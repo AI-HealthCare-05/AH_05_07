@@ -59,6 +59,7 @@ services:
     volumes:
       - ./app:/app/app  # 로컬의 app 디렉토리를 컨테이너의 /app/app에 마운트(수정사항 즉시 반영)
       - static_volume:/app/templates
+      - ${MODEL_MOUNT_PATH:-./models}:/models:ro
     restart: always
     ports:
       - "8000:8000"
