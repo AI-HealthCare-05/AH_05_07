@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 manifest_path = Path("data/manifest/nhanes_2017_2020.json")
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
