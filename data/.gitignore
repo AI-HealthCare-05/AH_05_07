@@ -1,0 +1,5 @@
+raw/
+derived/
+*.xpt
+*.parquet
+*.csv
