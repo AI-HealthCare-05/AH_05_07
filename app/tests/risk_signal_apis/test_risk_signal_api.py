@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from httpx import ASGITransport, AsyncClient
 from starlette import status
 from tortoise.contrib.test import TestCase
@@ -20,3 +22,11 @@ class TestRiskSignalAPI(TestCase):
             response = await client.post("/api/v1/risk-signal", json={**self.payload, "systolic_bp": 130})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    async def test_normalizes_runner_setup_failure(self) -> None:
+        with patch("app.apis.v1.risk_signal_routers.verified_model_is_available", return_value=True):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                response = await client.post("/api/v1/risk-signal", json=self.payload)
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.json()["detail"]["code"] == "model_not_ready"
