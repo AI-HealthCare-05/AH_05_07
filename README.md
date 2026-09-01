@@ -13,6 +13,7 @@
 
 - [Requirements](docs/requirements.md)
 - [Architecture and ERD](docs/architecture.md)
+- [Data contract](docs/data-contract.md)
 - [API contract](docs/api-contract.md)
 - [UX flow](docs/ux-flow.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
