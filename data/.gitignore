@@ -3,3 +3,4 @@ derived/
 *.xpt
 *.parquet
 *.csv
+*.parquet
