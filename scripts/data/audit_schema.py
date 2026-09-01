@@ -12,7 +12,9 @@ def read_columns(path: Path) -> set[str]:
     try:
         import pandas as pd
     except ImportError as error:
-        raise SystemExit("XPT audit needs pandas; use a local CSV export or install the ai dependency group.") from error
+        raise SystemExit(
+            "XPT audit needs pandas; use a local CSV export or install the ai dependency group."
+        ) from error
 
     return set(pd.read_sas(path, format="xport", encoding="utf-8", chunksize=1).read(1).columns)
 
@@ -22,7 +24,11 @@ parser.add_argument("raw_dir", type=Path)
 args = parser.parse_args()
 
 manifest = json.loads(Path("data/manifest/nhanes_2017_2020.json").read_text(encoding="utf-8"))
-required = {"demographics": {"SEQN", "RIAGENDR", "RIDAGEYR"}, "body_measures": {"SEQN", "BMXBMI"}, "blood_pressure": {"SEQN", *manifest["label"]["prohibited_predictors"]}}
+required = {
+    "demographics": {"SEQN", "RIAGENDR", "RIDAGEYR"},
+    "body_measures": {"SEQN", "BMXBMI"},
+    "blood_pressure": {"SEQN", *manifest["label"]["prohibited_predictors"]},
+}
 
 missing_files: list[str] = []
 for module, fields in required.items():
