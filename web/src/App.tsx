@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import {
+  ApiRequestError,
   createActiveChallengeCheckin,
   createBloodPressureObservation,
   getObservationWindow,
@@ -16,6 +17,21 @@ const challengeActions = [
   { id: "sleep-routine", label: "수면 시간 지키기" },
   { id: "low-sodium-meal", label: "덜 짜게 먹기" },
 ] as const;
+
+type Notice = {
+  kind: "success" | "error" | "warning";
+  message: string;
+  reload?: boolean;
+};
+
+type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | null;
+
+function isSessionError(error: unknown): boolean {
+  return (
+    error instanceof ApiRequestError
+    && (error.status === 401 || error.code === "supabase_session_required" || error.code === "supabase_session_invalid")
+  );
+}
 
 function observationPeriodLabel(period: "morning" | "evening"): string {
   return period === "morning" ? "아침 · 기상 후 1시간 이내" : "저녁 · 취침 전";
@@ -39,7 +55,7 @@ function koreaDate(offset = 0): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function Login({ onSession }: { onSession: (session: Session) => void }) {
+function Login({ onSession, recoveryMessage }: { onSession: (session: Session) => void; recoveryMessage?: string }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -76,7 +92,7 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
           <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
           <button type="submit" disabled={pending}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
         </form>
-        {message && <p className="notice" role="status">{message}</p>}
+        {(message || recoveryMessage) && <p className="notice" role="status">{message || recoveryMessage}</p>}
       </section>
     </main>
   );
@@ -85,7 +101,9 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [windowData, setWindowData] = useState<ObservationWindow | null>(null);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [loadingWindow, setLoadingWindow] = useState(false);
   const today = useMemo(() => koreaDate(), []);
   const startOn = useMemo(() => koreaDate(-6), []);
 
@@ -101,12 +119,64 @@ function App() {
     void refreshWindow(session);
   }, [session, startOn, today]);
 
-  async function refreshWindow(activeSession = session) {
+  function presentRequestError(error: unknown, context: "load" | "save") {
+    if (error instanceof ApiRequestError) {
+      if (isSessionError(error)) {
+        void supabase?.auth.signOut({ scope: "local" });
+        setSession(null);
+        setNotice({ kind: "warning", message: "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요." });
+        return;
+      }
+      if (error.status === 422 || error.code === "validation_error") {
+        setNotice({ kind: "error", message: "입력값을 확인해 수정한 뒤 다시 저장해 주세요." });
+        return;
+      }
+      if (error.code === "challenge_selection_locked") {
+        setNotice({ kind: "error", message: "첫 체크인 후에는 이 7일 챌린지의 선택을 바꿀 수 없습니다." });
+        return;
+      }
+      if (error.code === "active_challenge_required") {
+        setNotice({ kind: "error", message: "오늘의 상태를 기록하기 전에 7일 챌린지를 먼저 선택해 주세요." });
+        return;
+      }
+      if (error.status >= 500 || error.code === "observation_storage_not_ready") {
+        setNotice(
+          context === "save"
+            ? {
+                kind: "warning",
+                message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
+                reload: true,
+              }
+            : { kind: "warning", message: "기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.", reload: true },
+        );
+        return;
+      }
+    }
+
+    setNotice(
+      context === "save"
+        ? {
+            kind: "warning",
+            message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
+            reload: true,
+          }
+        : { kind: "warning", message: "기록을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.", reload: true },
+    );
+  }
+
+  async function refreshWindow(activeSession = session, afterSave = false) {
     if (!activeSession) return;
+    setLoadingWindow(true);
     try {
       setWindowData(await getObservationWindow(activeSession, startOn, today));
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "기록을 불러오지 못했습니다.");
+      if (afterSave && !isSessionError(error)) {
+        setNotice({ kind: "warning", message: "기록은 저장했지만 목록을 새로 불러오지 못했습니다. 새로고침으로 확인해 주세요.", reload: true });
+      } else {
+        presentRequestError(error, "load");
+      }
+    } finally {
+      setLoadingWindow(false);
     }
   }
 
@@ -116,10 +186,11 @@ function App() {
     const form = new FormData(event.currentTarget);
     const systolic = Number(form.get("systolic"));
     const diastolic = Number(form.get("diastolic"));
-    if (systolic <= diastolic) {
-      setNotice("수축기 값은 이완기 값보다 크게 입력해 주세요.");
+    if (!Number.isInteger(systolic) || !Number.isInteger(diastolic) || systolic <= diastolic) {
+      setNotice({ kind: "error", message: "수축기 값은 이완기 값보다 크게 입력해 주세요." });
       return;
     }
+    setPendingAction("blood-pressure");
     try {
       await createBloodPressureObservation(session, {
         observed_on: String(form.get("observed_on")),
@@ -127,10 +198,12 @@ function App() {
         systolic,
         diastolic,
       });
-      setNotice("기록을 저장했습니다.");
-      await refreshWindow();
+      setNotice({ kind: "success", message: "기록을 저장했습니다." });
+      await refreshWindow(session, true);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "기록을 저장하지 못했습니다.");
+      presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -142,30 +215,36 @@ function App() {
 
   async function selectChallenge(actionId: string) {
     if (!session) return;
+    setPendingAction("challenge-selection");
     try {
       await selectActiveChallenge(session, actionId);
-      setNotice("7일 챌린지를 선택했습니다.");
-      await refreshWindow();
+      setNotice({ kind: "success", message: "7일 챌린지를 선택했습니다." });
+      await refreshWindow(session, true);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "챌린지를 선택하지 못했습니다.");
+      presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function submitActiveChallengeCheckin(status: "completed" | "skipped") {
     if (!session) return;
+    setPendingAction("challenge-checkin");
     try {
       await createActiveChallengeCheckin(session, { observed_on: today, status });
-      setNotice("오늘의 상태를 기록했습니다.");
-      await refreshWindow();
+      setNotice({ kind: "success", message: "오늘의 상태를 기록했습니다." });
+      await refreshWindow(session, true);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "상태를 저장하지 못했습니다.");
+      presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
     }
   }
 
   if (!supabaseConfigured) {
     return <main className="auth-shell"><p className="notice">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   }
-  if (!session) return <Login onSession={setSession} />;
+  if (!session) return <Login onSession={setSession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
 
   return (
     <main className="page-shell">
@@ -173,7 +252,16 @@ function App() {
         <div><p className="eyebrow">상균7데이즈</p><h1>7일 기록</h1></div>
         <button className="text-button" onClick={() => void supabase?.auth.signOut()}>로그아웃</button>
       </header>
-      {notice && <p className="notice" role="status">{notice}</p>}
+      {notice && (
+        <div className={`notice notice-${notice.kind}`} role="status">
+          <span>{notice.message}</span>
+          {notice.reload && (
+            <button className="notice-action" onClick={() => void refreshWindow()} disabled={loadingWindow}>
+              {loadingWindow ? "불러오는 중" : "다시 불러오기"}
+            </button>
+          )}
+        </div>
+      )}
       <section className="grid">
         <form className="panel" onSubmit={submitBloodPressure}>
           <h2>혈압 기록</h2>
@@ -182,7 +270,9 @@ function App() {
           <p className="period-help">가능하면 매일 비슷한 시각에 기록해 주세요.</p>
           <label>수축기<input name="systolic" type="number" min="60" max="260" required /></label>
           <label>이완기<input name="diastolic" type="number" min="30" max="160" required /></label>
-          <button type="submit">저장</button>
+          <button type="submit" disabled={pendingAction !== null}>
+            {pendingAction === "blood-pressure" ? "저장 중" : "저장"}
+          </button>
         </form>
         <section className="panel">
           <h2>7일 챌린지</h2>
@@ -197,7 +287,7 @@ function App() {
                 {challengeActions.map((action) => (
                   <div className="action" key={action.id}>
                     <span>{action.label}</span>
-                    <button onClick={() => void selectChallenge(action.id)}>선택</button>
+                    <button onClick={() => void selectChallenge(action.id)} disabled={pendingAction !== null}>선택</button>
                   </div>
                 ))}
               </div>
@@ -217,7 +307,7 @@ function App() {
                     {challengeActions.filter((action) => action.id !== activeChallenge.action_id).map((action) => (
                       <div className="action" key={action.id}>
                         <span>{action.label}</span>
-                        <button className="secondary" onClick={() => void selectChallenge(action.id)}>선택 바꾸기</button>
+                        <button className="secondary" onClick={() => void selectChallenge(action.id)} disabled={pendingAction !== null}>선택 바꾸기</button>
                       </div>
                     ))}
                   </div>
@@ -225,15 +315,17 @@ function App() {
               )}
               <div className="action checkin-action">
                 <span>오늘의 상태{todayCheckin ? ` · ${todayCheckin.status === "completed" ? "완료" : "건너뜀"}` : ""}</span>
-                <button onClick={() => void submitActiveChallengeCheckin("completed")}>완료</button>
-                <button className="secondary" onClick={() => void submitActiveChallengeCheckin("skipped")}>건너뜀</button>
+                <button onClick={() => void submitActiveChallengeCheckin("completed")} disabled={pendingAction !== null}>
+                  {pendingAction === "challenge-checkin" ? "저장 중" : "완료"}
+                </button>
+                <button className="secondary" onClick={() => void submitActiveChallengeCheckin("skipped")} disabled={pendingAction !== null}>건너뜀</button>
               </div>
             </>
           )}
         </section>
       </section>
       <section className="panel records">
-        <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()}>새로고침</button></div>
+        <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()} disabled={loadingWindow}>{loadingWindow ? "불러오는 중" : "새로고침"}</button></div>
         <div className="record-columns">
           <div><h3>혈압 관찰</h3><ul>{windowData?.blood_pressure_observations.map((record) => <li key={record.id}>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</li>) || <li>기록 없음</li>}</ul></div>
           <div>

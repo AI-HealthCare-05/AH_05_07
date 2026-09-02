@@ -46,9 +46,9 @@ The dashboard never merges them into a diagnosis, treatment effect, prevention c
 | Situation | User-visible behavior |
 |---|---|
 | Expired email link | Offer a new magic link without implying an account problem. |
-| Expired session | Ask the user to sign in again and do not report an uncertain write as saved. |
+| Expired session | Clear the local session, ask the user to sign in again, and do not report an uncertain write as saved. |
 | Duplicate BP period or challenge check-in | Update intentionally or show a clear conflict; never create silent duplicates. |
-| Network or storage failure | Preserve a retry action and state that saving was not confirmed. |
+| Network or storage failure | State that saving was not confirmed, offer a fresh read, then let the user decide whether another write is needed. |
 | Model artifact unavailable | Show a not-ready state with no provisional score. |
 | Empty seven-day window | Show an intentional empty state and the next available action. |
 | Unauthorized record ID | Return not found without revealing another user's data. |

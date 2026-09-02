@@ -3,8 +3,41 @@ import type { Session } from "@supabase/supabase-js";
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 type ApiError = {
-  detail?: { code?: string; message?: string };
+  detail?: unknown;
 };
+
+type ApiErrorDetail = {
+  code?: string;
+  message?: string;
+};
+
+export class ApiRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
+function parseApiError(payload: ApiError, status: number): ApiRequestError {
+  if (Array.isArray(payload.detail)) {
+    return new ApiRequestError(status, "validation_error", "입력값을 확인해 주세요.");
+  }
+
+  if (payload.detail && typeof payload.detail === "object") {
+    const detail = payload.detail as ApiErrorDetail;
+    return new ApiRequestError(
+      status,
+      detail.code || "request_failed",
+      detail.message || "요청을 처리하지 못했습니다.",
+    );
+  }
+
+  return new ApiRequestError(status, "request_failed", "요청을 처리하지 못했습니다.");
+}
 
 export type BloodPressureObservation = {
   id: string;
@@ -61,7 +94,7 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
   });
   if (!response.ok) {
     const error = (await response.json().catch(() => ({}))) as ApiError;
-    throw new Error(error.detail?.message || error.detail?.code || "요청을 처리하지 못했습니다.");
+    throw parseApiError(error, response.status);
   }
   return (await response.json()) as T;
 }
