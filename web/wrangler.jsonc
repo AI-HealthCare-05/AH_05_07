@@ -1,0 +1,8 @@
+{
+  "name": "ah-05-07-pages-web",
+  "compatibility_date": "2026-09-02",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

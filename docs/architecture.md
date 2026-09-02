@@ -2,11 +2,11 @@
 
 ## Decision
 
-React/Vite runs on Cloudflare Pages. FastAPI inference runs on Cloud Run Seoul. Supabase Auth/PostgreSQL runs in Seoul. The API image loads an immutable CPU model artifact. Redis, a separate worker, and an LLM remain deferred until a benchmark demonstrates that a batch task violates the request contract.
+React/Vite runs as static assets on a Cloudflare Worker. FastAPI inference runs on Cloud Run Seoul. Supabase Auth/PostgreSQL runs in Seoul. The API image loads an immutable CPU model artifact. Redis, a separate worker, and an LLM remain deferred until a benchmark demonstrates that a batch task violates the request contract.
 
 ```mermaid
 flowchart TD
-    UI["React/Vite · Cloudflare Pages"] --> API["FastAPI · Cloud Run"]
+    UI["React/Vite · Cloudflare Worker"] --> API["FastAPI · Cloud Run"]
     API --> DB["Supabase · Auth/PostgreSQL"]
     API --> MODEL["Versioned CPU model artifact"]
     TRAIN["Local or Actions training"] --> ARTIFACT["Model card + digest"]
