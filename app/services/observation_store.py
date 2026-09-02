@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 import httpx
 
@@ -44,3 +45,18 @@ async def list_owned_records(
         )
     response.raise_for_status()
     return response.json()
+
+
+async def delete_owned_record(table: str, record_id: UUID, session: SupabaseSession) -> bool:
+    async with httpx.AsyncClient(timeout=5) as client:
+        response = await client.delete(
+            f"{config.SUPABASE_URL}/rest/v1/{table}",
+            headers={
+                "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+                "Authorization": f"Bearer {session.access_token}",
+                "Prefer": "return=representation",
+            },
+            params={"id": f"eq.{record_id}"},
+        )
+    response.raise_for_status()
+    return bool(response.json())
