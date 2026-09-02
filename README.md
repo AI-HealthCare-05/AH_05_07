@@ -16,6 +16,7 @@
 - [Data contract](docs/data-contract.md)
 - [API contract](docs/api-contract.md)
 - [UX flow](docs/ux-flow.md)
+- [Deployment SSOT](docs/deployment-ssot.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
 
 ## Verification
