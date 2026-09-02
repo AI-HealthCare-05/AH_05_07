@@ -6,12 +6,12 @@
 flowchart TD
     A["Email magic link"] --> B["Signed-in 7-day page"]
     B --> C["BP observation"]
-    B --> D["Daily challenge events"]
+    B --> D["One active 7-day challenge and daily check-in"]
     C --> E["Separated recent lists"]
     D --> E
 ```
 
-The current web supports authentication, BP creation, daily challenge-event creation, and a separated seven-day read. Delete and export exist only in the API. Risk signal, one active challenge, edit controls, measurement checklist, and structured feedback are not yet product-connected.
+The current web supports authentication, BP creation, one active seven-day challenge selection, daily check-ins, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Delete and export exist only in the API. Risk signal, BP edit controls, measurement checklist, and structured feedback are not yet product-connected.
 
 ## Accepted P0 flow
 

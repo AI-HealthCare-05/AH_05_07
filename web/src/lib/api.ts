@@ -21,11 +21,30 @@ export type ChallengeEvent = {
   status: "completed" | "skipped";
 };
 
+export type ActiveChallenge = {
+  id: string;
+  action_id: string;
+  starts_on: string;
+  ends_on: string;
+  first_checkin_on: string | null;
+  status: "active" | "closed";
+};
+
+export type ChallengeCheckin = {
+  id: string;
+  challenge_id: string;
+  action_id: string;
+  observed_on: string;
+  status: "completed" | "skipped";
+};
+
 export type ObservationWindow = {
   start_on: string;
   end_on: string;
   blood_pressure_observations: BloodPressureObservation[];
   challenge_events: ChallengeEvent[];
+  active_challenge: ActiveChallenge | null;
+  challenge_checkins: ChallengeCheckin[];
 };
 
 async function apiFetch<T>(path: string, session: Session, init: RequestInit = {}): Promise<T> {
@@ -62,6 +81,26 @@ export function createChallengeEvent(
   payload: Omit<ChallengeEvent, "id">,
 ): Promise<ChallengeEvent> {
   return apiFetch<ChallengeEvent>("/api/v1/observations/challenges", session, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function selectActiveChallenge(
+  session: Session,
+  actionId: string,
+): Promise<ActiveChallenge> {
+  return apiFetch<ActiveChallenge>("/api/v1/observations/challenges/active", session, {
+    method: "POST",
+    body: JSON.stringify({ action_id: actionId }),
+  });
+}
+
+export function createActiveChallengeCheckin(
+  session: Session,
+  payload: Pick<ChallengeCheckin, "observed_on" | "status">,
+): Promise<ChallengeCheckin> {
+  return apiFetch<ChallengeCheckin>("/api/v1/observations/challenges/active/checkins", session, {
     method: "POST",
     body: JSON.stringify(payload),
   });

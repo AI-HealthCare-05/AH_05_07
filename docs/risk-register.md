@@ -12,10 +12,12 @@
 | Entity | Current storage | Ownership and retention | Accepted target gap |
 |---|---|---|---|
 | Blood-pressure observation | `blood_pressure_observations` | `auth.users.id`, RLS, 30-day expiry, daily purge | Add intentional update flow and web delete/export controls. |
-| Challenge event | `challenge_events` | `auth.users.id`, RLS, 30-day expiry, daily purge | Replace the daily-event-only model with one active seven-day challenge plus daily check-ins. |
+| Legacy challenge event | `challenge_events` | `auth.users.id`, RLS, 30-day expiry, daily purge | Retain only as a readable legacy record until expiry; do not use it to select the active challenge. |
+| Active challenge | `active_challenges` | `auth.users.id`, RLS, one active row per user, 30-day expiry, daily purge | Verify deployed RLS and trigger behavior with two synthetic users. |
+| Challenge check-in | `challenge_checkins` | Same user as active challenge, RLS, one date per challenge, seven-day trigger boundary, 30-day expiry | Verify deployed trigger and upsert behavior with synthetic data. |
 | Risk-signal result | No product record is currently persisted | No released result without a verified artifact | Add versioned result storage only after the release gate passes. |
 
-The current database is not yet the target-domain ERD. In particular, `challenge_events` allows different action IDs on the same day and therefore cannot enforce one active challenge by itself.
+The legacy `challenge_events` table alone cannot enforce one active challenge because it allows different action IDs on the same day. The active-challenge and check-in tables establish that product rule without rewriting retained legacy records.
 
 ## Data handling classes
 
@@ -43,7 +45,7 @@ The current database is not yet the target-domain ERD. In particular, `challenge
 
 | ID | Risk | Priority | Evidence | Mitigation | Closure evidence |
 |---|---|---|---|---|---|
-| R-01 | The current challenge schema and UI permit several actions per day, conflicting with the accepted one-active-challenge contract. | P0 | `challenge_events` unique key includes `action_id`; web renders all three actions. | Review a migration that separates active challenge from daily check-in; update API, UI, and OpenAPI together. | One active challenge enforced in database/API; first check-in locks replacement; tests cover the rule. |
+| R-01 | A legacy challenge-event record could be mistaken for the active seven-day challenge. | P0 | `challenge_events` remains only for the previous flow; new tables, API, and UI use `active_challenges` plus `challenge_checkins`. | Keep the legacy route API-only, label it in the contract, and run the deployed AC-06 and RLS checks before claiming closure. | Synthetic-user evidence proves one active challenge, seven-day check-ins, post-first-check-in lock, and no cross-user write. |
 | R-02 | JWT/RLS ownership is configured but has no deployed two-user and anonymous negative test. | P0 | SQL policies and mocked API tests exist. | Use a dedicated Supabase test project with users A, B, and anonymous access. | A cannot read/change B; anonymous cannot read/write; evidence is repeatable. |
 | R-03 | The 30-day lifecycle is purge-based rather than access-bound, so an expired row may remain visible before the next purge. | P0 | `expires_at` exists; scheduled purge runs daily; RLS has no expiry predicate. | Decide and document whether the retention promise is exact-time or daily-purge; add an access predicate or revised wording accordingly. | Policy/query behavior and scheduled-purge evidence match the approved retention promise. |
 | R-04 | Core record control is incomplete: update is absent and delete/export are API-only. | P0 | Requirements FR-07; current web creates and reads only. | Add owned update, delete, and export flows with recovery states. | Browser flow and API tests verify the full owned-record lifecycle. |

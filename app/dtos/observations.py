@@ -35,3 +35,16 @@ class ChallengeEventInput(BaseModel):
     observed_on: date
     action_id: str = Field(pattern=r"^[a-z0-9-]{1,40}$")
     status: ChallengeStatus
+
+
+class ActiveChallengeSelectionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action_id: str = Field(pattern=r"^[a-z0-9-]{1,40}$")
+
+
+class ChallengeCheckinInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    observed_on: date
+    status: ChallengeStatus

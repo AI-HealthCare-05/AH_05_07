@@ -18,6 +18,10 @@ h1, h2, h3, p { margin-top: 0; }
 .actions { display: grid; gap: 0.75rem; }
 .action { flex-wrap: wrap; padding: 0.75rem 0; border-bottom: 1px solid #edf1ed; }
 .action span { flex: 1 1 10rem; }
+.compact-actions { margin: 0.75rem 0; }
+.challenge-summary { display: grid; gap: 0.35rem; margin-bottom: 0.75rem; }
+.challenge-summary span { color: #52655a; font-size: 0.9rem; }
+.checkin-action { margin-top: 1rem; border-top: 1px solid #edf1ed; }
 .secondary, .text-button { background: transparent; color: #126b4f; border: 1px solid #b7c6bd; }
 .text-button { border: 0; padding: 0.4rem; }
 .notice { border-radius: 0.5rem; background: #e7f1ea; color: #174a35; padding: 0.75rem; }

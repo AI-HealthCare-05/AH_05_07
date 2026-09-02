@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import {
+  createActiveChallengeCheckin,
   createBloodPressureObservation,
-  createChallengeEvent,
   getObservationWindow,
+  selectActiveChallenge,
   type ObservationWindow,
 } from "./lib/api";
 import { supabase, supabaseConfigured } from "./lib/supabase";
@@ -133,10 +134,27 @@ function App() {
     }
   }
 
-  async function submitChallenge(actionId: string, status: "completed" | "skipped") {
+  const activeChallenge = windowData?.active_challenge ?? null;
+  const activeChallengeEnded = Boolean(activeChallenge && today > activeChallenge.ends_on);
+  const todayCheckin = windowData?.challenge_checkins.find(
+    (checkin) => checkin.challenge_id === activeChallenge?.id && checkin.observed_on === today,
+  );
+
+  async function selectChallenge(actionId: string) {
     if (!session) return;
     try {
-      await createChallengeEvent(session, { observed_on: today, action_id: actionId, status });
+      await selectActiveChallenge(session, actionId);
+      setNotice("7일 챌린지를 선택했습니다.");
+      await refreshWindow();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "챌린지를 선택하지 못했습니다.");
+    }
+  }
+
+  async function submitActiveChallengeCheckin(status: "completed" | "skipped") {
+    if (!session) return;
+    try {
+      await createActiveChallengeCheckin(session, { observed_on: today, status });
       setNotice("오늘의 상태를 기록했습니다.");
       await refreshWindow();
     } catch (error) {
@@ -167,23 +185,73 @@ function App() {
           <button type="submit">저장</button>
         </form>
         <section className="panel">
-          <h2>오늘의 선택</h2>
-          <div className="actions">
-            {challengeActions.map((action) => (
-              <div className="action" key={action.id}>
-                <span>{action.label}</span>
-                <button onClick={() => void submitChallenge(action.id, "completed")}>완료</button>
-                <button className="secondary" onClick={() => void submitChallenge(action.id, "skipped")}>건너뜀</button>
+          <h2>7일 챌린지</h2>
+          {!activeChallenge || activeChallengeEnded ? (
+            <>
+              <p className="muted">
+                {!activeChallenge
+                  ? "한 가지 행동을 선택하고 7일 동안 매일 상태를 기록해요."
+                  : "이전 7일 챌린지가 끝났습니다. 새 행동을 선택해 시작할 수 있어요."}
+              </p>
+              <div className="actions">
+                {challengeActions.map((action) => (
+                  <div className="action" key={action.id}>
+                    <span>{action.label}</span>
+                    <button onClick={() => void selectChallenge(action.id)}>선택</button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <>
+              <p className="challenge-summary">
+                <strong>{challengeActionLabel(activeChallenge.action_id)}</strong>
+                <span>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</span>
+              </p>
+              {activeChallenge.first_checkin_on ? (
+                <p className="period-help">첫 체크인이 기록되어 이 7일 동안 선택을 바꿀 수 없습니다.</p>
+              ) : (
+                <>
+                  <p className="period-help">첫 체크인 전에는 다른 행동으로 선택을 바꿀 수 있습니다.</p>
+                  <div className="actions compact-actions">
+                    {challengeActions.filter((action) => action.id !== activeChallenge.action_id).map((action) => (
+                      <div className="action" key={action.id}>
+                        <span>{action.label}</span>
+                        <button className="secondary" onClick={() => void selectChallenge(action.id)}>선택 바꾸기</button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="action checkin-action">
+                <span>오늘의 상태{todayCheckin ? ` · ${todayCheckin.status === "completed" ? "완료" : "건너뜀"}` : ""}</span>
+                <button onClick={() => void submitActiveChallengeCheckin("completed")}>완료</button>
+                <button className="secondary" onClick={() => void submitActiveChallengeCheckin("skipped")}>건너뜀</button>
+              </div>
+            </>
+          )}
         </section>
       </section>
       <section className="panel records">
         <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()}>새로고침</button></div>
         <div className="record-columns">
           <div><h3>혈압 관찰</h3><ul>{windowData?.blood_pressure_observations.map((record) => <li key={record.id}>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</li>) || <li>기록 없음</li>}</ul></div>
-          <div><h3>챌린지</h3><ul>{windowData?.challenge_events.map((record) => <li key={record.id}>{record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}</li>) || <li>기록 없음</li>}</ul></div>
+          <div>
+            <h3>챌린지</h3>
+            <ul>
+              {windowData?.challenge_checkins.map((record) => (
+                <li key={`checkin-${record.id}`}>
+                  {record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}
+                </li>
+              ))}
+              {windowData?.challenge_events.map((record) => (
+                <li key={`legacy-${record.id}`}>
+                  {record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}
+                </li>
+              ))}
+              {!windowData?.challenge_checkins.length && !windowData?.challenge_events.length && <li>기록 없음</li>}
+            </ul>
+          </div>
         </div>
       </section>
     </main>

@@ -12,7 +12,14 @@ from app.apis.v1.observation_routers import (
     validate_observation_window,
 )
 from app.dependencies.supabase_auth import SupabaseSession
-from app.services.observation_store import delete_owned_record, insert_owned_record, list_owned_records
+from app.services.observation_store import (
+    ChallengeSelectionLockedError,
+    create_owned_challenge_checkin,
+    delete_owned_record,
+    insert_owned_record,
+    list_owned_records,
+    select_owned_active_challenge,
+)
 
 
 @pytest.mark.asyncio
@@ -89,12 +96,17 @@ async def test_export_observations_sets_json_attachment_header() -> None:
     session = SupabaseSession(user_id="session-user-id", access_token="session-token")
     blood_pressure_observations = [{"id": "blood-pressure-id", "observed_on": "2026-09-02"}]
     challenge_events = [{"id": "challenge-id", "observed_on": "2026-09-02"}]
+    active_challenge = {"id": "active-challenge-id", "action_id": "walk-10-minutes"}
+    challenge_checkins = [{"id": "checkin-id", "observed_on": "2026-09-02"}]
 
     with (
         patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
         patch(
             "app.apis.v1.observation_routers.list_owned_records",
-            new=AsyncMock(side_effect=[blood_pressure_observations, challenge_events]),
+            new=AsyncMock(side_effect=[blood_pressure_observations, challenge_events, challenge_checkins]),
+        ),
+        patch(
+            "app.apis.v1.observation_routers.get_owned_active_challenge", new=AsyncMock(return_value=active_challenge)
         ),
     ):
         response = await export_observations(date(2026, 9, 1), date(2026, 9, 7), "Bearer session-token")
@@ -107,6 +119,8 @@ async def test_export_observations_sets_json_attachment_header() -> None:
         "end_on": "2026-09-07",
         "blood_pressure_observations": blood_pressure_observations,
         "challenge_events": challenge_events,
+        "active_challenge": active_challenge,
+        "challenge_checkins": challenge_checkins,
     }
 
 
@@ -128,3 +142,84 @@ async def test_delete_owned_record_returns_false_when_row_is_not_visible() -> No
     assert not deleted
     assert client.delete.await_args.kwargs["headers"]["Authorization"] == "Bearer session-token"
     assert client.delete.await_args.kwargs["params"] == {"id": f"eq.{record_id}"}
+
+
+@pytest.mark.asyncio
+async def test_select_active_challenge_changes_choice_before_first_checkin() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    active_challenge = {
+        "id": "active-challenge-id",
+        "action_id": "walk-10-minutes",
+        "starts_on": "2026-09-02",
+        "ends_on": "2026-09-08",
+        "first_checkin_on": None,
+    }
+    replacement = {**active_challenge, "action_id": "sleep-routine"}
+
+    with (
+        patch(
+            "app.services.observation_store.get_owned_active_challenge",
+            new=AsyncMock(return_value=active_challenge),
+        ),
+        patch(
+            "app.services.observation_store.update_owned_record", new=AsyncMock(return_value=replacement)
+        ) as update_record,
+    ):
+        result = await select_owned_active_challenge("sleep-routine", date(2026, 9, 2), session)
+
+    assert result == replacement
+    assert update_record.await_args.args[0:3] == (
+        "active_challenges",
+        "active-challenge-id",
+        {"action_id": "sleep-routine"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_select_active_challenge_rejects_replacement_after_first_checkin() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    active_challenge = {
+        "id": "active-challenge-id",
+        "action_id": "walk-10-minutes",
+        "starts_on": "2026-09-02",
+        "ends_on": "2026-09-08",
+        "first_checkin_on": "2026-09-02",
+    }
+
+    with patch(
+        "app.services.observation_store.get_owned_active_challenge",
+        new=AsyncMock(return_value=active_challenge),
+    ):
+        with pytest.raises(ChallengeSelectionLockedError):
+            await select_owned_active_challenge("sleep-routine", date(2026, 9, 2), session)
+
+
+@pytest.mark.asyncio
+async def test_create_challenge_checkin_uses_the_active_challenge_and_session_identity() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    active_challenge = {"id": "active-challenge-id", "action_id": "walk-10-minutes"}
+    saved_checkin = {"id": "checkin-id", "challenge_id": "active-challenge-id"}
+
+    with (
+        patch(
+            "app.services.observation_store.get_owned_active_challenge",
+            new=AsyncMock(return_value=active_challenge),
+        ),
+        patch(
+            "app.services.observation_store.upsert_owned_record", new=AsyncMock(return_value=saved_checkin)
+        ) as upsert_record,
+    ):
+        result = await create_owned_challenge_checkin(date(2026, 9, 2), "completed", session)
+
+    assert result == saved_checkin
+    assert upsert_record.await_args.args == (
+        "challenge_checkins",
+        {
+            "challenge_id": "active-challenge-id",
+            "action_id": "walk-10-minutes",
+            "observed_on": "2026-09-02",
+            "status": "completed",
+        },
+        "user_id,challenge_id,observed_on",
+        session,
+    )
