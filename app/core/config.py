@@ -14,6 +14,13 @@ class Env(StrEnum):
     PROD = "prod"
 
 
+def parse_api_cors_origins(value: str) -> list[str]:
+    origins = list(dict.fromkeys(origin.strip() for origin in value.split(",") if origin.strip()))
+    if "*" in origins:
+        raise ValueError("API_CORS_ORIGINS must not include '*'.")
+    return origins
+
+
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
 
@@ -34,6 +41,7 @@ class Config(BaseSettings):
 
     SUPABASE_URL: str = ""
     SUPABASE_PUBLISHABLE_KEY: str = ""
+    API_CORS_ORIGINS: str = ""
 
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
