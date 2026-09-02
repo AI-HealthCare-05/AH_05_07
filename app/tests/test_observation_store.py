@@ -1,12 +1,13 @@
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
 from fastapi import HTTPException
 
 from app.apis.v1.observation_routers import validate_observation_window
 from app.dependencies.supabase_auth import SupabaseSession
-from app.services.observation_store import insert_owned_record, list_owned_records
+from app.services.observation_store import delete_owned_record, insert_owned_record, list_owned_records
 
 
 @pytest.mark.asyncio
@@ -68,3 +69,23 @@ def test_rejects_observation_window_longer_than_seven_days() -> None:
 
     assert error.value.status_code == 422
     assert error.value.detail["code"] == "observation_window_invalid"
+
+
+@pytest.mark.asyncio
+async def test_delete_owned_record_returns_false_when_row_is_not_visible() -> None:
+    response = MagicMock()
+    response.json.return_value = []
+    client = MagicMock()
+    client.delete = AsyncMock(return_value=response)
+    client_context = MagicMock()
+    client_context.__aenter__ = AsyncMock(return_value=client)
+    client_context.__aexit__ = AsyncMock(return_value=None)
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with patch("app.services.observation_store.httpx.AsyncClient", return_value=client_context):
+        deleted = await delete_owned_record("blood_pressure_observations", record_id, session)
+
+    assert not deleted
+    assert client.delete.await_args.kwargs["headers"]["Authorization"] == "Bearer session-token"
+    assert client.delete.await_args.kwargs["params"] == {"id": f"eq.{record_id}"}

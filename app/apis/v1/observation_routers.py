@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Annotated
+from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Header, HTTPException, status
@@ -10,7 +11,7 @@ from app.dependencies.supabase_auth import (
     validate_supabase_access_token,
 )
 from app.dtos.observations import BloodPressureObservationInput, ChallengeEventInput
-from app.services.observation_store import insert_owned_record, list_owned_records
+from app.services.observation_store import delete_owned_record, insert_owned_record, list_owned_records
 
 observation_router = APIRouter(prefix="/observations", tags=["observations"])
 
@@ -19,6 +20,13 @@ def storage_not_ready() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail={"code": "observation_storage_not_ready", "message": "Observation storage is not available."},
+    )
+
+
+def owned_record_not_found() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail={"code": "observation_not_found", "message": "Observation record was not found."},
     )
 
 
@@ -64,6 +72,34 @@ async def create_challenge_event(
         return await insert_owned_record("challenge_events", payload.model_dump(mode="json"), session)
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
+
+
+@observation_router.delete("/blood-pressure/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_blood_pressure_observation(
+    record_id: UUID,
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    try:
+        deleted = await delete_owned_record(
+            "blood_pressure_observations", record_id, await observation_session(authorization)
+        )
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+    if not deleted:
+        raise owned_record_not_found()
+
+
+@observation_router.delete("/challenges/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_challenge_event(
+    record_id: UUID,
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    try:
+        deleted = await delete_owned_record("challenge_events", record_id, await observation_session(authorization))
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+    if not deleted:
+        raise owned_record_not_found()
 
 
 @observation_router.get("/window")
