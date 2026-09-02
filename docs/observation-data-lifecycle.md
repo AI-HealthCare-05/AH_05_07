@@ -1,17 +1,14 @@
-# Observation data lifecycle gate
+# Observation data lifecycle
 
-No observation or challenge event is persisted until this contract is completed.
+## Decisions
 
-## Required decisions
-
-- Authentication identity: the stable account identifier used as the record owner.
-- Retention: a documented default duration and the rule for expiry.
-- Deletion: a user-initiated deletion path that removes observations and challenge events for that identity.
-- Export: whether a user can export their own records and the minimal format.
-- Access: no cross-user record access; administrative access requires a documented operational need.
+- Identity: `auth.users.id` is the only application-side record owner identifier.
+- Retention: observations and challenge events expire after 30 days; the scheduled purge removes expired rows daily.
+- Deletion: users delete an owned observation or challenge event by record ID; deleting an Auth user cascades to owned rows.
+- Export: users export their own 1–30 day observation window as JSON through `GET /api/v1/observations/export`.
+- Access: RLS limits reads, writes, and deletes to `auth.uid() = user_id`; no administrative read path exists.
 
 ## Non-negotiable boundaries
 
 - Do not store free-text health history, diagnosis, medication, treatment, original document, or contact details with these records.
 - Do not use records for model retraining or feature inputs without a separate reviewed decision.
-- A completed retention decision must be implemented and tested before changing `observation_storage_not_ready` to a write path.

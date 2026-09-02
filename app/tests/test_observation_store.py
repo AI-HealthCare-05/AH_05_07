@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
@@ -5,7 +6,11 @@ from uuid import UUID
 import pytest
 from fastapi import HTTPException
 
-from app.apis.v1.observation_routers import validate_observation_window
+from app.apis.v1.observation_routers import (
+    export_observations,
+    validate_observation_export_window,
+    validate_observation_window,
+)
 from app.dependencies.supabase_auth import SupabaseSession
 from app.services.observation_store import delete_owned_record, insert_owned_record, list_owned_records
 
@@ -69,6 +74,40 @@ def test_rejects_observation_window_longer_than_seven_days() -> None:
 
     assert error.value.status_code == 422
     assert error.value.detail["code"] == "observation_window_invalid"
+
+
+def test_rejects_observation_export_window_longer_than_thirty_days() -> None:
+    with pytest.raises(HTTPException) as error:
+        validate_observation_export_window(date(2026, 9, 1), date(2026, 10, 1))
+
+    assert error.value.status_code == 422
+    assert error.value.detail["code"] == "observation_export_window_invalid"
+
+
+@pytest.mark.asyncio
+async def test_export_observations_sets_json_attachment_header() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    blood_pressure_observations = [{"id": "blood-pressure-id", "observed_on": "2026-09-02"}]
+    challenge_events = [{"id": "challenge-id", "observed_on": "2026-09-02"}]
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch(
+            "app.apis.v1.observation_routers.list_owned_records",
+            new=AsyncMock(side_effect=[blood_pressure_observations, challenge_events]),
+        ),
+    ):
+        response = await export_observations(date(2026, 9, 1), date(2026, 9, 7), "Bearer session-token")
+
+    assert (
+        response.headers["content-disposition"] == 'attachment; filename="bp7-observations-2026-09-01-2026-09-07.json"'
+    )
+    assert json.loads(response.body) == {
+        "start_on": "2026-09-01",
+        "end_on": "2026-09-07",
+        "blood_pressure_observations": blood_pressure_observations,
+        "challenge_events": challenge_events,
+    }
 
 
 @pytest.mark.asyncio
