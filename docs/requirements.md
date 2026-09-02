@@ -1,6 +1,6 @@
 # Requirements
 
-BP7 is a Talos chronic-disease lifestyle challenge service. It provides a versioned hypertension-risk screening signal and seven days of home measurement records. It is not diagnosis or treatment.
+SK7 (상균7데이즈) is a Talos chronic-disease lifestyle challenge service. It provides a versioned hypertension-risk screening signal and seven days of home measurement records. It is not diagnosis or treatment.
 
 | ID | Priority | Actor | Contract | Exception / acceptance |
 |---|---|---|---|---|

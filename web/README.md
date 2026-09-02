@@ -1,4 +1,4 @@
-# BP7 web
+# 상균7데이즈 (SK7) web
 
 ```bash
 cp .env.example .env.local
