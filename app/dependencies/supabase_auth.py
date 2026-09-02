@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Annotated
 
 import httpx
@@ -9,9 +10,15 @@ from app.core import config
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def get_supabase_user_id(
+@dataclass(frozen=True)
+class SupabaseSession:
+    user_id: str
+    access_token: str
+
+
+async def get_supabase_session(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Security(bearer_scheme)],
-) -> str:
+) -> SupabaseSession:
     if not config.SUPABASE_URL or not config.SUPABASE_PUBLISHABLE_KEY:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -27,4 +34,4 @@ async def get_supabase_user_id(
         )
     if response.status_code != status.HTTP_200_OK or not response.json().get("id"):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "supabase_session_invalid"})
-    return response.json()["id"]
+    return SupabaseSession(user_id=response.json()["id"], access_token=credentials.credentials)
