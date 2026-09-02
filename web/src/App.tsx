@@ -152,7 +152,8 @@ function App() {
         <form className="panel" onSubmit={submitBloodPressure}>
           <h2>혈압 기록</h2>
           <label>날짜<input name="observed_on" type="date" defaultValue={today} required /></label>
-          <label>시간대<select name="period" defaultValue="morning"><option value="morning">아침</option><option value="evening">저녁</option></select></label>
+          <label>시간대<select name="period" defaultValue="morning"><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label>
+          <p className="period-help">가능하면 매일 비슷한 시각에 기록해 주세요.</p>
           <label>수축기<input name="systolic" type="number" min="60" max="260" required /></label>
           <label>이완기<input name="diastolic" type="number" min="30" max="160" required /></label>
           <button type="submit">저장</button>
