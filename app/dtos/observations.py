@@ -1,7 +1,7 @@
 from datetime import date
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ObservationPeriod(StrEnum):
@@ -16,6 +16,12 @@ class BloodPressureObservationInput(BaseModel):
     period: ObservationPeriod
     systolic: int = Field(ge=60, le=260)
     diastolic: int = Field(ge=30, le=160)
+
+    @model_validator(mode="after")
+    def validate_pressure_order(self) -> "BloodPressureObservationInput":
+        if self.systolic <= self.diastolic:
+            raise ValueError("systolic must be greater than diastolic")
+        return self
 
 
 class ChallengeStatus(StrEnum):

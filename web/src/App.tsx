@@ -105,12 +105,18 @@ function App() {
     event.preventDefault();
     if (!session) return;
     const form = new FormData(event.currentTarget);
+    const systolic = Number(form.get("systolic"));
+    const diastolic = Number(form.get("diastolic"));
+    if (systolic <= diastolic) {
+      setNotice("수축기 값은 이완기 값보다 크게 입력해 주세요.");
+      return;
+    }
     try {
       await createBloodPressureObservation(session, {
         observed_on: String(form.get("observed_on")),
         period: String(form.get("period")) as "morning" | "evening",
-        systolic: Number(form.get("systolic")),
-        diastolic: Number(form.get("diastolic")),
+        systolic,
+        diastolic,
       });
       setNotice("기록을 저장했습니다.");
       await refreshWindow();

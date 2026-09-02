@@ -26,3 +26,10 @@ class TestObservationAPI(TestCase):
             response = await client.post("/api/v1/observations/blood-pressure", json=payload)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    async def test_rejects_non_descending_observation_values(self) -> None:
+        payload = {"observed_on": "2026-09-02", "period": "morning", "systolic": 80, "diastolic": 80}
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/api/v1/observations/blood-pressure", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
