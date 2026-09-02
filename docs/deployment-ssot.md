@@ -6,11 +6,11 @@
 | --- | --- | --- |
 | Application code and Worker configuration | `AI-HealthCare-05/AH_05_07` `main` | `web/wrangler.jsonc` defines the production Worker name. |
 | Deployment snapshot | `emotigom/ah-05-07-pages` `main` | A derived copy of upstream `main`; do not make application changes here. |
-| Production web service | Cloudflare Worker `ah-05-07-pages-web` | The public URL is `https://ah-05-07-pages-web.ahnsangkyoon.workers.dev`. |
+| Production web service | Cloudflare Worker `ah-05-07-pages` | The public URL is `https://ah-05-07-pages.ahnsangkyoon.workers.dev`. |
 | API service | Cloud Run service `bp7-api` in `asia-northeast3` | Its allowed web origin must match the production web service. |
 | Authentication and record ownership | Supabase project configuration and migrations in this repository | Browser clients use only the publishable key; row ownership remains enforced by RLS. |
 
-`ah-05-07-pages` is retained only during cutover verification. It is not a second production target and must not receive a separate application deployment.
+`ah-05-07-pages-web` is the legacy Worker retained only during cutover verification. It is not a second production target and must not receive a separate application deployment.
 
 ## Build configuration
 
@@ -29,10 +29,14 @@ Do not create `VITE_*` secrets. Never place a Supabase `service_role` key, SMTP 
 1. Merge a verified change into upstream `main`.
 2. Run `Sync deployment branch` in `emotigom/ah-05-07-pages`.
 3. The sync workflow copies upstream `main` without upstream GitHub workflows.
-4. Cloudflare builds `web` with the variables above and deploys the assets to `ah-05-07-pages-web`.
+4. Cloudflare builds `web` with the variables above and deploys the assets to `ah-05-07-pages`.
 5. Verify the live URL, a signed-in API read, and the Cloud Run CORS preflight before retiring the old Worker.
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
+
+## Origin cutover
+
+Before accepting production traffic on the primary URL, add `https://ah-05-07-pages.ahnsangkyoon.workers.dev` to Supabase Auth redirect URLs and Cloud Run `API_CORS_ORIGINS`. Keep the legacy `ah-05-07-pages-web` origin temporarily only while confirming the primary URL; remove it after the verification passes.
 
 ## Change rules
 
