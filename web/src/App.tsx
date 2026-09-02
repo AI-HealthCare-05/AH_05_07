@@ -1,6 +1,5 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Turnstile } from "@marsidev/react-turnstile";
 import type { Session } from "@supabase/supabase-js";
 
 import {
@@ -16,8 +15,6 @@ const challengeActions = [
   { id: "sleep-routine", label: "수면 시간 지키기" },
   { id: "low-sodium-meal", label: "덜 짜게 먹기" },
 ] as const;
-
-const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim();
 
 function koreaDate(offset = 0): string {
   const date = new Date();
@@ -37,26 +34,16 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string>();
-  const [captchaVersion, setCaptchaVersion] = useState(0);
-  const captchaRequired = Boolean(turnstileSiteKey);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
-    if (captchaRequired && !captchaToken) {
-      setMessage("보안 확인을 완료한 뒤 이메일을 요청할 수 있습니다.");
-      return;
-    }
     setPending(true);
     setMessage("");
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: window.location.origin,
-          ...(captchaToken ? { captchaToken } : {}),
-        },
+        options: { emailRedirectTo: window.location.origin },
       });
       if (error) {
         setMessage(error.message);
@@ -66,10 +53,6 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
       setMessage("메일함에서 로그인 링크를 열어주세요.");
     } finally {
       setPending(false);
-      if (captchaRequired) {
-        setCaptchaToken(undefined);
-        setCaptchaVersion((version) => version + 1);
-      }
     }
   }
 
@@ -82,21 +65,7 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
         <form onSubmit={submit}>
           <label htmlFor="email">이메일</label>
           <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          {turnstileSiteKey && (
-            <div className="turnstile">
-              <Turnstile
-                key={captchaVersion}
-                siteKey={turnstileSiteKey}
-                onSuccess={setCaptchaToken}
-                onExpire={() => setCaptchaToken(undefined)}
-                onError={() => {
-                  setCaptchaToken(undefined);
-                  setMessage("보안 확인을 다시 시도해 주세요.");
-                }}
-              />
-            </div>
-          )}
-          <button type="submit" disabled={pending || (captchaRequired && !captchaToken)}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
+          <button type="submit" disabled={pending}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
         </form>
         {message && <p className="notice" role="status">{message}</p>}
       </section>
