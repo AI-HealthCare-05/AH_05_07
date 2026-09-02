@@ -56,7 +56,7 @@ function Login({ onSession }: { onSession: (session: Session) => void }) {
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="login-title">
-        <p className="eyebrow">BP7</p>
+        <p className="eyebrow">상균7데이즈</p>
         <h1 id="login-title">입력 기반 위험군 선별 신호</h1>
         <p className="muted">이메일 링크로 기록을 이어볼 수 있습니다.</p>
         <form onSubmit={submit}>
@@ -135,7 +135,7 @@ function App() {
   return (
     <main className="page-shell">
       <header className="topbar">
-        <div><p className="eyebrow">BP7</p><h1>7일 기록</h1></div>
+        <div><p className="eyebrow">상균7데이즈</p><h1>7일 기록</h1></div>
         <button className="text-button" onClick={() => void supabase?.auth.signOut()}>로그아웃</button>
       </header>
       {notice && <p className="notice" role="status">{notice}</p>}
