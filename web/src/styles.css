@@ -23,6 +23,7 @@ h1, h2, h3, p { margin-top: 0; }
 .notice { border-radius: 0.5rem; background: #e7f1ea; color: #174a35; padding: 0.75rem; }
 .eyebrow { color: #126b4f; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; }
 .muted { color: #52655a; }
+.period-help { color: #52655a; font-size: 0.9rem; margin: -0.25rem 0 0; }
 .records { margin-top: 1rem; }
 ul { margin: 0; padding-left: 1.1rem; }
 li { margin: 0.5rem 0; }
