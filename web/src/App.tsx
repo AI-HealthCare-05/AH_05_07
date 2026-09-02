@@ -16,6 +16,14 @@ const challengeActions = [
   { id: "low-sodium-meal", label: "덜 짜게 먹기" },
 ] as const;
 
+function observationPeriodLabel(period: "morning" | "evening"): string {
+  return period === "morning" ? "아침 · 기상 후 1시간 이내" : "저녁 · 취침 전";
+}
+
+function challengeActionLabel(actionId: string): string {
+  return challengeActions.find((action) => action.id === actionId)?.label ?? actionId;
+}
+
 function koreaDate(offset = 0): string {
   const date = new Date();
   date.setDate(date.getDate() + offset);
@@ -174,8 +182,8 @@ function App() {
       <section className="panel records">
         <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()}>새로고침</button></div>
         <div className="record-columns">
-          <div><h3>혈압 관찰</h3><ul>{windowData?.blood_pressure_observations.map((record) => <li key={record.id}>{record.observed_on} · {record.period === "morning" ? "아침" : "저녁"} · {record.systolic}/{record.diastolic}</li>) || <li>기록 없음</li>}</ul></div>
-          <div><h3>챌린지</h3><ul>{windowData?.challenge_events.map((record) => <li key={record.id}>{record.observed_on} · {record.action_id} · {record.status === "completed" ? "완료" : "건너뜀"}</li>) || <li>기록 없음</li>}</ul></div>
+          <div><h3>혈압 관찰</h3><ul>{windowData?.blood_pressure_observations.map((record) => <li key={record.id}>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</li>) || <li>기록 없음</li>}</ul></div>
+          <div><h3>챌린지</h3><ul>{windowData?.challenge_events.map((record) => <li key={record.id}>{record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}</li>) || <li>기록 없음</li>}</ul></div>
         </div>
       </section>
     </main>
