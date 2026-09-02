@@ -4,6 +4,8 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Header, HTTPException, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 
 from app.dependencies.supabase_auth import (
     SupabaseSession,
@@ -47,6 +49,17 @@ def validate_observation_window(start_on: date, end_on: date) -> None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"code": "observation_window_invalid", "message": "Observation window must span one to seven days."},
+        )
+
+
+def validate_observation_export_window(start_on: date, end_on: date) -> None:
+    if end_on < start_on or (end_on - start_on).days > 29:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "observation_export_window_invalid",
+                "message": "Export window must span one to thirty days.",
+            },
         )
 
 
@@ -134,3 +147,42 @@ async def get_observation_window(
         "blood_pressure_observations": blood_pressure_observations,
         "challenge_events": challenge_events,
     }
+
+
+@observation_router.get("/export")
+async def export_observations(
+    start_on: date,
+    end_on: date,
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    validate_observation_export_window(start_on, end_on)
+    try:
+        session = await observation_session(authorization)
+        blood_pressure_observations = await list_owned_records(
+            "blood_pressure_observations",
+            "id,observed_on,period,systolic,diastolic,created_at,expires_at",
+            start_on,
+            end_on,
+            session,
+        )
+        challenge_events = await list_owned_records(
+            "challenge_events",
+            "id,observed_on,action_id,status,created_at,expires_at",
+            start_on,
+            end_on,
+            session,
+        )
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+
+    return JSONResponse(
+        content=jsonable_encoder(
+            {
+                "start_on": start_on,
+                "end_on": end_on,
+                "blood_pressure_observations": blood_pressure_observations,
+                "challenge_events": challenge_events,
+            }
+        ),
+        headers={"Content-Disposition": f'attachment; filename="bp7-observations-{start_on}-{end_on}.json"'},
+    )
