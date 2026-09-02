@@ -15,11 +15,15 @@ The inherited `/api/v1/auth/*` and `/api/v1/users/*` routers are not used by the
 | POST | `/api/v1/observations/blood-pressure` | Supabase JWT | `201` | Web connected |
 | GET | `/api/v1/observations/window?start_on=&end_on=` | Supabase JWT | `200` | Web connected; one to seven days |
 | DELETE | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `204` | API only |
-| POST | `/api/v1/observations/challenges` | Supabase JWT | `201` | Web connected to the partial daily-event model |
+| POST | `/api/v1/observations/challenges/active` | Supabase JWT | `200` | Web connected; selects one active seven-day challenge, or changes it before the first check-in |
+| POST | `/api/v1/observations/challenges/active/checkins` | Supabase JWT | `201` | Web connected; upserts an in-window `completed` or `skipped` check-in for the active challenge |
+| POST | `/api/v1/observations/challenges` | Supabase JWT | `201` | Legacy API only; retained until 30-day event records expire |
 | DELETE | `/api/v1/observations/challenges/{record_id}` | Supabase JWT | `204` | API only |
 | GET | `/api/v1/observations/export?start_on=&end_on=` | Supabase JWT | `200` | API only; one to thirty days, JSON attachment |
 
 Every storage operation uses the caller's JWT and an RLS-protected Supabase request. A client-supplied `user_id` is not accepted.
+
+The active-challenge migration keeps legacy `challenge_events` separate from the new `active_challenges` and `challenge_checkins` records. Database constraints, RLS, and triggers enforce one active row per user, a seven-day window, a same-user check-in, and an immutable action after the first check-in. The API, not the browser, sets the Korea-date challenge start.
 
 ## Risk-signal scaffold
 

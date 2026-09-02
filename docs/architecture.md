@@ -21,16 +21,27 @@ flowchart TD
 erDiagram
     AUTH_USER ||--o{ BLOOD_PRESSURE_OBSERVATION : owns
     AUTH_USER ||--o{ CHALLENGE_EVENT : owns
+    AUTH_USER ||--o{ ACTIVE_CHALLENGE : owns
+    ACTIVE_CHALLENGE ||--o{ CHALLENGE_CHECKIN : has
 ```
 
-The current migration creates `blood_pressure_observations` and `challenge_events`. Both tables:
+The current migrations create `blood_pressure_observations`, legacy `challenge_events`, `active_challenges`, and `challenge_checkins`. The new challenge tables:
+
+- reference `auth.users(id)` and carry the same `user_id` into each check-in;
+- enable RLS and require `auth.uid() = user_id` for reads and writes;
+- permit one `active` challenge per user with a partial unique index;
+- enforce a seven-day window and same-user in-window check-ins with database constraints and triggers;
+- make the selected action immutable after the first check-in;
+- expire after 30 days and are purged by a scheduled PostgreSQL job.
+
+The observation and legacy-event tables:
 
 - reference `auth.users(id)` with `ON DELETE CASCADE`;
 - enable RLS and require `auth.uid() = user_id` for reads and writes;
 - expire after 30 days and are purged by a scheduled PostgreSQL job;
 - store structured values only.
 
-The current `challenge_events` table represents daily action events. It does not yet represent the accepted product concept of one active seven-day challenge.
+`challenge_events` remains readable as a legacy daily-event record until its existing 30-day retention period ends. It is not used to establish an active challenge.
 
 ## Accepted target domain model
 
@@ -43,7 +54,7 @@ erDiagram
     ACTIVE_CHALLENGE ||--o{ CHALLENGE_CHECKIN : has
 ```
 
-Names in the target diagram are conceptual until a migration is reviewed. A future migration must preserve existing ownership and retention guarantees and must not be inferred from the diagram alone.
+The active-challenge portion of the target diagram is now implemented by the reviewed migration. Risk-assessment and model-version entities remain conceptual until their separate release gate is passed.
 
 ## Component status
 

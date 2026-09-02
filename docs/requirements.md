@@ -18,7 +18,7 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 | FR-01 | P0 | Planned | User | Submit baseline demographic and lifestyle inputs for a versioned risk assessment. | Reject missing, out-of-range, extra, or unit-ambiguous inputs. |
 | FR-02 | P0 | Scaffold | System | Return risk band, probability, model version, and disclaimer only from a verified model artifact. | Return no provisional score when artifact, metadata, or split digest validation fails. |
 | FR-03 | P0 | Partial | User | Record morning/evening systolic and diastolic observations with a measurement checklist. | Creation and seven-day read are implemented; checklist, edit, and web delete remain. |
-| FR-04 | P0 | Partial | User | Select one walking, sleep, or low-sodium challenge and check in for seven days. | Current daily events exist; one active challenge and post-first-check-in change lock remain. |
+| FR-04 | P0 | Implemented | User | Select one walking, sleep, or low-sodium challenge and check in for seven days. | Exactly one `active` challenge is allowed per user; its action can change only before the first check-in, and every check-in must belong to that user and the seven-day window. |
 | FR-05 | P0 | Partial | System | Show risk signal, measured blood pressure, and challenge adherence as separate series. | Current web separates BP and challenge lists; risk signal and trend presentation remain. |
 | FR-06 | P1 | Planned | User | Submit structured result feedback for review. | Review data is never an online-training label. |
 | FR-07 | P0 | API only | User | Read, edit, delete, and export only records owned by the signed-in user. | Delete and 30-day JSON export APIs exist; edit and all web controls remain. |
