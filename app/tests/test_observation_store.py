@@ -6,6 +6,7 @@ from uuid import UUID
 import httpx
 import pytest
 from fastapi import HTTPException
+from httpx import ASGITransport, AsyncClient
 
 from app.apis.v1.observation_routers import (
     export_observations,
@@ -15,6 +16,7 @@ from app.apis.v1.observation_routers import (
 )
 from app.dependencies.supabase_auth import SupabaseSession
 from app.dtos.observations import BloodPressureObservationInput
+from app.main import app
 from app.services.observation_store import (
     ChallengeSelectionLockedError,
     OwnedRecordMissingError,
@@ -25,6 +27,29 @@ from app.services.observation_store import (
     select_owned_active_challenge,
     update_owned_record,
 )
+
+
+@pytest.mark.asyncio
+async def test_request_validation_error_hides_submitted_values() -> None:
+    payload = {"observed_on": "2026-09-03", "period": "morning", "systolic": 80, "diastolic": 80}
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.put(
+            "/api/v1/observations/blood-pressure/11111111-1111-1111-1111-111111111111",
+            json=payload,
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "validation_error", "message": "Input values are invalid."}}
+    assert "input" not in response.text
+    assert "80" not in response.text
+
+
+def test_openapi_documents_normalized_validation_error() -> None:
+    response = app.openapi()["paths"]["/api/v1/observations/blood-pressure/{record_id}"]["put"]["responses"]["422"]
+
+    assert response["description"] == "Input values are invalid."
+    assert response["content"]["application/json"]["schema"]["$ref"] == "#/components/schemas/ValidationErrorResponse"
 
 
 @pytest.mark.asyncio

@@ -95,7 +95,7 @@ def korea_today() -> date:
 def validate_observation_window(start_on: date, end_on: date) -> None:
     if end_on < start_on or (end_on - start_on).days > 6:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"code": "observation_window_invalid", "message": "Observation window must span one to seven days."},
         )
 
@@ -103,7 +103,7 @@ def validate_observation_window(start_on: date, end_on: date) -> None:
 def validate_observation_export_window(start_on: date, end_on: date) -> None:
     if end_on < start_on or (end_on - start_on).days > 29:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={
                 "code": "observation_export_window_invalid",
                 "message": "Export window must span one to thirty days.",
