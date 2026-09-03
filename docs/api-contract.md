@@ -58,11 +58,20 @@ Current application errors use:
 }
 ```
 
-FastAPI validation errors currently use its standard `detail` array. Before Gate B, the web client and API specification must agree on one normalized representation for validation and application errors.
+Request validation errors use a normalized response that never returns the submitted body, field values, or internal validation details:
+
+```json
+{
+  "detail": {
+    "code": "validation_error",
+    "message": "Input values are invalid."
+  }
+}
+```
 
 | Condition | Status | Contract |
 |---|---:|---|
-| Invalid body or date window | `422` | FastAPI validation array; the web maps it to a correction message and does not echo input values. |
+| Invalid body or date window | `422` | Stable `validation_error` code and generic message; no submitted input values are returned. |
 | Missing or invalid Supabase session | `401` | Stable machine-readable code; the web clears the local session and asks the user to sign in again. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
