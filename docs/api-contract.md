@@ -13,6 +13,7 @@ The inherited `/api/v1/auth/*` and `/api/v1/users/*` routers are not used by the
 | Method | Path | Auth | Success | Product status |
 |---|---|---|---|---|
 | POST | `/api/v1/observations/blood-pressure` | Supabase JWT | `201` | Web connected |
+| PUT | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `200` | API only; replaces one owned record after full input validation |
 | GET | `/api/v1/observations/window?start_on=&end_on=` | Supabase JWT | `200` | Web connected; one to seven days |
 | DELETE | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `204` | API only |
 | POST | `/api/v1/observations/challenges/active` | Supabase JWT | `200` | Web connected; selects one active seven-day challenge, or changes it before the first check-in |
@@ -64,6 +65,7 @@ FastAPI validation errors currently use its standard `detail` array. Before Gate
 | Invalid body or date window | `422` | FastAPI validation array; the web maps it to a correction message and does not echo input values. |
 | Missing or invalid Supabase session | `401` | Stable machine-readable code; the web clears the local session and asks the user to sign in again. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
+| Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
 | Model artifact not ready | `503` | No provisional signal. |
 | Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
 | Unexpected failure | `500` | No secret, token, request body, or health value in the response. |

@@ -3,22 +3,27 @@ from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
 from app.apis.v1.observation_routers import (
     export_observations,
+    update_blood_pressure_observation,
     validate_observation_export_window,
     validate_observation_window,
 )
 from app.dependencies.supabase_auth import SupabaseSession
+from app.dtos.observations import BloodPressureObservationInput
 from app.services.observation_store import (
     ChallengeSelectionLockedError,
+    OwnedRecordMissingError,
     create_owned_challenge_checkin,
     delete_owned_record,
     insert_owned_record,
     list_owned_records,
     select_owned_active_challenge,
+    update_owned_record,
 )
 
 
@@ -142,6 +147,78 @@ async def test_delete_owned_record_returns_false_when_row_is_not_visible() -> No
     assert not deleted
     assert client.delete.await_args.kwargs["headers"]["Authorization"] == "Bearer session-token"
     assert client.delete.await_args.kwargs["params"] == {"id": f"eq.{record_id}"}
+
+
+@pytest.mark.asyncio
+async def test_update_owned_record_uses_session_identity_and_returns_its_row() -> None:
+    response = MagicMock()
+    response.json.return_value = [{"id": "record-id", "user_id": "session-user-id", "systolic": 121}]
+    client = MagicMock()
+    client.patch = AsyncMock(return_value=response)
+    client_context = MagicMock()
+    client_context.__aenter__ = AsyncMock(return_value=client)
+    client_context.__aexit__ = AsyncMock(return_value=None)
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+
+    with patch("app.services.observation_store.httpx.AsyncClient", return_value=client_context):
+        record = await update_owned_record(
+            "blood_pressure_observations",
+            "record-id",
+            {"systolic": 121, "user_id": "client-supplied-id"},
+            session,
+        )
+
+    assert record["user_id"] == "session-user-id"
+    assert client.patch.await_args.kwargs["params"] == {"id": "eq.record-id"}
+    assert client.patch.await_args.kwargs["json"]["user_id"] == "session-user-id"
+
+
+@pytest.mark.asyncio
+async def test_update_blood_pressure_returns_not_found_without_disclosing_ownership() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch(
+            "app.apis.v1.observation_routers.update_owned_record",
+            new=AsyncMock(side_effect=OwnedRecordMissingError),
+        ),
+    ):
+        with pytest.raises(HTTPException) as error:
+            await update_blood_pressure_observation(
+                UUID("11111111-1111-1111-1111-111111111111"),
+                BloodPressureObservationInput(
+                    observed_on=date(2026, 9, 2), period="morning", systolic=120, diastolic=80
+                ),
+                "Bearer session-token",
+            )
+
+    assert error.value.status_code == 404
+    assert error.value.detail["code"] == "observation_not_found"
+
+
+@pytest.mark.asyncio
+async def test_update_blood_pressure_returns_a_stable_conflict_code() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    request = httpx.Request("PATCH", "https://example.supabase.co/rest/v1/blood_pressure_observations")
+    response = httpx.Response(409, request=request)
+    conflict = httpx.HTTPStatusError("duplicate observation", request=request, response=response)
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch("app.apis.v1.observation_routers.update_owned_record", new=AsyncMock(side_effect=conflict)),
+    ):
+        with pytest.raises(HTTPException) as error:
+            await update_blood_pressure_observation(
+                UUID("11111111-1111-1111-1111-111111111111"),
+                BloodPressureObservationInput(
+                    observed_on=date(2026, 9, 2), period="morning", systolic=120, diastolic=80
+                ),
+                "Bearer session-token",
+            )
+
+    assert error.value.status_code == 409
+    assert error.value.detail["code"] == "observation_conflict"
 
 
 @pytest.mark.asyncio
