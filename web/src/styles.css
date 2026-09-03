@@ -39,6 +39,12 @@ h1, h2, h3, p { margin-top: 0; }
 .muted { color: #52655a; }
 .period-help { color: #52655a; font-size: 0.9rem; margin: -0.25rem 0 0; }
 .export-help { color: #52655a; font-size: 0.9rem; margin: -0.2rem 0 0.8rem; }
+.measurement-checklist { border: 1px solid #c6d8ca; border-radius: 0.75rem; background: #f2f8f3; color: #174a35; padding: 0.9rem 1rem; }
+.measurement-checklist h3 { margin-bottom: 0.55rem; font-size: 1rem; }
+.measurement-checklist ul { display: grid; gap: 0.35rem; }
+.measurement-checklist li { margin: 0; }
+.measurement-checklist p { margin: 0.75rem 0 0; color: #52655a; font-size: 0.85rem; line-height: 1.5; }
+.measurement-checklist a { color: #126b4f; font-weight: 700; }
 .records { margin-top: 1rem; }
 ul { margin: 0; padding-left: 1.1rem; }
 li { margin: 0.5rem 0; }

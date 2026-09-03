@@ -429,6 +429,20 @@ function App() {
               </button>
             )}
           </div>
+          <aside className="measurement-checklist" aria-labelledby="measurement-checklist-title">
+            <h3 id="measurement-checklist-title">측정 전 확인</h3>
+            <ul>
+              <li>측정 전 30분 동안 카페인·흡연·운동을 피하고, 화장실을 다녀온 뒤 시작해요.</li>
+              <li>조용히 5분 쉬고, 등을 지지한 채 발을 바닥에 두고 다리를 꼬지 않아요.</li>
+              <li>맨팔에 커프를 두르고 팔을 심장 높이에서 지지해요. 측정 중에는 말하거나 휴대폰을 보지 않아요.</li>
+            </ul>
+            <p>
+              기록 조건을 맞추기 위한 참고 안내이며, 진단·치료·예방·응급 판단을 제공하지 않습니다. {" "}
+              <a href="https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings/monitoring-your-blood-pressure-at-home" target="_blank" rel="noreferrer">
+                가정 혈압 측정 안내 보기
+              </a>
+            </p>
+          </aside>
           <label>
             날짜
             <input
