@@ -18,7 +18,7 @@ The approved desktop composition is attached to [Issue #136](https://github.com/
 
 Moodboard and generated references influence tone only. They do not override product, safety, accessibility, privacy, or claim boundaries and do not authorize copying an external product layout.
 
-No G1 Figma frame exists. G2 must create and approve responsive frames before implementation is treated as visually accepted.
+No G1 Figma frame existed. G2 later approved a documented private interactive prototype after Figma authoring reached its available call limit; the immutable artifact and substitution are recorded in the [G2 prototype decision record](g2-prototype.md).
 
 ## Adopted qualities
 
@@ -78,7 +78,7 @@ Moa's position may change only with the `Asia/Seoul` calendar day. Blood-pressur
 
 - Treat the Issue #136 composite as the desktop visual master, not as a universal responsive bitmap.
 - Do not create mobile by cropping or proportionally shrinking the desktop composition.
-- G2 must create a dedicated `390 × 844` composition and verify the `320 CSS px` boundary.
+- The approved G2 artifact uses a dedicated `390 × 844` composition and has verified the `320 CSS px` boundary.
 - Preserve chronological order and recognizable landmark identity when mobile placement changes.
 - Keep today's context, measurement action, challenge action, and seven-day recap in the semantic order defined by the visual production contract.
 - Decorative media must not be the only indication of the current day or participation state.
@@ -87,13 +87,13 @@ Moa's position may change only with the `Asia/Seoul` calendar day. Blood-pressur
 
 Native React, HTML, and CSS remain the baseline. A static poster may support the composition, but core Korean content, authentication, measurement, challenge, history, and recovery actions must remain usable before media loads or when it fails.
 
-Any later GLB, Three.js, React Three Fiber, or layered 2.5D treatment is an optional enhancement. G2 must measure the static baseline first and provide a static fallback for reduced motion, unsupported rendering, load failure, and intentional disablement.
+Any later GLB, Three.js, React Three Fiber, or layered 2.5D treatment is an optional enhancement. G2 measured the static baseline and approved a static fallback for reduced motion, unsupported rendering, load failure, and intentional disablement.
 
-Source PNG files are not approved as the initial page payload. G2 must create measured responsive AVIF or WebP delivery candidates and record each derived file separately before public delivery.
+Source PNG files are not approved as the initial page payload. G3 must create measured responsive AVIF or WebP delivery candidates and record each derived file separately before public delivery.
 
 ## Provisional visual tokens
 
-These tokens are direction markers, not implementation values. G2 may adjust them after contrast, Korean typography, and fixture review while preserving the approved visual character.
+These tokens are direction markers, not implementation values. G3 may adjust them after contrast, Korean typography, and fixture review while preserving the approved visual character and recording any drift.
 
 | Token | Provisional value | Use |
 |---|---|---|
@@ -115,17 +115,22 @@ These tokens are direction markers, not implementation values. G2 may adjust the
 - Approved by: repository owner `emotigom`
 - Approval date: `2026-09-03`
 - Evidence: final composite attached to Issue #136
-- Gate result: character and journey direction approved; responsive prototype and production implementation remain pending at G2 and G3
+- Gate result at G1: character and journey direction approved; responsive prototype and production implementation were deferred to G2 and G3
 
-## G2 review candidate
+## G2 approval record
 
-The responsive G2 review candidate and its tooling substitution, fixture
-matrix, validation results, and remaining approval work are recorded in the
+The approved responsive G2 prototype, its tooling substitution, fixture
+matrix, validation results, and approval record are documented in the
 [G2 prototype decision record](g2-prototype.md). The private interactive
 prototype is available at
 [sk7-g2-prototype.ahnsangkyoon.chatgpt.site](https://sk7-g2-prototype.ahnsangkyoon.chatgpt.site).
 
-The linked Figma exploration is incomplete and reference-only. It is not an
-approved G2 artifact. G2 remains open until the repository owner reviews the
-desktop and mobile direction, the `320 CSS px` boundary is recorded, and any
-required static review exports are attached.
+The repository owner approved desktop and mobile prototype version 2 on
+`2026-09-03` after review of all eight baseline combinations and the four
+`320 × 844` boundary checks. Standalone PNG exports were waived for G2; this
+does not waive the sanitized golden captures required at G3.
+
+The linked Figma exploration remains incomplete and reference-only. The
+approved G2 artifact is the private interactive prototype at source commit
+`7f268f4d625e2a55c02f594e3e765ac4c1d46598`. Production implementation remains
+pending at G3.
