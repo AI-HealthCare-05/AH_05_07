@@ -38,6 +38,19 @@ Reserved object keys are immutable target names only. Their presence in this reg
 | `LM-006` | Day 6 traditional Korean pavilion landmark | `landmark-06-korean-pavilion.png` | `sk7/visual/moa/v1/landmark-06-korean-pavilion.png` | `image/png`; `1024 × 1024`; `892,098` bytes | `30320bfcf260ef7d52358fb83dd156da9a563f62463c5bb63ba50ee67e0d5a40` | User-owned working source; supersedes unapproved generation drafts |
 | `LM-007` | Day 7 sunset overlook landmark | `landmark-07-sunset-overlook.png` | `sk7/visual/moa/v1/landmark-07-sunset-overlook.png` | `image/png`; `1024 × 1024`; `527,881` bytes | `5e0a2cdb6058717ed8ed7425724111398c5846e65455c8f300cddcf6520392b0` | User-owned working source; supersedes unapproved generation drafts |
 
+## G3 measured delivery derivatives
+
+The following local application derivatives are metadata-stripped WebP files
+made from `MAP-001` for the G3 signed-in journey treatment. They are committed
+with the application only; no R2 object or public CDN delivery is implied by
+this record.
+
+| ID | Purpose and local path | Source asset | Delivery metadata | SHA-256 | Review / replacement history |
+|---|---|---|---|---|---|
+| `MAP-002` | Desktop journey image, `web/public/assets/moa-journey-map-v1-desktop.webp` | `MAP-001` | `image/webp`; `1280 × 720`; `34,856` bytes; ImageMagick resize, quality 82, metadata stripped | `9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e` | Created and reviewed for G3 on `2026-09-03`; local runtime derivative of `MAP-001` |
+| `MAP-003` | Mobile journey image, `web/public/assets/moa-journey-map-v1-mobile.webp` | `MAP-001` | `image/webp`; `768 × 432`; `17,994` bytes; ImageMagick resize, quality 80, metadata stripped | `af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558` | Created and reviewed for G3 on `2026-09-03`; local runtime derivative of `MAP-001` |
+| `FAV-001` | Local application favicon, `web/public/favicon.svg` | Application utility artwork | `image/svg+xml`; `64 × 64`; inline vector; no embedded metadata | N/A (text SVG tracked with source) | Created for G3 local preview console hygiene on `2026-09-04`; no external source or runtime delivery dependency |
+
 ## Alternative text and semantic use
 
 `MAP-001` candidate alternative text:
