@@ -19,6 +19,10 @@ class ChallengeSelectionLockedError(Exception):
     pass
 
 
+class ChallengeCheckinNotEditableError(Exception):
+    pass
+
+
 async def insert_owned_record(table: str, values: dict[str, object], session: SupabaseSession) -> dict[str, object]:
     async with httpx.AsyncClient(timeout=5) as client:
         response = await client.post(
@@ -139,6 +143,21 @@ async def get_owned_active_challenge(session: SupabaseSession) -> dict[str, obje
     return records[0] if records else None
 
 
+async def get_owned_challenge_checkin(record_id: UUID, session: SupabaseSession) -> dict[str, object] | None:
+    async with httpx.AsyncClient(timeout=5) as client:
+        response = await client.get(
+            f"{config.SUPABASE_URL}/rest/v1/challenge_checkins",
+            headers={
+                "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+                "Authorization": f"Bearer {session.access_token}",
+            },
+            params={"select": "id,challenge_id", "id": f"eq.{record_id}", "limit": "1"},
+        )
+    response.raise_for_status()
+    records = response.json()
+    return records[0] if records else None
+
+
 async def select_owned_active_challenge(
     action_id: str,
     starts_on: date,
@@ -194,3 +213,27 @@ async def create_owned_challenge_checkin(
         "user_id,challenge_id,observed_on",
         session,
     )
+
+
+async def update_owned_challenge_checkin(
+    record_id: UUID,
+    status: str,
+    session: SupabaseSession,
+) -> dict[str, object]:
+    """Update only a visible check-in's status through the caller's RLS context."""
+    async with httpx.AsyncClient(timeout=5) as client:
+        response = await client.patch(
+            f"{config.SUPABASE_URL}/rest/v1/challenge_checkins",
+            headers={
+                "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+                "Authorization": f"Bearer {session.access_token}",
+                "Prefer": "return=representation",
+            },
+            params={"id": f"eq.{record_id}"},
+            json={"status": status},
+        )
+    response.raise_for_status()
+    records = response.json()
+    if not records:
+        raise OwnedRecordMissingError
+    return records[0]

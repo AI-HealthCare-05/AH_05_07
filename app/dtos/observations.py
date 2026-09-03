@@ -48,3 +48,11 @@ class ChallengeCheckinInput(BaseModel):
 
     observed_on: date
     status: ChallengeStatus
+
+
+class ChallengeCheckinStatusInput(BaseModel):
+    """The immutable check-in fields are addressed by the route, not the client."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: ChallengeStatus

@@ -164,6 +164,21 @@ export function createActiveChallengeCheckin(
   });
 }
 
+export function updateChallengeCheckin(
+  session: Session,
+  recordId: string,
+  status: ChallengeCheckin["status"],
+): Promise<ChallengeCheckin> {
+  return apiFetch<ChallengeCheckin>(`/api/v1/observations/challenges/checkins/${recordId}`, session, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function deleteChallengeCheckin(session: Session, recordId: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/observations/challenges/checkins/${recordId}`, session, { method: "DELETE" });
+}
+
 export function getObservationWindow(session: Session, startOn: string, endOn: string): Promise<ObservationWindow> {
   const query = new URLSearchParams({ start_on: startOn, end_on: endOn });
   return apiFetch<ObservationWindow>(`/api/v1/observations/window?${query}`, session);

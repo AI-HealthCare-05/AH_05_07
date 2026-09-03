@@ -17,18 +17,22 @@ from app.dtos.observations import (
     ActiveChallengeSelectionInput,
     BloodPressureObservationInput,
     ChallengeCheckinInput,
+    ChallengeCheckinStatusInput,
     ChallengeEventInput,
 )
 from app.services.observation_store import (
     ActiveChallengeMissingError,
+    ChallengeCheckinNotEditableError,
     ChallengeSelectionLockedError,
     OwnedRecordMissingError,
     create_owned_challenge_checkin,
     delete_owned_record,
     get_owned_active_challenge,
+    get_owned_challenge_checkin,
     insert_owned_record,
     list_owned_records,
     select_owned_active_challenge,
+    update_owned_challenge_checkin,
     update_owned_record,
 )
 
@@ -62,6 +66,16 @@ def challenge_selection_locked() -> HTTPException:
         detail={
             "code": "challenge_selection_locked",
             "message": "The active challenge cannot be changed after the first check-in.",
+        },
+    )
+
+
+def challenge_checkin_not_editable() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={
+            "code": "challenge_checkin_not_editable",
+            "message": "Only a current active challenge check-in can be changed.",
         },
     )
 
@@ -196,6 +210,42 @@ async def create_active_challenge_checkin(
         raise storage_not_ready() from error
 
 
+async def ensure_editable_owned_challenge_checkin(record_id: UUID, session: SupabaseSession) -> None:
+    checkin = await get_owned_challenge_checkin(record_id, session)
+    if not checkin:
+        raise OwnedRecordMissingError
+
+    active_challenge = await get_owned_active_challenge(session)
+    if (
+        not active_challenge
+        or str(active_challenge["id"]) != str(checkin["challenge_id"])
+        or korea_today() > date.fromisoformat(str(active_challenge["ends_on"]))
+    ):
+        raise ChallengeCheckinNotEditableError
+
+
+@observation_router.put("/challenges/checkins/{record_id}")
+async def update_challenge_checkin(
+    record_id: UUID,
+    payload: ChallengeCheckinStatusInput,
+    authorization: Annotated[str | None, Header()] = None,
+) -> dict[str, object]:
+    try:
+        session = await observation_session(authorization)
+        await ensure_editable_owned_challenge_checkin(record_id, session)
+        return await update_owned_challenge_checkin(
+            record_id,
+            payload.status.value,
+            session,
+        )
+    except OwnedRecordMissingError as error:
+        raise owned_record_not_found() from error
+    except ChallengeCheckinNotEditableError as error:
+        raise challenge_checkin_not_editable() from error
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+
+
 @observation_router.delete("/blood-pressure/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_blood_pressure_observation(
     record_id: UUID,
@@ -220,6 +270,25 @@ async def delete_challenge_event(
         deleted = await delete_owned_record("challenge_events", record_id, await observation_session(authorization))
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
+    if not deleted:
+        raise owned_record_not_found()
+
+
+@observation_router.delete("/challenges/checkins/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_challenge_checkin(
+    record_id: UUID,
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    try:
+        session = await observation_session(authorization)
+        await ensure_editable_owned_challenge_checkin(record_id, session)
+        deleted = await delete_owned_record("challenge_checkins", record_id, session)
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+    except OwnedRecordMissingError as error:
+        raise owned_record_not_found() from error
+    except ChallengeCheckinNotEditableError as error:
+        raise challenge_checkin_not_editable() from error
     if not deleted:
         raise owned_record_not_found()
 
