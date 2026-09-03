@@ -7,6 +7,7 @@ import {
   createActiveChallengeCheckin,
   createBloodPressureObservation,
   deleteBloodPressureObservation,
+  exportObservations,
   getObservationWindow,
   selectActiveChallenge,
   updateBloodPressureObservation,
@@ -28,7 +29,7 @@ type Notice = {
   reload?: boolean;
 };
 
-type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | null;
+type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
 
 type BloodPressureDraft = {
   observedOn: string;
@@ -137,7 +138,7 @@ function App() {
     void refreshWindow(session);
   }, [session, startOn, today]);
 
-  function presentRequestError(error: unknown, context: "load" | "save" | "delete") {
+  function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export") {
     if (error instanceof ApiRequestError) {
       if (isSessionError(error)) {
         void supabase?.auth.signOut({ scope: "local" });
@@ -146,7 +147,10 @@ function App() {
         return;
       }
       if (error.status === 422 || error.code === "validation_error") {
-        setNotice({ kind: "error", message: "입력값을 확인해 수정한 뒤 다시 저장해 주세요." });
+        setNotice({
+          kind: "error",
+          message: context === "export" ? "내보낼 날짜 범위를 확인한 뒤 다시 시도해 주세요." : "입력값을 확인해 수정한 뒤 다시 저장해 주세요.",
+        });
         return;
       }
       if (error.status === 404 || error.code === "observation_not_found") {
@@ -167,7 +171,9 @@ function App() {
       }
       if (error.status >= 500 || error.code === "observation_storage_not_ready") {
         setNotice(
-          context === "save"
+          context === "export"
+            ? { kind: "warning", message: "파일을 내려받지 못했습니다. 잠시 후 다시 시도해 주세요." }
+            : context === "save"
             ? {
                 kind: "warning",
                 message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
@@ -186,7 +192,9 @@ function App() {
     }
 
     setNotice(
-      context === "save"
+      context === "export"
+        ? { kind: "warning", message: "파일을 내려받지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요." }
+        : context === "save"
         ? {
             kind: "warning",
             message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
@@ -315,6 +323,30 @@ function App() {
       await refreshWindow(session, true);
     } catch (error) {
       presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function exportRecentRecords() {
+    if (!session) return;
+    setPendingAction("export");
+    try {
+      const exported = await exportObservations(session, startOn, today);
+      const objectUrl = URL.createObjectURL(exported.blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = exported.filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setNotice({
+        kind: "success",
+        message: "최근 7일 기록을 JSON 파일로 내려받았습니다. 파일에는 날짜, 혈압, 챌린지 상태가 포함되므로 안전한 곳에 보관해 주세요.",
+      });
+    } catch (error) {
+      presentRequestError(error, "export");
     } finally {
       setPendingAction(null);
     }
@@ -452,7 +484,18 @@ function App() {
         </section>
       </section>
       <section className="panel records">
-        <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()} disabled={loadingWindow}>{loadingWindow ? "불러오는 중" : "새로고침"}</button></div>
+        <div className="section-heading">
+          <h2>최근 7일</h2>
+          <div className="inline-actions">
+            <button className="secondary" onClick={() => void exportRecentRecords()} disabled={pendingAction !== null}>
+              {pendingAction === "export" ? "내보내는 중" : "최근 7일 내보내기"}
+            </button>
+            <button className="text-button" onClick={() => void refreshWindow()} disabled={loadingWindow}>
+              {loadingWindow ? "불러오는 중" : "새로고침"}
+            </button>
+          </div>
+        </div>
+        <p className="export-help">내보낸 파일에는 날짜, 혈압, 챌린지 상태가 포함됩니다. 본인 기기에 안전하게 보관해 주세요.</p>
         {pendingDeletion && (
           <div className="delete-confirmation" role="alert">
             <span>선택한 혈압 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.</span>

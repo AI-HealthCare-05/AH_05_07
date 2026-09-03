@@ -36,6 +36,7 @@ h1, h2, h3, p { margin-top: 0; }
 .eyebrow { color: #126b4f; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; }
 .muted { color: #52655a; }
 .period-help { color: #52655a; font-size: 0.9rem; margin: -0.25rem 0 0; }
+.export-help { color: #52655a; font-size: 0.9rem; margin: -0.2rem 0 0.8rem; }
 .records { margin-top: 1rem; }
 ul { margin: 0; padding-left: 1.1rem; }
 li { margin: 0.5rem 0; }

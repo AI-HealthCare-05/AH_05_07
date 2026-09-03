@@ -12,6 +12,7 @@ from app.core.config import parse_api_cors_origins
 from app.core.db.databases import initialize_tortoise
 
 API_ALLOWED_METHODS = ("GET", "POST", "PUT", "DELETE")
+API_EXPOSED_HEADERS = ("Content-Disposition",)
 READINESS_CONFIGURATION_FIELDS = ("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "API_CORS_ORIGINS")
 
 
@@ -112,6 +113,7 @@ if cors_origins:
         allow_credentials=False,
         allow_methods=API_ALLOWED_METHODS,
         allow_headers=["Authorization", "Content-Type"],
+        expose_headers=API_EXPOSED_HEADERS,
     )
 initialize_persistence(app)
 
