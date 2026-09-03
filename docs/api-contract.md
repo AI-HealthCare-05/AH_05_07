@@ -42,7 +42,16 @@ These capabilities are accepted, but their final paths become contractual only w
 - Read the active challenge and create its daily check-in.
 - Prevent challenge replacement after the first check-in.
 - Return versioned risk-signal results to an authenticated product user.
-- Expose liveness and readiness endpoints.
+
+## Service health
+
+Health endpoints are unauthenticated, public operational checks. They never query, return, or log a product record, JWT, key, or configuration value.
+
+| Method | Path | Status | Contract |
+|---|---|---:|---|
+| GET | `/live` | `200` | Process liveness only: `{ "status": "ok" }`. It does not assess configuration or storage availability. |
+| GET | `/ready` | `200` | Required runtime configuration is present: `{ "status": "ready" }`. It does not query Supabase. |
+| GET | `/ready` | `503` | `{ "detail": { "code": "service_not_ready", "message": "Required runtime configuration is unavailable." } }`; no missing field or value is disclosed. |
 
 ## Error contract
 
