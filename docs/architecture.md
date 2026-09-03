@@ -66,7 +66,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Observation tables | Production | Preserve RLS, ownership indexes, uniqueness, and 30-day retention. |
 | Challenge domain | Partial | Separate active challenge from daily check-ins. |
 | Risk-signal API | Scaffold | Release only with verified artifact and deterministic evidence. |
-| Health endpoints | Planned | Separate liveness from dependency readiness. |
+| Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
 | Structured feedback | P1 planned | Store review input separately; never use it for online retraining. |
 
 ## Data classification

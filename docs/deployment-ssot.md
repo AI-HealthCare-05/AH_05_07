@@ -41,7 +41,7 @@ Classify the merged change before deploying it. A merged Git commit is not, by i
 2. Classify the change with the table above. For a release that includes a database migration, complete the migration gate first.
 3. If the API changed, build and deploy the Cloud Run revision that contains the merged commit.
 4. If the web changed, run `Sync deployment branch`. The sync workflow copies upstream `main` without upstream GitHub workflows; Cloudflare then builds `web` with the variables above and deploys the assets to `ah-05-07-pages`.
-5. Verify the live URL, a signed-in API read, and the Cloud Run CORS preflight for every browser HTTP method used by the change. Verify the specific database-backed browser flow only after its migration gate has passed.
+5. Verify `/live`, then `/ready`, the live URL, a signed-in API read, and the Cloud Run CORS preflight for every browser HTTP method used by the change. Verify the specific database-backed browser flow only after its migration gate has passed.
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
 
