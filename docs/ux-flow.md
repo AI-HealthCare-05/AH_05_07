@@ -33,6 +33,10 @@ The core path preserves three separate facts:
 
 The dashboard never merges them into a diagnosis, treatment effect, prevention claim, or single improvement score.
 
+## Signature presentation contract
+
+The [visual production contract](visual-production-contract.md) defines the concern-specific authorities, canonical synthetic fixtures, responsive baselines, accessibility requirements, and G0–G4 approval evidence for this flow. On mobile, the stable order is today's context, measurement action, challenge action, then recap and history. A loading or failed request must not be rendered as a confirmed empty window.
+
 ## Measurement checklist contract
 
 - The BP form shows the checklist before the date, period, and numeric fields.

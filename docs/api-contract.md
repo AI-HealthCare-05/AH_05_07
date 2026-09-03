@@ -22,7 +22,7 @@ The inherited `/api/v1/auth/*` and `/api/v1/users/*` routers are not used by the
 | DELETE | `/api/v1/observations/challenges/checkins/{record_id}` | Supabase JWT | `204` | Web connected; current active-challenge check-in only, with explicit browser confirmation |
 | POST | `/api/v1/observations/challenges` | Supabase JWT | `201` | Legacy API only; retained until 30-day event records expire |
 | DELETE | `/api/v1/observations/challenges/{record_id}` | Supabase JWT | `204` | API only |
-| GET | `/api/v1/observations/export?start_on=&end_on=` | Supabase JWT | `200` | API only; one to thirty days, JSON attachment |
+| GET | `/api/v1/observations/export?start_on=&end_on=` | Supabase JWT | `200` | Web connected for the recent seven days; API supports one to thirty days as a JSON attachment |
 
 Every storage operation uses the caller's JWT and an RLS-protected Supabase request. A client-supplied `user_id` is not accepted.
 

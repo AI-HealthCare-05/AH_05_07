@@ -35,7 +35,7 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 | NFR-05 | P0 | Implemented boundary | Real PHI and identifying content are out of scope. | Synthetic demo data; request bodies and health values absent from logs. |
 | NFR-06 | P0 | Implemented | Application code, deployment mirror, Cloudflare Worker, Cloud Run API, and Supabase roles follow the deployment SSOT. | Fresh deployment and rollback performed from the documented procedure. |
 | NFR-07 | P0 | Implemented | Expose separate liveness and configuration-readiness checks without sensitive details. | Automated tests for healthy and configuration-unready states; production smoke remains. |
-| NFR-08 | P1 | Planned | Complete the core flow on mobile and desktop with keyboard-visible focus and adequate contrast. | Accessibility checklist and browser evidence. |
+| NFR-08 | P1 | Planned | Complete the core flow on mobile and desktop with keyboard-visible focus and adequate contrast. | Follow the [visual production contract](visual-production-contract.md) for canonical states, responsive baselines, accessibility checks, and sanitized browser evidence. |
 
 ## Scope order
 
@@ -64,7 +64,7 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 
 | Evaluation area | Evidence |
 |---|---|
-| Planning | This file, PRD, UX flow, architecture, Issue #99 |
+| Planning | This file, PRD, UX flow, architecture, visual production contract, Issue #99 |
 | AI | Model card, split manifest, leakage audit, repeated-input test |
 | API | Generated OpenAPI, integration tests, error-contract tests, latency report |
 | Security | RLS policies, two-user negative tests, secret/log review |
