@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:evidence:vp-04": "vite --mode evidence-vp-04",
+    "dev:evidence:vp-07a": "vite --mode evidence-vp-07a",
+    "dev:evidence:vp-10": "vite --mode evidence-vp-10",
+    "dev:evidence:vp-11a": "vite --mode evidence-vp-11a",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
