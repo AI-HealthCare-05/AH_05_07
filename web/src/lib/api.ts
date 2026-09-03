@@ -96,17 +96,37 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
     const error = (await response.json().catch(() => ({}))) as ApiError;
     throw parseApiError(error, response.status);
   }
+  if (response.status === 204) {
+    return undefined as T;
+  }
   return (await response.json()) as T;
 }
 
+export type BloodPressureObservationInput = Omit<BloodPressureObservation, "id">;
+
 export function createBloodPressureObservation(
   session: Session,
-  payload: Omit<BloodPressureObservation, "id">,
+  payload: BloodPressureObservationInput,
 ): Promise<BloodPressureObservation> {
   return apiFetch<BloodPressureObservation>("/api/v1/observations/blood-pressure", session, {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function updateBloodPressureObservation(
+  session: Session,
+  recordId: string,
+  payload: BloodPressureObservationInput,
+): Promise<BloodPressureObservation> {
+  return apiFetch<BloodPressureObservation>(`/api/v1/observations/blood-pressure/${recordId}`, session, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteBloodPressureObservation(session: Session, recordId: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/observations/blood-pressure/${recordId}`, session, { method: "DELETE" });
 }
 
 export function createChallengeEvent(

@@ -13,9 +13,9 @@ The inherited `/api/v1/auth/*` and `/api/v1/users/*` routers are not used by the
 | Method | Path | Auth | Success | Product status |
 |---|---|---|---|---|
 | POST | `/api/v1/observations/blood-pressure` | Supabase JWT | `201` | Web connected |
-| PUT | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `200` | API only; replaces one owned record after full input validation |
+| PUT | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `200` | Web connected; replaces one owned record after full input validation |
 | GET | `/api/v1/observations/window?start_on=&end_on=` | Supabase JWT | `200` | Web connected; one to seven days |
-| DELETE | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `204` | API only |
+| DELETE | `/api/v1/observations/blood-pressure/{record_id}` | Supabase JWT | `204` | Web connected; requires an explicit browser confirmation |
 | POST | `/api/v1/observations/challenges/active` | Supabase JWT | `200` | Web connected; selects one active seven-day challenge, or changes it before the first check-in |
 | POST | `/api/v1/observations/challenges/active/checkins` | Supabase JWT | `201` | Web connected; upserts an in-window `completed` or `skipped` check-in for the active challenge |
 | POST | `/api/v1/observations/challenges` | Supabase JWT | `201` | Legacy API only; retained until 30-day event records expire |
@@ -38,7 +38,6 @@ No fallback rule, random score, or provisional probability may be returned. Auth
 
 These capabilities are accepted, but their final paths become contractual only when present in generated OpenAPI.
 
-- Update an owned BP observation.
 - Select exactly one active seven-day challenge.
 - Read the active challenge and create its daily check-in.
 - Prevent challenge replacement after the first check-in.

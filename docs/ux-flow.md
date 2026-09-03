@@ -11,7 +11,7 @@ flowchart TD
     D --> E
 ```
 
-The current web supports authentication, BP creation, one active seven-day challenge selection, daily check-ins, and a separated seven-day read. The first check-in locks the chosen action for that challenge. BP edit, delete, and export exist only in the API. Risk signal, BP edit controls, measurement checklist, and structured feedback are not yet product-connected.
+The current web supports authentication, BP creation, edit, explicit-confirmation delete, one active seven-day challenge selection, daily check-ins, and a separated seven-day read. The first check-in locks the chosen action for that challenge. BP export exists only in the API. Risk signal, measurement checklist, and structured feedback are not yet product-connected.
 
 ## Accepted P0 flow
 

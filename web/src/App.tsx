@@ -6,8 +6,12 @@ import {
   ApiRequestError,
   createActiveChallengeCheckin,
   createBloodPressureObservation,
+  deleteBloodPressureObservation,
   getObservationWindow,
   selectActiveChallenge,
+  updateBloodPressureObservation,
+  type BloodPressureObservation,
+  type BloodPressureObservationInput,
   type ObservationWindow,
 } from "./lib/api";
 import { supabase, supabaseConfigured } from "./lib/supabase";
@@ -26,6 +30,13 @@ type Notice = {
 
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | null;
 
+type BloodPressureDraft = {
+  observedOn: string;
+  period: "morning" | "evening";
+  systolic: string;
+  diastolic: string;
+};
+
 function isSessionError(error: unknown): boolean {
   return (
     error instanceof ApiRequestError
@@ -39,6 +50,10 @@ function observationPeriodLabel(period: "morning" | "evening"): string {
 
 function challengeActionLabel(actionId: string): string {
   return challengeActions.find((action) => action.id === actionId)?.label ?? actionId;
+}
+
+function emptyBloodPressureDraft(observedOn: string): BloodPressureDraft {
+  return { observedOn, period: "morning", systolic: "", diastolic: "" };
 }
 
 function koreaDate(offset = 0): string {
@@ -99,13 +114,16 @@ function Login({ onSession, recoveryMessage }: { onSession: (session: Session) =
 }
 
 function App() {
+  const today = useMemo(() => koreaDate(), []);
+  const startOn = useMemo(() => koreaDate(-6), []);
   const [session, setSession] = useState<Session | null>(null);
   const [windowData, setWindowData] = useState<ObservationWindow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [loadingWindow, setLoadingWindow] = useState(false);
-  const today = useMemo(() => koreaDate(), []);
-  const startOn = useMemo(() => koreaDate(-6), []);
+  const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
+  const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<BloodPressureObservation | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -119,7 +137,7 @@ function App() {
     void refreshWindow(session);
   }, [session, startOn, today]);
 
-  function presentRequestError(error: unknown, context: "load" | "save") {
+  function presentRequestError(error: unknown, context: "load" | "save" | "delete") {
     if (error instanceof ApiRequestError) {
       if (isSessionError(error)) {
         void supabase?.auth.signOut({ scope: "local" });
@@ -129,6 +147,14 @@ function App() {
       }
       if (error.status === 422 || error.code === "validation_error") {
         setNotice({ kind: "error", message: "입력값을 확인해 수정한 뒤 다시 저장해 주세요." });
+        return;
+      }
+      if (error.status === 404 || error.code === "observation_not_found") {
+        setNotice({ kind: "warning", message: "기록을 찾을 수 없습니다. 목록을 다시 불러와 확인해 주세요.", reload: true });
+        return;
+      }
+      if (error.status === 409 || error.code === "observation_conflict") {
+        setNotice({ kind: "error", message: "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요." });
         return;
       }
       if (error.code === "challenge_selection_locked") {
@@ -147,6 +173,12 @@ function App() {
                 message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
                 reload: true,
               }
+            : context === "delete"
+              ? {
+                  kind: "warning",
+                  message: "삭제 여부를 확인하지 못했습니다. 목록을 다시 불러와 확인해 주세요.",
+                  reload: true,
+                }
             : { kind: "warning", message: "기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.", reload: true },
         );
         return;
@@ -160,6 +192,12 @@ function App() {
             message: "저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.",
             reload: true,
           }
+        : context === "delete"
+          ? {
+              kind: "warning",
+              message: "삭제 여부를 확인하지 못했습니다. 목록을 다시 불러와 확인해 주세요.",
+              reload: true,
+            }
         : { kind: "warning", message: "기록을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.", reload: true },
     );
   }
@@ -183,25 +221,66 @@ function App() {
   async function submitBloodPressure(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!session) return;
-    const form = new FormData(event.currentTarget);
-    const systolic = Number(form.get("systolic"));
-    const diastolic = Number(form.get("diastolic"));
+    const systolic = Number(bloodPressureDraft.systolic);
+    const diastolic = Number(bloodPressureDraft.diastolic);
     if (!Number.isInteger(systolic) || !Number.isInteger(diastolic) || systolic <= diastolic) {
       setNotice({ kind: "error", message: "수축기 값은 이완기 값보다 크게 입력해 주세요." });
       return;
     }
+    const payload: BloodPressureObservationInput = {
+      observed_on: bloodPressureDraft.observedOn,
+      period: bloodPressureDraft.period,
+      systolic,
+      diastolic,
+    };
     setPendingAction("blood-pressure");
     try {
-      await createBloodPressureObservation(session, {
-        observed_on: String(form.get("observed_on")),
-        period: String(form.get("period")) as "morning" | "evening",
-        systolic,
-        diastolic,
-      });
-      setNotice({ kind: "success", message: "기록을 저장했습니다." });
+      if (editingBloodPressureId) {
+        await updateBloodPressureObservation(session, editingBloodPressureId, payload);
+        setNotice({ kind: "success", message: "기록을 수정했습니다." });
+      } else {
+        await createBloodPressureObservation(session, payload);
+        setNotice({ kind: "success", message: "기록을 저장했습니다." });
+      }
+      setBloodPressureDraft(emptyBloodPressureDraft(today));
+      setEditingBloodPressureId(null);
       await refreshWindow(session, true);
     } catch (error) {
       presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function beginBloodPressureEdit(record: BloodPressureObservation) {
+    setEditingBloodPressureId(record.id);
+    setPendingDeletion(null);
+    setBloodPressureDraft({
+      observedOn: record.observed_on,
+      period: record.period,
+      systolic: String(record.systolic),
+      diastolic: String(record.diastolic),
+    });
+    setNotice({ kind: "warning", message: "기록을 수정할 수 있습니다. 값을 확인한 뒤 저장해 주세요." });
+  }
+
+  function cancelBloodPressureEdit() {
+    setEditingBloodPressureId(null);
+    setBloodPressureDraft(emptyBloodPressureDraft(today));
+    setNotice(null);
+  }
+
+  async function confirmBloodPressureDeletion() {
+    if (!session || !pendingDeletion) return;
+    setPendingAction("blood-pressure");
+    try {
+      await deleteBloodPressureObservation(session, pendingDeletion.id);
+      if (editingBloodPressureId === pendingDeletion.id) cancelBloodPressureEdit();
+      setPendingDeletion(null);
+      setNotice({ kind: "success", message: "기록을 삭제했습니다." });
+      await refreshWindow(session, true);
+    } catch (error) {
+      presentRequestError(error, "delete");
     } finally {
       setPendingAction(null);
     }
@@ -264,14 +343,62 @@ function App() {
       )}
       <section className="grid">
         <form className="panel" onSubmit={submitBloodPressure}>
-          <h2>혈압 기록</h2>
-          <label>날짜<input name="observed_on" type="date" defaultValue={today} required /></label>
-          <label>시간대<select name="period" defaultValue="morning"><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label>
+          <div className="section-heading">
+            <h2>{editingBloodPressureId ? "혈압 기록 수정" : "혈압 기록"}</h2>
+            {editingBloodPressureId && (
+              <button className="text-button" type="button" onClick={cancelBloodPressureEdit} disabled={pendingAction !== null}>
+                수정 취소
+              </button>
+            )}
+          </div>
+          <label>
+            날짜
+            <input
+              name="observed_on"
+              type="date"
+              value={bloodPressureDraft.observedOn}
+              onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            시간대
+            <select
+              name="period"
+              value={bloodPressureDraft.period}
+              onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as "morning" | "evening" }))}
+            >
+              <option value="morning">아침 · 기상 후 1시간 이내</option>
+              <option value="evening">저녁 · 취침 전</option>
+            </select>
+          </label>
           <p className="period-help">가능하면 매일 비슷한 시각에 기록해 주세요.</p>
-          <label>수축기<input name="systolic" type="number" min="60" max="260" required /></label>
-          <label>이완기<input name="diastolic" type="number" min="30" max="160" required /></label>
+          <label>
+            수축기
+            <input
+              name="systolic"
+              type="number"
+              min="60"
+              max="260"
+              value={bloodPressureDraft.systolic}
+              onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            이완기
+            <input
+              name="diastolic"
+              type="number"
+              min="30"
+              max="160"
+              value={bloodPressureDraft.diastolic}
+              onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))}
+              required
+            />
+          </label>
           <button type="submit" disabled={pendingAction !== null}>
-            {pendingAction === "blood-pressure" ? "저장 중" : "저장"}
+            {pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "수정 저장" : "저장"}
           </button>
         </form>
         <section className="panel">
@@ -326,8 +453,30 @@ function App() {
       </section>
       <section className="panel records">
         <div className="section-heading"><h2>최근 7일</h2><button className="text-button" onClick={() => void refreshWindow()} disabled={loadingWindow}>{loadingWindow ? "불러오는 중" : "새로고침"}</button></div>
+        {pendingDeletion && (
+          <div className="delete-confirmation" role="alert">
+            <span>선택한 혈압 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.</span>
+            <div className="inline-actions">
+              <button className="danger" onClick={() => void confirmBloodPressureDeletion()} disabled={pendingAction !== null}>삭제</button>
+              <button className="secondary" onClick={() => setPendingDeletion(null)} disabled={pendingAction !== null}>취소</button>
+            </div>
+          </div>
+        )}
         <div className="record-columns">
-          <div><h3>혈압 관찰</h3><ul>{windowData?.blood_pressure_observations.map((record) => <li key={record.id}>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</li>) || <li>기록 없음</li>}</ul></div>
+          <div>
+            <h3>혈압 관찰</h3>
+            <ul>
+              {windowData?.blood_pressure_observations.length ? windowData.blood_pressure_observations.map((record) => (
+                <li className="record-item" key={record.id}>
+                  <span>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</span>
+                  <span className="inline-actions">
+                    <button className="secondary record-action" onClick={() => beginBloodPressureEdit(record)} disabled={pendingAction !== null}>수정</button>
+                    <button className="danger record-action" onClick={() => setPendingDeletion(record)} disabled={pendingAction !== null}>삭제</button>
+                  </span>
+                </li>
+              )) : <li>기록 없음</li>}
+            </ul>
+          </div>
           <div>
             <h3>챌린지</h3>
             <ul>
