@@ -116,3 +116,16 @@ These tokens are direction markers, not implementation values. G2 may adjust the
 - Approval date: `2026-09-03`
 - Evidence: final composite attached to Issue #136
 - Gate result: character and journey direction approved; responsive prototype and production implementation remain pending at G2 and G3
+
+## G2 review candidate
+
+The responsive G2 review candidate and its tooling substitution, fixture
+matrix, validation results, and remaining approval work are recorded in the
+[G2 prototype decision record](g2-prototype.md). The private interactive
+prototype is available at
+[sk7-g2-prototype.ahnsangkyoon.chatgpt.site](https://sk7-g2-prototype.ahnsangkyoon.chatgpt.site).
+
+The linked Figma exploration is incomplete and reference-only. It is not an
+approved G2 artifact. G2 remains open until the repository owner reviews the
+desktop and mobile direction, the `320 CSS px` boundary is recorded, and any
+required static review exports are attached.
