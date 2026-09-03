@@ -11,6 +11,10 @@ class ActiveChallengeMissingError(Exception):
     pass
 
 
+class OwnedRecordMissingError(Exception):
+    pass
+
+
 class ChallengeSelectionLockedError(Exception):
     pass
 
@@ -50,7 +54,7 @@ async def update_owned_record(
     response.raise_for_status()
     records = response.json()
     if not records:
-        raise ActiveChallengeMissingError
+        raise OwnedRecordMissingError
     return records[0]
 
 
@@ -148,11 +152,17 @@ async def select_owned_active_challenge(
                 return active_challenge
             if active_challenge["first_checkin_on"] is not None:
                 raise ChallengeSelectionLockedError
-            return await update_owned_record(
-                "active_challenges", str(active_challenge["id"]), {"action_id": action_id}, session
-            )
+            try:
+                return await update_owned_record(
+                    "active_challenges", str(active_challenge["id"]), {"action_id": action_id}, session
+                )
+            except OwnedRecordMissingError as error:
+                raise ActiveChallengeMissingError from error
 
-        await update_owned_record("active_challenges", str(active_challenge["id"]), {"status": "closed"}, session)
+        try:
+            await update_owned_record("active_challenges", str(active_challenge["id"]), {"status": "closed"}, session)
+        except OwnedRecordMissingError as error:
+            raise ActiveChallengeMissingError from error
 
     return await insert_owned_record(
         "active_challenges",

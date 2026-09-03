@@ -22,12 +22,14 @@ from app.dtos.observations import (
 from app.services.observation_store import (
     ActiveChallengeMissingError,
     ChallengeSelectionLockedError,
+    OwnedRecordMissingError,
     create_owned_challenge_checkin,
     delete_owned_record,
     get_owned_active_challenge,
     insert_owned_record,
     list_owned_records,
     select_owned_active_challenge,
+    update_owned_record,
 )
 
 observation_router = APIRouter(prefix="/observations", tags=["observations"])
@@ -60,6 +62,16 @@ def challenge_selection_locked() -> HTTPException:
         detail={
             "code": "challenge_selection_locked",
             "message": "The active challenge cannot be changed after the first check-in.",
+        },
+    )
+
+
+def observation_conflict() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={
+            "code": "observation_conflict",
+            "message": "An observation already exists for this date and period.",
         },
     )
 
@@ -107,6 +119,33 @@ async def create_blood_pressure_observation(
     try:
         session = await observation_session(authorization)
         return await insert_owned_record("blood_pressure_observations", payload.model_dump(mode="json"), session)
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code == status.HTTP_409_CONFLICT:
+            raise observation_conflict() from error
+        raise storage_not_ready() from error
+    except httpx.HTTPError as error:
+        raise storage_not_ready() from error
+
+
+@observation_router.put("/blood-pressure/{record_id}")
+async def update_blood_pressure_observation(
+    record_id: UUID,
+    payload: BloodPressureObservationInput,
+    authorization: Annotated[str | None, Header()] = None,
+) -> dict[str, object]:
+    try:
+        return await update_owned_record(
+            "blood_pressure_observations",
+            str(record_id),
+            payload.model_dump(mode="json"),
+            await observation_session(authorization),
+        )
+    except OwnedRecordMissingError as error:
+        raise owned_record_not_found() from error
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code == status.HTTP_409_CONFLICT:
+            raise observation_conflict() from error
+        raise storage_not_ready() from error
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
 
