@@ -42,6 +42,20 @@ jobs:
           python3 ../scripts/ci/verify_secret_boundary.py --self-test
           python3 ../scripts/ci/verify_secret_boundary.py --web-dist dist
 
+  deployment-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Verify deployment smoke controls
+        run: python3 scripts/ci/verify_deployment_smoke.py --self-test
+
   lint:
     runs-on: ubuntu-latest
     steps:
