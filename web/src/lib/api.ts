@@ -80,6 +80,11 @@ export type ObservationWindow = {
   challenge_checkins: ChallengeCheckin[];
 };
 
+export type ObservationExport = {
+  blob: Blob;
+  filename: string;
+};
+
 async function apiFetch<T>(path: string, session: Session, init: RequestInit = {}): Promise<T> {
   if (!apiBaseUrl) {
     throw new Error("VITE_API_BASE_URL is not configured.");
@@ -162,4 +167,37 @@ export function createActiveChallengeCheckin(
 export function getObservationWindow(session: Session, startOn: string, endOn: string): Promise<ObservationWindow> {
   const query = new URLSearchParams({ start_on: startOn, end_on: endOn });
   return apiFetch<ObservationWindow>(`/api/v1/observations/window?${query}`, session);
+}
+
+function exportFilename(contentDisposition: string | null, fallback: string): string {
+  const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
+  const filename = match?.[1]?.trim() || fallback;
+  return filename.replace(/[\\/:*?"<>|\u0000-\u001F]/g, "_");
+}
+
+export async function exportObservations(
+  session: Session,
+  startOn: string,
+  endOn: string,
+): Promise<ObservationExport> {
+  if (!apiBaseUrl) {
+    throw new Error("VITE_API_BASE_URL is not configured.");
+  }
+
+  const query = new URLSearchParams({ start_on: startOn, end_on: endOn });
+  const response = await fetch(`${apiBaseUrl}/api/v1/observations/export?${query}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+  if (!response.ok) {
+    const error = (await response.json().catch(() => ({}))) as ApiError;
+    throw parseApiError(error, response.status);
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: exportFilename(response.headers.get("Content-Disposition"), `bp7-observations-${startOn}-${endOn}.json`),
+  };
 }
