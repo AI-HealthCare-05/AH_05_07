@@ -2,10 +2,10 @@
 
 ## Status and scope
 
-This document records the review-ready G2 prototype for
-[Issue #138](https://github.com/AI-HealthCare-05/AH_05_07/issues/138). It does
-not mark G2 as approved and does not authorize production React, CSS, asset,
-API, authentication, database, or deployment changes.
+This document records the approved G2 prototype for
+[Issue #138](https://github.com/AI-HealthCare-05/AH_05_07/issues/138). G2
+approval does not authorize production React, CSS, asset, API, authentication,
+database, or deployment changes.
 
 The prototype uses only synthetic `VPF-1` content with locale `ko-KR`,
 timezone `Asia/Seoul`, canonical `as_of`
@@ -16,8 +16,8 @@ timezone `Asia/Seoul`, canonical `as_of`
 
 | Artifact | Role | Status |
 |---|---|---|
-| [Interactive prototype](https://sk7-g2-prototype.ahnsangkyoon.chatgpt.site) | Review the four canonical states at desktop and mobile sizes | Private, review-ready |
-| Site source commit `a2e8c2220e0b405ecb61d710001d0d4f037e6aec` | Immutable source reference for the review build | Recorded |
+| [Interactive prototype](https://sk7-g2-prototype.ahnsangkyoon.chatgpt.site) | Review the four canonical states at desktop and mobile sizes | Private, G2-approved version 2 |
+| Site source commit `7f268f4d625e2a55c02f594e3e765ac4c1d46598` | Immutable source reference for the approved review build | Recorded |
 | [Partial Figma file](https://www.figma.com/design/SmDrtp13Oa8LMGs0pw0C52) | Early exploration only | Incomplete; not the G2 deliverable |
 | [`합성3.png` on Issue #136](https://github.com/AI-HealthCare-05/AH_05_07/issues/136) | Approved desktop journey-map foundation | G1-approved |
 
@@ -38,7 +38,7 @@ The prototype exposes exactly these eight state and viewport combinations:
 | `VP-10 recap` | `1366 × 768` | `390 × 844` |
 | `VP-11a load-failure` | `1366 × 768` | `390 × 844` |
 
-## Candidate decisions for approval
+## Approved decisions
 
 ### Information hierarchy
 
@@ -87,21 +87,26 @@ build disables transitions when `prefers-reduced-motion: reduce` is active.
 | Production build | Passed |
 | Four fixtures at `1366 × 768` | Reviewed with no internal overflow observed |
 | Four fixtures at `390 × 844` | Reviewed with no internal overflow observed |
+| Four fixtures at `320 × 844` | No internal overflow, lost semantic region, or lost recovery action observed |
 | Desktop primary action height | `48px` |
 | Mobile primary action height | `44px` |
 | Shared blood-pressure evidence | Masked as `•••/•• mmHg` |
 | `VP-11a` truthfulness | Load failure remains distinct from confirmed empty and offers one retry action |
 | Reduced-motion fallback | Transition removal is defined for `prefers-reduced-motion: reduce` |
 
-These checks are prototype evidence, not production conformance evidence. No
-canonical PNG capture is claimed because the screenshot export session did not
-complete.
+These checks are prototype evidence, not production conformance evidence.
+Standalone PNG review exports were waived after the repository owner reviewed
+and approved the exact-dimension interactive artifact. No canonical G3 golden
+capture is claimed because the screenshot export session did not complete.
 
-## Remaining G2 approval work
+## G2 approval record
 
-- [ ] Review the desktop and mobile visual direction with the repository owner.
-- [ ] Verify the `320 CSS px` reflow boundary and record the result.
-- [ ] Produce the standalone desktop and mobile PNG review exports if they are
-      still required for approval.
-- [ ] Record the final approval or requested changes on Issue #138.
-- [ ] Merge this decision record before closing Issue #138.
+- Approved by: repository owner `emotigom`
+- Approval date: `2026-09-03`
+- Approved artifact: private interactive prototype version 2 at source commit
+  `7f268f4d625e2a55c02f594e3e765ac4c1d46598`
+- Evidence: eight baseline state and viewport combinations plus four
+  `320 × 844` boundary checks
+- Static export decision: standalone PNG review exports waived for G2; G3
+  sanitized golden captures remain required when implementation begins
+- Gate result: G2 approved; production implementation remains pending at G3
