@@ -30,7 +30,7 @@ Do not create `VITE_*` secrets. Never place a Supabase `service_role` key, SMTP 
 2. Run `Sync deployment branch` in `emotigom/ah-05-07-pages`.
 3. The sync workflow copies upstream `main` without upstream GitHub workflows.
 4. Cloudflare builds `web` with the variables above and deploys the assets to `ah-05-07-pages`.
-5. Verify the live URL, a signed-in API read, and the Cloud Run CORS preflight before retiring the old Worker.
+5. Verify the live URL, a signed-in API read, and the Cloud Run CORS preflight for every browser HTTP method used by the change before retiring the old Worker.
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
 
@@ -42,4 +42,5 @@ Before accepting production traffic on the primary URL, add `https://ah-05-07-pa
 
 - Change the public web origin in one pull request: `web/wrangler.jsonc`, Supabase Auth redirect URLs, and Cloud Run `API_CORS_ORIGINS` must agree.
 - Save a Cloudflare variable before triggering a new build. A previous static deployment cannot acquire a Vite variable after it has been built.
+- When a browser flow adds an API method such as `PUT` or `DELETE`, update the API CORS allow-list in the same pull request and verify that method's preflight against the production origin.
 - Keep the current production Worker and old Worker until the verification in this document passes. Do not use Cloudflare's manual static-file uploader for source-backed releases.
