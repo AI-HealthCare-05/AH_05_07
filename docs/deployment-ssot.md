@@ -41,7 +41,20 @@ Classify the merged change before deploying it. A merged Git commit is not, by i
 2. Classify the change with the table above. For a release that includes a database migration, complete the migration gate first.
 3. If the API changed, build and deploy the Cloud Run revision that contains the merged commit.
 4. If the web changed, run `Sync deployment branch`. The sync workflow copies upstream `main` without upstream GitHub workflows; Cloudflare then builds `web` with the variables above and deploys the assets to `ah-05-07-pages`.
-5. Verify `/live`, then `/ready`, the live URL, a signed-in API read, and the Cloud Run CORS preflight for every browser HTTP method used by the change. Verify the specific database-backed browser flow only after its migration gate has passed.
+5. Run the dependency-free deployment smoke verifier against the production web and API origins. It checks the live URL, `/live`, `/ready`, and CORS preflight for the browser methods currently used by the web client without sending authentication or product data.
+6. Verify a signed-in API read and the specific database-backed browser flow only after its migration gate has passed.
+
+### Deployment smoke command
+
+Run this from Cloud Shell after the required Cloudflare and Cloud Run releases complete. The values are public origins; the command neither reads nor prints credentials, user identity, or health records.
+
+```bash
+python3 scripts/ci/verify_deployment_smoke.py \
+  --web-base-url "https://ah-05-07-pages.ahnsangkyoon.workers.dev" \
+  --api-base-url "https://bp7-api-292436735548.asia-northeast3.run.app"
+```
+
+The verifier's local controls run in GitHub Actions with `--self-test`. A successful production result is deployment evidence, not a substitute for the signed-in flow check or rollback rehearsal.
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
 
