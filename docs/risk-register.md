@@ -36,7 +36,7 @@ The legacy `challenge_events` table alone cannot enforce one active challenge be
 | Caller identity | API validates the Supabase access token and uses the resulting user ID for writes. | No live end-to-end cross-user test yet. |
 | Row ownership | Both observation tables use `auth.uid() = user_id` policies. | Policy behavior is not proven against a deployed test project. |
 | Browser key boundary | Web build uses the Supabase publishable key and caller JWT. | Bundle and deployment-variable checks are not automated. |
-| Input bounds | Database constraints and API DTO validation limit period, ranges, status, and action ID. | Measurement checklist and intentional update behavior are absent. |
+| Input bounds | Database constraints and API DTO validation limit period, ranges, status, and action ID. | A visible checklist supports consistent measurement conditions but cannot verify real-world conditions or prove adherence to the guide. |
 | Duplicate prevention | Unique keys cover user/date/period for BP and user/date/action for challenge events. | A clear conflict/update experience is absent. |
 | Retention | `expires_at` defaults to 30 days; pg_cron purges daily. | RLS does not exclude rows after `expires_at`; rows may remain readable until the scheduled purge runs. |
 | Model release gate | Risk-signal route returns not-ready without a verified artifact. | Artifact, metadata, split digest, and repeatability evidence are not complete. |

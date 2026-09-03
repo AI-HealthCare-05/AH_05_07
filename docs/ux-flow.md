@@ -11,7 +11,7 @@ flowchart TD
     D --> E
 ```
 
-The current web supports authentication, BP creation, edit, explicit-confirmation delete, bounded recent-seven-day JSON export, one active seven-day challenge selection, daily check-ins, status-only check-in edit, explicit-confirmation check-in delete, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Risk signal, measurement checklist, and structured feedback are not yet product-connected.
+The current web supports authentication, a concise pre-measurement checklist, BP creation, edit, explicit-confirmation delete, bounded recent-seven-day JSON export, one active seven-day challenge selection, daily check-ins, status-only check-in edit, explicit-confirmation check-in delete, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Risk signal and structured feedback are not yet product-connected.
 
 ## Accepted P0 flow
 
@@ -32,6 +32,13 @@ The core path preserves three separate facts:
 3. The user records adherence to one selected challenge.
 
 The dashboard never merges them into a diagnosis, treatment effect, prevention claim, or single improvement score.
+
+## Measurement checklist contract
+
+- The BP form shows the checklist before the date, period, and numeric fields.
+- It briefly covers preparation, resting posture, cuff/arm position, and avoiding talking or phone use during the measurement.
+- The guide is a consistency aid only: it is not stored, it does not block saving, and it does not classify a reading or offer diagnosis, treatment, prevention, or emergency guidance.
+- The existing morning/evening selector remains the record's only time-related input; users are encouraged to record at a similar time when possible.
 
 ## Challenge contract
 
