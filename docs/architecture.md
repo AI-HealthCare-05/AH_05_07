@@ -32,13 +32,13 @@ The current migrations create `blood_pressure_observations`, legacy `challenge_e
 - permit one `active` challenge per user with a partial unique index;
 - enforce a seven-day window and same-user in-window check-ins with database constraints and triggers;
 - make the selected action immutable after the first check-in;
-- expire after 30 days and are purged by a scheduled PostgreSQL job.
+- become inaccessible at `expires_at` after 30 days through RLS; a scheduled PostgreSQL job later purges the expired rows physically.
 
 The observation and legacy-event tables:
 
 - reference `auth.users(id)` with `ON DELETE CASCADE`;
 - enable RLS and require `auth.uid() = user_id` for reads and writes;
-- expire after 30 days and are purged by a scheduled PostgreSQL job;
+- become inaccessible at `expires_at` after 30 days through RLS; a scheduled PostgreSQL job later purges the expired rows physically;
 - store structured values only.
 
 `challenge_events` remains readable as a legacy daily-event record until its existing 30-day retention period ends. It is not used to establish an active challenge.
@@ -63,7 +63,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Cloudflare web | Production | Add the accepted P0 flow and failure states. |
 | Supabase Auth | Production | Keep email magic links and publishable browser key. |
 | Observation API | Production core | Preserve owned BP update/delete and bounded export; allow status-only current-check-in update and explicit-confirmation delete without changing the challenge action, date, or owner. |
-| Observation tables | Production | Preserve RLS, ownership indexes, uniqueness, and 30-day retention. |
+| Observation tables | Production | Preserve RLS, ownership indexes, uniqueness, exact-time access expiry, and 30-day physical retention. |
 | Challenge domain | Partial | Separate active challenge from daily check-ins. |
 | Risk-signal API | Scaffold | Release only with verified artifact and deterministic evidence. |
 | Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
