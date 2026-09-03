@@ -61,11 +61,11 @@ FastAPI validation errors currently use its standard `detail` array. Before Gate
 
 | Condition | Status | Contract |
 |---|---:|---|
-| Invalid body or date window | `422` | No request-body echo in operational logs. |
-| Missing or invalid Supabase session | `401` | Stable machine-readable code. |
+| Invalid body or date window | `422` | FastAPI validation array; the web maps it to a correction message and does not echo input values. |
+| Missing or invalid Supabase session | `401` | Stable machine-readable code; the web clears the local session and asks the user to sign in again. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Model artifact not ready | `503` | No provisional signal. |
-| Storage dependency unavailable | `503` | Retry-safe message; never claim the write succeeded. |
+| Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
 | Unexpected failure | `500` | No secret, token, request body, or health value in the response. |
 
 ## Documentation endpoints

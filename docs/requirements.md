@@ -22,7 +22,7 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 | FR-05 | P0 | Partial | System | Show risk signal, measured blood pressure, and challenge adherence as separate series. | Current web separates BP and challenge lists; risk signal and trend presentation remain. |
 | FR-06 | P1 | Planned | User | Submit structured result feedback for review. | Review data is never an online-training label. |
 | FR-07 | P0 | API only | User | Read, edit, delete, and export only records owned by the signed-in user. | Delete and 30-day JSON export APIs exist; edit and all web controls remain. |
-| FR-08 | P0 | Partial | System | Present truthful loading, empty, session-expiry, duplicate, network-failure, and retry states. | Never report success when persistence is uncertain. |
+| FR-08 | P0 | Partial | System | Present truthful loading, empty, session-expiry, duplicate, network-failure, and retry states. | Web distinguishes successful save, session recovery, input correction, and unconfirmed persistence; duplicate and browser scenario evidence remain. |
 
 ## Non-functional requirements
 
