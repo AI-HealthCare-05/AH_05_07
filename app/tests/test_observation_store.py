@@ -9,22 +9,28 @@ from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
 from app.apis.v1.observation_routers import (
+    delete_challenge_checkin,
+    ensure_editable_owned_challenge_checkin,
     export_observations,
     update_blood_pressure_observation,
+    update_challenge_checkin,
     validate_observation_export_window,
     validate_observation_window,
 )
 from app.dependencies.supabase_auth import SupabaseSession
-from app.dtos.observations import BloodPressureObservationInput
+from app.dtos.observations import BloodPressureObservationInput, ChallengeCheckinStatusInput
 from app.main import app
 from app.services.observation_store import (
+    ChallengeCheckinNotEditableError,
     ChallengeSelectionLockedError,
     OwnedRecordMissingError,
     create_owned_challenge_checkin,
     delete_owned_record,
+    get_owned_challenge_checkin,
     insert_owned_record,
     list_owned_records,
     select_owned_active_challenge,
+    update_owned_challenge_checkin,
     update_owned_record,
 )
 
@@ -50,6 +56,19 @@ def test_openapi_documents_normalized_validation_error() -> None:
 
     assert response["description"] == "Input values are invalid."
     assert response["content"]["application/json"]["schema"]["$ref"] == "#/components/schemas/ValidationErrorResponse"
+
+
+def test_openapi_documents_owned_challenge_checkin_controls() -> None:
+    paths = app.openapi()["paths"]
+
+    assert "/api/v1/observations/challenges/checkins/{record_id}" in paths
+    assert "put" in paths["/api/v1/observations/challenges/checkins/{record_id}"]
+    assert "delete" in paths["/api/v1/observations/challenges/checkins/{record_id}"]
+
+
+def test_checkin_status_update_rejects_immutable_fields() -> None:
+    with pytest.raises(ValueError):
+        ChallengeCheckinStatusInput(status="completed", observed_on="2026-09-03")
 
 
 @pytest.mark.asyncio
@@ -196,6 +215,177 @@ async def test_update_owned_record_uses_session_identity_and_returns_its_row() -
     assert record["user_id"] == "session-user-id"
     assert client.patch.await_args.kwargs["params"] == {"id": "eq.record-id"}
     assert client.patch.await_args.kwargs["json"]["user_id"] == "session-user-id"
+
+
+@pytest.mark.asyncio
+async def test_update_owned_challenge_checkin_sends_only_status_with_the_session_token() -> None:
+    response = MagicMock()
+    response.json.return_value = [{"id": "checkin-id", "status": "skipped"}]
+    client = MagicMock()
+    client.patch = AsyncMock(return_value=response)
+    client_context = MagicMock()
+    client_context.__aenter__ = AsyncMock(return_value=client)
+    client_context.__aexit__ = AsyncMock(return_value=None)
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with patch("app.services.observation_store.httpx.AsyncClient", return_value=client_context):
+        record = await update_owned_challenge_checkin(record_id, "skipped", session)
+
+    assert record == {"id": "checkin-id", "status": "skipped"}
+    assert client.patch.await_args.kwargs["headers"]["Authorization"] == "Bearer session-token"
+    assert client.patch.await_args.kwargs["params"] == {"id": f"eq.{record_id}"}
+    assert client.patch.await_args.kwargs["json"] == {"status": "skipped"}
+
+
+@pytest.mark.asyncio
+async def test_get_owned_challenge_checkin_uses_the_session_token() -> None:
+    response = MagicMock()
+    response.json.return_value = [{"id": "checkin-id", "challenge_id": "challenge-id"}]
+    client = MagicMock()
+    client.get = AsyncMock(return_value=response)
+    client_context = MagicMock()
+    client_context.__aenter__ = AsyncMock(return_value=client)
+    client_context.__aexit__ = AsyncMock(return_value=None)
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with patch("app.services.observation_store.httpx.AsyncClient", return_value=client_context):
+        record = await get_owned_challenge_checkin(record_id, session)
+
+    assert record == {"id": "checkin-id", "challenge_id": "challenge-id"}
+    assert client.get.await_args.kwargs["headers"]["Authorization"] == "Bearer session-token"
+    assert client.get.await_args.kwargs["params"] == {
+        "select": "id,challenge_id",
+        "id": f"eq.{record_id}",
+        "limit": "1",
+    }
+
+
+@pytest.mark.asyncio
+async def test_checkin_editability_requires_the_current_unexpired_active_challenge() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with (
+        patch(
+            "app.apis.v1.observation_routers.get_owned_challenge_checkin",
+            new=AsyncMock(return_value={"id": str(record_id), "challenge_id": "challenge-id"}),
+        ),
+        patch(
+            "app.apis.v1.observation_routers.get_owned_active_challenge",
+            new=AsyncMock(return_value={"id": "challenge-id", "ends_on": "2026-09-08"}),
+        ),
+        patch("app.apis.v1.observation_routers.korea_today", return_value=date(2026, 9, 8)),
+    ):
+        await ensure_editable_owned_challenge_checkin(record_id, session)
+
+
+@pytest.mark.asyncio
+async def test_checkin_editability_rejects_expired_or_noncurrent_challenges() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with (
+        patch(
+            "app.apis.v1.observation_routers.get_owned_challenge_checkin",
+            new=AsyncMock(return_value={"id": str(record_id), "challenge_id": "previous-challenge-id"}),
+        ),
+        patch(
+            "app.apis.v1.observation_routers.get_owned_active_challenge",
+            new=AsyncMock(return_value={"id": "current-challenge-id", "ends_on": "2026-09-08"}),
+        ),
+    ):
+        with pytest.raises(ChallengeCheckinNotEditableError):
+            await ensure_editable_owned_challenge_checkin(record_id, session)
+
+
+@pytest.mark.asyncio
+async def test_update_challenge_checkin_returns_not_found_without_disclosing_ownership() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch(
+            "app.apis.v1.observation_routers.ensure_editable_owned_challenge_checkin",
+            new=AsyncMock(side_effect=OwnedRecordMissingError),
+        ),
+        patch(
+            "app.apis.v1.observation_routers.update_owned_challenge_checkin",
+            new=AsyncMock(side_effect=OwnedRecordMissingError),
+        ),
+    ):
+        with pytest.raises(HTTPException) as error:
+            await update_challenge_checkin(
+                UUID("11111111-1111-1111-1111-111111111111"),
+                ChallengeCheckinStatusInput(status="completed"),
+                "Bearer session-token",
+            )
+
+    assert error.value.status_code == 404
+    assert error.value.detail["code"] == "observation_not_found"
+
+
+@pytest.mark.asyncio
+async def test_update_challenge_checkin_changes_only_the_owned_status() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+    updated = {"id": str(record_id), "status": "skipped"}
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch("app.apis.v1.observation_routers.ensure_editable_owned_challenge_checkin", new=AsyncMock()),
+        patch(
+            "app.apis.v1.observation_routers.update_owned_challenge_checkin",
+            new=AsyncMock(return_value=updated),
+        ) as update_checkin,
+    ):
+        result = await update_challenge_checkin(
+            record_id,
+            ChallengeCheckinStatusInput(status="skipped"),
+            "Bearer session-token",
+        )
+
+    assert result == updated
+    assert update_checkin.await_args.args == (record_id, "skipped", session)
+
+
+@pytest.mark.asyncio
+async def test_delete_challenge_checkin_returns_not_found_without_disclosing_ownership() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch(
+            "app.apis.v1.observation_routers.ensure_editable_owned_challenge_checkin",
+            new=AsyncMock(side_effect=OwnedRecordMissingError),
+        ),
+        patch("app.apis.v1.observation_routers.delete_owned_record", new=AsyncMock(return_value=False)),
+    ):
+        with pytest.raises(HTTPException) as error:
+            await delete_challenge_checkin(
+                UUID("11111111-1111-1111-1111-111111111111"),
+                "Bearer session-token",
+            )
+
+    assert error.value.status_code == 404
+    assert error.value.detail["code"] == "observation_not_found"
+
+
+@pytest.mark.asyncio
+async def test_delete_challenge_checkin_deletes_only_after_the_editability_gate() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    record_id = UUID("11111111-1111-1111-1111-111111111111")
+
+    with (
+        patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
+        patch("app.apis.v1.observation_routers.ensure_editable_owned_challenge_checkin", new=AsyncMock()) as ensure,
+        patch("app.apis.v1.observation_routers.delete_owned_record", new=AsyncMock(return_value=True)) as delete_record,
+    ):
+        await delete_challenge_checkin(record_id, "Bearer session-token")
+
+    assert ensure.await_args.args == (record_id, session)
+    assert delete_record.await_args.args == ("challenge_checkins", record_id, session)
 
 
 @pytest.mark.asyncio

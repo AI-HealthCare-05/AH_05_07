@@ -4,7 +4,7 @@
 
 - Identity: `auth.users.id` is the only application-side record owner identifier.
 - Retention: observations and challenge events expire after 30 days; the scheduled purge removes expired rows daily.
-- Deletion: users delete an owned observation or challenge event by record ID; deleting an Auth user cascades to owned rows.
+- Deletion: users delete an owned blood-pressure observation or a current unexpired challenge check-in by record ID after confirmation; legacy challenge events and expired challenge history remain readable only until expiry. Deleting an Auth user cascades to owned rows.
 - Export: users export their own 1–30 day observation window as JSON through `GET /api/v1/observations/export`; the current web action requests the recent seven-day window.
 - Access: RLS limits reads, writes, and deletes to `auth.uid() = user_id`; no administrative read path exists.
 

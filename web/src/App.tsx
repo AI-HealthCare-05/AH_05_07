@@ -6,6 +6,7 @@ import {
   ApiRequestError,
   createActiveChallengeCheckin,
   createBloodPressureObservation,
+  deleteChallengeCheckin,
   deleteBloodPressureObservation,
   exportObservations,
   getObservationWindow,
@@ -13,7 +14,9 @@ import {
   updateBloodPressureObservation,
   type BloodPressureObservation,
   type BloodPressureObservationInput,
+  type ChallengeCheckin,
   type ObservationWindow,
+  updateChallengeCheckin,
 } from "./lib/api";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 
@@ -124,7 +127,9 @@ function App() {
   const [loadingWindow, setLoadingWindow] = useState(false);
   const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
-  const [pendingDeletion, setPendingDeletion] = useState<BloodPressureObservation | null>(null);
+  const [pendingBloodPressureDeletion, setPendingBloodPressureDeletion] = useState<BloodPressureObservation | null>(null);
+  const [editingChallengeCheckin, setEditingChallengeCheckin] = useState<ChallengeCheckin | null>(null);
+  const [pendingChallengeCheckinDeletion, setPendingChallengeCheckinDeletion] = useState<ChallengeCheckin | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -163,6 +168,10 @@ function App() {
       }
       if (error.code === "challenge_selection_locked") {
         setNotice({ kind: "error", message: "첫 체크인 후에는 이 7일 챌린지의 선택을 바꿀 수 없습니다." });
+        return;
+      }
+      if (error.code === "challenge_checkin_not_editable") {
+        setNotice({ kind: "warning", message: "진행 중인 7일 챌린지의 기록만 수정하거나 삭제할 수 있습니다.", reload: true });
         return;
       }
       if (error.code === "active_challenge_required") {
@@ -262,7 +271,7 @@ function App() {
 
   function beginBloodPressureEdit(record: BloodPressureObservation) {
     setEditingBloodPressureId(record.id);
-    setPendingDeletion(null);
+    setPendingBloodPressureDeletion(null);
     setBloodPressureDraft({
       observedOn: record.observed_on,
       period: record.period,
@@ -279,13 +288,50 @@ function App() {
   }
 
   async function confirmBloodPressureDeletion() {
-    if (!session || !pendingDeletion) return;
+    if (!session || !pendingBloodPressureDeletion) return;
     setPendingAction("blood-pressure");
     try {
-      await deleteBloodPressureObservation(session, pendingDeletion.id);
-      if (editingBloodPressureId === pendingDeletion.id) cancelBloodPressureEdit();
-      setPendingDeletion(null);
+      await deleteBloodPressureObservation(session, pendingBloodPressureDeletion.id);
+      if (editingBloodPressureId === pendingBloodPressureDeletion.id) cancelBloodPressureEdit();
+      setPendingBloodPressureDeletion(null);
       setNotice({ kind: "success", message: "기록을 삭제했습니다." });
+      await refreshWindow(session, true);
+    } catch (error) {
+      presentRequestError(error, "delete");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function beginChallengeCheckinEdit(record: ChallengeCheckin) {
+    setEditingChallengeCheckin(record);
+    setPendingChallengeCheckinDeletion(null);
+    setNotice({ kind: "warning", message: "날짜와 행동은 유지한 채 상태만 수정할 수 있습니다." });
+  }
+
+  async function updateOwnedChallengeCheckin(status: ChallengeCheckin["status"]) {
+    if (!session || !editingChallengeCheckin) return;
+    setPendingAction("challenge-checkin");
+    try {
+      await updateChallengeCheckin(session, editingChallengeCheckin.id, status);
+      setEditingChallengeCheckin(null);
+      setNotice({ kind: "success", message: "챌린지 상태를 수정했습니다." });
+      await refreshWindow(session, true);
+    } catch (error) {
+      presentRequestError(error, "save");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function confirmChallengeCheckinDeletion() {
+    if (!session || !pendingChallengeCheckinDeletion) return;
+    setPendingAction("challenge-checkin");
+    try {
+      await deleteChallengeCheckin(session, pendingChallengeCheckinDeletion.id);
+      if (editingChallengeCheckin?.id === pendingChallengeCheckinDeletion.id) setEditingChallengeCheckin(null);
+      setPendingChallengeCheckinDeletion(null);
+      setNotice({ kind: "success", message: "챌린지 기록을 삭제했습니다." });
       await refreshWindow(session, true);
     } catch (error) {
       presentRequestError(error, "delete");
@@ -496,12 +542,33 @@ function App() {
           </div>
         </div>
         <p className="export-help">내보낸 파일에는 날짜, 혈압, 챌린지 상태가 포함됩니다. 본인 기기에 안전하게 보관해 주세요.</p>
-        {pendingDeletion && (
+        {pendingBloodPressureDeletion && (
           <div className="delete-confirmation" role="alert">
             <span>선택한 혈압 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.</span>
             <div className="inline-actions">
               <button className="danger" onClick={() => void confirmBloodPressureDeletion()} disabled={pendingAction !== null}>삭제</button>
-              <button className="secondary" onClick={() => setPendingDeletion(null)} disabled={pendingAction !== null}>취소</button>
+              <button className="secondary" onClick={() => setPendingBloodPressureDeletion(null)} disabled={pendingAction !== null}>취소</button>
+            </div>
+          </div>
+        )}
+        {editingChallengeCheckin && (
+          <div className="checkin-edit" role="status">
+            <span>
+              {editingChallengeCheckin.observed_on} · {challengeActionLabel(editingChallengeCheckin.action_id)} 상태 수정
+            </span>
+            <div className="inline-actions">
+              <button onClick={() => void updateOwnedChallengeCheckin("completed")} disabled={pendingAction !== null}>완료</button>
+              <button className="secondary" onClick={() => void updateOwnedChallengeCheckin("skipped")} disabled={pendingAction !== null}>건너뜀</button>
+              <button className="text-button" onClick={() => setEditingChallengeCheckin(null)} disabled={pendingAction !== null}>수정 취소</button>
+            </div>
+          </div>
+        )}
+        {pendingChallengeCheckinDeletion && (
+          <div className="delete-confirmation" role="alert">
+            <span>선택한 챌린지 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.</span>
+            <div className="inline-actions">
+              <button className="danger" onClick={() => void confirmChallengeCheckinDeletion()} disabled={pendingAction !== null}>삭제</button>
+              <button className="secondary" onClick={() => setPendingChallengeCheckinDeletion(null)} disabled={pendingAction !== null}>취소</button>
             </div>
           </div>
         )}
@@ -514,7 +581,7 @@ function App() {
                   <span>{record.observed_on} · {observationPeriodLabel(record.period)} · {record.systolic}/{record.diastolic}</span>
                   <span className="inline-actions">
                     <button className="secondary record-action" onClick={() => beginBloodPressureEdit(record)} disabled={pendingAction !== null}>수정</button>
-                    <button className="danger record-action" onClick={() => setPendingDeletion(record)} disabled={pendingAction !== null}>삭제</button>
+                    <button className="danger record-action" onClick={() => setPendingBloodPressureDeletion(record)} disabled={pendingAction !== null}>삭제</button>
                   </span>
                 </li>
               )) : <li>기록 없음</li>}
@@ -524,13 +591,19 @@ function App() {
             <h3>챌린지</h3>
             <ul>
               {windowData?.challenge_checkins.map((record) => (
-                <li key={`checkin-${record.id}`}>
-                  {record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}
+                <li className="record-item" key={`checkin-${record.id}`}>
+                  <span>{record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}</span>
+                  {record.challenge_id === activeChallenge?.id && !activeChallengeEnded && (
+                    <span className="inline-actions">
+                      <button className="secondary record-action" onClick={() => beginChallengeCheckinEdit(record)} disabled={pendingAction !== null}>수정</button>
+                      <button className="danger record-action" onClick={() => setPendingChallengeCheckinDeletion(record)} disabled={pendingAction !== null}>삭제</button>
+                    </span>
+                  )}
                 </li>
               ))}
               {windowData?.challenge_events.map((record) => (
                 <li key={`legacy-${record.id}`}>
-                  {record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"}
+                  {record.observed_on} · {challengeActionLabel(record.action_id)} · {record.status === "completed" ? "완료" : "건너뜀"} · 이전 기록
                 </li>
               ))}
               {!windowData?.challenge_checkins.length && !windowData?.challenge_events.length && <li>기록 없음</li>}

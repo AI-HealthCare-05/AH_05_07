@@ -62,7 +62,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 |---|---|---|
 | Cloudflare web | Production | Add the accepted P0 flow and failure states. |
 | Supabase Auth | Production | Keep email magic links and publishable browser key. |
-| Observation API | Production core | Preserve owned BP update/delete and bounded export; add challenge-record controls only when their product contract is ready. |
+| Observation API | Production core | Preserve owned BP update/delete and bounded export; allow status-only current-check-in update and explicit-confirmation delete without changing the challenge action, date, or owner. |
 | Observation tables | Production | Preserve RLS, ownership indexes, uniqueness, and 30-day retention. |
 | Challenge domain | Partial | Separate active challenge from daily check-ins. |
 | Risk-signal API | Scaffold | Release only with verified artifact and deterministic evidence. |

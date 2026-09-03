@@ -11,7 +11,7 @@ flowchart TD
     D --> E
 ```
 
-The current web supports authentication, BP creation, edit, explicit-confirmation delete, bounded recent-seven-day JSON export, one active seven-day challenge selection, daily check-ins, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Risk signal, measurement checklist, and structured feedback are not yet product-connected.
+The current web supports authentication, BP creation, edit, explicit-confirmation delete, bounded recent-seven-day JSON export, one active seven-day challenge selection, daily check-ins, status-only check-in edit, explicit-confirmation check-in delete, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Risk signal, measurement checklist, and structured feedback are not yet product-connected.
 
 ## Accepted P0 flow
 
@@ -38,6 +38,8 @@ The dashboard never merges them into a diagnosis, treatment effect, prevention c
 - The user selects one of walking, sleep routine, or low-sodium meal.
 - The selection creates one active seven-day challenge.
 - Each day records `completed` or `skipped` for that active challenge.
+- During its current unexpired seven-day window, a check-in can change only between `completed` and `skipped`; its date, action, challenge link, and owner stay fixed.
+- During that same window, a user may delete an owned check-in after an explicit confirmation. An active challenge itself is not deleted through the web flow.
 - The challenge cannot be replaced after its first check-in.
 - Completion is adherence history, not evidence that blood pressure improved.
 
