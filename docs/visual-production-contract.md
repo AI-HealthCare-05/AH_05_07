@@ -19,7 +19,7 @@ No single artifact is authoritative for every concern.
 | Product, safety, privacy, and claim boundaries | `AGENTS.md`, `docs/requirements.md`, and the domain contracts |
 | Data and API semantics | Schema, migrations, API contracts, and automated tests |
 | Screen states and experience invariants | This contract and `docs/ux-flow.md` |
-| Visual specification | Approved, versioned Figma frames |
+| Visual specification | Approved, versioned prototype record; Figma when available, or a documented immutable interactive artifact when explicitly approved |
 | Editable illustration and media sources | User-owned Canva or original source files |
 | Shipped behavior and accessibility | `web/src` plus browser evidence |
 | Asset rights and provenance | `docs/asset-register.md`, created when public assets are introduced |
@@ -142,16 +142,16 @@ Do not blindly retry an uncertain mutation. By default, preserve an unsaved draf
 
 All baseline and boundary captures use device pixel ratio 1. All use 100% browser zoom except the separate zoom check.
 
-Create desktop and mobile golden screenshots for `VP-04 empty`, `VP-07a locked-unrecorded`, `VP-10 recap`, and `VP-11a load-failure`. Other canonical states require functional evidence and a screenshot only when the visual change affects them.
+G3 implementation creates desktop and mobile golden screenshots for `VP-04 empty`, `VP-07a locked-unrecorded`, `VP-10 recap`, and `VP-11a load-failure`. Other canonical states require functional evidence and a screenshot only when the visual change affects them. G2 review may use an exact-dimension interactive artifact when its immutable source revision, viewport checks, tooling substitution, and owner approval are recorded; this does not waive G3 captures.
 
 At 320 CSS pixels, the page must have no horizontal page scrolling, clipped controls, lost actions, or reordered facts. A shared evidence image must use synthetic fixtures, mask health values and identifiers, and exclude browser storage, request headers, tokens, and private console output.
 
-A canonical capture is the visible viewport, not a full-page composite. Use the stable Chromium version in the implementation environment, record its exact version in the pull request, wait for `document.fonts.ready`, and fail the capture if the approved font is unavailable. Attach sanitized PNG files to the implementing pull request with the name `vpf-1-<fixture>-<desktop|mobile>-<short-sha>.png`. An optional full-page diagnostic adds `-full` before the extension and is never the golden reference. The pull request evidence table is the durable index for each attachment, approved Figma frame, capture configuration, and approval result.
+A canonical capture is the visible viewport, not a full-page composite. Use the stable Chromium version in the implementation environment, record its exact version in the pull request, wait for `document.fonts.ready`, and fail the capture if the approved font is unavailable. Attach sanitized PNG files to the implementing pull request with the name `vpf-1-<fixture>-<desktop|mobile>-<short-sha>.png`. An optional full-page diagnostic adds `-full` before the extension and is never the golden reference. The pull request evidence table is the durable index for each attachment, approved prototype artifact, capture configuration, and approval result.
 
 Each visual pull request records:
 
 - the contract section and canonical fixture exercised;
-- the approved Figma file, frame, and version when a frame exists;
+- the approved prototype artifact, immutable revision, and Figma frame when one exists;
 - viewport, zoom, locale, timezone, commit, and timestamp;
 - sanitized before/after captures when implementation changes;
 - keyboard, focus, contrast, reflow, build, type-check, and console/network results; and
@@ -187,11 +187,12 @@ Use sources in this order:
 
 Moodboards influence tone only. They do not override product requirements or authorize copying a layout or asset.
 
-`docs/blood-pressure-measurement-guide.md` is the current health-wording source record. Accessibility decisions use the official [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/) and [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/). G1 creates `docs/visual-direction.md` as the durable record of approved references, adopted and rejected qualities, provisional tokens, and approved Figma frame links.
+`docs/blood-pressure-measurement-guide.md` is the current health-wording source record. Accessibility decisions use the official [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/) and [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/). `docs/visual-direction.md` is the durable record of approved references, adopted and rejected qualities, provisional tokens, and approved prototype links.
 
 | Tool or location | Role |
 |---|---|
-| Figma | Approved responsive frames, components, states, and visual tokens |
+| Figma | Preferred authoring surface for responsive frames, components, states, and visual tokens when available |
+| Private interactive prototype | Approved review substitute only when the Issue records the tooling constraint, immutable source revision, exact viewport evidence, and owner approval |
 | Canva | Editable source for user-owned illustration or presentation media, not application behavior |
 | Repository | Product contracts, semantic tokens, implementation, tests, evidence references, and asset register |
 | Browser | Acceptance of the shipped implementation against the approved state and viewport |
@@ -240,15 +241,17 @@ Do not request a complete mockup before G1. At G1, request only:
 
 Record which qualities are adopted and why. The reference set does not need to depict a health application.
 
-## First implementation sequence
+## G3 implementation sequence
 
-After G0:
+After G2 approval, open a dedicated G3 Issue and short branch, then:
 
-1. Resolve page-shell, authentication bootstrap, loading, confirmed-empty, stale-data, and recovery hierarchy.
-2. Redesign the blood-pressure measurement ritual.
-3. Build the compact active-challenge lane.
-4. Replace raw recent lists with a fact-only seven-day recap.
-5. Validate desktop, mobile, keyboard, Korean copy, and production parity.
+1. Create deterministic `VPF-1` fixtures without real user or health data.
+2. Resolve page-shell, authentication bootstrap, loading, confirmed-empty, stale-data, and recovery hierarchy.
+3. Implement the blood-pressure measurement ritual.
+4. Build the compact active-challenge lane.
+5. Replace raw recent lists with a fact-only seven-day recap.
+6. Create and register measured responsive media derivatives before any public asset delivery.
+7. Validate desktop, mobile, `320 CSS px`, 200% zoom, keyboard, focus, contrast, Korean copy, build, type-check, console, network, and production parity with sanitized captures.
 
 ## Phase boundary
 

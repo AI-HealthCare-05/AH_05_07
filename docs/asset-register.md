@@ -18,7 +18,7 @@ The SHA-256 value, byte size, and dimensions identify the reviewed source snapsh
 | Current location | User-owned working source; the approved desktop preview is attached to Issue #136 |
 | Public/private state | Public candidate, not yet delivered by the application or R2 |
 | Retention | Editable Canva sources remain user-controlled; reviewed flat source snapshots are retained outside runtime delivery until superseded or deliberately deleted |
-| Delivery rule | Create optimized AVIF or WebP derivatives during G2, remove unnecessary metadata, and register exact delivered bytes before R2 upload |
+| Delivery rule | Create optimized AVIF or WebP derivatives during G3, remove unnecessary metadata, and register exact delivered bytes before R2 upload |
 | Accessibility rule | The composite receives descriptive alternative text when informative; isolated landmarks are decorative when equivalent day names and state are present in semantic HTML |
 
 Canva terms and the ownership basis must be reviewed again before reuse outside SK7 or transfer to a third party.
