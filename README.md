@@ -18,6 +18,7 @@
 - [UX flow](docs/ux-flow.md)
 - [Visual production contract](docs/visual-production-contract.md)
 - [G1 visual direction](docs/visual-direction.md)
+- [G2 prototype decision record](docs/g2-prototype.md)
 - [Asset register](docs/asset-register.md)
 - [Deployment SSOT](docs/deployment-ssot.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
