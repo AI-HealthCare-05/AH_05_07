@@ -93,6 +93,10 @@ deployment.
   Worker version prefix and must not be represented as a verified rollback
   target.
 
+Issue #151 owns the read-only inventory and the separately approved rollback
+rehearsal. Its exact commands, stop conditions, and evidence boundary are in
+[`cloudflare-rollback-plan.md`](cloudflare-rollback-plan.md).
+
 Issue #146 introduces reconciliation of this ledger and the durable restart handoff.
 Future releases append a dated entry or replace the `Latest reviewed` section
 only when all recorded identifiers and results have been verified.
