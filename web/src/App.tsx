@@ -152,7 +152,10 @@ function WindowFeedback({ state, onRetry }: { state: WindowState; onRetry: () =>
 }
 
 function App() {
-  const fixture = useMemo(() => getEvidenceFixture(import.meta.env.VITE_SK7_EVIDENCE_MODE ?? import.meta.env.VITE_SK7_EVIDENCE_FIXTURE), []);
+  const fixture = useMemo(
+    () => getEvidenceFixture(new URLSearchParams(window.location.search).get("fixture") ?? import.meta.env.VITE_SK7_EVIDENCE_MODE ?? import.meta.env.VITE_SK7_EVIDENCE_FIXTURE),
+    [],
+  );
   const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
   const startOn = useMemo(() => fixture?.window?.start_on ?? koreaDate(-6), [fixture]);
   const evidenceMode = Boolean(fixture);
