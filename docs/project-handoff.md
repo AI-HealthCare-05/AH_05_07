@@ -91,9 +91,9 @@ gate are not complete.
    duplicate, timeout, empty, stale, and failure states.
 2. Inspect representative Cloud Run logs after a synthetic request and record
    only whether prohibited identity, body, and health values were absent.
-3. Apply the separately reviewed additive check-in foreign-key index through
-   the Supabase migration gate, then repeat the sanitized observation-load
-   baseline before setting a target.
+3. Expand the sanitized observation-load sample before setting a P95 target;
+   the deployed check-in foreign-key index removed the Advisor finding and
+   reduced the observed cold sample, but the current manual sample is small.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope.
 
