@@ -86,14 +86,14 @@ deployment.
   passed, as recorded in Issue #143.
 - Cloud Run deployment, Supabase migration, and production record write: not
   performed for this rollout.
-- Current source `main`: `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41`
-  after the test-only PR #145; no runtime deployment is required for that
-  assertion-only change.
+- Source baseline when this G4 evidence was reviewed:
+  `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41` after the test-only PR #145;
+  no runtime deployment is required for that assertion-only change.
 - Rollback: open. The recorded `38bb08b6` value is not distinct from the current
   Worker version prefix and must not be represented as a verified rollback
   target.
 
-Issue #146 owns reconciliation of this ledger and the durable restart handoff.
+Issue #146 introduces reconciliation of this ledger and the durable restart handoff.
 Future releases append a dated entry or replace the `Latest reviewed` section
 only when all recorded identifiers and results have been verified.
 
