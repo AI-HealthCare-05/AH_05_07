@@ -10,6 +10,11 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 - **Planned**: accepted for the 19-day pilot but not implemented.
 - **Scaffold**: code exists but the capability is not released for production use.
 
+For a new requirement or a material revision, start with the
+[requirements definition template](requirements-definition-template.md). The
+template records proposed scope and evidence; this file remains the current
+product-requirements authority after review and merge.
+
 ## Functional requirements
 
 | ID | Priority | Status | Actor | Contract | Exception / acceptance |

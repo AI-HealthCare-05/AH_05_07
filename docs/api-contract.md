@@ -2,6 +2,11 @@
 
 The executable contract is the generated OpenAPI document at `/api/openapi.json`. This file explains the current product-facing surface and accepted gaps; it must not invent a route before that route is merged into OpenAPI.
 
+For a new or changed endpoint, use the
+[API specification template](api-specification-template.md) before updating
+this current-state document. The template cannot make a planned path
+contractual; generated OpenAPI remains the executable authority.
+
 ## Authentication boundary
 
 The production web uses Supabase Auth email magic links directly. It sends the Supabase access token as `Authorization: Bearer <token>` to protected product APIs. The browser uses only the public Supabase URL and publishable key; it never receives a service-role key.
