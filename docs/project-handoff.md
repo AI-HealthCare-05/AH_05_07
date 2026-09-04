@@ -87,10 +87,12 @@ gate are not complete.
 
 ## Open evidence and next priority
 
-1. Extend Issue #172's automated signed-in browser harness with current
-   check-in status-edit/delete and storage-failure states. Issue #169 covered
-   browser validation, session recovery, and initial-load failure; Issue #172
-   covered blocked duplicate save, uncertain-save guidance, and stale refresh.
+1. Add a separately bounded synthetic browser scenario for storage failure.
+   Issue #169 covered browser validation, session recovery, and initial-load
+   failure; Issue #172 covered blocked duplicate save, uncertain-save guidance,
+   and stale refresh; Issue #174 covers current owned check-in status edit plus
+   explicit cancellation and confirmation before deletion. No real account,
+   JWT, operational record, API, database, or deployment is involved.
 2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
    reduced the observed cold sample, but the current manual sample is small.

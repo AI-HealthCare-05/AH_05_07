@@ -16,6 +16,39 @@ const previousWindow = {
   ],
 };
 
+function koreaToday(): string {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date()).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function currentChallengeWindow(status: "completed" | "skipped") {
+  const observedOn = koreaToday();
+  return {
+    ...emptyWindow,
+    active_challenge: {
+      id: "e2e-active-challenge",
+      action_id: "walk-10-minutes",
+      starts_on: observedOn,
+      ends_on: observedOn,
+      first_checkin_on: observedOn,
+    },
+    challenge_checkins: [
+      {
+        id: "e2e-current-checkin",
+        challenge_id: "e2e-active-challenge",
+        action_id: "walk-10-minutes",
+        observed_on: observedOn,
+        status,
+      },
+    ],
+  };
+}
+
 async function routeApiWindow(page: Page, status: number, body: unknown, onSave?: () => void) {
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
@@ -154,4 +187,89 @@ test("synthetic signed-in refresh failure retains the previously loaded records"
   await expect(page.getByRole("status")).toContainText("새로고침에 실패했습니다. 이전에 불러온 기록을 표시하고 있어요.");
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
   expect(windowRequests).toBe(2);
+});
+
+test("synthetic signed-in session updates only the current owned check-in status", async ({ page }) => {
+  let status: "completed" | "skipped" = "completed";
+  let updateRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(currentChallengeWindow(status)) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/challenges/checkins/e2e-current-checkin" && request.method() === "PUT") {
+      expect(request.postDataJSON()).toEqual({ status: "skipped" });
+      updateRequests += 1;
+      status = "skipped";
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(currentChallengeWindow(status).challenge_checkins[0]) });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "수정" }).click();
+  const editor = page.getByRole("status").filter({ hasText: "10분 걷기 상태" });
+  await expect(editor).toBeVisible();
+  await editor.getByRole("button", { name: "건너뜀" }).click();
+
+  await expect(page.getByRole("status")).toContainText("챌린지 상태를 수정했습니다.");
+  await expect(page.getByRole("heading", { name: "챌린지 참여" }).locator("..")).toContainText("건너뜀");
+  expect(updateRequests).toBe(1);
+});
+
+test("synthetic signed-in session requires confirmation before deleting the current owned check-in", async ({ page }) => {
+  let deleted = false;
+  let deleteRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      const window = currentChallengeWindow("completed");
+      if (deleted) window.challenge_checkins = [];
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(window) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/challenges/checkins/e2e-current-checkin" && request.method() === "DELETE") {
+      deleteRequests += 1;
+      deleted = true;
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "삭제" }).click();
+  const confirmation = page.getByRole("alert").filter({ hasText: "챌린지 기록을 삭제할까요?" });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "취소" }).click();
+  await expect(confirmation).toHaveCount(0);
+  expect(deleteRequests).toBe(0);
+
+  await page.getByRole("button", { name: "삭제" }).click();
+  await confirmation.getByRole("button", { name: "삭제" }).click();
+  await expect(page.getByRole("status")).toContainText("챌린지 기록을 삭제했습니다.");
+  await expect(page.getByRole("heading", { name: "챌린지 참여" }).locator("..")).toContainText("아직 챌린지 참여 기록이 없습니다.");
+  expect(deleteRequests).toBe(1);
 });
