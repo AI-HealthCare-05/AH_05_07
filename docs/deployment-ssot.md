@@ -93,9 +93,11 @@ deployment.
   Worker version prefix and must not be represented as a verified rollback
   target.
 
-Issue #151 owns the read-only inventory and the separately approved rollback
-rehearsal. Its exact commands, stop conditions, and evidence boundary are in
-[`cloudflare-rollback-plan.md`](cloudflare-rollback-plan.md).
+Issue #151 established a distinct Worker rollback target and a completed
+rehearsal: `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` was deployed at 100%,
+the public smoke passed, and
+`6d100754-7e85-4d43-b466-e7944c61a0c0` was restored at 100% with the same
+smoke passing. This does not close the remaining Gate C evidence.
 
 Issue #146 introduces reconciliation of this ledger and the durable restart handoff.
 Future releases append a dated entry or replace the `Latest reviewed` section

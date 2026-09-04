@@ -50,7 +50,7 @@ test, or deployment work complete before the repository evidence exists.
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification preflight | Issue #149 Phase A: linked metadata matches the source migration/RLS/grant contract; Phase B is not approved |
-| Rollback evidence | Issue #151 Phase A: complete current and distinct prior Worker IDs still require read-only inventory |
+| Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 
 The table records the evidence available when PR #147 was opened. It cannot
 predict that pull request's squash-merge commit or later work. At every restart,
@@ -87,10 +87,7 @@ gate are not complete.
 
 ## Open evidence and next priority
 
-1. Complete Issue #151's read-only Worker-version inventory; only after explicit
-   approval rehearse a distinct rollback target without copying sensitive output
-   into GitHub or Notion.
-2. After explicit owner approval in Issue #149, run the reviewed ownership and
+1. After explicit owner approval in Issue #149, run the reviewed ownership and
    exact-time pgTAP suites plus the normal signed-in synthetic-user checks;
    retain only sanitized outcomes and clean up all fixtures.
 3. Add automated signed-in browser evidence for recovery, validation,
