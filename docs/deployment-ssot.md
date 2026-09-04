@@ -58,6 +58,45 @@ The verifier's local controls run in GitHub Actions with `--self-test`. A succes
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
 
+## Release evidence ledger
+
+The source repository, deployment snapshot, and runtime release are related but
+distinct records. Every release note must identify each applicable record with
+an immutable value rather than treating a successful sync as proof of a runtime
+deployment.
+
+| Record | Required evidence |
+| --- | --- |
+| Source baseline | Full upstream `main` commit SHA and the merged Issue/PR. |
+| Deployment snapshot | `emotigom/ah-05-07-pages` workflow run URL and successful job result. |
+| Cloudflare runtime | Complete current Worker version identifier and public smoke result. |
+| Cloud Run runtime | Complete deployed revision only when `app/**` or API runtime configuration changed. |
+| Supabase schema | Applied migration filename and sanitized gate evidence only when a release depends on a schema change. |
+| Rollback | A complete, distinct previous runtime identifier plus the rehearsal result. |
+
+### Latest reviewed web release
+
+- Web release commit: `856606a2a230558887e294e44e8fe99186a542a8`.
+- Deployment snapshot: `emotigom/ah-05-07-pages` workflow run
+  [`33822332784`](https://github.com/emotigom/ah-05-07-pages/actions/runs/33822332784),
+  completed successfully on 2026-09-04.
+- Current Worker version recorded in Issue #143:
+  `38bb08b6-66ca-4933-8cbe-ee857aa4ece7`.
+- Public web/API/CORS smoke and operator-reviewed magic-link/session checks:
+  passed, as recorded in Issue #143.
+- Cloud Run deployment, Supabase migration, and production record write: not
+  performed for this rollout.
+- Current source `main`: `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41`
+  after the test-only PR #145; no runtime deployment is required for that
+  assertion-only change.
+- Rollback: open. The recorded `38bb08b6` value is not distinct from the current
+  Worker version prefix and must not be represented as a verified rollback
+  target.
+
+Issue #146 owns reconciliation of this ledger and the durable restart handoff.
+Future releases append a dated entry or replace the `Latest reviewed` section
+only when all recorded identifiers and results have been verified.
+
 ## Supabase migration gate
 
 Files in `supabase/migrations/` are version-controlled database change instructions. Git merge, GitHub Actions, Cloud Run deployment, and Cloudflare deployment do **not** execute those SQL files against the production Supabase project automatically.
