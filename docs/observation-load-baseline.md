@@ -19,6 +19,21 @@ seven-day list is visibly complete. This measures user-visible loading, not an
 API-only benchmark. Repeat with the same method after the separately approved
 production migration and record only aggregate timings.
 
+## Post-index measurement
+
+After the operator applied the reviewed index through the Supabase migration
+gate, the same synthetic-account manual method recorded the following samples.
+
+| Scenario | Samples (seconds) | Median | Interpretation |
+| --- | --- | ---: | --- |
+| First signed-in load | 3.0, 1.5, 1.0 | 1.5 | The cold/initialization sample improved from 7.0 to 3.0 seconds; the small manual sample is not a P95 target. |
+| Refresh while signed in | 1.5, 1.2, 1.2 | 1.2 | Warm-path results remain within the original 1.1–1.5 second range. |
+
+The deployed index is `challenge_checkins_challenge_user_idx` on
+`(challenge_id, user_id)`. The prior missing-foreign-key-index Advisor finding
+is resolved. A newly created index can initially appear as unused until normal
+queries accumulate usage; that informational notice is not a removal signal.
+
 ## Index review
 
 Supabase Performance Advisor, checked on 2026-09-04, reports that the composite
@@ -29,5 +44,6 @@ repository already indexes `(user_id, observed_on desc)` but not
 covering index. It does not change RLS, grants, rows, API responses, or the
 ownership contract.
 
-Production application remains an operator-mediated migration-gate action; the
-merged file alone does not change Supabase.
+Production application was completed through the operator-mediated migration
+gate before the post-index measurement above. Future schema changes still use
+the same gate; a merged file alone never changes Supabase.
