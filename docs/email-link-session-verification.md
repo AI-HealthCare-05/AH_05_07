@@ -90,3 +90,22 @@ header, raw log, screenshot, account identifier, health value, or product
 record. A completed checklist is evidence for AC-01 only when the related
 Issue or pull request contains this minimal result and the repository and
 Notion mirrors agree.
+
+## Recorded outcome
+
+Issue #182 records this approved synthetic-account checklist outcome. It is a
+sanitized operator result, not a retained browser capture.
+
+| Field | Result |
+| --- | --- |
+| Date | 2026-09-04 |
+| Environment class | Chrome; approved synthetic-account checklist |
+| Email-link sign-in | `pass` |
+| Reloaded session | `pass` |
+| Same-browser new-tab session | `pass` |
+| Expired/invalid-session recovery | `not run` |
+| Sanitized result | No additional result |
+
+The invalid-session state was not forced. This outcome closes the remaining
+manual email-link, reload, and same-browser new-tab portion of AC-01 without
+claiming that natural session expiry was observed.
