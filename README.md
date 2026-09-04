@@ -22,6 +22,7 @@
 - [Asset register](docs/asset-register.md)
 - [Deployment SSOT](docs/deployment-ssot.md)
 - [Project handoff and restart guide](docs/project-handoff.md)
+- [Deployed RLS ownership verification plan](docs/deployed-rls-verification-plan.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
 
 ## Verification
