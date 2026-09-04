@@ -219,3 +219,6 @@ At the beginning of a new Work session:
 
 Never infer completion from an old chat summary. Use immutable commits, Issues,
 test results, and sanitized release records.
+# #192 responsive visual QA gate
+
+The Calm Clay Journey now has an executable viewport/reduced-motion check and a synthetic-only manual capture runbook. This gate does not select Canva binaries or publish R2 assets; those actions remain after all required viewport evidence passes.

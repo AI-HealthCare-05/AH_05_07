@@ -81,6 +81,14 @@ layers replaceable. Visual QA precedes final Canva asset selection; approved
 derivatives may reach R2 only through the asset register and a separate scoped
 change.
 
+## Responsive QA execution
+
+Issue #192 makes the viewport and reduced-motion assertions executable in
+`web/e2e/visual-qa.spec.ts` and records the manual, synthetic-only capture
+procedure in `docs/visual-qa-runbook.md`. Passing this gate confirms layout and
+state truthfulness only; it neither approves Canva derivatives nor authorizes
+R2 publication.
+
 ## Information order
 
 Desktop may place measurement and challenge work in two distinguishable lanes. It must not force equal-height panels when their content lengths differ.
