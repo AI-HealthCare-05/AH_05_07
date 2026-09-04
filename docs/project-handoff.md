@@ -105,10 +105,13 @@ gate are not complete.
 3. Issue #184 adds evaluator-facing seven-day dashboard evidence: BP,
    challenge adherence, legacy records, and the not-ready risk-signal state
    have distinct lanes across normal, empty, and initial-load-failure fixtures.
-   Issue #186 adds read-only current/prior seven-day navigation that preserves
-   the selected range on reload and blocks retrospective mutation. A verified
-   model fact and a release-ready seven-day trend remain separate follow-up
-   work; do not use causal-improvement language.
+   Issue #186 adds current/prior seven-day navigation that preserves the
+   selected range on reload and blocks retrospective mutation. Issue #188 adds
+   a separate browse and single-record-detail state: current owned records can
+   enter the existing edit/delete flow, while prior and legacy records remain
+   read-only and a refreshed-away selection is explicit. A verified model fact
+   and a release-ready seven-day trend remain separate follow-up work; do not
+   use causal-improvement language.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at

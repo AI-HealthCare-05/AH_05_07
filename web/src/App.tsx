@@ -16,6 +16,7 @@ import {
   type BloodPressureObservation,
   type BloodPressureObservationInput,
   type ChallengeCheckin,
+  type ChallengeEvent,
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
@@ -33,6 +34,10 @@ type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-check
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior";
 type BloodPressureDraft = { observedOn: string; period: "morning" | "evening"; systolic: string; diastolic: string };
+type RecordBrowseItem =
+  | { key: string; kind: "blood-pressure"; record: BloodPressureObservation }
+  | { key: string; kind: "challenge-checkin"; record: ChallengeCheckin }
+  | { key: string; kind: "legacy"; record: ChallengeEvent };
 
 function koreaDate(offset = 0): string {
   const date = new Date();
@@ -202,6 +207,8 @@ function App() {
   const [pendingBloodPressureDeletion, setPendingBloodPressureDeletion] = useState<BloodPressureObservation | null>(null);
   const [editingChallengeCheckin, setEditingChallengeCheckin] = useState<ChallengeCheckin | null>(null);
   const [pendingChallengeCheckinDeletion, setPendingChallengeCheckinDeletion] = useState<ChallengeCheckin | null>(null);
+  const [recordBrowseOpen, setRecordBrowseOpen] = useState(false);
+  const [selectedRecordKey, setSelectedRecordKey] = useState<string | null>(null);
   const systolicRef = useRef<HTMLInputElement>(null);
   const diastolicRef = useRef<HTMLInputElement>(null);
 
@@ -264,6 +271,8 @@ function App() {
       nextUrl.searchParams.delete("dashboard_window");
     }
     window.history.replaceState({}, "", nextUrl);
+    setRecordBrowseOpen(false);
+    setSelectedRecordKey(null);
     setWindowData(null);
     setWindowState("loading");
     setDashboardWindow(nextWindow);
@@ -436,6 +445,13 @@ function App() {
     : "아직 선택 없음";
   const controlsDisabled = pendingAction !== null || isPriorDashboard;
   const displayMeasurement = (record: BloodPressureObservation) => evidenceMode ? "•••/•• mmHg" : `${record.systolic}/${record.diastolic} mmHg`;
+  const recordBrowseItems: RecordBrowseItem[] = [
+    ...(windowData?.blood_pressure_observations.map((record) => ({ key: `blood-pressure:${record.id}`, kind: "blood-pressure" as const, record })) ?? []),
+    ...(windowData?.challenge_checkins.map((record) => ({ key: `challenge-checkin:${record.id}`, kind: "challenge-checkin" as const, record })) ?? []),
+    ...(windowData?.challenge_events.map((record) => ({ key: `legacy:${record.id}`, kind: "legacy" as const, record })) ?? []),
+  ].sort((left, right) => right.record.observed_on.localeCompare(left.record.observed_on));
+  const selectedRecord = selectedRecordKey ? recordBrowseItems.find((record) => record.key === selectedRecordKey) : null;
+  const selectedRecordMissing = Boolean(selectedRecordKey && !selectedRecord);
 
   return (
     <main className="page-shell" data-evidence-fixture={fixture?.name}>
@@ -484,7 +500,7 @@ function App() {
           </section>
 
           <section className="panel recap" data-main-section="seven-day-dashboard" aria-labelledby="recap-title">
-            <div className="section-heading"><div><p className="eyebrow">03 · 최근 7일</p><h2 id="recap-title">7일 대시보드</h2></div><div className="inline-actions">{!evidenceMode && <button className="secondary" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "최근 7일 내보내기"}</button>}<button className="text-button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></div>
+            <div className="section-heading"><div><p className="eyebrow">03 · 최근 7일</p><h2 id="recap-title">7일 대시보드</h2></div><div className="inline-actions"><button className="secondary" onClick={() => { setSelectedRecordKey(null); setRecordBrowseOpen(true); }}>기록 목록 보기</button>{!evidenceMode && <button className="secondary" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "최근 7일 내보내기"}</button>}<button className="text-button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></div>
             <nav className="dashboard-window-nav" data-dashboard-window={dashboardWindow} aria-label="대시보드 7일 구간">
               <button className="secondary" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button>
               <p aria-live="polite"><span>표시 구간</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong></p>
@@ -505,6 +521,31 @@ function App() {
               <section data-dashboard-lane="legacy" aria-labelledby="legacy-title"><h3 id="legacy-title">이전 기록</h3><ul className="record-list">{windowData?.challenge_events.length ? windowData.challenge_events.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {challengeLabel(record.action_id)} · {checkinLabel(record.status)} · 이전 기록</span></li>) : <li className="empty-record">이전 기록이 없습니다.</li>}</ul></section>
             </div>
           </section>
+
+          {recordBrowseOpen && <section className="panel record-browser" data-main-section="record-browse" aria-labelledby="record-browse-title">
+            <div className="section-heading"><div><p className="eyebrow">04 · 기록 찾아보기</p><h2 id="record-browse-title">{selectedRecord || selectedRecordMissing ? "기록 상세" : "기록 목록"}</h2></div><button className="text-button" onClick={() => { setSelectedRecordKey(null); setRecordBrowseOpen(false); }}>대시보드로 돌아가기</button></div>
+            {selectedRecordMissing ? <div className="state-panel state-error" role="alert"><h3>선택한 기록을 찾을 수 없습니다.</h3><p>목록이 바뀌었을 수 있어요. 현재 표시 구간의 기록을 다시 확인해 주세요.</p><button onClick={() => setSelectedRecordKey(null)}>목록으로 돌아가기</button></div> : selectedRecord ? <article className="record-detail" data-record-detail-kind={selectedRecord.kind}>
+              <p className="eyebrow">선택한 기록</p>
+              {selectedRecord.kind === "blood-pressure" ? <>
+                <h3>혈압 관찰</h3>
+                <dl className="record-detail-facts"><div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div><div><dt>시간대</dt><dd>{periodLabel(selectedRecord.record.period)}</dd></div><div><dt>기록</dt><dd>{displayMeasurement(selectedRecord.record)}</dd></div></dl>
+                {isPriorDashboard ? <p className="muted">이전 7일의 기록은 읽기 전용입니다.</p> : !evidenceMode && <div className="inline-actions"><button onClick={() => { beginBloodPressureEdit(selectedRecord.record); setSelectedRecordKey(null); setRecordBrowseOpen(false); }} disabled={controlsDisabled}>수정</button><button className="danger" onClick={() => { setPendingBloodPressureDeletion(selectedRecord.record); setSelectedRecordKey(null); setRecordBrowseOpen(false); }} disabled={controlsDisabled}>삭제</button></div>}
+              </> : selectedRecord.kind === "challenge-checkin" ? <>
+                <h3>챌린지 참여</h3>
+                <dl className="record-detail-facts"><div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div><div><dt>선택한 행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div><div><dt>상태</dt><dd>{checkinLabel(selectedRecord.record.status)}</dd></div></dl>
+                {isPriorDashboard ? <p className="muted">이전 7일의 기록은 읽기 전용입니다.</p> : selectedRecord.record.challenge_id !== activeChallenge?.id || activeChallengeEnded ? <p className="muted">현재 활성 챌린지에 속하지 않은 기록은 읽기 전용입니다.</p> : !evidenceMode && <div className="inline-actions"><button onClick={() => { setEditingChallengeCheckin(selectedRecord.record); setSelectedRecordKey(null); setRecordBrowseOpen(false); }} disabled={controlsDisabled}>수정</button><button className="danger" onClick={() => { setPendingChallengeCheckinDeletion(selectedRecord.record); setSelectedRecordKey(null); setRecordBrowseOpen(false); }} disabled={controlsDisabled}>삭제</button></div>}
+              </> : <>
+                <h3>이전 기록</h3>
+                <dl className="record-detail-facts"><div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div><div><dt>행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div><div><dt>상태</dt><dd>{checkinLabel(selectedRecord.record.status)}</dd></div></dl>
+                <p className="muted">이전 기록은 읽기 전용입니다.</p>
+              </>}
+              <button className="secondary record-detail-back" onClick={() => setSelectedRecordKey(null)}>목록으로 돌아가기</button>
+            </article> : <div className="record-browse-lanes">
+              <section data-record-lane="blood-pressure" aria-labelledby="browse-blood-pressure-title"><h3 id="browse-blood-pressure-title">혈압 관찰</h3><ul className="record-list">{recordBrowseItems.filter((item) => item.kind === "blood-pressure").length ? recordBrowseItems.filter((item) => item.kind === "blood-pressure").map((item) => item.kind === "blood-pressure" && <li key={item.key}><span><strong>{dateLabel(item.record.observed_on)}</strong> · {periodLabel(item.record.period)} · {displayMeasurement(item.record)}</span><button className="secondary record-action" onClick={() => setSelectedRecordKey(item.key)}>상세 보기</button></li>) : <li className="empty-record">아직 혈압 관찰 기록이 없습니다.</li>}</ul></section>
+              <section data-record-lane="challenge" aria-labelledby="browse-challenge-title"><h3 id="browse-challenge-title">챌린지 참여</h3><ul className="record-list">{recordBrowseItems.filter((item) => item.kind === "challenge-checkin").length ? recordBrowseItems.filter((item) => item.kind === "challenge-checkin").map((item) => item.kind === "challenge-checkin" && <li key={item.key}><span><strong>{dateLabel(item.record.observed_on)}</strong> · {challengeLabel(item.record.action_id)} · {checkinLabel(item.record.status)}</span><button className="secondary record-action" onClick={() => setSelectedRecordKey(item.key)}>상세 보기</button></li>) : <li className="empty-record">아직 챌린지 참여 기록이 없습니다.</li>}</ul></section>
+              <section data-record-lane="legacy" aria-labelledby="browse-legacy-title"><h3 id="browse-legacy-title">이전 기록</h3><ul className="record-list">{recordBrowseItems.filter((item) => item.kind === "legacy").length ? recordBrowseItems.filter((item) => item.kind === "legacy").map((item) => item.kind === "legacy" && <li key={item.key}><span><strong>{dateLabel(item.record.observed_on)}</strong> · {challengeLabel(item.record.action_id)} · {checkinLabel(item.record.status)} · 이전 기록</span><button className="secondary record-action" onClick={() => setSelectedRecordKey(item.key)}>상세 보기</button></li>) : <li className="empty-record">이전 기록이 없습니다.</li>}</ul></section>
+            </div>}
+          </section>}
         </>
       )}
     </main>
