@@ -10,7 +10,7 @@
     "dev:evidence:vp-10": "vite --mode evidence-vp-10",
     "dev:evidence:vp-11a": "vite --mode evidence-vp-11a",
     "build": "tsc -b && vite build",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test && playwright test --config=playwright.production.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
