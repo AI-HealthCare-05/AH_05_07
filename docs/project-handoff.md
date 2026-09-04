@@ -49,7 +49,7 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
-| Ownership verification preflight | Issue #149 Phase A: linked metadata matches the source migration/RLS/grant contract; Phase B is not approved |
+| Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 
 The table records the evidence available when PR #147 was opened. It cannot
@@ -87,14 +87,13 @@ gate are not complete.
 
 ## Open evidence and next priority
 
-1. After explicit owner approval in Issue #149, run the reviewed ownership and
-   exact-time pgTAP suites plus the normal signed-in synthetic-user checks;
-   retain only sanitized outcomes and clean up all fixtures.
-3. Add automated signed-in browser evidence for recovery, validation,
+1. Add automated signed-in browser evidence for recovery, validation,
    duplicate, timeout, empty, stale, and failure states.
-4. Inspect representative Cloud Run logs after a synthetic request and record
+2. Inspect representative Cloud Run logs after a synthetic request and record
    only whether prohibited identity, body, and health values were absent.
-5. Start the risk-signal release gate only after the operational evidence above
+3. Establish a measured initial-load latency baseline and address the observed
+   sequential ownership-window reads before setting a target.
+4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope.
 
 Each item requires its own Issue, short branch, pull request, verification, and

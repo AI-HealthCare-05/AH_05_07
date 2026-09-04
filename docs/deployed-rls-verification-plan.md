@@ -10,8 +10,9 @@ may start only after the repository owner gives explicit approval in Issue #149.
 - **Phase A, completed on 2026-09-04:** source and linked-project metadata
   inventory only. No account, product record, policy, grant, migration, runtime
   configuration, or deployment was changed.
-- **Phase B, not approved:** create and use two dedicated synthetic accounts
-  through the normal signed-in product path, then clean them up.
+- **Phase B, completed on 2026-09-04:** two dedicated synthetic accounts used
+  the normal signed-in product path and were removed through the approved
+  Supabase Auth cleanup path.
 - Do not record email addresses, user IDs, JWTs, request headers, magic-link
   URLs, observation values, raw browser output, or query result rows in GitHub,
   Notion, screenshots, or this document.
@@ -61,6 +62,10 @@ Keep the actual account identifiers out of all shared evidence. Use only normal
 browser/API authentication and the publishable-key boundary; never put a
 service-role key in a browser, capture, command history, or patch.
 
+The owner gave the required explicit approval in Issue #149 before the
+2026-09-04 synthetic exercise. The completed run used no service-role key,
+direct production SQL, production-policy change, or runtime deployment.
+
 ## Phase B pass/fail matrix and cleanup
 
 | Check | Required sanitized result |
@@ -75,6 +80,22 @@ service-role key in a browser, capture, command history, or patch.
 Do not backdate production data, change server time, bypass triggers, or use
 direct production SQL to simulate expiry under this Issue. Stop and open a
 separate transactionized plan if normal-path cleanup cannot remove a fixture.
+
+## Phase B sanitized result — 2026-09-04
+
+| Check | Result |
+| --- | --- |
+| Anonymous request | Passed: the public observation-window request without credentials returned `401` and no record payload was read. |
+| Synthetic A owned observation | Passed: create, read, update, delete, and export completed through the signed-in product path. |
+| Synthetic B against A's observation/export | Passed: no A record or export content was disclosed to B. |
+| Challenge ownership | Passed: no A challenge or check-in was disclosed to B through the normal product path. |
+| Challenge lock | Passed: A's first check-in prevented replacement of the active seven-day action. |
+| Cleanup | Complete: both synthetic accounts were deleted through Supabase Auth; cascading foreign keys removed their related synthetic records. |
+
+The exercise recorded no account identifier, email address, JWT, magic-link URL,
+observation value, raw request/response body, or production record. The live
+exercise does not simulate expiry; exact-time retention remains covered by the
+separate local pgTAP suite and requires its own approved production evidence.
 
 ## Evidence record template
 

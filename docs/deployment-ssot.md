@@ -111,15 +111,19 @@ Files in `supabase/migrations/` are version-controlled database change instructi
 
 The current production project has had schema changes applied manually. Until its remote migration history has been reconciled with the repository and a linked CLI release procedure is reviewed, the approved production path is an operator-mediated execution in the Supabase SQL Editor.
 
-### Read-only ownership preflight
+### Deployed ownership verification
 
-Issue #149 records a read-only 2026-09-04 preflight at source commit
+Issue #149 records a 2026-09-04 preflight at source commit
 `1c00e903a6bf189bcabc46708d140bd8103045bc`. The linked-project migration
 inventory matches the four repository migrations through exact-time retention;
 the four ownership tables have RLS enabled with authenticated CRUD grants and
-their expected unexpired ownership-policy intent. No migration, policy, grant,
-record, account, Cloud Run revision, or Worker deployment was changed by this
-preflight. The detailed boundary and Phase B approval gate are in
+their expected unexpired ownership-policy intent. After explicit owner
+approval, the normal signed-in product path passed synthetic owner CRUD/export,
+cross-user non-disclosure, anonymous denial, and first-check-in action-lock
+checks. Both synthetic accounts and their cascading records were removed.
+No migration, policy, grant, production record, Cloud Run revision, or Worker
+deployment was changed by this verification. The detailed boundary and
+sanitized result are in
 [`deployed-rls-verification-plan.md`](deployed-rls-verification-plan.md).
 
 1. Identify the earliest migration that production has not applied. Review its table, policy, grant, trigger, and scheduled-job effects before executing it.
