@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const apiRequestTimeoutMs = 8_000;
 
 type ApiError = {
   detail?: unknown;
@@ -89,22 +90,38 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
   if (!apiBaseUrl) {
     throw new Error("VITE_API_BASE_URL is not configured.");
   }
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  });
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({}))) as ApiError;
-    throw parseApiError(error, response.status);
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, apiRequestTimeoutMs);
+  try {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+    });
+    if (!response.ok) {
+      const error = (await response.json().catch(() => ({}))) as ApiError;
+      throw parseApiError(error, response.status);
+    }
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    if (timedOut) {
+      throw new ApiRequestError(0, "request_timeout", "요청 응답 시간을 초과했습니다.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return (await response.json()) as T;
 }
 
 export type BloodPressureObservationInput = Omit<BloodPressureObservation, "id">;

@@ -389,3 +389,47 @@ test("synthetic signed-in session keeps current check-in deletion recoverable af
   await expect(confirmation.getByRole("button", { name: "삭제" })).toBeEnabled();
   expect(deleteRequests).toBe(1);
 });
+
+test("synthetic signed-in session recovers a blood-pressure draft after the shared request timeout", async ({ page }) => {
+  let saveRequests = 0;
+  let releaseRequest: (() => void) | undefined;
+  const pendingRequest = new Promise<void>((resolve) => { releaseRequest = resolve; });
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(emptyWindow) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/blood-pressure" && request.method() === "POST") {
+      saveRequests += 1;
+      await pendingRequest;
+      await route.abort().catch(() => undefined);
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+  const saveButton = page.locator("form.measurement-panel button[type=submit]");
+  await saveButton.click();
+
+  await expect(page.getByText("저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
+  await expect(page.getByLabel(/수축기/)).toHaveValue("120");
+  await expect(page.getByLabel(/이완기/)).toHaveValue("80");
+  await expect(saveButton).toBeEnabled();
+  expect(saveRequests).toBe(1);
+  releaseRequest?.();
+});
