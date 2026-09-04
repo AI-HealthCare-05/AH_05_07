@@ -87,8 +87,8 @@ gate are not complete.
 
 ## Open evidence and next priority
 
-1. Add automated signed-in browser evidence for recovery, validation,
-   duplicate, timeout, empty, stale, failure, and check-in status-edit/delete states.
+1. Extend Issue #169's automated signed-in browser harness with duplicate,
+   timeout, empty, stale, failure, and check-in status-edit/delete states.
 2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
    reduced the observed cold sample, but the current manual sample is small.

@@ -19,6 +19,7 @@ import {
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
+import { allowsE2eFixture, getE2eSession } from "./lib/e2eHarness";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 
 const challengeActions = [
@@ -152,14 +153,20 @@ function WindowFeedback({ state, onRetry }: { state: WindowState; onRetry: () =>
 }
 
 function App() {
+  const searchParameters = useMemo(() => new URLSearchParams(window.location.search), []);
+  const e2eSession = useMemo(() => getE2eSession(searchParameters.get("e2e")), [searchParameters]);
   const fixture = useMemo(
-    () => getEvidenceFixture(new URLSearchParams(window.location.search).get("fixture") ?? import.meta.env.VITE_SK7_EVIDENCE_MODE ?? import.meta.env.VITE_SK7_EVIDENCE_FIXTURE),
-    [],
+    () => getEvidenceFixture(
+      allowsE2eFixture()
+        ? searchParameters.get("fixture") ?? import.meta.env.VITE_SK7_EVIDENCE_MODE ?? import.meta.env.VITE_SK7_EVIDENCE_FIXTURE
+        : import.meta.env.VITE_SK7_EVIDENCE_MODE ?? import.meta.env.VITE_SK7_EVIDENCE_FIXTURE,
+    ),
+    [searchParameters],
   );
   const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
   const startOn = useMemo(() => fixture?.window?.start_on ?? koreaDate(-6), [fixture]);
   const evidenceMode = Boolean(fixture);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(e2eSession);
   const [windowData, setWindowData] = useState<ObservationWindow | null>(fixture?.window ?? null);
   const [windowState, setWindowState] = useState<WindowState>(fixture?.loadError ? "error" : fixture ? "ready" : "loading");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -174,11 +181,11 @@ function App() {
   const diastolicRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (evidenceMode || !supabase) return;
+    if (evidenceMode || e2eSession || !supabase) return;
     void supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
     return () => subscription.subscription.unsubscribe();
-  }, [evidenceMode]);
+  }, [evidenceMode, e2eSession]);
 
   useEffect(() => {
     if (evidenceMode || !session) return;
@@ -378,7 +385,7 @@ function App() {
     }
   }
 
-  if (!evidenceMode && !supabaseConfigured) return <main className="auth-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
+  if (!evidenceMode && !e2eSession && !supabaseConfigured) return <main className="auth-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   if (!evidenceMode && !session) return <Login onSession={setSession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
 
   const activeChallenge = windowData?.active_challenge ?? null;
