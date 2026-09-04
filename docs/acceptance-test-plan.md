@@ -16,7 +16,7 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 
 | AC | Scenario and precondition | Check level | Expected evidence | Current status |
 |---|---|---|---|---|
-| AC-01 | Synthetic user opens an email link, reloads the page, and visits it in a new tab before session expiry. | Browser E2E + manual production smoke | Session remains available; owned seven-day records load; no access token in capture. | Partial: Issue #143 records a passed operator-reviewed magic-link and session-refresh check; Issue #169 adds a synthetic signed-in `401` recovery transition with no real token. The complete email-link and new-tab scenario remain. |
+| AC-01 | Synthetic user opens an email link, reloads the page, and visits it in a new tab before session expiry. | Browser E2E + manual production smoke | Session remains available; owned seven-day records load; no access token in capture. | Partial: Issue #143 records a passed operator-reviewed magic-link and session-refresh check; Issue #169 adds a synthetic signed-in `401` recovery transition with no real token. Issue #180 defines the [sanitized operator checklist](email-link-session-verification.md) for the remaining email-link and new-tab scenario; it is not evidence of execution. |
 | AC-02 | Fixed normalized baseline input is evaluated twice with one verified model version. | Model unit + API integration | Same result payload and model version; artifact digest and split digest recorded. | Blocked: verified artifact not released. |
 | AC-03 | Risk-signal screen is rendered for a verified artifact and for an unavailable artifact. | UI component + browser | Required wording and release disclaimer appear; unavailable artifact shows an honest not-ready state without a score. | Blocked: web flow not connected. |
 | AC-04 | Open the BP form, review the measurement checklist, then submit out-of-range values, equal/reversed values, and an unknown field through browser and API. | DTO unit + API integration + browser | The concise checklist appears before the measurement fields without a diagnosis, treatment, prevention, or emergency claim; each invalid payload receives `422`; valid values save once; browser gives a clear correction message. | Partial: checklist and DTO/API mapping exist; Issue #169 adds a signed-in browser assertion that invalid input is blocked before a save request. Deployed browser evidence remains. |
@@ -29,7 +29,7 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 
 ## Execution order
 
-1. **AC-01, AC-04, AC-06, and AC-08** — retain signed-in browser evidence; do not infer completion for email-link or new-tab coverage.
+1. **AC-01, AC-04, AC-06, and AC-08** — retain signed-in browser evidence; execute the AC-01 checklist with a synthetic account before inferring completion for email-link or new-tab coverage.
 2. **AC-05** — add separately approved deployed expired-row evidence; do not alter production time or retained records during this work.
 3. **AC-10** — complete the documented clean-environment deployment rehearsal.
 4. **AC-02, AC-03, and AC-07** — connect a risk-signal flow only after the model release gate passes.
