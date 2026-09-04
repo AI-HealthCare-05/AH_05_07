@@ -24,10 +24,11 @@ product-requirements authority after review and merge.
 | FR-02 | P0 | Scaffold | System | Return risk band, probability, model version, and disclaimer only from a verified model artifact. | Return no provisional score when artifact, metadata, or split digest validation fails. |
 | FR-03 | P0 | Implemented | User | Record morning/evening systolic and diastolic observations with a measurement checklist. | The web shows a concise pre-measurement guide before the fields; it is not stored, does not block saving, and does not provide diagnosis, treatment, prevention, or emergency guidance. |
 | FR-04 | P0 | Implemented | User | Select one walking, sleep, or low-sodium challenge and check in for seven days. | Exactly one `active` challenge is allowed per user; its action can change only before the first check-in, and every check-in must belong to that user and the seven-day window. |
-| FR-05 | P0 | Partial | System | Show risk signal, measured blood pressure, and challenge adherence as separate series. | Current web separates BP and challenge lists; risk signal and trend presentation remain. |
+| FR-05 | P0 | Partial | System | Show the risk signal, measured blood pressure, and challenge adherence as clearly separated seven-day series. | Current web separates BP and challenge lists; a truthful seven-day trend view, empty/failure states, and risk-signal presentation remain. The view must not imply that one series caused or improved another. |
 | FR-06 | P1 | Planned | User | Submit structured result feedback for review. | Review data is never an online-training label. |
 | FR-07 | P0 | Partial | User | Read, edit, delete, and export only unexpired records owned by the signed-in user. | RLS hides an owned record at its 30-day `expires_at`; daily cron removes it later as physical cleanup. Web connects BP read, edit, explicit-confirmation delete, and recent-seven-day JSON export; current active-challenge check-ins support status-only edit and explicit-confirmation delete. Legacy events, expired challenge history, and active-challenge selection remain read-only. |
 | FR-08 | P0 | Partial | System | Present truthful loading, empty, session-expiry, duplicate, network-failure, and retry states. | Web distinguishes successful save, session recovery, input correction, and unconfirmed persistence; duplicate and browser scenario evidence remain. |
+| FR-09 | P1 | Planned | System | If measurement demonstrates that verified model work cannot finish within the accepted request budget, expose a persisted assessment-job lifecycle separately from observations and challenge adherence. | Requires an ADR, a measured trigger, PostgreSQL-persisted state/result, idempotency, timeout/retry policy, and a sanitized status contract. Until then, no worker or queue is introduced and the risk-signal path remains honestly not ready. |
 
 ## Non-functional requirements
 
@@ -41,6 +42,7 @@ product-requirements authority after review and merge.
 | NFR-06 | P0 | Implemented | Application code, deployment mirror, Cloudflare Worker, Cloud Run API, and Supabase roles follow the deployment SSOT. | Fresh deployment and rollback performed from the documented procedure. |
 | NFR-07 | P0 | Implemented | Expose separate liveness and configuration-readiness checks without sensitive details. | Automated tests for healthy and configuration-unready states; production smoke remains. |
 | NFR-08 | P1 | Planned | Complete the core flow on mobile and desktop with keyboard-visible focus and adequate contrast. | Follow the [visual production contract](visual-production-contract.md) for canonical states, responsive baselines, accessibility checks, and sanitized browser evidence. |
+| NFR-09 | P1 | Planned | Adopt asynchronous model processing only when an ADR and measured latency, duration, or reliability need justify it. | The ADR records the threshold, producer/consumer responsibility, persisted job state, retry/idempotency/timeout behavior, result retention, and security/log boundary. Redis or a separate worker is not a default requirement. |
 
 ## Scope order
 
@@ -49,7 +51,7 @@ product-requirements authority after review and merge.
 - Verified input-based risk-group screening signal or an honest not-ready state
 - One active seven-day challenge and daily check-ins
 - BP observation checklist, create/read/edit/delete/export
-- Separated seven-day view
+- Separated seven-day view with non-causal trend presentation, empty states, and evidence captures
 - Failure recovery, health checks, RLS negative tests, observability, deployment evidence
 - Requirements, ERD, API specification, wireframe, demo, and presentation consistency
 
@@ -58,6 +60,7 @@ product-requirements authority after review and merge.
 - Account closure and data-retention explanation
 - Structured feedback review flow
 - Accessibility and onboarding hardening
+- Conditional asynchronous model-job path only after the ADR and measured requirement
 - Public R2 asset provenance and lifecycle
 
 ### P2 — only if schedule remains safe

@@ -6,6 +6,16 @@ React/Vite static assets run on the Cloudflare Worker `ah-05-07-pages`. The brow
 
 The API may load an immutable CPU model artifact only after its metadata and split digest pass verification. Redis, a separate application worker, OCR, and an LLM remain deferred until an ADR and measurement demonstrate a requirement.
 
+## Talos scope reconciliation (Uponati excluded)
+
+| Talos evaluation axis | SK7 status | Accepted next boundary |
+|---|---|---|
+| Public-data model and result quality | Risk-signal route is a safe `503 model_not_ready` scaffold. | Release only after immutable artifact/metadata, frozen split digest, leakage audit, at least two-model and multiple-metric comparison, and repeated-input consistency evidence. No provisional score or diagnostic claim is permitted. |
+| Chronic-condition tracking dashboard | BP and challenge records are separated, but the evaluator-facing seven-day trend, empty/failure states, and evidence pack remain partial. | Present measurement, challenge adherence, and model signal as separate facts; do not render a causal or improvement conclusion. |
+| Lifestyle challenge | Active seven-day challenge, first-check-in action lock, and status-only check-in changes are implemented. | Finish signed-in browser and mobile evidence before treating the flow as submission-complete. |
+| Feedback and reminders | Structured feedback is planned; reminders are not implemented. | Feedback stays separate from online-training labels. Reminders are P2 only after P0 evidence is complete. |
+| Heavy AI processing | No measured model workload currently justifies a queue or worker. | Use the conditional asynchronous boundary below only after an ADR and measured trigger. Uponati-only OCR, prescription, medical-document, and LLM guidance are outside SK7 scope. |
+
 ```mermaid
 flowchart TD
     UI["React/Vite · Cloudflare Worker"] --> AUTH["Supabase Auth"]
@@ -68,6 +78,21 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Risk-signal API | Scaffold | Release only with verified artifact and deterministic evidence. |
 | Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
 | Structured feedback | P1 planned | Store review input separately; never use it for online retraining. |
+
+## Conditional asynchronous assessment boundary (not implemented)
+
+This is a decision boundary, not an implementation commitment. If a verified-model request or offline training requires background processing, the API must persist a minimal job record before returning a status reference. An ephemeral queue by itself is not a source of truth.
+
+```mermaid
+flowchart LR
+    API["FastAPI request gate"] --> JOB["PostgreSQL assessment job state"]
+    JOB --> WORKER["ADR-approved worker"]
+    WORKER --> ARTIFACT["Verified immutable artifact"]
+    WORKER --> JOB
+    API --> STATUS["Sanitized status or SSE"]
+```
+
+The ADR must define the measured trigger, state transitions, idempotency key, retry and timeout policy, result retention, authorization, and failure behavior. It must also show why synchronous verified CPU inference is insufficient. No Redis, worker, status endpoint, SSE channel, or new table may be presented as implemented before that ADR and the matching executable contract are merged.
 
 ## Data classification
 
