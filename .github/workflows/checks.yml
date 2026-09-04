@@ -37,6 +37,12 @@ jobs:
       - name: Build web client
         run: npm run build
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser evidence fixtures
+        run: npm run test:e2e
+
       - name: Verify secret boundary controls
         run: |
           python3 ../scripts/ci/verify_secret_boundary.py --self-test
