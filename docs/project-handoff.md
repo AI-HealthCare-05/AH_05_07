@@ -87,14 +87,16 @@ gate are not complete.
 
 ## Open evidence and next priority
 
-1. Confirm the remaining signed-in email-link and new-tab coverage in a
-   separately approved plan. Issue #169 covered browser validation, session
-   recovery, and initial-load failure; Issue #172 covered blocked duplicate
-   save, uncertain-save guidance, and stale refresh; Issue #174 covers current
-   owned check-in status edit plus explicit cancellation and confirmation
-   before deletion; Issue #176 covers normalized storage-unavailable recovery;
-   Issue #178 adds one shared eight-second browser request timeout, preserved
-   draft, and no automatic retry. No real account, JWT, operational record,
+1. Execute the [sanitized email-link and new-tab verification checklist](email-link-session-verification.md)
+   with a synthetic account, then retain only its minimal pass/fail result.
+   Issue #169 covered browser validation, session recovery, and initial-load
+   failure; Issue #172 covered blocked duplicate save, uncertain-save guidance,
+   and stale refresh; Issue #174 covers current owned check-in status edit plus
+   explicit cancellation and confirmation before deletion; Issue #176 covers
+   normalized storage-unavailable recovery; Issue #178 adds one shared
+   eight-second browser request timeout, preserved draft, and no automatic
+   retry. Issue #180 defines the manual AC-01 evidence boundary; it does not
+   claim that the checklist has run. No real account, JWT, operational record,
    API, database, or deployment is involved.
 2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
