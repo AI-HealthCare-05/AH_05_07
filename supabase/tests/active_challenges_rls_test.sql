@@ -79,8 +79,8 @@ SELECT throws_ok(
       'skipped'
     )
   $$,
-  '42501',
-  NULL,
+  'P0001',
+  'challenge_owner_required',
   'another user cannot create the owner check-in'
 );
 
