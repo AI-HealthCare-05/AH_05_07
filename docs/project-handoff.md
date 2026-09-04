@@ -49,6 +49,7 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
+| Ownership verification preflight | Issue #149 Phase A: linked metadata matches the source migration/RLS/grant contract; Phase B is not approved |
 
 The table records the evidence available when PR #147 was opened. It cannot
 predict that pull request's squash-merge commit or later work. At every restart,
@@ -87,8 +88,9 @@ gate are not complete.
 
 1. Establish and rehearse a distinct Cloudflare rollback target without copying
    sensitive console output into GitHub or Notion.
-2. Run the reviewed ownership and exact-time pgTAP suites against the linked
-   Supabase project with synthetic users; retain only sanitized outcomes.
+2. After explicit owner approval in Issue #149, run the reviewed ownership and
+   exact-time pgTAP suites plus the normal signed-in synthetic-user checks;
+   retain only sanitized outcomes and clean up all fixtures.
 3. Add automated signed-in browser evidence for recovery, validation,
    duplicate, timeout, empty, stale, and failure states.
 4. Inspect representative Cloud Run logs after a synthetic request and record
