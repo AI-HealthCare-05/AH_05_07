@@ -31,7 +31,7 @@ SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신
 | NFR-01 | P0 | Planned | Publish a versioned latency and load baseline before freezing a P95 target. | Reproducible command, environment, sample size, and report. |
 | NFR-02 | P0 | Planned | Equal normalized input plus model version returns equal output. | Repeated-input test against the immutable artifact. |
 | NFR-03 | P0 | Partial | Training and validation remain disjoint; compare at least two models and multiple metrics. | Split digest, experiment manifest, model card, and leakage audit. |
-| NFR-04 | P0 | Partial | Supabase JWT and RLS isolate every user's rows. | Two-user and anonymous negative integration tests; unauthorized row disclosure is zero. |
+| NFR-04 | P0 | Implemented | Supabase JWT and RLS isolate every user's rows. | Issue #149 Phase B passed approved synthetic two-user owner CRUD/export, cross-user non-disclosure, anonymous denial, and cleanup without retaining identifiers or values. |
 | NFR-05 | P0 | Implemented boundary | Real PHI and identifying content are out of scope. | Synthetic demo data; request bodies and health values absent from logs. |
 | NFR-06 | P0 | Implemented | Application code, deployment mirror, Cloudflare Worker, Cloud Run API, and Supabase roles follow the deployment SSOT. | Fresh deployment and rollback performed from the documented procedure. |
 | NFR-07 | P0 | Implemented | Expose separate liveness and configuration-readiness checks without sensitive details. | Automated tests for healthy and configuration-unready states; production smoke remains. |
