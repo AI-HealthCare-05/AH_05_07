@@ -89,21 +89,24 @@ async def list_owned_records(
     start_on: date,
     end_on: date,
     session: SupabaseSession,
+    client: httpx.AsyncClient | None = None,
 ) -> list[dict[str, object]]:
-    async with httpx.AsyncClient(timeout=5) as client:
-        response = await client.get(
-            f"{config.SUPABASE_URL}/rest/v1/{table}",
-            headers={
-                "apikey": config.SUPABASE_PUBLISHABLE_KEY,
-                "Authorization": f"Bearer {session.access_token}",
-            },
-            params=[
-                ("select", select),
-                ("observed_on", f"gte.{start_on.isoformat()}"),
-                ("observed_on", f"lte.{end_on.isoformat()}"),
-                ("order", "observed_on.asc,created_at.asc"),
-            ],
-        )
+    if client is None:
+        async with httpx.AsyncClient(timeout=5) as owned_client:
+            return await list_owned_records(table, select, start_on, end_on, session, owned_client)
+    response = await client.get(
+        f"{config.SUPABASE_URL}/rest/v1/{table}",
+        headers={
+            "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": f"Bearer {session.access_token}",
+        },
+        params=[
+            ("select", select),
+            ("observed_on", f"gte.{start_on.isoformat()}"),
+            ("observed_on", f"lte.{end_on.isoformat()}"),
+            ("order", "observed_on.asc,created_at.asc"),
+        ],
+    )
     response.raise_for_status()
     return response.json()
 
@@ -123,21 +126,25 @@ async def delete_owned_record(table: str, record_id: UUID, session: SupabaseSess
     return bool(response.json())
 
 
-async def get_owned_active_challenge(session: SupabaseSession) -> dict[str, object] | None:
-    async with httpx.AsyncClient(timeout=5) as client:
-        response = await client.get(
-            f"{config.SUPABASE_URL}/rest/v1/active_challenges",
-            headers={
-                "apikey": config.SUPABASE_PUBLISHABLE_KEY,
-                "Authorization": f"Bearer {session.access_token}",
-            },
-            params=[
-                ("select", "id,action_id,starts_on,ends_on,first_checkin_on,status,created_at,expires_at"),
-                ("status", "eq.active"),
-                ("order", "starts_on.desc"),
-                ("limit", "1"),
-            ],
-        )
+async def get_owned_active_challenge(
+    session: SupabaseSession, client: httpx.AsyncClient | None = None
+) -> dict[str, object] | None:
+    if client is None:
+        async with httpx.AsyncClient(timeout=5) as owned_client:
+            return await get_owned_active_challenge(session, owned_client)
+    response = await client.get(
+        f"{config.SUPABASE_URL}/rest/v1/active_challenges",
+        headers={
+            "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": f"Bearer {session.access_token}",
+        },
+        params=[
+            ("select", "id,action_id,starts_on,ends_on,first_checkin_on,status,created_at,expires_at"),
+            ("status", "eq.active"),
+            ("order", "starts_on.desc"),
+            ("limit", "1"),
+        ],
+    )
     response.raise_for_status()
     records = response.json()
     return records[0] if records else None
