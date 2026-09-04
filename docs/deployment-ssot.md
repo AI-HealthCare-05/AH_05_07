@@ -99,6 +99,13 @@ the public smoke passed, and
 `6d100754-7e85-4d43-b466-e7944c61a0c0` was restored at 100% with the same
 smoke passing. This does not close the remaining Gate C evidence.
 
+Issue #166 completed a bounded production Cloud Run requests-log review after a
+synthetic signed-in refresh. The operator selected the `bp7-api` requests stream
+in `asia-northeast3` and found request metadata only: no secret, JWT, user
+identifier, request body, or health value was displayed. Do not retain raw log
+output, identifiers, query strings, or screenshots as release evidence. Repeat
+this review after a logging- or request-path change.
+
 Issue #146 introduces reconciliation of this ledger and the durable restart handoff.
 Future releases append a dated entry or replace the `Latest reviewed` section
 only when all recorded identifiers and results have been verified.

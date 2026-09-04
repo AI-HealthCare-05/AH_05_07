@@ -89,24 +89,27 @@ gate are not complete.
 
 1. Add automated signed-in browser evidence for recovery, validation,
    duplicate, timeout, empty, stale, failure, and check-in status-edit/delete states.
-2. Inspect representative Cloud Run logs after a synthetic request and record
-   only whether prohibited identity, body, and health values were absent.
-3. Expand the sanitized observation-load sample before setting a P95 target;
+2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
    reduced the observed cold sample, but the current manual sample is small.
-4. Complete the evaluator-facing seven-day dashboard evidence: separate BP,
+3. Complete the evaluator-facing seven-day dashboard evidence: separate BP,
    challenge adherence, and future model signal; capture normal, empty, and
    failure states without causal-improvement language.
-5. Start the risk-signal release gate only after the operational evidence above
+4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
    least two-model and multiple-metric comparison, model card, and repeated-
    input consistency evidence.
-6. Consider asynchronous model processing only if a separate ADR documents a
+5. Consider asynchronous model processing only if a separate ADR documents a
    measured latency, duration, or reliability trigger. Persist job state and
    results in PostgreSQL; do not add Redis or a worker merely to mirror a
    reference architecture. OCR, prescription/medical-document handling, and
    LLM guidance are outside SK7 scope.
+
+The representative Cloud Run requests-log review is complete under Issue #166:
+after a synthetic signed-in refresh, the operator reviewed the bounded
+production request-metadata list and found no secret, user identifier, request
+body, or health value. No raw log output is retained.
 
 Each item requires its own Issue, short branch, pull request, verification, and
 squash merge. A production action requires the explicit approval and gate named

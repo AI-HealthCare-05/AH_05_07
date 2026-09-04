@@ -34,4 +34,17 @@ The self-test creates temporary synthetic files to prove that each prohibited ma
 
 This static check is evidence, not a production-log guarantee. After a synthetic production request, review representative Cloud Run logs manually without copying user identity, JWTs, request bodies, or health values into Issues, pull requests, or screenshots.
 
+## Recorded production review
+
+Issue #166 performed the required bounded review after a synthetic signed-in
+browser refresh. The operator selected the Cloud Run `requests` log stream for
+the production `bp7-api` service in `asia-northeast3` and reviewed the resulting
+request-metadata list only. No secret, JWT, email or other user identifier,
+request body, or health value was displayed. No raw log entry, identifier,
+query string, or screenshot is retained as evidence.
+
+This is a point-in-time operational check, not a claim that future application
+or infrastructure changes cannot add unsafe logging. Keep the static verifier in
+CI and repeat the bounded review after any logging- or request-path change.
+
 The boundary follows Supabase guidance: publishable keys are appropriate for browser clients, while `service_role` and secret keys must not be exposed publicly. See [Secure configuration of Supabase products](https://supabase.com/docs/guides/security/product-security).
