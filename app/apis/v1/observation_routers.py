@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
@@ -302,28 +303,34 @@ async def get_observation_window(
     validate_observation_window(start_on, end_on)
     try:
         session = await observation_session(authorization)
-        blood_pressure_observations = await list_owned_records(
-            "blood_pressure_observations",
-            "id,observed_on,period,systolic,diastolic,created_at,expires_at",
-            start_on,
-            end_on,
-            session,
-        )
-        challenge_events = await list_owned_records(
-            "challenge_events",
-            "id,observed_on,action_id,status,created_at,expires_at",
-            start_on,
-            end_on,
-            session,
-        )
-        active_challenge = await get_owned_active_challenge(session)
-        challenge_checkins = await list_owned_records(
-            "challenge_checkins",
-            "id,challenge_id,action_id,observed_on,status,created_at,expires_at",
-            start_on,
-            end_on,
-            session,
-        )
+        async with httpx.AsyncClient(timeout=5) as client:
+            blood_pressure_observations, challenge_events, active_challenge, challenge_checkins = await asyncio.gather(
+                list_owned_records(
+                    "blood_pressure_observations",
+                    "id,observed_on,period,systolic,diastolic,created_at,expires_at",
+                    start_on,
+                    end_on,
+                    session,
+                    client,
+                ),
+                list_owned_records(
+                    "challenge_events",
+                    "id,observed_on,action_id,status,created_at,expires_at",
+                    start_on,
+                    end_on,
+                    session,
+                    client,
+                ),
+                get_owned_active_challenge(session, client),
+                list_owned_records(
+                    "challenge_checkins",
+                    "id,challenge_id,action_id,observed_on,status,created_at,expires_at",
+                    start_on,
+                    end_on,
+                    session,
+                    client,
+                ),
+            )
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
 
