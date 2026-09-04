@@ -26,6 +26,18 @@ function koreaToday(): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+function shiftKoreaDate(value: string, offset: number): string {
+  const date = new Date(`${value}T12:00:00+09:00`);
+  date.setDate(date.getDate() + offset);
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function currentChallengeWindow(status: "completed" | "skipped") {
   const observedOn = koreaToday();
   return {
@@ -187,6 +199,63 @@ test("synthetic signed-in refresh failure retains the previously loaded records"
   await expect(page.getByRole("status")).toContainText("새로고침에 실패했습니다. 이전에 불러온 기록을 표시하고 있어요.");
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
   expect(windowRequests).toBe(2);
+});
+
+test("synthetic signed-in session reopens the selected prior window without a mutation", async ({ page }) => {
+  const today = koreaToday();
+  const currentStart = shiftKoreaDate(today, -6);
+  const priorStart = shiftKoreaDate(today, -13);
+  const priorEnd = shiftKoreaDate(today, -7);
+  const requests: Array<{ start: string | null; end: string | null; method: string }> = [];
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      requests.push({ start: url.searchParams.get("start_on"), end: url.searchParams.get("end_on"), method: request.method() });
+      const isPrior = url.searchParams.get("start_on") === priorStart;
+      await route.fulfill({
+        contentType: "application/json",
+        status: 200,
+        headers,
+        body: JSON.stringify(isPrior
+          ? { ...emptyWindow, start_on: priorStart, end_on: priorEnd, blood_pressure_observations: [{ id: "e2e-prior", observed_on: priorStart, period: "morning", systolic: 120, diastolic: 80 }] }
+          : { ...emptyWindow, start_on: currentStart, end_on: today }),
+      });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "이전 7일 보기" }).click();
+
+  await expect(page).toHaveURL(/dashboard_window=prior/);
+  await expect(page.getByText("이전 7일 기록을 읽기 전용으로 보고 있어요.")).toBeVisible();
+  await expect(page.getByText("120/80 mmHg")).toBeVisible();
+  await expect(page.getByRole("button", { name: "혈압 기록 저장" })).toBeDisabled();
+
+  await page.reload();
+  await expect(page).toHaveURL(/dashboard_window=prior/);
+  await expect(page.getByText("120/80 mmHg")).toBeVisible();
+  await page.getByRole("button", { name: "현재 7일 보기" }).click();
+  await expect(page).not.toHaveURL(/dashboard_window=prior/);
+
+  expect(requests).toEqual([
+    { start: currentStart, end: today, method: "GET" },
+    { start: priorStart, end: priorEnd, method: "GET" },
+    { start: priorStart, end: priorEnd, method: "GET" },
+    { start: currentStart, end: today, method: "GET" },
+  ]);
 });
 
 test("synthetic signed-in session updates only the current owned check-in status", async ({ page }) => {
