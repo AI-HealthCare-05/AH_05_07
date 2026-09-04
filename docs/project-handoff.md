@@ -102,9 +102,11 @@ gate are not complete.
 2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
    reduced the observed cold sample, but the current manual sample is small.
-3. Complete the evaluator-facing seven-day dashboard evidence: separate BP,
-   challenge adherence, and future model signal; capture normal, empty, and
-   failure states without causal-improvement language.
+3. Issue #184 adds evaluator-facing seven-day dashboard evidence: BP,
+   challenge adherence, legacy records, and the not-ready risk-signal state
+   have distinct lanes across normal, empty, and initial-load-failure fixtures.
+   A verified model fact and a release-ready seven-day trend remain separate
+   follow-up work; do not use causal-improvement language.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at

@@ -117,7 +117,7 @@ function Journey({ today }: { today: string }) {
   const days = ["정원 입구", "허브 정원", "그늘 아래", "나무 다리", "독서 쉼터", "한국 정자", "노을 전망"];
   const index = journeyDayIndex(today);
   return (
-    <section className="journey" aria-labelledby="journey-title">
+    <section className="journey" data-main-section="journey" aria-labelledby="journey-title">
       <div className="journey-copy">
         <p className="eyebrow">오늘의 맥락</p>
         <h2 id="journey-title">{dateLabel(today)}의 조용한 기록</h2>
@@ -166,6 +166,7 @@ function App() {
   const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
   const startOn = useMemo(() => fixture?.window?.start_on ?? koreaDate(-6), [fixture]);
   const evidenceMode = Boolean(fixture);
+  const riskSignalState = fixture?.dashboard.riskSignal ?? "not-ready";
   const [session, setSession] = useState<Session | null>(e2eSession);
   const [windowData, setWindowData] = useState<ObservationWindow | null>(fixture?.window ?? null);
   const [windowState, setWindowState] = useState<WindowState>(fixture?.loadError ? "error" : fixture ? "ready" : "loading");
@@ -400,7 +401,7 @@ function App() {
 
   return (
     <main className="page-shell" data-evidence-fixture={fixture?.name}>
-      <header className="topbar">
+      <header className="topbar" data-main-section="header">
         <div><p className="eyebrow">상균7데이즈</p><h1>7일 기록</h1>{fixture && <p className="fixture-label">검토 상태 · {fixture.name}</p>}</div>
         {!evidenceMode && <button className="text-button" onClick={() => void supabase?.auth.signOut()}>로그아웃</button>}
       </header>
@@ -410,7 +411,7 @@ function App() {
       <WindowFeedback state={windowState} onRetry={() => void refreshWindow()} />
       {(windowState === "ready" || windowState === "refreshing" || windowState === "refresh-error") && (
         <>
-          <section className="today-summary" aria-labelledby="today-title">
+          <section className="today-summary" data-main-section="today-summary" aria-labelledby="today-title">
             <div><p className="eyebrow">오늘의 사실</p><h2 id="today-title">{dateLabel(today)}</h2></div>
             <dl>
               <div><dt>혈압 측정</dt><dd>{todayMeasurement ? (evidenceMode ? "기록 있음 · •••/•• mmHg" : `기록 있음 · ${displayMeasurement(todayMeasurement)}`) : "아직 기록 없음"}</dd></div>
@@ -418,7 +419,7 @@ function App() {
             </dl>
           </section>
 
-          <section className="work-lanes" aria-label="오늘의 기록 작업">
+          <section className="work-lanes" data-main-section="record-actions" aria-label="오늘의 기록 작업">
             <form className="panel measurement-panel" onSubmit={submitBloodPressure} noValidate>
               <div className="section-heading"><div><p className="eyebrow">01 · 측정</p><h2>{editingBloodPressureId ? "혈압 기록 수정" : "혈압 측정 기록"}</h2></div>{editingBloodPressureId && <button className="text-button" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div>
               <p className="muted">기록 조건을 맞추기 위한 참고 안내입니다. 수치를 해석하거나 건강 결과를 판단하지 않습니다.</p>
@@ -443,16 +444,21 @@ function App() {
             </section>
           </section>
 
-          <section className="panel recap" aria-labelledby="recap-title">
-            <div className="section-heading"><div><p className="eyebrow">03 · 최근 7일</p><h2 id="recap-title">사실로 다시 보기</h2></div><div className="inline-actions">{!evidenceMode && <button className="secondary" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "최근 7일 내보내기"}</button>}<button className="text-button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></div>
-            <p className="muted">측정, 챌린지 참여, 이전 기록은 서로 다른 사실로 표시됩니다.</p>
+          <section className="panel recap" data-main-section="seven-day-dashboard" aria-labelledby="recap-title">
+            <div className="section-heading"><div><p className="eyebrow">03 · 최근 7일</p><h2 id="recap-title">7일 대시보드</h2></div><div className="inline-actions">{!evidenceMode && <button className="secondary" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "최근 7일 내보내기"}</button>}<button className="text-button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></div>
+            <p className="muted">혈압 관찰, 챌린지 참여, 입력 기반 위험군 선별 신호 준비 상태, 이전 기록은 서로 다른 사실로 표시됩니다.</p>
             {pendingBloodPressureDeletion && <div className="confirmation" role="alert"><span>{dateLabel(pendingBloodPressureDeletion.observed_on)} 혈압 기록을 삭제할까요?</span><div className="inline-actions"><button className="danger" onClick={() => void confirmBloodPressureDeletion()} disabled={controlsDisabled}>삭제</button><button className="secondary" onClick={() => setPendingBloodPressureDeletion(null)} disabled={controlsDisabled}>취소</button></div></div>}
             {editingChallengeCheckin && <div className="confirmation" role="status"><span>{dateLabel(editingChallengeCheckin.observed_on)} · {challengeLabel(editingChallengeCheckin.action_id)} 상태</span><div className="inline-actions"><button onClick={() => void updateOwnedChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button><button className="secondary" onClick={() => void updateOwnedChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button><button className="text-button" onClick={() => setEditingChallengeCheckin(null)} disabled={controlsDisabled}>취소</button></div></div>}
             {pendingChallengeCheckinDeletion && <div className="confirmation" role="alert"><span>{dateLabel(pendingChallengeCheckinDeletion.observed_on)} 챌린지 기록을 삭제할까요?</span><div className="inline-actions"><button className="danger" onClick={() => void confirmChallengeCheckinDeletion()} disabled={controlsDisabled}>삭제</button><button className="secondary" onClick={() => setPendingChallengeCheckinDeletion(null)} disabled={controlsDisabled}>취소</button></div></div>}
             <div className="recap-columns">
-              <section aria-labelledby="measurements-title"><h3 id="measurements-title">혈압 관찰</h3><ul className="record-list">{windowData?.blood_pressure_observations.length ? windowData.blood_pressure_observations.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {periodLabel(record.period)} · {displayMeasurement(record)}</span>{!evidenceMode && <span className="inline-actions"><button className="secondary record-action" onClick={() => beginBloodPressureEdit(record)} disabled={controlsDisabled}>수정</button><button className="danger record-action" onClick={() => setPendingBloodPressureDeletion(record)} disabled={controlsDisabled}>삭제</button></span>}</li>) : <li className="empty-record">아직 혈압 관찰 기록이 없습니다.</li>}</ul></section>
-              <section aria-labelledby="checkins-title"><h3 id="checkins-title">챌린지 참여</h3><ul className="record-list">{windowData?.challenge_checkins.length ? windowData.challenge_checkins.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {challengeLabel(record.action_id)} · {checkinLabel(record.status)}</span>{!evidenceMode && record.challenge_id === activeChallenge?.id && !activeChallengeEnded && <span className="inline-actions"><button className="secondary record-action" onClick={() => setEditingChallengeCheckin(record)} disabled={controlsDisabled}>수정</button><button className="danger record-action" onClick={() => setPendingChallengeCheckinDeletion(record)} disabled={controlsDisabled}>삭제</button></span>}</li>) : <li className="empty-record">아직 챌린지 참여 기록이 없습니다.</li>}</ul></section>
-              <section aria-labelledby="legacy-title"><h3 id="legacy-title">이전 기록</h3><ul className="record-list">{windowData?.challenge_events.length ? windowData.challenge_events.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {challengeLabel(record.action_id)} · {checkinLabel(record.status)} · 이전 기록</span></li>) : <li className="empty-record">이전 기록이 없습니다.</li>}</ul></section>
+              <section className="risk-signal-panel" data-dashboard-lane="risk-signal" aria-labelledby="risk-signal-title">
+                <div className="risk-signal-heading"><div><p className="eyebrow">신호</p><h3 id="risk-signal-title">입력 기반 위험군 선별 신호</h3></div><span>{riskSignalState === "not-ready" ? "준비 중" : ""}</span></div>
+                <p>{riskSignalState === "not-ready" ? "검증된 모델 근거가 준비되기 전에는 결과를 제공하지 않습니다." : ""}</p>
+                <small>{riskSignalState === "not-ready" ? "현재는 점수, 확률, 등급을 표시하지 않습니다." : ""}</small>
+              </section>
+              <section data-dashboard-lane="blood-pressure" aria-labelledby="measurements-title"><h3 id="measurements-title">혈압 관찰</h3><ul className="record-list">{windowData?.blood_pressure_observations.length ? windowData.blood_pressure_observations.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {periodLabel(record.period)} · {displayMeasurement(record)}</span>{!evidenceMode && <span className="inline-actions"><button className="secondary record-action" onClick={() => beginBloodPressureEdit(record)} disabled={controlsDisabled}>수정</button><button className="danger record-action" onClick={() => setPendingBloodPressureDeletion(record)} disabled={controlsDisabled}>삭제</button></span>}</li>) : <li className="empty-record">아직 혈압 관찰 기록이 없습니다.</li>}</ul></section>
+              <section data-dashboard-lane="challenge" aria-labelledby="checkins-title"><h3 id="checkins-title">챌린지 참여</h3><ul className="record-list">{windowData?.challenge_checkins.length ? windowData.challenge_checkins.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {challengeLabel(record.action_id)} · {checkinLabel(record.status)}</span>{!evidenceMode && record.challenge_id === activeChallenge?.id && !activeChallengeEnded && <span className="inline-actions"><button className="secondary record-action" onClick={() => setEditingChallengeCheckin(record)} disabled={controlsDisabled}>수정</button><button className="danger record-action" onClick={() => setPendingChallengeCheckinDeletion(record)} disabled={controlsDisabled}>삭제</button></span>}</li>) : <li className="empty-record">아직 챌린지 참여 기록이 없습니다.</li>}</ul></section>
+              <section data-dashboard-lane="legacy" aria-labelledby="legacy-title"><h3 id="legacy-title">이전 기록</h3><ul className="record-list">{windowData?.challenge_events.length ? windowData.challenge_events.map((record) => <li key={record.id}><span><strong>{dateLabel(record.observed_on)}</strong> · {challengeLabel(record.action_id)} · {checkinLabel(record.status)} · 이전 기록</span></li>) : <li className="empty-record">이전 기록이 없습니다.</li>}</ul></section>
             </div>
           </section>
         </>

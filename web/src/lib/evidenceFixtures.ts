@@ -8,6 +8,7 @@ export type EvidenceFixture = {
   name: EvidenceFixtureName;
   asOf: string;
   window: ObservationWindow | null;
+  dashboard: { riskSignal: "not-ready" };
   loadError?: boolean;
 };
 
@@ -27,6 +28,7 @@ const fixtures: Record<EvidenceFixtureName, EvidenceFixture> = {
   "VP-04": {
     name: "VP-04",
     asOf,
+    dashboard: { riskSignal: "not-ready" },
     window: {
       ...windowBounds,
       blood_pressure_observations: [],
@@ -38,6 +40,7 @@ const fixtures: Record<EvidenceFixtureName, EvidenceFixture> = {
   "VP-07a": {
     name: "VP-07a",
     asOf,
+    dashboard: { riskSignal: "not-ready" },
     window: {
       ...windowBounds,
       blood_pressure_observations: [
@@ -54,6 +57,7 @@ const fixtures: Record<EvidenceFixtureName, EvidenceFixture> = {
   "VP-10": {
     name: "VP-10",
     asOf,
+    dashboard: { riskSignal: "not-ready" },
     window: {
       ...windowBounds,
       blood_pressure_observations: [
@@ -72,7 +76,7 @@ const fixtures: Record<EvidenceFixtureName, EvidenceFixture> = {
       ],
     },
   },
-  "VP-11a": { name: "VP-11a", asOf, window: null, loadError: true },
+  "VP-11a": { name: "VP-11a", asOf, dashboard: { riskSignal: "not-ready" }, window: null, loadError: true },
 };
 
 export function getEvidenceFixture(value: string | undefined): EvidenceFixture | null {
