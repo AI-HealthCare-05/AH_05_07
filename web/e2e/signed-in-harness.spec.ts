@@ -61,6 +61,29 @@ function currentChallengeWindow(status: "completed" | "skipped") {
   };
 }
 
+function recordBrowseWindow() {
+  const observedOn = koreaToday();
+  return {
+    ...emptyWindow,
+    active_challenge: {
+      id: "e2e-browse-challenge",
+      action_id: "walk-10-minutes",
+      starts_on: observedOn,
+      ends_on: observedOn,
+      first_checkin_on: observedOn,
+    },
+    blood_pressure_observations: [
+      { id: "e2e-browse-observation", observed_on: observedOn, period: "morning", systolic: 120, diastolic: 80 },
+    ],
+    challenge_checkins: [
+      { id: "e2e-browse-checkin", challenge_id: "e2e-browse-challenge", action_id: "walk-10-minutes", observed_on: observedOn, status: "completed" },
+    ],
+    challenge_events: [
+      { id: "e2e-browse-legacy", action_id: "sleep-routine", observed_on: shiftKoreaDate(observedOn, -1), status: "skipped" },
+    ],
+  };
+}
+
 async function routeApiWindow(page: Page, status: number, body: unknown, onSave?: () => void) {
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
@@ -501,4 +524,89 @@ test("synthetic signed-in session recovers a blood-pressure draft after the shar
   await expect(saveButton).toBeEnabled();
   expect(saveRequests).toBe(1);
   releaseRequest?.();
+});
+
+test("synthetic signed-in session opens a separated record detail and starts only the owned current edit", async ({ page }) => {
+  await routeApiWindow(page, 200, recordBrowseWindow());
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "기록 목록 보기" }).click();
+  const bloodPressureLane = page.locator('[data-record-lane="blood-pressure"]');
+  await bloodPressureLane.getByRole("button", { name: "상세 보기" }).click();
+
+  const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
+  await expect(detail).toContainText("혈압 관찰");
+  await expect(detail).toContainText("120/80 mmHg");
+  await detail.getByRole("button", { name: "수정" }).click();
+
+  await expect(page.getByRole("heading", { name: "혈압 기록 수정" })).toBeVisible();
+  await expect(page.getByLabel(/수축기/)).toHaveValue("120");
+});
+
+test("synthetic signed-in prior detail remains read-only without a mutation", async ({ page }) => {
+  const requests: string[] = [];
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      requests.push(request.method());
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(recordBrowseWindow()) });
+      return;
+    }
+    requests.push(request.method());
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "이전 7일 보기" }).click();
+  await page.getByRole("button", { name: "기록 목록 보기" }).click();
+  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+
+  const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
+  await expect(detail).toContainText("이전 7일의 기록은 읽기 전용입니다.");
+  await expect(detail.getByRole("button", { name: "수정" })).toHaveCount(0);
+  await expect(detail.getByRole("button", { name: "삭제" })).toHaveCount(0);
+  expect(requests).toEqual(["GET", "GET"]);
+});
+
+test("synthetic signed-in session tells the user when a selected record disappears after refresh", async ({ page }) => {
+  let windowRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      windowRequests += 1;
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(windowRequests === 1 ? recordBrowseWindow() : emptyWindow) });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "기록 목록 보기" }).click();
+  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.getByRole("button", { name: "새로고침" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("선택한 기록을 찾을 수 없습니다.");
+  await page.getByRole("button", { name: "목록으로 돌아가기" }).click();
+  await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText("아직 혈압 관찰 기록이 없습니다.");
+  expect(windowRequests).toBe(2);
 });
