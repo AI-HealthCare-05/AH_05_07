@@ -51,6 +51,7 @@ test, or deployment work complete before the repository evidence exists.
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
+| UI production handoff | Issue #190: implement the Notion-approved Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure; final visual QA, asset selection, R2, and production parity remain separate |
 
 The table records the evidence available when PR #147 was opened. It cannot
 predict that pull request's squash-merge commit or later work. At every restart,
@@ -79,6 +80,9 @@ identifier and sanitized rehearsal evidence exist.
   policies and local pgTAP suites.
 - Approved G3 seven-day signature experience, deterministic evidence fixtures,
   responsive asset delivery, and sanitized desktop/mobile review evidence.
+- CSS-first Calm Clay Journey shell with S01–S14 semantic screen states,
+  safe URL/back-forward navigation, separate fact lanes, and reduced-motion
+  fallbacks. Final Canva assets are intentionally not coupled to the shell.
 - Dependency-free secret-boundary and public deployment-smoke verification.
 
 The risk-signal UI remains unreleased because the verified model artifact,
@@ -102,16 +106,14 @@ gate are not complete.
 2. Expand the sanitized observation-load sample before setting a P95 target;
    the deployed check-in foreign-key index removed the Advisor finding and
    reduced the observed cold sample, but the current manual sample is small.
-3. Issue #184 adds evaluator-facing seven-day dashboard evidence: BP,
+3. Issues #184–#188 add evaluator-facing seven-day dashboard, range, browse,
+   and focused-detail evidence: BP,
    challenge adherence, legacy records, and the not-ready risk-signal state
-   have distinct lanes across normal, empty, and initial-load-failure fixtures.
-   Issue #186 adds current/prior seven-day navigation that preserves the
-   selected range on reload and blocks retrospective mutation. Issue #188 adds
-   a separate browse and single-record-detail state: current owned records can
-   enter the existing edit/delete flow, while prior and legacy records remain
-   read-only and a refreshed-away selection is explicit. A verified model fact
-   and a release-ready seven-day trend remain separate follow-up work; do not
-   use causal-improvement language.
+   remain distinct. Issue #190 maps those contracts to the Calm Clay Journey
+   S01–S14 application shell without changing the API, database, ownership,
+   authentication, or model boundary. Visual QA, actual Canva asset approval,
+   R2 delivery, and production parity are the next UI gates. A verified model
+   fact remains separate follow-up work; do not use causal-improvement language.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at

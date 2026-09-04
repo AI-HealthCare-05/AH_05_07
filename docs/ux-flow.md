@@ -1,17 +1,42 @@
 # UX flow
 
-## Current production flow
+## Current application flow
 
 ```mermaid
 flowchart TD
-    A["Email magic link"] --> B["Signed-in 7-day page"]
-    B --> C["BP observation"]
-    B --> D["One active 7-day challenge and daily check-in"]
-    C --> E["Separated recent lists"]
-    D --> E
+    A["S01 Email link"] --> B["S02 Today"]
+    B --> C["S03–S07 Record"]
+    B --> D["S08–S10 Review"]
+    B --> E["S11 Signal status"]
+    D --> F["S14 Settings"]
 ```
 
-The current web supports authentication, a concise pre-measurement checklist, BP creation, edit, explicit-confirmation delete, bounded recent-seven-day JSON export, one active seven-day challenge selection, daily check-ins, status-only check-in edit, explicit-confirmation check-in delete, and a separated seven-day read. The first check-in locks the chosen action for that challenge. Risk signal and structured feedback are not yet product-connected.
+Issue #190 introduces the Calm Clay Journey application shell and semantic
+screens S01–S14. The current web supports authentication, a concise
+pre-measurement checklist, BP creation, edit, explicit-confirmation delete,
+bounded seven-day JSON export, one active challenge selection, daily check-ins,
+status-only check-in edit, explicit-confirmation check-in delete, and separated
+review screens. The first check-in locks the chosen action. The risk-signal
+screen remains an explicit not-ready state; structured feedback and a verified
+model result are not product-connected.
+
+The signed-in screen state is reflected by a safe `screen` URL parameter. The
+five primary destinations are Today, Records, Seven days, Signal, and Settings;
+focused work screens remain reachable from those destinations. Browser
+back/forward restores the selected screen, record key, and current/prior range
+without introducing a router dependency.
+
+| Screen | Purpose |
+|---|---|
+| S01 | Signed-out email-link gate |
+| S02 | Today home and separate fact summary |
+| S03–S06 | Challenge choice, BP entry, confirmed-save, and locked state |
+| S07 | Today detail with three separate fact lanes |
+| S08–S09 | Record browse and one selected record |
+| S10 | Current/prior seven-day recap and export |
+| S11 | Honest risk-signal not-ready state |
+| S12–S13 | Confirmed empty and initial-load failure |
+| S14 | Account, locale, export, and recovery help |
 
 ## Accepted P0 flow
 

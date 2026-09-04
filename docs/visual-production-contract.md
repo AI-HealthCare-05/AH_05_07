@@ -2,7 +2,7 @@
 
 ## Purpose and status
 
-This contract governs the visual direction, state coverage, evidence, and asset handling for the SK7 signature experience. It is normative for future visual work; it does not claim that the current web already conforms.
+This contract governs the visual direction, state coverage, evidence, and asset handling for the SK7 signature experience. Issue #190 implements its CSS-first Calm Clay Journey foundation and S01–S14 semantic screen structure. Final visual QA, approved Canva asset selection, R2 publication, and production-parity evidence remain later gates and are not implied by that implementation.
 
 The product promise is:
 
@@ -59,6 +59,27 @@ Future visual work must:
 - keep destructive and secondary actions visually subordinate without hiding them.
 
 Avoid generic SaaS dashboards, a separate card for every sentence, excessive pills, gradients, glass effects, decorative shadows, alarm-like clinical styling, and gamified streak or reward language. Decorative media must not compete with the daily action.
+
+### Calm Clay Journey implementation profile
+
+Issue #190 maps the approved handoff tokens into `web/src/styles.css` and keeps
+the screen registry and Korean copy map in `web/src/ui/journey.ts`. The shell
+uses warm cream, sage, lavender, restrained water and coral accents, soft clay
+geometry, and CSS-only landscape shapes. Core flows remain usable when images
+are blocked; no new binary asset, UI framework, router, or animation dependency
+is introduced.
+
+Screen transitions use a 260–360 ms shared-axis entrance. The signed-out gate
+uses one 520 ms gate-open transition, confirmed persistence alone may show the
+save ripple, the locked-state marker settles once, and the seven-day recap pans
+once. `prefers-reduced-motion` replaces those movements with a 160 ms fade and
+stops loading loops. Shake, alarm flash, confetti, scoring bursts, and anxious
+character reactions are prohibited.
+
+The implementation intentionally leaves illustration slots and CSS scene
+layers replaceable. Visual QA precedes final Canva asset selection; approved
+derivatives may reach R2 only through the asset register and a separate scoped
+change.
 
 ## Information order
 
@@ -255,4 +276,9 @@ After G2 approval, open a dedicated G3 Issue and short branch, then:
 
 ## Phase boundary
 
-This contract does not authorize React or CSS changes, Figma or Canva writes, R2 configuration or uploads, new dependencies, API, database, migration, RLS, authentication, retention, or deployment changes, model implementation, or the use of real user data. Each later gate proceeds through its own Issue, short branch, pull request, and evidence.
+Issue #190 authorizes the bounded React and CSS foundation described above. It
+does not authorize Canva writes, final binary selection, R2 configuration or
+uploads, new dependencies, API, database, migration, RLS, authentication,
+retention, deployment, model implementation, or real user data. Visual QA,
+asset approval, public delivery, and production-parity evidence remain separate
+gates with their own Issue, short branch, pull request, and evidence.
