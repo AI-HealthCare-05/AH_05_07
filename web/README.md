@@ -32,7 +32,9 @@ uses `ko-KR`, `Asia/Seoul`, synthetic dates, and masked blood-pressure values.
 an intercepted API origin. It never signs in to Supabase, sends a real JWT, or
 reads a production record. The harness covers browser-side validation, a `401`
 session-recovery transition, and an initial load failure that must not be
-presented as an empty record set.
+presented as an empty record set. It also proves that a pending save disables a
+duplicate submission, an uncertain save is not presented as successful, and a
+failed refresh retains the previously loaded records with a stale-data notice.
 
 For local review, these cross-platform commands select a dedicated Vite mode.
 Each review screen shows its fixture label; this label is absent from the
