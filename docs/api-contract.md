@@ -92,6 +92,7 @@ Request validation errors use a normalized response that never returns the submi
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
 | Model artifact not ready | `503` | No provisional signal. |
 | Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
+| Browser request exceeds 8 seconds | Browser-normalized error | The request is aborted once; the web keeps the active draft or confirmation, offers a fresh read, and never retries or claims the write succeeded. |
 | Unexpected failure | `500` | No secret, token, request body, or health value in the response. |
 
 ## Documentation endpoints
