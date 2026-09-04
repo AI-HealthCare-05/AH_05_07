@@ -41,14 +41,19 @@ test, or deployment work complete before the repository evidence exists.
 | Concern | Verified checkpoint |
 | --- | --- |
 | Source repository | `AI-HealthCare-05/AH_05_07`, default branch `main` |
-| Current source baseline | `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41` (PR #145) |
+| Source baseline before this handoff | `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41` (PR #145) |
 | G3 signature implementation | PR #142, commit `805cf2bad7ab6fd4852fe51a6b6d3ccf2a40b411` |
 | G4 readiness record | PR #144, commit `856606a2a230558887e294e44e8fe99186a542a8` |
 | Production web | Cloudflare Worker `ah-05-07-pages` |
 | Deployment snapshot | `emotigom/ah-05-07-pages`; run `33822332784` passed on 2026-09-04 |
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
-| Current documentation work | Issue #146, G4 and restart SSOT reconciliation |
+| Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
+
+The table records the evidence available when PR #147 was opened. It cannot
+predict that pull request's squash-merge commit or later work. At every restart,
+resolve the current upstream `main` SHA and recent merged pull requests before
+treating any source commit as current.
 
 Issue #143 records a passed public web/API/CORS smoke, magic-link sign-in and
 session refresh, and a clean browser console/network review for the G4 web
@@ -101,29 +106,37 @@ The operator keeps the working clone at
 `C:\Users\emotigom\PycharmProjects\AH_05_07` and downloads generated patches to
 `C:\pj`.
 
-Before applying an Issue patch in PowerShell:
+Every patch delivery must provide a full expected base SHA, patch filename, and
+branch name. Apply those values in PowerShell:
 
 ```powershell
 Set-Location C:\Users\emotigom\PycharmProjects\AH_05_07
 git switch main
 git pull --ff-only
-git rev-parse HEAD
-git status --short
-git switch -c docs/146-g4-recovery-ssot
-git apply --check C:\pj\AH_05_07-issue-146.patch
-git apply C:\pj\AH_05_07-issue-146.patch
+
+$ExpectedBase = "<full expected base SHA>"
+$PatchFile = "C:\pj\<patch filename>.patch"
+$BranchName = "<type>/<issue>-<short-name>"
+$ActualBase = git rev-parse HEAD
+$Dirty = git status --porcelain
+
+if ($ActualBase -ne $ExpectedBase) {
+    throw "Unexpected base commit: $ActualBase"
+}
+if ($Dirty) {
+    throw "Working tree is not clean."
+}
+
+git switch -c $BranchName
+git apply --check $PatchFile
+git apply $PatchFile
 git diff --check
 git status --short
 ```
 
-For Issue #146, `git rev-parse HEAD` must equal
-`61ee356e43eeb4f06120af870c4fc2b9ee5f9d41` and `git status --short` must be
-empty before creating the branch. Stop if either check differs. Review the diff
-before committing, then use a pull request and squash merge according to
-`AGENTS.md`.
-
-Future patch instructions must name their own baseline commit, filename, and
-branch. Do not reuse the Issue #146 branch or apply a patch to an unknown base.
+Stop on either guard failure. Review the diff before committing, then use a pull
+request and squash merge according to `AGENTS.md`. Never reuse an old Issue
+branch or apply a patch to an unknown base.
 
 ## Verification commands
 
