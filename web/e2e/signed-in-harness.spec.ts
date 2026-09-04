@@ -273,3 +273,119 @@ test("synthetic signed-in session requires confirmation before deleting the curr
   await expect(page.getByRole("heading", { name: "챌린지 참여" }).locator("..")).toContainText("아직 챌린지 참여 기록이 없습니다.");
   expect(deleteRequests).toBe(1);
 });
+
+test("synthetic signed-in session keeps a blood-pressure draft after storage is unavailable", async ({ page }) => {
+  let saveRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(emptyWindow) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/blood-pressure" && request.method() === "POST") {
+      saveRequests += 1;
+      await route.fulfill({ contentType: "application/json", status: 503, headers, body: JSON.stringify({ detail: { code: "observation_storage_not_ready" } }) });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+  const saveButton = page.locator("form.measurement-panel button[type=submit]");
+  await saveButton.click();
+
+  await expect(page.getByRole("status")).toContainText("저장 여부를 확인하지 못했습니다.");
+  await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
+  await expect(page.getByLabel(/수축기/)).toHaveValue("120");
+  await expect(page.getByLabel(/이완기/)).toHaveValue("80");
+  await expect(saveButton).toBeEnabled();
+  expect(saveRequests).toBe(1);
+});
+
+test("synthetic signed-in session keeps current check-in editing recoverable after storage is unavailable", async ({ page }) => {
+  let updateRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(currentChallengeWindow("completed")) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/challenges/checkins/e2e-current-checkin" && request.method() === "PUT") {
+      updateRequests += 1;
+      await route.fulfill({ contentType: "application/json", status: 503, headers, body: JSON.stringify({ detail: { code: "observation_storage_not_ready" } }) });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "수정" }).click();
+  const editor = page.getByRole("status").filter({ hasText: "10분 걷기 상태" });
+  await editor.getByRole("button", { name: "건너뜀" }).click();
+
+  await expect(page.getByText("저장 여부를 확인하지 못했습니다. 목록을 다시 불러온 뒤 필요한 경우 다시 시도해 주세요.")).toBeVisible();
+  await expect(page.getByText("챌린지 상태를 수정했습니다.")).toHaveCount(0);
+  await expect(editor).toBeVisible();
+  await expect(editor.getByRole("button", { name: "건너뜀" })).toBeEnabled();
+  expect(updateRequests).toBe(1);
+});
+
+test("synthetic signed-in session keeps current check-in deletion recoverable after storage is unavailable", async ({ page }) => {
+  let deleteRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(currentChallengeWindow("completed")) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/challenges/checkins/e2e-current-checkin" && request.method() === "DELETE") {
+      deleteRequests += 1;
+      await route.fulfill({ contentType: "application/json", status: 503, headers, body: JSON.stringify({ detail: { code: "observation_storage_not_ready" } }) });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in");
+  await page.getByRole("button", { name: "삭제" }).click();
+  const confirmation = page.getByRole("alert").filter({ hasText: "챌린지 기록을 삭제할까요?" });
+  await confirmation.getByRole("button", { name: "삭제" }).click();
+
+  await expect(page.getByRole("status")).toContainText("삭제 여부를 확인하지 못했습니다.");
+  await expect(page.getByText("챌린지 기록을 삭제했습니다.")).toHaveCount(0);
+  await expect(confirmation).toBeVisible();
+  await expect(confirmation.getByRole("button", { name: "삭제" })).toBeEnabled();
+  expect(deleteRequests).toBe(1);
+});
