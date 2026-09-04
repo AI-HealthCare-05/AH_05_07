@@ -111,6 +111,12 @@ Files in `supabase/migrations/` are version-controlled database change instructi
 
 The current production project has had schema changes applied manually. Until its remote migration history has been reconciled with the repository and a linked CLI release procedure is reviewed, the approved production path is an operator-mediated execution in the Supabase SQL Editor.
 
+Issue #160 adds the additive `challenge_checkins(challenge_id, user_id)` index
+for the current Advisor finding. Apply it only through this gate, then re-run
+the Advisor and the sanitized signed-in observation-window measurement in
+[`observation-load-baseline.md`](observation-load-baseline.md). Do not treat a
+merged migration file as a deployed index.
+
 ### Deployed ownership verification
 
 Issue #149 records a 2026-09-04 preflight at source commit

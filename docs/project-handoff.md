@@ -91,8 +91,9 @@ gate are not complete.
    duplicate, timeout, empty, stale, and failure states.
 2. Inspect representative Cloud Run logs after a synthetic request and record
    only whether prohibited identity, body, and health values were absent.
-3. Establish a measured initial-load latency baseline and address the observed
-   sequential ownership-window reads before setting a target.
+3. Apply the separately reviewed additive check-in foreign-key index through
+   the Supabase migration gate, then repeat the sanitized observation-load
+   baseline before setting a target.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope.
 
