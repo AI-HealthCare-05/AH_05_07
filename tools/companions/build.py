@@ -58,10 +58,10 @@ def coat_profiles(kind):
     width = 0.68 if kind in ("seal", "capybara", "hedgehog") else 0.60
     head = (0.64, 0.47, 0.54) if kind in ("fox", "squirrel", "cat") else (0.67, 0.51, 0.59)
     if kind == "capybara":
-        head = (0.66, 0.53, 0.49)
+        head = (0.60, 0.62, 0.46)
     return (
         ((0, 0.015, 1.05), (width, 0.45, 0.81), 0.18, 1),
-        ((0, -0.01, 2.10), head, 0.10, 0.86),
+        ((0, -0.01, 2.10), head, 0.10, 0.70 if kind == "capybara" else 0.86),
         ((0, 0.025, 1.64), (0.39, 0.35, 0.4), 0, 1),
     )
 
@@ -91,8 +91,8 @@ def coat_front_y(kind, x, z):
 
 
 def eye_surface_offset(kind):
-    """Preserve the original eye embedding when the species cranium is shallower."""
-    if kind not in ("cat", "fox", "squirrel"):
+    """Preserve eye embedding when a species has a different cranium profile."""
+    if kind not in ("cat", "fox", "squirrel", "capybara"):
         return 0.0
     return coat_front_y(kind, 0.25, 2.25) - coat_front_y("bear", 0.25, 2.25)
 
@@ -713,6 +713,40 @@ def pointed_ear_point(point, center, radii, sign):
     return x, y, z
 
 
+def small_ear_center(kind, x, radius):
+    """Seat a small ear into its own cranium instead of the bear's fixed height."""
+    if kind not in ("otter", "capybara", "hedgehog") or radius <= 0:
+        raise ValueError("Expected a supported small ear and positive radius")
+    center, radii, pear, flatten = coat_profiles(kind)[1]
+    lower, upper = center[2], center[2] + radii[2]
+    for _ in range(48):
+        middle = (lower + upper) / 2
+        if profile_front_y(x, middle, center, radii, pear, flatten) is None:
+            upper = middle
+        else:
+            lower = middle
+    # Lower 70% of the radius overlaps the head. The existing hollow ear shell
+    # and its pivot both follow this seat; species warp later moves both too.
+    return x, 0, lower + radius * 0.30
+
+
+def capybara_face(rig, coat, dark):
+    """Broad blunt rostrum, small paired nostrils, and one quiet mouth line."""
+    center, radii, flatten = (0, -0.55, 2.055), (0.38, 0.36, 0.185), 0.55
+    muzzle = surface("Capybara blunt rostrum", center, radii, coat, 28, 48, flatten=flatten)
+    bind(muzzle, rig, fixed("head"))
+    for sign in (-1, 1):
+        x, z = sign * 0.16, 2.14
+        y = profile_front_y(x, z, center, radii, flatten=flatten)
+        nostril = surface("Capybara nostril", (x, y + 0.003, z), (0.027, 0.013, 0.018), dark, 12, 20)
+        bind(nostril, rig, fixed("head"))
+    mouth_points = []
+    for x, z in ((-0.15, 1.985), (-0.075, 1.971), (0, 1.968), (0.075, 1.971), (0.15, 1.985)):
+        mouth_points.append((x, profile_front_y(x, z, center, radii, flatten=flatten) + 0.001, z))
+    mouth = tube("Capybara quiet mouth", mouth_points, [0.007] * len(mouth_points), dark, 8)
+    bind(mouth, rig, fixed("head"))
+
+
 def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt profiles
     z = 2.6
     rx, rz = (0.21, 0.23)
@@ -728,6 +762,16 @@ def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt
         rx, rz, z = 0.22, 0.33, 2.70
     elif kind in ("otter", "capybara", "hedgehog"):
         rx, rz = 0.12, 0.12
+        if kind == "capybara":
+            x *= 0.90
+        x, _, z = small_ear_center(kind, x, rz)
+        bpy.context.view_layer.objects.active = rig
+        rig.select_set(True)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bone = rig.data.edit_bones[name]
+        bone.head = (x, 0, z - 0.08)
+        bone.tail = (x + (0.045 if x > 0 else -0.045), 0, z + 0.15)
+        bpy.ops.object.mode_set(mode="OBJECT")
     if kind in ("seal", "penguin"):
         return
     if kind == "dog":
@@ -788,7 +832,7 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         elif kind == "penguin":
             parts.append(leg)
             foot.data.materials.clear()
-            foot.data.materials.append(material("Ochre webbed feet", (0.72, 0.36, 0.09)))
+            foot.data.materials.append(material("Ochre feet", (0.72, 0.36, 0.09)))
             bind(foot, rig, fixed("foot." + s))
         else:
             parts += [leg, foot]
@@ -815,48 +859,51 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             )
             bind(groove, rig, fixed("foot." + s))
     muzzle_width = 0.30 if kind not in ("capybara", "seal", "otter") else 0.39
-    muzzle = surface("Sculpted muzzle", (0, -0.493, 2.06), (muzzle_width, 0.15, 0.205), cream, 24, 40, flatten=0.83)
-    warp_face(muzzle, kind, muzzle_width)
-    bind(muzzle, rig, fixed("head"))
-    nose = surface(
-        "Rounded triangular nose", (0, -0.642, 2.14), (0.093, 0.054, 0.061), dark, 16, 28, pear=-0.4, flatten=0.9
-    )
-    if kind == "penguin":
-        nose.data.materials.clear()
-        nose.data.materials.append(material("Warm beak", (0.77, 0.40, 0.10)))
-        for vertex in nose.data.vertices:
-            vertex.co.y = -0.58 + (vertex.co.y + 0.58) * 2.1
-    warp_face(nose, kind, muzzle_width)
-    bind(nose, rig, fixed("head"))
-    for sign in (-1, 1):
-        smile = tube(
-            "Quiet smile",
-            [
-                (0, -0.650, 2.105),
-                (sign * 0.025, -0.652, 2.035),
-                (sign * 0.082, -0.647, 2.005),
-                (sign * 0.138, -0.621, 2.04),
-            ],
-            [0.009] * 4,
-            dark,
-            8,
+    if kind == "capybara":
+        capybara_face(rig, base, dark)
+    else:
+        muzzle = surface("Sculpted muzzle", (0, -0.493, 2.06), (muzzle_width, 0.15, 0.205), cream, 24, 40, flatten=0.83)
+        warp_face(muzzle, kind, muzzle_width)
+        bind(muzzle, rig, fixed("head"))
+        nose = surface(
+            "Rounded triangular nose", (0, -0.642, 2.14), (0.093, 0.054, 0.061), dark, 16, 28, pear=-0.4, flatten=0.9
         )
-        warp_face(smile, kind, muzzle_width)
-        bind(smile, rig, fixed("head"))
-        if kind in ("seal", "otter", "cat"):
-            for level in range(3):
-                whisker = tube(
-                    "Short sculpted whisker",
-                    [
-                        (sign * 0.23, -0.60, 2.07 - level * 0.035),
-                        (sign * 0.36, -0.63, 2.09 - level * 0.045),
-                        (sign * 0.44, -0.60, 2.12 - level * 0.055),
-                    ],
-                    [0.005, 0.004, 0.002],
-                    inner,
-                    6,
-                )
-                bind(whisker, rig, fixed("head"))
+        if kind == "penguin":
+            nose.data.materials.clear()
+            nose.data.materials.append(material("Warm beak", (0.77, 0.40, 0.10)))
+            for vertex in nose.data.vertices:
+                vertex.co.y = -0.58 + (vertex.co.y + 0.58) * 2.1
+        warp_face(nose, kind, muzzle_width)
+        bind(nose, rig, fixed("head"))
+        for sign in (-1, 1):
+            smile = tube(
+                "Quiet smile",
+                [
+                    (0, -0.650, 2.105),
+                    (sign * 0.025, -0.652, 2.035),
+                    (sign * 0.082, -0.647, 2.005),
+                    (sign * 0.138, -0.621, 2.04),
+                ],
+                [0.009] * 4,
+                dark,
+                8,
+            )
+            warp_face(smile, kind, muzzle_width)
+            bind(smile, rig, fixed("head"))
+            if kind in ("seal", "otter", "cat"):
+                for level in range(3):
+                    whisker = tube(
+                        "Short sculpted whisker",
+                        [
+                            (sign * 0.23, -0.60, 2.07 - level * 0.035),
+                            (sign * 0.36, -0.63, 2.09 - level * 0.045),
+                            (sign * 0.44, -0.60, 2.12 - level * 0.055),
+                        ],
+                        [0.005, 0.004, 0.002],
+                        inner,
+                        6,
+                    )
+                    bind(whisker, rig, fixed("head"))
     tail_points = [(0, 0.39, 0.77), (0, 0.65, 0.78), (0, 0.73, 0.81)]
     tail_radii = [0.14, 0.16, 0.035]
     if kind in ("fox", "red_panda", "squirrel", "cat", "dog", "otter"):
@@ -870,14 +917,16 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         elif kind == "otter":
             tail_points = [(0, 0.38, 0.65), (0, 0.63, 0.42), (0, 0.96, 0.27), (0, 1.28, 0.2)]
             tail_radii = [0.18, 0.16, 0.11, 0.018]
-    if kind == "capybara":
-        tail_radii = [0.065, 0.06, 0.015]
-    tail = tube("Species tail", tail_points, tail_radii, base)
-    bind(
-        tail,
-        rig,
-        lambda co: {"tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)), "tail.02": min(1, max(0, (co.y - 0.6) / 0.4))},
-    )
+    if kind != "capybara":
+        tail = tube("Species tail", tail_points, tail_radii, base)
+        bind(
+            tail,
+            rig,
+            lambda co: {
+                "tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)),
+                "tail.02": min(1, max(0, (co.y - 0.6) / 0.4)),
+            },
+        )
     if kind == "hedgehog":
         for row in range(7):
             for col in range(11):

@@ -98,6 +98,25 @@ digest. The character name, special motion and asset provenance remain local.
 - Any failed version remains stored with a reason. Only assets that pass the stated
   QA scope count as complete; final human design review is still pending.
 
+### Species correction from actual candidate review
+
+The first capybara candidate had detached small ears in its front render and a
+bear-like cream muzzle/triangular nose. Small ears now seat against their own
+cranium profile, with the rotation pivot moved into the same attached base. This
+also corrects the shared small-ear placement for otter and hedgehog; actual moving
+contact must still be reviewed. The capybara uses a lower, deeper cranium and a
+dedicated blunt rostrum with small paired nostrils and one quiet mouth line.
+It has no visible tail mesh. The original stylistic dimensions are design choices;
+the distinguishing high facial features and absence of an external tail were
+checked against [San Diego Zoo's capybara description](https://animals.sandiegozoo.org/animals/capybara)
+on 2026-09-06. No source photograph was copied into the asset.
+
+Pure geometry checks cover closed rostrum surfaces, attached facial details and
+the small-ear base/pivot within the cranium. They do not approve the new shape,
+recognition or motion; new candidate renders and full playback remain required.
+The penguin's current foot is a flattened rounded form, so its material name is
+simply `Ochre feet`; a material label is not evidence of modeled webbing.
+
 ## Storage and resumption
 
 Large editable sources, GLBs, renders and videos stay in the external run directory.

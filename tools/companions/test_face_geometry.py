@@ -76,7 +76,10 @@ class FaceGeometryTests(unittest.TestCase):
             offset = GEOMETRY["eye_surface_offset"](kind)
             self.assertAlmostEqual(-0.487 + offset + 0.040 - coat, reference)
             self.assertLess(-0.487 + offset - coat, 0, "Front hemisphere stays visible")
-        for kind in ("bear", "rabbit", "dog", "red_panda", "otter", "capybara", "hedgehog", "penguin", "seal"):
+        coat = GEOMETRY["coat_front_y"]("capybara", 0.25, 2.25)
+        offset = GEOMETRY["eye_surface_offset"]("capybara")
+        self.assertAlmostEqual(-0.487 + offset + 0.040 - coat, reference)
+        for kind in ("bear", "rabbit", "dog", "red_panda", "otter", "hedgehog", "penguin", "seal"):
             self.assertEqual(GEOMETRY["eye_surface_offset"](kind), 0)
 
     def test_profile_matches_known_ellipse_and_actual_rounded_pear_vertices(self):
