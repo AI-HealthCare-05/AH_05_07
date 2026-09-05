@@ -49,6 +49,7 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
+| Model Gate 1B contract | `docs/model-gate-1b-runbook.md`; operator execution and reviewed evidence remain open |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
@@ -131,8 +132,11 @@ gate are not complete.
    remains separate follow-up work; do not use causal-improvement language.
 4. Follow `docs/ai-toolchain-ssot.md` when starting the risk-signal release
    gate. Issue #204 freezes the selected tools, internal pipeline, deferred
-   alternatives, and change-control contract; it does not train or promote a
-   model. The release gate starts only after the operational evidence above is
+   alternatives, and change-control contract. Issue #206 defines the external
+   local seven-module audit, derived-table, frozen-split, and sanitized-evidence
+   sequence. Neither Issue trains or promotes a model, and the Gate 1B operator
+   run remains open until its reviewed evidence exists. The release gate starts
+   only after the operational evidence above is
    reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
    least two-model and multiple-metric comparison, model card, and repeated-
