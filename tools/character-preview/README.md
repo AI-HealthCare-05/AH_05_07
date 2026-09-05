@@ -135,8 +135,12 @@ python tools/character-preview/contact_sheet.py --report "<검증 결과>/verifi
 python tools/character-preview/verify_video.py --video "<기존 WebM>" --ffmpeg "<기존 FFmpeg 실행 파일>" --output "<새 영상 QA 경로>"
 ```
 
-이 검사는 녹화가 포함된 실패 run을 통과로 바꾸지 않는다. 추출 PNG의 내용/문구와
-움직임의 시각 품질은 직접 검토하며 자동 decode 결과와 구분한다. Blender·browser·
+이 검사는 녹화가 포함된 실패 run을 통과로 바꾸지 않는다. 영상 보고의
+`whole_browser_run_passed=false`와 `visual_quality_approved=false`는 독립 decode 도구가
+전체 브라우저 통과나 시각 승인을 추론하지 않는다는 뜻이며, 실제 브라우저 실패 판정이
+아니다. 실제 전체 실행 상태는 `verification.json`, 범위가 명시된 기술 검토는 별도
+reviewer sidecar에서 확인한다. 추출 PNG의 내용/문구와 움직임의 시각 품질은 직접
+검토하며 자동 decode 결과와 구분한다. Blender·browser·
 영상 decode 작업을 동시에 실행하지 않아 같은 PC의 부하 간섭을 줄인다.
 
 이미 전체 재생 검사를 마친 제작물에 바닥 기준만 추가로 검토할 때는 다음 별도
