@@ -120,8 +120,12 @@ must not exist and its parent must exist. Only recognized direct artifacts in th
 selected candidate folders are hashed. GLB and generator digests are compared with
 the generated manifest; missing files and catalog statuses remain explicit.
 Prior unselected version folders are listed without reading their contents.
-The optional `rigged.blend` checkpoint is included when present. Separate QA folders
-stay in the run manifest. Clip/triangle counts here are generated-manifest
+The optional `rigged.blend` checkpoint is included when present. After video QA,
+byte-identical copies named `motion-preview.webm` and `ground-preview.webm` may be
+placed next to the selected asset. The inventory hashes these optional files; it
+does not decode or approve them. The copy manifest links the original recording,
+video checks and technical review. Preserve the originals and use exclusive copies.
+Separate QA folders stay in the run manifest. Clip/triangle counts here are generated-manifest
 declarations, not new binary or visual validation. File presence and successful
 inventory never imply quality or completion approval. Use a new inventory filename
 after the catalog changes, preserving every earlier snapshot.

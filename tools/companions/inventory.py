@@ -21,6 +21,8 @@ KNOWN_FILES = {
     "light.glb",
     "generator.py",
     "asset-manifest.json",
+    "motion-preview.webm",
+    "ground-preview.webm",
     *(f"{view}.png" for view in VIEWS),
     *(f"{variant}-{view}.png" for variant in VARIANTS for view in VIEWS),
     *(f"{variant}-{clip}-{pose}.png" for variant in VARIANTS for clip in CLIPS for pose in ("quarter", "mid")),
