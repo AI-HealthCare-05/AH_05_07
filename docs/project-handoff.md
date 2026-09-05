@@ -118,10 +118,13 @@ gate are not complete.
    S01–S14 application shell without changing the API, database, ownership,
    authentication, or model boundary. Issue #192 passed responsive visual QA
    and Issue #194 records selected Canva sources only. The next visual delivery
-   step, when explicitly approved, is a small derivative-export review that
-   records exact bytes, metadata removal, viewport fit, fallback evidence, and
-   R2 object keys before any upload. A verified model fact remains separate
-   follow-up work; do not use causal-improvement language.
+   step is the Issue #196 local derivative-staging gate. It supplies a
+   dependency-free exact-file verifier and review-only manifest for
+   source-owner Canva exports, recording exact bytes, metadata removal,
+   viewport fit, and fallback evidence before any delivery decision. R2 object
+   keys, upload, runtime binding, and production parity remain separate. A
+   verified model fact remains separate follow-up work; do not use
+   causal-improvement language.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at

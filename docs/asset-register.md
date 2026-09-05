@@ -97,6 +97,23 @@ Canva full-screen keyframe guides visual QA only; it is not a runtime asset.
    explicitly excluded for this reason. All released text, state, and controls
    remain selectable semantic HTML.
 
+### Derivative staging gate — Issue #196
+
+Issue #196 adds the local review procedure in
+[`canva-derivative-staging.md`](canva-derivative-staging.md) and a
+dependency-free verifier for the exact `approved` source candidates. The gate
+is intentionally review-only: it records a future export's MIME, dimensions,
+byte budget, SHA-256, alpha requirement, removable metadata check, and manual
+text-free/viewport/fallback attestations before any file becomes a tracked
+runtime asset.
+
+The verifier accepts exactly the two identity candidates, two separately sized
+backgrounds, and five approved character poses. It rejects `replaceable` and
+`not used` sources, including whole-screen and utility-state PNGs. Canva
+thumbnails are source-review previews only and must never substitute for a
+source-owner export. No #196 artifact creates an R2 object, assigns a public
+URL, changes cache headers, or couples a derivative to `web/`.
+
 ## Common provenance
 
 | Field | Record |
