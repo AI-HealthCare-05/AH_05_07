@@ -106,7 +106,7 @@ ul, ol { margin: 0; padding: 0; }
 .header-actions { display: flex; align-items: center; gap: var(--sk7-space-3); }
 .fixture-label, .status-pill { width: fit-content; border: 1px solid rgb(109 127 97 / .28); border-radius: 999px; background: rgb(221 229 211 / .65); color: var(--sk7-sage-600); padding: .35rem .65rem; font-size: .72rem; font-weight: 800; }
 
-.clay-horizon { position: absolute; z-index: 0; top: 3.4rem; left: 50%; width: min(110rem, 125vw); height: 18rem; transform: translateX(-50%); pointer-events: none; background-image: var(--sk7-background-desktop); background-position: center top; background-repeat: no-repeat; background-size: cover; }
+.clay-horizon { position: absolute; z-index: 0; top: 3.4rem; left: 50%; width: min(110rem, 125vw); height: 18rem; transform: translateX(-50%); pointer-events: none; }
 .clay-horizon::before, .clay-horizon::after, .clay-horizon span { position: absolute; content: ""; border-radius: 50% 50% 0 0; }
 .clay-horizon::before { inset: 7rem 0 0; background: var(--sk7-sage-100); transform: rotate(-2deg); }
 .clay-horizon::after { right: -5%; bottom: -2rem; width: 65%; height: 9rem; background: var(--sk7-lavender-100); transform: rotate(3deg); }
@@ -133,8 +133,6 @@ ul, ol { margin: 0; padding: 0; }
 .scene-water { background: #eef5f2; }
 .scene-coral { background: #f8eee8; }
 .scene-copy { display: grid; gap: var(--sk7-space-3); align-content: start; }
-.scene-character { position: absolute; z-index: 0; right: clamp(1rem, 5vw, 4rem); bottom: 1rem; width: min(28vw, 13rem); max-height: 42%; object-fit: contain; pointer-events: none; }
-.scene-copy, .scene > :not(.scene-character) { position: relative; z-index: 1; }
 .scene-actions { margin-top: auto; }
 @keyframes scene-enter { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 
@@ -289,8 +287,6 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 @media (max-width: 580px) {
-  .clay-horizon { background-image: var(--sk7-background-mobile); }
-  .scene-character { right: .8rem; width: min(34vw, 8rem); opacity: .78; }
   .app-shell { padding-inline: .7rem; padding-bottom: 6.5rem; }
   .app-header { padding: .7rem .2rem; }
   .brand-button small, .fixture-label { display: none; }

@@ -1,7 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { primaryNavigation, type ScreenId } from "../ui/journey";
-import { characterAssetFor, sceneBackgrounds } from "../ui/r2VisualAssets";
 
 type SceneShellProps = {
   activeScreen: ScreenId;
@@ -25,14 +24,7 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
         </div>
       </header>
 
-      <div
-        className="clay-horizon"
-        aria-hidden="true"
-        style={{
-          "--sk7-background-desktop": `url(${sceneBackgrounds.desktop})`,
-          "--sk7-background-mobile": `url(${sceneBackgrounds.mobile})`,
-        } as CSSProperties}
-      ><span /><span /><span /></div>
+      <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
       <nav className="primary-nav" aria-label="주요 화면">
         {primaryNavigation.map((item) => (
@@ -67,11 +59,8 @@ type SceneProps = {
 };
 
 export function Scene({ id, eyebrow, title, body, children, actions, tone = "cream", className = "" }: SceneProps) {
-  const characterAsset = characterAssetFor(id);
-
   return (
     <section className={`scene scene-${tone} ${className}`.trim()} data-scene={id} aria-labelledby={`${id}-title`}>
-      {characterAsset && <img className="scene-character" src={characterAsset} alt="" aria-hidden="true" onError={(event) => { event.currentTarget.hidden = true; }} />}
       <div className="scene-copy">
         <p className="eyebrow">{eyebrow}</p>
         <h1 id={`${id}-title`}>{title}</h1>
