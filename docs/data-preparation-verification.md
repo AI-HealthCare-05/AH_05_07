@@ -1,7 +1,7 @@
 # Data preparation prerequisite — verification record
 
 Date: 2026-09-05. Reviewed base: `20f23f7597ceb812170f6582fd6f5011cb5ec654`.
-Status: local implementation verified; remote publication and Windows run pending.
+Status: local Windows verification and published Windows/Linux CI passed; PR #210 awaits user merge.
 Related operational Issue: #208, which remains open.
 
 ## Executed evidence
@@ -32,20 +32,33 @@ Synthetic fixtures and test artifacts stay in temporary test directories. No
 participant rows, source XPT, Parquet, trained production artifact or Gate 1B
 operational evidence is part of the patch.
 
+## Published verification follow-up
+
+PR: [#210](https://github.com/AI-HealthCare-05/AH_05_07/pull/210).
+Verified implementation commit: `fa1e091b9a4fa70cb7b6ea465b533ff060480fe7`.
+The supplied patch SHA-256 matched SHA256SUMS.txt before application.
+
+Local Windows PowerShell, Python 3.13.14: frozen AI/app sync, 28 data tests,
+3 API tests, full Ruff check and format check, Gate 1B contract and self-test,
+AI toolchain contract, secret boundary and self-test, and whitespace checks
+all completed with exit code 0. `pyproject.toml` and `uv.lock` are unchanged.
+
+- [Data preparation CI](https://github.com/AI-HealthCare-05/AH_05_07/actions/runs/33966811022):
+  both `ubuntu-latest` and `windows-latest` synthetic preparation jobs passed.
+- [General CI](https://github.com/AI-HealthCare-05/AH_05_07/actions/runs/33966811009):
+  lint, app tests, web build and deployment-smoke controls passed.
+
+Issue #208 links the prerequisite PR and remains open. These results establish
+synthetic regression coverage, not operational Gate 1B acceptance.
+
 ## Not executed / not claimed
 
-- Windows OS or the operator's PowerShell session: not executed here.
-  `.github/workflows/data-preparation.yml` supplies Windows/Linux regression jobs
-  for execution after publication. It does not mean those jobs have run.
 - Real NHANES files and operational Gate 1B evidence: not executed or reviewed.
 - Two-model real-data evaluation, promotion, release or model quality: not done.
-- Browser visual QA, DB tests or web build: not rerun; no web/DB changes.
+- Browser visual QA: not rerun; no web/DB changes. General CI ran app tests
+  with its MySQL service and built the web client.
 - Cloud Run, Cloudflare, R2 or Supabase mutation: none.
-- GitHub Issue/branch creation: connector returned 403, resource not accessible
-  by integration. Git push preflight also lacked credentials. No remote branch,
-  PR or workflow run was created by this session. A reviewable patch is supplied.
 
-Before actual-data operation, publish the patch from an authorized checkout,
-review the PR and Windows CI result, and merge. Then run the single entry point
-on local external files and review only its allowed evidence JSON. The existing
-public service is unchanged until any separately classified deployment occurs.
+User review and merge remain pending. Actual-data preparation and human evidence
+review are separate work under #208. The existing public service is unchanged
+until any separately classified deployment occurs.

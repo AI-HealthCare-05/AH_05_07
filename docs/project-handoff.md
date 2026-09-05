@@ -265,8 +265,9 @@ operator entry point with two-run digest comparison. See ADR-0003 and
 `docs/data-feature-semantics.md`. The unsafe legacy API feature mapping is
 removed; an artifact configuration cannot enable the unreleased questionnaire.
 
-Verification is recorded in `docs/data-preparation-verification.md`. No actual
-NHANES file, Windows operator run, model evaluation/promotion, or production
-deployment is claimed. Windows CI configuration is supplied for execution after
-publication. Preserve previous downloaded runners; use the repository entry
+Verification is recorded in `docs/data-preparation-verification.md`. PR #210 has
+passed local Windows checks, Windows/Linux synthetic preparation CI and general
+CI. No actual NHANES preparation, model evaluation/promotion, or production
+deployment is claimed. User review and merge remain pending. Preserve previous
+downloaded runners; use the repository entry
 point only after this change is reviewed and its required checks pass.
