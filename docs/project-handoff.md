@@ -62,7 +62,7 @@ versions, not this source SHA's deployment.
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
 | Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 documentation completed via PR #222; #223 reviews input questions; no selected/released artifact |
-| Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
+| Handoff reconciliation | Historical reconciliation completed through [PR #147](https://github.com/AI-HealthCare-05/AH_05_07/pull/147), merge `50039ee1604bf984aae99e945a798db13595862f`; [Issue #146](https://github.com/AI-HealthCare-05/AH_05_07/issues/146) is closed. Current workstreams are tracked in [upgrade execution](upgrade-execution.md). |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 | UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
@@ -77,11 +77,13 @@ session refresh, and a clean browser console/network review for the G4 web
 rollout. It records no Cloud Run deployment, Supabase migration, or production
 record write.
 
-The current Worker version was recorded as
-`38bb08b6-66ca-4933-8cbe-ee857aa4ece7`. The purported rollback value
-`38bb08b6` is only the current version prefix, so rollback readiness remains
-open. Do not call Gate C or rollback rehearsal complete until a distinct full
-identifier and sanitized rehearsal evidence exist.
+At Issue #143, the Worker version was recorded as
+`38bb08b6-66ca-4933-8cbe-ee857aa4ece7`. The short value `38bb08b6` did not
+establish a distinct rollback target. [Issue #151](https://github.com/AI-HealthCare-05/AH_05_07/issues/151)
+subsequently completed rollback, restore and public smoke for the two full
+versions in the table above. That historical rehearsal does not prove deployment
+of the upgrade baseline; [O3 clean-release rehearsal](mvp1-operations-review.md)
+and the remaining Gate C evidence still require separate approval and execution.
 
 ## What is implemented
 
@@ -247,7 +249,9 @@ At the beginning of a new Work session:
 2. Read the current Notion 19-day roadmap, then treat any mismatch as work to
    reconcile rather than as permission to change code.
 3. Confirm the latest upstream `main` SHA and recent merged PRs.
-4. Confirm there is at most one active Issue and no unreviewed local work.
+4. Confirm one Issue, short branch and PR per substantive workstream. Reconcile
+   and preserve each worktree's saved changes, following the user-authorized
+   parallel plan in [upgrade execution](upgrade-execution.md).
 5. Inspect the latest relevant deployment run only when the next task concerns
    runtime state.
 6. Choose the highest open P0 evidence item, create or confirm its Issue, and
@@ -333,7 +337,8 @@ explicit release criteria remain unresolved.
 
 Issue #221 completed its documentation scope in PR #222: [draft model card](model-card.md),
 [unsupported input mappings and question drafts](model-input-adapter-contract.md),
-and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
+and [readiness matrix and proposed one-time test procedure](model-release-readiness.md)
+requiring separate approval.
 Named reviewers, supported population, justified quality criteria, final model,
 preprocessing and signal thresholds are not yet approved. No actual model/test
 execution or product change is part of the question review package. Issue #223 adds
