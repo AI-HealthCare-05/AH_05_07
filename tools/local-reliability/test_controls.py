@@ -82,6 +82,9 @@ class Controls(unittest.TestCase):
         evidence = Path(__file__).resolve().parents[2] / "docs/evidence/local-reliability.json"
         report = json.loads(evidence.read_text(encoding="utf-8"))
         self.assertTrue(verify(report))
+        without_coordination = copy.deepcopy(report)
+        without_coordination.pop("measurement_coordination")
+        self.assertTrue(verify(without_coordination))
         for change in ("extra", "nan", "counts", "order"):
             broken = copy.deepcopy(report)
             phase = next(iter(broken["measurements"].values()))[0]

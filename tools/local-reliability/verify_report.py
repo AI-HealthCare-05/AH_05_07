@@ -71,7 +71,7 @@ def verify_phase(phase):
 
 
 def verify(report):
-    keys(report, TOP)
+    keys(report, TOP if "measurement_coordination" in report else TOP - {"measurement_coordination"})
     if report["schema_version"] != "local-reliability-v1" or report["status"] != "passed":
         raise ValueError("Successful local report required")
     if any(

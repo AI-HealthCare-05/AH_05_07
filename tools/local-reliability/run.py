@@ -177,10 +177,11 @@ class Run:
         with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
             bundle.extractall(self.source, filter="data")
         self.report["source_hashes"] = {name: digest(self.source / name) for name in PRESERVED}
-        self.report["tool_hashes"] = {name: digest(Path(__file__).parent / name) for name in ("run.py", "metrics.py")}
+        tool_names = ("run.py", "metrics.py", "test_controls.py", "verify_report.py")
+        self.report["tool_hashes"] = {name: digest(Path(__file__).parent / name) for name in tool_names}
         tool_snapshot = self.output / "runner-source"
         tool_snapshot.mkdir()
-        for name in ("run.py", "metrics.py", "test_controls.py"):
+        for name in tool_names:
             shutil.copyfile(Path(__file__).parent / name, tool_snapshot / name)
         self.command("frozen-python-install", ["uv", "sync", "--frozen", "--group", "app", "--group", "ai"])
         self.python = str(self.source / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
