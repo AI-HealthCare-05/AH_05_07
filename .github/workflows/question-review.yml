@@ -1,0 +1,39 @@
+name: Synthetic question review
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/question-review/**'
+      - 'docs/input-question-review.md'
+      - 'web/**'
+      - '.github/workflows/question-review.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/question-review/**'
+      - 'docs/input-question-review.md'
+      - 'web/**'
+      - '.github/workflows/question-review.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-review:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - run: node tools/question-review/verify.cjs

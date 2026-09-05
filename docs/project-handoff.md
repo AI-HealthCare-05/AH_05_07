@@ -49,14 +49,14 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
-| Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 defines [release readiness](model-release-readiness.md); no selected/released artifact |
+| Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 documentation completed via PR #222; #223 reviews input questions; no selected/released artifact |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 | UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
 
 Non-model deployment rows retain the historical handoff snapshot; the model row
-is updated through PR #220 and Issue #221. At every restart,
+is updated through PR #222 and the Issue #223 question review package. At every restart,
 resolve the current upstream `main` SHA and recent merged pull requests before
 treating any source commit as current.
 
@@ -316,10 +316,12 @@ validity. JSON verifier checks do not independently recalculate real-prediction
 intervals. Older-age performance, calibration, external/Korean validation and
 explicit release criteria remain unresolved.
 
-Issue #221 owns the next documentation/decision work: [draft model card](model-card.md),
+Issue #221 completed its documentation scope in PR #222: [draft model card](model-card.md),
 [unsupported input mappings and question drafts](model-input-adapter-contract.md),
 and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
 Named reviewers, supported population, justified quality criteria, final model,
 preprocessing and signal thresholds are not yet approved. No actual model/test
-execution or product change is part of this contract PR. The API remains
+execution or product change is part of the question review package. Issue #223 adds
+[CDC source comparison and a synthetic-only local review screen](input-question-review.md);
+translation, measurement equivalence and adapter support remain pending. The API remains
 model_not_ready; evidence, CONFIGs and lock are unchanged.

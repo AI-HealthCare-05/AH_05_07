@@ -87,10 +87,12 @@ validity. JSON verifier checks do not independently recalculate real-prediction
 intervals. Older-age performance, calibration, external/Korean validation and
 explicit release criteria remain unresolved.
 
-Issue #221 owns the next documentation/decision work: [draft model card](model-card.md),
+Issue #221 completed its documentation scope in PR #222: [draft model card](model-card.md),
 [unsupported input mappings and question drafts](model-input-adapter-contract.md),
 and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
 Named reviewers, supported population, justified quality criteria, final model,
 preprocessing and signal thresholds are not yet approved. No actual model/test
-execution or product change is part of this contract PR. The API remains
+execution or product change is part of the question review package. Issue #223 adds
+[CDC source comparison and a synthetic-only local review screen](input-question-review.md);
+translation, measurement equivalence and adapter support remain pending. The API remains
 model_not_ready; evidence, CONFIGs and lock are unchanged.
