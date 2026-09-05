@@ -173,6 +173,14 @@ SHA와 검토 맥락 bedaa179, 각 generator SHA는 새 원본 완료 manifest�
 
 ## 재개와 보존
 
+후속 문서 head28cd175의 Windows software CI는 `recorded page close exceeded 15000ms`로
+실패했다. Linux와 일반 검사는 통과했지만 이 실패를 재시도로 지우지 않는다. 소프트웨어
+경로의 장기 녹화 종료 한계를 다시 확인한 것이며 인코더 원인으로 확정하지 않았다.
+CI는14개 전체 기능 loop와 나머지 검사를 녹화 없이 유지하고, 모든 기능 context를 닫은 뒤
+별도의 합성 한 clip 전체 loop 녹화/종료를 검사하도록 분리했다. 단기 smoke와 전체 녹화의
+보고 scope도 구분한다. 실제4종의 full Chromium/Iris Xe 전체 녹화 결과를 재실행하거나
+수정하지 않으며, CI smoke 통과가 장기 software 녹화 한계 해결을 뜻하지 않는다.
+
 새 catalog/GLB가 준비되면 해당 입력을 고정하고 새 외부 결과 경로에 verifier를
 실행한다. `--record`는 실제 브라우저를 WebM으로 녹화하며 성능 결과에 녹화 부하를
 표시한다. 기존 결과 경로를 재사용하면 중단한다. 기본20분 또는 `--timeout-ms`의

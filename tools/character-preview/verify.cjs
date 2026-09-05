@@ -11,6 +11,8 @@ const args = process.argv.slice(2);
 const arg = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 const synthetic = args.includes('--synthetic');
 const record = args.includes('--record');
+const recordSmoke = args.includes('--record-smoke');
+assert(!recordSmoke || (synthetic && !record), 'Recording smoke is separate from full recording and only uses the synthetic fixture');
 const browserChannel = arg('--browser-channel', undefined);
 assert(browserChannel === undefined || browserChannel === 'chromium', 'Use bundled default or chromium channel');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'sk7-character-check-'));
@@ -241,6 +243,37 @@ function checkpoint(nextStage) {
     const no3d = await context.newPage(); await no3d.addInitScript(() => { HTMLCanvasElement.prototype.getContext = () => null; });
     await no3d.goto(base); await no3d.waitForFunction(() => window.previewDiagnostics?.snapshot().status === 'static');
     assert(await no3d.locator('#fallback').isVisible()); await no3d.close(); checks.push('no_webgl_static_fallback');
+    if (recordSmoke) {
+      // Keep all 14 functional loops above. Bound recording separately on software CI.
+      await context.close();
+      checkpoint('synthetic recording smoke: open sole recording context');
+      const smoke = await browser.newContext({ viewport: { width: 1366, height: 768 }, recordVideo: { dir: path.join(output, 'video', 'synthetic-smoke'), size: { width: 960, height: 540 } } });
+      await smoke.route('**/*', (route) => { const url = route.request().url(); if (!url.startsWith(base) && !url.startsWith('blob:') && !url.startsWith('data:')) { network.push(url); return route.abort(); } return route.continue(); });
+      const recorded = await smoke.newPage(); recorded.on('pageerror', (e) => errors.push(e.message));
+      await recorded.goto(base + '/?animal=' + encodeURIComponent(first.id));
+      await recorded.waitForFunction(() => window.previewDiagnostics?.snapshot().status === 'playing');
+      await recorded.selectOption('#clip', '0');
+      const before = await recorded.evaluate(() => window.previewDiagnostics.snapshot());
+      await recorded.waitForTimeout(550);
+      const after = await recorded.evaluate(() => window.previewDiagnostics.snapshot());
+      assert.notEqual(after.actionTime, before.actionTime);
+      assert(after.bones.some((v, i) => Math.abs(v - before.bones[i]) > 1e-7));
+      await recorded.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 30000 });
+      const played = await recorded.evaluate(() => window.previewDiagnostics.snapshot());
+      const video = recorded.video(), closingStarted = Date.now();
+      await recorded.locator('#static').check();
+      await recorded.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static');
+      checkpoint('synthetic recording smoke: close recorded page');
+      await bounded(recorded.close(), 15000, 'synthetic smoke recorded page close');
+      await bounded(smoke.close(), 15000, 'synthetic smoke recording context close');
+      const videoPath = await bounded(video.path(), 5000, 'synthetic smoke video path');
+      assert(fs.statSync(videoPath).size > 0, 'Finalized smoke video is empty');
+      motionVideos.push({ animal: first.id, path: path.relative(output, videoPath).replaceAll(path.sep, '/'), scope: 'temporary_synthetic_single_clip_recording_smoke_only',
+        clip: before.stats.clips[0].name, duration: before.stats.clips[0].duration, completeLoopObserved: played.completedLoops >= 1,
+        viewport: { width: 1366, height: 768 }, videoSize: { width: 960, height: 540 }, finalizationMs: Date.now() - closingStarted, silent: true });
+      checks.push('synthetic_single_clip_recording_finalized');
+      checkpoint('synthetic recording smoke finalized; full functional loops were separate');
+    }
     assert.deepEqual(errors, []); assert.deepEqual(network, []); checks.push('no_page_errors_or_external_network', 'production_bundle_isolated');
     assert.equal(digest(path.join(assets, 'catalog.json')), catalogHash, 'Catalog changed during verification');
     for (const asset of assetManifest) assert.equal(digest(path.join(assets, asset.file)), asset.sha256, 'Input GLB changed during verification');

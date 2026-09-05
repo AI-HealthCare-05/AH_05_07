@@ -113,7 +113,11 @@ machine의 동시 부하·녹화 여부도 별도 기록한다.
 선택할 수 있다([공식 구분](https://playwright.dev/docs/browsers#chromium-new-headless-mode)).
 선택한 channel과 실제 renderer를 보고하며, channel만으로 하드웨어 가속 사용이나
 성능 개선을 주장하지 않는다. 생략하면 기존 headless shell 경로를 유지한다.
-CI는 합성 fixture만 검사하고 실제 Blender 제작물이나 사용자 폴더를 읽지 않는다.
+CI는 `--synthetic --record-smoke`로 합성 fixture만 검사하고 실제 Blender 제작물이나
+사용자 폴더를 읽지 않는다. 14개 전체 clip-variant loop·화면·키보드·자원·대체 검사는
+녹화 없이 모두 유지하며, 그 context를 닫은 뒤 별도 한 clip의 전체 loop 녹화와15초
+종료 제한을 검사한다. 보고의 `temporary_synthetic_single_clip_recording_smoke_only`는
+14clip 녹화가 아니다. 실제 자산의 `--record` 전체 녹화 경로는 그대로다.
 
 `verification.json`과 합성/캐릭터 화면 캡처는 로컬 집계 검토 후보다. bone 변화
 검사는 발 미끄러짐·관통·루프 연결·실루엣 품질의 사람/제작자 시각 검사를 대신하지
