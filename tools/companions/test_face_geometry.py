@@ -115,32 +115,20 @@ class FaceGeometryTests(unittest.TestCase):
             (0.082, -0.647, 2.005),
             (0.138, -0.621, 2.04),
         )
-        for kind in ("cat", "fox", "squirrel", "capybara"):
-            width = 0.39 if kind == "capybara" else 0.30
+        for kind in ("cat", "fox", "squirrel"):
+            width = 0.30
             for x, y, z in points:
                 base_front = front(x, z, (0, -0.493, 2.06), (width, 0.15, 0.205), flatten=0.83)
                 old_clearance = y - base_front
                 new_front = warp(kind, (x, base_front, z), width)
                 new_detail = warp(kind, (x, y, z), width)
-                scale = 1.55 if kind == "capybara" else 1
-                self.assertAlmostEqual(new_detail[1] - new_front[1], old_clearance * scale)
+                self.assertAlmostEqual(new_detail[1] - new_front[1], old_clearance)
                 self.assertEqual(new_detail[2], new_front[2])
                 if x == 0:
                     self.assertLess(old_clearance, 0, "The authored nose and mouth centers protrude")
                 # The outer mouth endpoint intentionally anchors inside the muzzle;
                 # its signed clearance must be retained as well as the visible center.
                 self.assertGreater((new_detail[1] - new_front[1]) * old_clearance, 0)
-
-    def test_shared_vertex_warp_and_capybara_height_affine_are_applied(self):
-        points = [(0, -0.493, 2.06), (0, -0.642, 2.14), (0.138, -0.621, 2.04)]
-        obj = SimpleNamespace(
-            data=SimpleNamespace(vertices=[SimpleNamespace(co=point) for point in points], update=lambda: None)
-        )
-        GEOMETRY["warp_face"](obj, "capybara", 0.39)
-        for old, vertex in zip(points, obj.data.vertices, strict=True):
-            self.assertAlmostEqual((vertex.co[1] + 0.49) / 1.55 - 0.49, old[1])
-            self.assertAlmostEqual((vertex.co[2] - 2.06) / 0.83 + 2.06, old[2])
-        self.assertAlmostEqual(obj.data.vertices[1].co[2], 2.1264)
 
     def test_coat_union_is_continuous_at_torso_neck_boundary(self):
         front = GEOMETRY["profile_front_y"]

@@ -102,9 +102,6 @@ def face_warp_point(kind, point, muzzle_width):
     x, y, z = point
     if kind in ("fox", "cat", "squirrel"):
         y -= 0.07 * (1 - abs(x) / muzzle_width)
-    elif kind == "capybara":
-        y = -0.49 + (y + 0.49) * 1.55
-        z = 2.06 + (z - 2.06) * 0.83
     return x, y, z
 
 
