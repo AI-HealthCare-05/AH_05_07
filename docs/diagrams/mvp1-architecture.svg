@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+<title id="title">SK7 현재 실행 경로와 미구현 목표</title><desc id="desc">현재 Web, Auth, API, RLS 기록 경로. 모델 연구는 제품에 연결되지 않으며 모델 출시 경로는 별도의 점선 목표다.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#45665e"/></marker></defs>
+<style>text{font-family:'Malgun Gothic',sans-serif;fill:#183136;font-size:18px}.heading{font-size:30px;font-weight:bold}.small{font-size:15px}.box{fill:white;stroke:#638576;stroke-width:2}.target{fill:#fffaf0;stroke:#997a44;stroke-width:2;stroke-dasharray:8 6}.edge{fill:none;stroke:#45665e;stroke-width:2;marker-end:url(#arrow)}</style>
+<rect width="1280" height="820" fill="#f3f5f1"/><text x="40" y="52" class="heading">SK7 · 실제 경로 / 목표 경로</text>
+<text x="40" y="84" class="small">Source: 255c904 · 운영 토폴로지 SSOT + 코드 기준. 새 운영 배포 검증을 뜻하지 않음.</text>
+<text x="40" y="128" font-weight="bold">현재 제품 경로</text>
+<rect x="40" y="155" width="290" height="110" rx="10" class="box"/><text x="60" y="190">React / Vite · CSS-first UI</text><text x="60" y="219">Cloudflare Worker</text><text x="60" y="246" class="small">기록 · 챌린지 · 신호 준비 중</text>
+<rect x="460" y="155" width="260" height="110" rx="10" class="box"/><text x="480" y="190">Supabase Auth</text><text x="480" y="219">이메일 링크 / 세션</text><text x="480" y="246" class="small">브라우저 publishable key</text>
+<path d="M330 200H450" class="edge"/><text x="346" y="183" class="small">인증</text>
+<rect x="40" y="335" width="290" height="125" rx="10" class="box"/><text x="60" y="371">FastAPI · Cloud Run bp7-api</text><text x="60" y="403">JWT 기반 record API</text><text x="60" y="433" class="small">/live · /ready(구성 존재 검사)</text>
+<path d="M180 265V325" class="edge"/><text x="195" y="301" class="small">caller JWT</text>
+<rect x="460" y="335" width="330" height="125" rx="10" class="box"/><text x="480" y="371">Supabase Data API / PostgreSQL</text><text x="480" y="403">RLS: 소유자 + 미만료 행</text><text x="480" y="433" class="small">4개 기록 테이블 · 30일 접근 만료</text>
+<path d="M330 393H450" class="edge"/><text x="347" y="375" class="small">caller JWT</text>
+<rect x="885" y="155" width="350" height="130" rx="10" class="box"/><text x="905" y="189">로컬 연구 · 제품과 연결 없음</text><text x="905" y="222">준비 / LR·HGB / 탐색적 구간</text><text x="905" y="254" class="small">공개는 승인된 집계 evidence만</text>
+<rect x="885" y="335" width="350" height="125" rx="10" class="box"/><text x="905" y="371">현재 모델 route</text><text x="905" y="403">503 model_not_ready</text><text x="905" y="433" class="small">artifact 설정으로도 활성화 안 됨</text>
+<text x="40" y="524" font-weight="bold">목표 · 아래 구성/연결은 미구현 또는 승인 전</text>
+<rect x="40" y="553" width="280" height="130" rx="10" class="target"/><text x="60" y="590">의미·지원 대상 승인</text><text x="60" y="623">버전 고정 input adapter</text><text x="60" y="654" class="small">혈압 라벨 입력 / SEQN 제외</text>
+<rect x="480" y="553" width="280" height="130" rx="10" class="target"/><text x="500" y="590">선택 모델 / 전처리 / 임계값</text><text x="500" y="623">artifact · metadata · 검증</text><text x="500" y="654" class="small">별도 test·출시 승인 필요</text>
+<rect x="920" y="553" width="315" height="130" rx="10" class="target"/><text x="940" y="590">인증된 모델 결과 경로</text><text x="940" y="623">버전별 assessment 저장</text><text x="940" y="654" class="small">반복 입력·운영 승인 이후만</text>
+<path d="M320 615H470" class="edge" stroke-dasharray="8 6"/><path d="M760 615H910" class="edge" stroke-dasharray="8 6"/>
+<text x="40" y="734">실선: 현재 코드 경로 / 점선: 목표 설계. 목표를 현재 실행 증거로 사용하지 않음.</text>
+<text x="40" y="769" class="small">Redis·별도 worker·OCR·LLM 미도입. 비동기 모델 처리는 측정·ADR·승인 후 별도 검토.</text>
+</svg>

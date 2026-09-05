@@ -1,6 +1,8 @@
 # Requirements
 
-SK7 (상균7데이즈) provides a versioned **입력 기반 위험군 선별 신호** and a seven-day record of home blood-pressure observations and one lifestyle challenge. Model output, measured blood pressure, and challenge adherence remain separate facts. The service does not provide diagnosis, treatment, prevention, or causal-improvement claims.
+SK7 (상균7데이즈) currently provides a seven-day record of home blood-pressure observations and one lifestyle challenge. A versioned **입력 기반 위험군 선별 신호** is a gated target; the current product remains `model_not_ready`. Model output, measured blood pressure, and challenge adherence remain separate facts. The service does not provide diagnosis, treatment, prevention, or causal-improvement claims.
+
+[MVP1 closeout](mvp1-closeout.md) maps these internal requirements to the Talos original requirements and evidence. Neither the honest not-ready fallback nor this internal P0 scope establishes client acceptance of missing future-onset prediction and prediction trends. Talos's external API P95 3-second criterion remains unverified; the small UI timing baseline does not satisfy it.
 
 ## Status legend
 
@@ -39,7 +41,7 @@ product-requirements authority after review and merge.
 | NFR-03 | P0 | Partial | Training and validation remain disjoint; compare at least two models and multiple metrics. | Split digest, experiment manifest, model card, and leakage audit. |
 | NFR-04 | P0 | Implemented | Supabase JWT and RLS isolate every user's rows. | Issue #149 Phase B passed approved synthetic two-user owner CRUD/export, cross-user non-disclosure, anonymous denial, and cleanup without retaining identifiers or values. |
 | NFR-05 | P0 | Implemented boundary | Real PHI and identifying content are out of scope. | Synthetic demo data; request bodies and health values absent from logs. |
-| NFR-06 | P0 | Implemented | Application code, deployment mirror, Cloudflare Worker, Cloud Run API, and Supabase roles follow the deployment SSOT. | Fresh deployment and rollback performed from the documented procedure. |
+| NFR-06 | P0 | Partial | Application code, deployment mirror, Cloudflare Worker, Cloud Run API, and Supabase roles follow the deployment SSOT. | Prior rollback/restore evidence exists; clean-environment deployed reproduction remains under the closeout operations plan. |
 | NFR-07 | P0 | Implemented | Expose separate liveness and configuration-readiness checks without sensitive details. | Automated tests for healthy and configuration-unready states; production smoke remains. |
 | NFR-08 | P1 | Partial | Complete the core flow on mobile and desktop with keyboard-visible focus and adequate contrast. | Issue #190 implements the shared token layer, 44 px controls, visible focus, reduced-motion fallback, 320 px/mobile/desktop reflow, and S01–S14 semantic structure. Canonical viewport captures, 200% zoom review, contrast review, and production visual QA remain under the [visual production contract](visual-production-contract.md). |
 | NFR-09 | P1 | Planned | Adopt asynchronous model processing only when an ADR and measured latency, duration, or reliability need justify it. | The ADR records the threshold, producer/consumer responsibility, persisted job state, retry/idempotency/timeout behavior, result retention, and security/log boundary. Redis or a separate worker is not a default requirement. |

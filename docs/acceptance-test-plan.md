@@ -29,6 +29,11 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 
 ## Execution order
 
+Issue #225 consolidates the current gaps in [MVP1 closeout](mvp1-closeout.md), records
+[local synthetic validation](mvp1-validation.md), and prepares [O1/O2/O3 operations](mvp1-operations-review.md).
+Local browser/API/pgTAP/build evidence does not close the deployed gaps in the matrix.
+The user's question-screen operation/display review is not input semantics or model approval.
+
 1. **AC-04, AC-06, and AC-08** — retain signed-in browser evidence; do not extend the AC-01 result into forced expiry or token inspection.
 2. **AC-05** — add separately approved deployed expired-row evidence; do not alter production time or retained records during this work.
 3. **AC-10** — complete the documented clean-environment deployment rehearsal.
