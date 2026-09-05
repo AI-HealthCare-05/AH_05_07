@@ -55,9 +55,11 @@ user instruction as preparation complete. No raw files, Parquet, individual valu
 statistics, local review metadata or full logs are included.
 
 Model training, evaluation, promotion and production deployment were not
-performed. AC-02/03/07 model-release requirements remain open: a versioned input
-adapter, bounded model comparison/evaluation, model card, verified artifact and
-promotion decision require separate work. Preparation evidence does not enable
+performed during that preparation run. Later comparison and exploratory
+uncertainty execution/publication are complete. AC-02/03/07 remain open for
+reviewed input semantics, quality/external validation, selected artifact and
+release approval; see the [draft model card](model-card.md) and
+[current readiness matrix](model-release-readiness.md). Preparation evidence does not enable
 the `503 model_not_ready` API or establish model quality.
 
 
@@ -66,8 +68,9 @@ the `503 model_not_ready` API or establish model quality.
 PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
 committed-evidence and synthetic checks plus general CI all passed. All #208
 preparation/publication conditions were confirmed and the Issue was closed on
-user instruction. This supersedes earlier pending-review text above. The
+user instruction. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
-Issue #213 implements the bounded synthetic-tested train/validation comparison
-path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
-serialization, promotion, adapter/UI change or deployment is claimed.
+Issue #213 comparison implementation completed via PR #214. Subsequent
+comparison and uncertainty evidence are distinct from this preparation record.
+No test evaluation, serialization, promotion, adapter/UI activation or model
+deployment is claimed by any of these published aggregates.

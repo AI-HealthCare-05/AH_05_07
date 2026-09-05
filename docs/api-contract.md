@@ -37,7 +37,7 @@ The active-challenge migration keeps legacy `challenge_events` separate from the
 
 | Method | Path | Auth | Current behavior | Release gate |
 |---|---|---|---|---|
-| POST | `/api/v1/risk-signal` | Not yet product-connected | `503 model_not_ready` without a verified artifact | Artifact, metadata, split digest, repeatability test, model version, and disclaimer must all pass. |
+| POST | `/api/v1/risk-signal` | Not yet product-connected | `503 model_not_ready` even with artifact configuration | [Input semantics and release approvals](model-release-readiness.md), verified artifact/metadata, split digest, repeatability, model version and wording must all pass before a separately reviewed implementation. |
 
 No fallback rule, random score, or provisional probability may be returned. Authentication and final success status must be reviewed when the product flow is connected.
 

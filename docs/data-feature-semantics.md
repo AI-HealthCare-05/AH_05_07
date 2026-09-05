@@ -54,5 +54,7 @@ returns `503 model_not_ready` even if artifact environment variables are set;
 the invalid mapping has been removed. The DTO is retained for compatibility
 while the endpoint remains unavailable. Releasing a versioned questionnaire,
 strict normalization adapter, metadata semantics version, fitted preprocessing,
-and reviewed artifact is a separate feature. No product input agreement or
+and reviewed artifact remains unimplemented. The [adapter contract draft](model-input-adapter-contract.md)
+and [release matrix](model-release-readiness.md) record required decisions without enabling it.
+No product input agreement or
 clinical generalization is claimed by successful data preparation.
