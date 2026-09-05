@@ -34,6 +34,16 @@ Issue #225 consolidates the current gaps in [MVP1 closeout](mvp1-closeout.md), r
 Local browser/API/pgTAP/build evidence does not close the deployed gaps in the matrix.
 The user's question-screen operation/display review is not input semantics or model approval.
 
+The [upgrade record](upgrade-execution.md) links separate unmerged branches:
+PR #234 passed 35 synthetic browser checks and a production-bundle fixture boundary,
+including period-switch races, edit cancellation, delete focus and narrow/zoomed
+layouts. PR #235 completed a clean exported-source install/build/start/smoke and
+489 timed synthetic responses through a loopback API/Auth/PostgREST/Postgres path,
+with ownership/expiry policy checks and owned-resource cleanup. The report records
+its host-load overlap. These add local evidence for AC-04/05/06/08/10; O1/O2/O3 still
+require their separately approved operating environment and evidence. No new
+production check, natural thirty-day observation or model execution occurred.
+
 1. **AC-04, AC-06, and AC-08** — retain signed-in browser evidence; do not extend the AC-01 result into forced expiry or token inspection.
 2. **AC-05** — add separately approved deployed expired-row evidence; do not alter production time or retained records during this work.
 3. **AC-10** — complete the documented clean-environment deployment rehearsal.

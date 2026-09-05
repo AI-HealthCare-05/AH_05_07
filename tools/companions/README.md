@@ -35,6 +35,16 @@ Always use `--python-exit-code 1`: Blender otherwise can return exit 0 after a P
 assertion fails. A saved GLB is only a candidate. Inspect all views and every action
 in the development viewer before setting a quality pass. `--clip greet --poses`
 can diagnose one motion without rerendering every already-inspected pose.
+For an additional review, use `--output NEW_EXTERNAL_DIRECTORY`; it must not exist.
+`--views side,back --render` limits a corrective render to the selected views.
+Existing PNGs and reports are refused, not replaced.
+
+Final rendering defaults to Cycles. On the measured Intel host, EEVEE sometimes
+saved an almost unlit frame among otherwise valid views or poses. This was not
+limited to one camera or a second view. Preserve those diagnostic frames and render
+affected deliverables with Cycles in a new output. A successful render exit code
+alone does not qualify an image. Reports identify the actual engine, dimensions,
+camera, input/source hashes and selected frames.
 
 Before a new build, commit the exact authoring file bytes. Generation rejects a dirty
 source and rechecks source/commit at the end. `rigged.blend` checkpoints the rigged
@@ -52,6 +62,9 @@ digest. The character name, special motion and asset provenance remain local.
   all seven actions, skinned surfaces, finite deformation at 13 times per clip,
   and identical start/end bone matrices. It excludes the importer's hidden bone
   display widget from the mesh count. It renders the actual imported asset.
+  Camera framing uses the union of sampled deformed vertices across all clips,
+  fits both axes in the actual portrait frame and adds 25% scale margin. Bounds
+  between sampled frames still require playback inspection.
 - `glb_audit.py` independently reads real binary accessors, skin weights, indices,
   normals, four-second zero-start timelines, loop values, actual parent-coordinate
   root motion and generator Git bytes. Its synthetic corruption tests run on
@@ -68,6 +81,11 @@ digest. The character name, special motion and asset provenance remain local.
 - The root bone's **local Y** is vertical. Export shifts every clip to 0–4 seconds.
   Independent binary QA found and rejected earlier local-Z bounce and 1/24-second
   start-offset candidates; these were not counted as quality-passed assets.
+- The shared hip/leg weights are continuous through the old height boundary and
+  fade toward the centerline. A visible folded seam on an earlier rabbit candidate
+  prompted the fix. Synthetic invariants cover normalized, bounded influences,
+  boundary continuity and opposing-leg stress; actual repaired move poses were
+  also inspected. None of these tests certifies every possible contact or pose.
 - Any failed version remains stored with a reason. Only assets that pass the stated
   QA scope count as complete; final human design review is still pending.
 
@@ -79,3 +97,22 @@ The external run state, artifact manifest and `RESUME.md` identify the last veri
 candidate. Never overwrite a previously verified candidate while regenerating.
 Same-disk checkpoints are not independent backup. No paid Meshy job or external
 asset upload is authorized by these scripts.
+
+### Selected-asset inventory
+
+After asset writers stop, run:
+
+```text
+python tools/companions/inventory.py --assets ASSETS --output NEW_INVENTORY_JSON
+```
+
+`ASSETS` is an explicit external root containing `catalog.json`. The output file
+must not exist and its parent must exist. Only recognized direct artifacts in the
+selected candidate folders are hashed. GLB and generator digests are compared with
+the generated manifest; missing files and catalog statuses remain explicit.
+Prior unselected version folders are listed without reading their contents.
+The optional `rigged.blend` checkpoint is included when present. Separate QA folders
+stay in the run manifest. Clip/triangle counts here are generated-manifest
+declarations, not new binary or visual validation. File presence and successful
+inventory never imply quality or completion approval. Use a new inventory filename
+after the catalog changes, preserving every earlier snapshot.

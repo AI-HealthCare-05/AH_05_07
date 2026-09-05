@@ -127,9 +127,12 @@ remain incomplete. See `docs/model-comparison-evidence.md` for limitations.
    eight-second browser request timeout, preserved draft, and no automatic
    retry. No real account, JWT, operational record, API, database, or
    deployment is involved.
-2. Expand the sanitized observation-load sample before setting a P95 target;
-   the deployed check-in foreign-key index removed the Advisor finding and
-   reduced the observed cold sample, but the current manual sample is small.
+2. Review the separate local API evidence in [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235):
+   489 timed synthetic responses, fixed endpoint phases, cold/warm/concurrency and
+   quantile definitions, plus owned-environment cleanup. Its measurement window
+   includes disclosed software WebGL overlap. This expands beyond the historical
+   small manual UI sample; it does not establish production P95 or replace the
+   client's decision on load conditions and acceptance. The PR remains unmerged.
 3. Issues #184–#188 add evaluator-facing seven-day dashboard, range, browse,
    and focused-detail evidence: BP,
    challenge adherence, legacy records, and the not-ready risk-signal state
