@@ -347,7 +347,7 @@ def prepare_decimated_skin(obj):
             old = dict(vertex[deform])
             limited, discarded = limited_skin_weights(old)
             if limited != old:
-                for joint in list(vertex[deform]):
+                for joint in old:
                     del vertex[deform][joint]
                 for joint, weight in limited.items():
                     vertex[deform][joint] = weight
