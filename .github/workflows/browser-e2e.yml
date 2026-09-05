@@ -6,6 +6,7 @@ on:
     paths:
       - "web/**"
       - "tools/mvp1-capture.cjs"
+      - "tools/submission-*"
       - "docs/mvp1-*.md"
       - "docs/evidence/mvp1/**"
       - ".github/workflows/browser-e2e.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "web/**"
       - "tools/mvp1-capture.cjs"
+      - "tools/submission-*"
       - "docs/mvp1-*.md"
       - "docs/evidence/mvp1/**"
       - ".github/workflows/browser-e2e.yml"
@@ -52,4 +54,8 @@ jobs:
         run: npm run test:e2e
 
       - name: Check local submission capture script syntax
-        run: node --check ../tools/mvp1-capture.cjs
+        run: |
+          node --check ../tools/mvp1-capture.cjs
+          node --check ../tools/submission-record.cjs
+          node --check ../tools/submission-video-check.cjs
+          node --check ../tools/submission-slides.mjs
