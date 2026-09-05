@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Any
 
 PIPELINE_COMMANDS = (
-    "scripts/data/verify_manifest.py",
-    "scripts/data/audit_schema.py $RawDir",
-    "scripts/data/build_derived_table.py $RawDir $DerivedTable",
-    "scripts/data/freeze_split.py $DerivedTable $SplitDir --evidence $EvidenceFile --commit $Commit",
+    "scripts/data/prepare_gate_1b.py",
+    "verify_manifest.py",
+    "audit_schema.py",
+    "build_derived_table.py",
+    "freeze_split.py",
 )
+
 REQUIRED_FILES = (
     "data/manifest/nhanes_2017_2020.json",
     "docs/ai-toolchain-ssot.md",
@@ -22,6 +24,9 @@ REQUIRED_FILES = (
     "scripts/data/build_derived_table.py",
     "scripts/data/freeze_split.py",
     "scripts/data/verify_manifest.py",
+    "scripts/data/prepare_gate_1b.py",
+    "scripts/data/contract.py",
+    "scripts/data/preparation.py",
 )
 EVIDENCE_FIELDS = {
     "dataset_id",
@@ -115,6 +120,10 @@ def evidence_findings(evidence: dict[str, Any]) -> list[str]:
 
 def _manifest_findings(manifest: dict[str, Any]) -> list[str]:
     issues: list[str] = []
+    if manifest.get("semantics_version") != 2 or set(manifest.get("predictor_specs", {})) != set(
+        manifest.get("candidate_predictors", [])
+    ):
+        issues.append("manifest requires versioned predictor semantics")
     files = manifest.get("files", {})
     module_columns = manifest.get("module_columns", {})
     if set(files) != set(module_columns):

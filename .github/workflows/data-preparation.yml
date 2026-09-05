@@ -1,0 +1,59 @@
+name: Data preparation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/data/**"
+      - "scripts/model/**"
+      - "scripts/ci/verify_model_gate_1b_contract.py"
+      - "data/manifest/**"
+      - "tests/data/**"
+      - "docs/model-gate-1b-runbook.md"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".python-version"
+      - ".github/workflows/data-preparation.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/data/**"
+      - "scripts/model/**"
+      - "scripts/ci/verify_model_gate_1b_contract.py"
+      - "data/manifest/**"
+      - "tests/data/**"
+      - "docs/model-gate-1b-runbook.md"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".python-version"
+      - ".github/workflows/data-preparation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: data-preparation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-preparation:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install frozen AI environment
+        run: uv sync --frozen --group ai
+      - name: Run synthetic semantics and real CLI tests
+        run: uv run --frozen --group ai python -m pytest tests/data -q

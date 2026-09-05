@@ -169,3 +169,12 @@ Before accepting production traffic on the primary URL, add `https://ah-05-07-pa
 - When a browser flow adds an API method such as `PUT` or `DELETE`, update the API CORS allow-list in the same pull request and verify that method's preflight against the production origin.
 - Treat changes to `supabase/migrations/**` as a production gate, not as documentation or an implicit side effect of a code deployment. Do not deploy a caller path that requires a new table, policy, trigger, or grant before the migration evidence is complete.
 - Keep the current production Worker and old Worker until the verification in this document passes. Do not use Cloudflare's manual static-file uploader for source-backed releases.
+
+## Pending preparation version 2 release classification
+
+The Gate 1B prerequisite patch changes `app/apis/v1/risk_signal_routers.py` to
+keep the unreviewed input contract explicitly unavailable. If merged, this API
+change needs a classified Cloud Run revision before claiming the guard is
+present in production. Data scripts/tests/docs do not require runtime releases;
+no web, R2 or database deployment is required. No deployment was performed while
+preparing the patch, and no model artifact is authorized for release by it.

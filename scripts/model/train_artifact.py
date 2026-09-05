@@ -7,7 +7,9 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+from preprocessing import make_preprocessor
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 parser = argparse.ArgumentParser()
 parser.add_argument("split_dir", type=Path)
@@ -18,11 +20,21 @@ args = parser.parse_args()
 
 manifest = json.loads(Path("data/manifest/nhanes_2017_2020.json").read_text(encoding="utf-8"))
 split_metadata = json.loads((args.split_dir / "split_metadata.json").read_text(encoding="utf-8"))
+if (
+    split_metadata.get("semantics_version") != manifest["semantics_version"]
+    or split_metadata.get("features") != manifest["candidate_predictors"]
+):
+    raise ValueError("split metadata does not match the versioned feature semantics")
 features = manifest["candidate_predictors"]
 target = manifest["label"]["name"]
 train = pd.read_parquet(args.split_dir / "train.parquet")
 
-model = LogisticRegression(max_iter=2000)
+model = Pipeline(
+    [
+        ("preprocess", make_preprocessor(manifest, split_metadata["fill_values"])),
+        ("model", LogisticRegression(max_iter=2000)),
+    ]
+)
 model.fit(train[features], train[target])
 args.artifact.parent.mkdir(parents=True, exist_ok=True)
 joblib.dump(model, args.artifact)
