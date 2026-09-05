@@ -38,6 +38,14 @@ test, or deployment work complete before the repository evidence exists.
 
 ## Current checkpoint
 
+The current closeout authority is [MVP1 closeout](mvp1-closeout.md), Issue #225,
+based on `255c904414943e21ee0a8596690e2a1adebb3ebc` (PR #224). Status: in progress.
+It links requirement-specific remaining implementation, operations verification,
+client decisions and seven deliverables. #213 is closed for PR #214's implementation
+scope only. The user confirmed question-screen operation/display; Korean polishing
+is a follow-up, not semantics/adapter/model approval. Historical deployment rows below
+remain evidence for their stated versions, not this source SHA's deployment.
+
 | Concern | Verified checkpoint |
 | --- | --- |
 | Source repository | `AI-HealthCare-05/AH_05_07`, default branch `main` |

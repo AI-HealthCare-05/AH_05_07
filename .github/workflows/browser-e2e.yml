@@ -5,11 +5,17 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "tools/mvp1-capture.cjs"
+      - "docs/mvp1-*.md"
+      - "docs/evidence/mvp1/**"
       - ".github/workflows/browser-e2e.yml"
   pull_request:
     branches: [main]
     paths:
       - "web/**"
+      - "tools/mvp1-capture.cjs"
+      - "docs/mvp1-*.md"
+      - "docs/evidence/mvp1/**"
       - ".github/workflows/browser-e2e.yml"
 
 permissions:
@@ -44,3 +50,6 @@ jobs:
 
       - name: Run browser evidence fixtures
         run: npm run test:e2e
+
+      - name: Check local submission capture script syntax
+        run: node --check ../tools/mvp1-capture.cjs
