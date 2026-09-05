@@ -7,6 +7,7 @@ on:
       - "scripts/model/**"
       - "scripts/data/**"
       - "scripts/ci/verify_model_comparison.py"
+      - "scripts/ci/verify_model_uncertainty.py"
       - "scripts/ci/verify_model_gate_1b_contract.py"
       - "tests/model/**"
       - "tests/data/**"
@@ -24,6 +25,7 @@ on:
       - "scripts/model/**"
       - "scripts/data/**"
       - "scripts/ci/verify_model_comparison.py"
+      - "scripts/ci/verify_model_uncertainty.py"
       - "scripts/ci/verify_model_gate_1b_contract.py"
       - "tests/model/**"
       - "tests/data/**"
@@ -75,5 +77,5 @@ jobs:
         with:
           python-version-file: .python-version
       - run: uv sync --frozen --group ai
-      - name: Synthetic-only comparison and boundary checks
+      - name: Synthetic-only comparison, paired uncertainty and boundary checks
         run: uv run --frozen --group ai python -m pytest tests/model -q
