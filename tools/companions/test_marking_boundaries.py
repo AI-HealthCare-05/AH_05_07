@@ -17,6 +17,7 @@ def load_geometry():
         "inside_outline",
         "outline_bounds",
         "face_overlaps_marking",
+        "face_meets_outline_edge",
         "stripe_planes",
         "stripe_material",
         "verify_marked_surface",
@@ -137,6 +138,18 @@ class MarkingBoundaryTests(unittest.TestCase):
         self.assertLess(fraction, 1)
         self.assertAlmostEqual(G["plane_distance"](on_edge, plane), 0)
         self.assertAlmostEqual(on_edge[2], 0.75)
+
+    def test_finite_edge_avoids_unnecessary_distant_supporting_plane_cuts(self):
+        segment = ((0, 0), (0, 1))
+        plane = ((0, 0, 0), (1, 0, 0))
+        distant = ((-1, -0.5, 2), (1, -0.5, 2), (0, -0.5, 3))
+        containing = ((-1, -0.5, -2), (1, -0.5, -2), (0, -0.5, 3))
+        crossing = ((-1, -0.5, 0.5), (1, -0.5, 0.5), (0, -0.5, 2))
+        for points, expected in ((distant, False), (containing, True), (crossing, True)):
+            distances = [G["plane_distance"](point, plane) for point in points]
+            self.assertLess(min(distances), 0)
+            self.assertGreater(max(distances), 0)
+            self.assertEqual(G["face_meets_outline_edge"](points, distances, segment), expected)
 
     def test_invalid_contour_inputs_are_rejected(self):
         for options in (

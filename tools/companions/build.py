@@ -217,6 +217,25 @@ def face_overlaps_marking(points, bounds):
     )
 
 
+def face_meets_outline_edge(points, distances, segment):
+    """Limit a supporting-plane cut to faces crossed by its finite contour edge."""
+    (x, z), (next_x, next_z) = segment
+    dx, dz = next_x - x, next_z - z
+    length = math.hypot(dx, dz)
+    positions = []
+    for index, point in enumerate(points):
+        following = (index + 1) % len(points)
+        a, b = distances[index], distances[following]
+        if abs(a) <= MARKING_CUT_EPS:
+            positions.append(((point[0] - x) * dx + (point[2] - z) * dz) / length)
+        if a * b < 0:
+            fraction = a / (a - b)
+            other = points[following]
+            crossing = [point[axis] + fraction * (other[axis] - point[axis]) for axis in (0, 2)]
+            positions.append(((crossing[0] - x) * dx + (crossing[1] - z) * dz) / length)
+    return bool(positions) and min(positions) <= length + MARKING_CUT_EPS and max(positions) >= -MARKING_CUT_EPS
+
+
 def stripe_planes(lower, upper):
     """Only true transitions of the existing floor(z*12)%3 color rule."""
     return [
@@ -230,7 +249,7 @@ def stripe_material(z):
     return int(math.floor(z * 12)) % 3 == 0
 
 
-def cut_surface_plane(bm, plane, bounds=None):
+def cut_surface_plane(bm, plane, bounds=None, segment=None):
     """Cut shared edges without deleting either side or creating overlay shells."""
     bm.normal_update()
     faces = []
@@ -240,7 +259,8 @@ def cut_surface_plane(bm, plane, bounds=None):
             continue
         distances = [plane_distance(point, plane) for point in points]
         if min(distances) < -MARKING_CUT_EPS and max(distances) > MARKING_CUT_EPS:
-            faces.append(face)
+            if segment is None or face_meets_outline_edge(points, distances, segment):
+                faces.append(face)
     if faces:
         # BMesh splits shared edges in adjacent faces too. The shared topology
         # and interpolated deform custom-data are retained by the operator.
@@ -307,8 +327,9 @@ def paint_surface_markings(obj):
                 raise ValueError("Unknown coat marking pattern")
             regions = [outline_planes(outline) for outline in outlines]
             for outline, planes in zip(outlines, regions, strict=True):
-                for plane in planes:
-                    cut_surface_plane(bm, plane, outline_bounds(outline))
+                segments = zip(outline, (*outline[1:], outline[0]), strict=True)
+                for plane, segment in zip(planes, segments, strict=True):
+                    cut_surface_plane(bm, plane, outline_bounds(outline), segment)
             bm.normal_update()
             for face in bm.faces:
                 marked = face.normal.y < 0 and any(
