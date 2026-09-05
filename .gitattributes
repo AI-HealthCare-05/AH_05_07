@@ -1,3 +1,6 @@
 # Evidence hashes must use identical checkout bytes on every platform.
 /data/manifest/nhanes_2017_2020.json text eol=lf
 /uv.lock text eol=lf
+
+# Preserve this approved Windows evidence archive byte-for-byte.
+/docs/evidence/model-uncertainty.json -text

@@ -44,8 +44,10 @@ statistical significance and release suitability are not established.
   0.253451 versus 0.323529. No probability correction was performed.
 - Age 18–39, 415 rows: Brier worsens from 0.175858 to 0.176357 for HGB.
 - Age 40–59, 385 rows: AUROC worsens from 0.641739 to 0.634952 for HGB.
-- No confidence intervals or statistical significance tests were produced.
-  The result does not establish that differences are robust to sampling.
+- The original comparison produced no confidence intervals or significance tests.
+  The later [separate exploratory uncertainty report](model-uncertainty-evidence.md)
+  adds conditional pointwise intervals without changing this comparison JSON;
+  it does not establish general robustness to sampling or training variation.
 - The fixed fewer-than-20-row rule suppresses metric values. Logistic calibration
   has two insufficient-row bins and one empty bin; HGB has two insufficient-row
   bins. The missing-sex group is empty for both models. Status/reason/null values
@@ -78,7 +80,8 @@ The original local result and Gate 1B JSON are preserved. This publication does
 not retrain, tune, calibrate probabilities, evaluate test, serialize a model,
 promote, deploy or implement an input adapter.
 
-Next work requires a separate reviewed design: quantify uncertainty, investigate
+The separate exploratory uncertainty result is now reported above. Further
+work requires reviewed designs to investigate
 older-age and calibration limitations and subgroup regressions, define external
 and Korean-user validation, and set explicit quality/release criteria. Any later
 calibration, test protocol, artifact/adapter or promotion work needs its own
