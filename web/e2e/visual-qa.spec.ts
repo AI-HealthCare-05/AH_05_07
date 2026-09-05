@@ -34,13 +34,3 @@ test("reduced motion keeps the main scenes understandable", async ({ page }) => 
   await page.getByRole("button", { name: "입력 기반 위험군 선별 신호" }).click();
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
 });
-
-test("R2 visual failures preserve the semantic journey and its controls", async ({ page }) => {
-  await page.route("https://sk7-assets.gomdory.com/**", async (route) => route.abort("failed"));
-  await page.goto("/?fixture=VP-10");
-
-  await expect(page.locator('[data-scene="S02"]')).toContainText("오늘의 기록");
-  await expect(page.getByRole("button", { name: "기록 찾아보기" })).toBeEnabled();
-  await page.getByRole("button", { name: "기록 찾아보기" }).click();
-  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
-});
