@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 from mathutils import Vector
 
@@ -48,6 +49,8 @@ SPECIAL = {
 MARKING_EMBED = 0.04  # About 1.5 times the 0.026 sculpt voxel, allowing for remesh shrink.
 MARKING_RELIEF = 0.012
 QUILL_BASE_EMBED = 0.04
+MARKING_OUTLINE_SEGMENTS = 64
+MARKING_CUT_EPS = 1e-5  # Well below a display pixel, above float32 near-coincident edge spacing.
 
 
 def coat_profiles(kind):
@@ -127,6 +130,197 @@ def conform_marking(obj, kind, center, radii):
     for vertex in obj.data.vertices:
         vertex.co = marking_point(kind, vertex.co, center, radii)
     obj.data.update()
+
+
+def marking_outline(center, radii, pear=0, scale=(1, 1), segments=MARKING_OUTLINE_SEGMENTS):
+    """Outline of the former shell's ideal exposed cap, without offset geometry.
+
+    The old shell crossed its analytic coat at normalized depth
+    -EMBED / (EMBED + RELIEF). Preserve that footprint as a material boundary;
+    remesh shrink and independent decimation can no longer move the crossing.
+    """
+    if not isinstance(segments, int) or segments < 12 or len(center) != 3 or len(radii) != 3 or len(scale) != 2:
+        raise ValueError("Invalid marking contour specification")
+    if any(not math.isfinite(value) for value in (*center, *radii, pear, *scale)):
+        raise ValueError("Non-finite marking contour")
+    if min(*radii, *scale) <= 0 or abs(pear) > 0.2:
+        raise ValueError("Marking radii and scales must be positive")
+    depth = MARKING_EMBED / (MARKING_EMBED + MARKING_RELIEF)
+    outline = []
+    for index in range(segments):
+        angle = 2 * math.pi * index / segments
+        x, z = math.cos(angle), math.sin(angle)
+        lower, upper = 0.0, 1.0
+        for _ in range(48):
+            radius = (lower + upper) / 2
+            height = radius * z
+            signed = (1 - height * height) * (1 - pear * height) ** 2 - (radius * x) ** 2 - depth**2
+            if signed > 0:
+                lower = radius
+            else:
+                upper = radius
+        radius = (lower + upper) / 2
+        outline.append(((center[0] + radii[0] * radius * x) * scale[0], (center[2] + radii[2] * radius * z) * scale[1]))
+    return outline
+
+
+def coat_marking_outlines(kind):
+    if kind not in ("red_panda", "fox", "penguin", "otter", "squirrel", "seal"):
+        return []
+    # Match the existing shared X/Z warp; no shape or bone transform changes.
+    scale = {"otter": (0.88, 0.98), "penguin": (0.89, 0.95), "seal": (1.08, 0.64)}.get(kind, (1, 1))
+    result = [marking_outline((0, -0.405, 1.14), (0.32, 0.064, 0.43), 0.13, scale)]
+    if kind == "red_panda":
+        result += [marking_outline((sign * 0.41, -0.397, 2.18), (0.15, 0.05, 0.17), scale=scale) for sign in (-1, 1)]
+    elif kind == "penguin":
+        result += [marking_outline((sign * 0.25, -0.452, 2.22), (0.20, 0.050, 0.275), scale=scale) for sign in (-1, 1)]
+    return result
+
+
+def outline_planes(outline):
+    """Unit inward half-planes of the convex X/Z contour."""
+    result = []
+    for (x, z), (next_x, next_z) in zip(outline, (*outline[1:], outline[0]), strict=True):
+        dx, dz = next_x - x, next_z - z
+        length = math.hypot(dx, dz)
+        if length <= 1e-12:
+            raise ValueError("Degenerate marking edge")
+        result.append(((x, 0, z), (-dz / length, 0, dx / length)))
+    return result
+
+
+def plane_distance(point, plane):
+    origin, normal = plane
+    return sum((point[index] - origin[index]) * normal[index] for index in range(3))
+
+
+def inside_outline(point, planes):
+    return all(plane_distance(point, plane) >= -MARKING_CUT_EPS for plane in planes)
+
+
+def outline_bounds(outline):
+    return (
+        min(p[0] for p in outline),
+        max(p[0] for p in outline),
+        min(p[1] for p in outline),
+        max(p[1] for p in outline),
+    )
+
+
+def face_overlaps_marking(points, bounds):
+    left, right, bottom, top = bounds
+    return not (
+        max(point[0] for point in points) < left
+        or min(point[0] for point in points) > right
+        or max(point[2] for point in points) < bottom
+        or min(point[2] for point in points) > top
+    )
+
+
+def stripe_planes(lower, upper):
+    """Only true transitions of the existing floor(z*12)%3 color rule."""
+    return [
+        ((0, 0, index / 12), (0, 0, 1))
+        for index in range(math.floor(lower * 12) + 1, math.ceil(upper * 12))
+        if index % 3 in (0, 1)
+    ]
+
+
+def stripe_material(z):
+    return int(math.floor(z * 12)) % 3 == 0
+
+
+def cut_surface_plane(bm, plane, bounds=None):
+    """Cut shared edges without deleting either side or creating overlay shells."""
+    bm.normal_update()
+    faces = []
+    for face in bm.faces:
+        points = [vertex.co for vertex in face.verts]
+        if bounds is not None and (face.normal.y >= 0 or not face_overlaps_marking(points, bounds)):
+            continue
+        distances = [plane_distance(point, plane) for point in points]
+        if min(distances) < -MARKING_CUT_EPS and max(distances) > MARKING_CUT_EPS:
+            faces.append(face)
+    if faces:
+        # BMesh splits shared edges in adjacent faces too. The shared topology
+        # and interpolated deform custom-data are retained by the operator.
+        bm.verts.index_update()
+        bm.edges.index_update()
+        bm.faces.index_update()
+        # Stable index order avoids depending on BM element pointer/set order.
+        vertices = sorted({vertex for face in faces for vertex in face.verts}, key=lambda vertex: vertex.index)
+        edges = sorted({edge for face in faces for edge in face.edges}, key=lambda edge: edge.index)
+        geometry = [*vertices, *edges, *sorted(faces, key=lambda face: face.index)]
+        bmesh.ops.bisect_plane(
+            bm,
+            geom=geometry,
+            dist=MARKING_CUT_EPS,
+            plane_co=plane[0],
+            plane_no=plane[1],
+            clear_inner=False,
+            clear_outer=False,
+        )
+
+
+def verify_marked_surface(bm, deform, original):
+    if any(not edge.is_manifold for edge in bm.edges):
+        raise ValueError("Material boundary cut opened the coat")
+    for vertex, (coordinate, weights) in original.items():
+        if not vertex.is_valid or math.dist(vertex.co, coordinate) > 1e-7 or dict(vertex[deform]) != weights:
+            raise ValueError("Material boundary cut changed an existing vertex or its skin weights")
+    for vertex in bm.verts:
+        values = list(vertex[deform].values())
+        if (
+            not values
+            or any(not math.isfinite(value) or value < 0 for value in values)
+            or abs(sum(values) - 1) > 1e-5
+            or sum(value > 1e-8 for value in values) > 4
+        ):
+            raise ValueError("Material boundary cut produced invalid skin weights")
+
+
+def paint_surface_markings(obj):
+    """Reapply exact color boundaries to the actual source/standard/light surface.
+
+    Existing positions and weights are guarded; new edge points interpolate the
+    same closed surface. Actual Blender import/render QA remains mandatory.
+    """
+    pattern = obj.get("sk7_surface_pattern")
+    if not pattern:
+        return
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(obj.data)
+        deform = bm.verts.layers.deform.active
+        if deform is None:
+            raise ValueError("Surface markings require the existing skin weights")
+        original = {vertex: (tuple(vertex.co), dict(vertex[deform])) for vertex in bm.verts}
+        bmesh.ops.triangulate(bm, faces=list(bm.faces), quad_method="FIXED", ngon_method="EAR_CLIP")
+        if pattern == "red_panda_tail":
+            for plane in stripe_planes(min(v.co.z for v in bm.verts), max(v.co.z for v in bm.verts)):
+                cut_surface_plane(bm, plane)
+            for face in bm.faces:
+                face.material_index = obj["sk7_marking_material"] if stripe_material(face.calc_center_median().z) else 0
+        else:
+            outlines = coat_marking_outlines(pattern)
+            if not outlines:
+                raise ValueError("Unknown coat marking pattern")
+            regions = [outline_planes(outline) for outline in outlines]
+            for outline, planes in zip(outlines, regions, strict=True):
+                for plane in planes:
+                    cut_surface_plane(bm, plane, outline_bounds(outline))
+            bm.normal_update()
+            for face in bm.faces:
+                marked = face.normal.y < 0 and any(
+                    inside_outline(face.calc_center_median(), planes) for planes in regions
+                )
+                face.material_index = obj["sk7_marking_material"] if marked else 0
+        verify_marked_surface(bm, deform, original)
+        bm.normal_update()
+        bm.to_mesh(obj.data)
+        obj.data.update()
+    finally:
+        bm.free()
 
 
 def coat_back_y(kind, x, z):
@@ -523,11 +717,6 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             12,
         )
         bind(glint, rig, fixed("blink." + s))
-        if kind == "penguin":
-            center, radii = (sign * 0.25, -0.452, 2.22), (0.20, 0.050, 0.275)
-            patch = surface("Ivory penguin face", center, radii, cream, 20, 32)
-            conform_marking(patch, kind, center, radii)
-            bind(patch, rig, fixed("head"))
         # Small separate toe grooves retain readability without busy surface noise.
         for i in range(0 if kind in ("seal", "penguin") else 3):
             groove = surface(
@@ -577,17 +766,6 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
                     6,
                 )
                 bind(whisker, rig, fixed("head"))
-    if kind in ("red_panda", "fox", "penguin", "otter", "squirrel", "seal"):
-        center, radii = (0, -0.405, 1.14), (0.32, 0.064, 0.43)
-        bib = surface("Chest bib", center, radii, cream, 20, 32, pear=0.13)
-        conform_marking(bib, kind, center, radii)
-        bind(bib, rig, skin_weights)
-    if kind == "red_panda":
-        for sign in (-1, 1):
-            center, radii = (sign * 0.41, -0.397, 2.18), (0.15, 0.05, 0.17)
-            patch = surface("Panda cheek marking", center, radii, cream, 16, 24)
-            conform_marking(patch, kind, center, radii)
-            bind(patch, rig, fixed("head"))
     tail_points = [(0, 0.39, 0.77), (0, 0.65, 0.78), (0, 0.73, 0.81)]
     tail_radii = [0.14, 0.16, 0.035]
     if kind in ("fox", "red_panda", "squirrel", "cat", "dog", "otter"):
@@ -609,11 +787,11 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         rig,
         lambda co: {"tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)), "tail.02": min(1, max(0, (co.y - 0.6) / 0.4))},
     )
-    if kind in ("fox", "red_panda"):
+    if kind == "fox":
         tail.data.materials.append(cream)
         for polygon in tail.data.polygons:
             center = polygon.center
-            if (kind == "fox" and center.z > 1.33) or (kind == "red_panda" and int(center.z * 12) % 3 == 0):
+            if center.z > 1.33:
                 polygon.material_index = 1
     if kind == "hedgehog":
         for row in range(7):
@@ -644,6 +822,16 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
                 vertex.co.z = 0.52 + (vertex.co.z - 0.52) * 0.45
             bind(fin, rig, fixed("tail.01"))
     species_proportions(rig, kind)
+    if coat_marking_outlines(kind):
+        skin["sk7_surface_pattern"] = kind
+        skin.data.materials.append(cream)
+        skin["sk7_marking_material"] = len(skin.data.materials) - 1
+        paint_surface_markings(skin)
+    if kind == "red_panda":
+        tail["sk7_surface_pattern"] = "red_panda_tail"
+        tail.data.materials.append(cream)
+        tail["sk7_marking_material"] = len(tail.data.materials) - 1
+        paint_surface_markings(tail)
     return rig
 
 
@@ -826,6 +1014,7 @@ def export_variant(output, name, target):
             for _ in range(index):
                 bpy.ops.object.modifier_move_up(modifier=dec.name)
             apply(obj, dec)
+        paint_surface_markings(obj)
     bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
         if obj.type == "ARMATURE" or (obj.type == "MESH" and obj.parent):
