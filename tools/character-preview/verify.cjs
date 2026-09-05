@@ -36,7 +36,7 @@ function inspectDist(dir) {
 }
 inspectDist(dist); fs.mkdirSync(output, { recursive: true });
 const server = spawn(python, [path.join(__dirname, 'serve.py'), '--assets', assets, '--vendor', vendor, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
-const errors = [], network = [], checks = [], playback = [], samples = [], assetManifest = [];
+const errors = [], network = [], checks = [], playback = [], samples = [], assetManifest = [], motionVideos = [];
 const digest = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const quantile = (values, q) => { const a = [...values].sort((x, y) => x - y), x = (a.length - 1) * q, i = Math.floor(x); return a.length ? a[i] + (a[Math.ceil(x)] - a[i]) * (x - i) : null; };
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,23 +58,37 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     for (const route of ['/assets/%2e%2e%2fcatalog.json', '/assets/%2e%2e%2fAGENTS.md', '/vendor/%2e%2e%2fpackage.json', '/serve.py']) assert.equal((await fetch(base + route)).status, 404);
     assert.equal((await fetch(base, { method: 'POST' })).status, 501); checks.push('read_only_path_boundary');
     browser = await chromium.launch({ args: synthetic ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--enable-unsafe-swiftshader'] });
-    const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, ...(record ? { recordVideo: { dir: path.join(output, 'video'), size: { width: 1366, height: 768 } } } : {}) });
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
     await context.route('**/*', (route) => { const url = route.request().url(); if (!url.startsWith(base) && !url.startsWith('blob:') && !url.startsWith('data:')) { network.push(url); return route.abort(); } return route.continue(); });
-    const page = await context.newPage(); page.on('pageerror', (e) => errors.push(e.message));
+    let page = await context.newPage(); const mainPage = page; page.on('pageerror', (e) => errors.push(e.message));
     const glbRequests = []; page.on('request', (request) => { if (request.url().endsWith('.glb')) glbRequests.push(request.url()); });
     await page.goto(base); await page.waitForFunction(() => window.previewDiagnostics && !['starting', 'loading'].includes(window.previewDiagnostics.snapshot().status));
     const snap = () => page.evaluate(() => window.previewDiagnostics.snapshot());
     assert.equal(await page.locator('#animal option').count(), 12);
-    const available = catalog.animals.filter((a) => a.standard && a.light);
+    const requested = arg('--animals', '').split(',').filter(Boolean);
+    const available = catalog.animals.filter((a) => a.standard && a.light && (!requested.length || requested.includes(a.id)));
+    assert(requested.every((id) => available.some((animal) => animal.id === id)), 'Requested animal is not available in both variants');
     assert(available.length, 'A real asset or explicit temporary fixture is required');
     assert(glbRequests.every((url) => url.endsWith('/assets/' + catalog.animals[0].standard)), 'A non-selected model was prefetched');
     checks.push('initial_selected_asset_only');
     for (const animal of available) {
+      let motionContext;
+      let standardClips;
+      if (record) {
+        await mainPage.locator('#static').check(); await mainPage.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static');
+        motionContext = await browser.newContext({ viewport: { width: 1366, height: 768 }, recordVideo: { dir: path.join(output, 'video', animal.id.replace(/[^a-z0-9_-]/gi, '_')), size: { width: 1366, height: 768 } } });
+        await motionContext.route('**/*', (route) => { const url = route.request().url(); if (!url.startsWith(base) && !url.startsWith('blob:') && !url.startsWith('data:')) { network.push(url); return route.abort(); } return route.continue(); });
+        page = await motionContext.newPage(); page.on('pageerror', (e) => errors.push(e.message)); await page.goto(base + '/?animal=' + encodeURIComponent(animal.id));
+        await page.waitForFunction(() => window.previewDiagnostics?.snapshot().status === 'playing');
+      }
       await page.selectOption('#animal', animal.id);
       for (const variant of ['standard', 'light']) {
         await page.locator(`[name=variant][value=${variant}]`).check();
         await page.waitForFunction(({ id, variant }) => { const d = window.previewDiagnostics.snapshot(); return d.animal === id && d.variant === variant && d.stats && d.status === 'playing'; }, { id: animal.id, variant });
         const loaded = await snap(); assert.equal(loaded.stats.clips.length, 7); assert(loaded.stats.bones > 0 && loaded.stats.skinnedMeshes > 0);
+        assert.deepEqual(loaded.stats.clips.map((clip) => clip.name).sort(), ['celebrate', 'curious', 'greet', 'idle', 'move', 'rest', 'special']);
+        const clipIdentity = loaded.stats.clips.map(({ name, duration }) => ({ name, duration })).sort((a, b) => a.name.localeCompare(b.name));
+        if (variant === 'standard') standardClips = clipIdentity; else assert.deepEqual(clipIdentity, standardClips, 'Standard/light clip names and durations differ');
         const file = path.join(assets, animal[variant]);
         assetManifest.push({ animal: animal.id, variant, file: animal[variant], bytes: fs.statSync(file).size, sha256: digest(file), triangles: loaded.stats.triangles, materials: loaded.stats.materials, textures: loaded.stats.textureDimensions, bones: loaded.stats.bones, skinnedMeshes: loaded.stats.skinnedMeshes, clips: loaded.stats.clips });
         for (let index = 0; index < loaded.stats.clips.length; index++) {
@@ -82,15 +96,20 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           await page.waitForTimeout(550); const after = await snap();
           assert.notEqual(before.actionTime, after.actionTime, `${animal.id}/${variant}/${index}: time did not advance`);
           assert(after.bones.some((v, i) => Math.abs(v - before.bones[i]) > 1e-7), `${animal.id}/${variant}/${index}: no bone change`);
-          if (!synthetic) await page.locator('#viewport').screenshot({ path: path.join(output, `${animal.id}-${variant}-${loaded.stats.clips[index].name.replace(/[^a-z0-9_-]/gi, '_')}.png`) });
           await page.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 30000 });
-          playback.push({ animal: animal.id, variant, clip: loaded.stats.clips[index].name, duration: loaded.stats.clips[index].duration, animationTimeAdvanced: true, bonePoseChanged: true, completeLoopObserved: true });
+          const poseTime = loaded.stats.clips[index].duration * 0.25;
+          await page.locator('#time').evaluate((el, time) => { el.value = String(time); el.dispatchEvent(new Event('input', { bubbles: true })); }, poseTime);
+          assert(Math.abs((await snap()).actionTime - poseTime) <= 0.001);
+          if (!synthetic) await page.locator('#viewport').screenshot({ path: path.join(output, `${animal.id}-${variant}-${loaded.stats.clips[index].name.replace(/[^a-z0-9_-]/gi, '_')}.png`) });
+          playback.push({ animal: animal.id, variant, clip: loaded.stats.clips[index].name, duration: loaded.stats.clips[index].duration, animationTimeAdvanced: true, bonePoseChanged: true, completeLoopObserved: true, capturedPoseTimeSeconds: poseTime });
         }
         await page.click('#pause'); const paused = await snap(); await page.waitForTimeout(100); assert.equal((await snap()).actionTime, paused.actionTime);
         await page.click('#stop'); assert.equal((await snap()).actionTime, 0); await page.click('#play');
       }
+      if (motionContext) { const video = page.video(); await motionContext.close(); motionVideos.push({ animal: animal.id, path: path.relative(output, await video.path()).replaceAll(path.sep, '/'), scope: 'actual_browser_7_clips_both_variants_with_controls', silent: true }); page = mainPage; }
     }
     checks.push('all_available_variant_clips_bone_playback', 'pause_stop_play');
+    if (record) { await mainPage.locator('#static').uncheck(); await mainPage.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); }
     const first = available[0]; await page.selectOption('#animal', first.id);
     for (const viewport of [{ width: 1366, height: 768 }, { width: 390, height: 844 }, { width: 320, height: 844 }]) {
       await page.setViewportSize(viewport); await page.waitForTimeout(1200); await page.click('#play'); await page.waitForTimeout(3000);
@@ -100,7 +119,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         loadMs: sample.stats.loadMs, sampleCount: values.length, sampleIntervalMs: values.reduce((a, b) => a + b, 0), frameMsP50: quantile(values, 0.5), frameMsP95: quantile(values, 0.95),
         fpsFromMeanInterval: values.length ? 1000 * values.length / values.reduce((a, b) => a + b, 0) : null, rule: sample.sampleRule,
         rendererPath: synthetic ? 'forced_software_fixture' : 'browser_default', softwareRenderer: /SwiftShader|llvmpipe|Software/i.test(sample.renderer || '') ? true : /Intel|NVIDIA|AMD|Apple/i.test(sample.renderer || '') ? false : null,
-        renderPixelRatio: sample.viewport.renderPixelRatio, antialias: sample.viewport.antialias, browserVideoRecording: record, actualMobileDevice: false });
+        renderPixelRatio: sample.viewport.renderPixelRatio, antialias: sample.viewport.antialias, browserVideoRecording: false, actualMobileDevice: false });
       await page.screenshot({ path: path.join(output, `preview-${viewport.width}.png`), fullPage: true });
     }
     checks.push('desktop_390_320_viewports');
@@ -140,7 +159,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     for (const asset of assetManifest) assert.equal(digest(path.join(assets, asset.file)), asset.sha256, 'Input GLB changed during verification');
     checks.push('catalog_and_glb_bytes_unchanged');
     const report = { status: 'passed', scope: synthetic ? 'temporary_synthetic_fixture_only' : 'available_local_glb_playback_not_visual_quality_approval', completedAnimalsClaimed: 0,
-      availableAnimalsTested: available.length, clipVariantChecks: playback.length, sourceCommit: catalog.source_commit, catalogSha256: catalogHash, assetManifest, checks, playback, samples, swapMemory: memories,
+      availableAnimalsTested: available.length, clipVariantChecks: playback.length, sourceCommit: catalog.source_commit, catalogSha256: catalogHash, assetManifest, motionVideos, checks, playback, samples, swapMemory: memories,
       limitations: ['Browser viewport and recorded renderer only; not a physical mobile device or production FPS.', 'Bone playback/resource checks are not joint penetration or visual quality approval.', 'No real health or model data accessed.'], errors, externalRequests: network.length };
     fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify({ status: 'passed', availableAnimals: available.length, clipVariantChecks: playback.length, checks: checks.length, output }));
   } catch (error) { fs.writeFileSync(path.join(output, 'failure.json'), JSON.stringify({ status: 'failed', stage: checks.at(-1) || 'startup', reason: error.message, errors }, null, 2)); throw error; }

@@ -41,4 +41,4 @@ jobs:
       - run: npm run build
         working-directory: web
       - name: Verify temporary synthetic fixture and production isolation
-        run: node tools/character-preview/verify.cjs --synthetic
+        run: node tools/character-preview/verify.cjs --synthetic --record

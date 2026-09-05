@@ -60,14 +60,18 @@ node tools/character-preview/verify.cjs --synthetic --vendor "<검증한 vendor 
 # 제작 GLB 검사: 준비된 모든 animal × standard/light × 7clip
 node tools/character-preview/verify.cjs --assets "<외부 자산 경로>" --vendor "<검증한 vendor 경로>" --output "<새 실제 자산 검사 경로>"
 # 선택 사항: 같은 실제 브라우저 검증을 로컬 WebM으로도 기록
-# 위 실제 자산 명령에 --record 추가; 녹화 부하가 있는 측정임을 별도 기록
+# 위 실제 자산 명령에 --record 추가; 각 동물의 별도 WebM을 기록
+# --animals bear,rabbit 로 해당 준비 자산만 검사하거나 생략해 준비된 전체 검사
 ```
 
 검사는 운영 bundle 분리, loopback/경로/읽기 전용, clip 시간과 bone pose 변화 및 실제 loop 완료,
 pause/stop/play, 1366/390/320 viewport, 키보드 초점/회전, 10회 교체 자원 수,
 실패/reduced-motion/context loss/no-WebGL과 외부 요청·page error 부재를 확인한다.
-실제 자산 검사에는 clip별 pose PNG도 남긴다. 선택적 WebM은 브라우저에서 일어난
-조작/결과만 녹화하며 사용자 최종 품질 승인을 대신하지 않는다.
+실제 자산 검사에는 timeline으로 각 clip25% 시점(1ms 해상도)에 멈춘 pose PNG도
+남긴다. 표준/경량의 clip 이름·길이도 같아야 한다. 선택적 WebM은 동물마다 별도
+context에서 7clip × 2variant의 실제 조작/결과만 녹화하며 사람이 품질을 승인한
+것이 아니다. 녹화 중 주 검토 context는 정적 표시로 바꿔 한 자산만 렌더한다.
+성능 표본은 녹화를 종료한 뒤 별도의 주 context에서 수집한다.
 검사 중인 asset root와 catalog는 수정하지 않는다. 새 자산을 검증할 때 새 결과 경로를 사용한다.
 
 로드/viewport 변경마다 표본을 비우고1초 초기 구간 뒤 활성 animation의 RAF 간격
@@ -81,3 +85,10 @@ CI는 합성 fixture만 검사하고 실제 Blender 제작물이나 사용자 �
 `verification.json`과 합성/캐릭터 화면 캡처는 로컬 집계 검토 후보다. bone 변화
 검사는 발 미끄러짐·관통·루프 연결·실루엣 품질의 사람/제작자 시각 검사를 대신하지
 않는다. 제작 품질 통과 수량은 G4 manifest를 확인하며 이 도구는 그 수량을 만들지 않는다.
+
+기존 Pillow가 있는 문서 제작용 Python에서만 선택적으로 contact PNG를 만들 수 있다.
+제품/CI에 Pillow를 추가하거나 자동 설치하지 않는다. 원본 pose PNG는 그대로 둔다.
+
+```powershell
+python tools/character-preview/contact_sheet.py --report "<검증 결과>/verification.json" --animal bear --output "<새 contact.png>"
+```

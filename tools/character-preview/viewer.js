@@ -16,7 +16,7 @@ const rim = new THREE.DirectionalLight(0xe1e8ff, 1.8);
 rim.position.set(-4, 3, -2); scene.add(rim);
 const camera = new THREE.PerspectiveCamera(36, 1, 0.01, 1000);
 let controls, catalogSource = '', lastFrame = performance.now(), frameHandle, distance = 4;
-const controlsIds = ['clip', 'play', 'pause', 'stop', 'left', 'right', 'closer', 'farther', 'reset'];
+const controlsIds = ['clip', 'time', 'play', 'pause', 'stop', 'left', 'right', 'closer', 'farther', 'reset'];
 const labels = { idle: '대기', greet: '인사', move: '이동', curious: '관심 있게 보기', celebrate: '작은 축하', rest: '휴식', special: '종별 동작' };
 
 function status(text, value) { $('status').textContent = text; state.status = value; }
@@ -92,6 +92,7 @@ function selectClip(play = true) {
   const clip = state.clips[Number($('clip').value)];
   if (!clip) return;
   state.action = state.mixer.clipAction(clip); state.action.reset().play(); state.action.paused = !play; state.playing = play;
+  $('time').max = clip.duration; $('time').value = 0; $('time-label').textContent = '0.00초';
   state.mixer.update(0);
   status(`${state.current.name} · ${labels[clip.name] || clip.name} ${play ? '재생 중' : '정지'}`, play ? 'playing' : 'paused');
 }
@@ -144,6 +145,7 @@ function frame(now) {
   if (state.object && state.playing && now - state.loadedAt > 1000) { state.frames.push(now - lastFrame); if (state.frames.length > 600) state.frames.shift(); }
   lastFrame = now;
   if (state.playing) state.mixer?.update(delta);
+  if (state.action && state.playing) { $('time').value = state.action.time; $('time-label').textContent = state.action.time.toFixed(2) + '초'; }
   controls?.update();
   if (state.renderer && state.object && !$('static').checked) state.renderer.render(scene, camera);
   frameHandle = requestAnimationFrame(frame);
@@ -160,6 +162,7 @@ reduced.addEventListener('change', (event) => { $('static').checked = event.matc
 $('static').addEventListener('change', load); $('animal').addEventListener('change', load); $('retry').addEventListener('click', load);
 document.querySelectorAll('[name=variant]').forEach((radio) => radio.addEventListener('change', load));
 $('clip').addEventListener('change', () => selectClip()); $('play').addEventListener('click', () => { if (state.action) { state.action.paused = false; state.playing = true; status('선택 움직임 재생 중', 'playing'); } });
+$('time').addEventListener('input', () => { if (!state.action) return; state.playing = false; state.action.paused = true; state.action.time = Number($('time').value); state.mixer.update(0); $('time-label').textContent = state.action.time.toFixed(3) + '초'; status('선택한 시점의 자세입니다. 표준형과 경량형을 같은 시점으로 비교할 수 있습니다.', 'paused'); });
 $('pause').addEventListener('click', () => { if (state.action) { state.action.paused = true; state.playing = false; status('현재 자세에서 일시 정지했습니다.', 'paused'); } });
 $('stop').addEventListener('click', () => selectClip(false));
 for (const [id, amount] of [['left', -0.3], ['right', 0.3]]) $(id).addEventListener('click', () => { const offset = camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0, 1, 0), amount); camera.position.copy(controls.target).add(offset); controls.update(); });
@@ -179,5 +182,7 @@ try {
   const response = await fetch('/catalog.json'); if (!response.ok) throw Error('Catalog unavailable');
   const catalog = await response.json(); state.animals = catalog.animals; catalogSource = catalog.source_commit;
   $('animal').replaceChildren(...state.animals.map((animal) => { const option = document.createElement('option'); option.value = animal.id; option.textContent = animal.name + (animal.status === 'pending' ? ' · 준비 중' : animal.status === 'temporary_fixture' ? ' · 임시 fixture' : ''); return option; }));
+  const requestedAnimal = new URLSearchParams(location.search).get('animal');
+  if (state.animals.some((animal) => animal.id === requestedAnimal)) $('animal').value = requestedAnimal;
   $('animal').disabled = false; resize(); await load();
 } catch { status('로컬 자산 목록을 읽지 못했습니다. catalog 설정을 확인해주세요.', 'catalog_failed'); }
