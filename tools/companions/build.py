@@ -15,7 +15,7 @@ from pathlib import Path
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 CLIPS = ("idle", "greet", "move", "curious", "celebrate", "rest", "special")
 COLORS = {
@@ -1061,6 +1061,19 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
     bpy.context.scene.frame_set(1)
 
 
+def fox_sit_displacement(pulse, vertical_leg_length):
+    """Sagittal FK: bend the thighs while keeping both foot heads at rest XYZ."""
+    if (
+        not math.isfinite(pulse)
+        or not 0 <= pulse <= 1
+        or not math.isfinite(vertical_leg_length)
+        or vertical_leg_length <= 0
+    ):
+        raise ValueError("Invalid fox sit phase or rest leg length")
+    angle = -0.9 * pulse
+    return angle, (0, -vertical_leg_length * math.sin(angle), -vertical_leg_length * (1 - math.cos(angle)))
+
+
 def special_pose(rig, kind, a, pulse):  # noqa: C901 - species motion design table
     bones = rig.pose.bones
     if kind in ("bear", "otter", "seal"):
@@ -1100,9 +1113,18 @@ def special_pose(rig, kind, a, pulse):  # noqa: C901 - species motion design tab
         bones["upper_arm.L"].rotation_euler.z = -1.1 * pulse
         bones["forearm.L"].rotation_euler.x = 0.18 * math.sin(4 * a) * pulse
     elif kind == "fox":
-        bones["hips"].location.y = -0.10 * pulse
-        bones["thigh.L"].rotation_euler.x = -0.3 * pulse
-        bones["thigh.R"].rotation_euler.x = -0.3 * pulse
+        # Both authored legs have the same Y/Z offsets; a world-X hinge keeps
+        # their small opposite X slants intact. Convert through the actual rest
+        # bases instead of assuming local X axes or pelvis translation axes.
+        length = bones["thigh.L"].bone.head_local.z - bones["foot.L"].bone.head_local.z
+        angle, displacement = fox_sit_displacement(pulse, length)
+        hips_basis = bones["hips"].bone.matrix_local.to_3x3()
+        bones["hips"].location = hips_basis.inverted() @ Vector(displacement)
+        for side in ("L", "R"):
+            for name, rotation in (("thigh", angle), ("foot", -angle)):
+                bone = bones[f"{name}.{side}"]
+                basis = bone.bone.matrix_local.to_3x3()
+                bone.rotation_euler = (basis.inverted() @ Matrix.Rotation(rotation, 3, "X") @ basis).to_euler("XYZ")
         bones["tail.01"].rotation_euler.z = 1.00 * pulse
         bones["tail.02"].rotation_euler.z = 0.95 * pulse
 
