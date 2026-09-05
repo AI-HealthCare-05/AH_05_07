@@ -498,7 +498,7 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
                     rig.pose.bones[f"thigh.{side}"].rotation_euler.x = 0.23 * sin * sign
                     rig.pose.bones[f"foot.{side}"].rotation_euler.x = -0.12 * sin * sign
                     rig.pose.bones[f"upper_arm.{side}"].rotation_euler.x = -0.24 * sin * sign
-                rig.pose.bones["root"].location.z = 0.045 * (1 - math.cos(2 * a))
+                rig.pose.bones["root"].location.y = 0.045 * (1 - math.cos(2 * a))
                 rig.pose.bones["tail.01"].rotation_euler.z = 0.1 * sin
                 if kind == "penguin":
                     rig.pose.bones["spine"].rotation_euler.z = 0.10 * sin
@@ -513,7 +513,7 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
             elif clip == "celebrate":
                 rig.pose.bones["upper_arm.L"].rotation_euler.z = -0.90 * pulse
                 rig.pose.bones["upper_arm.R"].rotation_euler.z = 0.90 * pulse
-                rig.pose.bones["root"].location.z = 0.08 * (1 - math.cos(2 * a))
+                rig.pose.bones["root"].location.y = 0.08 * (1 - math.cos(2 * a))
                 rig.pose.bones["head"].rotation_euler.x = -0.09 * pulse
             elif clip == "rest":
                 rig.pose.bones["head"].rotation_euler.x = 0.15 * pulse
@@ -545,7 +545,7 @@ def special_pose(rig, kind, a, pulse):  # noqa: C901 - species motion design tab
             if kind == "otter":
                 bones[f"hand.{side}"].rotation_euler.x = sign * 0.25 * math.sin(5 * a) * pulse
     elif kind in ("rabbit", "squirrel"):
-        bones["root"].location.z = 0.17 * pulse**3
+        bones["root"].location.y = 0.17 * pulse**3
         bones["ear.L"].rotation_euler.x = 0.23 * math.sin(2 * a)
         bones["ear.R"].rotation_euler.x = -0.17 * math.sin(2 * a)
         bones["head"].rotation_euler.y = 0.3 * math.sin(2 * a) if kind == "squirrel" else 0.03 * math.sin(a)
