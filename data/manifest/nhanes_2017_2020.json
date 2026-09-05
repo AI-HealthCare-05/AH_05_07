@@ -4,29 +4,29 @@
   "unit_of_analysis": "participant",
   "join_key": "SEQN",
   "files": {
-    "demographics": "DEMO_P.XPT",
-    "body_measures": "BMX_P.XPT",
-    "blood_pressure": "BPX_P.XPT",
-    "physical_activity": "PAQ_P.XPT",
-    "smoking": "SMQ_P.XPT",
-    "alcohol": "ALQ_P.XPT",
-    "sleep": "SLQ_P.XPT"
+    "demographics": "P_DEMO.xpt",
+    "body_measures": "P_BMX.xpt",
+    "blood_pressure": "P_BPXO.xpt",
+    "physical_activity": "P_PAQ.xpt",
+    "smoking": "P_SMQ.xpt",
+    "alcohol": "P_ALQ.xpt",
+    "sleep": "P_SLQ.xpt"
   },
   "module_columns": {
     "demographics": ["RIAGENDR", "RIDAGEYR"],
     "body_measures": ["BMXBMI"],
-    "blood_pressure": ["BPXSY1", "BPXSY2", "BPXSY3", "BPXDI1", "BPXDI2", "BPXDI3"],
+    "blood_pressure": ["BPXOSY1", "BPXOSY2", "BPXOSY3", "BPXODI1", "BPXODI2", "BPXODI3"],
     "physical_activity": ["PAQ605", "PAQ620"],
     "smoking": ["SMQ020"],
-    "alcohol": ["ALQ101"],
+    "alcohol": ["ALQ111"],
     "sleep": ["SLD012"]
   },
   "label": {
     "name": "hypertension_risk_group",
-    "derivation": "mean of available BPXSY1..BPXSY3 >= 130 OR mean of available BPXDI1..BPXDI3 >= 80",
-    "prohibited_predictors": ["BPXSY1", "BPXSY2", "BPXSY3", "BPXDI1", "BPXDI2", "BPXDI3"]
+    "derivation": "mean of available BPXOSY1..BPXOSY3 >= 130 OR mean of available BPXODI1..BPXODI3 >= 80",
+    "prohibited_predictors": ["BPXOSY1", "BPXOSY2", "BPXOSY3", "BPXODI1", "BPXODI2", "BPXODI3"]
   },
-  "candidate_predictors": ["RIAGENDR", "RIDAGEYR", "BMXBMI", "PAQ605", "PAQ620", "SMQ020", "ALQ101", "SLD012"],
+  "candidate_predictors": ["RIAGENDR", "RIDAGEYR", "BMXBMI", "PAQ605", "PAQ620", "SMQ020", "ALQ111", "SLD012"],
   "exclusions": ["identifiers except SEQN for joining", "free text", "dates", "diagnosis and treatment fields", "unavailable-at-inference fields"],
   "split": {"seed": 20260901, "train": 0.7, "validation": 0.15, "test": 0.15},
   "status": "schema_audit_required_before_training"
