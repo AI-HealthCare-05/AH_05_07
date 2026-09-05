@@ -152,25 +152,38 @@ class InventoryTests(unittest.TestCase):
                 self.catalog = original
 
     def test_resolved_file_escape_is_rejected_before_open(self):
-        target = self.candidate / "standard.glb"
-        outside = self.base / "outside.glb"
         original_resolve = Path.resolve
         original_open = Path.open
+        outside = original_resolve(self.base / "outside.glb")
+        # Hosted Windows TEMP can use an 8.3 alias which inventory resolves to a
+        # long path. Exercise equivalent spellings on every OS without relying
+        # on short-name support or weakening the actual containment guard.
+        spellings = (self.candidate, self.root / ".." / self.root.name / self.candidate.name)
+        for index, candidate in enumerate(spellings):
+            with self.subTest(path_spelling=index):
+                target = original_resolve(candidate / "standard.glb")
+                injected = []
 
-        def resolved(path, *args, **kwargs):
-            return outside if path == target else original_resolve(path, *args, **kwargs)
+                def resolved(path, *args, target=target, injected=injected, **kwargs):
+                    canonical = original_resolve(path, *args, **kwargs)
+                    if canonical == target:
+                        injected.append(True)
+                        return outside
+                    return canonical
 
-        def guarded(path, *args, **kwargs):
-            self.assertNotEqual(path, target)
-            self.assertNotEqual(path, outside)
-            return original_open(path, *args, **kwargs)
+                def guarded(path, *args, target=target, **kwargs):
+                    canonical = original_resolve(path)
+                    self.assertNotEqual(canonical, target)
+                    self.assertNotEqual(canonical, outside)
+                    return original_open(path, *args, **kwargs)
 
-        with (
-            patch.object(Path, "resolve", resolved),
-            patch.object(Path, "open", guarded),
-            self.assertRaisesRegex(AuditError, "artifact_path_escape"),
-        ):
-            create_inventory(self.root)
+                with (
+                    patch.object(Path, "resolve", resolved),
+                    patch.object(Path, "open", guarded),
+                    self.assertRaisesRegex(AuditError, "artifact_path_escape"),
+                ):
+                    create_inventory(self.root)
+                self.assertTrue(injected, "The test must actually inject the escaped resolution")
 
     def test_real_symlink_directory_escape_is_rejected_when_supported(self):
         outside = self.base / "outside"
