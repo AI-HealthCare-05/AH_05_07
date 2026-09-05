@@ -315,6 +315,52 @@ def verify_marked_surface(bm, deform, original):
             raise ValueError("Material boundary cut produced invalid skin weights")
 
 
+def limited_skin_weights(weights):
+    """Make decimator-created group unions match the existing four-weight GLB export.
+
+    Valid vertices remain byte-for-byte unchanged. This does not repair missing,
+    non-finite, negative or unnormalized inputs by guessing replacement weights.
+    """
+    values = list(weights.values())
+    if not values or any(not math.isfinite(value) or value < 0 for value in values) or abs(sum(values) - 1) > 1e-5:
+        raise ValueError("Decimated skin has missing, non-finite, negative or unnormalized weights")
+    if sum(value > 1e-8 for value in values) <= 4:
+        return dict(weights), 0.0
+    # As in the existing GLB export, retain the four largest weights and normalize.
+    # Vertex group indices explicitly break ties; never depend on set order.
+    retained = sorted(weights.items(), key=lambda item: (-item[1], item[0]))[:4]
+    total = math.fsum(value for _, value in retained)
+    discarded = math.fsum(value for joint, value in weights.items() if joint not in dict(retained))
+    return {joint: value / total for joint, value in retained}, discarded
+
+
+def prepare_decimated_skin(obj):
+    """Explicit pre-cut skin cleanup; coordinates and already-valid weights stay fixed."""
+    bm = bmesh.new()
+    summary = {"object": obj.name, "vertices_changed": 0, "maximum_discarded_weight": 0.0}
+    try:
+        bm.from_mesh(obj.data)
+        deform = bm.verts.layers.deform.active
+        if deform is None:
+            raise ValueError("Decimated mesh is missing authored skin weights")
+        for vertex in bm.verts:
+            old = dict(vertex[deform])
+            limited, discarded = limited_skin_weights(old)
+            if limited != old:
+                for joint in list(vertex[deform]):
+                    del vertex[deform][joint]
+                for joint, weight in limited.items():
+                    vertex[deform][joint] = weight
+                summary["vertices_changed"] += 1
+                summary["maximum_discarded_weight"] = max(summary["maximum_discarded_weight"], discarded)
+        if summary["vertices_changed"]:
+            bm.to_mesh(obj.data)
+            obj.data.update()
+    finally:
+        bm.free()
+    return summary
+
+
 def paint_surface_markings(obj):
     """Reapply exact color boundaries to the actual source/standard/light surface.
 
@@ -1043,6 +1089,7 @@ def export_variant(output, name, target):
     objs = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and obj.parent]
     count = triangles(objs)
     ratio = min(1, target / count)
+    skin_cleanup = []
     for obj in objs:
         if len(obj.data.polygons) > 100:
             dec = obj.modifiers.new("Web silhouette reduction", "DECIMATE")
@@ -1053,6 +1100,9 @@ def export_variant(output, name, target):
             for _ in range(index):
                 bpy.ops.object.modifier_move_up(modifier=dec.name)
             apply(obj, dec)
+            summary = prepare_decimated_skin(obj)
+            if summary["vertices_changed"]:
+                skin_cleanup.append(summary)
         paint_surface_markings(obj)
     bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
@@ -1082,6 +1132,7 @@ def export_variant(output, name, target):
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "textures": 0,
         "material_mode": "PBR factors; no external textures",
+        "skin_influence_cleanup": skin_cleanup,
     }
 
 
