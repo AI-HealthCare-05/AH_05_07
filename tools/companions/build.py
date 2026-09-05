@@ -1002,7 +1002,10 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
         action.use_fake_user = True
         rig.animation_data_create()
         rig.animation_data.action = action
-        for frame in range(1, 98, 4):
+        # FK contact depends on sin/cos of the same angle; separately interpolating
+        # sparse angle/translation keys moves planted feet between authored poses.
+        frame_step = 1 if kind == "fox" and clip == "special" else 4
+        for frame in range(1, 98, frame_step):
             t = (frame - 1) / 96
             a = 2 * math.pi * t if frame != 97 else 0
             sin, pulse = math.sin(a), (1 - math.cos(a)) / 2
