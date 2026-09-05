@@ -24,11 +24,8 @@ parser.add_argument("raw_dir", type=Path)
 args = parser.parse_args()
 
 manifest = json.loads(Path("data/manifest/nhanes_2017_2020.json").read_text(encoding="utf-8"))
-required = {
-    "demographics": {"SEQN", "RIAGENDR", "RIDAGEYR"},
-    "body_measures": {"SEQN", "BMXBMI"},
-    "blood_pressure": {"SEQN", *manifest["label"]["prohibited_predictors"]},
-}
+join_key = manifest["join_key"]
+required = {module: {join_key, *columns} for module, columns in manifest["module_columns"].items()}
 
 missing_files: list[str] = []
 for module, fields in required.items():

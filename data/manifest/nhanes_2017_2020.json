@@ -12,6 +12,15 @@
     "alcohol": "ALQ_P.XPT",
     "sleep": "SLQ_P.XPT"
   },
+  "module_columns": {
+    "demographics": ["RIAGENDR", "RIDAGEYR"],
+    "body_measures": ["BMXBMI"],
+    "blood_pressure": ["BPXSY1", "BPXSY2", "BPXSY3", "BPXDI1", "BPXDI2", "BPXDI3"],
+    "physical_activity": ["PAQ605", "PAQ620"],
+    "smoking": ["SMQ020"],
+    "alcohol": ["ALQ101"],
+    "sleep": ["SLD012"]
+  },
   "label": {
     "name": "hypertension_risk_group",
     "derivation": "mean of available BPXSY1..BPXSY3 >= 130 OR mean of available BPXDI1..BPXDI3 >= 80",

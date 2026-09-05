@@ -34,3 +34,9 @@ KNHANES remains a Korean-source alternative, subject to its raw-data application
 Implementation begins only after the exact release files, variable names, derivation code, missing-value policy, and license/usage record are committed under `data/manifest/`. A failed feature-availability or leakage audit blocks training.
 
 Run `uv run --group ai python scripts/data/audit_schema.py /local/path/to/raw` after downloading the listed files outside the repository. The audit checks the join key and the minimum variables needed for the label and first predictor set; it does not copy source data into Git.
+
+Follow `docs/model-gate-1b-runbook.md` for the canonical manifest audit,
+seven-module schema audit, derived-table, frozen-split, and sanitized-evidence
+sequence. Merging that contract does not mark Gate 1B complete; an operator must
+run it against the manually obtained public release and review the allowlisted
+evidence first.
