@@ -20,6 +20,7 @@
 - [G1 visual direction](docs/visual-direction.md)
 - [G2 prototype decision record](docs/g2-prototype.md)
 - [Asset register](docs/asset-register.md)
+- [Canva derivative staging](docs/canva-derivative-staging.md)
 - [Deployment SSOT](docs/deployment-ssot.md)
 - [Project handoff and restart guide](docs/project-handoff.md)
 - [Deployed RLS ownership verification plan](docs/deployed-rls-verification-plan.md)

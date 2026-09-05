@@ -112,6 +112,15 @@ reduced motion, attach sanitized visual evidence, and apply the registered
 versioned cache policy. The unavailable **입력 기반 위험군 선별 신호** remains
 textual and has no score, model-output, or decorative data visualization.
 
+### Derivative staging gate
+
+Issue #196 makes the pre-delivery review repeatable with
+[`canva-derivative-staging.md`](canva-derivative-staging.md). The verifier
+accepts local, owner-exported approved derivatives only, records their exact
+bytes in a review-only manifest, and requires manual text-free, viewport-fit,
+and blocked-image-fallback attestations. It is not a runtime asset loader and
+does not authorize R2 publication, cache delivery, or a production change.
+
 ## Information order
 
 Desktop may place measurement and challenge work in two distinguishable lanes. It must not force equal-height panels when their content lengths differ.
