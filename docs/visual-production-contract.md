@@ -89,6 +89,29 @@ procedure in `docs/visual-qa-runbook.md`. Passing this gate confirms layout and
 state truthfulness only; it neither approves Canva derivatives nor authorizes
 R2 publication.
 
+### Canva source-selection gate
+
+Issue #194 records the selected Canva source sets and an explicit
+`approved` / `replaceable` / `not used` decision in
+[`asset-register.md`](asset-register.md). This is a source-selection gate, not
+a delivery gate: `approved` means the editable source may enter a later
+derivative review, not that its current export may be shipped.
+
+Whole-screen and utility-state Canva PNGs remain `not used` at runtime because
+they bake example UI copy and state into an image. Live Korean copy, labels,
+field values, status announcements, and controls stay in semantic HTML. A
+background or character is decorative and optional; the current CSS scene is
+the required fallback whenever an image is unavailable, omitted, or unsuitable
+for the viewport. Desktop and mobile source sets are exported and measured
+separately—never force-crop or upscale one to impersonate the other.
+
+A separate Issue is required before export or R2 delivery. It must add the
+exact derivative metadata and SHA-256, review stripped metadata and rights,
+confirm the target viewport and focal point, test blocked-image fallback and
+reduced motion, attach sanitized visual evidence, and apply the registered
+versioned cache policy. The unavailable **입력 기반 위험군 선별 신호** remains
+textual and has no score, model-output, or decorative data visualization.
+
 ## Information order
 
 Desktop may place measurement and challenge work in two distinguishable lanes. It must not force equal-height panels when their content lengths differ.

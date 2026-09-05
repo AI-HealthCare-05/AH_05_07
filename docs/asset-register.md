@@ -6,6 +6,97 @@ This register records the user-approved G1 visual source snapshots. None of the 
 
 The SHA-256 value, byte size, and dimensions identify the reviewed source snapshot. A resized, recompressed, converted, or metadata-scrubbed file is a new derivative and requires its own versioned entry before public delivery.
 
+## Canva selection register — Issue #194
+
+Issue #194 is a read-only source review after the responsive Calm Clay Journey
+QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion.
+It selects editable Canva sources for a later, separate derivative-delivery
+Issue. It does **not** add a binary to this repository, alter Canva, create an
+R2 bucket or object, or bind an image into the application.
+
+`approved` below means that the identified editable source is approved as the
+starting point for a measured derivative; it is not approval of any exported
+byte. `replaceable` is an intentionally optional source that can be changed
+without changing product behavior. `not used` means that a source was reviewed
+but is explicitly excluded from runtime use. Every exported derivative still
+needs its own dimensions, byte size, SHA-256, metadata review, and approving
+Issue/PR entry.
+
+### Source authority and non-runtime rule
+
+| Source set | Canva location | Classification | Runtime decision |
+|---|---|---|---|
+| App identity | [00_Brand / App_Identity](https://www.canva.com/folder/FAHUP9boI5o) | `approved` source set | The existing text SVG favicon remains in use until a separately reviewed icon derivative replaces it. |
+| Shared desktop background | [10_Backgrounds / Desktop](https://www.canva.com/folder/FAHUPnJovR8) | `approved` source set | Export only a text-free background layer at its native design size; current CSS landscape is the fallback. |
+| Shared mobile background | [10_Backgrounds / Mobile](https://www.canva.com/folder/FAHUPpggvEk) | `approved` source set | Use a separately measured portrait derivative; do not crop or enlarge the desktop export to fit mobile. |
+| Character base and poses | [20_Character](https://www.canva.com/folder/FAHUPsoe1YM) | `approved` source set | Decorative only, with semantic HTML retaining all state wording. |
+| Character motion references | [20_Character / Motion](https://www.canva.com/folder/FAHUPgYc7Pk) | `replaceable` | Reference for restrained CSS motion only; no autoplay media is approved. |
+| Mobile and desktop screen keyframes | [50_Storyboards / 14 Screen Journey](https://www.canva.com/folder/FAHUPr96FZ8) | `not used` | Whole-screen PNGs are review references only. Their baked UI copy and example state must never replace live Korean text, controls, or data. |
+| Utility-state images | [50_Storyboards / 04_Utility_States](https://www.canva.com/folder/FAHUP8VsVkY) | `not used` | The app renders loading, sign-in-link, expiry, offline, export, and delete states as accessible HTML/CSS. |
+
+### Selected source candidates
+
+The asset IDs below are Canva source identifiers, not public URLs or R2 keys.
+The source dimension and SHA-256 cells intentionally remain `pending export`:
+Canva's review listing does not establish the bytes that would be delivered.
+
+| Register ID | Source candidate and Canva asset ID | Role / target | Status | Viewport rule and CSS fallback | Planned derivative path |
+|---|---|---|---|---|---|
+| `CANVA-ID-001` | `SK7 app icon 512` · `MAHUP7kjh_0` | App icon master | `approved` | Export at native `512 × 512`; never upscale. Fallback: existing `web/public/favicon.svg`. | `visual/v1/identity/sk7-app-icon-512-v01.png` |
+| `CANVA-ID-002` | `SK7 Apple touch icon 180` · `MAHUPyj8tPc` | Apple touch icon | `approved` | Export at native `180 × 180`; no CSS substitute is needed until explicit platform binding. | `visual/v1/identity/sk7-apple-touch-icon-180-v01.png` |
+| `CANVA-ID-003` | `SK7 favicon 48` · `MAHUPxXL6XY` | Browser favicon candidate | `replaceable` | Native `48 × 48` only; existing SVG remains the fallback. | `visual/v1/identity/sk7-favicon-48-v01.png` |
+| `CANVA-BG-001` | `SK7 Calm Clay Journey · 대표 배경` · `DAHUPf9rvoo` | Shared desktop scene layer | `approved` | Desktop-only source; cover/crop only after measured review. Fallback: CSS scene layers. | `visual/v1/backgrounds/sk7-calm-clay-desktop-v01.<webp|avif>` |
+| `CANVA-BG-002` | `SK7 Calm Clay Journey · 대표 배경` · `DAHUPljPCy8` | Shared mobile scene layer | `approved` | Mobile-only source; no desktop upscale or forced reuse. Fallback: CSS scene layers. | `visual/v1/backgrounds/sk7-calm-clay-mobile-v01.<webp|avif>` |
+| `CANVA-CHAR-001` | `sk7-character-base-cream-v01.png` · `MAHUPsGl3QY` | Neutral decorative character | `approved` | Preserve source aspect ratio and transparent edge quality; hide without loss of meaning. Fallback: no image. | `visual/v1/characters/sk7-character-base-cream-v01.<webp|png>` |
+| `CANVA-CHAR-002` | `sk7-character-saved-v01.png` · `MAHUPqpW1LA` | Confirmed-save decorative state | `approved` | S05 only; confirmation text stays live HTML. Fallback: CSS save ripple / no image. | `visual/v1/characters/sk7-character-saved-v01.<webp|png>` |
+| `CANVA-CHAR-003` | `sk7-character-empty-v01.png`, `sk7-character-retry-v01.png`, `sk7-character-locked-v01.png` · `MAHUPpTX-fo`, `MAHUPmW52-Y`, `MAHUPoEyTFQ` | Empty, recovery, and action-lock decorations | `approved` | Preserve source aspect ratio. S06/S12/S13 wording and recovery controls remain HTML. Fallback: no image. | `visual/v1/characters/sk7-character-<state>-v01.<webp|png>` |
+| `CANVA-CHAR-004` | `sk7-character-idle-v01.png`, `sk7-character-focus-v01.png` · `MAHUPr73PpA`, `MAHUPltCh1o` | Optional neutral / focused decorations | `replaceable` | May be omitted at any viewport or reduced-motion preference. Fallback: no image. | `visual/v1/characters/sk7-character-<pose>-v01.<webp|png>` |
+| `CANVA-MOTION-001` | `sk7-motion-ref-idle-breathe-in-v01.png`, `sk7-motion-ref-gentle-blink-v01.png`, `sk7-motion-ref-gentle-wave-v01.png` · `MAHUPlEld1g`, `MAHUPl-wsIQ`, `MAHUPqX8xvg` | Motion reference frames | `replaceable` | Translate only to the existing bounded CSS motion; `prefers-reduced-motion` keeps the 160 ms fade. | No binary path unless a later Issue approves media delivery. |
+| `CANVA-REF-001` | `sk7-screen-s01…s05`, `s07…s09`, `s11`, `s14` mobile and desktop PNG keyframes | Screen composition references | `not used` | Do not ship or crop these full-screen captures. They contain UI copy/state examples and cannot be an accessibility fallback. | None. |
+| `CANVA-REF-002` | `sk7-utility-u01…u06` PNGs | Utility-state references | `not used` | Do not ship; the live state label, retry, and confirmation controls are semantic HTML/CSS. | None. |
+
+### S01–S14 screen mapping
+
+Each screen remains comprehensible without image delivery. `Reference` means a
+Canva full-screen keyframe guides visual QA only; it is not a runtime asset.
+
+| Screen | Runtime candidate after a separate delivery Issue | Reference / source status | CSS fallback now |
+|---|---|---|---|
+| S01 welcome | `CANVA-BG-001/002`, `CANVA-CHAR-004` optional | S01 mobile/desktop keyframes · `not used` | Gate, copy, and actions remain HTML/CSS. |
+| S02 today home | `CANVA-BG-001/002`, `CANVA-CHAR-004` optional | S02 mobile/desktop keyframes · `not used` | CSS landscape and semantic action cards. |
+| S03 challenge select | `CANVA-BG-001/002` optional | S03 mobile/desktop keyframes · `not used` | Live selection controls and explanatory copy. |
+| S04 BP entry | `CANVA-BG-001/002` optional | S04 mobile/desktop keyframes · `not used` | Live labelled fields, units, and validation. |
+| S05 confirmed save | `CANVA-CHAR-002` optional | S05 mobile/desktop keyframes · `not used` | Confirmed-save message and CSS ripple. |
+| S06 action locked | `CANVA-CHAR-003` locked pose optional | No whole-screen keyframe registered · no asset required | Live action-lock explanation. |
+| S07 today detail | `CANVA-CHAR-004` focus pose optional | S07 mobile/desktop keyframes · `not used` | Separate fact lanes in HTML. |
+| S08 records | `CANVA-BG-001/002` optional | S08 mobile/desktop keyframes · `not used` | Semantic record list and filters. |
+| S09 record detail | `CANVA-CHAR-004` focus pose optional | S09 mobile/desktop keyframes · `not used` | Detail and edit controls in HTML. |
+| S10 seven-day recap | `CANVA-BG-001/002` optional | No whole-screen keyframe registered · no asset required | CSS recap, labels, and separate fact lanes. |
+| S11 signal unavailable | No character or data illustration is needed | S11 mobile/desktop keyframes · `not used` | Honest unavailable state; no score or model output. |
+| S12 confirmed empty | `CANVA-CHAR-003` empty pose optional | No whole-screen keyframe registered · no asset required | Empty explanation and next actions in HTML. |
+| S13 load failure | `CANVA-CHAR-003` retry pose optional | No whole-screen keyframe registered · no asset required | Failure explanation and retry control in HTML. |
+| S14 settings/help | `CANVA-BG-001/002` optional | S14 mobile/desktop keyframes · `not used` | Live settings/help navigation. |
+
+### Export, delivery, and cache contract
+
+1. A later, dedicated delivery Issue may export only `approved` candidates.
+   It must choose one format per derivative (`AVIF` or `WebP`; `PNG` only where
+   alpha or platform behavior requires it), strip nonessential metadata, and
+   record width, height, bytes, content type, SHA-256, focal point, and
+   `decorative` status in this register.
+2. The future bucket is `sk7-assets-prod`; the planned immutable prefixes are
+   `visual/v1/backgrounds/`, `visual/v1/characters/`, and
+   `visual/v1/identity/`. No bucket, object, or binding exists because of this
+   register. A future manifest belongs under `visual/v1/manifests/`.
+3. Immutable binaries use `Cache-Control: public, max-age=31536000, immutable`.
+   A manifest uses `Cache-Control: public, max-age=300, must-revalidate`.
+   Objects are versioned rather than overwritten, and public listing remains
+   disabled.
+4. No image may contain product UI copy, a person name, email address, health
+   value, token, or identifier. The full-screen and utility captures above are
+   explicitly excluded for this reason. All released text, state, and controls
+   remain selectable semantic HTML.
+
 ## Common provenance
 
 | Field | Record |
