@@ -22,3 +22,5 @@ jobs:
           python-version-file: .python-version
       - name: Check local-only and aggregate arithmetic controls
         run: python tools/local-reliability/test_controls.py
+      - name: Check committed local aggregates (no HTTP or SQL execution)
+        run: python tools/local-reliability/verify_report.py docs/evidence/local-reliability.json

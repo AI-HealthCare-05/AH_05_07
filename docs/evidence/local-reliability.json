@@ -1,0 +1,792 @@
+{
+  "schema_version": "local-reliability-v1",
+  "status": "passed",
+  "source_commit": "8cf8f7263abef365485da1ba06ddf83c4852c92a",
+  "started_at": "2026-09-05T18:45:00.352281+00:00",
+  "environment": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 8,
+    "uv": "uv 0.12.8 (68209e5c6 2026-08-31 x86_64-pc-windows-msvc)",
+    "node": "v24.11.0",
+    "supabase_cli": "2.116.0",
+    "docker": "29.6.1",
+    "docker_local_socket_checked": true,
+    "python_packages": {
+      "python": "3.13.14",
+      "fastapi": "0.128.0",
+      "uvicorn": "0.40.0",
+      "httpx": "0.28.1",
+      "pydantic": "2.12.5",
+      "scikit-learn": "1.8.0"
+    },
+    "containers": [
+      {
+        "role": "supabase_rest",
+        "image": "public.ecr.aws/supabase/postgrest:v16.1",
+        "image_id": "sha256:5922bde07147b82b1c9d8f749e48c1e5b99ebb233f3888bb7ab65f07cf4ac82d"
+      },
+      {
+        "role": "supabase_auth",
+        "image": "public.ecr.aws/supabase/gotrue:v2.196.0",
+        "image_id": "sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232"
+      },
+      {
+        "role": "supabase_kong",
+        "image": "public.ecr.aws/supabase/kong:2.8.1",
+        "image_id": "sha256:1b53405d8680a09d6f44494b7990bf7da2ea43f84a258c59717d4539abf09f6d"
+      },
+      {
+        "role": "supabase_db",
+        "image": "public.ecr.aws/supabase/postgres:17.6.1.165",
+        "image_id": "sha256:28f0e16a019e648089fc1a6d333549a55548f6019c15ae4bd7cd58b989027518"
+      }
+    ],
+    "api_startup_to_readiness_s": [
+      3.3046859000023687,
+      1.5773768000071868,
+      1.5899922999960836,
+      1.6150131999893347,
+      2.1358494000014616,
+      2.120518700001412,
+      12.216849300006288,
+      2.849486099992646,
+      2.8165157999901567
+    ]
+  },
+  "measurement_scope": "actual loopback FastAPI -> local Supabase Auth/PostgREST/PostgreSQL; synthetic only",
+  "mocked_response": false,
+  "host_load_context": "measurement gated by a local coordinator signal; see coordinator note",
+  "production_validation": false,
+  "natural_30_day_expiry_observed": false,
+  "method": {
+    "timer": "perf_counter_ns; full response read; milliseconds",
+    "quantile": "Hyndman-Fan type 7; linear interpolation at (n-1)*p",
+    "cold": "fresh API process per endpoint after readiness polling; Auth/DB remain warm; /ready already touched; not infrastructure cold",
+    "warmup": "one endpoint call before measured warm phases",
+    "warm": "20 sequential requests, then 40 requests with 4 concurrent client threads",
+    "arrival": "closed loop, next call when worker finishes; no intentional inter-request delay",
+    "connections": "urllib opener per call; no persistent client pool; one Uvicorn worker",
+    "errors": "unexpected status / all samples; expected 401/422/503 are contract checks, not availability failures"
+  },
+  "stages": [
+    {
+      "name": "uv-version",
+      "exit_code": 0,
+      "elapsed_s": 0.06470400000398513
+    },
+    {
+      "name": "node-version",
+      "exit_code": 0,
+      "elapsed_s": 0.08160730000236072
+    },
+    {
+      "name": "supabase-version",
+      "exit_code": 0,
+      "elapsed_s": 1.7316559000028064
+    },
+    {
+      "name": "docker-version",
+      "exit_code": 0,
+      "elapsed_s": 0.35049129999242723
+    },
+    {
+      "name": "docker-local-context",
+      "exit_code": 0,
+      "elapsed_s": 0.24975410000479314
+    },
+    {
+      "name": "container-inventory-before",
+      "exit_code": 0,
+      "elapsed_s": 0.3047132999927271
+    },
+    {
+      "name": "frozen-python-install",
+      "exit_code": 0,
+      "elapsed_s": 8.96893309999723
+    },
+    {
+      "name": "python-versions",
+      "exit_code": 0,
+      "elapsed_s": 1.1810429000033764
+    },
+    {
+      "name": "clean-web-install",
+      "exit_code": 0,
+      "elapsed_s": 20.23168209999858
+    },
+    {
+      "name": "web-build",
+      "exit_code": 0,
+      "elapsed_s": 14.578603599991766
+    },
+    {
+      "name": "web-secret-boundary",
+      "exit_code": 0,
+      "elapsed_s": 0.7250829999975394
+    },
+    {
+      "name": "local-config-init",
+      "exit_code": 0,
+      "elapsed_s": 1.1524021999939578
+    },
+    {
+      "name": "local-stack-start",
+      "exit_code": 0,
+      "elapsed_s": 39.07610679999925
+    },
+    {
+      "name": "owned-container-inventory",
+      "exit_code": 0,
+      "elapsed_s": 0.1659053000039421
+    },
+    {
+      "name": "owned-container-budget",
+      "exit_code": 0,
+      "elapsed_s": 0.17066350000095554
+    },
+    {
+      "name": "owned-image-provenance",
+      "exit_code": 0,
+      "elapsed_s": 0.15074250000179745
+    },
+    {
+      "name": "owned-container-budget",
+      "exit_code": 0,
+      "elapsed_s": 0.16258109999762382
+    },
+    {
+      "name": "owned-image-provenance",
+      "exit_code": 0,
+      "elapsed_s": 0.1480580000061309
+    },
+    {
+      "name": "owned-container-budget",
+      "exit_code": 0,
+      "elapsed_s": 0.16759389999788254
+    },
+    {
+      "name": "owned-image-provenance",
+      "exit_code": 0,
+      "elapsed_s": 0.14691779999702703
+    },
+    {
+      "name": "owned-container-budget",
+      "exit_code": 0,
+      "elapsed_s": 0.1666700000059791
+    },
+    {
+      "name": "owned-image-provenance",
+      "exit_code": 0,
+      "elapsed_s": 0.1566919000033522
+    },
+    {
+      "name": "local-status-in-memory",
+      "exit_code": 0,
+      "elapsed_s": 0.8623479000088992
+    },
+    {
+      "name": "postgres-ownership-retention-pgtap",
+      "exit_code": 0,
+      "elapsed_s": 1.8996994000044651
+    },
+    {
+      "name": "built-web-api-smoke",
+      "exit_code": 0,
+      "elapsed_s": 0.4235393999988446
+    },
+    {
+      "name": "storage-fault-target-check",
+      "exit_code": 0,
+      "elapsed_s": 0.16654659999767318
+    },
+    {
+      "name": "owned-postgrest-stop",
+      "exit_code": 0,
+      "elapsed_s": 0.40512130000570323
+    },
+    {
+      "name": "owned-postgrest-restart",
+      "exit_code": 0,
+      "elapsed_s": 0.347031600002083
+    },
+    {
+      "name": "owned-stack-cleanup",
+      "exit_code": 0,
+      "elapsed_s": 3.709395300000324
+    },
+    {
+      "name": "container-inventory-after",
+      "exit_code": 0,
+      "elapsed_s": 0.19068919999699574
+    },
+    {
+      "name": "owned-container-cleanup-check",
+      "exit_code": 0,
+      "elapsed_s": 0.17109840000921395
+    },
+    {
+      "name": "owned-volume-cleanup-check",
+      "exit_code": 0,
+      "elapsed_s": 0.16644790000282228
+    }
+  ],
+  "measurements": {
+    "GET /live": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:47:46.598497+00:00",
+        "ended_at": "2026-09-05T18:47:46.665667+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 51.9076,
+          "p50": 51.9076,
+          "p95": 51.9076,
+          "max": 51.9076
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:47:46.666668+00:00",
+        "ended_at": "2026-09-05T18:47:47.717596+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 36.3768,
+          "p50": 55.26275,
+          "p95": 63.830675,
+          "max": 65.6352
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:47:47.717596+00:00",
+        "ended_at": "2026-09-05T18:47:49.381571+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 61.3549,
+          "p50": 156.6962,
+          "p95": 226.05944,
+          "max": 270.2632
+        }
+      }
+    ],
+    "GET /ready": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:47:50.981595+00:00",
+        "ended_at": "2026-09-05T18:47:51.051224+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 68.5446,
+          "p50": 68.5446,
+          "p95": 68.5446,
+          "max": 68.5446
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:47:51.051224+00:00",
+        "ended_at": "2026-09-05T18:47:52.205658+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 40.9038,
+          "p50": 61.4444,
+          "p95": 77.41275,
+          "max": 81.1187
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:47:52.205658+00:00",
+        "ended_at": "2026-09-05T18:47:54.380182+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 71.0878,
+          "p50": 206.69705,
+          "p95": 367.19105499999995,
+          "max": 422.329
+        }
+      }
+    ],
+    "GET /observations/window (owner)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:47:56.002533+00:00",
+        "ended_at": "2026-09-05T18:47:56.246417+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 242.9725,
+          "p50": 242.9725,
+          "p95": 242.9725,
+          "max": 242.9725
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:47:56.246417+00:00",
+        "ended_at": "2026-09-05T18:48:00.623494+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 187.7036,
+          "p50": 213.77735,
+          "p95": 251.08883,
+          "max": 257.5817
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:48:00.623494+00:00",
+        "ended_at": "2026-09-05T18:48:10.295670+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 324.3525,
+          "p50": 959.7555,
+          "p95": 1409.1356500000002,
+          "max": 1412.8554
+        }
+      }
+    ],
+    "GET /observations/export (owner)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:48:12.442198+00:00",
+        "ended_at": "2026-09-05T18:48:12.797386+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 354.7916,
+          "p50": 354.7916,
+          "p95": 354.7916,
+          "max": 354.7916
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:48:12.797907+00:00",
+        "ended_at": "2026-09-05T18:48:20.352606+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 286.6283,
+          "p50": 341.0274,
+          "p95": 527.2047600000001,
+          "max": 539.1018
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:48:20.353176+00:00",
+        "ended_at": "2026-09-05T18:48:34.649926+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 625.8516,
+          "p50": 1388.90485,
+          "p95": 2392.3942249999996,
+          "max": 2428.11
+        }
+      }
+    ],
+    "PUT /observations/blood-pressure (owner)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:48:36.778969+00:00",
+        "ended_at": "2026-09-05T18:48:37.117654+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 338.0028,
+          "p50": 338.0028,
+          "p95": 338.0028,
+          "max": 338.0028
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:48:37.117654+00:00",
+        "ended_at": "2026-09-05T18:48:42.085988+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 198.6059,
+          "p50": 239.66365000000002,
+          "p95": 333.9137,
+          "max": 335.4793
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:48:42.086537+00:00",
+        "ended_at": "2026-09-05T18:48:51.229530+00:00",
+        "expected_status": 200,
+        "status_counts": {
+          "200": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 363.3598,
+          "p50": 806.47065,
+          "p95": 1747.99786,
+          "max": 1844.5384
+        }
+      }
+    ],
+    "GET /observations/window (anonymous)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:49:03.470042+00:00",
+        "ended_at": "2026-09-05T18:49:04.174419+00:00",
+        "expected_status": 401,
+        "status_counts": {
+          "401": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 674.7474,
+          "p50": 674.7474,
+          "p95": 674.7474,
+          "max": 674.7474
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:49:04.174419+00:00",
+        "ended_at": "2026-09-05T18:49:24.839447+00:00",
+        "expected_status": 401,
+        "status_counts": {
+          "401": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 261.9781,
+          "p50": 914.76765,
+          "p95": 2089.91972,
+          "max": 2476.1236
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:49:24.839447+00:00",
+        "ended_at": "2026-09-05T18:49:33.866466+00:00",
+        "expected_status": 401,
+        "status_counts": {
+          "401": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 155.2208,
+          "p50": 526.1299,
+          "p95": 2533.846719999998,
+          "max": 3391.9628
+        }
+      }
+    ],
+    "POST /observations/blood-pressure (invalid)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:49:36.730403+00:00",
+        "ended_at": "2026-09-05T18:49:36.792669+00:00",
+        "expected_status": 422,
+        "status_counts": {
+          "422": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 61.5271,
+          "p50": 61.5271,
+          "p95": 61.5271,
+          "max": 61.5271
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:49:36.792669+00:00",
+        "ended_at": "2026-09-05T18:49:38.486436+00:00",
+        "expected_status": 422,
+        "status_counts": {
+          "422": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 60.2348,
+          "p50": 81.22025,
+          "p95": 109.902445,
+          "max": 115.0542
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:49:38.486436+00:00",
+        "ended_at": "2026-09-05T18:49:41.371585+00:00",
+        "expected_status": 422,
+        "status_counts": {
+          "422": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 77.3376,
+          "p50": 279.0091,
+          "p95": 378.45764499999984,
+          "max": 442.7409
+        }
+      }
+    ],
+    "POST /risk-signal (not ready)": [
+      {
+        "phase": "first_endpoint_call",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:49:44.198839+00:00",
+        "ended_at": "2026-09-05T18:49:44.283545+00:00",
+        "expected_status": 503,
+        "status_counts": {
+          "503": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 84.0538,
+          "p50": 84.0538,
+          "p95": 84.0538,
+          "max": 84.0538
+        }
+      },
+      {
+        "phase": "warm_sequential",
+        "concurrency": 1,
+        "sample_count": 20,
+        "started_at": "2026-09-05T18:49:44.283545+00:00",
+        "ended_at": "2026-09-05T18:49:45.541902+00:00",
+        "expected_status": 503,
+        "status_counts": {
+          "503": 20
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 49.2811,
+          "p50": 62.052,
+          "p95": 77.88177999999999,
+          "max": 78.5901
+        }
+      },
+      {
+        "phase": "warm_concurrent",
+        "concurrency": 4,
+        "sample_count": 40,
+        "started_at": "2026-09-05T18:49:45.541902+00:00",
+        "ended_at": "2026-09-05T18:49:47.403031+00:00",
+        "expected_status": 503,
+        "status_counts": {
+          "503": 40
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 65.1487,
+          "p50": 181.39215000000002,
+          "p95": 239.01013,
+          "max": 279.6324
+        }
+      }
+    ],
+    "GET /observations/window (injected local storage failure)": [
+      {
+        "phase": "bounded_fault_injection",
+        "concurrency": 1,
+        "sample_count": 1,
+        "started_at": "2026-09-05T18:49:54.058238+00:00",
+        "ended_at": "2026-09-05T18:49:54.058238+00:00",
+        "expected_status": 503,
+        "status_counts": {
+          "503": 1
+        },
+        "unexpected_count": 0,
+        "unexpected_rate": 0.0,
+        "transport_error_count": 0,
+        "latency_ms": {
+          "min": 5242.2622,
+          "p50": 5242.2622,
+          "p95": 5242.2622,
+          "max": 5242.2622
+        }
+      }
+    ]
+  },
+  "checks": {
+    "pgtap": "existing ownership, active-challenge and exact-time retention suites passed; transactional synthetic fixtures",
+    "actual_api_owner_crud_export": true,
+    "cross_user_read_write_denied": true,
+    "anonymous_401": true,
+    "input_422": true,
+    "duplicate_409": true,
+    "first_checkin_action_lock": true,
+    "status_only_checkin_edit_delete": true,
+    "model_not_ready_503": true,
+    "local_storage_failure_recovery": true,
+    "preserved_source_bytes": true
+  },
+  "cleanup": {
+    "status": "passed",
+    "preexisting_running_containers_preserved": true,
+    "owned_container_count": 0,
+    "owned_volume_count": 0,
+    "failures": [],
+    "raw_logs_retained": false,
+    "credentials_or_row_exports_retained": false
+  },
+  "source_hashes": {
+    "uv.lock": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
+    "web/package-lock.json": "dcbde9f5ca857c0ea0237810cc93e0160de8576df57991a4493363aa67eb3a92",
+    "data/manifest/nhanes_2017_2020.json": "ab5b952d4041457f2ead0360ee46978db409aeddb7b8097e166dbaa714151b52",
+    "docs/evidence/model-gate-1b.json": "fce93c04a3ef61ab5db33765f727febcd91a10051b235bcbb7cd6bc87e4a6ef5",
+    "docs/evidence/model-comparison.json": "afce8779c75b5f17547c484de91138e1977aec135de18d15091c530b73d934ec",
+    "docs/evidence/model-uncertainty.json": "59843a41746f155d73bd759749f8c1be93ab8ec6b1cebf262b4f8e57bb0ea812"
+  },
+  "tool_hashes": {
+    "run.py": "a1a314b5059f907d13dc2ef3517808507fb1699b61adc18a814b01ae21775909",
+    "metrics.py": "5012992add30830ef837f983d7ac620265adfa52d4c4b2d9d624a8e0011b459d"
+  },
+  "measurement_coordination": {
+    "renderer_paused": true,
+    "other_background_work": "Root Blender and G1/G5 browser/build work paused by coordinator; three preexisting user containers and other host tasks remain."
+  },
+  "ended_at": "2026-09-05T18:49:58.927498+00:00"
+}

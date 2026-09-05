@@ -1,7 +1,9 @@
 """Dependency-free safety and arithmetic controls; not performance or PostgreSQL evidence."""
 
 import argparse
+import copy
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -11,6 +13,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent))
 from metrics import NoRedirect, percentile, request, summarize  # noqa: E402
+from verify_report import verify  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("local_runner", Path(__file__).with_name("run.py"))
 runner = importlib.util.module_from_spec(spec)
@@ -74,6 +77,24 @@ class Controls(unittest.TestCase):
                 runner.require_local_docker(endpoint)
         runner.require_local_docker("npipe:////./pipe/dockerDesktopLinuxEngine")
         runner.require_local_docker("unix:///var/run/docker.sock")
+
+    def test_aggregate_tampering_is_rejected(self):
+        evidence = Path(__file__).resolve().parents[2] / "docs/evidence/local-reliability.json"
+        report = json.loads(evidence.read_text(encoding="utf-8"))
+        self.assertTrue(verify(report))
+        for change in ("extra", "nan", "counts", "order"):
+            broken = copy.deepcopy(report)
+            phase = next(iter(broken["measurements"].values()))[0]
+            if change == "extra":
+                phase["individual_values"] = []
+            elif change == "nan":
+                phase["latency_ms"]["p95"] = float("nan")
+            elif change == "counts":
+                phase["sample_count"] += 1
+            else:
+                phase["latency_ms"]["p95"] = phase["latency_ms"]["max"] + 1
+            with self.assertRaises(ValueError):
+                verify(broken)
 
 
 if __name__ == "__main__":
