@@ -1,0 +1,601 @@
+{
+  "schema_version": 1,
+  "status": "validation_compared_not_promoted",
+  "execution_commit": "668a0d81fb7b477b278dca8319440900bc530dd3",
+  "provenance": {
+    "gate_execution_commit": "cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad",
+    "gate_evidence_sha256": "d8651091892ec4351206ef25ad07ac1d0238772c6386a6b83c8e645e0f6c75fc",
+    "manifest_sha256": "ab5b952d4041457f2ead0360ee46978db409aeddb7b8097e166dbaa714151b52",
+    "toolchain_lock_sha256": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
+    "split_digest": "67b5a3ebec1d4881c5ea68ce2b475eeb18520b553f2e599dddde995c11cc238d",
+    "metadata_sha256": "8f477c9359f4e6a9cbbdf59b4becf65c7c74773f39b54b4e477a344422b0d1fb",
+    "input_sha256": {
+      "train": "47cd6bffdfb83ec5206ba3a81225c22e82538b654198a6d37de6c9d8638bfc8d",
+      "validation": "54f004082c3484b3698ff0d20a4efd8dccaa5a07abf927de1d72b414571f1e84"
+    },
+    "features": [
+      "RIAGENDR",
+      "RIDAGEYR",
+      "BMXBMI",
+      "PAQ605",
+      "PAQ620",
+      "SMQ020",
+      "ALQ111",
+      "SLD012"
+    ],
+    "semantics_version": 2
+  },
+  "config": {
+    "version": 1,
+    "semantics_version": 2,
+    "seed": 20260901,
+    "calibration_bins": 10,
+    "calibration_strategy": "uniform_left_closed_last_inclusive",
+    "minimum_report_rows": 20,
+    "pr_auc_definition": "average_precision",
+    "threads": 1,
+    "logistic_regression": {
+      "max_iter": 2000,
+      "solver": "lbfgs",
+      "C": 1.0
+    },
+    "histogram_gradient_boosting": {
+      "max_iter": 100,
+      "learning_rate": 0.1,
+      "max_leaf_nodes": 31,
+      "min_samples_leaf": 20,
+      "l2_regularization": 0.0,
+      "early_stopping": false
+    }
+  },
+  "config_sha256": "aed79ee34d52ff2777a1e4412473f80f121c561fa76226f47f8a2a0e0a52cb49",
+  "models": {
+    "logistic_regression": {
+      "overall": {
+        "rows": 1192,
+        "brier": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.22427817716803458
+        },
+        "auroc": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.6729593484680694
+        },
+        "pr_auc": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.5304830951822608
+        }
+      },
+      "calibration": [
+        {
+          "bin": 0,
+          "rows": 3,
+          "observed": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          },
+          "predicted": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          }
+        },
+        {
+          "bin": 1,
+          "rows": 150,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.12
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.16128002121645954
+          }
+        },
+        {
+          "bin": 2,
+          "rows": 206,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.28640776699029125
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.24998229654667753
+          }
+        },
+        {
+          "bin": 3,
+          "rows": 209,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.39712918660287083
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.3547311450353471
+          }
+        },
+        {
+          "bin": 4,
+          "rows": 205,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5317073170731708
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.451689423773128
+          }
+        },
+        {
+          "bin": 5,
+          "rows": 210,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5666666666666667
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5496799337575431
+          }
+        },
+        {
+          "bin": 6,
+          "rows": 156,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6025641025641025
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6430470686588222
+          }
+        },
+        {
+          "bin": 7,
+          "rows": 52,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.40384615384615385
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.7268857987140045
+          }
+        },
+        {
+          "bin": 8,
+          "rows": 1,
+          "observed": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          },
+          "predicted": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          }
+        },
+        {
+          "bin": 9,
+          "rows": 0,
+          "observed": {
+            "status": "unavailable",
+            "reason": "empty_bin",
+            "value": null
+          },
+          "predicted": {
+            "status": "unavailable",
+            "reason": "empty_bin",
+            "value": null
+          }
+        }
+      ],
+      "subgroups": {
+        "sex_1": {
+          "rows": 593,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.24482708084535387
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6113175094599244
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5058102526291468
+          }
+        },
+        "sex_2": {
+          "rows": 599,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.20393510558097228
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.7284744175155133
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5734712302176008
+          }
+        },
+        "sex_missing": {
+          "rows": 0,
+          "auroc": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          },
+          "pr_auc": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          },
+          "brier": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          }
+        },
+        "age_18_39": {
+          "rows": 415,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.17585796484039506
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6688905594186557
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.3503721454807053
+          }
+        },
+        "age_40_59": {
+          "rows": 385,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.2408124795969048
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6417390834997571
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6034861223758348
+          }
+        },
+        "age_60_80": {
+          "rows": 392,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.25930032431307387
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5010080909114712
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.520432206613517
+          }
+        }
+      }
+    },
+    "histogram_gradient_boosting": {
+      "overall": {
+        "rows": 1192,
+        "brier": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.21932614945310272
+        },
+        "auroc": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.687531722960502
+        },
+        "pr_auc": {
+          "status": "ok",
+          "reason": null,
+          "value": 0.5933305019690763
+        }
+      },
+      "calibration": [
+        {
+          "bin": 0,
+          "rows": 134,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.13432835820895522
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.05403136563817904
+          }
+        },
+        {
+          "bin": 1,
+          "rows": 104,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.21153846153846154
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.1534903911442823
+          }
+        },
+        {
+          "bin": 2,
+          "rows": 102,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.3235294117647059
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.2534514933973522
+          }
+        },
+        {
+          "bin": 3,
+          "rows": 145,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.30344827586206896
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.35361630956480344
+          }
+        },
+        {
+          "bin": 4,
+          "rows": 212,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.45128384077309874
+          }
+        },
+        {
+          "bin": 5,
+          "rows": 246,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.532520325203252
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5511294573604876
+          }
+        },
+        {
+          "bin": 6,
+          "rows": 176,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5625
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6431831620132591
+          }
+        },
+        {
+          "bin": 7,
+          "rows": 57,
+          "observed": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6666666666666666
+          },
+          "predicted": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.7434541367174698
+          }
+        },
+        {
+          "bin": 8,
+          "rows": 11,
+          "observed": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          },
+          "predicted": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          }
+        },
+        {
+          "bin": 9,
+          "rows": 5,
+          "observed": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          },
+          "predicted": {
+            "status": "unavailable",
+            "reason": "insufficient_rows",
+            "value": null
+          }
+        }
+      ],
+      "subgroups": {
+        "sex_1": {
+          "rows": 593,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.23890468591643746
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.633453732370141
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5540049772117445
+          }
+        },
+        "sex_2": {
+          "rows": 599,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.19994372520809855
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.7340768059946141
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6344130971278882
+          }
+        },
+        "sex_missing": {
+          "rows": 0,
+          "auroc": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          },
+          "pr_auc": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          },
+          "brier": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "value": null
+          }
+        },
+        "age_18_39": {
+          "rows": 415,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.17635652658259124
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6696736202468208
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.40518741686332693
+          }
+        },
+        "age_40_59": {
+          "rows": 385,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.2365261867692884
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6349516921250067
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6100930198478243
+          }
+        },
+        "age_60_80": {
+          "rows": 392,
+          "brier": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.24792405538302814
+          },
+          "auroc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.5703830745463592
+          },
+          "pr_auc": {
+            "status": "ok",
+            "reason": null,
+            "value": 0.6451757621169573
+          }
+        }
+      }
+    }
+  },
+  "relative_comparison": "candidate_meets_relative_conditions",
+  "test_used": false,
+  "release_approved": false
+}

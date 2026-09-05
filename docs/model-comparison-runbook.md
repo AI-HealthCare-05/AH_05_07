@@ -1,7 +1,9 @@
 # Frozen validation comparison runbook
 
-Issue #213 implements this path. Actual NHANES fitting is deferred until user
-review/merge and a separate execution request. Gate 1B Issue #208 is complete
+Issue #213 implementation is complete through merged PR #214. A subsequent
+user-authorized actual train/validation run is recorded in
+[model-comparison-evidence.md](model-comparison-evidence.md); Issue #215 publishes
+the user-approved aggregates and their limitations. Gate 1B Issue #208 is complete
 through PR #212, merged at `04ab996ba68c852fdf3f47ca94101294bd849f00` with all
 Windows/Linux evidence/synthetic checks and general CI successful. The original
 Gate 1B record remains `prepared_not_trained`; it is not model completion.
@@ -90,9 +92,10 @@ Rows, per-person predictions, labels, join identifiers, fitted estimators, fill
 values and full logs are never emitted in the candidate or console. Fitted
 estimators exist only in local process memory and are not serialized; no
 per-person prediction files are written by this path. Local inputs and any
-failure record remain private. There are no actual evaluation results in this PR.
+failure record remain private. Approved actual aggregates are stored in `docs/evidence/model-comparison.json`;
+publication does not rerun fitting.
 
-Model training on actual inputs, test evaluation, model card/artifact/promotion,
+Further training, test evaluation, model card/artifact/promotion,
 release, user input adapter and UI work remain separate. The public result
 continues to be named 입력 기반 위험군 선별 신호; existing model-unavailable behavior
 is unchanged.
