@@ -16,6 +16,9 @@ loss도 점수·대체 성공 결과 없이 정적 안내로 바뀐다.
 공식 npm Three.js 0.185.1 tarball integrity를 검증해 외부 local cache에 보존했다.
 license·파일 manifest가 그 경로에 있고 운영 package/lock에 추가하지 않았다.
 loopback server는 명시된 자산/vendor의 허용 파일만 읽으며 외부 URI GLB는 거부한다.
+Windows 경로의 UNC/drive/ADS 또는 상대 경로 이탈은 resolve 이전에 거부한다.
+이 경계는 실제 네트워크 경로를 접근하지 않는 합성 검사에서 위험 입력의
+resolve/is_file 미호출과 정상 중첩 파일 접근을 확인한다.
 원자료·분할 데이터·건강정보·모델 학습 파일을 이 도구에서 읽거나 생성하지 않는다.
 
 ## 검사 종류와 한계
@@ -61,6 +64,12 @@ Blender와 브라우저 검사는 동시에 실행하지 않는 절차를 유지
 별도 context에서 성능 표본을 수집한다. 위 v003의 과거 녹화 포함 수치를 새 방식의
 측정으로 바꾸지 않는다. 임시 fixture CI도 동물별 녹화·timeline을 검사한다.
 
+v006의 첫 녹화 검증은14개 full-loop 후25% pose PNG가 만들어졌지만 녹화 context
+종료 구간에서240초 전체 상한에 도달했다. 기존 출력과 WebM을 보존하며 전체
+통과로 집계하지 않는다. 인코더가 원인이라고 확정하지 않았다. 후속 runner는
+실제 viewport1366×768을 유지하면서 WebM을960×540으로 기록하고, GLB 해제 후
+page/context 종료를 각각15초로 제한한다. clip별 진행 기록도 즉시 보존한다.
+
 Windows/Linux CI는 임시 fixture만 실행한다. 실제 자산은 Git·CI runner에 자동
 업로드하지 않는다. 공개 가능한 CI의 코드 경계 검사와 외부 로컬 자산 검증을
 구분하며, 제작 품질 통과 동물/clip 수는 G4의 검사 결과에서만 집계한다.
@@ -70,6 +79,8 @@ Windows/Linux CI는 임시 fixture만 실행한다. 실제 자산은 Git·CI run
 새 catalog/GLB가 준비되면 해당 입력을 고정하고 새 외부 결과 경로에 verifier를
 실행한다. `--record`는 실제 브라우저를 WebM으로 녹화하며 성능 결과에 녹화 부하를
 표시한다. 기존 결과 경로를 재사용하면 중단한다. 기본20분 또는 `--timeout-ms`의
-상한에 도달하면 브라우저/서버를 닫고 실패 기록을 남긴다. 큰 자산/캡처/녹화는
+상한에 도달하면 브라우저/서버를 닫고 실패 기록을 남긴다.
+browser cleanup에는 추가 최대10초를 허용하며 Node도 실패로 종료한다.
+큰 자산/캡처/녹화는
 로컬 manifest로 추적하고 승인되지 않은 외부 upload를 하지 않는다. 같은 디스크
 보존은 독립 backup이 아니다. 사용자가 PR을 검토·병합하며 1회차는 계속 진행 중이다.

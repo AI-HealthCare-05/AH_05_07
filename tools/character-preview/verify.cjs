@@ -23,7 +23,7 @@ function run(script, options) {
   const result = spawnSync(python, [path.join(__dirname, script), ...options], { encoding: 'utf8' });
   assert.equal(result.status, 0, `${script} failed: ${result.stderr.slice(-500)}`);
 }
-if (synthetic) run('make_fixture.py', ['--output', assets]);
+if (synthetic) { run('test_boundary.py', []); run('make_fixture.py', ['--output', assets]); }
 if (!fs.existsSync(path.join(vendor, 'vendor-manifest.json'))) run('prepare_vendor.py', ['--output', vendor]);
 const dist = path.join(root, 'web/dist');
 assert(fs.existsSync(path.join(dist, 'index.html')), 'Build the production web first');
@@ -40,11 +40,24 @@ const errors = [], network = [], checks = [], playback = [], samples = [], asset
 const digest = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const quantile = (values, q) => { const a = [...values].sort((x, y) => x - y), x = (a.length - 1) * q, i = Math.floor(x); return a.length ? a[i] + (a[Math.ceil(x)] - a[i]) * (x - i) : null; };
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function bounded(promise, milliseconds, stage) {
+  let timer;
+  try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`${stage} exceeded ${milliseconds}ms`)), milliseconds); })]); }
+  finally { clearTimeout(timer); }
+}
+let stage = 'startup';
+const started = Date.now();
+function checkpoint(nextStage) {
+  stage = nextStage;
+  fs.writeFileSync(path.join(output, 'progress.json'), JSON.stringify({ status: 'in_progress_not_passed', stage, elapsedMs: Date.now() - started, checks, playback, assetManifest, motionVideos, samples }, null, 2));
+}
 (async () => {
   let browser;
   const deadline = setTimeout(async () => {
-    fs.writeFileSync(path.join(output, 'deadline.json'), JSON.stringify({ status: 'stopped', reason: 'bounded_wall_time_reached' }));
-    await browser?.close(); server.kill();
+    fs.writeFileSync(path.join(output, 'deadline.json'), JSON.stringify({ status: 'stopped', stage, elapsedMs: Date.now() - started, reason: 'bounded_wall_time_reached' }));
+    server.kill();
+    try { await bounded(browser?.close(), 10000, 'deadline browser cleanup'); }
+    finally { process.exit(1); }
   }, Number(arg('--timeout-ms', 1200000)));
   try {
     const base = await new Promise((resolve, reject) => {
@@ -55,6 +68,14 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const catalog = await (await fetch(base + '/catalog.json')).json();
     const catalogHash = digest(path.join(assets, 'catalog.json'));
     assert.equal(catalog.animals.length, 12);
+    if (synthetic) {
+      const invalid = path.join(temp, 'invalid-catalog'); fs.mkdirSync(invalid);
+      const altered = structuredClone(catalog); altered.animals[0].id = '../../escape';
+      fs.writeFileSync(path.join(invalid, 'catalog.json'), JSON.stringify(altered));
+      const rejected = spawnSync(python, [path.join(__dirname, 'serve.py'), '--assets', invalid, '--vendor', vendor], { encoding: 'utf8' });
+      assert.notEqual(rejected.status, 0); assert(rejected.stderr.includes('Invalid asset identifier'));
+      checks.push('catalog_identifier_boundary');
+    }
     for (const route of ['/assets/%2e%2e%2fcatalog.json', '/assets/%2e%2e%2fAGENTS.md', '/vendor/%2e%2e%2fpackage.json', '/serve.py']) assert.equal((await fetch(base + route)).status, 404);
     assert.equal((await fetch(base, { method: 'POST' })).status, 501); checks.push('read_only_path_boundary');
     browser = await chromium.launch({ args: synthetic ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--enable-unsafe-swiftshader'] });
@@ -76,7 +97,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       let standardClips;
       if (record) {
         await mainPage.locator('#static').check(); await mainPage.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static');
-        motionContext = await browser.newContext({ viewport: { width: 1366, height: 768 }, recordVideo: { dir: path.join(output, 'video', animal.id.replace(/[^a-z0-9_-]/gi, '_')), size: { width: 1366, height: 768 } } });
+        motionContext = await browser.newContext({ viewport: { width: 1366, height: 768 }, recordVideo: { dir: path.join(output, 'video', animal.id.replace(/[^a-z0-9_-]/gi, '_')), size: { width: 960, height: 540 } } });
         await motionContext.route('**/*', (route) => { const url = route.request().url(); if (!url.startsWith(base) && !url.startsWith('blob:') && !url.startsWith('data:')) { network.push(url); return route.abort(); } return route.continue(); });
         page = await motionContext.newPage(); page.on('pageerror', (e) => errors.push(e.message)); await page.goto(base + '/?animal=' + encodeURIComponent(animal.id));
         await page.waitForFunction(() => window.previewDiagnostics?.snapshot().status === 'playing');
@@ -102,11 +123,21 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           assert(Math.abs((await snap()).actionTime - poseTime) <= 0.001);
           if (!synthetic) await page.locator('#viewport').screenshot({ path: path.join(output, `${animal.id}-${variant}-${loaded.stats.clips[index].name.replace(/[^a-z0-9_-]/gi, '_')}.png`) });
           playback.push({ animal: animal.id, variant, clip: loaded.stats.clips[index].name, duration: loaded.stats.clips[index].duration, animationTimeAdvanced: true, bonePoseChanged: true, completeLoopObserved: true, capturedPoseTimeSeconds: poseTime });
+          checkpoint(`${animal.id}/${variant}/${loaded.stats.clips[index].name}: loop and pose passed`);
         }
         await page.click('#pause'); const paused = await snap(); await page.waitForTimeout(100); assert.equal((await snap()).actionTime, paused.actionTime);
         await page.click('#stop'); assert.equal((await snap()).actionTime, 0); await page.click('#play');
       }
-      if (motionContext) { const video = page.video(); await motionContext.close(); motionVideos.push({ animal: animal.id, path: path.relative(output, await video.path()).replaceAll(path.sep, '/'), scope: 'actual_browser_7_clips_both_variants_with_controls', silent: true }); page = mainPage; }
+      if (motionContext) {
+        const video = page.video(), closingStarted = Date.now();
+        checkpoint(`${animal.id}: stopping rendering before video finalization`);
+        await page.locator('#static').check(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static');
+        checkpoint(`${animal.id}: closing recorded page`); await bounded(page.close(), 15000, 'recorded page close');
+        checkpoint(`${animal.id}: closing recording context`); await bounded(motionContext.close(), 15000, 'recording context close');
+        const videoPath = await bounded(video.path(), 5000, 'video path');
+        motionVideos.push({ animal: animal.id, path: path.relative(output, videoPath).replaceAll(path.sep, '/'), scope: 'actual_browser_7_clips_both_variants_with_controls', viewport: { width: 1366, height: 768 }, videoSize: { width: 960, height: 540 }, finalizationMs: Date.now() - closingStarted, silent: true });
+        checkpoint(`${animal.id}: video finalized`); page = mainPage;
+      }
     }
     checks.push('all_available_variant_clips_bone_playback', 'pause_stop_play');
     if (record) { await mainPage.locator('#static').uncheck(); await mainPage.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); }
@@ -162,6 +193,6 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       availableAnimalsTested: available.length, clipVariantChecks: playback.length, sourceCommit: catalog.source_commit, catalogSha256: catalogHash, assetManifest, motionVideos, checks, playback, samples, swapMemory: memories,
       limitations: ['Browser viewport and recorded renderer only; not a physical mobile device or production FPS.', 'Bone playback/resource checks are not joint penetration or visual quality approval.', 'No real health or model data accessed.'], errors, externalRequests: network.length };
     fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify({ status: 'passed', availableAnimals: available.length, clipVariantChecks: playback.length, checks: checks.length, output }));
-  } catch (error) { fs.writeFileSync(path.join(output, 'failure.json'), JSON.stringify({ status: 'failed', stage: checks.at(-1) || 'startup', reason: error.message, errors }, null, 2)); throw error; }
-  finally { clearTimeout(deadline); await browser?.close(); server.kill(); await wait(100); }
+  } catch (error) { fs.writeFileSync(path.join(output, 'failure.json'), JSON.stringify({ status: 'failed', stage, elapsedMs: Date.now() - started, reason: error.message, errors }, null, 2)); throw error; }
+  finally { clearTimeout(deadline); server.kill(); await bounded(browser?.close(), 10000, 'browser cleanup'); await wait(100); }
 })().catch((error) => { console.error(error.message); process.exitCode = 1; });

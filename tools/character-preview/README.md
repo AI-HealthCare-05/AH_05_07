@@ -29,6 +29,9 @@ animal은 `id`, `name`, `status`, `motion`, `hero`, `standard`, `light`, `note`�
 미완료, `review_candidate`는 후보, `passed`는 제작 검사 통과이며 사람 최종
 검토와 별개다. `temporary_fixture`는 최종 동물이나 품질 통과 수량이 아니다.
 예: standard `bear-v002/standard.glb`, hero `bear-v002/hero.png`.
+ID는 소문자로 시작하는 1–32자 영문 소문자·숫자·`_`·`-`이며 이름은 비어 있지 않아야 한다.
+경로는 `/`로 구분한 상대 경로만 허용한다. drive·UNC·역슬래시·`..`·ADS 등은
+파일시스템 resolve 전에 거부하고, 이후 실제 경로의 root containment를 검사한다.
 
 GLB는 버전2의 embedded buffer/image만 지원한다. 외부 resource URI를 거부하며
 압축 decoder나 CDN을 자동 설치하지 않는다. 이번 자산은 재질 색상의 PBR 경로다.
@@ -55,6 +58,7 @@ GLB는 버전2의 embedded buffer/image만 지원한다. 외부 resource URI를 
 ```powershell
 npm --prefix web ci
 npm --prefix web run build
+python tools/character-preview/test_boundary.py
 # 빠른 CI/기능 검증: 실제 동물이 아닌 명시적 두-bone fixture
 node tools/character-preview/verify.cjs --synthetic --vendor "<검증한 vendor 경로>" --output "<새 합성 검사 경로>"
 # 제작 GLB 검사: 준비된 모든 animal × standard/light × 7clip
@@ -72,6 +76,11 @@ pause/stop/play, 1366/390/320 viewport, 키보드 초점/회전, 10회 교체 �
 context에서 7clip × 2variant의 실제 조작/결과만 녹화하며 사람이 품질을 승인한
 것이 아니다. 녹화 중 주 검토 context는 정적 표시로 바꿔 한 자산만 렌더한다.
 성능 표본은 녹화를 종료한 뒤 별도의 주 context에서 수집한다.
+녹화 크기는960×540이며 실제 browser viewport1366×768을 축소해 담는다.
+녹화 종료 전 GLB를 해제하고 page/context 종료를 각각15초로 제한한다.
+각 clip 결과는 `progress.json`에 즉시 보존한다. 이 파일의 진행 중 상태나 부분
+결과를 전체 통과로 해석하지 않는다. 전체 상한 `--timeout-ms` 도달 시 별도
+`deadline.json`을 남기며 browser cleanup은 최대10초를 추가로 허용한 뒤 중단한다.
 검사 중인 asset root와 catalog는 수정하지 않는다. 새 자산을 검증할 때 새 결과 경로를 사용한다.
 
 로드/viewport 변경마다 표본을 비우고1초 초기 구간 뒤 활성 animation의 RAF 간격

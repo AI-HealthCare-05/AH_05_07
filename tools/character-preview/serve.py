@@ -3,6 +3,7 @@
 import argparse
 import json
 import mimetypes
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -12,6 +13,15 @@ ASSET_SUFFIXES = {".glb", ".png", ".jpg", ".webp"}
 
 
 def contained(root, relative):
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or ":" in relative
+        or "\x00" in relative
+        or any(part in {"", ".", ".."} for part in relative.split("/"))
+    ):
+        raise ValueError("Unavailable resource")
     path = (root / relative).resolve()
     if path == root or root not in path.parents or not path.is_file():
         raise ValueError("Unavailable resource")
@@ -24,6 +34,10 @@ def catalog(asset_root):
         raise ValueError("Invalid local catalog")
     ids = set()
     for animal in data["animals"]:
+        if not isinstance(animal.get("id"), str) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,31}", animal["id"]):
+            raise ValueError("Invalid asset identifier")
+        if not isinstance(animal.get("name"), str) or not animal["name"].strip():
+            raise ValueError("Invalid asset name")
         if animal["id"] in ids:
             raise ValueError("Duplicate asset")
         ids.add(animal["id"])
