@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".gitattributes"
       - "scripts/data/**"
       - "scripts/model/**"
       - "scripts/ci/verify_model_gate_1b_contract.py"
@@ -17,6 +18,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - ".gitattributes"
       - "scripts/data/**"
       - "scripts/model/**"
       - "scripts/ci/verify_model_gate_1b_contract.py"
@@ -56,4 +58,5 @@ jobs:
       - name: Install frozen AI environment
         run: uv sync --frozen --group ai
       - name: Run synthetic semantics and real CLI tests
+        # Includes a fresh core.autocrlf=true checkout and Git blob hash comparison.
         run: uv run --frozen --group ai python -m pytest tests/data -q

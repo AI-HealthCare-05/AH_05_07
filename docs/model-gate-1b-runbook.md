@@ -139,6 +139,29 @@ data files or complete terminal output.
 
 ## Failure and rerun rules
 
+### Checkout byte identity (Issue #208)
+
+Evidence generation and verification hash actual checkout bytes. At commit
+`6760451d80d29b4df3d0c53666303eb3a1d30b8c`, automatic Windows CRLF conversion
+changed the manifest and lockfile hashes while Git still reported a clean tree.
+Such evidence can pass locally and fail against a Linux LF checkout.
+
+`.gitattributes` now pins only `data/manifest/nhanes_2017_2020.json` and `uv.lock`
+to `text eol=lf`. Their content, library versions and the byte-based verifier
+remain unchanged. The Windows/Linux data workflow tests a fresh temporary
+checkout with `core.autocrlf=true`, including a CRLF control file, and compares
+both protected files directly and by SHA-256 with their Git blobs.
+
+After this fix is merged, use a fresh clean checkout of the merged commit and
+confirm both file byte hashes against `git show HEAD:<file>` before preparation.
+Do not force-refresh an existing operator checkout or change global Git settings.
+Preserve existing raw files, outputs and evidence. Never repair old evidence by
+replacing hashes or its commit: regenerate it through the single entry point
+at the new verified commit, followed by human review. This fix does not rerun
+actual data or establish Gate 1B acceptance; Issue #208 remains open.
+
+### Other failures
+
 - Missing file or column: stop and correct the local source set; do not weaken
   the manifest or silently substitute another release.
 - Duplicate join keys or failed leakage assertion: stop and open a bounded
