@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "status": "submission_review_in_progress",
+  "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+  "files": [
+    {
+      "file": "references/empty-1366.png",
+      "format": "png",
+      "bytes": 75715,
+      "sha256": "8d57120fca4b68e580839fecddaf2a1bb7ddd7bbfd5319bedc6cbd98a1803335",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/error-1366.png",
+      "format": "png",
+      "bytes": 83898,
+      "sha256": "c094d2ed23bd91085551ef7e0feee0803c62cf6609623cb9a8153a02329b6531",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/mvp1-architecture.svg",
+      "format": "svg",
+      "bytes": 4394,
+      "sha256": "f5abed9e9004130783b74279596cb6f380ba512b856df288f0314ffe496c1d0d",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/mvp1-erd.svg",
+      "format": "svg",
+      "bytes": 4175,
+      "sha256": "97d4d47482a4d08ede4c557956381fe316febd9da1bba72da720eaf012d98edb",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/mvp1-submission-package.md",
+      "format": "md",
+      "bytes": 9393,
+      "sha256": "6e49fe95b2240c19630ae12703eff0857cf929316f439e14d40ff7b683986628",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/normal-1366.png",
+      "format": "png",
+      "bytes": 138157,
+      "sha256": "25c1c472a1e612cb44542cfc6f7f0077f1ea03b2f79c5581c2d25dc0e2c68d5d",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "references/not-ready-1366.png",
+      "format": "png",
+      "bytes": 98191,
+      "sha256": "4d2c6da94b7e4f9fdba059b14460291d3f7ef1310347382ac275513f00ccc50b",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sk7-mvp1-review.mp4",
+      "format": "mp4",
+      "bytes": 7059581,
+      "sha256": "a297bdc1587e76b070bad7744a7470c4d88046aeecf01b495a2619a6099cbe03",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sk7-mvp1-review.pdf",
+      "format": "pdf",
+      "bytes": 270029,
+      "sha256": "0b576258e1b1becd41ce567d2099a3febc7cccfbf2ed6270110d6349de15e5dd",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sk7-mvp1-review.pptx",
+      "format": "pptx",
+      "bytes": 169122,
+      "sha256": "703daf8f7f7eeb4958dbc4c977fb4ea9993e2c3b27c44c337bf4665a29b94623",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sk7-mvp1-sources.md",
+      "format": "md",
+      "bytes": 7592,
+      "sha256": "0bd070645337751cf968295652d8cc5c2a60edeb020a32d31076ff6f1df1b844",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sources/submission-package.py",
+      "format": "py",
+      "bytes": 6403,
+      "sha256": "26064ccee7be0f7d2de6bcc349910e28d157e25c293f0bd691b550499f110704",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sources/submission-record.cjs",
+      "format": "cjs",
+      "bytes": 7577,
+      "sha256": "41fbfd0016aa03030e1c60b16818f3ac6ac095873b189fa1d9bac162c20edd88",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sources/submission-render.ps1",
+      "format": "ps1",
+      "bytes": 1632,
+      "sha256": "9055463b1442cffb4d32f43e35004b1351fa5676fd374b3fbdb573b0dc9c7857",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sources/submission-slides.mjs",
+      "format": "mjs",
+      "bytes": 11759,
+      "sha256": "54dade534c7b684877473e9a5831e996e44c5c131380e4d2d0c79ad59b8c5b36",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "sources/submission-video-check.cjs",
+      "format": "cjs",
+      "bytes": 2123,
+      "sha256": "cb51bcd344d508377647f763d522f53b34bd00f15d94220ff33826820d850b5a",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    },
+    {
+      "file": "validation.json",
+      "format": "json",
+      "bytes": 757,
+      "sha256": "21cd7f062d647c0ac288e2399c23f0b88118b39a8669832dd95ecef34156fb43",
+      "production_basis_commit": "d3d1a1a2903c558778eef7be0f249057e40ee769",
+      "validation": "See validation.json; hashes recomputed from this file"
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 **상태: 진행 중.** 통합 관리 Issue [#225](https://github.com/AI-HealthCare-05/AH_05_07/issues/225).
 기준 main은 PR #224 병합 `255c904414943e21ee0a8596690e2a1adebb3ebc`이다.
+제출 검토본 제작 기준은 PR #226 병합 `d3d1a1a2903c558778eef7be0f249057e40ee769`이며
+[PPTX/PDF/MP4 실제 파일의 검사 기록](mvp1-submission-package.md)을 연결한다.
 이 문서는 요구사항을 축소 승인하거나 연구 결과를 운영 기능으로 승격하지 않는다.
 사용자는 로컬 질문 검토 화면의 **작동·항목 표시**만 확인했다. 한국어 자연화는
 후속 개선이며, 질문 의미·adapter·지원 대상·모델 출시 승인은 여전히 대기다.
@@ -128,8 +130,8 @@ Talos 공통 평가 원문과 내부 우선순위가 다른 항목도 제외했�
 | 3 API 명세서 | [제출 시트](https://docs.google.com/spreadsheets/d/1LBiCp6sfI1OOphBTpOHxgYh84zNJ2usK3_5n8PMNVNc/edit), [API SSOT](api-contract.md), `/api/openapi.json` | 작성본 링크 확인. 현재 generated OpenAPI의 method/path/status와 대조, legacy/product 구분·503 상태 표시·최종 export 필요 |
 | 4 ERD·아키텍처 | [원본](architecture.md), [아키텍처 SVG](diagrams/mvp1-architecture.svg), [ERD SVG](diagrams/mvp1-erd.svg) | 실제와 목표를 분리한 제출용 도면 준비. 운영 inventory/revision 대조와 최종 제출 형식 선택 필요 |
 | 5 UI·와이어프레임 | [Canva](https://www.canva.com/folder/FAHUPpTo5FI), [14화면 기준](https://app.notion.com/p/3d1f58c859468143a071d4991c2f85fe), [인계](https://app.notion.com/p/3d1f58c8594681449053d238bc8ce2c1), [캡처 목록](mvp1-validation.md) | 현재 CSS-first UI의 정상/빈/오류/준비 중 합성8장 확보. 디자인 목표와 runtime 차이 설명·공유 권한·최종 선별 필요 |
-| 6 시연 영상 | [3–5분 대본·촬영 순서](mvp1-demo.md) | 대본·순서·합성 장면 준비. **실제 영상 없음**. 녹화·편집·음성/자막·재생/권한 검토 필요 |
-| 7 발표 자료 | [슬라이드 내용 초안](mvp1-demo.md#발표-내용-초안) | 근거 연결된 내용 초안. **최종 PPTX/PDF 없음**. 파일 제작·렌더링·발표 시간·링크/주장 검토 필요 |
+| 6 시연 영상 | [실제 파일·검사](mvp1-submission-package.md), [대본](mvp1-demo.md) | **4분21.28초 무음 자막 MP4 제출 검토본 준비**. 실제 로컬 합성 브라우저 녹화·정상 재생 확인. 사용자 최종 검토·공유 대상/권한·납품 수용 필요 |
+| 7 발표 자료 | [실제 파일·검사](mvp1-submission-package.md), [7장 원고](mvp1-demo.md#발표-내용-초안) | **편집 가능한7장 PPTX·대응 PDF 제출 검토본 준비**. 렌더·집계 표·출처 검사. 발표 리허설·사용자 최종 검토·납품 수용 필요 |
 
 ## 1회차 종료 검토 조건과 후속 개선
 
