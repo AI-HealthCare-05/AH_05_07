@@ -249,12 +249,8 @@ def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt
         if vertex.co.y < 0 and r < 0.82:
             vertex.co.y += 0.115 * (1 - (r / 0.82) ** 2) ** 2
     outer.data.update()
-    outer.data.materials.append(inner)
-    for polygon in outer.data.polygons:
-        c = polygon.center
-        r = math.sqrt(((c.x - x) / rx) ** 2 + ((c.z - z) / rz) ** 2)
-        if c.y < -0.02 and r < 0.73:
-            polygon.material_index = 1
+    # One continuous coat lets cavity lighting define the inset; a per-face color
+    # threshold produced a stair-step boundary after web decimation.
     bind(outer, rig, fixed(name))
 
 
