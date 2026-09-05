@@ -134,3 +134,20 @@ preprocessing for comparison and artifact creation. The exact lockfile is
 unchanged. The synthetic Linux/Windows workflow is a code regression gate; it
 never downloads NHANES or publishes Gate 1B evidence. Actual data preparation,
 model evaluation and promotion remain separate uncompleted evidence gates.
+
+### Evidence input byte stability
+
+Issue #208 found that Windows automatic CRLF checkout changed the manifest and
+lockfile SHA-256 without changing Git content or dependency versions. Evidence
+uses actual file bytes, so `.gitattributes` pins these two inputs to LF. The
+Windows/Linux data workflow includes `tests/data/test_checkout_bytes.py`, which
+compares a fresh `core.autocrlf=true` checkout with Git blob bytes and hashes.
+See the runbook's checkout byte identity section for the fresh-checkout rerun
+requirement. Existing evidence must remain untouched; this correction adds no
+tool or version change and does not establish operational Gate acceptance.
+
+Local Windows validation (2026-09-05): all 29 data tests passed, including the
+fresh-checkout regression; full Ruff lint/format, Gate 1B contract/self-test,
+toolchain contract, secret boundary and whitespace checks passed. Remote
+Windows/Linux results are recorded in the referencing PR's Data preparation
+checks; both must pass before merge. No actual-data rerun is part of this fix.
