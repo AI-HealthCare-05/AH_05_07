@@ -38,13 +38,17 @@ test, or deployment work complete before the repository evidence exists.
 
 ## Current checkpoint
 
-The current closeout authority is [MVP1 closeout](mvp1-closeout.md), Issue #225,
-based on `255c904414943e21ee0a8596690e2a1adebb3ebc` (PR #224). Status: in progress.
-It links requirement-specific remaining implementation, operations verification,
-client decisions and seven deliverables. #213 is closed for PR #214's implementation
-scope only. The user confirmed question-screen operation/display; Korean polishing
-is a follow-up, not semantics/adapter/model approval. Historical deployment rows below
-remain evidence for their stated versions, not this source SHA's deployment.
+The current closeout authority is [MVP1 closeout](mvp1-closeout.md), Issue #225.
+The upgrade baseline is `c46c772486a30319e594dbb9cf555263d5fba1a9` (PR #227),
+confirmed against origin/main. Status: in progress. The seven-slide PPTX/PDF and
+4:21 silent-caption MP4 review package are preserved; submission acceptance,
+operations and model/input approvals remain pending. [Upgrade execution](upgrade-execution.md)
+tracks the separate usability, local reliability, model-design and original-character
+workstreams and their review PRs. These changes are not a production release.
+#213 is closed for PR #214's implementation scope only. The user's question-screen
+operation/display review and language polishing do not approve semantics, an adapter
+or a model. Historical deployment rows below remain evidence for their stated
+versions, not this source SHA's deployment.
 
 | Concern | Verified checkpoint |
 | --- | --- |
