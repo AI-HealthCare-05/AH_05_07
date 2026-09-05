@@ -8,7 +8,8 @@ const canvas = $('canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const state = { animals: [], current: null, object: null, mixer: null, clips: [], action: null,
   playing: false, loadId: 0, abort: null, renderer: null, stats: null, frames: [], loadedAt: 0,
-  swaps: 0, failures: 0, released: 0, loops: 0, ground: null, groundSpec: null, status: 'starting', externalRequests: 0 };
+  swaps: 0, failures: 0, released: 0, loops: 0, ground: null, groundSpec: null, defaultPoseMinY: null, status: 'starting', externalRequests: 0 };
+const standardGroundReferences = new Map(); // Numeric metadata only; never retains a GLB/GPU object.
 const scene = new THREE.Scene();
 scene.add(new THREE.HemisphereLight(0xffffff, 0x819276, 2.4));
 const light = new THREE.DirectionalLight(0xfff4df, 3.8);
@@ -58,12 +59,12 @@ function updateGround() {
     group.add(plane, grid); group.position.set(s.centerX, s.y, s.centerZ);
     state.ground = group; scene.add(group);
   }
-  $('ground-note').textContent = state.groundSpec ? `파일 기본 자세의 최저 Y ${state.groundSpec.y.toFixed(5)}에 고정 · 격자 간격 ${state.groundSpec.spacing.toFixed(3)} GLB 단위. 재생을 따라 움직이지 않으며 물리적 접지 판정이 아닙니다.` : 'GLB 기본 자세에서 한 번 정한 높이에 고정됩니다. 실제 바닥·접지 판정은 아닙니다.';
+  $('ground-note').textContent = state.groundSpec ? `표준형 기본 자세의 최저 Y ${state.groundSpec.y.toFixed(5)}에 공통 고정 · 현재 변형 최저 Y ${state.defaultPoseMinY.toFixed(5)} · 격자 간격 ${state.groundSpec.spacing.toFixed(3)} GLB 단위. 재생을 따라 움직이지 않으며 물리적 접지 판정이 아닙니다.` : state.object && state.defaultPoseMinY !== null ? '공통 바닥을 정하려면 표준형을 먼저 불러오세요. 경량형 높이로 임의 변환하거나 표준형을 숨겨서 읽지 않습니다.' : '표준형 GLB 기본 자세에서 정한 높이를 두 변형에 공통 고정합니다. 실제 바닥·접지 판정은 아닙니다.';
 }
 function unload() {
   state.abort?.abort(); state.abort = null;
   state.playing = false;
-  clearGround(); state.groundSpec = null; updateGround();
+  clearGround(); state.groundSpec = null; state.defaultPoseMinY = null; updateGround();
   if (state.mixer) { state.mixer.stopAllAction(); state.mixer.uncacheRoot(state.object); }
   if (state.object) { scene.remove(state.object); dispose(state.object); }
   state.object = null; state.mixer = null; state.action = null; state.clips = []; state.stats = null; state.frames = [];
@@ -157,11 +158,16 @@ async function load() {
     state.object.updateMatrixWorld(true);
     state.object.traverse((node) => { if (node.skeleton) node.skeleton.update(); });
     const defaultBounds = new THREE.Box3().setFromObject(state.object, true);
-    state.groundSpec = groundReference(defaultBounds.min.toArray(), defaultBounds.max.toArray());
+    const defaultReference = groundReference(defaultBounds.min.toArray(), defaultBounds.max.toArray());
+    state.defaultPoseMinY = defaultReference.y;
+    const referenceKey = `${animal.id}/${animal.standard}`;
+    if (variant === 'standard') standardGroundReferences.set(referenceKey, Object.freeze({ ...defaultReference, referenceVariant: 'standard' }));
+    state.groundSpec = standardGroundReferences.get(referenceKey) ?? null;
     updateGround();
     state.swaps++; state.loadedAt = performance.now(); state.frames = [];
     $('clip').replaceChildren(...state.clips.map((clip, i) => { const option = document.createElement('option'); option.value = i; option.textContent = `${labels[clip.name] || clip.name} · ${clip.duration.toFixed(2)}초`; return option; }));
     $('fallback').hidden = true; canvas.hidden = false; enable(true); $('clip').disabled = !state.clips.length;
+    for (const control of ['ground', 'front', 'side']) $(control).disabled = !state.groundSpec;
     for (const control of ['play', 'pause', 'stop']) $(control).disabled = !state.clips.length;
     resetCamera(); facts();
     if (state.clips.length) selectClip(); else status('정적 GLB를 표시했습니다. 움직임 클립이 없습니다.', 'ready');
@@ -206,6 +212,7 @@ window.previewDiagnostics = Object.freeze({ snapshot: () => ({ status: state.sta
   stats: state.stats, playing: state.playing, actionTime: state.action?.time ?? null, completedLoops: state.loops, swaps: state.swaps, failures: state.failures, released: state.released,
   memory: state.renderer ? { ...state.renderer.info.memory, programs: state.renderer.info.programs?.length } : null,
   groundReference: state.groundSpec ? { ...state.groundSpec, visible: Boolean(state.ground), actualY: state.ground?.position.y ?? null } : null,
+  defaultPoseMinY: state.defaultPoseMinY,
   camera: { position: camera.position.toArray(), target: controls?.target.toArray() ?? null },
   frameIntervalsMs: [...state.frames], sampleRule: 'RAF intervals after most recent load/resize plus 1000ms; latest at most 600; active animation only; linear quantiles',
   bones: state.object ? (() => { const values = []; state.object.traverse((n) => { if (n.isBone) values.push(...n.quaternion.toArray(), ...n.position.toArray(), ...n.scale.toArray()); }); return values; })() : [],
@@ -219,5 +226,7 @@ try {
   $('animal').replaceChildren(...state.animals.map((animal) => { const option = document.createElement('option'); option.value = animal.id; option.textContent = animal.name + (['needs_revision', 'failed'].includes(animal.status) ? ' · 수정 필요' : animal.status === 'pending' ? ' · 준비 중' : animal.status === 'temporary_fixture' ? ' · 임시 fixture' : ''); return option; }));
   const requestedAnimal = new URLSearchParams(location.search).get('animal');
   if (state.animals.some((animal) => animal.id === requestedAnimal)) $('animal').value = requestedAnimal;
+  const requestedVariant = new URLSearchParams(location.search).get('variant');
+  if (['standard', 'light'].includes(requestedVariant)) document.querySelector(`[name=variant][value=${requestedVariant}]`).checked = true;
   $('animal').disabled = false; resize(); await load();
 } catch { status('로컬 자산 목록을 읽지 못했습니다. catalog 설정을 확인해주세요.', 'catalog_failed'); }

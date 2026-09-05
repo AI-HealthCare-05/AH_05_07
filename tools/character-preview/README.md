@@ -20,6 +20,8 @@ python tools/character-preview/serve.py --assets "<catalog.json이 있는 외부
 외부 asset/vendor root의 허용 파일만 GET/HEAD로 읽는다. 중지는 해당 터미널에서
 Ctrl+C. 자산은 삭제하지 않는다. 서버 실행 후 네트워크 의존은 loopback뿐이다.
 브라우저 개발 서버와 운영 app은 따로 실행하며 서버를 외부 주소에 노출하지 않는다.
+`?animal=bear&variant=light`처럼 명시한 자산·변형을 먼저 열 수도 있다. 허용된
+catalog ID와 standard/light만 사용하고 나머지 값을 파일 경로로 해석하지 않는다.
 
 ## Catalog 계약
 
@@ -53,15 +55,19 @@ GLB는 버전2의 embedded buffer/image만 지원한다. 외부 resource URI를 
 - bytes는 읽은 GLB 크기, 삼각형/재질/텍스처/뼈대/clip은 실제 로드한 scene에서 계산한다.
   texture 해상도와 viewport/DPR·renderer 환경도 기록한다. 타깃 FPS 통과를 자동 판정하지 않는다.
 
-`고정 바닥·격자`는 로드한 GLB의 **애니메이션 적용 전 기본 자세**에서 모든 실제
-world-space vertex의 최저 Y를 한 번 계산한다. `rest`라는 clip의 동적 자세나
+`고정 바닥·격자`는 **표준형 GLB의 애니메이션 적용 전 기본 자세**에서 모든 실제
+world-space vertex의 최저 Y를 한 번 계산해 두 변형에 공통 적용한다. `rest` clip의 동적 자세나
 현재 frame의 발 위치를 따라가지 않는다. 그 Y의 반투명 평면과20분할 격자는
 재생/clip/시점 변경 중 고정되며, GLB 단위와 기준 Y를 화면에 표시한다.
 정면/옆면 기준 시점은 같은 기본 자세의 중심을 본다. 이를 물리 바닥의 승인된
 높이나 자동 충돌/발 접지 판정으로 해석하지 않는다. 평면이 발을 가리는 경우
 토글을 끄고 같은 시점을 비교한다. 토글 off, 자산 교체, 정적 표시, 종료 시
-평면/격자 geometry와 material을 해제한다. 새 자산/버전 로드 시 새 기준을 계산한다.
-표준/경량의 기준 Y 차이도 별도 결과에서 확인해야 한다.
+평면/격자 geometry와 material을 해제한다. 표준형 파일별 기준 숫자만 메모리에 유지한다.
+경량형을 먼저 열어 표준형 기준이 없으면 바닥 조작을 비활성화하고 표준형을 먼저
+불러오도록 안내한다. 표준형을 숨겨서 읽거나 경량형 높이를 결측/대체값으로 쓰지 않는다.
+현재 변형의 실제 기본 최저 Y도 함께 표시해 경량화 extrema 차이를 숨기지 않는다.
+곰/토끼/강아지의 renderer 없는 Three/Box3 사전 대조에서 차이가 확인되어, 실제 바닥
+재생 검토 전에 이 공통 표준형 기준을 고정했다. 상대 GLB 단위이며 물리 mm 기준이 아니다.
 
 ## 검증
 
@@ -136,8 +142,9 @@ python tools/character-preview/verify_video.py --video "<기존 WebM>" --ffmpeg 
 이미 전체 재생 검사를 마친 제작물에 바닥 기준만 추가로 검토할 때는 다음 별도
 runner를 사용한다. 기존16개 결과를 덮어쓰거나 다시 실행하지 않는다. 깨끗한
 viewer commit과 고정된 catalog에서 move/special/celebrate의 실제 loop 및 정면/옆면
-25%·50%·75% 자세를 양쪽 variant에서 기록한다. 두 variant의 기준 Y가 다르면
-공통 바닥을 임의로 선택하지 않고 중단한다. 결과는 영상 decode와 시각 검토 전
+25%·50%·75% 자세와 각 시점의 실제 연속 loop를 양쪽 variant에서 기록한다. 표준형
+기본 Y·중심·격자 크기가 경량형에서도 그대로 유지돼야 하며 두 변형의 원래 최저 Y는
+별도로 기록한다. 결과는 영상 decode와 시각 검토 전
 `visual_review_pending`이며 자동 접지 승인으로 바꾸지 않는다.
 
 ```powershell

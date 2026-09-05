@@ -65,16 +65,16 @@ const deadline = setTimeout(async () => {
         const fixed = (await snapshot()).groundReference;
         assert(fixed.visible && fixed.actualY === fixed.y && fixed.followsAnimation === false);
         if (variant === 'standard') standardY = fixed.y;
-        assert.equal(fixed.y, standardY, 'Variant default-pose floor differs; review explicit common floor before continuing');
+        assert.equal(fixed.y, standardY, 'The common standard-variant reference changed');
+        assert.equal(fixed.referenceVariant, 'standard');
         for (const clip of clips) {
           const loaded = await snapshot(), index = loaded.stats.clips.findIndex((c) => c.name === clip);
           assert(index >= 0, 'Required clip absent');
-          await page.selectOption('#clip', String(index)); await page.click('#front');
-          await page.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 15000 });
-          assert.deepEqual((await snapshot()).groundReference, fixed, 'Floor moved during full loop');
           const poses = [];
           for (const view of ['front', 'side']) {
-            await page.click('#' + view);
+            await page.selectOption('#clip', String(index)); await page.click('#' + view);
+            await page.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 15000 });
+            assert.deepEqual((await snapshot()).groundReference, fixed, 'Floor moved during full loop');
             for (const fraction of [0.25, 0.5, 0.75]) {
               const time = loaded.stats.clips[index].duration * fraction;
               await page.locator('#time').evaluate((el, t) => { el.value = String(t); el.dispatchEvent(new Event('input', { bubbles: true })); }, time);
@@ -85,7 +85,7 @@ const deadline = setTimeout(async () => {
               poses.push({ view, fraction, time_seconds: time, file: filename, sha256: hash(path.join(output, filename)), camera: current.camera });
             }
           }
-          observations.push({ animal: animal.id, variant, clip, duration: loaded.stats.clips[index].duration, complete_loop_observed: true, ground: fixed, poses });
+          observations.push({ animal: animal.id, variant, clip, duration: loaded.stats.clips[index].duration, complete_loop_observed: true, continuous_loop_views: ['front', 'side'], ground: fixed, variant_default_pose_min_y: loaded.defaultPoseMinY, poses });
           stage = `${animal.id}/${variant}/${clip}: fixed floor loop and six poses captured`; checkpoint();
         }
       }
