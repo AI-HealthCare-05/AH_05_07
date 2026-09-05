@@ -45,6 +45,80 @@ SPECIAL = {
     "fox": "tail-wrap sit",
     "squirrel": "scan and small hop",
 }
+MARKING_EMBED = 0.04  # About 1.5 times the 0.026 sculpt voxel, allowing for remesh shrink.
+MARKING_RELIEF = 0.012
+
+
+def coat_profiles(kind):
+    """The same authored profiles drive the coat geometry and marking projection."""
+    width = 0.68 if kind in ("seal", "capybara", "hedgehog") else 0.60
+    head = (0.64, 0.47, 0.54) if kind in ("fox", "squirrel", "cat") else (0.67, 0.51, 0.59)
+    if kind == "capybara":
+        head = (0.66, 0.53, 0.49)
+    return (
+        ((0, 0.015, 1.05), (width, 0.45, 0.81), 0.18, 1),
+        ((0, -0.01, 2.10), head, 0.10, 0.86),
+        ((0, 0.025, 1.64), (0.39, 0.35, 0.4), 0, 1),
+    )
+
+
+def profile_front_y(x, z, center, radii, pear=0, flatten=1):
+    """Analytic front (-Y) of surface(), including pear and rounded cross section."""
+    height = (z - center[2]) / radii[2]
+    if abs(height) > 1 + 1e-12:
+        return None
+    height = max(-1, min(1, height))
+    radial = math.sqrt(max(0, 1 - height * height)) * (1 - pear * height)
+    if radial <= 1e-12:
+        return center[1] if abs(x - center[0]) <= 1e-12 else None
+    lateral = abs((x - center[0]) / (radii[0] * radial))
+    if lateral > 1 + 1e-12:
+        return None
+    depth = radii[1] * radial * max(0, 1 - min(1, lateral) ** (2 / flatten)) ** (flatten / 2)
+    return center[1] - depth
+
+
+def coat_front_y(kind, x, z):
+    fronts = [profile_front_y(x, z, *profile) for profile in coat_profiles(kind)]
+    supported = [front for front in fronts if front is not None]
+    if not supported:
+        raise ValueError("Marking lies outside authored coat profiles")
+    return min(supported)
+
+
+def face_warp_point(kind, point, muzzle_width):
+    """Apply one shared deformation to the muzzle and attached nose/mouth surfaces."""
+    x, y, z = point
+    if kind in ("fox", "cat", "squirrel"):
+        y -= 0.07 * (1 - abs(x) / muzzle_width)
+    elif kind == "capybara":
+        y = -0.49 + (y + 0.49) * 1.55
+        z = 2.06 + (z - 2.06) * 0.83
+    return x, y, z
+
+
+def warp_face(obj, kind, muzzle_width):
+    for vertex in obj.data.vertices:
+        vertex.co = face_warp_point(kind, vertex.co, muzzle_width)
+    obj.data.update()
+
+
+def marking_point(kind, point, center, radii):
+    """Keep X/Z and closed topology; strictly positive Y scale preserves thickness.
+
+    Rim vertices sink into the analytic coat by MARKING_EMBED. Only the central
+    front cap stands proud; the back shell remains embedded. Projection precedes
+    the shared species warp. Final remeshed coat contact still needs render QA.
+    """
+    x, y, z = point
+    depth = (y - center[1]) / radii[1]
+    return x, coat_front_y(kind, x, z) + MARKING_EMBED + (MARKING_EMBED + MARKING_RELIEF) * depth, z
+
+
+def conform_marking(obj, kind, center, radii):
+    for vertex in obj.data.vertices:
+        vertex.co = marking_point(kind, vertex.co, center, radii)
+    obj.data.update()
 
 
 def material(name, color, roughness=0.7):
@@ -275,15 +349,10 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     eye = material("Soft glossy eyes", (0.007, 0.006, 0.005), 0.23)
     inner = material("Inner ear", tuple(v * 0.60 for v in body_color))
     rig = rig_create()
-    width = 0.60 if kind not in ("seal", "capybara", "hedgehog") else 0.68
-    body = surface("Pear torso", (0, 0.015, 1.05), (width, 0.45, 0.81), base, pear=0.18)
-    head_scale = (0.67, 0.51, 0.59)
-    if kind in ("fox", "squirrel", "cat"):
-        head_scale = (0.64, 0.47, 0.54)
-    if kind == "capybara":
-        head_scale = (0.66, 0.53, 0.49)
-    head = surface("Cheek and cranium", (0, -0.01, 2.10), head_scale, base, pear=0.10, flatten=0.86)
-    neck = surface("Neck transition", (0, 0.025, 1.64), (0.39, 0.35, 0.4), base)
+    body_profile, head_profile, neck_profile = coat_profiles(kind)
+    body = surface("Pear torso", *body_profile[:2], base, pear=body_profile[2], flatten=body_profile[3])
+    head = surface("Cheek and cranium", *head_profile[:2], base, pear=head_profile[2], flatten=head_profile[3])
+    neck = surface("Neck transition", *neck_profile[:2], base, pear=neck_profile[2], flatten=neck_profile[3])
     parts = [body, head, neck]
     for s, sign in (("L", 1), ("R", -1)):
         arm = tube(
@@ -327,7 +396,9 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         )
         bind(glint, rig, fixed("blink." + s))
         if kind == "penguin":
-            patch = surface("Ivory penguin face", (sign * 0.25, -0.452, 2.22), (0.20, 0.050, 0.275), cream, 20, 32)
+            center, radii = (sign * 0.25, -0.452, 2.22), (0.20, 0.050, 0.275)
+            patch = surface("Ivory penguin face", center, radii, cream, 20, 32)
+            conform_marking(patch, kind, center, radii)
             bind(patch, rig, fixed("head"))
         # Small separate toe grooves retain readability without busy surface noise.
         for i in range(0 if kind in ("seal", "penguin") else 3):
@@ -337,13 +408,7 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             bind(groove, rig, fixed("foot." + s))
     muzzle_width = 0.30 if kind not in ("capybara", "seal", "otter") else 0.39
     muzzle = surface("Sculpted muzzle", (0, -0.493, 2.06), (muzzle_width, 0.15, 0.205), cream, 24, 40, flatten=0.83)
-    if kind in ("fox", "cat", "squirrel"):
-        for vertex in muzzle.data.vertices:
-            vertex.co.y -= 0.07 * (1 - abs(vertex.co.x) / muzzle_width)
-    if kind == "capybara":
-        for vertex in muzzle.data.vertices:
-            vertex.co.y = -0.49 + (vertex.co.y + 0.49) * 1.55
-            vertex.co.z = 2.06 + (vertex.co.z - 2.06) * 0.83
+    warp_face(muzzle, kind, muzzle_width)
     bind(muzzle, rig, fixed("head"))
     nose = surface(
         "Rounded triangular nose", (0, -0.642, 2.14), (0.093, 0.054, 0.061), dark, 16, 28, pear=-0.4, flatten=0.9
@@ -353,10 +418,8 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         nose.data.materials.append(material("Warm beak", (0.77, 0.40, 0.10)))
         for vertex in nose.data.vertices:
             vertex.co.y = -0.58 + (vertex.co.y + 0.58) * 2.1
+    warp_face(nose, kind, muzzle_width)
     bind(nose, rig, fixed("head"))
-    if kind == "capybara":
-        for vertex in nose.data.vertices:
-            vertex.co.y -= 0.065
     for sign in (-1, 1):
         smile = tube(
             "Quiet smile",
@@ -370,10 +433,8 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             dark,
             8,
         )
+        warp_face(smile, kind, muzzle_width)
         bind(smile, rig, fixed("head"))
-        if kind == "capybara":
-            for vertex in smile.data.vertices:
-                vertex.co.y -= 0.065
         if kind in ("seal", "otter", "cat"):
             for level in range(3):
                 whisker = tube(
@@ -389,11 +450,15 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
                 )
                 bind(whisker, rig, fixed("head"))
     if kind in ("red_panda", "fox", "penguin", "otter", "squirrel", "seal"):
-        bib = surface("Chest bib", (0, -0.405, 1.14), (0.32, 0.064, 0.43), cream, 20, 32, pear=0.13)
+        center, radii = (0, -0.405, 1.14), (0.32, 0.064, 0.43)
+        bib = surface("Chest bib", center, radii, cream, 20, 32, pear=0.13)
+        conform_marking(bib, kind, center, radii)
         bind(bib, rig, skin_weights)
     if kind == "red_panda":
         for sign in (-1, 1):
-            patch = surface("Panda cheek marking", (sign * 0.41, -0.397, 2.18), (0.15, 0.05, 0.17), cream, 16, 24)
+            center, radii = (sign * 0.41, -0.397, 2.18), (0.15, 0.05, 0.17)
+            patch = surface("Panda cheek marking", center, radii, cream, 16, 24)
+            conform_marking(patch, kind, center, radii)
             bind(patch, rig, fixed("head"))
     tail_points = [(0, 0.39, 0.77), (0, 0.65, 0.78), (0, 0.73, 0.81)]
     tail_radii = [0.14, 0.16, 0.035]
