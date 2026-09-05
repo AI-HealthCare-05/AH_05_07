@@ -66,7 +66,7 @@ def resource(route, asset_root, vendor_root):
             raise ValueError("Unsupported vendor resource")
         return path.read_bytes(), "text/javascript"
     name = route.removeprefix("/") or "index.html"
-    if name not in {"index.html", "viewer.js", "viewer.css", "boot.js", "fallback.svg"}:
+    if name not in {"index.html", "viewer.js", "ground-reference.js", "viewer.css", "boot.js", "fallback.svg"}:
         raise ValueError("Unavailable page")
     path = HERE / name
     return path.read_bytes(), mimetypes.guess_type(path)[0] or "application/octet-stream"

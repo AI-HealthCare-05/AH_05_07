@@ -53,6 +53,16 @@ GLB는 버전2의 embedded buffer/image만 지원한다. 외부 resource URI를 
 - bytes는 읽은 GLB 크기, 삼각형/재질/텍스처/뼈대/clip은 실제 로드한 scene에서 계산한다.
   texture 해상도와 viewport/DPR·renderer 환경도 기록한다. 타깃 FPS 통과를 자동 판정하지 않는다.
 
+`고정 바닥·격자`는 로드한 GLB의 **애니메이션 적용 전 기본 자세**에서 모든 실제
+world-space vertex의 최저 Y를 한 번 계산한다. `rest`라는 clip의 동적 자세나
+현재 frame의 발 위치를 따라가지 않는다. 그 Y의 반투명 평면과20분할 격자는
+재생/clip/시점 변경 중 고정되며, GLB 단위와 기준 Y를 화면에 표시한다.
+정면/옆면 기준 시점은 같은 기본 자세의 중심을 본다. 이를 물리 바닥의 승인된
+높이나 자동 충돌/발 접지 판정으로 해석하지 않는다. 평면이 발을 가리는 경우
+토글을 끄고 같은 시점을 비교한다. 토글 off, 자산 교체, 정적 표시, 종료 시
+평면/격자 geometry와 material을 해제한다. 새 자산/버전 로드 시 새 기준을 계산한다.
+표준/경량의 기준 Y 차이도 별도 결과에서 확인해야 한다.
+
 ## 검증
 
 기존 locked Playwright를 사용한다. 준비·build는 로컬 검증이며 배포가 아니다.
@@ -62,6 +72,7 @@ GLB는 버전2의 embedded buffer/image만 지원한다. 외부 resource URI를 
 npm --prefix web ci
 npm --prefix web run build
 python tools/character-preview/test_boundary.py
+node tools/character-preview/test_ground.cjs
 # 빠른 CI/기능 검증: 실제 동물이 아닌 명시적 두-bone fixture
 node tools/character-preview/verify.cjs --synthetic --vendor "<검증한 vendor 경로>" --output "<새 합성 검사 경로>"
 # 제작 GLB 검사: 준비된 모든 animal × standard/light × 7clip

@@ -25,7 +25,11 @@ function run(script, options) {
   const result = spawnSync(python, [path.join(__dirname, script), ...options], { encoding: 'utf8' });
   assert.equal(result.status, 0, `${script} failed: ${result.stderr.slice(-500)}`);
 }
-if (synthetic) { run('test_boundary.py', []); run('make_fixture.py', ['--output', assets]); }
+if (synthetic) {
+  run('test_boundary.py', []); run('make_fixture.py', ['--output', assets]);
+  const groundTest = spawnSync(process.execPath, [path.join(__dirname, 'test_ground.cjs')], { encoding: 'utf8' });
+  assert.equal(groundTest.status, 0, groundTest.stderr);
+}
 if (!fs.existsSync(path.join(vendor, 'vendor-manifest.json'))) run('prepare_vendor.py', ['--output', vendor]);
 const dist = path.join(root, 'web/dist');
 assert(fs.existsSync(path.join(dist, 'index.html')), 'Build the production web first');
@@ -173,6 +177,29 @@ function checkpoint(nextStage) {
     assert(memories.at(-1).geometries <= Math.max(memories[0].geometries, memories[1].geometries));
     assert(memories.at(-1).textures <= Math.max(memories[0].textures, memories[1].textures)); checks.push('10_swap_resource_counts_bounded');
     assert(memories.at(-1).programs <= Math.max(memories[0].programs, memories[1].programs));
+    await page.click('#pause');
+    const noGround = await snap(); assert.equal(noGround.groundReference.visible, false);
+    for (let index = 0; index < 4; index++) {
+      await page.locator('#ground').check(); await page.waitForTimeout(80);
+      const fixed = await snap(); assert.equal(fixed.groundReference.actualY, fixed.groundReference.y);
+      assert(fixed.memory.geometries > noGround.memory.geometries);
+      for (const proportion of [0.25, 0.5, 0.75]) {
+        await page.locator('#time').evaluate((el, p) => { el.value = String(Number(el.max) * p); el.dispatchEvent(new Event('input', { bubbles: true })); }, proportion);
+        assert.deepEqual((await snap()).groundReference, fixed.groundReference, 'The floor followed animation');
+      }
+      const beforeView = await page.locator('#viewport').screenshot(); await page.click('#side'); await page.waitForTimeout(80);
+      assert(!(await page.locator('#viewport').screenshot()).equals(beforeView)); await page.click('#front');
+      await page.locator('#ground').uncheck(); await page.waitForTimeout(80);
+      const cleared = await snap(); assert.equal(cleared.groundReference.visible, false);
+      assert.equal(cleared.memory.geometries, noGround.memory.geometries); assert.equal(cleared.memory.textures, noGround.memory.textures);
+      assert(cleared.memory.programs <= Math.max(noGround.memory.programs, 1));
+    }
+    await page.locator('#ground').check(); await page.click('#retry'); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing');
+    assert.equal((await snap()).groundReference.visible, true);
+    assert.equal((await snap()).groundReference.y, noGround.groundReference.y);
+    await page.locator('#static').check(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static'); assert.equal((await snap()).groundReference, null);
+    await page.locator('#static').uncheck(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); await page.locator('#ground').uncheck();
+    checks.push('fixed_ground_reference_toggle_release_and_views');
     const pending = catalog.animals.find((animal) => !animal.standard);
     if (pending) { await page.selectOption('#animal', pending.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'pending'); assert(await page.locator('#fallback').isVisible()); checks.push('pending_asset_not_counted'); await page.selectOption('#animal', first.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); }
     if (synthetic) {

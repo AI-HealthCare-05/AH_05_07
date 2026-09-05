@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { groundReference } from './ground-reference.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const state = { animals: [], current: null, object: null, mixer: null, clips: [], action: null,
   playing: false, loadId: 0, abort: null, renderer: null, stats: null, frames: [], loadedAt: 0,
-  swaps: 0, failures: 0, released: 0, loops: 0, status: 'starting', externalRequests: 0 };
+  swaps: 0, failures: 0, released: 0, loops: 0, ground: null, groundSpec: null, status: 'starting', externalRequests: 0 };
 const scene = new THREE.Scene();
 scene.add(new THREE.HemisphereLight(0xffffff, 0x819276, 2.4));
 const light = new THREE.DirectionalLight(0xfff4df, 3.8);
@@ -16,7 +17,7 @@ const rim = new THREE.DirectionalLight(0xe1e8ff, 1.8);
 rim.position.set(-4, 3, -2); scene.add(rim);
 const camera = new THREE.PerspectiveCamera(36, 1, 0.01, 1000);
 let controls, catalogSource = '', lastFrame = performance.now(), frameHandle, distance = 4;
-const controlsIds = ['clip', 'time', 'play', 'pause', 'stop', 'left', 'right', 'closer', 'farther', 'reset'];
+const controlsIds = ['clip', 'time', 'play', 'pause', 'stop', 'left', 'right', 'closer', 'farther', 'reset', 'front', 'side', 'ground'];
 const labels = { idle: '대기', greet: '인사', move: '이동', curious: '관심 있게 보기', celebrate: '작은 축하', rest: '휴식', special: '종별 동작' };
 
 function status(text, value) { $('status').textContent = text; state.status = value; }
@@ -42,9 +43,27 @@ function dispose(object) {
   for (const texture of textures) texture.source?.data?.close?.();
   state.released += geometries.size + materials.size + textures.size + skeletons.size;
 }
+function clearGround() {
+  if (state.ground) { scene.remove(state.ground); dispose(state.ground); state.ground = null; }
+}
+function updateGround() {
+  clearGround();
+  if (state.object && state.groundSpec && $('ground').checked) {
+    const s = state.groundSpec, group = new THREE.Group();
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(s.size, s.size), new THREE.MeshBasicMaterial({ color: 0xa2b498, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide }));
+    plane.rotation.x = -Math.PI / 2;
+    const grid = new THREE.GridHelper(s.size, 20, 0x627761, 0x91a48b);
+    grid.position.y = s.size * 0.00005; // Avoid z-fighting; the plane remains exactly at reference Y.
+    grid.material.transparent = true; grid.material.opacity = 0.65;
+    group.add(plane, grid); group.position.set(s.centerX, s.y, s.centerZ);
+    state.ground = group; scene.add(group);
+  }
+  $('ground-note').textContent = state.groundSpec ? `파일 기본 자세의 최저 Y ${state.groundSpec.y.toFixed(5)}에 고정 · 격자 간격 ${state.groundSpec.spacing.toFixed(3)} GLB 단위. 재생을 따라 움직이지 않으며 물리적 접지 판정이 아닙니다.` : 'GLB 기본 자세에서 한 번 정한 높이에 고정됩니다. 실제 바닥·접지 판정은 아닙니다.';
+}
 function unload() {
   state.abort?.abort(); state.abort = null;
   state.playing = false;
+  clearGround(); state.groundSpec = null; updateGround();
   if (state.mixer) { state.mixer.stopAllAction(); state.mixer.uncacheRoot(state.object); }
   if (state.object) { scene.remove(state.object); dispose(state.object); }
   state.object = null; state.mixer = null; state.action = null; state.clips = []; state.stats = null; state.frames = [];
@@ -84,6 +103,13 @@ function resetCamera() {
   camera.position.copy(center).add(new THREE.Vector3(0.8, 0.35, 1).normalize().multiplyScalar(distance));
   controls.target.copy(center); controls.minDistance = distance * 0.35; controls.maxDistance = distance * 2.5;
   camera.near = distance / 100; camera.far = distance * 50; camera.updateProjectionMatrix(); controls.update();
+}
+function referenceCamera(side) {
+  if (!state.groundSpec || !controls) return;
+  const s = state.groundSpec, center = new THREE.Vector3(s.centerX, s.centerY, s.centerZ);
+  distance = s.size / 3 * 2.5;
+  camera.position.copy(center).add((side ? new THREE.Vector3(1, 0.14, 0) : new THREE.Vector3(0, 0.14, 1)).normalize().multiplyScalar(distance));
+  controls.target.copy(center); controls.update();
 }
 function selectClip(play = true) {
   if (!state.mixer) return;
@@ -128,6 +154,11 @@ async function load() {
     if (id !== state.loadId) { dispose(gltf.scene); return; }
     state.object = gltf.scene; state.clips = gltf.animations; state.mixer = new THREE.AnimationMixer(state.object); state.mixer.addEventListener('loop', () => state.loops++); scene.add(state.object);
     state.stats = { ...stats(state.object, state.clips, buffer.byteLength), loadMs: performance.now() - started };
+    state.object.updateMatrixWorld(true);
+    state.object.traverse((node) => { if (node.skeleton) node.skeleton.update(); });
+    const defaultBounds = new THREE.Box3().setFromObject(state.object, true);
+    state.groundSpec = groundReference(defaultBounds.min.toArray(), defaultBounds.max.toArray());
+    updateGround();
     state.swaps++; state.loadedAt = performance.now(); state.frames = [];
     $('clip').replaceChildren(...state.clips.map((clip, i) => { const option = document.createElement('option'); option.value = i; option.textContent = `${labels[clip.name] || clip.name} · ${clip.duration.toFixed(2)}초`; return option; }));
     $('fallback').hidden = true; canvas.hidden = false; enable(true); $('clip').disabled = !state.clips.length;
@@ -168,10 +199,14 @@ $('stop').addEventListener('click', () => selectClip(false));
 for (const [id, amount] of [['left', -0.3], ['right', 0.3]]) $(id).addEventListener('click', () => { const offset = camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0, 1, 0), amount); camera.position.copy(controls.target).add(offset); controls.update(); });
 for (const [id, factor] of [['closer', 0.85], ['farther', 1.18]]) $(id).addEventListener('click', () => { camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target); controls.update(); });
 $('reset').addEventListener('click', resetCamera); new ResizeObserver(resize).observe($('viewport'));
+$('front').addEventListener('click', () => referenceCamera(false)); $('side').addEventListener('click', () => referenceCamera(true));
+$('ground').addEventListener('change', updateGround);
 window.addEventListener('pagehide', () => { ++state.loadId; cancelAnimationFrame(frameHandle); unload(); controls?.dispose(); state.renderer?.dispose(); });
 window.previewDiagnostics = Object.freeze({ snapshot: () => ({ status: state.status, animal: state.current?.id, variant: document.querySelector('[name=variant]:checked').value,
   stats: state.stats, playing: state.playing, actionTime: state.action?.time ?? null, completedLoops: state.loops, swaps: state.swaps, failures: state.failures, released: state.released,
   memory: state.renderer ? { ...state.renderer.info.memory, programs: state.renderer.info.programs?.length } : null,
+  groundReference: state.groundSpec ? { ...state.groundSpec, visible: Boolean(state.ground), actualY: state.ground?.position.y ?? null } : null,
+  camera: { position: camera.position.toArray(), target: controls?.target.toArray() ?? null },
   frameIntervalsMs: [...state.frames], sampleRule: 'RAF intervals after most recent load/resize plus 1000ms; latest at most 600; active animation only; linear quantiles',
   bones: state.object ? (() => { const values = []; state.object.traverse((n) => { if (n.isBone) values.push(...n.quaternion.toArray(), ...n.position.toArray(), ...n.scale.toArray()); }); return values; })() : [],
   viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio, renderPixelRatio: 1, antialias: false }, userAgent: navigator.userAgent, platform: navigator.platform,

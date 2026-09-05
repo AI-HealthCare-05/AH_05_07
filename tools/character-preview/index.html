@@ -26,6 +26,9 @@
       <label for="time">같은 시점의 자세 확인 <output id="time-label">0.00초</output></label><input id="time" type="range" min="0" max="1" step="0.001" value="0" disabled>
       <div class="row"><button id="play" disabled>재생</button><button id="pause" disabled>일시 정지</button><button id="stop" disabled>처음으로 정지</button></div>
       <fieldset><legend>시점</legend><div class="row"><button id="left" disabled aria-label="왼쪽으로 회전">↶ 왼쪽</button><button id="right" disabled aria-label="오른쪽으로 회전">오른쪽 ↷</button></div><div class="row"><button id="closer" disabled>확대</button><button id="farther" disabled>축소</button><button id="reset" disabled>시점 초기화</button></div></fieldset>
+      <div class="row"><button id="front" disabled>정면 기준 시점</button><button id="side" disabled>옆면 기준 시점</button></div>
+      <label class="motion"><input id="ground" type="checkbox" disabled><span>고정 바닥·격자로 접지 살펴보기</span></label>
+      <p id="ground-note" class="hint">GLB 기본 자세에서 한 번 정한 높이에 고정됩니다. 실제 바닥·접지 판정은 아닙니다.</p>
       <label class="motion"><input id="static" type="checkbox"><span>움직임 없이 정적 이미지 보기</span></label>
       <button id="retry">선택 자산 다시 불러오기</button>
       <p id="note">임시 fixture 또는 검토 중 자산은 최종 품질 통과 수량에 포함하지 않습니다.</p>
