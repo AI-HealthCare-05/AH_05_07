@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 SCHEMA = "sk7-canva-derivative-review-v1"
 
 
@@ -152,17 +151,9 @@ class ValidationError(ValueError):
     """A review package does not meet the versioned staging contract."""
 
 
-def parse_png(data: bytes) -> dict[str, Any]:
-    if not data.startswith(PNG_SIGNATURE):
-        raise ValidationError("not a PNG signature")
-
+def iter_png_chunks(data: bytes):
+    """Yield PNG chunks after validating their enclosing byte ranges."""
     offset = len(PNG_SIGNATURE)
-    width = height = color_type = None
-    has_alpha = False
-    metadata: list[str] = []
-    saw_iend = False
-    saw_idat = False
-
     while offset < len(data):
         if offset + 12 > len(data):
             raise ValidationError("truncated PNG chunk")
@@ -171,14 +162,30 @@ def parse_png(data: bytes) -> dict[str, Any]:
         chunk_end = offset + 12 + length
         if chunk_end > len(data):
             raise ValidationError("PNG chunk length exceeds file")
-        chunk_data = data[offset + 8 : offset + 8 + length]
+        yield chunk_type, data[offset + 8 : offset + 8 + length]
+        offset = chunk_end
+
+
+def read_png_ihdr(chunk: bytes, has_prior_ihdr: bool) -> tuple[int, int, bool]:
+    if len(chunk) != 13 or has_prior_ihdr:
+        raise ValidationError("invalid PNG IHDR")
+    width, height, _bit_depth, color_type, _compression, _filter, _interlace = struct.unpack(">IIBBBBB", chunk)
+    return width, height, color_type in {4, 6}
+
+
+def parse_png(data: bytes) -> dict[str, Any]:
+    if not data.startswith(PNG_SIGNATURE):
+        raise ValidationError("not a PNG signature")
+
+    width = height = None
+    has_alpha = False
+    metadata: list[str] = []
+    saw_iend = False
+    saw_idat = False
+
+    for chunk_type, chunk_data in iter_png_chunks(data):
         if chunk_type == b"IHDR":
-            if length != 13 or width is not None:
-                raise ValidationError("invalid PNG IHDR")
-            width, height, _bit_depth, color_type, _compression, _filter, _interlace = struct.unpack(
-                ">IIBBBBB", chunk_data
-            )
-            has_alpha = color_type in {4, 6}
+            width, height, has_alpha = read_png_ihdr(chunk_data, width is not None)
         elif chunk_type == b"tRNS":
             has_alpha = True
         elif chunk_type in PNG_METADATA_CHUNKS:
@@ -188,7 +195,6 @@ def parse_png(data: bytes) -> dict[str, Any]:
         elif chunk_type == b"IEND":
             saw_iend = True
             break
-        offset = chunk_end
 
     if width is None or height is None or not saw_idat or not saw_iend:
         raise ValidationError("PNG is missing IHDR, IDAT, or IEND")
@@ -243,38 +249,36 @@ def parse_webp(data: bytes) -> dict[str, Any]:
     }
 
 
-def inspect_asset(path: Path, rule: AssetRule) -> dict[str, Any]:
-    if not path.is_file():
-        raise ValidationError(f"missing required file: {rule.filename}")
-    data = path.read_bytes()
-    if len(data) > rule.max_bytes:
-        raise ValidationError(
-            f"{rule.filename} is {len(data):,} bytes; budget is {rule.max_bytes:,} bytes"
-        )
+def parse_registered_asset(data: bytes, rule: AssetRule) -> dict[str, Any]:
     if rule.mime == "image/png":
-        result = parse_png(data)
-    elif rule.mime == "image/webp":
-        result = parse_webp(data)
-    else:  # pragma: no cover - all rules are constants above
-        raise ValidationError(f"unsupported expected MIME type: {rule.mime}")
+        return parse_png(data)
+    if rule.mime == "image/webp":
+        return parse_webp(data)
+    raise ValidationError(f"unsupported expected MIME type: {rule.mime}")  # pragma: no cover
 
-    if result["mime"] != rule.mime:
-        raise ValidationError(f"{rule.filename} MIME does not match its registered extension")
+
+def validate_image_dimensions(result: dict[str, Any], rule: AssetRule) -> None:
     if rule.exact_width is not None and result["width"] != rule.exact_width:
         raise ValidationError(f"{rule.filename} must be exactly {rule.exact_width}px wide")
     if rule.exact_height is not None and result["height"] != rule.exact_height:
         raise ValidationError(f"{rule.filename} must be exactly {rule.exact_height}px high")
     if result["width"] < rule.min_width or result["height"] < rule.min_height:
         raise ValidationError(
-            f"{rule.filename} is {result['width']}x{result['height']}; minimum is "
-            f"{rule.min_width}x{rule.min_height}"
+            f"{rule.filename} is {result['width']}x{result['height']}; minimum is {rule.min_width}x{rule.min_height}"
         )
+
+
+def validate_image_policy(result: dict[str, Any], rule: AssetRule) -> None:
+    if result["mime"] != rule.mime:
+        raise ValidationError(f"{rule.filename} MIME does not match its registered extension")
     if rule.alpha_required and not result["has_alpha"]:
         raise ValidationError(f"{rule.filename} must retain an alpha-capable PNG channel")
     if result["metadata_chunks"]:
         chunks = ", ".join(result["metadata_chunks"])
         raise ValidationError(f"{rule.filename} contains removable metadata chunks: {chunks}")
 
+
+def make_asset_record(data: bytes, result: dict[str, Any], rule: AssetRule) -> dict[str, Any]:
     return {
         "register_id": rule.register_id,
         "canva_source_id": rule.source_id,
@@ -294,6 +298,19 @@ def inspect_asset(path: Path, rule: AssetRule) -> dict[str, Any]:
             "blocked_image_fallback": None,
         },
     }
+
+
+def inspect_asset(path: Path, rule: AssetRule) -> dict[str, Any]:
+    if not path.is_file():
+        raise ValidationError(f"missing required file: {rule.filename}")
+    data = path.read_bytes()
+    if len(data) > rule.max_bytes:
+        raise ValidationError(f"{rule.filename} is {len(data):,} bytes; budget is {rule.max_bytes:,} bytes")
+
+    result = parse_registered_asset(data, rule)
+    validate_image_dimensions(result, rule)
+    validate_image_policy(result, rule)
+    return make_asset_record(data, result, rule)
 
 
 def inspect_package(assets_dir: Path) -> list[dict[str, Any]]:
@@ -322,14 +339,16 @@ def build_manifest(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def verify_manifest(records: list[dict[str, Any]], manifest_path: Path, require_manual_review: bool) -> None:
+def read_manifest(manifest_path: Path) -> dict[str, Any]:
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise ValidationError(f"manifest does not exist: {manifest_path}") from exc
     except json.JSONDecodeError as exc:
         raise ValidationError(f"manifest is not valid JSON: {manifest_path}") from exc
 
+
+def validate_manifest_boundary(manifest: dict[str, Any]) -> None:
     if manifest.get("schema") != SCHEMA:
         raise ValidationError("manifest schema is not the SK7 derivative review schema")
     if manifest.get("delivery_status") != "review-only-unbound":
@@ -337,21 +356,28 @@ def verify_manifest(records: list[dict[str, Any]], manifest_path: Path, require_
     if manifest.get("runtime_binding") is not False or manifest.get("r2_upload") is not False:
         raise ValidationError("this staging package must not claim runtime binding or R2 upload")
 
+
+def validate_manifest_record(record: dict[str, Any], saved: dict[str, Any], require_manual_review: bool) -> None:
+    for key in ("register_id", "canva_source_id", "mime", "width", "height", "bytes", "sha256", "metadata_clean"):
+        if saved.get(key) != record[key]:
+            raise ValidationError(f"manifest differs from file for {record['filename']}: {key}")
+    if not require_manual_review:
+        return
+    review = saved.get("manual_review", {})
+    incomplete = [key for key in ("text_free", "viewport_fit", "blocked_image_fallback") if review.get(key) is not True]
+    if incomplete:
+        raise ValidationError(f"manual review remains incomplete for {record['filename']}: {', '.join(incomplete)}")
+
+
+def verify_manifest(records: list[dict[str, Any]], manifest_path: Path, require_manual_review: bool) -> None:
+    manifest = read_manifest(manifest_path)
+    validate_manifest_boundary(manifest)
     manifest_records = {asset.get("filename"): asset for asset in manifest.get("assets", [])}
     for record in records:
         saved = manifest_records.get(record["filename"])
         if saved is None:
             raise ValidationError(f"manifest is missing {record['filename']}")
-        for key in ("register_id", "canva_source_id", "mime", "width", "height", "bytes", "sha256", "metadata_clean"):
-            if saved.get(key) != record[key]:
-                raise ValidationError(f"manifest differs from file for {record['filename']}: {key}")
-        if require_manual_review:
-            review = saved.get("manual_review", {})
-            incomplete = [key for key in ("text_free", "viewport_fit", "blocked_image_fallback") if review.get(key) is not True]
-            if incomplete:
-                raise ValidationError(
-                    f"manual review remains incomplete for {record['filename']}: {', '.join(incomplete)}"
-                )
+        validate_manifest_record(record, saved, require_manual_review)
 
 
 def write_png(path: Path, width: int, height: int, alpha: bool, with_text_chunk: bool = False) -> None:
@@ -419,10 +445,18 @@ def run_self_test() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--assets-dir", type=Path, help="untracked directory containing the exact nine exported derivatives")
-    parser.add_argument("--write-manifest", type=Path, help="write exact file metadata into a review-only JSON manifest")
+    parser.add_argument(
+        "--assets-dir", type=Path, help="untracked directory containing the exact nine exported derivatives"
+    )
+    parser.add_argument(
+        "--write-manifest", type=Path, help="write exact file metadata into a review-only JSON manifest"
+    )
     parser.add_argument("--manifest", type=Path, help="verify an existing review-only JSON manifest")
-    parser.add_argument("--require-manual-review", action="store_true", help="require the three sanitized review attestations for every asset")
+    parser.add_argument(
+        "--require-manual-review",
+        action="store_true",
+        help="require the three sanitized review attestations for every asset",
+    )
     parser.add_argument("--self-test", action="store_true", help="run parser and policy controls without real assets")
     args = parser.parse_args()
 
@@ -442,7 +476,9 @@ def main() -> int:
         records = inspect_package(args.assets_dir)
         if args.write_manifest:
             args.write_manifest.parent.mkdir(parents=True, exist_ok=True)
-            args.write_manifest.write_text(json.dumps(build_manifest(records), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            args.write_manifest.write_text(
+                json.dumps(build_manifest(records), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+            )
             print(f"review-only manifest written: {args.write_manifest}")
         if args.manifest:
             verify_manifest(records, args.manifest, args.require_manual_review)
