@@ -11,6 +11,8 @@ const args = process.argv.slice(2);
 const arg = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 const synthetic = args.includes('--synthetic');
 const record = args.includes('--record');
+const browserChannel = arg('--browser-channel', undefined);
+assert(browserChannel === undefined || browserChannel === 'chromium', 'Use bundled default or chromium channel');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'sk7-character-check-'));
 const assets = path.resolve(arg('--assets', path.join(temp, 'assets')));
 const vendor = path.resolve(arg('--vendor', path.join(temp, 'vendor')));
@@ -46,10 +48,11 @@ async function bounded(promise, milliseconds, stage) {
   finally { clearTimeout(timer); }
 }
 let stage = 'startup';
+let inputProvenance = null;
 const started = Date.now();
 function checkpoint(nextStage) {
   stage = nextStage;
-  fs.writeFileSync(path.join(output, 'progress.json'), JSON.stringify({ status: 'in_progress_not_passed', stage, elapsedMs: Date.now() - started, checks, playback, assetManifest, motionVideos, samples }, null, 2));
+  fs.writeFileSync(path.join(output, 'progress.json'), JSON.stringify({ status: 'in_progress_not_passed', stage, elapsedMs: Date.now() - started, inputProvenance, checks, playback, assetManifest, motionVideos, samples }, null, 2));
 }
 (async () => {
   let browser;
@@ -67,6 +70,7 @@ function checkpoint(nextStage) {
     });
     const catalog = await (await fetch(base + '/catalog.json')).json();
     const catalogHash = digest(path.join(assets, 'catalog.json'));
+    inputProvenance = { sourceCommit: catalog.source_commit, catalogSha256: catalogHash, verifierSha256: digest(__filename) };
     assert.equal(catalog.animals.length, 12);
     if (synthetic) {
       const invalid = path.join(temp, 'invalid-catalog'); fs.mkdirSync(invalid);
@@ -78,7 +82,7 @@ function checkpoint(nextStage) {
     }
     for (const route of ['/assets/%2e%2e%2fcatalog.json', '/assets/%2e%2e%2fAGENTS.md', '/vendor/%2e%2e%2fpackage.json', '/serve.py']) assert.equal((await fetch(base + route)).status, 404);
     assert.equal((await fetch(base, { method: 'POST' })).status, 501); checks.push('read_only_path_boundary');
-    browser = await chromium.launch({ args: synthetic ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--enable-unsafe-swiftshader'] });
+    browser = await chromium.launch({ channel: browserChannel, args: synthetic ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--enable-unsafe-swiftshader'] });
     const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
     await context.route('**/*', (route) => { const url = route.request().url(); if (!url.startsWith(base) && !url.startsWith('blob:') && !url.startsWith('data:')) { network.push(url); return route.abort(); } return route.continue(); });
     let page = await context.newPage(); const mainPage = page; page.on('pageerror', (e) => errors.push(e.message));
@@ -150,8 +154,10 @@ function checkpoint(nextStage) {
         loadMs: sample.stats.loadMs, sampleCount: values.length, sampleIntervalMs: values.reduce((a, b) => a + b, 0), frameMsP50: quantile(values, 0.5), frameMsP95: quantile(values, 0.95),
         fpsFromMeanInterval: values.length ? 1000 * values.length / values.reduce((a, b) => a + b, 0) : null, rule: sample.sampleRule,
         rendererPath: synthetic ? 'forced_software_fixture' : 'browser_default', softwareRenderer: /SwiftShader|llvmpipe|Software/i.test(sample.renderer || '') ? true : /Intel|NVIDIA|AMD|Apple/i.test(sample.renderer || '') ? false : null,
+        browserChannel: browserChannel || 'default_headless_shell',
         renderPixelRatio: sample.viewport.renderPixelRatio, antialias: sample.viewport.antialias, browserVideoRecording: false, actualMobileDevice: false });
       await page.screenshot({ path: path.join(output, `preview-${viewport.width}.png`), fullPage: true });
+      checkpoint(`viewport ${viewport.width}: sample and capture completed`);
     }
     checks.push('desktop_390_320_viewports');
     await page.setViewportSize({ width: 1366, height: 768 }); await page.locator('#animal').focus(); await page.keyboard.press('Tab'); assert(await page.locator(':focus').count());

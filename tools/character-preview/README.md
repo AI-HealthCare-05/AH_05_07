@@ -89,6 +89,10 @@ context에서 7clip × 2variant의 실제 조작/결과만 녹화하며 사람�
 경로이며 보고에 실제 renderer 문자열과 software 여부를 남긴다. render DPR1·AA off로
 자원 사용을 제한한다. 실제 모바일 기기/운영 성능으로 확대 해석하지 않는다.
 machine의 동시 부하·녹화 여부도 별도 기록한다.
+이미 설치된 full Chromium의 new headless는 `--browser-channel chromium`으로
+선택할 수 있다([공식 구분](https://playwright.dev/docs/browsers#chromium-new-headless-mode)).
+선택한 channel과 실제 renderer를 보고하며, channel만으로 하드웨어 가속 사용이나
+성능 개선을 주장하지 않는다. 생략하면 기존 headless shell 경로를 유지한다.
 CI는 합성 fixture만 검사하고 실제 Blender 제작물이나 사용자 폴더를 읽지 않는다.
 
 `verification.json`과 합성/캐릭터 화면 캡처는 로컬 집계 검토 후보다. bone 변화
@@ -101,3 +105,16 @@ CI는 합성 fixture만 검사하고 실제 Blender 제작물이나 사용자 �
 ```powershell
 python tools/character-preview/contact_sheet.py --report "<검증 결과>/verification.json" --animal bear --output "<새 contact.png>"
 ```
+
+긴 녹화의 close가 제한 시간을 초과한 로컬 환경에서는 기능 검사를 `--record` 없이
+수행한다. 그 실행의 상태와 기존 녹화 파일의 유효성은 별도로 기록한다. 기존 FFmpeg가
+있는 경우에만 아래 명령으로 영상 전체 decode, 고정 black-frame scan, 실제9개
+시점 PNG를 만든다. 도구를 자동 설치하거나 영상을 변환/덮어쓰지 않는다.
+
+```powershell
+python tools/character-preview/verify_video.py --video "<기존 WebM>" --ffmpeg "<기존 FFmpeg 실행 파일>" --output "<새 영상 QA 경로>"
+```
+
+이 검사는 녹화가 포함된 실패 run을 통과로 바꾸지 않는다. 추출 PNG의 내용/문구와
+움직임의 시각 품질은 직접 검토하며 자동 decode 결과와 구분한다. Blender·browser·
+영상 decode 작업을 동시에 실행하지 않아 같은 PC의 부하 간섭을 줄인다.
