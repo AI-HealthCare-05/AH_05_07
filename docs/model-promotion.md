@@ -22,3 +22,13 @@ with both reports produced. Missing required metrics yield `not_computable`.
 Neither result authorizes release or proves sufficient quality. No selected
 artifact is created in this comparison path; metadata, model card and promotion
 review remain separate. Test is never read here, even after a relative result.
+
+
+## Recorded validation result
+
+The [approved internal validation report](model-comparison-evidence.md) records
+HGB meeting the numeric relative conditions, status validation_compared_not_promoted.
+Older-age AUROC, calibration underprediction, subgroup regressions and missing
+uncertainty estimates remain explicit limitations. This result is not statistical
+significance, sufficient quality, Korean-user validation or release suitability.
+The conditions above are unchanged; no artifact selection/promotion is enacted.

@@ -17,7 +17,7 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 | AC | Scenario and precondition | Check level | Expected evidence | Current status |
 |---|---|---|---|---|
 | AC-01 | Synthetic user opens an email link, reloads the page, and visits it in a new tab before session expiry. | Browser E2E + manual production smoke | Session remains available; owned seven-day records load; no access token in capture. | Implemented evidence: Issue #143 records a passed operator-reviewed magic-link and session-refresh check; Issue #169 adds a synthetic signed-in `401` recovery transition with no real token; Issue #180 defines the [sanitized operator checklist](email-link-session-verification.md); Issue #182 records the 2026-09-04 Chrome synthetic-account result: email-link sign-in, reload, and same-browser new tab passed, while expired/invalid recovery was not run. |
-| AC-02 | Fixed normalized baseline input is evaluated twice with one verified model version. | Model unit + API integration | Same result payload and model version; artifact digest and split digest recorded. | Blocked: verified artifact not released. Issue #208 has user-approved prepared_not_trained evidence and a Windows operator report in [the Gate 1B evidence record](model-gate-1b-evidence.md); model training, evaluation and promotion remain unperformed. |
+| AC-02 | Fixed normalized baseline input is evaluated twice with one verified model version. | Model unit + API integration | Same result payload and model version; artifact digest and split digest recorded. | Blocked: verified artifact not released. Issue #208 has user-approved prepared_not_trained evidence and a Windows operator report in [the Gate 1B evidence record](model-gate-1b-evidence.md); [approved internal validation results and limitations](model-comparison-evidence.md) now exist; model release and promotion remain blocked. |
 | AC-03 | Risk-signal screen is rendered for a verified artifact and for an unavailable artifact. | UI component + browser | Required wording and release disclaimer appear; unavailable artifact shows an honest not-ready state without a score. | Partial: Issue #190 connects S11 as a dedicated unavailable-artifact screen with the canonical term, disclaimer, and no score, probability, or band. A verified artifact path remains blocked by the model release gate. |
 | AC-04 | Open the BP form, review the measurement checklist, then submit out-of-range values, equal/reversed values, and an unknown field through browser and API. | DTO unit + API integration + browser | The concise checklist appears before the measurement fields without a diagnosis, treatment, prevention, or emergency claim; each invalid payload receives `422`; valid values save once; browser gives a clear correction message. | Partial: checklist and DTO/API mapping exist; Issue #169 adds a signed-in browser assertion that invalid input is blocked before a save request. Deployed browser evidence remains. |
 | AC-05 | Synthetic users A and B plus an anonymous request attempt read, change, delete, and export. Seed an expired synthetic owner row without altering the product migration contract. | Supabase integration | Only the unexpired owner can act on its records; expired rows are absent before physical purge; cross-user access returns a non-disclosing result; anonymous requests fail. | Partial: Issue #149 Phase B passed anonymous denial, owner CRUD/export, and cross-user non-disclosure through the normal product path; synthetic accounts and records were removed. Deployed expired-row evidence remains separate. |
@@ -34,7 +34,7 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 3. **AC-10** — complete the documented clean-environment deployment rehearsal.
 4. **AC-02, AC-03, and AC-07** — connect a risk-signal flow only after the model release gate passes.
 
-The preparation prerequisite for step 4 is recorded in [approved Gate 1B evidence](model-gate-1b-evidence.md): 7,944 rows and matching two-run digests at the recorded execution commit. User publication approval is recorded separately from the Windows operator report and CI validation. Issue #208 awaits evidence PR review/merge; model release requirements remain open.
+The preparation prerequisite for step 4 is recorded in [approved Gate 1B evidence](model-gate-1b-evidence.md): 7,944 rows and matching two-run digests at the recorded execution commit. User publication approval is recorded separately from the Windows operator report and CI validation. Issue #208 is closed after PR #212 merge; model release requirements remain open.
 
 ## Gate A decision rule
 
@@ -59,5 +59,9 @@ preparation/publication conditions were confirmed and the Issue was closed on
 user instruction. This supersedes earlier pending-review text above. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
 Issue #213 implements the bounded synthetic-tested train/validation comparison
-path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
-serialization, promotion, adapter/UI change or deployment is claimed.
+path in `docs/model-comparison-runbook.md` and is complete through PR #214.
+The later actual train/validation report is in `docs/model-comparison-evidence.md`.
+AC-02/03/07 remain incomplete: uncertainty, calibration and subgroup limitations,
+external/Korean-user validation and quality/release criteria remain unresolved.
+No test evaluation, serialization, promotion, adapter/UI change or deployment
+is claimed.

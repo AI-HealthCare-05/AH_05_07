@@ -133,7 +133,8 @@ are retained, with explicit categorical types and shared scikit-learn
 preprocessing for comparison and artifact creation. The exact lockfile is
 unchanged. The synthetic Linux/Windows workflow is a code regression gate; it
 never downloads NHANES or publishes Gate 1B evidence. Actual preparation now has user-approved evidence in `docs/model-gate-1b-evidence.md`;
-model evaluation and promotion remain separate uncompleted evidence gates.
+Actual internal validation is recorded in `docs/model-comparison-evidence.md`;
+quality acceptance and promotion remain incomplete.
 
 ### Evidence input byte stability
 
@@ -162,5 +163,11 @@ and strict comparison verifier. Libraries and uv.lock are unchanged. Former
 standalone prediction-file CLI use is replaced by this validated path. CI uses
 only synthetic fixtures. Gate 1B #208 is complete via merged PR #212 at
 `04ab996ba68c852fdf3f47ca94101294bd849f00`, with successful Windows/Linux evidence
-and regression checks. Its state remains prepared_not_trained. Actual model
-comparison is deferred until this implementation is merged and separately run.
+and regression checks. Its state remains prepared_not_trained. The implemented comparison path was
+subsequently run on approved train/validation; user-approved aggregates are in
+`docs/evidence/model-comparison.json`, with the report and limitations in
+`docs/model-comparison-evidence.md`. The comparison status is
+validation_compared_not_promoted. The relative HGB result does not establish
+quality sufficiency, statistical significance, Korean-user performance or release
+suitability. No tool, lock, CONFIG, probability calibration or model is changed
+by publication. Windows/Linux CI validates committed aggregates without fitting.

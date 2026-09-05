@@ -12,6 +12,7 @@ on:
       - "tests/data/**"
       - "data/manifest/**"
       - "docs/evidence/model-gate-1b.json"
+      - "docs/evidence/model-comparison.json"
       - "uv.lock"
       - "pyproject.toml"
       - ".python-version"
@@ -28,6 +29,7 @@ on:
       - "tests/data/**"
       - "data/manifest/**"
       - "docs/evidence/model-gate-1b.json"
+      - "docs/evidence/model-comparison.json"
       - "uv.lock"
       - "pyproject.toml"
       - ".python-version"
@@ -38,6 +40,25 @@ permissions:
   contents: read
 
 jobs:
+  committed-comparison:
+    name: Committed comparison evidence (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: uv sync --frozen --group ai
+      - name: Validate approved aggregates only
+        # No fitting, source data download, prediction generation or test reads.
+        run: uv run --frozen --group ai python scripts/ci/verify_model_comparison.py --evidence docs/evidence/model-comparison.json
+
   synthetic-comparison:
     strategy:
       fail-fast: false

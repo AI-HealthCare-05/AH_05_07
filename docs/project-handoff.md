@@ -49,7 +49,7 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
-| Model Gate 1B contract | [Approved preparation evidence](model-gate-1b-evidence.md), prepared_not_trained; evidence PR review/merge remains |
+| Model Gate 1B contract | [Approved preparation evidence](model-gate-1b-evidence.md), prepared_not_trained; #208 closed after PR #212 merge |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
@@ -96,9 +96,10 @@ identifier and sanitized rehearsal evidence exist.
   joblib for artifact serialization. CI rejects silent dependency drift; exact
   resolved versions remain in `uv.lock`.
 
-The risk-signal UI remains unreleased because the verified model artifact,
-metadata, split digest, leakage audit, comparison evidence, and repeatability
-gate are not complete.
+The risk-signal UI remains unreleased. Frozen split/leakage evidence and approved
+internal validation aggregates now exist, but quality acceptance, external
+validation, verified artifact/metadata, input adapter and release repeatability
+remain incomplete. See `docs/model-comparison-evidence.md` for limitations.
 
 ## Open evidence and next priority
 
@@ -135,8 +136,8 @@ gate are not complete.
    alternatives, and change-control contract. Issue #206 defines the external
    local seven-module audit, derived-table, frozen-split, and sanitized-evidence
    sequence. Issue #208 now has a Windows operator report and user-approved
-   evidence in `docs/model-gate-1b-evidence.md`; its evidence PR review and merge
-   remain pending. No model training or promotion has occurred. The release gate starts
+   evidence in `docs/model-gate-1b-evidence.md`; its evidence PR #212 is merged. The later actual comparison report is in
+   `docs/model-comparison-evidence.md`; promotion remains unperformed. The release gate starts
    only after the operational evidence above is
    reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
@@ -256,7 +257,7 @@ CSS-first.
 ## Preparation version 2 and approved operational evidence
 
 Base reviewed: `20f23f7597ceb812170f6582fd6f5011cb5ec654`.
-Issue #208 remains the open operational data-preparation task. Its initial
+Issue #208 is closed as the completed operational data-preparation task. Its initial
 filename list predates #209; the current manifest/runbook has the corrected
 `P_` names. Do not close #208 on the strength of this prerequisite patch.
 
@@ -273,8 +274,9 @@ independent local hash checks and user-approved public JSON are recorded in
 `cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad`, with 7,944 total rows and
 5,560/1,192/1,192 train/validation/test rows. Both runs matched; LF manifest/lock
 hashes match Git blobs. Committed-evidence CI validates JSON without source data.
-Issue #208 remains open pending evidence PR review/merge. Model training,
-evaluation, promotion and deployment remain unperformed. Preserve previous
+Issue #208 is closed after PR #212 merge. The subsequent train/validation
+comparison is reported in `docs/model-comparison-evidence.md`; promotion and
+deployment remain unperformed. Preserve previous
 raw files and outputs; a new execution must always generate new evidence.
 
 
@@ -286,5 +288,9 @@ preparation/publication conditions were confirmed and the Issue was closed on
 user instruction. This supersedes earlier pending-review text above. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
 Issue #213 implements the bounded synthetic-tested train/validation comparison
-path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
+path in `docs/model-comparison-runbook.md`; PR #214 is merged and its CI passed.
+Issue #215 separately publishes approved actual validation aggregates. Status:
+validation_compared_not_promoted. See `docs/model-comparison-evidence.md` for the
+older-age AUROC, low-bin underprediction, subgroup regressions, missing confidence
+intervals and limits on external/Korean-user interpretation. No test evaluation,
 serialization, promotion, adapter/UI change or deployment is claimed.
