@@ -16,3 +16,4 @@ wheels/
 # Manual Canva exports are a review input, never an implicit runtime asset.
 /asset-review/inbox/
 /asset-review/review-v*.json
+/web/test-results/question-review/

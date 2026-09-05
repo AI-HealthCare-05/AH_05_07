@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>SK7 · 입력 질문 검토실</title>
+  <link rel="stylesheet" href="review.css">
+  <script src="review-data.js" defer></script>
+  <script src="review.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#question">질문 내용으로 이동</a>
+  <header>
+    <div class="eyebrow">SK7 / RESEARCH REVIEW / 01</div>
+    <h1>입력 질문 검토실</h1>
+    <p>질문의 의미를 맞추기 위한 초안입니다. <strong>합성 사례만</strong> 전환하며 실제 응답은 받지 않습니다.</p>
+    <div class="badges"><span>2017–March 2020 NHANES</span><span>번역·지원 대상 검토 중</span><span>제품과 분리된 로컬 화면</span></div>
+  </header>
+  <div class="workspace">
+    <nav aria-label="검토할 feature"><p class="eyebrow">8개 질문 / 고정 순서</p><div id="features"></div><p class="nav-note">보여주는 코드는 원문 의미 대조용입니다. 승인된 adapter가 아닙니다.</p></nav>
+    <main>
+      <section class="question-card" aria-labelledby="question">
+        <div id="feature-id" class="eyebrow"></div>
+        <h2 id="question" tabindex="-1"></h2>
+        <p id="draft" class="draft"></p>
+        <p id="options" class="muted"></p>
+      </section>
+      <section class="case-card" aria-labelledby="cases-heading">
+        <h3 id="cases-heading">고정 합성 사례</h3>
+        <p class="muted">아래 버튼은 준비된 예시를 바꿉니다. 내 응답을 선택하는 설문이 아닙니다.</p>
+        <div id="cases" class="cases" role="group" aria-label="합성 사례 전환"></div>
+        <div id="case-result" aria-live="polite" aria-atomic="true">
+          <p id="case-detail"></p><p id="code" class="code"></p><p id="reason"></p>
+        </div>
+      </section>
+      <div class="detail-grid">
+        <section aria-labelledby="meaning-heading"><h3 id="meaning-heading">원문 의미와 코드</h3><p id="meaning"></p><p id="coding"></p></section>
+        <section class="review-note" aria-labelledby="gap-heading"><h3 id="gap-heading">검토가 필요한 쟁점</h3><p id="gap"></p><p>모름·거절·결측·미지원은 별개입니다. 미지원 응답을 결측 코드로 바꾸지 않습니다.</p></section>
+      </div>
+      <section class="sources" aria-labelledby="sources-heading"><h3 id="sources-heading">CDC 공식 출처</h3><ul id="sources"></ul><p class="muted">출처 링크를 직접 열면 CDC 사이트로 이동합니다. 합성 사례는 전송하지 않습니다.</p></section>
+    </main>
+  </div>
+  <footer>질문 초안 · 전처리/모델 계산 없음 · 응답 저장/전송/추적 없음<br>한국어 이해도·측정 동등성·지원 대상은 사람 검토가 필요합니다.</footer>
+</body>
+</html>
