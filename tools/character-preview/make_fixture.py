@@ -149,7 +149,7 @@ def make_fixture(output):
         {
             "id": key,
             "name": name,
-            "status": "temporary_fixture" if index == 0 else "pending",
+            "status": ["temporary_fixture", "needs_revision", "failed"][index] if index < 3 else "pending",
             "motion": "in_place",
             "hero": None,
             "standard": "temporary.glb" if index == 0 else None,

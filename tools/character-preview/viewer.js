@@ -108,7 +108,7 @@ async function load() {
   const id = ++state.loadId; unload();
   const animal = state.animals.find((a) => a.id === $('animal').value); state.current = animal;
   $('animal-title').textContent = animal.name;
-  $('quality').textContent = animal.status === 'passed' ? '제작 검사 통과 · 사람 검토 대기' : animal.status === 'temporary_fixture' ? '임시 fixture' : animal.status === 'pending' ? '제작 대기' : '검토 후보';
+  $('quality').textContent = ['needs_revision', 'failed'].includes(animal.status) ? '수정 필요 · 완료 수량 제외' : animal.status === 'passed' ? '제작 검사 통과 · 사람 검토 대기' : animal.status === 'temporary_fixture' ? '임시 fixture' : animal.status === 'pending' ? '제작 대기' : '검토 후보';
   $('note').textContent = animal.note || '자산 검사와 사람 최종 검토는 별도입니다.';
   image(animal); facts();
   if ($('static').checked || !state.renderer) { fallback($('static').checked ? '움직임 최소화: GLB를 읽지 않고 정적 이미지로 표시합니다.' : '이 환경에서 3D를 사용할 수 없습니다. 정적 대체 이미지입니다.'); status('정적 이미지로 검토 중입니다.', 'static'); return; }
@@ -181,7 +181,7 @@ frameHandle = requestAnimationFrame(frame);
 try {
   const response = await fetch('/catalog.json'); if (!response.ok) throw Error('Catalog unavailable');
   const catalog = await response.json(); state.animals = catalog.animals; catalogSource = catalog.source_commit;
-  $('animal').replaceChildren(...state.animals.map((animal) => { const option = document.createElement('option'); option.value = animal.id; option.textContent = animal.name + (animal.status === 'pending' ? ' · 준비 중' : animal.status === 'temporary_fixture' ? ' · 임시 fixture' : ''); return option; }));
+  $('animal').replaceChildren(...state.animals.map((animal) => { const option = document.createElement('option'); option.value = animal.id; option.textContent = animal.name + (['needs_revision', 'failed'].includes(animal.status) ? ' · 수정 필요' : animal.status === 'pending' ? ' · 준비 중' : animal.status === 'temporary_fixture' ? ' · 임시 fixture' : ''); return option; }));
   const requestedAnimal = new URLSearchParams(location.search).get('animal');
   if (state.animals.some((animal) => animal.id === requestedAnimal)) $('animal').value = requestedAnimal;
   $('animal').disabled = false; resize(); await load();

@@ -175,6 +175,15 @@ function checkpoint(nextStage) {
     assert(memories.at(-1).programs <= Math.max(memories[0].programs, memories[1].programs));
     const pending = catalog.animals.find((animal) => !animal.standard);
     if (pending) { await page.selectOption('#animal', pending.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'pending'); assert(await page.locator('#fallback').isVisible()); checks.push('pending_asset_not_counted'); await page.selectOption('#animal', first.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); }
+    if (synthetic) {
+      for (const excluded of catalog.animals.filter((animal) => ['needs_revision', 'failed'].includes(animal.status))) {
+        await page.selectOption('#animal', excluded.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'pending');
+        assert.equal(await page.locator('#quality').textContent(), '수정 필요 · 완료 수량 제외');
+        assert((await page.locator('#animal option:checked').textContent()).includes('수정 필요'));
+      }
+      checks.push('revision_and_failed_quality_not_counted');
+      await page.selectOption('#animal', first.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing');
+    }
     const glbRoute = /\/assets\/.*\.glb$/;
     await page.route(glbRoute, (route) => route.fulfill({ status: 404, body: '' })); await page.click('#retry');
     await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'failed'); assert(await page.locator('#fallback').isVisible()); await page.unroute(glbRoute); checks.push('failed_glb_static_fallback');
