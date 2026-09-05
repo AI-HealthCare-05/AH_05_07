@@ -316,11 +316,10 @@ def paint_surface_markings(obj):
             raise ValueError("Surface markings require the existing skin weights")
         original = {vertex: (tuple(vertex.co), dict(vertex[deform])) for vertex in bm.verts}
         bmesh.ops.triangulate(bm, faces=list(bm.faces), quad_method="FIXED", ngon_method="EAR_CLIP")
+        regions = []
         if pattern == "red_panda_tail":
             for plane in stripe_planes(min(v.co.z for v in bm.verts), max(v.co.z for v in bm.verts)):
                 cut_surface_plane(bm, plane)
-            for face in bm.faces:
-                face.material_index = obj["sk7_marking_material"] if stripe_material(face.calc_center_median().z) else 0
         else:
             outlines = coat_marking_outlines(pattern)
             if not outlines:
@@ -330,12 +329,20 @@ def paint_surface_markings(obj):
                 segments = zip(outline, (*outline[1:], outline[0]), strict=True)
                 for plane, segment in zip(planes, segments, strict=True):
                     cut_surface_plane(bm, plane, outline_bounds(outline), segment)
-            bm.normal_update()
-            for face in bm.faces:
-                marked = face.normal.y < 0 and any(
-                    inside_outline(face.calc_center_median(), planes) for planes in regions
-                )
-                face.material_index = obj["sk7_marking_material"] if marked else 0
+        # Classify final triangles once; export/reapplication must not choose a
+        # different side from the center of an untriangulated boundary polygon.
+        bmesh.ops.triangulate(
+            bm, faces=[face for face in bm.faces if len(face.verts) > 3], quad_method="BEAUTY", ngon_method="BEAUTY"
+        )
+        bm.normal_update()
+        for face in bm.faces:
+            center = face.calc_center_median()
+            marked = (
+                stripe_material(center.z)
+                if pattern == "red_panda_tail"
+                else face.normal.y < 0 and any(inside_outline(center, planes) for planes in regions)
+            )
+            face.material_index = obj["sk7_marking_material"] if marked else 0
         verify_marked_surface(bm, deform, original)
         bm.normal_update()
         bm.to_mesh(obj.data)
