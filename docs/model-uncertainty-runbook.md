@@ -1,6 +1,9 @@
 # Exploratory validation uncertainty runbook
 
-Issue #217 implements this path; actual-data execution is NOT part of this PR.
+Issue #217 implemented this path through merged PR #218. The separately
+approved actual run succeeded at `65ec302886cd6bcf288194ad2e2b6639e6f867a1`.
+Issue #219 publishes its approved aggregate result; see
+[the execution and verification report](model-uncertainty-evidence.md).
 PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7`. Its committed
 comparison, synthetic Windows/Linux checks and general CI passed. Issue #215
 was closed as evidence publication complete, not all model validation complete.
@@ -97,6 +100,8 @@ committed comparison/Gate verifier jobs stay enabled and never refit actual data
 
 Per-person predictions, labels, identifiers, bootstrap indices/samples and model
 files stay out of files and logs. Fitted objects and prediction arrays exist only
-in memory. No actual uncertainty JSON is committed in this implementation PR.
-No actual data fit/analysis, calibration, tuning, test evaluation, serialization,
-promotion or deployment is performed here.
+in memory. The approved result is now included as `docs/evidence/model-uncertainty.json`
+for user-reviewed publication; CI verifies its aggregates without actual fitting
+or bootstrap. Any future actual run still requires separate approval. This
+publication performs no actual fit/analysis, calibration, tuning, test evaluation,
+serialization, promotion or deployment.

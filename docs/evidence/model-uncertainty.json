@@ -1,0 +1,852 @@
+{
+  "schema_version": 1,
+  "status": "exploratory_uncertainty_not_promoted",
+  "original_comparison_sha256": "d40c4273a297a615cbc15634c573084322541cce6c59638772e588f58fbafeac",
+  "original_execution_commit": "668a0d81fb7b477b278dca8319440900bc530dd3",
+  "execution_commit": "65ec302886cd6bcf288194ad2e2b6639e6f867a1",
+  "provenance": {
+    "gate_execution_commit": "cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad",
+    "gate_evidence_sha256": "d8651091892ec4351206ef25ad07ac1d0238772c6386a6b83c8e645e0f6c75fc",
+    "manifest_sha256": "ab5b952d4041457f2ead0360ee46978db409aeddb7b8097e166dbaa714151b52",
+    "toolchain_lock_sha256": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
+    "split_digest": "67b5a3ebec1d4881c5ea68ce2b475eeb18520b553f2e599dddde995c11cc238d",
+    "metadata_sha256": "8f477c9359f4e6a9cbbdf59b4becf65c7c74773f39b54b4e477a344422b0d1fb",
+    "input_sha256": {
+      "train": "47cd6bffdfb83ec5206ba3a81225c22e82538b654198a6d37de6c9d8638bfc8d",
+      "validation": "54f004082c3484b3698ff0d20a4efd8dccaa5a07abf927de1d72b414571f1e84"
+    },
+    "features": [
+      "RIAGENDR",
+      "RIDAGEYR",
+      "BMXBMI",
+      "PAQ605",
+      "PAQ620",
+      "SMQ020",
+      "ALQ111",
+      "SLD012"
+    ],
+    "semantics_version": 2
+  },
+  "comparison_config_sha256": "aed79ee34d52ff2777a1e4412473f80f121c561fa76226f47f8a2a0e0a52cb49",
+  "uncertainty_config": {
+    "version": 1,
+    "replicates": 2000,
+    "seed": 20260901,
+    "rng": "PCG64",
+    "resampling": "paired_rows_within_group_n_with_replacement",
+    "group_rng": "reset_same_seed_per_group",
+    "confidence": 0.95,
+    "quantiles": [
+      0.025,
+      0.975
+    ],
+    "quantile_method": "linear",
+    "minimum_valid_replicates": 1900,
+    "minimum_report_rows": 20,
+    "reproduction_atol": 1e-10,
+    "reproduction_rtol": 1e-08,
+    "reproduction_scope": "all_reports_and_relative_decision",
+    "interpretation": "exploratory_conditional_pointwise"
+  },
+  "uncertainty_config_sha256": "283ff15107ba98230719ee9f56f5749358f36a288685aaa316575a861d253e6a",
+  "reproduction": {
+    "status": "passed",
+    "scope": "all_reports_and_relative_decision"
+  },
+  "groups": {
+    "overall": {
+      "rows": 1192,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6729593484680694
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.687531722960502
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.01457237449243265
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.6422389966051433,
+              0.7033944415007836
+            ],
+            "hgb": [
+              0.6581890503123153,
+              0.7176512703502115
+            ],
+            "difference": [
+              -0.0064773032466871935,
+              0.03571451667862482
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5304830951822608
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5933305019690763
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.06284740678681555
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.48868108003176003,
+              0.5764491014680517
+            ],
+            "hgb": [
+              0.5479186623168493,
+              0.6384747190158191
+            ],
+            "difference": [
+              0.027838164243632172,
+              0.09548693236211574
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.22427817716803458
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.21932614945310272
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.0049520277149318614
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.21476624862614568,
+              0.23392511410614109
+            ],
+            "hgb": [
+              0.20861377407542459,
+              0.22973130272128608
+            ],
+            "difference": [
+              -0.011842731313632351,
+              0.0018700279191332294
+            ]
+          }
+        }
+      }
+    },
+    "sex_1": {
+      "rows": 593,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6113175094599244
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.633453732370141
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.022136222910216663
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.5672389585775622,
+              0.6565039084842321
+            ],
+            "hgb": [
+              0.5910846890280126,
+              0.6779816011947427
+            ],
+            "difference": [
+              -0.011352990291482692,
+              0.05937258798974149
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5058102526291468
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5540049772117445
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.04819472458259766
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.454861261429724,
+              0.5660504372551738
+            ],
+            "hgb": [
+              0.49770219203312266,
+              0.6232827298519772
+            ],
+            "difference": [
+              0.0020598136010059756,
+              0.09555127070153331
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.24482708084535387
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.23890468591643746
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.0059223949289164135
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.23128960628260062,
+              0.25791660265112654
+            ],
+            "hgb": [
+              0.22496424000989568,
+              0.2523132852383629
+            ],
+            "difference": [
+              -0.01717045879072311,
+              0.004616793523772972
+            ]
+          }
+        }
+      }
+    },
+    "sex_2": {
+      "rows": 599,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.7284744175155133
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.7340768059946141
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.005602388479100773
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.6881779307733494,
+              0.7693947400472195
+            ],
+            "hgb": [
+              0.6945340645588691,
+              0.7750630686896643
+            ],
+            "difference": [
+              -0.021553306842369398,
+              0.03160729334713043
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5734712302176008
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6344130971278882
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.06094186691028736
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.5101923484260505,
+              0.6462415058598016
+            ],
+            "hgb": [
+              0.569692750237689,
+              0.6970556834005627
+            ],
+            "difference": [
+              0.005638174161031739,
+              0.10767774003080775
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.20393510558097228
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.19994372520809855
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.003991380372873721
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.191197989502581,
+              0.21668839853014835
+            ],
+            "hgb": [
+              0.1844580995052641,
+              0.21435707675156876
+            ],
+            "difference": [
+              -0.012679708314656512,
+              0.004718843214082597
+            ]
+          }
+        }
+      }
+    },
+    "sex_missing": {
+      "rows": 0,
+      "attempted_replicates": 0,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "hgb": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "difference": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            }
+          },
+          "interval": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "valid_replicates": 0,
+            "invalid_replicates": 0,
+            "lr": null,
+            "hgb": null,
+            "difference": null
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "hgb": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "difference": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            }
+          },
+          "interval": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "valid_replicates": 0,
+            "invalid_replicates": 0,
+            "lr": null,
+            "hgb": null,
+            "difference": null
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "hgb": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            },
+            "difference": {
+              "status": "unavailable",
+              "reason": "empty_group",
+              "value": null
+            }
+          },
+          "interval": {
+            "status": "unavailable",
+            "reason": "empty_group",
+            "valid_replicates": 0,
+            "invalid_replicates": 0,
+            "lr": null,
+            "hgb": null,
+            "difference": null
+          }
+        }
+      }
+    },
+    "age_18_39": {
+      "rows": 415,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6688905594186557
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6696736202468208
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.0007830608281650386
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.6129012302643412,
+              0.7227348340385407
+            ],
+            "hgb": [
+              0.6096306996819889,
+              0.7294793468677236
+            ],
+            "difference": [
+              -0.046661089026962976,
+              0.04579029529058345
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.3503721454807053
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.40518741686332693
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.054815271382621655
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.28398253731173556,
+              0.4444529769246525
+            ],
+            "hgb": [
+              0.3243098856967744,
+              0.5100255056949394
+            ],
+            "difference": [
+              -0.009940646598967238,
+              0.12109502809208508
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.17585796484039506
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.17635652658259124
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.0004985617421961741
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.15522300133667283,
+              0.19753226844190283
+            ],
+            "hgb": [
+              0.15236286237861538,
+              0.20137572738582396
+            ],
+            "difference": [
+              -0.010977354817829197,
+              0.012308379569423685
+            ]
+          }
+        }
+      }
+    },
+    "age_40_59": {
+      "rows": 385,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6417390834997571
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6349516921250067
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.006787391374750373
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.5866931455855338,
+              0.696260758945488
+            ],
+            "hgb": [
+              0.5783717430109588,
+              0.690933634606014
+            ],
+            "difference": [
+              -0.06311316542508835,
+              0.050757664374995896
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6034861223758348
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6100930198478243
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.0066068974719895035
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.5323295371754895,
+              0.6830635817600024
+            ],
+            "hgb": [
+              0.5363947885014391,
+              0.6889514930713841
+            ],
+            "difference": [
+              -0.06069608178172664,
+              0.07336029310895253
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.2408124795969048
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.2365261867692884
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.004286292827616389
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.23048269748818268,
+              0.2516181922042822
+            ],
+            "hgb": [
+              0.22416854436153055,
+              0.24894427149425344
+            ],
+            "difference": [
+              -0.016147466476713723,
+              0.00808873830665465
+            ]
+          }
+        }
+      }
+    },
+    "age_60_80": {
+      "rows": 392,
+      "attempted_replicates": 2000,
+      "metrics": {
+        "auroc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5010080909114712
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.5703830745463592
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.06937498363488792
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.43961215424990707,
+              0.5571919246479977
+            ],
+            "hgb": [
+              0.5122843908609511,
+              0.6224939426353926
+            ],
+            "difference": [
+              -0.0007872312108916336,
+              0.13758106877565135
+            ]
+          }
+        },
+        "pr_auc": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.520432206613517
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.6451757621169573
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.1247435555034403
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.46093442866513434,
+              0.5894421268077543
+            ],
+            "hgb": [
+              0.5778377321232608,
+              0.7087665213527361
+            ],
+            "difference": [
+              0.059937793804505174,
+              0.17747609156445684
+            ]
+          }
+        },
+        "brier": {
+          "point": {
+            "lr": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.25930032431307387
+            },
+            "hgb": {
+              "status": "ok",
+              "reason": null,
+              "value": 0.24792405538302814
+            },
+            "difference": {
+              "status": "ok",
+              "reason": null,
+              "value": -0.01137626893004573
+            }
+          },
+          "interval": {
+            "status": "ok",
+            "reason": null,
+            "valid_replicates": 2000,
+            "invalid_replicates": 0,
+            "lr": [
+              0.2462590906890749,
+              0.27273807898530167
+            ],
+            "hgb": [
+              0.23527560329848288,
+              0.2617029933170092
+            ],
+            "difference": [
+              -0.02346003300856914,
+              0.0007113985090009146
+            ]
+          }
+        }
+      }
+    }
+  },
+  "test_used": false,
+  "release_approved": false
+}

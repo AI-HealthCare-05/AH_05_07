@@ -14,6 +14,7 @@ on:
       - "data/manifest/**"
       - "docs/evidence/model-gate-1b.json"
       - "docs/evidence/model-comparison.json"
+      - "docs/evidence/model-uncertainty.json"
       - "uv.lock"
       - "pyproject.toml"
       - ".python-version"
@@ -32,6 +33,7 @@ on:
       - "data/manifest/**"
       - "docs/evidence/model-gate-1b.json"
       - "docs/evidence/model-comparison.json"
+      - "docs/evidence/model-uncertainty.json"
       - "uv.lock"
       - "pyproject.toml"
       - ".python-version"
@@ -60,6 +62,29 @@ jobs:
       - name: Validate approved aggregates only
         # No fitting, source data download, prediction generation or test reads.
         run: uv run --frozen --group ai python scripts/ci/verify_model_comparison.py --evidence docs/evidence/model-comparison.json
+
+  committed-uncertainty:
+    name: Committed uncertainty evidence (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: uv sync --frozen --group ai
+      - name: Verify approved archive bytes
+        run: >-
+          uv run --frozen --group ai python -c
+          "import hashlib, pathlib; assert hashlib.sha256(pathlib.Path('docs/evidence/model-uncertainty.json').read_bytes()).hexdigest() == '59843a41746f155d73bd759749f8c1be93ab8ec6b1cebf262b4f8e57bb0ea812'"
+      - name: Validate approved uncertainty aggregates only
+        # JSON contract/reference/arithmetic only; no fitting, bootstrap or test access.
+        run: uv run --frozen --group ai python scripts/ci/verify_model_uncertainty.py --evidence docs/evidence/model-uncertainty.json
 
   synthetic-comparison:
     strategy:

@@ -72,8 +72,23 @@ Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
 closed for evidence publication only. Approved comparison and Gate JSON remain
 unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
 paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
-This PR implements and synthetically validates it; actual uncertainty execution
-requires separate approval after merge. Pointwise conditional exploratory
+PR #218 implemented and synthetically validated it, then merged at
+`65ec302886cd6bcf288194ad2e2b6639e6f867a1`. The separately approved local
+execution has since succeeded; approved disclosure is tracked in Issue #219. Pointwise conditional exploratory
 intervals do not establish training stability, multiplicity control, NHANES
 survey inference or Korean-user validity. Calibration, older-age performance,
 external validation and prospectively defined release criteria remain open.
+
+## Approved uncertainty disclosure (Issue #219)
+
+See [execution, approval and verification scopes](model-uncertainty-evidence.md)
+and [unchanged aggregate JSON](evidence/model-uncertainty.json). Implementation
+conditions of #217 are fulfilled by merged #218; local execution succeeded;
+repository disclosure awaits user merge of the publication PR. Overall AP
+improvement is supported within the exploratory conditional analysis, while
+overall AUROC/Brier difference intervals include zero. Status remains
+`exploratory_uncertainty_not_promoted`; no model selection/release approval.
+Calibration, older-age performance, external/Korean-user validation and explicit
+release criteria remain unresolved. Aggregate verifier checks are not independent
+real-prediction interval recalculation. No new actual fit/bootstrap/test work is
+performed for publication; existing comparison/Gate evidence and lock stay intact.
