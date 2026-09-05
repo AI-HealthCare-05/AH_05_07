@@ -132,3 +132,14 @@ python tools/character-preview/verify_video.py --video "<기존 WebM>" --ffmpeg 
 이 검사는 녹화가 포함된 실패 run을 통과로 바꾸지 않는다. 추출 PNG의 내용/문구와
 움직임의 시각 품질은 직접 검토하며 자동 decode 결과와 구분한다. Blender·browser·
 영상 decode 작업을 동시에 실행하지 않아 같은 PC의 부하 간섭을 줄인다.
+
+이미 전체 재생 검사를 마친 제작물에 바닥 기준만 추가로 검토할 때는 다음 별도
+runner를 사용한다. 기존16개 결과를 덮어쓰거나 다시 실행하지 않는다. 깨끗한
+viewer commit과 고정된 catalog에서 move/special/celebrate의 실제 loop 및 정면/옆면
+25%·50%·75% 자세를 양쪽 variant에서 기록한다. 두 variant의 기준 Y가 다르면
+공통 바닥을 임의로 선택하지 않고 중단한다. 결과는 영상 decode와 시각 검토 전
+`visual_review_pending`이며 자동 접지 승인으로 바꾸지 않는다.
+
+```powershell
+node tools/character-preview/verify_ground.cjs --assets "<외부 자산 경로>" --vendor "<검증한 vendor 경로>" --output "<새 추가 바닥 검토 경로>" --animals bear --browser-channel chromium --timeout-ms 180000
+```
