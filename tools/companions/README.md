@@ -38,6 +38,11 @@ can diagnose one motion without rerendering every already-inspected pose.
 For an additional review, use `--output NEW_EXTERNAL_DIRECTORY`; it must not exist.
 `--views side,back --render` limits a corrective render to the selected views.
 Existing PNGs and reports are refused, not replaced.
+The four standard delivery views remain 1600×1800. For additional light-variant
+shape comparisons, `--view-width 640` renders 640×720 views; it does not change
+the GLB, pose renders or standard delivery requirement. Every report records the
+actual PNG dimensions. Use browser playback and matched poses as well as these
+static comparisons when reviewing the reduced mesh.
 
 Final rendering defaults to Cycles. On the measured Intel host, EEVEE sometimes
 saved an almost unlit frame among otherwise valid views or poses. This was not
@@ -86,6 +91,10 @@ digest. The character name, special motion and asset provenance remain local.
   prompted the fix. Synthetic invariants cover normalized, bounded influences,
   boundary continuity and opposing-leg stress; actual repaired move poses were
   also inspected. None of these tests certifies every possible contact or pose.
+- A cat candidate's tall oval ears did not read clearly as a cat in the actual
+  front render. Cat/fox ears now use a broad embedded base and a tapered, rounded
+  triangle profile. Closed-volume, mirror and tip-width controls are synthetic
+  checks; species recognition and moving-ear contact still need actual renders.
 - Any failed version remains stored with a reason. Only assets that pass the stated
   QA scope count as complete; final human design review is still pending.
 

@@ -104,6 +104,13 @@ def main():  # noqa: C901 - sequential Blender import, deformation and render ch
     parser.add_argument("--engine", choices=("CYCLES", "BLENDER_EEVEE_NEXT"), default="CYCLES")
     parser.add_argument("--output", type=Path, help="New external directory for review PNGs and JSON; must not exist")
     parser.add_argument(
+        "--view-width",
+        type=int,
+        choices=(640, 1600),
+        default=1600,
+        help="1600x1800 delivery views (default), or 640x720 light-variant comparison views",
+    )
+    parser.add_argument(
         "--views", type=parse_views, help="Comma-separated views for --render; default front,side,back,hero"
     )
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
@@ -246,7 +253,7 @@ def main():  # noqa: C901 - sequential Blender import, deformation and render ch
     rig.animation_data.action_slot = actions["idle"].slots[0]
     scene.frame_set(audit["clips"]["idle"]["frames"][0])
     if args.render:
-        scene.render.resolution_x, scene.render.resolution_y = 1600, 1800
+        scene.render.resolution_x, scene.render.resolution_y = args.view_width, args.view_width * 9 // 8
         scene.cycles.samples = 24
         scene.render.resolution_percentage = 100
         for name in selected_views:

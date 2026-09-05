@@ -315,12 +315,37 @@ def arm_weights(co, side):
     return {f"forearm.{side}": a, f"hand.{side}": 1 - a}
 
 
+def pointed_ear_point(point, center, radii, sign):
+    """Closed rounded-triangle shell, with a broad buried root and a tapered tip."""
+    x, y, z = point
+    height = max(-1, min(1, (z - center[2]) / radii[2]))
+    radial = math.sqrt(max(0, 1 - height * height))
+    # The lower rounded part is embedded in the cranium. The visible upper
+    # contour narrows almost linearly, unlike the previous tall oval profile.
+    width = radii[0] * (
+        math.sqrt(max(0, 1 - ((height + 0.2) / 0.8) ** 2)) if height < -0.2 else ((1 - height) / 1.2) ** 0.85
+    )
+    lateral = (x - center[0]) / (radii[0] * radial) if radial > 1e-8 else 0
+    lean = sign * 0.055 * (height + 1) / 2
+    x = center[0] + lean + width * lateral
+    cavity = lateral * lateral + ((height - 0.1) / 0.82) ** 2
+    if y < center[1] and cavity < 1:
+        y += 0.085 * (1 - cavity) ** 2
+    return x, y, z
+
+
 def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt profiles
     z = 2.6
     rx, rz = (0.21, 0.23)
     if kind == "rabbit":
         rx, rz, z = 0.15, 0.64, 2.96
-    elif kind in ("cat", "fox", "red_panda"):
+    elif kind == "cat":
+        rx, rz, z = 0.26, 0.31, 2.57
+        x *= 0.90
+    elif kind == "fox":
+        rx, rz, z = 0.25, 0.37, 2.65
+        x *= 0.92
+    elif kind == "red_panda":
         rx, rz, z = 0.22, 0.33, 2.70
     elif kind in ("otter", "capybara", "hedgehog"):
         rx, rz = 0.12, 0.12
@@ -329,9 +354,12 @@ def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt
     if kind == "dog":
         rx, rz, z = 0.20, 0.43, 2.26
         x *= 1.23
-    outer = surface(name, (x, 0, z), (rx, 0.14, rz), mat, pear=0.22 if kind in ("fox", "cat") else 0)
+    outer = surface(name, (x, 0, z), (rx, 0.14, rz), mat)
     # Sculpt the cavity into the closed shell itself; an overlay disk would float in side view.
     for vertex in outer.data.vertices:
+        if kind in ("cat", "fox"):
+            vertex.co = pointed_ear_point(vertex.co, (x, 0, z), (rx, 0.14, rz), 1 if x > 0 else -1)
+            continue
         r = math.sqrt(((vertex.co.x - x) / rx) ** 2 + ((vertex.co.z - z) / rz) ** 2)
         if vertex.co.y < 0 and r < 0.82:
             vertex.co.y += 0.115 * (1 - (r / 0.82) ** 2) ** 2
