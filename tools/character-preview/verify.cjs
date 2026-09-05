@@ -200,6 +200,7 @@ function checkpoint(nextStage) {
     await page.locator('#static').check(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static'); assert.equal((await snap()).groundReference, null);
     await page.locator('#static').uncheck(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); await page.locator('#ground').uncheck();
     checks.push('fixed_ground_reference_toggle_release_and_views');
+    await page.locator('#static').check(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'static');
     const lightFirst = await context.newPage(), lightFirstRequests = [];
     lightFirst.on('request', (request) => { if (request.url().endsWith('.glb')) lightFirstRequests.push(request.url()); });
     await lightFirst.goto(base + '/?animal=' + first.id + '&variant=light');
@@ -212,6 +213,7 @@ function checkpoint(nextStage) {
     await lightFirst.locator('[name=variant][value=light]').check(); await lightFirst.waitForFunction(() => window.previewDiagnostics.snapshot().variant === 'light' && window.previewDiagnostics.snapshot().status === 'playing');
     assert.deepEqual(await lightFirst.evaluate(() => window.previewDiagnostics.snapshot().groundReference), commonGround);
     await lightFirst.close(); checks.push('light_first_no_hidden_standard_and_common_reference');
+    await page.locator('#static').uncheck(); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing');
     const pending = catalog.animals.find((animal) => !animal.standard);
     if (pending) { await page.selectOption('#animal', pending.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'pending'); assert(await page.locator('#fallback').isVisible()); checks.push('pending_asset_not_counted'); await page.selectOption('#animal', first.id); await page.waitForFunction(() => window.previewDiagnostics.snapshot().status === 'playing'); }
     if (synthetic) {
