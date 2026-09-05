@@ -49,3 +49,15 @@ imputation, source-order repeatability, XPT ingestion and failure/no-overwrite
 behavior. The API regression confirms that artifact configuration alone cannot
 bypass the missing input semantics agreement. These are synthetic code checks,
 not evidence that the actual Gate 1B operator run has passed.
+
+
+## Gate 1B closure and next implementation
+
+PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
+committed-evidence and synthetic checks plus general CI all passed. All #208
+preparation/publication conditions were confirmed and the Issue was closed on
+user instruction. This supersedes earlier pending-review text above. The
+approved evidence remains unchanged and `prepared_not_trained`, not model complete.
+Issue #213 implements the bounded synthetic-tested train/validation comparison
+path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
+serialization, promotion, adapter/UI change or deployment is claimed.

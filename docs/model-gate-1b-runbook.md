@@ -190,3 +190,15 @@ Its existing synthetic regression suite is separate. Issue #208 awaits evidence
 PR review/merge; model training, evaluation, promotion and deployment remain
 outside this completed preparation run. Future changed inputs/contracts require
 new generated evidence and review, not edits to the approved JSON fields.
+
+
+## Gate 1B closure and next implementation
+
+PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
+committed-evidence and synthetic checks plus general CI all passed. All #208
+preparation/publication conditions were confirmed and the Issue was closed on
+user instruction. This supersedes earlier pending-review text above. The
+approved evidence remains unchanged and `prepared_not_trained`, not model complete.
+Issue #213 implements the bounded synthetic-tested train/validation comparison
+path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
+serialization, promotion, adapter/UI change or deployment is claimed.

@@ -1,0 +1,58 @@
+name: Model comparison
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/model/**"
+      - "scripts/data/**"
+      - "scripts/ci/verify_model_comparison.py"
+      - "scripts/ci/verify_model_gate_1b_contract.py"
+      - "tests/model/**"
+      - "tests/data/**"
+      - "data/manifest/**"
+      - "docs/evidence/model-gate-1b.json"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".python-version"
+      - ".gitattributes"
+      - ".github/workflows/model-comparison.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/model/**"
+      - "scripts/data/**"
+      - "scripts/ci/verify_model_comparison.py"
+      - "scripts/ci/verify_model_gate_1b_contract.py"
+      - "tests/model/**"
+      - "tests/data/**"
+      - "data/manifest/**"
+      - "docs/evidence/model-gate-1b.json"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".python-version"
+      - ".gitattributes"
+      - ".github/workflows/model-comparison.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-comparison:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: uv sync --frozen --group ai
+      - name: Synthetic-only comparison and boundary checks
+        run: uv run --frozen --group ai python -m pytest tests/model -q
