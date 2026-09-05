@@ -209,12 +209,24 @@ def rig_create():
 def skin_weights(co):
     x, _, z = co
     side = "L" if x > 0 else "R"
-    if z < 0.60:
-        a = min(1, max(0, (z - 0.26) / 0.30))
-        return {f"thigh.{side}": a, f"foot.{side}": 1 - a}
+
+    def smooth(lower, upper, value):
+        t = min(1, max(0, (value - lower) / (upper - lower)))
+        return t * t * (3 - 2 * t)
+
     if z < 1.30:
         a = min(1, max(0, (z - 0.70) / 0.60))
-        return {"hips": 1 - a, "spine": a}
+        # Continuous hip/thigh transition on the unified skin. The old hard z=.60
+        # boundary folded neighboring faces during the in-place step. Fade leg
+        # influence toward the centerline too, so opposite legs cannot tear it.
+        leg = (1 - smooth(0.42, 0.84, z)) * smooth(0.015, 0.20, abs(x))
+        foot = leg * (1 - smooth(0.22, 0.42, z))
+        return {
+            "hips": (1 - a) * (1 - leg),
+            "spine": a * (1 - leg),
+            f"thigh.{side}": leg - foot,
+            f"foot.{side}": foot,
+        }
     a = min(1, max(0, (z - 1.45) / 0.4))
     return {"spine": 1 - a, "head": a}
 
