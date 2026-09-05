@@ -73,7 +73,7 @@ function facts() {
     ['삼각형', s?.triangles.toLocaleString() ?? '—'], ['재질 / 텍스처', s ? `${s.materials} / ${s.textures}` : '—'],
     ['뼈대 / 스킨 메시', s ? `${s.bones} / ${s.skinnedMeshes}` : '—'], ['클립', s ? `${s.clips.length}개` : '—'],
     ['이동 방식', state.current?.motion ?? '미확정'], ['화면 / DPR', `${innerWidth}×${innerHeight} / ${devicePixelRatio}`],
-    ['도구 / 환경', `Three.js ${THREE.REVISION} · ${navigator.platform} · render DPR 1 / AA off`], ['제작 소스', catalogSource || '미확인'],
+    ['도구 / 환경', `Three.js ${THREE.REVISION} · ${navigator.platform} · render DPR 1 / AA off`], ['카탈로그 기준 커밋', catalogSource || '미확인'],
     ['텍스처 해상도', s ? s.textureDimensions.map((a) => a.join('×')).join(', ') || '텍스처 없음 · 재질 색상' : '—'] ];
   $('facts').replaceChildren(...pairs.map(([key, value]) => { const group = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = key; dd.textContent = value; group.append(dt, dd); return group; }));
 }

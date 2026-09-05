@@ -23,13 +23,15 @@ Ctrl+C. 자산은 삭제하지 않는다. 서버 실행 후 네트워크 의존�
 
 ## Catalog 계약
 
-`schema_version: 1`, 제작 코드의 `source_commit`, `animals` 12개를 둔다.
+`schema_version: 1`, 카탈로그의 저장소 기준 `source_commit`, `animals` 12개를 둔다.
+각 자산의 실제 `generator_repository_commit`은 해당 `asset-manifest.json`에서
+별도로 확인한다. viewer 실행 commit과 이 두 참조를 구분한다.
 animal은 `id`, `name`, `status`, `motion`, `hero`, `standard`, `light`, `note`를 가진다.
 파일 경로는 자산 root 상대 경로이며 준비되지 않았으면 null이다. `pending`은
 미완료, `review_candidate`는 후보, `passed`는 제작 검사 통과이며 사람 최종
 검토와 별개다. `temporary_fixture`는 최종 동물이나 품질 통과 수량이 아니다.
 `needs_revision`과 `failed`는 목록과 본문에 수정 필요로 표시하고 완료 수량에서 제외한다.
-예: standard `bear-v002/standard.glb`, hero `bear-v002/hero.png`.
+예: standard `bear-v007/standard.glb`, hero `bear-v007/hero.png`.
 ID는 소문자로 시작하는 1–32자 영문 소문자·숫자·`_`·`-`이며 이름은 비어 있지 않아야 한다.
 경로는 `/`로 구분한 상대 경로만 허용한다. drive·UNC·역슬래시·`..`·ADS 등은
 파일시스템 resolve 전에 거부하고, 이후 실제 경로의 root containment를 검사한다.
