@@ -147,6 +147,30 @@ script·참조 보고의 SHA를 로컬 reviewer sidecar에서 연결한다. 곰/
 최종 art/출시 승인을 뜻하지 않는다. 이 실행 코드의 Windows/Linux 합성과 일반6개 CI도
 통과했다. 큰 자산과198개 추가 결과 파일은 외부 로컬 manifest에 보존한다.
 
+고양이 v002는 `bedaa179be9977842e1232d926346c4a0ec6ba80`에서 첫 전체18개 검사와
+14개 clip-variant loop를 exit0으로 통과했다. 같은 코드의 추가 고정 바닥 검사는
+12개 정면/옆면 view-variant loop와36개 자세를 기록했다. 두 무음 WebM60.44/63.84초는
+전체 decode exit0·검은 구간0이며 실제9개 시점씩을 열람했다. 모든 clip의 표준/경량
+동일1초 pose, 바닥36개 pose contact, move 옆면25/50/75%, stretch 정면 중간 자세,
+1366/390 및320 바닥 화면, 제작 back/hero를 직접 확인했다. 확인한 표본에서 명백한
+관절 분리·바닥 침범·발 끌림이나 귀/발 잘림은 관찰하지 못했다. 경량형 winding 진단1은
+보존하며 전체 프레임의 충돌/물리 접촉 검사로 표현하지 않는다. 원본 full JSON의
+`sourceCommit`은 catalog 기준 c46…이고 실제 viewer 실행 SHA는 위 코드 및 ground
+report/새 reviewer sidecar에서 구분한다. 고양이 generator는 `c7c41323318f0af4159be29d04bdc3c0c3837e53`,
+standard/light GLB는 각각1,043,208/528,348bytes,32,656/14,272삼각형이다. 기존 binary/
+fresh-import 참조와 이 층을 결합한 선언 범위 기술 QA는 총4종·28고유clip이며 나머지8종과
+사람 art/운영 통합 승인은 남아 있다. 이전3종의 검증을 재실행하거나 결과를 수정하지 않았다.
+
+편집 원본 검사는 별도의 읽기 전용 외부 script로 수행했다. 곰 v007·토끼 v002·강아지 v001·
+고양이 v002의 `rigged.blend`와 `source.blend`를 각각 새로운 Blender4.5.13 세션에서 열어
+8개 exit0을 확인했다. 전자는 animate 이전 checkpoint이므로 실제20bone/mesh/live skin을,
+후자는 그 구조와 정확한7개 action·실존 channelbag/fcurve/keyframe을 검사했다. 모든 정점의
+유효 bone 가중치, authored1..97 frame 범위와 변하는 채널을 확인했으며 원본/manifest/generator
+전후 SHA는 유지됐다. 원본 save/delete/render/export는 수행하지 않았다. 외부 wrapper/inspector
+SHA와 검토 맥락 bedaa179, 각 generator SHA는 새 원본 완료 manifest에서 별도로 연결한다.
+이는 `.blend`가 실제로 열리고 편집 구조가 남았다는 검사이며 모든 자세의 시각 승인이나
+완전한 장기 편집 호환성 보증은 아니다.
+
 ## 재개와 보존
 
 새 catalog/GLB가 준비되면 해당 입력을 고정하고 새 외부 결과 경로에 verifier를
