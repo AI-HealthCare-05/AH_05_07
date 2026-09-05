@@ -47,6 +47,7 @@ SPECIAL = {
 }
 MARKING_EMBED = 0.04  # About 1.5 times the 0.026 sculpt voxel, allowing for remesh shrink.
 MARKING_RELIEF = 0.012
+QUILL_BASE_EMBED = 0.04
 
 
 def coat_profiles(kind):
@@ -128,6 +129,72 @@ def conform_marking(obj, kind, center, radii):
     obj.data.update()
 
 
+def coat_back_y(kind, x, z):
+    """Rear (+Y) of the same authored coat union used for front markings."""
+    backs = []
+    for profile in coat_profiles(kind):
+        front = profile_front_y(x, z, *profile)
+        if front is not None:
+            backs.append(2 * profile[0][1] - front)
+    if not backs:
+        raise ValueError("Quill base lies outside authored coat profiles")
+    return max(backs)
+
+
+def coat_x_interval(kind, z):
+    """Authored horizontal footprint at Z; used to seat shoulder-edge quills."""
+    intervals = []
+    for center, radii, pear, _ in coat_profiles(kind):
+        height = (z - center[2]) / radii[2]
+        if abs(height) < 1:
+            width = radii[0] * math.sqrt(1 - height * height) * (1 - pear * height)
+            intervals.append((center[0] - width, center[0] + width))
+    if not intervals:
+        raise ValueError("Quill base lies outside authored coat height")
+    return min(interval[0] for interval in intervals), max(interval[1] for interval in intervals)
+
+
+def attach_quill_points(points, base_weights, tip_weights):
+    """Translate the whole evaluated base band, sizing offset by its worst vertex.
+
+    Temporary subdivision-interpolated tags identify the base and tip, not skin
+    influences. Uniform translation preserves the base shape and thickness;
+    the transition fades toward the unchanged tip. Lateral movement is only
+    needed by shoulder-edge bases outside the coat footprint. Skin binding
+    remains the existing rule; those heights are independent of X.
+    """
+    if not points or len(points) != len(base_weights) or len(points) != len(tip_weights):
+        raise ValueError("Invalid quill attachment samples")
+    if any(len(point) != 3 or any(not math.isfinite(value) for value in point) for point in points):
+        raise ValueError("Invalid quill attachment coordinates")
+    if any(not math.isfinite(value) or not 0 <= value <= 1 for value in (*base_weights, *tip_weights)):
+        raise ValueError("Invalid quill attachment weights")
+    if any(base >= 0.5 and tip >= 0.5 for base, tip in zip(base_weights, tip_weights, strict=True)):
+        raise ValueError("Overlapping quill base and tip tags")
+    bases = [point for point, weight in zip(points, base_weights, strict=True) if weight >= 0.5]
+    if not bases:
+        raise ValueError("Quill base tag was lost")
+    intervals = [coat_x_interval("hedgehog", point[2]) for point in bases]
+    lower = max(interval[0] + QUILL_BASE_EMBED - point[0] for point, interval in zip(bases, intervals, strict=True))
+    upper = min(interval[1] - QUILL_BASE_EMBED - point[0] for point, interval in zip(bases, intervals, strict=True))
+    if lower > upper:
+        raise ValueError("Quill base cannot fit inside authored coat footprint")
+    shift_x = min(upper, max(lower, 0))
+    offset = max(
+        0,
+        *(point[1] - coat_back_y("hedgehog", point[0] + shift_x, point[2]) + QUILL_BASE_EMBED for point in bases),
+    )
+    result = []
+    for point, base, tip in zip(points, base_weights, tip_weights, strict=True):
+        if tip >= 0.5 or base <= 0.125:
+            result.append(tuple(point))
+            continue
+        fraction = min(1, (base - 0.125) / 0.375)
+        blend = fraction * fraction * (3 - 2 * fraction)
+        result.append((point[0] + shift_x * blend, point[1] - offset * blend, point[2]))
+    return result, (shift_x, -offset, 0)
+
+
 def material(name, color, roughness=0.7):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*color, 1)
@@ -181,7 +248,7 @@ def surface(name, center, radii, mat, rings=28, segments=48, pear=0, flatten=1):
     return mesh(name, verts, faces, mat)
 
 
-def tube(name, points, radii, mat, sides=20):
+def tube(name, points, radii, mat, sides=20, attach_quill=False):
     verts, faces = [], []
     for j, point in enumerate(points):
         tangent = Vector(points[min(j + 1, len(points) - 1)]) - Vector(points[max(0, j - 1)])
@@ -201,9 +268,29 @@ def tube(name, points, radii, mat, sides=20):
             faces.append((a, b, b + sides, a + sides))
     faces += [tuple(reversed(range(sides))), tuple((len(points) - 1) * sides + i for i in range(sides))]
     obj = mesh(name, verts, faces, mat)
+    if attach_quill:
+        base_tag = obj.vertex_groups.new(name="Temporary quill base")
+        base_tag.add(list(range(sides)), 1, "REPLACE")
+        tip_tag = obj.vertex_groups.new(name="Temporary quill tip")
+        tip_tag.add(list(range((len(points) - 1) * sides, len(points) * sides)), 1, "REPLACE")
     modifier = obj.modifiers.new("Soft continuous contour", "SUBSURF")
     modifier.levels = 2
     apply(obj, modifier)
+    if attach_quill:
+        # Inspect all evaluated base-band vertices after subdivision, not only
+        # the center or the original cage. Preserve topology and the tip band.
+        coordinates = [tuple(vertex.co) for vertex in obj.data.vertices]
+        memberships = [{group.group: group.weight for group in vertex.groups} for vertex in obj.data.vertices]
+        projected, _ = attach_quill_points(
+            coordinates,
+            [groups.get(base_tag.index, 0) for groups in memberships],
+            [groups.get(tip_tag.index, 0) for groups in memberships],
+        )
+        for vertex, coordinate in zip(obj.data.vertices, projected, strict=True):
+            vertex.co = coordinate
+        obj.vertex_groups.remove(tip_tag)
+        obj.vertex_groups.remove(base_tag)
+        obj.data.update()
     return obj
 
 
@@ -541,6 +628,7 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
                     [0.07, 0.052, 0.006],
                     inner,
                     8,
+                    attach_quill=True,
                 )
                 bind(quill, rig, skin_weights)
     if kind == "seal":
