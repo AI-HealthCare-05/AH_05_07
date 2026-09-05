@@ -26,9 +26,11 @@ def load(module: str, columns: list[str]) -> pd.DataFrame:
 bp_columns = manifest["label"]["prohibited_predictors"]
 assert set(module_columns["blood_pressure"]) == set(bp_columns)
 bp = load("blood_pressure", [key, *bp_columns])
-label = (
-    (bp[["BPXSY1", "BPXSY2", "BPXSY3"]].mean(axis=1) >= 130) | (bp[["BPXDI1", "BPXDI2", "BPXDI3"]].mean(axis=1) >= 80)
-).astype("int8")
+systolic_columns = sorted(column for column in bp_columns if column.startswith("BPXOSY"))
+diastolic_columns = sorted(column for column in bp_columns if column.startswith("BPXODI"))
+assert len(systolic_columns) == 3
+assert len(diastolic_columns) == 3
+label = ((bp[systolic_columns].mean(axis=1) >= 130) | (bp[diastolic_columns].mean(axis=1) >= 80)).astype("int8")
 table = pd.DataFrame({key: bp[key], manifest["label"]["name"]: label})
 
 sources = {module: columns for module, columns in module_columns.items() if module != "blood_pressure"}

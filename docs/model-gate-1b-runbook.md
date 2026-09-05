@@ -30,13 +30,13 @@ Place these seven files in one local raw-data directory outside the repository:
 
 | Module | File | Required non-key columns |
 | --- | --- | --- |
-| Demographics | `DEMO_P.XPT` | `RIAGENDR`, `RIDAGEYR` |
-| Body measures | `BMX_P.XPT` | `BMXBMI` |
-| Blood pressure label inputs | `BPX_P.XPT` | `BPXSY1`–`BPXSY3`, `BPXDI1`–`BPXDI3` |
-| Physical activity | `PAQ_P.XPT` | `PAQ605`, `PAQ620` |
-| Smoking | `SMQ_P.XPT` | `SMQ020` |
-| Alcohol | `ALQ_P.XPT` | `ALQ101` |
-| Sleep | `SLQ_P.XPT` | `SLD012` |
+| Demographics | `P_DEMO.xpt` | `RIAGENDR`, `RIDAGEYR` |
+| Body measures | `P_BMX.xpt` | `BMXBMI` |
+| Blood pressure label inputs | `P_BPXO.xpt` | `BPXOSY1`–`BPXOSY3`, `BPXODI1`–`BPXODI3` |
+| Physical activity | `P_PAQ.xpt` | `PAQ605`, `PAQ620` |
+| Smoking | `P_SMQ.xpt` | `SMQ020` |
+| Alcohol | `P_ALQ.xpt` | `ALQ111` |
+| Sleep | `P_SLQ.xpt` | `SLD012` |
 
 Every file also requires the `SEQN` join key. `SEQN` may exist in local
 intermediate data for deterministic joins and split hashing, but it must never

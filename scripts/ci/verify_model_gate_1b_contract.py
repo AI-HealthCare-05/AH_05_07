@@ -42,6 +42,23 @@ EVIDENCE_FIELDS = {
 }
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
+OFFICIAL_FILES = {
+    "demographics": "P_DEMO.xpt",
+    "body_measures": "P_BMX.xpt",
+    "blood_pressure": "P_BPXO.xpt",
+    "physical_activity": "P_PAQ.xpt",
+    "smoking": "P_SMQ.xpt",
+    "alcohol": "P_ALQ.xpt",
+    "sleep": "P_SLQ.xpt",
+}
+OFFICIAL_BP_COLUMNS = {
+    "BPXOSY1",
+    "BPXOSY2",
+    "BPXOSY3",
+    "BPXODI1",
+    "BPXODI2",
+    "BPXODI3",
+}
 
 
 def _identity_findings(evidence: dict[str, Any]) -> list[str]:
@@ -102,10 +119,16 @@ def _manifest_findings(manifest: dict[str, Any]) -> list[str]:
     module_columns = manifest.get("module_columns", {})
     if set(files) != set(module_columns):
         issues.append("manifest files and module columns do not match")
+    if files != OFFICIAL_FILES:
+        issues.append("manifest files do not match the official NHANES release names")
 
     prohibited = set(manifest.get("label", {}).get("prohibited_predictors", []))
     if set(module_columns.get("blood_pressure", [])) != prohibited:
         issues.append("blood-pressure module columns do not match prohibited predictors")
+    if prohibited != OFFICIAL_BP_COLUMNS:
+        issues.append("blood-pressure columns do not match the oscillometric release")
+    if module_columns.get("alcohol") != ["ALQ111"]:
+        issues.append("alcohol column does not match the selected release")
     predictors = {
         column for module, columns in module_columns.items() if module != "blood_pressure" for column in columns
     }
