@@ -27,6 +27,8 @@ Substitute explicit local paths. `OUTPUT` must not exist. Keep the previous cand
   --python tools/companions/review.py -- --asset $OUTPUT --variant standard --render --poses
 & $BLENDER --background --factory-startup --threads 3 --python-exit-code 1 `
   --python tools/companions/review.py -- --asset $OUTPUT --variant light --render
+python tools/companions/glb_audit.py --asset-dir $OUTPUT --variant standard --output $NEW_STANDARD_REPORT
+python tools/companions/glb_audit.py --asset-dir $OUTPUT --variant light --output $NEW_LIGHT_REPORT
 ```
 
 Always use `--python-exit-code 1`: Blender otherwise can return exit 0 after a Python
@@ -34,7 +36,9 @@ assertion fails. A saved GLB is only a candidate. Inspect all views and every ac
 in the development viewer before setting a quality pass. `--clip greet --poses`
 can diagnose one motion without rerendering every already-inspected pose.
 
-The source `.blend` retains editable high-detail geometry, modifier/skin structure,
+Before a new build, commit the exact authoring file bytes. Generation rejects a dirty
+source and rechecks source/commit at the end. `rigged.blend` checkpoints the rigged
+rest geometry before animation. The source `.blend` retains editable high-detail geometry, modifier/skin structure,
 materials and named actions. `standard.blend` and `light.blend` retain the two web
 meshes. `generator.py` snapshots the exact authoring source; the manifest stores its
 digest. The character name, special motion and asset provenance remain local.
@@ -48,6 +52,12 @@ digest. The character name, special motion and asset provenance remain local.
   all seven actions, skinned surfaces, finite deformation at 13 times per clip,
   and identical start/end bone matrices. It excludes the importer's hidden bone
   display widget from the mesh count. It renders the actual imported asset.
+- `glb_audit.py` independently reads real binary accessors, skin weights, indices,
+  normals, four-second zero-start timelines, loop values, actual parent-coordinate
+  root motion and generator Git bytes. Its synthetic corruption tests run on
+  Windows/Linux without Blender or private assets. This is a bounded uncompressed
+  SK7 profile, not the whole glTF conformance suite. Geometric diagnostics cannot
+  replace art and motion inspection.
 - These checks do **not** prove collision-free animation, foot planting, art quality
   or runtime frame rate. Inspect joints, contact, ears/tail/body intersections,
   front/side/back completeness and standard/light differences separately. Browser
@@ -55,6 +65,9 @@ digest. The character name, special motion and asset provenance remain local.
 - Motion is in place, with vertical bounce where authored. No horizontal root
   translation or health-value-dependent expression is used. Idle includes real
   eyelid/eye-bone compression, not a camera or whole-object scale substitute.
+- The root bone's **local Y** is vertical. Export shifts every clip to 0–4 seconds.
+  Independent binary QA found and rejected earlier local-Z bounce and 1/24-second
+  start-offset candidates; these were not counted as quality-passed assets.
 - Any failed version remains stored with a reason. Only assets that pass the stated
   QA scope count as complete; final human design review is still pending.
 

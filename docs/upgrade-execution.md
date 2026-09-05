@@ -10,11 +10,17 @@
 
 | 목표 | 작업 범위 / 근거 | 상태 |
 | --- | --- | --- |
-| G1 | [#228](https://github.com/AI-HealthCare-05/AH_05_07/issues/228), 기록·한국어·접근성 | 구현·합성 검증 중 |
-| G2 | [#229](https://github.com/AI-HealthCare-05/AH_05_07/issues/229), 격리 로컬 API 재현·측정 | 실행·검증 중 |
-| G3 | [#230](https://github.com/AI-HealthCare-05/AH_05_07/issues/230), [PR #231](https://github.com/AI-HealthCare-05/AH_05_07/pull/231) | 문서 계약 구체화; 사람 결정은 대기 |
+| G1 | [#228](https://github.com/AI-HealthCare-05/AH_05_07/issues/228), [PR #234](https://github.com/AI-HealthCare-05/AH_05_07/pull/234) | 한국어·기록 흐름·접근성 수정, 로컬 합성 35개 및 운영 번들 경계 검사 통과; CI 7개 성공, 병합 대기 |
+| G2 | [#229](https://github.com/AI-HealthCare-05/AH_05_07/issues/229), [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235) | 격리 로컬 설치·빌드·실제 API 경로 489회 응답 측정·정리 완료; CI 6개 성공, 병합 대기 |
+| G3 | [#230](https://github.com/AI-HealthCare-05/AH_05_07/issues/230), [PR #231](https://github.com/AI-HealthCare-05/AH_05_07/pull/231) | 목적별 세 경로와 여섯 결정 구체화; 기존 evidence verifier 및 CI 4개 성공, 사람 결정·병합 대기 |
 | G4 | [#233](https://github.com/AI-HealthCare-05/AH_05_07/issues/233), 원본 12종·84클립 | 곰 제작 경로 검증·변형 수정 중; 품질 통과 0종 |
-| G5 | 별도 개발용 GLB 뷰어 | 구현 중; 운영 빌드와 분리 |
+| G5 | [#232](https://github.com/AI-HealthCare-05/AH_05_07/issues/232), [PR #236](https://github.com/AI-HealthCare-05/AH_05_07/pull/236) | 개발용 GLB 뷰어·Windows/Linux 합성 검사 구현; 실제 자산별 검증 진행 중, 운영 빌드와 분리 |
+
+위 PR의 결과는 각각의 검증된 브랜치 기준이며 아직 main의 운영 구현으로 간주하지 않는다.
+G2 수치는 합성 계정·별도 로컬 환경에 한정된다. 일부 측정 구간에 G5 소프트웨어
+WebGL 검사가 겹친 사실을 해당 집계 보고에 기록했으며, 운영 성능이나 완전한 유휴
+호스트 측정으로 표현하지 않는다. G1의 화면 폭/확대/키보드 검사는 실제 기기·사용자
+조사나 스크린리더 실사용 연구를 대신하지 않는다.
 
 목표별 별도 worktree와 브랜치를 사용한다. 공유 문서·계약은 통합 담당자가
 관리한다. 하위 에이전트의 한 차례 사용량 제한 중단 후 저장된 변경에서 재개했다.

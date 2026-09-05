@@ -685,11 +685,19 @@ def main():
     target = args.output.resolve()
     if target.is_relative_to(repository) or repository.is_relative_to(target):
         parser.error("Asset output must be outside and must not contain the repository")
+    source_path = Path(__file__).resolve()
+    source_bytes = source_path.read_bytes()
+    source_relative = source_path.relative_to(repository).as_posix()
+    generator_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+    committed_source = subprocess.check_output(["git", "show", f"{generator_commit}:{source_relative}"], cwd=repository)
+    if committed_source != source_bytes:
+        parser.error("Freeze the exact authoring source bytes in Git before generating assets")
     args.output.mkdir(parents=True, exist_ok=False)
-    (args.output / "generator.py").write_bytes(Path(__file__).read_bytes())
+    (args.output / "generator.py").write_bytes(source_bytes)
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     rig = character(args.species)
+    bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "rigged.blend"))
     animate(rig, args.species)
     studio()
     bpy.context.scene.render.fps = 24
@@ -701,19 +709,17 @@ def main():
         render_views(args.output)
     light = export_variant(args.output, "light", 13500)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "light.blend"))
-    generator_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
-    source_relative = Path(__file__).resolve().relative_to(repository).as_posix()
-    source_status = subprocess.check_output(
-        ["git", "status", "--porcelain", "--", source_relative], cwd=repository, text=True
-    )
+    final_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+    if final_commit != generator_commit or source_path.read_bytes() != source_bytes:
+        raise RuntimeError("Authoring source or execution commit changed; candidate remains unverified")
     manifest = {
         "species": args.species,
         "name_ko": COLORS[args.species][0],
         "generator": "Blender " + bpy.app.version_string,
         "basis_commit": "c46c772486a30319e594dbb9cf555263d5fba1a9",
         "generator_repository_commit": generator_commit,
-        "generator_source_matches_commit": not bool(source_status.strip()),
-        "source_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "generator_source_matches_commit": True,
+        "source_script_sha256": hashlib.sha256(source_bytes).hexdigest(),
         "clips": list(CLIPS),
         "clip_duration_seconds": 4,
         "fps": 24,
