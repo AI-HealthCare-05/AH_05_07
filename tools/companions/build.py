@@ -249,6 +249,22 @@ def stripe_material(z):
     return int(math.floor(z * 12)) % 3 == 0
 
 
+def tail_color_planes(pattern, lower, upper):
+    if pattern == "red_panda_tail":
+        return stripe_planes(lower, upper)
+    if pattern == "fox_tail":
+        return [((0, 0, 1.33), (0, 0, 1))] if lower < 1.33 < upper else []
+    raise ValueError("Unknown tail material pattern")
+
+
+def tail_color_material(pattern, z):
+    if pattern == "red_panda_tail":
+        return stripe_material(z)
+    if pattern == "fox_tail":
+        return z > 1.33
+    raise ValueError("Unknown tail material pattern")
+
+
 def cut_surface_plane(bm, plane, bounds=None, segment=None):
     """Cut shared edges without deleting either side or creating overlay shells."""
     bm.normal_update()
@@ -317,8 +333,9 @@ def paint_surface_markings(obj):
         original = {vertex: (tuple(vertex.co), dict(vertex[deform])) for vertex in bm.verts}
         bmesh.ops.triangulate(bm, faces=list(bm.faces), quad_method="FIXED", ngon_method="EAR_CLIP")
         regions = []
-        if pattern == "red_panda_tail":
-            for plane in stripe_planes(min(v.co.z for v in bm.verts), max(v.co.z for v in bm.verts)):
+        tail_pattern = pattern in ("red_panda_tail", "fox_tail")
+        if tail_pattern:
+            for plane in tail_color_planes(pattern, min(v.co.z for v in bm.verts), max(v.co.z for v in bm.verts)):
                 cut_surface_plane(bm, plane)
         else:
             outlines = coat_marking_outlines(pattern)
@@ -338,8 +355,8 @@ def paint_surface_markings(obj):
         for face in bm.faces:
             center = face.calc_center_median()
             marked = (
-                stripe_material(center.z)
-                if pattern == "red_panda_tail"
+                tail_color_material(pattern, center.z)
+                if tail_pattern
                 else face.normal.y < 0 and any(inside_outline(center, planes) for planes in regions)
             )
             face.material_index = obj["sk7_marking_material"] if marked else 0
@@ -815,12 +832,6 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         rig,
         lambda co: {"tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)), "tail.02": min(1, max(0, (co.y - 0.6) / 0.4))},
     )
-    if kind == "fox":
-        tail.data.materials.append(cream)
-        for polygon in tail.data.polygons:
-            center = polygon.center
-            if center.z > 1.33:
-                polygon.material_index = 1
     if kind == "hedgehog":
         for row in range(7):
             for col in range(11):
@@ -855,8 +866,8 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         skin.data.materials.append(cream)
         skin["sk7_marking_material"] = len(skin.data.materials) - 1
         paint_surface_markings(skin)
-    if kind == "red_panda":
-        tail["sk7_surface_pattern"] = "red_panda_tail"
+    if kind in ("red_panda", "fox"):
+        tail["sk7_surface_pattern"] = kind + "_tail"
         tail.data.materials.append(cream)
         tail["sk7_marking_material"] = len(tail.data.materials) - 1
         paint_surface_markings(tail)

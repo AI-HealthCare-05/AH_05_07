@@ -20,6 +20,8 @@ def load_geometry():
         "face_meets_outline_edge",
         "stripe_planes",
         "stripe_material",
+        "tail_color_planes",
+        "tail_color_material",
         "verify_marked_surface",
         "profile_front_y",
         "coat_profiles",
@@ -150,6 +152,15 @@ class MarkingBoundaryTests(unittest.TestCase):
             self.assertLess(min(distances), 0)
             self.assertGreater(max(distances), 0)
             self.assertEqual(G["face_meets_outline_edge"](points, distances, segment), expected)
+
+    def test_fox_tip_reuses_single_exact_original_height_transition(self):
+        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.6, 1.5), [((0, 0, 1.33), (0, 0, 1))])
+        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.6, 1.2), [])
+        for height, expected in ((1.3299, False), (1.33, False), (1.3301, True)):
+            self.assertIs(G["tail_color_material"]("fox_tail", height), expected)
+        self.assertEqual(G["tail_color_planes"]("red_panda_tail", 0.6, 1.5), G["stripe_planes"](0.6, 1.5))
+        with self.assertRaises(ValueError):
+            G["tail_color_material"]("unknown", 1.4)
 
     def test_invalid_contour_inputs_are_rejected(self):
         for options in (
