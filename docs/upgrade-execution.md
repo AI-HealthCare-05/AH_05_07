@@ -13,8 +13,8 @@
 | G1 | [#228](https://github.com/AI-HealthCare-05/AH_05_07/issues/228), [PR #234](https://github.com/AI-HealthCare-05/AH_05_07/pull/234) | 한국어·기록 흐름·접근성 수정, 로컬 합성 35개 및 운영 번들 경계 검사 통과; CI 7개 성공, 병합 대기 |
 | G2 | [#229](https://github.com/AI-HealthCare-05/AH_05_07/issues/229), [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235) | 격리 로컬 설치·빌드·실제 API 경로 489회 응답 측정·정리 완료; CI 6개 성공, 병합 대기 |
 | G3 | [#230](https://github.com/AI-HealthCare-05/AH_05_07/issues/230), [PR #231](https://github.com/AI-HealthCare-05/AH_05_07/pull/231) | 목적별 세 경로와 여섯 결정 구체화; 기존 evidence verifier 및 CI 4개 성공, 사람 결정·병합 대기 |
-| G4 | [#233](https://github.com/AI-HealthCare-05/AH_05_07/issues/233), 원본 12종·84클립 | 곰 제작 경로 검증·변형 수정 중; 품질 통과 0종 |
-| G5 | [#232](https://github.com/AI-HealthCare-05/AH_05_07/issues/232), [PR #236](https://github.com/AI-HealthCare-05/AH_05_07/pull/236) | 개발용 GLB 뷰어·Windows/Linux 합성 검사 구현; 실제 자산별 검증 진행 중, 운영 빌드와 분리 |
+| G4 | [#233](https://github.com/AI-HealthCare-05/AH_05_07/issues/233), [PR #237](https://github.com/AI-HealthCare-05/AH_05_07/pull/237) | 목표 12종·84클립 중 곰/토끼/강아지 3종·21개 고유 동작이 명시한 제작 QA 범위 통과; 나머지 제작/수정 중 |
+| G5 | [#232](https://github.com/AI-HealthCare-05/AH_05_07/issues/232), [PR #236](https://github.com/AI-HealthCare-05/AH_05_07/pull/236) | 실제 3종의 양쪽 GLB 전체 재생·바닥 표본·영상 검사 통과; 고양이 검토 진행, 운영 빌드와 분리 |
 
 위 PR의 결과는 각각의 검증된 브랜치 기준이며 아직 main의 운영 구현으로 간주하지 않는다.
 G2 수치는 합성 계정·별도 로컬 환경에 한정된다. 일부 측정 구간에 G5 소프트웨어
@@ -25,6 +25,42 @@ WebGL 검사가 겹친 사실을 해당 집계 보고에 기록했으며, 운영
 목표별 별도 worktree와 브랜치를 사용한다. 공유 문서·계약은 통합 담당자가
 관리한다. 하위 에이전트의 한 차례 사용량 제한 중단 후 저장된 변경에서 재개했다.
 중단을 작업 완료로 처리하거나 사용량 초기화 크레딧을 임의 사용하지 않았다.
+
+## 실제 제작과 검사 범위
+
+현재 선택 자산은 `bear-v007`, `rabbit-v002`, `dog-v001`이다. 첫 두 종의 생성
+커밋은 `98752a3996cf1844783a9d250bd88761b2be1e70`, 강아지는
+`146b45aa8b5963efe63adcc6afc8daa2721b3761`이다. 제작 소스 변경 뒤 이전
+manifest의 commit이나 해시를 수정하지 않는다. 카탈로그의 기준 main,
+실제 생성 커밋, 뷰어 실행 커밋, 후속 문서 커밋을 구분한다.
+
+각 종은 편집 원본, 20개 bone rig, 실제 7개 skeletal clip, 표준/경량 GLB,
+네 방향 표준형 1600×1800 RGBA 렌더와 전체 동작의 선택 포즈를 가진다.
+표준형과 경량형을 동작 수에 중복 합산하지 않는다. 개별 생성 manifest는
+생성 직후의 QA 대기 상태를 보존하며, 후속 기술 판정은 별도 검토 sidecar와
+카탈로그에 기록한다. 파일 목록 도구가 품질 통과를 추론하지 않는다.
+
+- 독립 바이너리 파서와 새 Blender GLB import에서 실제 skin/clip/원본 해시,
+  7개 동작별 13시점의 유한 변형, loop endpoints와 프레이밍을 검사했다.
+- 선별 정적 렌더와 양쪽 버전의 실제 Chromium 전체 7개 동작 재생을 확인했다.
+  고정 바닥 추가 검토는 move/special/celebrate의 정면/측면 재생 및
+  25%·50%·75% 자세를 확인한다. 바닥은 표준형 기본 자세에서 한 번 고정한다.
+- 저장 영상 전체 decode·검은 구간 검사와 실제 추출 frame을 검토했다.
+  의도한 수직 bounce는 in-place hop이며 발이 항상 붙은 보행으로 설명하지 않는다.
+- 이 검사는 모든 프레임의 물리 충돌·발 고정, 사람 디자인 승인 또는 운영 적용을
+  보증하지 않는다. 실제 모바일 기기 대신 1366/390/320 브라우저 viewport를 썼다.
+
+고양이 v002는 귀/눈 부착 수정 뒤 정적 검토를 통과했고 브라우저 검토 중이다.
+레서판다와 수달 v001은 실제 렌더의 볼/가슴 무늬 경계 결함으로 추가 렌더를
+중단해 보존했다. 레서판다 꼬리 띠의 계단 경계도 수정 대상이다. 이 후보들은
+완료 수량에서 제외한다. 나머지 여섯 종도 아직 통과 자산으로 세지 않는다.
+
+G4 소스 `c7c41323318f0af4159be29d04bdc3c0c3837e53`에서 합성 검사 62개와
+Windows/Linux를 포함한 CI 17개가 통과했다. G5 `bedaa179be9977842e1232d926346c4a0ec6ba80`의
+CI 6개도 통과했다. CI는 합성/계약 검증이며 비공개 로컬 제작물을 다시 렌더하지 않는다.
+다섯 브랜치를 합친 별도 checkout에서 실제 web build와 운영 번들 경계를 검사했고,
+현재 통합 문서 14개의 상대 파일 링크 126개와 보호된 소스 범위를 대조했다.
+원래 사용자 worktree나 운영 환경에 이 통합 checkout을 적용하지 않았다.
 
 ## 제작·보관 경계
 
