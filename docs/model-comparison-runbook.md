@@ -104,6 +104,9 @@ is unchanged.
 
 Issue #217 and [the uncertainty runbook](model-uncertainty-runbook.md) define
 a separate exploratory bootstrap contract and reproduction gate. The original
-comparison command, CONFIG and approved evidence remain unchanged. This is
-implementation and synthetic validation only; actual execution needs separate
-approval after merge.
+comparison command, CONFIG and approved evidence remain unchanged. Implementation
+merged in PR #218, the separately approved local execution succeeded, and its
+[aggregate report](model-uncertainty-evidence.md) was published through merged
+PR #220. #217/#219 are complete for their respective scopes. Any future actual
+execution still needs separate approval; [release contracts](model-release-readiness.md)
+remain under review in #221.

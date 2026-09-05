@@ -17,7 +17,7 @@ This plan turns PRD acceptance conditions AC-01 through AC-10 into repeatable ev
 | AC | Scenario and precondition | Check level | Expected evidence | Current status |
 |---|---|---|---|---|
 | AC-01 | Synthetic user opens an email link, reloads the page, and visits it in a new tab before session expiry. | Browser E2E + manual production smoke | Session remains available; owned seven-day records load; no access token in capture. | Implemented evidence: Issue #143 records a passed operator-reviewed magic-link and session-refresh check; Issue #169 adds a synthetic signed-in `401` recovery transition with no real token; Issue #180 defines the [sanitized operator checklist](email-link-session-verification.md); Issue #182 records the 2026-09-04 Chrome synthetic-account result: email-link sign-in, reload, and same-browser new tab passed, while expired/invalid recovery was not run. |
-| AC-02 | Fixed normalized baseline input is evaluated twice with one verified model version. | Model unit + API integration | Same result payload and model version; artifact digest and split digest recorded. | Blocked: verified artifact not released. Issue #208 has user-approved prepared_not_trained evidence and a Windows operator report in [the Gate 1B evidence record](model-gate-1b-evidence.md); [approved internal validation results and limitations](model-comparison-evidence.md) now exist; model release and promotion remain blocked. |
+| AC-02 | Fixed normalized baseline input is evaluated twice with one verified model version. | Model unit + API integration | Same result payload and model version; artifact digest and split digest recorded. | Blocked: verified artifact not released. Issue #208 has user-approved prepared_not_trained evidence and a Windows operator report in [the Gate 1B evidence record](model-gate-1b-evidence.md); [approved internal validation](model-comparison-evidence.md) and [published uncertainty](model-uncertainty-evidence.md) exist; the [release matrix](model-release-readiness.md) still blocks model release and promotion. |
 | AC-03 | Risk-signal screen is rendered for a verified artifact and for an unavailable artifact. | UI component + browser | Required wording and release disclaimer appear; unavailable artifact shows an honest not-ready state without a score. | Partial: Issue #190 connects S11 as a dedicated unavailable-artifact screen with the canonical term, disclaimer, and no score, probability, or band. A verified artifact path remains blocked by the model release gate. |
 | AC-04 | Open the BP form, review the measurement checklist, then submit out-of-range values, equal/reversed values, and an unknown field through browser and API. | DTO unit + API integration + browser | The concise checklist appears before the measurement fields without a diagnosis, treatment, prevention, or emergency claim; each invalid payload receives `422`; valid values save once; browser gives a clear correction message. | Partial: checklist and DTO/API mapping exist; Issue #169 adds a signed-in browser assertion that invalid input is blocked before a save request. Deployed browser evidence remains. |
 | AC-05 | Synthetic users A and B plus an anonymous request attempt read, change, delete, and export. Seed an expired synthetic owner row without altering the product migration contract. | Supabase integration | Only the unexpired owner can act on its records; expired rows are absent before physical purge; cross-user access returns a non-disclosing result; anonymous requests fail. | Partial: Issue #149 Phase B passed anonymous denial, owner CRUD/export, and cross-user non-disclosure through the normal product path; synthetic accounts and records were removed. Deployed expired-row evidence remains separate. |
@@ -42,53 +42,55 @@ Gate A can be marked complete when the requirements, API contract, architecture/
 
 ## Preparation semantics prerequisite
 
-Before AC-02/03/07 model release work, preparation version 2 must be reviewed.
+Preparation version 2 has approved preparation evidence. Before AC-02/03/07
+model release work, the product input semantics still require review.
 The single CLI and `tests/data` cover missing/partial BP, questionnaire special
 codes, sleep end categories, source joins, manifest split ratios, train-only
 imputation, source-order repeatability, XPT ingestion and failure/no-overwrite
 behavior. The API regression confirms that artifact configuration alone cannot
-bypass the missing input semantics agreement. These are synthetic code checks,
-not evidence that the actual Gate 1B operator run has passed.
+bypass the missing input semantics agreement. These synthetic checks are separate
+from the approved actual Gate 1B operator report; neither establishes product input equivalence or release readiness.
 
 ## Gate 1B closure and next implementation
 
 PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
 committed-evidence and synthetic checks plus general CI all passed. All #208
 preparation/publication conditions were confirmed and the Issue was closed on
-user instruction. This supersedes earlier pending-review text above. The
+user instruction. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
 Issue #213 implements the bounded synthetic-tested train/validation comparison
 path in `docs/model-comparison-runbook.md` and is complete through PR #214.
 The later actual train/validation report is in `docs/model-comparison-evidence.md`.
-AC-02/03/07 remain incomplete: uncertainty, calibration and subgroup limitations,
+AC-02/03/07 remain incomplete: conditional uncertainty limits, calibration and subgroup limitations,
 external/Korean-user validation and quality/release criteria remain unresolved.
 No test evaluation, serialization, promotion, adapter/UI change or deployment
 is claimed.
 
-## Exploratory uncertainty implementation (Issue #217)
+## Current model evidence and release contract
 
-PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7` with passing
-Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
-closed for evidence publication only. Approved comparison and Gate JSON remain
-unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
-paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
-PR #218 implemented and synthetically validated it, then merged at
-`65ec302886cd6bcf288194ad2e2b6639e6f867a1`. The separately approved local
-execution has since succeeded; approved disclosure is tracked in Issue #219. Pointwise conditional exploratory
-intervals do not establish training stability, multiplicity control, NHANES
-survey inference or Korean-user validity. Calibration, older-age performance,
-external validation and prospectively defined release criteria remain open.
+Implementation #217 is complete through PR #218, merged at
+`65ec302886cd6bcf288194ad2e2b6639e6f867a1`, with Windows/Linux synthetic CI passing.
+The separately approved local uncertainty execution succeeded at that commit.
+Publication #219 is complete through PR #220, merged at
+`64aca180aab940a731c322fcf22693a5ec58d756`, with all 14 CI checks passing.
+Both Issues are closed for their own scopes, not all model validation or release.
+Prior comparison publication #215 remains complete via PR #216
+(`b77f2ce3c81c620dcef4074fca60faaa88a8b5e7`). Approved JSON and execution records
+are preserved in the [comparison](model-comparison-evidence.md) and
+[uncertainty](model-uncertainty-evidence.md) reports.
 
-## Approved uncertainty disclosure (Issue #219)
+Exploratory conditional intervals now exist: overall AP improvement is supported,
+while overall AUROC/Brier difference intervals include zero. The status remains
+`exploratory_uncertainty_not_promoted`. These pointwise intervals do not establish
+training stability, multiplicity control, NHANES survey inference or Korean-user
+validity. JSON verifier checks do not independently recalculate real-prediction
+intervals. Older-age performance, calibration, external/Korean validation and
+explicit release criteria remain unresolved.
 
-See [execution, approval and verification scopes](model-uncertainty-evidence.md)
-and [unchanged aggregate JSON](evidence/model-uncertainty.json). Implementation
-conditions of #217 are fulfilled by merged #218; local execution succeeded;
-repository disclosure awaits user merge of the publication PR. Overall AP
-improvement is supported within the exploratory conditional analysis, while
-overall AUROC/Brier difference intervals include zero. Status remains
-`exploratory_uncertainty_not_promoted`; no model selection/release approval.
-Calibration, older-age performance, external/Korean-user validation and explicit
-release criteria remain unresolved. Aggregate verifier checks are not independent
-real-prediction interval recalculation. No new actual fit/bootstrap/test work is
-performed for publication; existing comparison/Gate evidence and lock stay intact.
+Issue #221 owns the next documentation/decision work: [draft model card](model-card.md),
+[unsupported input mappings and question drafts](model-input-adapter-contract.md),
+and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
+Named reviewers, supported population, justified quality criteria, final model,
+preprocessing and signal thresholds are not yet approved. No actual model/test
+execution or product change is part of this contract PR. The API remains
+model_not_ready; evidence, CONFIGs and lock are unchanged.

@@ -1,6 +1,7 @@
 # Model promotion gate
 
-The logistic-regression baseline is the default artifact.
+The logistic-regression baseline remains the default under the comparison policy.
+No selected or serialized release artifact currently exists.
 
 A histogram-gradient-boosting candidate may replace it only when all conditions hold on the frozen validation split:
 
@@ -22,15 +23,22 @@ Neither result authorizes release or proves sufficient quality. No selected
 artifact is created in this comparison path; metadata, model card and promotion
 review remain separate. Test is never read here, even after a relative result.
 
-## Recorded validation result
+## Recorded validation result and current release barrier
 
 The [approved internal validation report](model-comparison-evidence.md) records
 HGB meeting the numeric relative conditions, status validation_compared_not_promoted.
-Older-age AUROC, calibration underprediction, subgroup regressions and missing
-uncertainty estimates remain explicit limitations. This result is not statistical
-significance, sufficient quality, Korean-user validation or release suitability.
-The conditions above are unchanged; no artifact selection/promotion is enacted.
+The [published uncertainty report](model-uncertainty-evidence.md), merged in PR #220,
+now supplies exploratory conditional intervals. Overall AP improvement is supported,
+but overall AUROC/Brier difference intervals include zero. Older-age performance,
+calibration underprediction, subgroup regressions and external/Korean-user validity
+remain unresolved. The conditions above are unchanged; no selection/promotion is enacted.
 
-The exploratory paired-bootstrap design in ADR-0005 does not modify these
-relative conditions or authorize promotion when a difference interval excludes
-zero. No actual uncertainty analysis is claimed by its implementation.
+ADR-0005's intervals are pointwise, conditional and exploratory. They do not turn
+a zero-excluding interval into model selection or release approval. The
+[draft model card](model-card.md), [input adapter contract](model-input-adapter-contract.md)
+and [release readiness matrix](model-release-readiness.md) specify the remaining
+human decisions. Quality thresholds remain undecided without responsible review;
+this design was written after seeing validation results. Final model, preprocessing,
+thresholds, metrics and failure actions must be fixed and separately approved before
+one-time test evaluation. Test is never used for tuning or repeated selection approval.
+The current API continues to return model_not_ready.

@@ -49,14 +49,14 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
-| Model Gate 1B contract | [Approved preparation evidence](model-gate-1b-evidence.md), prepared_not_trained; #208 closed after PR #212 merge |
+| Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 defines [release readiness](model-release-readiness.md); no selected/released artifact |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 | UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
 
-The table records the evidence available when PR #147 was opened. It cannot
-predict that pull request's squash-merge commit or later work. At every restart,
+Non-model deployment rows retain the historical handoff snapshot; the model row
+is updated through PR #220 and Issue #221. At every restart,
 resolve the current upstream `main` SHA and recent merged pull requests before
 treating any source commit as current.
 
@@ -284,40 +284,42 @@ raw files and outputs; a new execution must always generate new evidence.
 PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
 committed-evidence and synthetic checks plus general CI all passed. All #208
 preparation/publication conditions were confirmed and the Issue was closed on
-user instruction. This supersedes earlier pending-review text above. The
+user instruction. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
 Issue #213 implements the bounded synthetic-tested train/validation comparison
 path in `docs/model-comparison-runbook.md`; PR #214 is merged and its CI passed.
 Issue #215 separately publishes approved actual validation aggregates. Status:
 validation_compared_not_promoted. See `docs/model-comparison-evidence.md` for the
-older-age AUROC, low-bin underprediction, subgroup regressions, missing confidence
-intervals and limits on external/Korean-user interpretation. No test evaluation,
+older-age AUROC, low-bin underprediction and subgroup regressions. The separate
+uncertainty report now supplies exploratory conditional intervals; external/Korean
+validity remains unestablished. No test evaluation,
 serialization, promotion, adapter/UI change or deployment is claimed.
 
-## Exploratory uncertainty implementation (Issue #217)
+## Current model evidence and release contract
 
-PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7` with passing
-Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
-closed for evidence publication only. Approved comparison and Gate JSON remain
-unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
-paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
-PR #218 implemented and synthetically validated it, then merged at
-`65ec302886cd6bcf288194ad2e2b6639e6f867a1`. The separately approved local
-execution has since succeeded; approved disclosure is tracked in Issue #219. Pointwise conditional exploratory
-intervals do not establish training stability, multiplicity control, NHANES
-survey inference or Korean-user validity. Calibration, older-age performance,
-external validation and prospectively defined release criteria remain open.
+Implementation #217 is complete through PR #218, merged at
+`65ec302886cd6bcf288194ad2e2b6639e6f867a1`, with Windows/Linux synthetic CI passing.
+The separately approved local uncertainty execution succeeded at that commit.
+Publication #219 is complete through PR #220, merged at
+`64aca180aab940a731c322fcf22693a5ec58d756`, with all 14 CI checks passing.
+Both Issues are closed for their own scopes, not all model validation or release.
+Prior comparison publication #215 remains complete via PR #216
+(`b77f2ce3c81c620dcef4074fca60faaa88a8b5e7`). Approved JSON and execution records
+are preserved in the [comparison](model-comparison-evidence.md) and
+[uncertainty](model-uncertainty-evidence.md) reports.
 
-## Approved uncertainty disclosure (Issue #219)
+Exploratory conditional intervals now exist: overall AP improvement is supported,
+while overall AUROC/Brier difference intervals include zero. The status remains
+`exploratory_uncertainty_not_promoted`. These pointwise intervals do not establish
+training stability, multiplicity control, NHANES survey inference or Korean-user
+validity. JSON verifier checks do not independently recalculate real-prediction
+intervals. Older-age performance, calibration, external/Korean validation and
+explicit release criteria remain unresolved.
 
-See [execution, approval and verification scopes](model-uncertainty-evidence.md)
-and [unchanged aggregate JSON](evidence/model-uncertainty.json). Implementation
-conditions of #217 are fulfilled by merged #218; local execution succeeded;
-repository disclosure awaits user merge of the publication PR. Overall AP
-improvement is supported within the exploratory conditional analysis, while
-overall AUROC/Brier difference intervals include zero. Status remains
-`exploratory_uncertainty_not_promoted`; no model selection/release approval.
-Calibration, older-age performance, external/Korean-user validation and explicit
-release criteria remain unresolved. Aggregate verifier checks are not independent
-real-prediction interval recalculation. No new actual fit/bootstrap/test work is
-performed for publication; existing comparison/Gate evidence and lock stay intact.
+Issue #221 owns the next documentation/decision work: [draft model card](model-card.md),
+[unsupported input mappings and question drafts](model-input-adapter-contract.md),
+and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
+Named reviewers, supported population, justified quality criteria, final model,
+preprocessing and signal thresholds are not yet approved. No actual model/test
+execution or product change is part of this contract PR. The API remains
+model_not_ready; evidence, CONFIGs and lock are unchanged.

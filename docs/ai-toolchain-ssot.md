@@ -171,30 +171,31 @@ quality sufficiency, statistical significance, Korean-user performance or releas
 suitability. No tool, lock, CONFIG, probability calibration or model is changed
 by publication. Windows/Linux CI validates committed aggregates without fitting.
 
-## Exploratory uncertainty implementation (Issue #217)
+## Current model evidence and release contract
 
-PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7` with passing
-Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
-closed for evidence publication only. Approved comparison and Gate JSON remain
-unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
-paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
-PR #218 implemented and synthetically validated it, then merged at
-`65ec302886cd6bcf288194ad2e2b6639e6f867a1`. The separately approved local
-execution has since succeeded; approved disclosure is tracked in Issue #219. Pointwise conditional exploratory
-intervals do not establish training stability, multiplicity control, NHANES
-survey inference or Korean-user validity. Calibration, older-age performance,
-external validation and prospectively defined release criteria remain open.
+Implementation #217 is complete through PR #218, merged at
+`65ec302886cd6bcf288194ad2e2b6639e6f867a1`, with Windows/Linux synthetic CI passing.
+The separately approved local uncertainty execution succeeded at that commit.
+Publication #219 is complete through PR #220, merged at
+`64aca180aab940a731c322fcf22693a5ec58d756`, with all 14 CI checks passing.
+Both Issues are closed for their own scopes, not all model validation or release.
+Prior comparison publication #215 remains complete via PR #216
+(`b77f2ce3c81c620dcef4074fca60faaa88a8b5e7`). Approved JSON and execution records
+are preserved in the [comparison](model-comparison-evidence.md) and
+[uncertainty](model-uncertainty-evidence.md) reports.
 
-## Approved uncertainty disclosure (Issue #219)
+Exploratory conditional intervals now exist: overall AP improvement is supported,
+while overall AUROC/Brier difference intervals include zero. The status remains
+`exploratory_uncertainty_not_promoted`. These pointwise intervals do not establish
+training stability, multiplicity control, NHANES survey inference or Korean-user
+validity. JSON verifier checks do not independently recalculate real-prediction
+intervals. Older-age performance, calibration, external/Korean validation and
+explicit release criteria remain unresolved.
 
-See [execution, approval and verification scopes](model-uncertainty-evidence.md)
-and [unchanged aggregate JSON](evidence/model-uncertainty.json). Implementation
-conditions of #217 are fulfilled by merged #218; local execution succeeded;
-repository disclosure awaits user merge of the publication PR. Overall AP
-improvement is supported within the exploratory conditional analysis, while
-overall AUROC/Brier difference intervals include zero. Status remains
-`exploratory_uncertainty_not_promoted`; no model selection/release approval.
-Calibration, older-age performance, external/Korean-user validation and explicit
-release criteria remain unresolved. Aggregate verifier checks are not independent
-real-prediction interval recalculation. No new actual fit/bootstrap/test work is
-performed for publication; existing comparison/Gate evidence and lock stay intact.
+Issue #221 owns the next documentation/decision work: [draft model card](model-card.md),
+[unsupported input mappings and question drafts](model-input-adapter-contract.md),
+and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
+Named reviewers, supported population, justified quality criteria, final model,
+preprocessing and signal thresholds are not yet approved. No actual model/test
+execution or product change is part of this contract PR. The API remains
+model_not_ready; evidence, CONFIGs and lock are unchanged.

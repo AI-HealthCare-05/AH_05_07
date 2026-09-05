@@ -186,9 +186,10 @@ publication approval and automated repository validation are recorded separately
 
 The Data preparation workflow validates this JSON with the existing verifier on
 Windows/Linux without downloading raw data or rerunning actual preparation.
-Its existing synthetic regression suite is separate. Issue #208 awaits evidence
-PR review/merge; model training, evaluation, promotion and deployment remain
-outside this completed preparation run. Future changed inputs/contracts require
+Its existing synthetic regression suite is separate. Issue #208 completed
+preparation/publication through merged PR #212. Model fitting and evaluation
+were outside that preparation run; later approved comparison and uncertainty
+reports are separate evidence. No promotion or deployment follows from them. Future changed inputs/contracts require
 new generated evidence and review, not edits to the approved JSON fields.
 
 
@@ -197,8 +198,9 @@ new generated evidence and review, not edits to the approved JSON fields.
 PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
 committed-evidence and synthetic checks plus general CI all passed. All #208
 preparation/publication conditions were confirmed and the Issue was closed on
-user instruction. This supersedes earlier pending-review text above. The
+user instruction. The
 approved evidence remains unchanged and `prepared_not_trained`, not model complete.
-Issue #213 implements the bounded synthetic-tested train/validation comparison
-path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
-serialization, promotion, adapter/UI change or deployment is claimed.
+Issue #213 comparison implementation is complete through PR #214. Later actual
+comparison and uncertainty reports are published; [release readiness](model-release-readiness.md)
+remains incomplete. This preparation record does not claim test evaluation,
+serialization, promotion, adapter/UI activation or deployment.

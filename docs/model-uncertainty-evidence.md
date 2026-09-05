@@ -1,6 +1,7 @@
 # Approved exploratory validation uncertainty evidence
 
-Status: `exploratory_uncertainty_not_promoted`. Publication Issue #219.
+Status: `exploratory_uncertainty_not_promoted`. Publication Issue #219 completed
+via PR #220, merged at `64aca180aab940a731c322fcf22693a5ec58d756`; all 14 CI checks passed.
 [Approved JSON](evidence/model-uncertainty.json) is copied byte-for-byte from the
 reviewed external output. A file-specific -text Git attribute preserves the
 approved CRLF bytes across checkouts; manifest/lock LF attributes are unchanged.
@@ -83,9 +84,10 @@ existing synthetic numerical tests and other evidence/general checks remain.
 Issue #217 scoped implementation and synthetic CI only. PR #218 merged as the
 execution commit above; its Windows/Linux synthetic and general checks passed,
 fulfilling those implementation conditions. The later separately approved local
-execution succeeded. Issue #219 covers this approved disclosure; repository
-publication completion awaits user PR merge. Issue #217 is not being closed as
-all model validation complete.
+execution succeeded. Issue #219 disclosure is merged via PR #220. Issues #217
+and #219 are closed for implementation and disclosure respectively. Neither
+closure means all model validation complete. [Release readiness](model-release-readiness.md)
+and human decisions are tracked in Issue #221.
 
 The approved comparison/Gate JSON, both CONFIGs, dependencies and lock remain
 unchanged. This PR does not retrain, bootstrap, calibrate, tune, read/hash/evaluate
