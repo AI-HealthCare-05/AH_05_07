@@ -49,7 +49,7 @@ test, or deployment work complete before the repository evidence exists.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
-| Model Gate 1B contract | `docs/model-gate-1b-runbook.md`; operator execution and reviewed evidence remain open |
+| Model Gate 1B contract | [Approved preparation evidence](model-gate-1b-evidence.md), prepared_not_trained; evidence PR review/merge remains |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
@@ -134,8 +134,9 @@ gate are not complete.
    gate. Issue #204 freezes the selected tools, internal pipeline, deferred
    alternatives, and change-control contract. Issue #206 defines the external
    local seven-module audit, derived-table, frozen-split, and sanitized-evidence
-   sequence. Neither Issue trains or promotes a model, and the Gate 1B operator
-   run remains open until its reviewed evidence exists. The release gate starts
+   sequence. Issue #208 now has a Windows operator report and user-approved
+   evidence in `docs/model-gate-1b-evidence.md`; its evidence PR review and merge
+   remain pending. No model training or promotion has occurred. The release gate starts
    only after the operational evidence above is
    reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
@@ -252,7 +253,7 @@ delivery was completed outside the repository. The first app binding was
 reverted in Issue #200 after responsive review, so the current UI remains
 CSS-first.
 
-## 2026-09-05 preparation version 2 prerequisite (pending merge)
+## Preparation version 2 and approved operational evidence
 
 Base reviewed: `20f23f7597ceb812170f6582fd6f5011cb5ec654`.
 Issue #208 remains the open operational data-preparation task. Its initial
@@ -265,9 +266,13 @@ operator entry point with two-run digest comparison. See ADR-0003 and
 `docs/data-feature-semantics.md`. The unsafe legacy API feature mapping is
 removed; an artifact configuration cannot enable the unreleased questionnaire.
 
-Verification is recorded in `docs/data-preparation-verification.md`. PR #210 has
-passed local Windows checks, Windows/Linux synthetic preparation CI and general
-CI. No actual NHANES preparation, model evaluation/promotion, or production
-deployment is claimed. User review and merge remain pending. Preserve previous
-downloaded runners; use the repository entry
-point only after this change is reviewed and its required checks pass.
+Historical synthetic verification is recorded in `docs/data-preparation-verification.md`.
+PRs #210 and #211 are merged. The subsequent Windows actual preparation report,
+independent local hash checks and user-approved public JSON are recorded in
+`docs/model-gate-1b-evidence.md`. The execution commit remains
+`cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad`, with 7,944 total rows and
+5,560/1,192/1,192 train/validation/test rows. Both runs matched; LF manifest/lock
+hashes match Git blobs. Committed-evidence CI validates JSON without source data.
+Issue #208 remains open pending evidence PR review/merge. Model training,
+evaluation, promotion and deployment remain unperformed. Preserve previous
+raw files and outputs; a new execution must always generate new evidence.

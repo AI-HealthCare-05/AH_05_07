@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".gitattributes"
+      - "docs/evidence/model-gate-1b.json"
       - "scripts/data/**"
       - "scripts/model/**"
       - "scripts/ci/verify_model_gate_1b_contract.py"
@@ -19,6 +20,7 @@ on:
     branches: [main]
     paths:
       - ".gitattributes"
+      - "docs/evidence/model-gate-1b.json"
       - "scripts/data/**"
       - "scripts/model/**"
       - "scripts/ci/verify_model_gate_1b_contract.py"
@@ -38,6 +40,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  committed-evidence:
+    name: Committed Gate 1B evidence (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Verify approved evidence against repository contract
+        # Standard-library validation only; no source data or preparation execution.
+        run: python scripts/ci/verify_model_gate_1b_contract.py --evidence docs/evidence/model-gate-1b.json
+
   synthetic-preparation:
     strategy:
       fail-fast: false

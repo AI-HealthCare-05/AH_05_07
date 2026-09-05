@@ -1,7 +1,7 @@
 # Data preparation prerequisite — verification record
 
 Date: 2026-09-05. Reviewed base: `20f23f7597ceb812170f6582fd6f5011cb5ec654`.
-Status: local Windows verification and published Windows/Linux CI passed; PR #210 awaits user merge.
+Historical prerequisite record: PRs #210 and #211 are merged. Subsequent actual execution and user publication approval are recorded in [model-gate-1b-evidence.md](model-gate-1b-evidence.md). The limitations below describe the original prerequisite session.
 Related operational Issue: #208, which remains open.
 
 ## Executed evidence

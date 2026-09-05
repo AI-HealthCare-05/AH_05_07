@@ -174,3 +174,19 @@ actual data or establish Gate 1B acceptance; Issue #208 remains open.
 Gate 1B is complete only after the operator runs this procedure and reviews the
 sanitized evidence. Merging the runbook and verifier alone establishes the
 contract; it does not mark the data gate as passed.
+
+## Approved execution record
+
+The latest user-approved `prepared_not_trained` evidence is stored unchanged in
+`docs/evidence/model-gate-1b.json`; see [the execution and approval record](model-gate-1b-evidence.md).
+It identifies actual execution commit `cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad`,
+not the documentation commit. The Windows operator report records two matching
+runs and independent file-hash checks, with 7,944 total rows. Human public
+publication approval and automated repository validation are recorded separately.
+
+The Data preparation workflow validates this JSON with the existing verifier on
+Windows/Linux without downloading raw data or rerunning actual preparation.
+Its existing synthetic regression suite is separate. Issue #208 awaits evidence
+PR review/merge; model training, evaluation, promotion and deployment remain
+outside this completed preparation run. Future changed inputs/contracts require
+new generated evidence and review, not edits to the approved JSON fields.
