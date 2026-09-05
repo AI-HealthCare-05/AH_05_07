@@ -2,7 +2,10 @@
 
 ## Scope and status
 
-This register records the user-approved G1 visual source snapshots. None of the entries below is committed as a binary, uploaded to R2, or approved as an unoptimized runtime payload by this documentation change.
+This register records the user-approved G1 visual source snapshots. The source
+review itself did not upload binaries; the later R2 v1 delivery is recorded as
+an operational fact below. The current application remains CSS-first after
+Issue #200 reverted the initial runtime binding for responsive regression.
 
 The SHA-256 value, byte size, and dimensions identify the reviewed source snapshot. A resized, recompressed, converted, or metadata-scrubbed file is a new derivative and requires its own versioned entry before public delivery.
 
@@ -126,7 +129,7 @@ URL, changes cache headers, or couples a derivative to `web/`.
 | Creation date | `2026-09-03` |
 | G1 review date | `2026-09-03` |
 | Current location | User-owned working source; the approved desktop preview is attached to Issue #136 |
-| Public/private state | Public candidate, not yet delivered by the application or R2 |
+| Public/private state | Approved source candidates; reviewed derivatives are delivered in R2 `visual/v1/`, but not currently rendered by the application |
 | Retention | Editable Canva sources remain user-controlled; reviewed flat source snapshots are retained outside runtime delivery until superseded or deliberately deleted |
 | Delivery rule | Create optimized AVIF or WebP derivatives during G3, remove unnecessary metadata, and register exact delivered bytes before R2 upload |
 | Accessibility rule | The composite receives descriptive alternative text when informative; isolated landmarks are decorative when equivalent day names and state are present in semantic HTML |
@@ -135,7 +138,8 @@ Canva terms and the ownership basis must be reviewed again before reuse outside 
 
 ## Registered source snapshots
 
-Reserved object keys are immutable target names only. Their presence in this register does not claim that an R2 object exists.
+The registered object keys identify the reviewed R2 v1 delivery. They do not
+authorize application binding; the current UI remains CSS-first.
 
 | ID | Title and purpose | Canonical source file | Reserved versioned object key | Source metadata | SHA-256 | Source / replacement history |
 |---|---|---|---|---|---|---|

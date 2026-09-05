@@ -51,7 +51,7 @@ test, or deployment work complete before the repository evidence exists.
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
-| UI production handoff | Issue #190 implements the Notion-approved Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. Issue #194 selects Canva source sets only; derivative export, R2, and production parity remain separate. |
+| UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
 
 The table records the evidence available when PR #147 was opened. It cannot
 predict that pull request's squash-merge commit or later work. At every restart,
@@ -117,14 +117,13 @@ gate are not complete.
    remain distinct. Issue #190 maps those contracts to the Calm Clay Journey
    S01–S14 application shell without changing the API, database, ownership,
    authentication, or model boundary. Issue #192 passed responsive visual QA
-   and Issue #194 records selected Canva sources only. The next visual delivery
-   step is the Issue #196 local derivative-staging gate. It supplies a
-   dependency-free exact-file verifier and review-only manifest for
-   source-owner Canva exports, recording exact bytes, metadata removal,
-   viewport fit, and fallback evidence before any delivery decision. R2 object
-   keys, upload, runtime binding, and production parity remain separate. A
-   verified model fact remains separate follow-up work; do not use
-   causal-improvement language.
+   and Issue #194 records selected Canva sources only. Issue #196 added the
+   local derivative-staging gate; R2 `visual/v1/` now contains the reviewed
+   release objects and manifest. Issue #198's first runtime binding was
+   reverted by Issue #200 because it caused responsive regression. CSS-first
+   rendering is the current production contract; any new binding needs a
+   separate visual review and responsive evidence. A verified model fact
+   remains separate follow-up work; do not use causal-improvement language.
 4. Start the risk-signal release gate only after the operational evidence above
    is reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
@@ -236,5 +235,7 @@ The Calm Clay Journey has an executable viewport/reduced-motion check and a
 synthetic-only manual capture runbook. The manual `1366 × 768`, `390 × 844`,
 `320 × 844`, and reduced-motion evidence passed on 2026-09-05. Issue #194 then
 reviewed Canva sources read-only and registered approved, replaceable, and
-not-used sets. Neither gate exports a final binary, changes Canva, creates or
-uploads an R2 object, or couples media to the application.
+not-used sets. Issue #196 later staged the approved derivatives and the R2 v1
+delivery was completed outside the repository. The first app binding was
+reverted in Issue #200 after responsive review, so the current UI remains
+CSS-first.
