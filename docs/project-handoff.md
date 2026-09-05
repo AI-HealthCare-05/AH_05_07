@@ -48,6 +48,7 @@ test, or deployment work complete before the repository evidence exists.
 | Deployment snapshot | `emotigom/ah-05-07-pages`; run `33822332784` passed on 2026-09-04 |
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
+| AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
 | Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
@@ -89,6 +90,10 @@ identifier and sanitized rehearsal evidence exist.
   source candidates; full-screen and utility PNGs are explicitly not runtime
   assets because copy and state must remain semantic HTML/CSS.
 - Dependency-free secret-boundary and public deployment-smoke verification.
+- Bounded model-development tooling: pandas and PyArrow for local tabular data,
+  scikit-learn for the two contracted classical models and evaluation, and
+  joblib for artifact serialization. CI rejects silent dependency drift; exact
+  resolved versions remain in `uv.lock`.
 
 The risk-signal UI remains unreleased because the verified model artifact,
 metadata, split digest, leakage audit, comparison evidence, and repeatability
@@ -124,8 +129,11 @@ gate are not complete.
    rendering is the current production contract; any new binding needs a
    separate visual review and responsive evidence. A verified model fact
    remains separate follow-up work; do not use causal-improvement language.
-4. Start the risk-signal release gate only after the operational evidence above
-   is reconciled and a separate Issue defines its bounded scope. The gate needs
+4. Follow `docs/ai-toolchain-ssot.md` when starting the risk-signal release
+   gate. Issue #204 freezes the selected tools, internal pipeline, deferred
+   alternatives, and change-control contract; it does not train or promote a
+   model. The release gate starts only after the operational evidence above is
+   reconciled and a separate Issue defines its bounded scope. The gate needs
    immutable artifact and metadata, frozen split digest, leakage audit, at
    least two-model and multiple-metric comparison, model card, and repeated-
    input consistency evidence.
