@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -589,6 +590,22 @@ def triangles(objects):
     return total
 
 
+def publish_stage(staged, final, signature):
+    """Publish a minimally readable container exclusively; full QA still follows."""
+    with staged.open("rb") as stream:
+        header = stream.read(16)
+    if len(header) < 16 or not header.startswith(signature):
+        raise ValueError("Incomplete staged asset container; preserve it for diagnosis")
+    os.link(staged, final)  # Exclusive publication: an existing result cannot be replaced.
+    staged.unlink()
+
+
+def save_blend(output, name):
+    staged = output / (".stage-" + name)
+    bpy.ops.wm.save_as_mainfile(filepath=str(staged))
+    publish_stage(staged, output / name, b"BLENDER")
+
+
 def export_variant(output, name, target):
     objs = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and obj.parent]
     count = triangles(objs)
@@ -608,8 +625,9 @@ def export_variant(output, name, target):
         if obj.type == "ARMATURE" or (obj.type == "MESH" and obj.parent):
             obj.select_set(True)
     path = output / f"{name}.glb"
+    staged = output / f".stage-{name}.glb"
     bpy.ops.export_scene.gltf(
-        filepath=str(path),
+        filepath=str(staged),
         export_format="GLB",
         use_selection=True,
         export_animations=True,
@@ -622,6 +640,7 @@ def export_variant(output, name, target):
         export_anim_slide_to_zero=True,
         export_optimize_animation_size=True,
     )
+    publish_stage(staged, path, b"glTF")
     return {
         "file": path.name,
         "triangles": triangles(objs),
@@ -697,18 +716,18 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     rig = character(args.species)
-    bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "rigged.blend"))
+    save_blend(args.output, "rigged.blend")
     animate(rig, args.species)
     studio()
     bpy.context.scene.render.fps = 24
     bpy.context.scene.frame_start, bpy.context.scene.frame_end = 1, 97
-    bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "source.blend"))
+    save_blend(args.output, "source.blend")
     standard = export_variant(args.output, "standard", 32000)
-    bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "standard.blend"))
+    save_blend(args.output, "standard.blend")
     if args.render:
         render_views(args.output)
     light = export_variant(args.output, "light", 13500)
-    bpy.ops.wm.save_as_mainfile(filepath=str(args.output / "light.blend"))
+    save_blend(args.output, "light.blend")
     final_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
     if final_commit != generator_commit or source_path.read_bytes() != source_bytes:
         raise RuntimeError("Authoring source or execution commit changed; candidate remains unverified")
@@ -732,9 +751,10 @@ def main():
         "paid_generation": False,
         "rig_bones": len(rig.data.bones),
     }
-    (args.output / "asset-manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    staged_manifest = args.output / ".stage-asset-manifest.json"
+    staged_manifest.write_text(json.dumps(manifest, ensure_ascii=False, allow_nan=False, indent=2), encoding="utf-8")
+    assert json.loads(staged_manifest.read_bytes()) == manifest
+    publish_stage(staged_manifest, args.output / "asset-manifest.json", b"{")
     print("SK7_ASSET_AUTHORED", args.species, json.dumps(manifest["variants"]))
 
 

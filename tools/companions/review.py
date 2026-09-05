@@ -7,6 +7,7 @@ import math
 import struct
 import subprocess
 import sys
+from itertools import product
 from pathlib import Path
 
 import bpy
@@ -21,6 +22,7 @@ VIEWS = {
     "back": (0, 7, 2.1),
     "hero": (4.4, -7, 3.0),
 }
+FRAMING_MARGIN_SCALE = 1.25
 
 
 def parse_views(value):
@@ -30,9 +32,48 @@ def parse_views(value):
     return names
 
 
+def frame_camera(scene, framing, view):
+    """Fit sampled deformed world bounds in both axes using Blender's actual frame."""
+    lower, upper = Vector(framing["world_min"]), Vector(framing["world_max"])
+    center = (lower + upper) / 2
+    diagonal = (upper - lower).length
+    assert math.isfinite(diagonal) and diagonal > 0, "Invalid framing bounds"
+    camera = scene.camera
+    assert camera.data.type == "ORTHO", "Review framing requires an orthographic camera"
+    # Preserve the established view direction, but center it on this asset's motion bounds.
+    direction = Vector(VIEWS[view]) - Vector((0, 0.08, 1.60))
+    distance = max(direction.length, 2 * diagonal)
+    camera.location = center + direction.normalized() * distance
+    camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.shift_x = camera.data.shift_y = 0
+    camera.data.clip_start = 0.01
+    camera.data.clip_end = max(100, distance + 2 * diagonal)
+    rotation = camera.rotation_euler.to_quaternion().inverted()
+    corners = [rotation @ (Vector(corner) - center) for corner in product(*zip(lower, upper, strict=True))]
+    required = [max(c[i] for c in corners) - min(c[i] for c in corners) for i in (0, 1)]
+    camera.data.ortho_scale = 1
+    # view_frame handles portrait aspect, pixel aspect and sensor-fit conventions.
+    unit_frame = camera.data.view_frame(scene=scene)
+    available = [max(c[i] for c in unit_frame) - min(c[i] for c in unit_frame) for i in (0, 1)]
+    assert all(value > 0 for value in available), "Invalid orthographic frame"
+    camera.data.ortho_scale = FRAMING_MARGIN_SCALE * max(
+        needed / space for needed, space in zip(required, available, strict=True)
+    )
+    bpy.context.view_layer.update()
+    return {
+        "location": list(camera.location),
+        "rotation_euler_radians": list(camera.rotation_euler),
+        "orthographic_scale": camera.data.ortho_scale,
+        "projected_bounds_width_height": required,
+        "frame_width_height": [value * camera.data.ortho_scale for value in available],
+        "margin_scale": FRAMING_MARGIN_SCALE,
+    }
+
+
 def render_png(scene, path, audit, view, clip=None):
     if path.exists():
         raise FileExistsError("Review output already exists; use --output with a new directory")
+    camera_report = frame_camera(scene, audit["framing"], view)
     scene.render.filepath = str(path)
     bpy.context.view_layer.update()
     bpy.ops.render.render(write_still=True)
@@ -48,6 +89,7 @@ def render_png(scene, path, audit, view, clip=None):
             "clip": clip,
             "frame": scene.frame_current,
             "engine": scene.render.engine,
+            "camera": camera_report,
         }
     )
 
@@ -143,10 +185,7 @@ def main():  # noqa: C901 - sequential Blender import, deformation and render ch
     scene.render.engine = args.engine
     scene.render.resolution_x, scene.render.resolution_y = 900, 1050
     scene.cycles.samples = 16
-    camera = scene.camera
-    camera.location = (4.4, -7, 3.0)
-    camera.rotation_euler = (Vector((0, 0.08, 1.60)) - camera.location).to_track_quat("-Z", "Y").to_euler()
-    bpy.context.view_layer.update()
+    bounds_min, bounds_max = [math.inf] * 3, [-math.inf] * 3
     for clip, action in actions.items():
         for track in rig.animation_data.nla_tracks:
             track.mute = True
@@ -166,6 +205,9 @@ def main():  # noqa: C901 - sequential Blender import, deformation and render ch
                 coords = [evaluated.matrix_world @ vertex.co for vertex in evaluated.data.vertices]
                 assert all(all(math.isfinite(v) for v in co) for co in coords)
                 lowest = min(lowest, min(co.z for co in coords))
+                for axis in range(3):
+                    bounds_min[axis] = min(bounds_min[axis], min(co[axis] for co in coords))
+                    bounds_max[axis] = max(bounds_max[axis], max(co[axis] for co in coords))
         loop_delta = max(
             abs(a - b)
             for ma, mb in zip(snapshots[0], snapshots[-1], strict=True)
@@ -179,22 +221,35 @@ def main():  # noqa: C901 - sequential Blender import, deformation and render ch
             "finite_deformation_samples": len(frames),
             "sample_min_z": lowest,
         }
-        if args.poses and (args.clip is None or args.clip == clip):
+    audit["framing"] = {
+        "world_min": bounds_min,
+        "world_max": bounds_max,
+        "margin_scale": FRAMING_MARGIN_SCALE,
+        "method": "Union of actual deformed vertices at 13 frames in each of all seven clips, projected into each camera",
+        "sampled_clip_count": len(actions),
+        "sampled_frames_per_clip": 13,
+        "limitation": "Sampled bounds plus 25% frame scale margin; extrema between sampled frames are not certified",
+    }
+    # Render only after every clip contributes its bounds, including long ears and authored hops.
+    if args.poses:
+        for clip, action in actions.items():
+            if args.clip is not None and args.clip != clip:
+                continue
+            rig.animation_data.action = action
+            rig.animation_data.action_slot = action.slots[0]
+            start, end = audit["clips"][clip]["frames"]
             for label, frame in (("quarter", round(start + (end - start) * 0.25)), ("mid", round((start + end) / 2))):
                 scene.frame_set(frame)
                 scene.render.resolution_percentage = 55
                 render_png(scene, output / f"{args.variant}-{clip}-{label}.png", audit, "hero", clip)
     rig.animation_data.action = actions["idle"]
     rig.animation_data.action_slot = actions["idle"].slots[0]
-    scene.frame_set(1)
+    scene.frame_set(audit["clips"]["idle"]["frames"][0])
     if args.render:
         scene.render.resolution_x, scene.render.resolution_y = 1600, 1800
         scene.cycles.samples = 24
         scene.render.resolution_percentage = 100
         for name in selected_views:
-            camera.location = VIEWS[name]
-            camera.rotation_euler = (Vector((0, 0.08, 1.60)) - camera.location).to_track_quat("-Z", "Y").to_euler()
-            bpy.context.view_layer.update()
             render_png(scene, output / f"{args.variant}-{name}.png", audit, name, "idle")
     assert hashlib.sha256(input_path.read_bytes()).hexdigest() == input_hash, "Input GLB changed during review"
     assert Path(__file__).read_bytes() == review_bytes, "Review source changed during execution"
