@@ -124,3 +124,13 @@ For a later scale-up or final submission, collect these authorities in order:
 
 If any item is absent, describe the model gate as incomplete rather than
 reconstructing it from memory.
+
+## Gate 1B preparation revision
+
+ADR-0003 defines version 2 feature semantics and the single
+`scripts/data/prepare_gate_1b.py` operator entry point. The underlying four stages
+are retained, with explicit categorical types and shared scikit-learn
+preprocessing for comparison and artifact creation. The exact lockfile is
+unchanged. The synthetic Linux/Windows workflow is a code regression gate; it
+never downloads NHANES or publishes Gate 1B evidence. Actual data preparation,
+model evaluation and promotion remain separate uncompleted evidence gates.

@@ -251,3 +251,22 @@ not-used sets. Issue #196 later staged the approved derivatives and the R2 v1
 delivery was completed outside the repository. The first app binding was
 reverted in Issue #200 after responsive review, so the current UI remains
 CSS-first.
+
+## 2026-09-05 preparation version 2 prerequisite (pending merge)
+
+Base reviewed: `20f23f7597ceb812170f6582fd6f5011cb5ec654`.
+Issue #208 remains the open operational data-preparation task. Its initial
+filename list predates #209; the current manifest/runbook has the corrected
+`P_` names. Do not close #208 on the strength of this prerequisite patch.
+
+The version 2 patch adds explicit data semantics, BP-completeness exclusions,
+train-only/type-aware preprocessing, manifest ratios, and a single Python
+operator entry point with two-run digest comparison. See ADR-0003 and
+`docs/data-feature-semantics.md`. The unsafe legacy API feature mapping is
+removed; an artifact configuration cannot enable the unreleased questionnaire.
+
+Verification is recorded in `docs/data-preparation-verification.md`. No actual
+NHANES file, Windows operator run, model evaluation/promotion, or production
+deployment is claimed. Windows CI configuration is supplied for execution after
+publication. Preserve previous downloaded runners; use the repository entry
+point only after this change is reviewed and its required checks pass.

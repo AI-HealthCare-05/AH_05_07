@@ -1,8 +1,9 @@
 """Audit locally downloaded NHANES files against the committed manifest."""
 
 import argparse
-import json
 from pathlib import Path
+
+from contract import load_manifest, outside_repository
 
 
 def read_columns(path: Path) -> set[str]:
@@ -16,14 +17,16 @@ def read_columns(path: Path) -> set[str]:
             "XPT audit needs pandas; use a local CSV export or install the ai dependency group."
         ) from error
 
-    return set(pd.read_sas(path, format="xport", encoding="utf-8", chunksize=1).read(1).columns)
+    with pd.read_sas(path, format="xport", encoding="utf-8", chunksize=1) as reader:
+        return set(reader.read(1).columns)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("raw_dir", type=Path)
 args = parser.parse_args()
 
-manifest = json.loads(Path("data/manifest/nhanes_2017_2020.json").read_text(encoding="utf-8"))
+manifest = load_manifest()
+args.raw_dir = outside_repository(args.raw_dir)
 join_key = manifest["join_key"]
 required = {module: {join_key, *columns} for module, columns in manifest["module_columns"].items()}
 
@@ -35,7 +38,9 @@ for module, fields in required.items():
         missing_files.append(filename)
         continue
     missing = fields - read_columns(path)
-    assert not missing, f"{filename}: missing {sorted(missing)}"
+    if missing:
+        raise ValueError(f"{filename}: missing required columns")
 
-assert not missing_files, f"missing files: {missing_files}"
+if missing_files:
+    raise ValueError(f"missing files: {missing_files}")
 print("schema audit: passed")

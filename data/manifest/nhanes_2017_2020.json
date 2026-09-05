@@ -13,21 +13,201 @@
     "sleep": "P_SLQ.xpt"
   },
   "module_columns": {
-    "demographics": ["RIAGENDR", "RIDAGEYR"],
-    "body_measures": ["BMXBMI"],
-    "blood_pressure": ["BPXOSY1", "BPXOSY2", "BPXOSY3", "BPXODI1", "BPXODI2", "BPXODI3"],
-    "physical_activity": ["PAQ605", "PAQ620"],
-    "smoking": ["SMQ020"],
-    "alcohol": ["ALQ111"],
-    "sleep": ["SLD012"]
+    "demographics": [
+      "RIAGENDR",
+      "RIDAGEYR"
+    ],
+    "body_measures": [
+      "BMXBMI"
+    ],
+    "blood_pressure": [
+      "BPXOSY1",
+      "BPXOSY2",
+      "BPXOSY3",
+      "BPXODI1",
+      "BPXODI2",
+      "BPXODI3"
+    ],
+    "physical_activity": [
+      "PAQ605",
+      "PAQ620"
+    ],
+    "smoking": [
+      "SMQ020"
+    ],
+    "alcohol": [
+      "ALQ111"
+    ],
+    "sleep": [
+      "SLD012"
+    ]
   },
   "label": {
     "name": "hypertension_risk_group",
     "derivation": "mean of available BPXOSY1..BPXOSY3 >= 130 OR mean of available BPXODI1..BPXODI3 >= 80",
-    "prohibited_predictors": ["BPXOSY1", "BPXOSY2", "BPXOSY3", "BPXODI1", "BPXODI2", "BPXODI3"]
+    "prohibited_predictors": [
+      "BPXOSY1",
+      "BPXOSY2",
+      "BPXOSY3",
+      "BPXODI1",
+      "BPXODI2",
+      "BPXODI3"
+    ],
+    "missing_policy": "require_at_least_one_positive_finite_reading_in_each_component"
   },
-  "candidate_predictors": ["RIAGENDR", "RIDAGEYR", "BMXBMI", "PAQ605", "PAQ620", "SMQ020", "ALQ111", "SLD012"],
-  "exclusions": ["identifiers except SEQN for joining", "free text", "dates", "diagnosis and treatment fields", "unavailable-at-inference fields"],
-  "split": {"seed": 20260901, "train": 0.7, "validation": 0.15, "test": 0.15},
-  "status": "schema_audit_required_before_training"
+  "candidate_predictors": [
+    "RIAGENDR",
+    "RIDAGEYR",
+    "BMXBMI",
+    "PAQ605",
+    "PAQ620",
+    "SMQ020",
+    "ALQ111",
+    "SLD012"
+  ],
+  "exclusions": [
+    "identifiers except SEQN for joining",
+    "free text",
+    "dates",
+    "diagnosis and treatment fields",
+    "unavailable-at-inference fields"
+  ],
+  "split": {
+    "seed": 20260901,
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "status": "schema_audit_required_before_training",
+  "semantics_version": 2,
+  "population": {
+    "minimum_age": 18,
+    "maximum_coded_age": 80,
+    "age_top_code": 80,
+    "bmi_range": [
+      10,
+      80
+    ],
+    "label_missing_policy": "exclude_unless_both_systolic_and_diastolic_have_a_valid_reading",
+    "join_policy": "adult_demographics_left_join_then_label_and_bmi_eligibility"
+  },
+  "predictor_specs": {
+    "RIAGENDR": {
+      "kind": "categorical",
+      "valid_values": [
+        1,
+        2
+      ],
+      "missing_codes": [],
+      "meaning": "NHANES recorded sex category"
+    },
+    "RIDAGEYR": {
+      "kind": "continuous",
+      "minimum": 18,
+      "maximum": 80,
+      "missing_codes": [],
+      "meaning": "Age in years at screening; 80 represents 80 years and over"
+    },
+    "BMXBMI": {
+      "kind": "continuous",
+      "minimum": 10,
+      "maximum": 80,
+      "missing_codes": [],
+      "meaning": "Measured BMI kg/m2; 10..80 is the SK7 analysis/input scope, not a CDC validity rule"
+    },
+    "PAQ605": {
+      "kind": "categorical",
+      "valid_values": [
+        1,
+        2
+      ],
+      "missing_codes": [
+        7,
+        9
+      ],
+      "meaning": "Vigorous work/household activity for at least 10 continuous minutes; 1 yes, 2 no"
+    },
+    "PAQ620": {
+      "kind": "categorical",
+      "valid_values": [
+        1,
+        2
+      ],
+      "missing_codes": [
+        7,
+        9
+      ],
+      "meaning": "Moderate work/household activity for at least 10 continuous minutes; 1 yes, 2 no"
+    },
+    "SMQ020": {
+      "kind": "categorical",
+      "valid_values": [
+        1,
+        2
+      ],
+      "missing_codes": [
+        7,
+        9
+      ],
+      "meaning": "At least 100 cigarettes over lifetime; 1 yes, 2 no; not current smoking status"
+    },
+    "ALQ111": {
+      "kind": "categorical",
+      "valid_values": [
+        1,
+        2
+      ],
+      "missing_codes": [
+        7,
+        9
+      ],
+      "meaning": "At least one alcoholic drink over lifetime excluding small tastes/sips; 1 yes, 2 no; not frequency"
+    },
+    "SLD012": {
+      "kind": "categorical",
+      "valid_values": [
+        2,
+        3.0,
+        3.5,
+        4.0,
+        4.5,
+        5.0,
+        5.5,
+        6.0,
+        6.5,
+        7.0,
+        7.5,
+        8.0,
+        8.5,
+        9.0,
+        9.5,
+        10.0,
+        10.5,
+        11.0,
+        11.5,
+        12.0,
+        12.5,
+        13.0,
+        13.5,
+        14.0
+      ],
+      "missing_codes": [],
+      "meaning": "Weekday/workday main sleep period category; 2 means less than 3 hours, 14 means at least 14 hours; other values are half-hour rounded hours"
+    }
+  },
+  "preprocessing": {
+    "continuous_missing": "train_median_fail_if_all_missing",
+    "categorical_missing": -1,
+    "categorical_encoding": "one_hot_in_model_pipeline",
+    "split_input_order": "SEQN_ascending"
+  },
+  "source_codebooks": {
+    "demographics": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_DEMO.htm",
+    "body_measures": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_BMX.htm",
+    "blood_pressure": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_BPXO.htm",
+    "physical_activity": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_PAQ.htm",
+    "smoking": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_SMQ.htm",
+    "alcohol": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_ALQ.htm",
+    "sleep": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/P_SLQ.htm"
+  }
 }

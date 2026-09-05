@@ -5,13 +5,11 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from sklearn.compose import ColumnTransformer
+from preprocessing import make_preprocessor
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
 
 parser = argparse.ArgumentParser()
 parser.add_argument("split_dir", type=Path)
@@ -22,23 +20,12 @@ manifest = json.loads(Path("data/manifest/nhanes_2017_2020.json").read_text(enco
 features, target = manifest["candidate_predictors"], manifest["label"]["name"]
 train = pd.read_parquet(args.split_dir / "train.parquet")
 validation = pd.read_parquet(args.split_dir / "validation.parquet")
-numeric = [name for name in features if pd.api.types.is_numeric_dtype(train[name])]
-categorical = [name for name in features if name not in numeric]
-preprocess = ColumnTransformer(
-    [
-        ("numeric", SimpleImputer(strategy="median"), numeric),
-        (
-            "categorical",
-            Pipeline(
-                [
-                    ("impute", SimpleImputer(strategy="most_frequent")),
-                    ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
-                ]
-            ),
-            categorical,
-        ),
-    ]
-)
+split_metadata = json.loads((args.split_dir / "split_metadata.json").read_text(encoding="utf-8"))
+if (
+    split_metadata.get("semantics_version") != manifest["semantics_version"]
+    or split_metadata.get("features") != manifest["candidate_predictors"]
+):
+    raise ValueError("split metadata does not match the versioned feature semantics")
 
 models = {
     "logistic_regression": LogisticRegression(max_iter=2000),
@@ -46,7 +33,7 @@ models = {
 }
 results = {}
 for name, model in models.items():
-    pipeline = Pipeline([("preprocess", preprocess), ("model", model)])
+    pipeline = Pipeline([("preprocess", make_preprocessor(manifest, split_metadata["fill_values"])), ("model", model)])
     pipeline.fit(train[features], train[target])
     probability = pipeline.predict_proba(validation[features])[:, 1]
     results[name] = {

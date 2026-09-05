@@ -41,3 +41,13 @@ does not substitute for reviewed sanitized evidence from the operator run.
 ## Gate A decision rule
 
 Gate A can be marked complete when the requirements, API contract, architecture/ERD, risk register, and this matrix agree on the current state and next P0 work. Passing every AC is not required for Gate A; the unresolved conditions remain explicit P0 work and must not be represented as complete.
+
+## Preparation semantics prerequisite
+
+Before AC-02/03/07 model release work, preparation version 2 must be reviewed.
+The single CLI and `tests/data` cover missing/partial BP, questionnaire special
+codes, sleep end categories, source joins, manifest split ratios, train-only
+imputation, source-order repeatability, XPT ingestion and failure/no-overwrite
+behavior. The API regression confirms that artifact configuration alone cannot
+bypass the missing input semantics agreement. These are synthetic code checks,
+not evidence that the actual Gate 1B operator run has passed.
