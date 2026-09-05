@@ -132,7 +132,7 @@ ADR-0003 defines version 2 feature semantics and the single
 are retained, with explicit categorical types and shared scikit-learn
 preprocessing for comparison and artifact creation. The exact lockfile is
 unchanged. The synthetic Linux/Windows workflow is a code regression gate; it
-never downloads NHANES or publishes Gate 1B evidence. Actual data preparation,
+never downloads NHANES or publishes Gate 1B evidence. Actual preparation now has user-approved evidence in `docs/model-gate-1b-evidence.md`;
 model evaluation and promotion remain separate uncompleted evidence gates.
 
 ### Evidence input byte stability

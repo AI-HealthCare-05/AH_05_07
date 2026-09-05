@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "gate": "model_gate_1b",
+  "status": "prepared_not_trained",
+  "repository_commit": "cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad",
+  "dataset_id": "nhanes-2017-march-2020-prepandemic",
+  "manifest_sha256": "ab5b952d4041457f2ead0360ee46978db409aeddb7b8097e166dbaa714151b52",
+  "toolchain_lock_sha256": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
+  "derived_table_sha256": "680950650b8b15592eca69948a80b83f57f39d17fcf596383e29c1b9d9ed405e",
+  "split_digest": "67b5a3ebec1d4881c5ea68ce2b475eeb18520b553f2e599dddde995c11cc238d",
+  "seed": 20260901,
+  "features": [
+    "RIAGENDR",
+    "RIDAGEYR",
+    "BMXBMI",
+    "PAQ605",
+    "PAQ620",
+    "SMQ020",
+    "ALQ111",
+    "SLD012"
+  ],
+  "label": "hypertension_risk_group",
+  "prohibited_predictors_absent": true,
+  "row_counts": {
+    "total": 7944,
+    "train": 5560,
+    "validation": 1192,
+    "test": 1192
+  },
+  "partition_sha256": {
+    "train": "47cd6bffdfb83ec5206ba3a81225c22e82538b654198a6d37de6c9d8638bfc8d",
+    "validation": "54f004082c3484b3698ff0d20a4efd8dccaa5a07abf927de1d72b414571f1e84",
+    "test": "c961bd9e5fc7151e55eee3d16c690b82b8d26e69e817d5d831fd7362fe6e4979"
+  }
+}
