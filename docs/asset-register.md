@@ -84,10 +84,12 @@ Canva full-screen keyframe guides visual QA only; it is not a runtime asset.
    alpha or platform behavior requires it), strip nonessential metadata, and
    record width, height, bytes, content type, SHA-256, focal point, and
    `decorative` status in this register.
-2. The future bucket is `sk7-assets-prod`; the planned immutable prefixes are
+2. The published bucket is `sk7-assets-prod`; the immutable prefixes are
    `visual/v1/backgrounds/`, `visual/v1/characters/`, and
-   `visual/v1/identity/`. No bucket, object, or binding exists because of this
-   register. A future manifest belongs under `visual/v1/manifests/`.
+   `visual/v1/identity/`. The 2026-09-05 v1 release contains the approved two
+   backgrounds, two identity icons, five decorative characters, and the
+   manifest. This register does not authorize any whole-screen, utility,
+   idle, or focus asset at runtime.
 3. Immutable binaries use `Cache-Control: public, max-age=31536000, immutable`.
    A manifest uses `Cache-Control: public, max-age=300, must-revalidate`.
    Objects are versioned rather than overwritten, and public listing remains
