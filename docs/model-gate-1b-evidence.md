@@ -1,6 +1,6 @@
 # Gate 1B approved preparation evidence
 
-Status: `prepared_not_trained`. Related Issue: #208 (kept open for PR review).
+Status: `prepared_not_trained`. Related Issue: #208 (closed after PR #212 merge and CI verification).
 Execution commit: `cb3a3f06d7378fe4d526abd66275af1e2fb5c7ad`.
 The [approved JSON](evidence/model-gate-1b.json) is copied unchanged from the
 latest generated evidence. Its commit identifies the actual preparation run,
@@ -50,8 +50,8 @@ separate from this evidence validation.
 Issue #208's preparation, two-run reproducibility, human evidence review and
 publication-approval conditions are supported by the report and approved JSON.
 The evidence PR adds committed-evidence CI and synchronized acceptance/runbook/
-handoff records. Review its CI checks and merge before closing the Issue; the
-assistant does not close it. No raw files, Parquet, individual values, imputation
+handoff records. PR #212 is merged and its CI checks passed; #208 was closed on subsequent
+user instruction as preparation complete. No raw files, Parquet, individual values, imputation
 statistics, local review metadata or full logs are included.
 
 Model training, evaluation, promotion and production deployment were not
@@ -59,3 +59,15 @@ performed. AC-02/03/07 model-release requirements remain open: a versioned input
 adapter, bounded model comparison/evaluation, model card, verified artifact and
 promotion decision require separate work. Preparation evidence does not enable
 the `503 model_not_ready` API or establish model quality.
+
+
+## Gate 1B closure and next implementation
+
+PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
+committed-evidence and synthetic checks plus general CI all passed. All #208
+preparation/publication conditions were confirmed and the Issue was closed on
+user instruction. This supersedes earlier pending-review text above. The
+approved evidence remains unchanged and `prepared_not_trained`, not model complete.
+Issue #213 implements the bounded synthetic-tested train/validation comparison
+path in `docs/model-comparison-runbook.md`. No actual model fit, test evaluation,
+serialization, promotion, adapter/UI change or deployment is claimed.

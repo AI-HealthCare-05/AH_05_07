@@ -151,3 +151,16 @@ fresh-checkout regression; full Ruff lint/format, Gate 1B contract/self-test,
 toolchain contract, secret boundary and whitespace checks passed. Remote
 Windows/Linux results are recorded in the referencing PR's Data preparation
 checks; both must pass before merge. No actual-data rerun is part of this fix.
+
+
+## Frozen validation execution path (Issue #213)
+
+ADR-0004 and `docs/model-comparison-runbook.md` define the existing
+`compare_baselines.py` as the single execution entry, shared `preprocessing.py`,
+aggregate functions in `evaluate_predictions.py`, fixed `evaluation_rules.py`
+and strict comparison verifier. Libraries and uv.lock are unchanged. Former
+standalone prediction-file CLI use is replaced by this validated path. CI uses
+only synthetic fixtures. Gate 1B #208 is complete via merged PR #212 at
+`04ab996ba68c852fdf3f47ca94101294bd849f00`, with successful Windows/Linux evidence
+and regression checks. Its state remains prepared_not_trained. Actual model
+comparison is deferred until this implementation is merged and separately run.
