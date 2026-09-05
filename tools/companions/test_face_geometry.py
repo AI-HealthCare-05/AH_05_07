@@ -16,6 +16,7 @@ def load_geometry():
         "coat_profiles",
         "profile_front_y",
         "coat_front_y",
+        "eye_surface_offset",
         "face_warp_point",
         "warp_face",
         "marking_point",
@@ -66,6 +67,18 @@ def signed_volume(vertices, faces):
 
 
 class FaceGeometryTests(unittest.TestCase):
+    def test_shallow_cranium_eyes_preserve_embedding_and_original_species_stay_fixed(self):
+        reference = -0.487 + 0.040 - GEOMETRY["coat_front_y"]("bear", 0.25, 2.25)
+        self.assertGreater(reference, 0.015)
+        for kind in ("cat", "fox", "squirrel"):
+            coat = GEOMETRY["coat_front_y"](kind, 0.25, 2.25)
+            self.assertLess(-0.487 + 0.040 - coat, -0.02, "Reproduce the old detached eye centerline")
+            offset = GEOMETRY["eye_surface_offset"](kind)
+            self.assertAlmostEqual(-0.487 + offset + 0.040 - coat, reference)
+            self.assertLess(-0.487 + offset - coat, 0, "Front hemisphere stays visible")
+        for kind in ("bear", "rabbit", "dog", "red_panda", "otter", "capybara", "hedgehog", "penguin", "seal"):
+            self.assertEqual(GEOMETRY["eye_surface_offset"](kind), 0)
+
     def test_profile_matches_known_ellipse_and_actual_rounded_pear_vertices(self):
         front = GEOMETRY["profile_front_y"]
         self.assertAlmostEqual(front(0.6, 0, (0, 0, 0), (1, 1, 1)), -0.8)

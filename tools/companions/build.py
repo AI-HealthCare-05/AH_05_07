@@ -86,6 +86,13 @@ def coat_front_y(kind, x, z):
     return min(supported)
 
 
+def eye_surface_offset(kind):
+    """Preserve the original eye embedding when the species cranium is shallower."""
+    if kind not in ("cat", "fox", "squirrel"):
+        return 0.0
+    return coat_front_y(kind, 0.25, 2.25) - coat_front_y("bear", 0.25, 2.25)
+
+
 def face_warp_point(kind, point, muzzle_width):
     """Apply one shared deformation to the muzzle and attached nose/mouth surfaces."""
     x, y, z = point
@@ -417,10 +424,16 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     bind(skin, rig, lambda co: {"hips": 1.0} if kind == "seal" and co.z < 0.8 else skin_weights(co))
     for s, sign in (("L", 1), ("R", -1)):
         ear("ear." + s, sign * 0.50, kind, base, inner, rig)
-        eyeball = surface("Eye " + s, (sign * 0.25, -0.487, 2.25), (0.047, 0.040, 0.068), eye, 16, 24)
+        eye_offset = eye_surface_offset(kind)
+        eyeball = surface("Eye " + s, (sign * 0.25, -0.487 + eye_offset, 2.25), (0.047, 0.040, 0.068), eye, 16, 24)
         bind(eyeball, rig, fixed("blink." + s))
         glint = surface(
-            "Eye catchlight " + s, (sign * 0.25 - 0.009, -0.523, 2.278), (0.010, 0.007, 0.012), cream, 8, 12
+            "Eye catchlight " + s,
+            (sign * 0.25 - 0.009, -0.523 + eye_offset, 2.278),
+            (0.010, 0.007, 0.012),
+            cream,
+            8,
+            12,
         )
         bind(glint, rig, fixed("blink." + s))
         if kind == "penguin":
