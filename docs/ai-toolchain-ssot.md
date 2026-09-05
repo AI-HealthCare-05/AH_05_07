@@ -153,7 +153,6 @@ toolchain contract, secret boundary and whitespace checks passed. Remote
 Windows/Linux results are recorded in the referencing PR's Data preparation
 checks; both must pass before merge. No actual-data rerun is part of this fix.
 
-
 ## Frozen validation execution path (Issue #213)
 
 ADR-0004 and `docs/model-comparison-runbook.md` define the existing
@@ -171,3 +170,16 @@ validation_compared_not_promoted. The relative HGB result does not establish
 quality sufficiency, statistical significance, Korean-user performance or release
 suitability. No tool, lock, CONFIG, probability calibration or model is changed
 by publication. Windows/Linux CI validates committed aggregates without fitting.
+
+## Exploratory uncertainty implementation (Issue #217)
+
+PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7` with passing
+Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
+closed for evidence publication only. Approved comparison and Gate JSON remain
+unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
+paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
+This PR implements and synthetically validates it; actual uncertainty execution
+requires separate approval after merge. Pointwise conditional exploratory
+intervals do not establish training stability, multiplicity control, NHANES
+survey inference or Korean-user validity. Calibration, older-age performance,
+external validation and prospectively defined release criteria remain open.

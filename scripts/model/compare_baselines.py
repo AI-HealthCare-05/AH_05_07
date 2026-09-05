@@ -33,12 +33,12 @@ def model_factories():
     }
 
 
-def fit_reports(manifest, frames, fills):
+def fit_predictions(manifest, frames, fills):
     features, label = manifest["candidate_predictors"], manifest["label"]["name"]
     preprocess = make_preprocessor(manifest, fills)
     train = preprocess.fit_transform(frames["train"][features])
     validation = preprocess.transform(frames["validation"][features])
-    reports = {}
+    predictions = {}
     with threadpool_limits(limits=CONFIG["threads"]), warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         warnings.simplefilter("error", RuntimeWarning)
@@ -55,8 +55,15 @@ def fit_reports(manifest, frames, fills):
                 or ((probability < 0) | (probability > 1)).any()
             ):
                 raise ValueError("invalid_probability")
-            reports[name] = report(frames["validation"], probability[:, 1], label)
-    return reports
+            predictions[name] = probability[:, 1].copy()
+    return predictions
+
+
+def fit_reports(manifest, frames, fills):
+    predictions = fit_predictions(manifest, frames, fills)
+    return {
+        name: report(frames["validation"], values, manifest["label"]["name"]) for name, values in predictions.items()
+    }
 
 
 def run(split_dir, output):

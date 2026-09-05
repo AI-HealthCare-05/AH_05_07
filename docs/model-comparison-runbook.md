@@ -99,3 +99,11 @@ Further training, test evaluation, model card/artifact/promotion,
 release, user input adapter and UI work remain separate. The public result
 continues to be named 입력 기반 위험군 선별 신호; existing model-unavailable behavior
 is unchanged.
+
+## Follow-up uncertainty path
+
+Issue #217 and [the uncertainty runbook](model-uncertainty-runbook.md) define
+a separate exploratory bootstrap contract and reproduction gate. The original
+comparison command, CONFIG and approved evidence remain unchanged. This is
+implementation and synthetic validation only; actual execution needs separate
+approval after merge.

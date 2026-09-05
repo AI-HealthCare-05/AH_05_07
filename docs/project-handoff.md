@@ -279,7 +279,6 @@ comparison is reported in `docs/model-comparison-evidence.md`; promotion and
 deployment remain unperformed. Preserve previous
 raw files and outputs; a new execution must always generate new evidence.
 
-
 ## Gate 1B closure and next implementation
 
 PR #212 merged at `04ab996ba68c852fdf3f47ca94101294bd849f00`; its Windows/Linux
@@ -294,3 +293,16 @@ validation_compared_not_promoted. See `docs/model-comparison-evidence.md` for th
 older-age AUROC, low-bin underprediction, subgroup regressions, missing confidence
 intervals and limits on external/Korean-user interpretation. No test evaluation,
 serialization, promotion, adapter/UI change or deployment is claimed.
+
+## Exploratory uncertainty implementation (Issue #217)
+
+PR #216 merged at `b77f2ce3c81c620dcef4074fca60faaa88a8b5e7` with passing
+Windows/Linux committed comparison, synthetic and general CI. Issue #215 is
+closed for evidence publication only. Approved comparison and Gate JSON remain
+unchanged. ADR-0005 and `docs/model-uncertainty-runbook.md` define a separate
+paired-bootstrap CONFIG/schema and a future reproduction-gated execution path.
+This PR implements and synthetically validates it; actual uncertainty execution
+requires separate approval after merge. Pointwise conditional exploratory
+intervals do not establish training stability, multiplicity control, NHANES
+survey inference or Korean-user validity. Calibration, older-age performance,
+external validation and prospectively defined release criteria remain open.
