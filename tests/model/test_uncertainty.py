@@ -153,7 +153,8 @@ def completed_uncertainty(request):
     (repo / "docs/evidence/model-comparison.json").write_bytes(approved)
     commit(repo)
     output = comparison_output.parent / "uncertainty output"
-    # Audit actual CLI: fail any attempt to open test or write individual/model/sample files.
+    # Audit actual CLI: reject test and all file writes except aggregates/failure.
+    # The OS null device used by subprocess discovery cannot persist data.
     script = """
 import os,pathlib,runpy,sys
 root=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
@@ -162,7 +163,8 @@ def audit(event,args):
         path=pathlib.Path(os.fsdecode(args[0])).resolve()
         if path.name=='test.parquet': raise RuntimeError('test access forbidden')
         writing=args[2] & (os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND)
-        if writing and path not in {out/'uncertainty-evidence.json',out/'failure.json'}:
+        if writing and path not in {out/'uncertainty-evidence.json',out/'failure.json',pathlib.Path(os.devnull).resolve()}:
+            print('Synthetic audit blocked file write: '+str(path),file=sys.stderr)
             raise RuntimeError('private output forbidden')
 sys.addaudithook(audit)
 sys.argv=[str(root/'scripts/model/validation_uncertainty.py'),'--split-dir',sys.argv[3],'--work-dir',str(out)]
