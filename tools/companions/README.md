@@ -98,6 +98,18 @@ digest. The character name, special motion and asset provenance remain local.
 - Any failed version remains stored with a reason. Only assets that pass the stated
   QA scope count as complete; final human design review is still pending.
 
+### Explicit post-decimation skin control
+
+A real red-panda and otter light build stopped because decimation joined neighboring
+joint sets into five positive influences at two existing vertices. New material-cut
+vertices were valid. The existing four-influence guard remains unchanged. After
+reduction, only vertices exceeding that limit retain the four strongest weights
+(with a joint-index tie break) and normalize, matching the existing GLB export
+policy. Already-valid weights and all geometry stay unchanged; missing, negative,
+non-finite or unnormalized input still fails. Each new variant manifest records
+changed vertex counts and maximum discarded weight. Actual export, deformation and
+visual review are still required even after the in-memory regression probe passes.
+
 ### Species correction from actual candidate review
 
 The first capybara candidate had detached small ears in its front render and a
