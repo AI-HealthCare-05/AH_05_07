@@ -24,6 +24,8 @@
 - [R2 visual v1 runtime boundary](docs/r2-visual-v1-runtime.md)
 - [Deployment SSOT](docs/deployment-ssot.md)
 - [Project handoff and restart guide](docs/project-handoff.md)
+- [Current work state](docs/work-state.md)
+- [Work queue](docs/work-queue.md)
 - [Deployed RLS ownership verification plan](docs/deployed-rls-verification-plan.md)
 - [Cloudflare Worker rollback evidence plan](docs/cloudflare-rollback-plan.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
