@@ -52,8 +52,23 @@ test("each approved review screen can load one explicit asset", async ({ page })
 
 test("valid review selection requests exactly one approved GLB", async ({ page }) => {
   const requests: string[] = [];
+  const failedRequests: string[] = [];
+  const glbResponses: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
+  page.on("requestfailed", (request) => failedRequests.push(`${request.url()} :: ${request.failure()?.errorText ?? "unknown"}`));
+  page.on("response", (response) => {
+    if (response.url().endsWith(".glb")) glbResponses.push(`${response.status()} ${response.url()}`);
+  });
   await page.goto(reviewUrl("S02"));
+  console.log("review diagnostics", JSON.stringify({
+    status: await page.locator("[data-companion-status]").getAttribute("data-companion-status"),
+    webgl: await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    }),
+    glbResponses,
+    failedRequests,
+  }));
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   expect(companionRequests(requests)).toHaveLength(1);
   expect(companionRequests(requests)[0]).toBe(companionAssetManifest.bear.lite.url);
