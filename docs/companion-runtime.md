@@ -40,8 +40,11 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 
 기존 화면은 companion 없이도 정보·폼·탐색을 제공한다. 경계는 장식용 요소를
 읽기 순서·키보드 포커스에 추가하지 않으며, 로드 실패를 본문·버튼·폼·탐색으로
-전파할 자산 로더가 없다. 기존 CSS의 `prefers-reduced-motion: reduce` 정책을
-그대로 유지하고, 향후 시각 요소를 추가할 때도 이 경계를 선행 조건으로 삼는다.
+전파할 자산 로더가 없다. `CompanionRuntimeBoundary`는 호스트가 전달한
+`reducedMotion` boolean만 계약에 보관하며, 이를 혈압·위험·모델 사실로 추론하지
+않는다. 현재는 두 모드 모두 `null`을 반환하므로 포커스·정보 전달·실패 표면이
+생기지 않는다. 기존 CSS의 `prefers-reduced-motion: reduce` 정책을 그대로
+유지하고, 향후 시각 요소를 추가할 때도 이 경계를 선행 조건으로 삼는다.
 
 ## 자산 및 운영 경계
 

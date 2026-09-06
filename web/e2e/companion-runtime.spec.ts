@@ -7,6 +7,7 @@ import {
   companionSpecies,
   getCompanionDecision,
   getCompanionScreenDisposition,
+  isCompanionReviewCandidate,
   resolveCompanionRuntimeConfig,
 } from "../src/ui/companion";
 
@@ -19,15 +20,20 @@ test("companion contract keeps the S2 candidate and clip sets fixed", () => {
 });
 
 test("mode parsing is fail closed and review mode remains asset-disabled", () => {
-  expect(resolveCompanionRuntimeConfig(undefined)).toEqual({ mode: "off", enabled: false, assetLoading: "disabled", networkPolicy: "none" });
+  expect(resolveCompanionRuntimeConfig(undefined)).toEqual({ mode: "off", enabled: false, assetLoading: "disabled", networkPolicy: "none", reducedMotion: false });
   expect(resolveCompanionRuntimeConfig("on").mode).toBe("off");
   expect(resolveCompanionRuntimeConfig("production").mode).toBe("off");
-  expect(resolveCompanionRuntimeConfig("review")).toEqual({ mode: "review", enabled: true, assetLoading: "disabled", networkPolicy: "none" });
+  expect(resolveCompanionRuntimeConfig("review")).toEqual({ mode: "review", enabled: true, assetLoading: "disabled", networkPolicy: "none", reducedMotion: false });
+  expect(resolveCompanionRuntimeConfig("review", { reducedMotion: true }).reducedMotion).toBe(true);
 });
 
 test("screen and animation policy never uses health or model facts", () => {
   expect(getCompanionScreenDisposition("S02")).toBe("review_candidate");
+  expect(isCompanionReviewCandidate("S02")).toBe(true);
   expect(getCompanionScreenDisposition("S11")).toBe("excluded");
+  expect(isCompanionReviewCandidate("S11")).toBe(false);
+  expect(getCompanionScreenDisposition("S13")).toBe("excluded");
+  expect(isCompanionReviewCandidate("S13")).toBe(false);
   expect(getCompanionDecision("S02", "idle")).toEqual({ status: "allowed", reason: "general_review_candidate" });
   expect(getCompanionDecision("S05", "celebrate", "save_success")).toEqual({ status: "conditional", reason: "save_success_only" });
   expect(getCompanionDecision("S02", "celebrate", "save_success").status).toBe("blocked");
