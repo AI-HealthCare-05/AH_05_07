@@ -20,6 +20,7 @@ def geometry():
         "penguin_beak",
         "penguin_tail",
         "penguin_tail_weights",
+        "fox_tail_weights",
         "coat_profiles",
         "profile_front_y",
         "coat_front_y",
@@ -70,6 +71,7 @@ def geometry():
             "warp_face": lambda *_args: None,
             "material": lambda name, color: (name, color),
             "capybara_face": lambda *_args: mesh("Capybara blunt rostrum", [(0, 0, 0)], [], None),
+            "fox_tail": lambda mat: mesh("Fox wrapping tail", [(0, 0.26, 0.64)], [], mat),
         }
     )
     exec(
@@ -147,7 +149,7 @@ class PenguinGeometryTests(unittest.TestCase):
             self.assertTrue(all(0 <= value <= 1 for value in weights.values()))
 
     def test_other_species_keep_existing_face_and_tail_dispatch(self):
-        for kind in ("bear", "rabbit", "cat", "dog", "red_panda", "otter", "seal", "fox", "squirrel"):
+        for kind in ("bear", "rabbit", "cat", "dog", "red_panda", "otter", "seal", "squirrel"):
             with self.subTest(kind=kind):
                 g, made = geometry()
                 g["dispatch"](kind)
@@ -159,6 +161,10 @@ class PenguinGeometryTests(unittest.TestCase):
         g, made = geometry()
         g["dispatch"]("capybara")
         self.assertEqual([o["name"] for o in made], ["Capybara blunt rostrum"])
+        g, made = geometry()
+        g["dispatch"]("fox")
+        self.assertIn("Fox wrapping tail", [o["name"] for o in made])
+        self.assertNotIn("Species tail", [o["name"] for o in made])
 
     def test_broad_chest_outline_stays_on_supported_skin_and_eye_surrounds_stay_fixed(self):
         outlines = MARKINGS["coat_marking_outlines"]("penguin")

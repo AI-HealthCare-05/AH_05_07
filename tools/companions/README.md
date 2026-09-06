@@ -153,6 +153,33 @@ sampled move foot-position difference was about `0.0001241` authored scene units
 that result and inspect the new exported motion; do not claim exact continuous
 reproduction or infer the final fox quality pass from this source probe.
 
+The later actual `fox-v001` browser review passed playback, original opening,
+resource and video checks, but failed the requested tail-wrap gesture. In the
+standard/light side and rear-oblique special sequences, the short upturned tail
+stayed behind the pelvis. The successful functional reports and failed candidate
+are retained; a lowered body alone does not satisfy “꼬리를 감싸고 앉기”.
+
+The next fox candidate uses one authored structural correction: a longer, low
+curved tail, the same two tail bones with pivots aligned to that geometry, and a
+quarter-turn at each hinge around the rest-space vertical axis. This routes the
+tip around the right flank to the seated front. Two complementary smooth skin
+weights bridge the joint. Horizontal tail rings use a fixed vertical frame to
+avoid the generic tangent fallback reversing ring orientation. The existing
+cream tip uses one exact cut along rest-length Y instead of the old upright
+tail's Z threshold. Palette, twenty-bone count, seven clips, planted-foot setup
+and the other species' authoring paths remain unchanged.
+
+Pure checks cover closed winding, finite normalized weights, an embedded root,
+front reach, distal clearance from the authored coat union, and positive-volume
+nondegenerate cage deformation at 97 special phases. These are an independent
+two-hinge linear-skin calculation of the actual authored cage, not Blender's
+evaluated subdivision or a guarantee against every surface intersection. The
+visible hip creases in `fox-v001` have not been diagnosed as self-intersections.
+The new candidate still needs actual neutral side/rear views, special wrap/return
+and hip/foot contact inspection, the existing import/original/playback/floor/video
+gates, and human species/style review. Do not reuse `fox-v001`'s quality evidence
+for the changed geometry or relabel its failed gesture as complete.
+
 The seal's anatomical shear previously tilted the root bone and therefore sent a
 local-Y bounce partly sideways. The root alone is now excluded from that shear;
 the mesh, non-root anatomy and authored motion amplitudes remain unchanged. Pure

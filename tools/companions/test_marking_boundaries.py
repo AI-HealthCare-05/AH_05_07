@@ -22,6 +22,7 @@ def load_geometry():
         "stripe_material",
         "tail_color_planes",
         "tail_color_material",
+        "tail_color_coordinate",
         "verify_marked_surface",
         "profile_front_y",
         "coat_profiles",
@@ -154,11 +155,13 @@ class MarkingBoundaryTests(unittest.TestCase):
             self.assertGreater(max(distances), 0)
             self.assertEqual(G["face_meets_outline_edge"](points, distances, segment), expected)
 
-    def test_fox_tip_reuses_single_exact_original_height_transition(self):
-        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.6, 1.5), [((0, 0, 1.33), (0, 0, 1))])
-        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.6, 1.2), [])
-        for height, expected in ((1.3299, False), (1.33, False), (1.3301, True)):
-            self.assertIs(G["tail_color_material"]("fox_tail", height), expected)
+    def test_fox_tip_follows_new_rest_length_while_panda_height_stripes_are_preserved(self):
+        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.2, 2.5), [((0, 2.13, 0), (0, 1, 0))])
+        self.assertEqual(G["tail_color_planes"]("fox_tail", 0.2, 2.0), [])
+        for length, expected in ((2.1299, False), (2.13, False), (2.1301, True)):
+            self.assertIs(G["tail_color_material"]("fox_tail", length), expected)
+        self.assertEqual(G["tail_color_coordinate"]("fox_tail", (0, 2.2, 0.64)), 2.2)
+        self.assertEqual(G["tail_color_coordinate"]("red_panda_tail", (0, 2.2, 0.64)), 0.64)
         self.assertEqual(G["tail_color_planes"]("red_panda_tail", 0.6, 1.5), G["stripe_planes"](0.6, 1.5))
         with self.assertRaises(ValueError):
             G["tail_color_material"]("unknown", 1.4)

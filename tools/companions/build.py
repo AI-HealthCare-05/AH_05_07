@@ -256,16 +256,21 @@ def tail_color_planes(pattern, lower, upper):
     if pattern == "red_panda_tail":
         return stripe_planes(lower, upper)
     if pattern == "fox_tail":
-        return [((0, 0, 1.33), (0, 0, 1))] if lower < 1.33 < upper else []
+        return [((0, 2.13, 0), (0, 1, 0))] if lower < 2.13 < upper else []
     raise ValueError("Unknown tail material pattern")
 
 
-def tail_color_material(pattern, z):
+def tail_color_material(pattern, coordinate):
     if pattern == "red_panda_tail":
-        return stripe_material(z)
+        return stripe_material(coordinate)
     if pattern == "fox_tail":
-        return z > 1.33
+        return coordinate > 2.13
     raise ValueError("Unknown tail material pattern")
+
+
+def tail_color_coordinate(pattern, point):
+    """Fox's long horizontal rest tail uses lengthwise Y; panda stripes keep Z."""
+    return point[1] if pattern == "fox_tail" else point[2]
 
 
 def cut_surface_plane(bm, plane, bounds=None, segment=None):
@@ -384,7 +389,8 @@ def paint_surface_markings(obj):
         regions = []
         tail_pattern = pattern in ("red_panda_tail", "fox_tail")
         if tail_pattern:
-            for plane in tail_color_planes(pattern, min(v.co.z for v in bm.verts), max(v.co.z for v in bm.verts)):
+            coordinates = [tail_color_coordinate(pattern, v.co) for v in bm.verts]
+            for plane in tail_color_planes(pattern, min(coordinates), max(coordinates)):
                 cut_surface_plane(bm, plane)
         else:
             outlines = coat_marking_outlines(pattern)
@@ -404,7 +410,7 @@ def paint_surface_markings(obj):
         for face in bm.faces:
             center = face.calc_center_median()
             marked = (
-                tail_color_material(pattern, center.z)
+                tail_color_material(pattern, tail_color_coordinate(pattern, center))
                 if tail_pattern
                 else face.normal.y < 0 and any(inside_outline(center, planes) for planes in regions)
             )
@@ -625,6 +631,87 @@ def bind(obj, rig, weights):
 
 def fixed(name):
     return lambda _: {name: 1.0}
+
+
+def fox_tail_specs():
+    """A low bushy arc long enough to reach the seated front, not a rear hook."""
+    centers = [
+        (0, 0.26, 0.64),
+        (0, 0.38, 0.64),
+        (0, 0.60, 0.64),
+        (0, 0.84, 0.64),
+        (0, 1.04, 0.64),
+        (0, 1.24, 0.64),
+        (0.02, 1.44, 0.64),
+        (0.07, 1.64, 0.64),
+        (0.16, 1.84, 0.64),
+        (0.29, 2.04, 0.64),
+        (0.45, 2.22, 0.64),
+        (0.59, 2.36, 0.64),
+        (0.68, 2.44, 0.64),
+    ]
+    radii = [0.075, 0.11, 0.15, 0.18, 0.20, 0.22, 0.235, 0.24, 0.23, 0.21, 0.165, 0.105, 0.018]
+    return centers, radii
+
+
+def fox_tail_geometry(sides=20):
+    """Closed rings use a fixed vertical axis, avoiding frame flips on a Y arc."""
+    if type(sides) is not int or sides < 8:
+        raise ValueError("Fox tail requires at least eight ring sides")
+    centers, radii = fox_tail_specs()
+    vertices = []
+    for index, (center, radius) in enumerate(zip(centers, radii, strict=True)):
+        before, after = centers[max(0, index - 1)], centers[min(len(centers) - 1, index + 1)]
+        dx, dy = after[0] - before[0], after[1] - before[1]
+        length = math.hypot(dx, dy)
+        for side in range(sides):
+            angle = 2 * math.pi * side / sides
+            vertices.append(
+                (
+                    center[0] + radius * dy / length * math.sin(angle),
+                    center[1] - radius * dx / length * math.sin(angle),
+                    center[2] + radius * math.cos(angle),
+                )
+            )
+    faces = [
+        (
+            ring * sides + side,
+            ring * sides + (side + 1) % sides,
+            (ring + 1) * sides + (side + 1) % sides,
+            (ring + 1) * sides + side,
+        )
+        for ring in range(len(centers) - 1)
+        for side in range(sides)
+    ]
+    faces += [tuple(reversed(range(sides))), tuple((len(centers) - 1) * sides + i for i in range(sides))]
+    return vertices, faces
+
+
+def fox_tail(mat):
+    vertices, faces = fox_tail_geometry()
+    obj = mesh("Fox wrapping tail", vertices, faces, mat)
+    modifier = obj.modifiers.new("Soft fox tail contour", "SUBSURF")
+    modifier.levels = 2
+    apply(obj, modifier)
+    return obj
+
+
+def fox_tail_weights(co):
+    """Smooth two-bone bend around the real tail joint; complementary weights."""
+    t = max(0, min(1, (co.y - 1.04) / 0.40))
+    distal = t * t * (3 - 2 * t)
+    return {"tail.01": 1 - distal, "tail.02": distal}
+
+
+def fox_tail_bones():
+    return (("tail.01", (0, 0.34, 0.64), (0, 1.24, 0.64)), ("tail.02", (0, 1.24, 0.64), (0, 2.24, 0.64)))
+
+
+def fox_wrap_angles(pulse):
+    """One designed quarter-turn at each hinge; no search or pose-dependent scale."""
+    if not math.isfinite(pulse) or not 0 <= pulse <= 1:
+        raise ValueError("Invalid fox wrap phase")
+    return (-math.pi / 2 * pulse, -math.pi / 2 * pulse)
 
 
 def rig_create():
@@ -923,6 +1010,9 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         bpy.ops.object.mode_set(mode="EDIT")
         for side in ("L", "R"):
             rig.data.edit_bones[f"foot.{side}"].parent = rig.data.edit_bones["root"]
+        for name, head, tail in fox_tail_bones():
+            bone = rig.data.edit_bones[name]
+            bone.head, bone.tail, bone.roll = head, tail, 0
         bpy.ops.object.mode_set(mode="OBJECT")
     body_profile, head_profile, neck_profile = coat_profiles(kind)
     body = surface("Pear torso", *body_profile[:2], base, pear=body_profile[2], flatten=body_profile[3])
@@ -1042,12 +1132,19 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             tail_points = [(0, 0.38, 0.65), (0, 0.63, 0.42), (0, 0.96, 0.27), (0, 1.28, 0.2)]
             tail_radii = [0.18, 0.16, 0.11, 0.018]
     if kind != "capybara":
-        tail = penguin_tail(base) if kind == "penguin" else tube("Species tail", tail_points, tail_radii, base)
+        if kind == "penguin":
+            tail = penguin_tail(base)
+        elif kind == "fox":
+            tail = fox_tail(base)
+        else:
+            tail = tube("Species tail", tail_points, tail_radii, base)
         bind(
             tail,
             rig,
             penguin_tail_weights
             if kind == "penguin"
+            else fox_tail_weights
+            if kind == "fox"
             else lambda co: {
                 "tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)),
                 "tail.02": min(1, max(0, (co.y - 0.6) / 0.4)),
@@ -1279,8 +1376,10 @@ def special_pose(rig, kind, a, pulse):  # noqa: C901 - species motion design tab
             bone.rotation_euler = (basis.inverted() @ Matrix.Rotation(angle, 3, "X") @ basis).to_euler("XYZ")
             # The root-parent feet retain their reset rest channels throughout
             # special; no inverse-parent interpolation is needed for contact.
-        bones["tail.01"].rotation_euler.z = 1.00 * pulse
-        bones["tail.02"].rotation_euler.z = 0.95 * pulse
+        for name, angle in zip(("tail.01", "tail.02"), fox_wrap_angles(pulse), strict=True):
+            bone = bones[name]
+            basis = bone.bone.matrix_local.to_3x3()
+            bone.rotation_euler = (basis.inverted() @ Matrix.Rotation(angle, 3, "Z") @ basis).to_euler("XYZ")
 
 
 def triangles(objects):
