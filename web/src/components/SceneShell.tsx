@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
 import { primaryNavigation, type ScreenId } from "../ui/journey";
 
@@ -13,6 +14,7 @@ type SceneShellProps = {
 export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut }: SceneShellProps) {
   return (
     <main className="app-shell" data-screen={activeScreen}>
+      <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")} aria-label="오늘의 기록으로 이동">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
@@ -32,6 +34,7 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
             className={item.screen === activeScreen ? "is-active" : ""}
             type="button"
             aria-current={item.screen === activeScreen ? "page" : undefined}
+            aria-label={item.label}
             onClick={() => onNavigate(item.screen)}
             key={item.screen}
           >
@@ -42,7 +45,7 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
         ))}
       </nav>
 
-      <div className="scene-viewport">{children}</div>
+      <div id="scene-content" className="scene-viewport" tabIndex={-1}>{children}</div>
     </main>
   );
 }
@@ -59,11 +62,13 @@ type SceneProps = {
 };
 
 export function Scene({ id, eyebrow, title, body, children, actions, tone = "cream", className = "" }: SceneProps) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [id]);
   return (
     <section className={`scene scene-${tone} ${className}`.trim()} data-scene={id} aria-labelledby={`${id}-title`}>
       <div className="scene-copy">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 id={`${id}-title`}>{title}</h1>
+        <h1 ref={headingRef} tabIndex={-1} id={`${id}-title`}>{title}</h1>
         {body && <p className="scene-body">{body}</p>}
       </div>
       {children}
