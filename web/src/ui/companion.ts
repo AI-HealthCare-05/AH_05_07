@@ -31,6 +31,12 @@ export type CompanionRuntimeConfig = Readonly<{
   enabled: boolean;
   assetLoading: "disabled";
   networkPolicy: "none";
+  reducedMotion: boolean;
+}>;
+
+export type CompanionRuntimeOptions = Readonly<{
+  /** The host owns media-query detection and passes only this presentation fact. */
+  reducedMotion?: boolean;
 }>;
 
 export type CompanionSelectionContext = "save_success" | "non_semantic";
@@ -51,18 +57,26 @@ export function resolveCompanionMode(rawMode: unknown): CompanionMode {
  * belongs in this module. Review mode remains asset-disabled until S2 usage and rights
  * decisions are complete.
  */
-export function resolveCompanionRuntimeConfig(rawMode: unknown): CompanionRuntimeConfig {
+export function resolveCompanionRuntimeConfig(
+  rawMode: unknown,
+  options: CompanionRuntimeOptions = {},
+): CompanionRuntimeConfig {
   const mode = resolveCompanionMode(rawMode);
   return {
     mode,
     enabled: mode === "review",
     assetLoading: "disabled",
     networkPolicy: "none",
+    reducedMotion: options.reducedMotion === true,
   };
 }
 
+export function isCompanionReviewCandidate(screen: ScreenId): screen is CompanionReviewScreen {
+  return (companionReviewScreens as readonly string[]).includes(screen);
+}
+
 export function getCompanionScreenDisposition(screen: ScreenId): "review_candidate" | "excluded" {
-  return (companionReviewScreens as readonly string[]).includes(screen) ? "review_candidate" : "excluded";
+  return isCompanionReviewCandidate(screen) ? "review_candidate" : "excluded";
 }
 
 /**
