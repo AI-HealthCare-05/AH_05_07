@@ -9,6 +9,73 @@ Issue #200 reverted the initial runtime binding for responsive regression.
 
 The SHA-256 value, byte size, and dimensions identify the reviewed source snapshot. A resized, recompressed, converted, or metadata-scrubbed file is a new derivative and requires its own versioned entry before public delivery.
 
+## 3D companion R2 v1 delivery — Issue #247
+
+Issue [#247](https://github.com/AI-HealthCare-05/AH_05_07/issues/247) records the
+S3B delivery of the selected companion GLBs. This is a public, decorative,
+review-only delivery; it does not connect the assets to the product UI, does
+not replace the existing `visual/v1/` assets, and does not change the
+`CompanionRuntimeBoundary` default `off` state.
+
+The following common fields apply to every row in the delivery register:
+
+- Purpose: decorative companion GLB for non-operational review only.
+- Review scope: source-manifest file existence, GLB magic, byte size, SHA-256,
+  authenticated remote GET bytes/SHA-256, and custom-domain public GET status
+  and headers. Visual, motion, browser, accessibility, and operational approval
+  are not inferred by this S3B check.
+- Owner: repository owner `emotigom`.
+- Creator: `emotigom`-directed source-manifest export.
+- Creation tool: `Blender 4.5.13 LTS`, matching the selected inventory's
+  generated-manifest declarations.
+- Rights basis: human use-scope decision in [Issue #242](https://github.com/AI-HealthCare-05/AH_05_07/issues/242),
+  recorded in [s2-design-selection.md](s2-design-selection.md); this does not
+  grant reuse outside the SK7 project.
+- Source manifest: `selected-inventory-eleven-001.json`, SHA-256
+  `9fb23a63a612c7a30e8d01b6150bab258c239e4242d1f15224deeff5a1ecbd6f`.
+- MIME and cache contract: `model/gltf-binary` and
+  `public, max-age=31536000, immutable`.
+- Public/decorative classification: `public`, `decorative`, `review-only`,
+  with no semantic health meaning.
+- Review date: `2026-09-07`.
+- Replacement/supersession: new `companion/v1/` delivery; it does not replace
+  or supersede `visual/v1/` assets.
+
+Each row below is one complete delivery record with those common fields and
+the row-specific identity, digest, size, key, and URL. The local `light.glb`
+filename is preserved; only its R2 object variant is mapped to `lite`.
+
+| Asset ID | Species | Version | Variant | Source file | SHA-256 | Bytes | R2 object key | Public URL |
+|---|---|---|---|---|---|---:|---|---|
+| `COMPANION-R2-001` | bear | v007 | lite | `bear-v007/light.glb` | `7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874` | 518,636 | `companion/v1/bear/v007/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/bear/v007/lite.glb) |
+| `COMPANION-R2-002` | bear | v007 | standard | `bear-v007/standard.glb` | `48bfc97022f9799c2dccc58c0d0037a4cf06e846147e9b81864b814a5b214712` | 1,032,708 | `companion/v1/bear/v007/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/bear/v007/standard.glb) |
+| `COMPANION-R2-003` | rabbit | v002 | lite | `rabbit-v002/light.glb` | `b3559b2925bb16381adf954432e11541542c14bac7d6e6a52e7fa7f402825627` | 519,456 | `companion/v1/rabbit/v002/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/rabbit/v002/lite.glb) |
+| `COMPANION-R2-004` | rabbit | v002 | standard | `rabbit-v002/standard.glb` | `25f0165c11eea89b9f90360e72435d4ccca98bf67d30b4d45df18f8b2c580704` | 1,033,524 | `companion/v1/rabbit/v002/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/rabbit/v002/standard.glb) |
+| `COMPANION-R2-005` | cat | v002 | lite | `cat-v002/light.glb` | `6a77bf8229d43f7094208143cb611bdbb46ffd185faf769efc5114d37e3ed960` | 528,348 | `companion/v1/cat/v002/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/cat/v002/lite.glb) |
+| `COMPANION-R2-006` | cat | v002 | standard | `cat-v002/standard.glb` | `5635a2e619e0d2bbeabe125423462350f7eae6ed8c1a6f0b6c4ca00ec1053afb` | 1,043,208 | `companion/v1/cat/v002/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/cat/v002/standard.glb) |
+| `COMPANION-R2-007` | dog | v001 | lite | `dog-v001/light.glb` | `71762e0e00be1dd083fc0421533519921f0ac0c427fc08246632606406e92884` | 518,128 | `companion/v1/dog/v001/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/dog/v001/lite.glb) |
+| `COMPANION-R2-008` | dog | v001 | standard | `dog-v001/standard.glb` | `7c20c8aae1114e0be52da20acc11fc25fc60c9a4379af9fc8440b3ad9734cf8b` | 1,032,876 | `companion/v1/dog/v001/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/dog/v001/standard.glb) |
+| `COMPANION-R2-009` | red_panda | v003 | lite | `red_panda-v003/light.glb` | `a6de102411b17295b2a9ea9a88592b4e4e9d4f3d8af73101f906f669ef927b48` | 644,528 | `companion/v1/red_panda/v003/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/red_panda/v003/lite.glb) |
+| `COMPANION-R2-010` | red_panda | v003 | standard | `red_panda-v003/standard.glb` | `29ddc43291cbfa3fc7c7479f983e5d560eddfa83a2966094773278f471f997a7` | 1,198,468 | `companion/v1/red_panda/v003/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/red_panda/v003/standard.glb) |
+| `COMPANION-R2-011` | otter | v003 | lite | `otter-v003/light.glb` | `ac55dec25c28ff1cad1702f152987ed98e10620cc5f46a40862bfa6a86ffc27b` | 548,508 | `companion/v1/otter/v003/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/otter/v003/lite.glb) |
+| `COMPANION-R2-012` | otter | v003 | standard | `otter-v003/standard.glb` | `83106523fa0ab0e360c914d4522b3c5f4b32c0bdf0c29ee712565d1f5168330e` | 1,068,024 | `companion/v1/otter/v003/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/otter/v003/standard.glb) |
+| `COMPANION-R2-013` | capybara | v002 | lite | `capybara-v002/light.glb` | `c6908aff87e737f53c7c1133bc509caa8ee5623521ffec5198f5c672bd003e20` | 513,236 | `companion/v1/capybara/v002/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/capybara/v002/lite.glb) |
+| `COMPANION-R2-014` | capybara | v002 | standard | `capybara-v002/standard.glb` | `de7ceab11ef6d22682737b99dfa18f5930cae345fbbd965c4776b621101f8c9a` | 1,027,480 | `companion/v1/capybara/v002/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/capybara/v002/standard.glb) |
+| `COMPANION-R2-015` | hedgehog | v004 | lite | `hedgehog-v004/light.glb` | `7a8730bd05ef339dcdaa08af1d7e3741b54a1637d97f7c397901d107399e08fa` | 598,996 | `companion/v1/hedgehog/v004/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/hedgehog/v004/lite.glb) |
+| `COMPANION-R2-016` | hedgehog | v004 | standard | `hedgehog-v004/standard.glb` | `a957fe8de2f6902198ebe4328589e2b852050a9656dda2504c5edfd89f7b0ede` | 1,122,852 | `companion/v1/hedgehog/v004/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/hedgehog/v004/standard.glb) |
+| `COMPANION-R2-017` | penguin | v002 | lite | `penguin-v002/light.glb` | `d209bf3f3f1390679f3d4902b09705fba3f94e75156f59041c7c9392f9549fe5` | 576,468 | `companion/v1/penguin/v002/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/penguin/v002/lite.glb) |
+| `COMPANION-R2-018` | penguin | v002 | standard | `penguin-v002/standard.glb` | `62159b3a39f921b0948bcc5862ff186578e55fe1e5dd9e9b6df803e6138e7144` | 1,104,748 | `companion/v1/penguin/v002/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/penguin/v002/standard.glb) |
+| `COMPANION-R2-019` | fox | v002 | lite | `fox-v002/light.glb` | `f4809971e572fe133465698ef73ac2b89ddff975141c8dc87a04f71f58637660` | 556,720 | `companion/v1/fox/v002/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/fox/v002/lite.glb) |
+| `COMPANION-R2-020` | fox | v002 | standard | `fox-v002/standard.glb` | `247dfd616e2be0955040961d74ef9942d63de06a5a711a04cd4f27377b4028aa` | 1,081,136 | `companion/v1/fox/v002/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/fox/v002/standard.glb) |
+| `COMPANION-R2-021` | squirrel | v001 | lite | `squirrel-v001/light.glb` | `3265086d5add45e0911852107b21db4a085349c002e743b2f403f8301426b6f5` | 540,440 | `companion/v1/squirrel/v001/lite.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/squirrel/v001/lite.glb) |
+| `COMPANION-R2-022` | squirrel | v001 | standard | `squirrel-v001/standard.glb` | `1a256a93117cda2884a11ff91dc35eac33b5544595fc3e8d3d8882828cd5afff` | 1,058,696 | `companion/v1/squirrel/v001/standard.glb` | [public](https://sk7-assets.gomdory.com/companion/v1/squirrel/v001/standard.glb) |
+
+The 22 rows total 17,867,184 bytes: 11 `standard` objects and 11 `lite`
+objects. No GLB binary is committed to Git. The prior preflight contract had a
+63-character inventory digest ending in `...ecbd6`; the corrected contract
+adds the missing trailing `f` only. The inventory, GLB bytes, and manifest
+records were not changed.
+
 ## Canva selection register — Issue #194
 
 Issue #194 is a read-only source review after the responsive Calm Clay Journey
