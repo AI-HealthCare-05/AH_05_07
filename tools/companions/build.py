@@ -974,8 +974,8 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     return rig
 
 
-def species_proportions(rig, kind):  # noqa: C901 - anatomical warp applied identically to mesh and rig
-    """Apply the same authored anatomical warp to rest geometry and bone endpoints."""
+def species_proportions(rig, kind):  # noqa: C901 - anatomical warp with a fixed movement anchor
+    """Warp rest anatomy while preserving the seal's vertical movement anchor."""
 
     def point(co):
         x, y, z = co
@@ -1000,6 +1000,9 @@ def species_proportions(rig, kind):  # noqa: C901 - anatomical warp applied iden
     bpy.context.view_layer.objects.active = rig
     bpy.ops.object.mode_set(mode="EDIT")
     for bone in rig.data.edit_bones:
+        if kind == "seal" and bone.name == "root":
+            # Local Y carries the vertical bounce; anatomical shear would tilt it.
+            continue
         bone.head, bone.tail = point(bone.head), point(bone.tail)
     bpy.ops.object.mode_set(mode="OBJECT")
 
