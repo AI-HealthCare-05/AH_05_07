@@ -197,7 +197,9 @@ tested in memory and rejected for central body and mutual flipper intersections.
 Diagnostic exit 0 records that result; it is not quality acceptance. The proposal
 was not integrated, further exploration of the same approach stopped, and seal
 remains `needs_revision`, excluded from the completed-asset count. A new manual
-flipper/rig design and full deformation review are still required.
+flipper/rig design and full deformation review would be required for future use.
+The user subsequently closed this production scope at the eleven reviewed species;
+no further seal modeling is scheduled in this run.
 
 For the penguin, inspect special at fractions `0.375` and `0.625` as well as a full
 loop: quarter/midpoint stills miss its alternating spine roll. For the squirrel,
