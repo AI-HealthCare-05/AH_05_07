@@ -9,7 +9,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4173",
     launchOptions: {
-      args: useSoftwareWebGL ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [],
+      args: useSoftwareWebGL ? ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [],
     },
   },
   webServer: {
