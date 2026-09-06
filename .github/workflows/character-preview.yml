@@ -1,0 +1,44 @@
+name: Local character preview
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/character-preview/**'
+      - 'docs/adr/0006-local-character-preview.md'
+      - 'web/**'
+      - '.github/workflows/character-preview.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/character-preview/**'
+      - 'docs/adr/0006-local-character-preview.md'
+      - 'web/**'
+      - '.github/workflows/character-preview.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-viewer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - name: Verify temporary synthetic fixture and production isolation
+        run: node tools/character-preview/verify.cjs --synthetic --record-smoke
