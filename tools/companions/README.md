@@ -129,6 +129,34 @@ recognition or motion; new candidate renders and full playback remain required.
 The penguin's current foot is a flattened rounded form, so its material name is
 simply `Ochre feet`; a material label is not evidence of modeled webbing.
 
+### Fox sitting and seal movement anchors
+
+An actual fox source probe found feet below the authored ground during its sitting
+motion. The two existing foot bones now use the root as parent for that species;
+their special-action channels stay planted while pelvis and thighs move back/down.
+The other six actions convert their former thigh-parent FK poses into root-relative
+foot channels at the original keys. A fresh Blender in-memory probe checked 193
+integer/half-frame sitting poses: sampled foot position/basis error was zero and
+the minimum world Z stayed positive. The six actions reproduced their original
+25 key poses within `1e-5`. Between-key interpolation is not identical: the largest
+sampled move foot-position difference was about `0.0001241` authored scene units. Preserve
+that result and inspect the new exported motion; do not claim exact continuous
+reproduction or infer the final fox quality pass from this source probe.
+
+The seal's anatomical shear previously tilted the root bone and therefore sent a
+local-Y bounce partly sideways. The root alone is now excluded from that shear;
+the mesh, non-root anatomy and authored motion amplitudes remain unchanged. Pure
+regression checks fail on the previous source. A fresh Blender armature-only probe
+then checked all seven actions at 97 frames each: no sampled horizontal root motion,
+matching loop endpoints, and the existing `0.09`/`0.16` move/celebrate heights.
+This is a movement-anchor check without mesh creation, export or rendering. The
+future seal still requires complete body/flipper deformation and playback QA.
+
+For the penguin, inspect special at fractions `0.375` and `0.625` as well as a full
+loop: quarter/midpoint stills miss its alternating spine roll. For the squirrel,
+include `0.125`, `0.375`, `0.625`, `0.875` and continuous motion. A posed screenshot
+at a zero crossing is not evidence that the authored movement is absent or approved.
+
 ## Storage and resumption
 
 Large editable sources, GLBs, renders and videos stay in the external run directory.
