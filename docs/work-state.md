@@ -2,7 +2,8 @@
 
 ## 기준
 
-- 현재 기준 main: `73adb04a4157512e22dbb95fe0c0b6aeaa5f1f53`.
+- S3C 작업 시작 기준 main: `41361189110f9903acce8704bdef6d375ab913ea`.
+  이 값은 작업 시작 당시의 역사적 기준이며, 현재/미래 main을 가리키는 포인터가 아니다.
 - S1 검사 기준: `3561e0c66c518c53c8be204ae7258ec4ba577a3b` (PR #239), `origin/main` 대조 완료.
 - 작업 안전·주장 경계: [AGENTS.md](../AGENTS.md), [프로젝트 인계](project-handoff.md).
 - #225는 1회차 제출 준비 작업의 종료 이력으로 보존한다. 남은 조건은 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)에서 추적한다.
@@ -22,10 +23,13 @@
 - S2 사람 선정 기록: [s2-design-selection.md](s2-design-selection.md). 11개 후보를
   모두 `selected`로 기록했으나 화면별 사용 범위·동작 제한·권리 확인은 pending이며
   제품 적용이나 출시 승인을 의미하지 않는다.
-- S3 런타임 기반: [companion-runtime.md](companion-runtime.md)와 중앙 TypeScript
-  계약·기본 OFF 경계를 구현했다. S3A 사람 사용 범위·권리 결정과 S3B R2
-  `companion/v1/` 22개 게시 및 byte/SHA/public header 검증을 완료했다. 실제
-  자산 로드·화면 적용은 S3C까지 시작하지 않는다.
+- S3 런타임: [companion-runtime.md](companion-runtime.md)와 중앙 TypeScript 계약·기본
+  OFF 경계를 보존하면서 S3C review runtime을 구현했다. S3A 사람 사용 범위·권리
+  결정과 S3B R2 `companion/v1/` 22개 게시 및 byte/SHA/public header 검증을 완료했고,
+  실제 22개 로드·7 clip 이름·정책·responsive·failure isolation을 local review browser에서
+  검증했다. production activation은 승인하지 않았다.
+- successor review gate: [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)
+  를 생성했다. #248은 이 사람 시각 수용·운영 결정 전까지 닫지 않는다.
 
 ## 현재 S3 상태
 
@@ -33,7 +37,7 @@
 | --- | --- | --- |
 | S3A | 완료 | Issue #242 사람 결정: S02/S03/S05/S10만 허용, S04/S07/S08/S09/S11/S12/S13/S14 제외, 일반 4 clip, 조건부 `celebrate`/`move`, `special` 보류, 물범 제외. |
 | S3B | 완료 | [companion-r2-v1.json](evidence/companion-r2-v1.json): 22개, 17,867,184 bytes, source↔remote/public 검증 PASS. |
-| S3C | 미착수 | [successor Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)에서 검증된 manifest를 `VITE_SK7_COMPANION_MODE=review`에만 연결. production default `off` 유지. |
+| S3C | review runtime implemented/verified | [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248): evidence-generated manifest, explicit selector, lazy Three.js `0.185.1`, 22/22 GLB, policy/network/responsive/failure tests. production activation **NOT APPROVED**. |
 
 ## 미결 결정
 
@@ -50,7 +54,7 @@
 | S0 | 병합 기록 정리와 짧은 인계 | 이 문서, [작업 대기열](work-queue.md), 로컬 `HANDOFF-LITE.md`, 문서 검사와 PR. |
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
-| S3 | 화면 적용 검토 | S3A/S3B를 완료했다. #244의 중앙 계약·기본 OFF/fail-closed 경계와 #247의 R2 delivery를 보존하며, 실제 GLB 연결·화면 적용은 S3C successor Issue로 이관했다. |
+| S3 | 화면 적용 검토 | S3A complete, S3B complete, S3C review runtime implemented/verified. #248의 review-only 범위에서만 실제 GLB를 읽었고, 운영 활성화·최종 배정은 successor S3D에서 사람 승인으로 결정한다. |
 | S4 | 1회차 마감 | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·

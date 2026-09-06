@@ -51,12 +51,14 @@
   },
   "cors_current_state": {
     "result": "read_only_recorded",
-    "allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev"],
+    "allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev", "http://127.0.0.1:4173"],
     "allowed_methods": ["GET", "HEAD"],
     "allowed_headers": [],
     "exposed_headers": ["ETag", "Content-Length", "Content-Type", "Cache-Control"],
     "max_age_seconds": 86400,
-    "wildcard_added": false
+    "wildcard_added": false,
+    "s3c_local_review_origin_added": true,
+    "s3c_previous_allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev"]
   },
   "runtime_boundary": {
     "default_mode": "off",

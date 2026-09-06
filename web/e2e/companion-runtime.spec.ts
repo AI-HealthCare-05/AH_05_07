@@ -19,11 +19,11 @@ test("companion contract keeps the S2 candidate and clip sets fixed", () => {
   expect(companionExcludedScreens).toEqual(["S04", "S07", "S08", "S09", "S11", "S12", "S13", "S14"]);
 });
 
-test("mode parsing is fail closed and review mode remains asset-disabled", () => {
+test("mode parsing is fail closed and review mode is lazy review-only", () => {
   expect(resolveCompanionRuntimeConfig(undefined)).toEqual({ mode: "off", enabled: false, assetLoading: "disabled", networkPolicy: "none", reducedMotion: false });
   expect(resolveCompanionRuntimeConfig("on").mode).toBe("off");
   expect(resolveCompanionRuntimeConfig("production").mode).toBe("off");
-  expect(resolveCompanionRuntimeConfig("review")).toEqual({ mode: "review", enabled: true, assetLoading: "disabled", networkPolicy: "none", reducedMotion: false });
+  expect(resolveCompanionRuntimeConfig("review")).toEqual({ mode: "review", enabled: true, assetLoading: "lazy-review", networkPolicy: "single-approved-glb", reducedMotion: false });
   expect(resolveCompanionRuntimeConfig("review", { reducedMotion: true }).reducedMotion).toBe(true);
 });
 

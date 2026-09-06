@@ -32,11 +32,12 @@
 - 현재 결과: Issue #244에서 11종·7 clip 중앙 계약, 기본 `off`/fail-closed 게이트,
   S02/S03/S05/S10 검토 후보와 제외 화면 정책, 동작 의미·reduced-motion·실패 격리
   경계를 구현하고 합성 검증했다. Issue #247에서 검증된 22개 `companion/v1/`
-  GLB를 R2에 게시하고 source↔remote/public 검증을 완료했다. 실제 GLB/R2 연결과
-  화면 적용은 아직 하지 않았다.
-- 남은 선행 조건: [S3C successor Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)에서 review mode 한정 로드, 1366/390/320,
-  network/bundle, reduced-motion, 실패 격리와 제외 화면 미로드를 검증한다. 운영
-  활성화는 범위에 없다.
+  GLB를 R2에 게시하고 source↔remote/public 검증을 완료했다. Issue #248에서
+  evidence-generated manifest와 lazy Three.js `0.185.1` review runtime을 연결하고,
+  22/22 GLB·7 clip·정책·network·responsive·failure isolation을 검증했다.
+- 현재 경계: production activation **NOT APPROVED**. 사람의 시각 수용과 운영 여부는
+  [S3D successor Issue](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)에서
+  별도로 결정한다.
 
 ## S4 — 1회차 마감
 

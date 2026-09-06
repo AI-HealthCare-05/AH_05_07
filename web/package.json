@@ -9,19 +9,24 @@
     "dev:evidence:vp-07a": "vite --mode evidence-vp-07a",
     "dev:evidence:vp-10": "vite --mode evidence-vp-10",
     "dev:evidence:vp-11a": "vite --mode evidence-vp-11a",
+    "prebuild": "node scripts/generate-companion-manifest.mjs",
     "build": "tsc -b && vite build",
+    "verify:companion-manifest": "node scripts/verify-companion-manifest.mjs",
     "test:e2e": "playwright test && playwright test --config=playwright.production.config.ts",
+    "test:e2e:review": "playwright test --config=playwright.review.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
+    "@types/three": "0.185.0",
     "@vitejs/plugin-react": "^5.0.2",
     "typescript": "^5.9.2",
     "vite": "^7.1.3"

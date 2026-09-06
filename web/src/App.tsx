@@ -24,6 +24,7 @@ import {
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
 import { allowsE2eFixture, getE2eSession } from "./lib/e2eHarness";
 import { supabase, supabaseConfigured } from "./lib/supabase";
+import { resolveCompanionSelection, type CompanionSelectionContext } from "./ui/companion";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 
 const challengeActions = [
@@ -168,7 +169,9 @@ function App() {
   const [windowState, setWindowState] = useState<WindowState>(fixture?.loadError ? "error" : fixture ? "ready" : "loading");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-  const [confirmedSave, setConfirmedSave] = useState(false);
+  const [confirmedSave, setConfirmedSave] = useState(
+    () => Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
+  );
   const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
   const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
@@ -493,7 +496,16 @@ function App() {
         ? truthfulFallback
         : requestedScreen === "S06" && (!activeChallenge?.first_checkin_on || Boolean(todayMeasurement))
           ? truthfulFallback
-          : automaticallyEmpty ? "S12" : requestedScreen;
+        : automaticallyEmpty ? "S12" : requestedScreen;
+  const companionContext: CompanionSelectionContext | undefined = activeScreen === "S05" && confirmedSave
+    ? "save_success"
+    : initialSearch.get("companion_context") === "non_semantic"
+      ? "non_semantic"
+      : undefined;
+  const companionSelection = useMemo(
+    () => resolveCompanionSelection(activeScreen, initialSearch, companionContext),
+    [activeScreen, companionContext, initialSearch],
+  );
 
   function openRecord(item: RecordBrowseItem) {
     navigate("S09", item.key);
@@ -641,7 +653,7 @@ function App() {
   }
 
   return (
-    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void supabase?.auth.signOut() : undefined}>
+    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void supabase?.auth.signOut() : undefined} companionSelection={companionSelection}>
       {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>이전 7일 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}
