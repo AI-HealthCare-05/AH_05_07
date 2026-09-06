@@ -1,7 +1,8 @@
 # SK7 고도화 실행 기록
 
-실행 기준은 PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`이다.
-시작 시 origin/main과 일치했고 사용자 작업 트리는 변경하지 않았다.
+현재 기록 정리 기준은 PR #237 병합 `e63b35473080fc0f3a614702eb4ec4457652ffff`이며
+origin/main과 일치한다. PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`은
+각 고도화 작업이 시작한 과거 기준으로 보존한다. 사용자 작업 트리는 변경하지 않았다.
 [1회차 마감](mvp1-closeout.md)은 계속 진행 중이다. 고도화 결과나 캐릭터 제작은
 발주 범위 수용·입력 의미·adapter·모델·운영 출시 승인을 대신하지 않는다.
 기존 제출 검토본과 승인 evidence·manifest·CONFIG·lock을 보존한다.
@@ -15,13 +16,14 @@
 
 | 목표 | 작업 범위 / 근거 | 상태 |
 | --- | --- | --- |
-| G1 | [#228](https://github.com/AI-HealthCare-05/AH_05_07/issues/228), [PR #234](https://github.com/AI-HealthCare-05/AH_05_07/pull/234) | 한국어·기록 흐름·접근성 수정, 로컬 합성 35개 및 운영 번들 경계 검사 통과; CI 7개 성공, 병합 대기 |
-| G2 | [#229](https://github.com/AI-HealthCare-05/AH_05_07/issues/229), [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235) | 격리 로컬 설치·빌드·실제 API 경로 489회 응답 측정·정리 완료; CI 6개 성공, 병합 대기 |
-| G3 | [#230](https://github.com/AI-HealthCare-05/AH_05_07/issues/230), [PR #231](https://github.com/AI-HealthCare-05/AH_05_07/pull/231) | 목적별 세 경로와 여섯 결정 구체화; 기존 evidence verifier 및 CI 4개 성공, 사람 결정·병합 대기 |
-| G4 | [#233](https://github.com/AI-HealthCare-05/AH_05_07/issues/233), [PR #237](https://github.com/AI-HealthCare-05/AH_05_07/pull/237) | 사용자 조정 범위의 로컬 제작·검토본 준비 완료: 11종·77개 고유 동작; 물범 제외, 사람 디자인 검토·PR 병합 대기 |
-| G5 | [#232](https://github.com/AI-HealthCare-05/AH_05_07/issues/232), [PR #236](https://github.com/AI-HealthCare-05/AH_05_07/pull/236) | 선택 11종 양쪽 GLB 전체 재생·바닥 표본·영상 검사 통과; 12종 목록에서 물범은 수정 필요 대체 표시, 운영 빌드와 분리 |
+| G1 | [#228](https://github.com/AI-HealthCare-05/AH_05_07/issues/228), [PR #234](https://github.com/AI-HealthCare-05/AH_05_07/pull/234) | 한국어·기록 흐름·접근성 수정, 로컬 합성 35개 및 운영 번들 경계 검사 통과; CI 7개 성공, `ba549c6…`로 병합 완료 |
+| G2 | [#229](https://github.com/AI-HealthCare-05/AH_05_07/issues/229), [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235) | 격리 로컬 설치·빌드·실제 API 경로 489회 응답 측정·정리 완료; CI 6개 성공, `0515f62…`로 병합 완료 |
+| G3 | [#230](https://github.com/AI-HealthCare-05/AH_05_07/issues/230), [PR #231](https://github.com/AI-HealthCare-05/AH_05_07/pull/231) | 목적별 세 경로와 여섯 결정 구체화; 기존 evidence verifier 및 CI 4개 성공, `2c9adb6…`로 병합 완료; 사람 결정은 대기 |
+| G4 | [#233](https://github.com/AI-HealthCare-05/AH_05_07/issues/233), [PR #237](https://github.com/AI-HealthCare-05/AH_05_07/pull/237) | 사용자 조정 범위의 로컬 제작·검토본 준비 완료: 11종·77개 고유 동작; 물범 제외, `e63b354…`로 병합 완료; 사람 디자인 검토는 대기 |
+| G5 | [#232](https://github.com/AI-HealthCare-05/AH_05_07/issues/232), [PR #236](https://github.com/AI-HealthCare-05/AH_05_07/pull/236) | 선택 11종 양쪽 GLB 전체 재생·바닥 표본·영상 검사 통과; 12종 목록에서 물범은 수정 필요 대체 표시, `02851bf…`로 병합 완료, 운영 빌드와 분리 |
 
-위 PR의 결과는 각각의 검증된 브랜치 기준이며 아직 main의 운영 구현으로 간주하지 않는다.
+위 PR의 소스·문서 변경은 main에 병합되었다. 병합은 운영 배포, 운영 검증, 모델
+승인 또는 발주 범위 수용을 뜻하지 않는다.
 G2 수치는 합성 계정·별도 로컬 환경에 한정된다. 일부 측정 구간에 G5 소프트웨어
 WebGL 검사가 겹친 사실을 해당 집계 보고에 기록했으며, 운영 성능이나 완전한 유휴
 호스트 측정으로 표현하지 않는다. G1의 화면 폭/확대/키보드 검사는 실제 기기·사용자
@@ -185,4 +187,5 @@ G4 `7d9d97e`와 G5 `b28596c`까지 포함한 통합 문서의 상대 파일 링�
 검토는 대기다. 종료 알림 자동화는 중지 상태를 유지한다.
 
 실제 모델/데이터 실행·test 접근/해시·보정·bootstrap·직렬화·승격·배포는 없다.
-제품은 `model_not_ready`를 유지한다. PR 병합은 사용자가 한다.
+제품은 `model_not_ready`를 유지한다. 이후 운영·모델·발주 판단은
+[후속 Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)에서 별도로 추적한다.
