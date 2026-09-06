@@ -354,7 +354,7 @@ test("synthetic signed-in session requires confirmation before deleting the curr
   await page.goto("/?e2e=signed-in&screen=S08");
   await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "삭제" }).click();
-  const confirmation = page.getByRole("alert").filter({ hasText: "챌린지 기록을 삭제할까요?" });
+  const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await expect(confirmation).toBeVisible();
   await confirmation.getByRole("button", { name: "취소" }).click();
   await expect(confirmation).toHaveCount(0);
@@ -475,7 +475,7 @@ test("synthetic signed-in session keeps current check-in deletion recoverable af
   await page.goto("/?e2e=signed-in&screen=S08");
   await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "삭제" }).click();
-  const confirmation = page.getByRole("alert").filter({ hasText: "챌린지 기록을 삭제할까요?" });
+  const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await confirmation.getByRole("button", { name: "삭제" }).click();
 
   await expect(page.getByRole("status")).toContainText("삭제 여부를 확인하지 못했습니다.");
