@@ -5,6 +5,31 @@ Issue #232. 기준 `c46c772486a30319e594dbb9cf555263d5fba1a9`에서 작성한 �
 [실행/재검증 방법](../tools/character-preview/README.md)을 따른다. 운영 제품에
 연결하지 않고 model_not_ready, 기존 모델 evidence·manifest·CONFIG·lock을 보존한다.
 
+## 현재 확인된 범위
+
+2026-09-06 로컬 검토에서 **7종·49개 고유 동작**을 선언한 기술 QA 범위의 통과로
+선정했다. 표준/경량의 재생 횟수를 고유 동작 수에 중복 합산하지 않는다. 카탈로그
+선택은 reviewer sidecar와 실제 참조 파일을 독립 대조한 뒤 기록했으며, inventory는
+보관 상태를 나타낸다. 자동 inventory가 품질 통과를 추론한 것은 아니다.
+
+| 후보 | 실제 전체 viewer 실행 | 외부 로컬 QA 루트의 검토 기록 |
+| --- | --- | --- |
+| 곰 v007·토끼 v002 | `ffcbf7eaa15a7b7a5920feee37f410d95cd687d6` | `g5-technical-review-bear-rabbit-dog-001.json`; 추가 바닥은 아래 강아지 실행 SHA |
+| 강아지 v001 | `a707a9e186cf5999a7c73499227408a25c898da4` | 위 세 후보 sidecar; 같은 SHA의 바닥 검사와 별도 원본 열기를 구분 |
+| 고양이 v002 | `bedaa179be9977842e1232d926346c4a0ec6ba80` | `g5-technical-review-cat-v002-001.json` |
+| 레서판다 v003·수달 v003·카피바라 v002 | `2033c366e742645cb31f642b7b4a8a44fc7e1257` | [새 세 후보의 근거와 한계](#새-세-후보-실행-기록과-한계) |
+
+7종 모두 편집 원본을 각각 새 Blender 세션에서 열고, 표준/경량 7개 실제 clip loop,
+추가 고정 바닥, 무음 영상 전체 decode와 명시한 이미지 표본 검토를 수행했다.
+프로그램의 전체 loop 완료와 decode는 사람이 모든 프레임을 관찰했다는 뜻이 아니다.
+원본 검사는 편집 구조, 시각 검토는 명시한 화면과 시점에 한정한다. 이전 네 후보의
+보고·캡처·영상은 수정하거나 재실행하지 않았다.
+
+**고슴도치·펭귄·물범·여우·다람쥐의 실제 검증과 모든 후보의 사람 디자인 승인은
+대기**다. 새 소스 수정이나 짧은 probe만으로 남은 후보를 통과 처리하지 않는다.
+레서판다 꼬리 진단, 물리 접지·전 프레임 충돌 미보증, 실제 모바일·운영 성능 미확인은
+계속 남는다. 제품 통합과 출시는 이 검토실의 승인 범위가 아니다.
+
 ## 구현된 검토 경로
 
 12종 목록에서 준비된 한 자산만 읽고 표준/경량을 전환한다. 실제 GLB에서 clip·
@@ -31,6 +56,8 @@ resolve/is_file 미호출과 정상 중첩 파일 접근을 확인한다.
 | 10회 자산 교체 | renderer geometry/texture/program 수가 초기 두 상태보다 증가하지 않음 | 모든 드라이버·장시간 세션의 메모리 누수 부재 |
 | fallback / lazy | 읽기 실패·미준비·초기 reduced·no-WebGL·context loss 대체, 선택 외 GLB prefetch 없음 | 자산 자체의 검토/출시 완료 |
 | production build / 일반 검사 | 운영 bundle에 viewer/Three.js 경로·식별 내용이 없고 기존 계약과 분리 | 배포나 운영 검증 완료 |
+
+## 이전 실행 기록
 
 합성 fixture 로컬 검증에서 14clip-variant의 loop 완료와 대체/교체 검사를 통과했다.
 초기 검사 도중 URL 경로 정규화와 키보드 focus-visible 검사 방식을 수정했고 실패
@@ -158,8 +185,8 @@ script·참조 보고의 SHA를 로컬 reviewer sidecar에서 연결한다. 곰/
 `sourceCommit`은 catalog 기준 c46…이고 실제 viewer 실행 SHA는 위 코드 및 ground
 report/새 reviewer sidecar에서 구분한다. 고양이 generator는 `c7c41323318f0af4159be29d04bdc3c0c3837e53`,
 standard/light GLB는 각각1,043,208/528,348bytes,32,656/14,272삼각형이다. 기존 binary/
-fresh-import 참조와 이 층을 결합한 선언 범위 기술 QA는 총4종·28고유clip이며 나머지8종과
-사람 art/운영 통합 승인은 남아 있다. 이전3종의 검증을 재실행하거나 결과를 수정하지 않았다.
+fresh-import 참조와 이 층을 결합해 해당 실행 당시4종·28고유clip을 기록했다. 이후 추가
+후보는 상단 현재 상태와 별도 실행 근거로 구분한다. 이전3종의 결과는 수정하지 않았다.
 
 편집 원본 검사는 별도의 읽기 전용 외부 script로 수행했다. 곰 v007·토끼 v002·강아지 v001·
 고양이 v002의 `rigged.blend`와 `source.blend`를 각각 새로운 Blender4.5.13 세션에서 열어
@@ -171,6 +198,72 @@ SHA와 검토 맥락 bedaa179, 각 generator SHA는 새 원본 완료 manifest�
 이는 `.blend`가 실제로 열리고 편집 구조가 남았다는 검사이며 모든 자세의 시각 승인이나
 완전한 장기 편집 호환성 보증은 아니다.
 
+## 새 세 후보 실행 기록과 한계
+
+레서판다 v003·수달 v003·카피바라 v002의 generator는
+`6a617adff19252d6883db869c89c2fdfdd8d30c1`이다. 기존 카탈로그를 수정하지 않고
+새 검토용 카탈로그에 이 세 후보만 활성화해 GLB/hero 9개를 동일 바이트로 복사했다.
+viewer `2033c366e742645cb31f642b7b4a8a44fc7e1257`의 깨끗한 체크아웃에서
+Blender·브라우저·영상 decode를 순차 실행했다. 이 실행 SHA를 후속 문서 커밋으로
+바꾸지 않는다. full JSON의 `sourceCommit`은 카탈로그 기준 c46…이며 실제
+viewer·generator와 다른 참조임을 새 sidecar에 명시했다.
+
+각 후보는 전체18개 기능 검사, 7clip ×2variant의14개 실제 loop, 고정 표준형 바닥의
+정면/옆면12개 view-variant loop와36개 자세를 통과했다. 1366/390/320 화면, 키보드,
+자원 해제/10회 교체, 실패·reduced-motion·no-WebGL/context loss 대체를 포함한다.
+원본6개는 새 Blender4.5.13 세션에서 각각 exit0으로 열렸다. `rigged`는 animate 이전
+20bone/mesh/live skin, `source`는 정확한7action/keyframe을 검사했다. 생성 코드,
+manifest, 원본/복사 GLB·hero, 실행 카탈로그와 viewer SHA는 전후 그대로였다.
+
+| 새 후보 | 표준/경량 삼각형 | 전체/바닥 무음 영상 길이 |
+| --- | --- | --- |
+| 레서판다 v003 | 36,280 /17,126 | 60.08 /63.88초 |
+| 수달 v003 | 33,250 /14,764 | 61.60 /62.56초 |
+| 카피바라 v002 | 32,636 /14,272 | 61.12 /63.04초 |
+
+6개 영상은 전체 decode exit0·고정 black-frame 검출0이며 실제9개 시점씩을 열람했다.
+추가 근접6loop와 레서판다 측면2loop도 새 출력에서 진행했고, 34.84초/11.96초의
+두 영상 decode와 각9개 추출 시점을 확인했다. 총8개 영상이다. 기본 화면 전체,
+표준/경량1초 pose, 바닥108개 pose contact와 추가 근접 화면을 직접 확인했다.
+시작의 로딩/hero 표시, 확대 화면의 의도된 전체 실루엣 잘림, 마지막 바닥 영상의
+viewport 변경에 따른 회색 여백은 실제 기록대로 보존한다.
+
+레서판다의 고개/몸통 내밀기와 꼬리 연결부, 수달의 모은 손 방향 변화 및 볼 부착,
+카피바라의 작은 귀·주둥이와 고개 상하 변화를 확인한 표본에서 큰 관절 분리나 명백한
+바닥 침범·발 끌림은 관찰하지 못했다. 수달 손 비비기는 .45/.50/.55, 카피바라 고개는
+.25/.75 시점을 추가로 확인했다. 이동과 축하의 공중 구간은 선언된 in-place hop이며,
+손 사이의 정확한 표면 접촉이나 걸음의 물리적 접지를 인증하지 않는다.
+
+레서판다 꼬리의 `winding_opposes_vertex_normals` 진단은 표준2/경량1개 면에 남는다.
+두 재질을 함께 정확한 position으로 weld한 검사에서는 닫힌 단일 표면과 일관된 edge
+방향을 확인했지만 작은 국소 접힘/자기 교차까지 배제하지 않았다. 실제 캡처 카메라를
+사용한 해당 면의 기하학적 투영 크기 최대값은 후면 사선에서 폭 약0.236px·높이0.033px,
+추가 측면에서0.167px·0.094px였다. 최초 확대 후면은 하부 실루엣을 잘라 별도 덜 확대한
+측면으로 꼬리 기저 전체를 확보했다. viewer의 pan은 비활성화되어 있으며 시도한 drag가
+camera target을 바꿨다고 기록하지 않는다. 작은 면 자체를 이미지에서 분해해 관찰하거나
+raster occlusion을 검사한 것은 아니다. 닫힌 topology·subpixel 크기를 무해성의 증명으로
+삼거나 기존 진단을0으로 고치지 않는다.
+
+새 세 후보의 성능 표본은 full Chromium151/Iris Xe D3D11, DPR1/AA off의 **녹화 없는**
+표준형 context에서 화면별 약3.2초 활성 RAF였다. 평균 간격의 역수는 약60FPS였으나
+실제 모바일 기기·운영·목표 FPS나 모든 GPU에서의 성능 승인을 뜻하지 않는다.
+
+아래는 저장소 파일이 아닌 **외부 로컬 QA 루트에 대한 상대 위치**다. 큰 파일은
+Git에 복제하지 않으며 실제 파일 검토 시 해당 참조와 SHA를 대조한다.
+
+| 로컬 근거 | 위치와 적용 범위 |
+| --- | --- |
+| 새3종 완료 목록 | `g5-new-trio-technical-completion-001.json`, SHA-256 `0f8bed7516506b9d2c351a85aa7d59085c734183078b31563b38f61096621c7d` |
+| 개별 검토 | `g5-technical-review-red_panda-v003-001.json`, `g5-technical-review-otter-v003-001.json`, `g5-technical-review-capybara-v002-001.json`; 원본·실행·열람 이미지와 한계 연결 |
+| 실제 실행 | `g5-trio-qa-001/completion.json`;15단계 exit0, 후보별 원본/기능/바닥/영상 세부 출력 참조 |
+| 꼬리 후속 진단 | `g5-red-panda-v003-tail-topology-001.json`, `g5-red-panda-tail-projected-pixels-001.json`, `g5-red-panda-tail-side-projected-pixels-001.json`; 품질 자동 승인이 아님 |
+| 7종 보관 목록 | `run-20260906-0319/selected-inventory-seven-001.json`;7폴더/49고유clip, 품질 추론 없음 |
+| 새3종 영상 사본 | `run-20260906-0319/g5-new-trio-motion-copies-001.json`;6개 WebM의 source/destination SHA 동일, 재인코딩 없음 |
+
+검토 후 원본 카탈로그는 별도 선택 단계에서7종으로 갱신했다. 과거 검증에 사용한 별도
+카탈로그와 JSON은 그대로 보존한다. 영상 사본은 각 후보 폴더의 `motion-preview.webm`/
+`ground-preview.webm`이며 같은 디스크 사본이지 독립 백업은 아니다.
+
 ## 재개와 보존
 
 후속 문서 head28cd175의 Windows software CI는 `recorded page close exceeded 15000ms`로
@@ -178,7 +271,7 @@ SHA와 검토 맥락 bedaa179, 각 generator SHA는 새 원본 완료 manifest�
 경로의 장기 녹화 종료 한계를 다시 확인한 것이며 인코더 원인으로 확정하지 않았다.
 CI는14개 전체 기능 loop와 나머지 검사를 녹화 없이 유지하고, 모든 기능 context를 닫은 뒤
 별도의 합성 한 clip 전체 loop 녹화/종료를 검사하도록 분리했다. 단기 smoke와 전체 녹화의
-보고 scope도 구분한다. 실제4종의 full Chromium/Iris Xe 전체 녹화 결과를 재실행하거나
+보고 scope도 구분한다. 당시 실제4종의 full Chromium/Iris Xe 전체 녹화 결과를 재실행하거나
 수정하지 않으며, CI smoke 통과가 장기 software 녹화 한계 해결을 뜻하지 않는다.
 
 새 catalog/GLB가 준비되면 해당 입력을 고정하고 새 외부 결과 경로에 verifier를
