@@ -797,6 +797,14 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     eye = material("Soft glossy eyes", (0.007, 0.006, 0.005), 0.23)
     inner = material("Inner ear", tuple(v * 0.60 for v in body_color))
     rig = rig_create()
+    if kind == "fox":
+        # Root-parent foot controls keep the special pose planted even between
+        # exported keys. Other clips bake the former thigh-parent world pose.
+        bpy.context.view_layer.objects.active = rig
+        bpy.ops.object.mode_set(mode="EDIT")
+        for side in ("L", "R"):
+            rig.data.edit_bones[f"foot.{side}"].parent = rig.data.edit_bones["root"]
+        bpy.ops.object.mode_set(mode="OBJECT")
     body_profile, head_profile, neck_profile = coat_profiles(kind)
     body = surface("Pear torso", *body_profile[:2], base, pear=body_profile[2], flatten=body_profile[3])
     head = surface("Cheek and cranium", *head_profile[:2], base, pear=head_profile[2], flatten=head_profile[3])
@@ -1051,6 +1059,8 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
                     rig.pose.bones[f"blink.{side}"].scale.y = 1 - 0.9 * pulse
             elif clip == "special":
                 special_pose(rig, kind, a, pulse)
+            if kind == "fox" and clip != "special":
+                bake_fox_fk_feet(rig)
             for bone in rig.pose.bones:
                 for path in ("location", "rotation_euler", "scale"):
                     bone.keyframe_insert(path, frame=frame, group=bone.name)
@@ -1062,6 +1072,34 @@ def animate(rig, kind):  # noqa: C901 - seven explicit authored pose tracks
                             key.interpolation = "LINEAR"
     rig.animation_data.action = bpy.data.actions["idle"]
     bpy.context.scene.frame_set(1)
+
+
+def root_relative_foot_basis(rest_foot, rest_thigh, posed_thigh, rest_root, posed_root, requested_foot_basis):
+    """Preserve the former thigh-parent world pose under the new root parent."""
+    desired = posed_thigh @ rest_thigh.inverted() @ rest_foot @ requested_foot_basis
+    return rest_foot.inverted() @ rest_root @ posed_root.inverted() @ desired
+
+
+def authored_pose_matrix(bone):
+    """FK from current channels without dependency-graph/action resampling."""
+    rest = bone.bone.matrix_local
+    if bone.parent is None:
+        return rest @ bone.matrix_basis
+    return authored_pose_matrix(bone.parent) @ bone.parent.bone.matrix_local.inverted() @ rest @ bone.matrix_basis
+
+
+def bake_fox_fk_feet(rig):
+    root = rig.pose.bones["root"]
+    for side in ("L", "R"):
+        thigh, foot = rig.pose.bones[f"thigh.{side}"], rig.pose.bones[f"foot.{side}"]
+        foot.matrix_basis = root_relative_foot_basis(
+            foot.bone.matrix_local,
+            thigh.bone.matrix_local,
+            authored_pose_matrix(thigh),
+            root.bone.matrix_local,
+            authored_pose_matrix(root),
+            foot.matrix_basis.copy(),
+        )
 
 
 def fox_sit_displacement(pulse, vertical_leg_length):
@@ -1124,10 +1162,11 @@ def special_pose(rig, kind, a, pulse):  # noqa: C901 - species motion design tab
         hips_basis = bones["hips"].bone.matrix_local.to_3x3()
         bones["hips"].location = hips_basis.inverted() @ Vector(displacement)
         for side in ("L", "R"):
-            for name, rotation in (("thigh", angle), ("foot", -angle)):
-                bone = bones[f"{name}.{side}"]
-                basis = bone.bone.matrix_local.to_3x3()
-                bone.rotation_euler = (basis.inverted() @ Matrix.Rotation(rotation, 3, "X") @ basis).to_euler("XYZ")
+            bone = bones[f"thigh.{side}"]
+            basis = bone.bone.matrix_local.to_3x3()
+            bone.rotation_euler = (basis.inverted() @ Matrix.Rotation(angle, 3, "X") @ basis).to_euler("XYZ")
+            # The root-parent feet retain their reset rest channels throughout
+            # special; no inverse-parent interpolation is needed for contact.
         bones["tail.01"].rotation_euler.z = 1.00 * pulse
         bones["tail.02"].rotation_euler.z = 0.95 * pulse
 
