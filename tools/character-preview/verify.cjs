@@ -35,14 +35,59 @@ if (synthetic) {
 if (!fs.existsSync(path.join(vendor, 'vendor-manifest.json'))) run('prepare_vendor.py', ['--output', vendor]);
 const dist = path.join(root, 'web/dist');
 assert(fs.existsSync(path.join(dist, 'index.html')), 'Build the production web first');
+const localViewerMarkers = [
+  /character-preview/i,
+  /캐릭터 검토실/,
+  /previewDiagnostics/,
+  /tools[\\/]character-preview/i,
+  /\bcatalog\.json\b/i,
+  /\bvendor-manifest\.json\b/i,
+  /(?:^|["'\\/])vendor[\\/]/i,
+];
+const staticThreeMarkers = [
+  /GLTFLoader/,
+  /THREE\./,
+  /three\.module/i,
+  /(?:^|["'])three\/(?:addons|src|build)\//i,
+];
+function readDistText(file) {
+  return fs.readFileSync(file, 'utf8');
+}
 function inspectDist(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const file = path.join(dir, entry.name);
     if (entry.isDirectory()) inspectDist(file);
-    else assert(!/character-preview|캐릭터 검토실|GLTFLoader|three\.module/.test(fs.readFileSync(file, 'utf8')), 'Viewer leaked into product build');
+    else {
+      const text = readDistText(file);
+      const marker = localViewerMarkers.find((pattern) => pattern.test(text));
+      assert(!marker, `Local character preview leaked into product build: ${path.relative(dist, file)} (${marker})`);
+    }
   }
 }
-inspectDist(dist); fs.mkdirSync(output, { recursive: true });
+function initialEntryFile() {
+  const html = readDistText(path.join(dist, 'index.html'));
+  const match = html.match(/<script[^>]+type=["']module["'][^>]+src=["']([^"']+)["']/i)
+    ?? html.match(/<script[^>]+src=["']([^"']+)["'][^>]+type=["']module["']/i);
+  assert(match, 'Production index does not declare a module entry');
+  const url = new URL(match[1], 'https://product.invalid');
+  assert.equal(url.origin, 'https://product.invalid', 'Production entry must be local');
+  const entry = path.resolve(dist, decodeURIComponent(url.pathname).replace(/^\/+/, '').split('/').join(path.sep));
+  assert(entry === dist || entry.startsWith(dist + path.sep), 'Production entry escapes dist');
+  assert(fs.existsSync(entry), `Production entry is missing: ${match[1]}`);
+  return entry;
+}
+function inspectProductionIsolation() {
+  const entry = initialEntryFile();
+  const entryText = readDistText(entry);
+  const marker = staticThreeMarkers.find((pattern) => pattern.test(entryText));
+  assert(!marker, `Three.js statically included in production main entry: ${path.relative(dist, entry)} (${marker})`);
+  const assetsDir = path.join(dist, 'assets');
+  assert(fs.existsSync(assetsDir), 'Production assets directory is missing');
+  assert(fs.readdirSync(assetsDir).some((name) => /^CompanionReviewRenderer-[^/]+\.js$/i.test(name)), 'Approved lazy CompanionReviewRenderer chunk is missing');
+}
+inspectDist(dist);
+inspectProductionIsolation();
+fs.mkdirSync(output, { recursive: true });
 const server = spawn(python, [path.join(__dirname, 'serve.py'), '--assets', assets, '--vendor', vendor, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
 const errors = [], network = [], checks = [], playback = [], samples = [], assetManifest = [], motionVideos = [];
 const digest = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');

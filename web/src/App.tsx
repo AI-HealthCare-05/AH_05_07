@@ -502,10 +502,7 @@ function App() {
     : initialSearch.get("companion_context") === "non_semantic"
       ? "non_semantic"
       : undefined;
-  const companionSelection = useMemo(
-    () => resolveCompanionSelection(activeScreen, initialSearch, companionContext),
-    [activeScreen, companionContext, initialSearch],
-  );
+  const companionSelection = resolveCompanionSelection(activeScreen, initialSearch, companionContext);
 
   function openRecord(item: RecordBrowseItem) {
     navigate("S09", item.key);
