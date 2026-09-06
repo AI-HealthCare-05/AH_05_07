@@ -129,6 +129,16 @@ recognition or motion; new candidate renders and full playback remain required.
 The penguin's current foot is a flattened rounded form, so its material name is
 simply `Ochre feet`; a material label is not evidence of modeled webbing.
 
+The first penguin candidate also retained the shared protruding mammalian muzzle,
+bifurcated smile and rounded ball tail. Its actual front/side render review stopped
+further rendering. The penguin now has a closed tapered bill seated directly in
+the cranium, a short low tapered tail and a broader breast material region on the
+same closed skin. Its eye surroundings, palette, rig and seven clips stay intact.
+Geometry tests check closed winding, analytic base overlap, bounded tail weights
+and the unchanged other-species dispatch. Remeshed attachment, reduced-mesh material
+cuts and species recognition still require a new candidate's actual render and
+playback review; the former v001 remains stored as needing revision.
+
 ### Fox sitting and seal movement anchors
 
 An actual fox source probe found feet below the authored ground during its sitting
@@ -156,6 +166,19 @@ For the penguin, inspect special at fractions `0.375` and `0.625` as well as a f
 loop: quarter/midpoint stills miss its alternating spine roll. For the squirrel,
 include `0.125`, `0.375`, `0.625`, `0.875` and continuous motion. A posed screenshot
 at a zero crossing is not evidence that the authored movement is absent or approved.
+
+### Quill tag lifetime in Blender
+
+The first hedgehog build stopped because its quill attachment received all-zero
+base tags. A single-quill memory probe reproduced the actual cause in Blender
+4.5.13: SUBSURF preserved both weight groups, but the saved RNA group handles
+reported index `-1` after modifier application. The authoring code now resolves
+indices by name after the modifier and obtains a fresh handle for each deletion.
+The same probe passed attachment and left no temporary groups after the fix.
+The base-existence, `0.5` weight, finite-range and insertion-depth guards are
+unchanged. The diagnostic command's exit 0 means it captured the former attachment
+failure successfully; it does not turn the failed build into a pass. A complete
+new hedgehog candidate still needs export, deformation and visual review.
 
 ## Storage and resumption
 
