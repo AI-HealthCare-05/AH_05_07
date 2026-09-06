@@ -930,8 +930,8 @@ def hedgehog_quill_specs():
     golden_angle = math.pi * (3 - math.sqrt(5))
     # Native linearly interpolated base tags cover more of the rising shaft
     # than smoothed geometry tags. Seat the crown 0.04 lower so its full base
-    # band remains below the authored head height; the unchanged tips still
-    # extend above its silhouette. Attachment guards stay unchanged.
+    # band remains below the authored head height. Tip length/direction stay
+    # unchanged relative to each base; attachment guards stay unchanged.
     for region, count, bottom, span in (("back", 55, 0.83, 1.48), ("crown", 22, 2.22, 0.26)):
         for index in range(count):
             phase = (index + (0.5 if region == "crown" else 0)) * golden_angle
