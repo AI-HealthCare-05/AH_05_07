@@ -1,0 +1,26 @@
+name: Local reliability controls
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  controls:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Check local-only and aggregate arithmetic controls
+        run: python tools/local-reliability/test_controls.py
+      - name: Check committed local aggregates (no HTTP or SQL execution)
+        run: python tools/local-reliability/verify_report.py docs/evidence/local-reliability.json
