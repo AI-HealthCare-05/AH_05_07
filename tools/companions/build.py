@@ -561,17 +561,21 @@ def tube(name, points, radii, mat, sides=20, attach_quill=False):
     if attach_quill:
         # Inspect all evaluated base-band vertices after subdivision, not only
         # the center or the original cage. Preserve topology and the tip band.
+        # Applying the modifier replaces Blender's vertex-group RNA handles.
+        # Resolve fresh indices; the old handles can report -1 despite intact weights.
+        base_index = obj.vertex_groups["Temporary quill base"].index
+        tip_index = obj.vertex_groups["Temporary quill tip"].index
         coordinates = [tuple(vertex.co) for vertex in obj.data.vertices]
         memberships = [{group.group: group.weight for group in vertex.groups} for vertex in obj.data.vertices]
         projected, _ = attach_quill_points(
             coordinates,
-            [groups.get(base_tag.index, 0) for groups in memberships],
-            [groups.get(tip_tag.index, 0) for groups in memberships],
+            [groups.get(base_index, 0) for groups in memberships],
+            [groups.get(tip_index, 0) for groups in memberships],
         )
         for vertex, coordinate in zip(obj.data.vertices, projected, strict=True):
             vertex.co = coordinate
-        obj.vertex_groups.remove(tip_tag)
-        obj.vertex_groups.remove(base_tag)
+        obj.vertex_groups.remove(obj.vertex_groups["Temporary quill tip"])
+        obj.vertex_groups.remove(obj.vertex_groups["Temporary quill base"])
         obj.data.update()
     return obj
 
