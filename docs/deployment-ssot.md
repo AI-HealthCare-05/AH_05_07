@@ -74,13 +74,13 @@ deployment.
 | Supabase schema | Applied migration filename and sanitized gate evidence only when a release depends on a schema change. |
 | Rollback | A complete, distinct previous runtime identifier plus the rehearsal result. |
 
-### Latest reviewed web release
+### Historical web release and rollback evidence
 
 - Web release commit: `856606a2a230558887e294e44e8fe99186a542a8`.
 - Deployment snapshot: `emotigom/ah-05-07-pages` workflow run
   [`33822332784`](https://github.com/emotigom/ah-05-07-pages/actions/runs/33822332784),
   completed successfully on 2026-09-04.
-- Current Worker version recorded in Issue #143:
+- Worker version recorded at Issue #143:
   `38bb08b6-66ca-4933-8cbe-ee857aa4ece7`.
 - Public web/API/CORS smoke and operator-reviewed magic-link/session checks:
   passed, as recorded in Issue #143.
@@ -89,15 +89,17 @@ deployment.
 - Source baseline when this G4 evidence was reviewed:
   `61ee356e43eeb4f06120af870c4fc2b9ee5f9d41` after the test-only PR #145;
   no runtime deployment is required for that assertion-only change.
-- Rollback: open. The recorded `38bb08b6` value is not distinct from the current
-  Worker version prefix and must not be represented as a verified rollback
-  target.
+- At Issue #143, rollback was unresolved: the recorded `38bb08b6` value was only
+  the then-current Worker version prefix and did not establish a distinct
+  rollback target.
 
 Issue #151 established a distinct Worker rollback target and a completed
 rehearsal: `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` was deployed at 100%,
 the public smoke passed, and
 `6d100754-7e85-4d43-b466-e7944c61a0c0` was restored at 100% with the same
-smoke passing. This does not close the remaining Gate C evidence.
+smoke passing. This historical rehearsal does not close the remaining Gate C
+evidence or the upgrade baseline's [O3 clean-release rehearsal](mvp1-operations-review.md),
+which still requires separate approval and execution.
 
 Issue #166 completed a bounded production Cloud Run requests-log review after a
 synthetic signed-in refresh. The operator selected the `bp7-api` requests stream

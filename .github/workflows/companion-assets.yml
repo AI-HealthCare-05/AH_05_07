@@ -1,0 +1,29 @@
+name: Companion asset controls
+
+on:
+  pull_request:
+    paths:
+      - 'tools/companions/**'
+      - '.github/workflows/companion-assets.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/companions/**'
+      - '.github/workflows/companion-assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  binary-controls:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Reject corrupted synthetic graphics and preserve provenance
+        run: python -m unittest discover -s tools/companions -p 'test_*.py' -v

@@ -38,13 +38,17 @@ test, or deployment work complete before the repository evidence exists.
 
 ## Current checkpoint
 
-The current closeout authority is [MVP1 closeout](mvp1-closeout.md), Issue #225,
-based on `255c904414943e21ee0a8596690e2a1adebb3ebc` (PR #224). Status: in progress.
-It links requirement-specific remaining implementation, operations verification,
-client decisions and seven deliverables. #213 is closed for PR #214's implementation
-scope only. The user confirmed question-screen operation/display; Korean polishing
-is a follow-up, not semantics/adapter/model approval. Historical deployment rows below
-remain evidence for their stated versions, not this source SHA's deployment.
+The current closeout authority is [MVP1 closeout](mvp1-closeout.md), Issue #225.
+The upgrade baseline is `c46c772486a30319e594dbb9cf555263d5fba1a9` (PR #227),
+confirmed against origin/main. Status: in progress. The seven-slide PPTX/PDF and
+4:21 silent-caption MP4 review package are preserved; submission acceptance,
+operations and model/input approvals remain pending. [Upgrade execution](upgrade-execution.md)
+tracks the separate usability, local reliability, model-design and original-character
+workstreams and their review PRs. These changes are not a production release.
+#213 is closed for PR #214's implementation scope only. The user's question-screen
+operation/display review and language polishing do not approve semantics, an adapter
+or a model. Historical deployment rows below remain evidence for their stated
+versions, not this source SHA's deployment.
 
 | Concern | Verified checkpoint |
 | --- | --- |
@@ -58,7 +62,7 @@ remain evidence for their stated versions, not this source SHA's deployment.
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
 | Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 documentation completed via PR #222; #223 reviews input questions; no selected/released artifact |
-| Handoff reconciliation | Issue #146 and PR #147; resolve their merge state before selecting the next Issue |
+| Handoff reconciliation | Historical reconciliation completed through [PR #147](https://github.com/AI-HealthCare-05/AH_05_07/pull/147), merge `50039ee1604bf984aae99e945a798db13595862f`; [Issue #146](https://github.com/AI-HealthCare-05/AH_05_07/issues/146) is closed. Current workstreams are tracked in [upgrade execution](upgrade-execution.md). |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 | UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
@@ -73,11 +77,13 @@ session refresh, and a clean browser console/network review for the G4 web
 rollout. It records no Cloud Run deployment, Supabase migration, or production
 record write.
 
-The current Worker version was recorded as
-`38bb08b6-66ca-4933-8cbe-ee857aa4ece7`. The purported rollback value
-`38bb08b6` is only the current version prefix, so rollback readiness remains
-open. Do not call Gate C or rollback rehearsal complete until a distinct full
-identifier and sanitized rehearsal evidence exist.
+At Issue #143, the Worker version was recorded as
+`38bb08b6-66ca-4933-8cbe-ee857aa4ece7`. The short value `38bb08b6` did not
+establish a distinct rollback target. [Issue #151](https://github.com/AI-HealthCare-05/AH_05_07/issues/151)
+subsequently completed rollback, restore and public smoke for the two full
+versions in the table above. That historical rehearsal does not prove deployment
+of the upgrade baseline; [O3 clean-release rehearsal](mvp1-operations-review.md)
+and the remaining Gate C evidence still require separate approval and execution.
 
 ## What is implemented
 
@@ -123,9 +129,12 @@ remain incomplete. See `docs/model-comparison-evidence.md` for limitations.
    eight-second browser request timeout, preserved draft, and no automatic
    retry. No real account, JWT, operational record, API, database, or
    deployment is involved.
-2. Expand the sanitized observation-load sample before setting a P95 target;
-   the deployed check-in foreign-key index removed the Advisor finding and
-   reduced the observed cold sample, but the current manual sample is small.
+2. Review the separate local API evidence in [PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235):
+   489 timed synthetic responses, fixed endpoint phases, cold/warm/concurrency and
+   quantile definitions, plus owned-environment cleanup. Its measurement window
+   includes disclosed software WebGL overlap. This expands beyond the historical
+   small manual UI sample; it does not establish production P95 or replace the
+   client's decision on load conditions and acceptance. The PR remains unmerged.
 3. Issues #184–#188 add evaluator-facing seven-day dashboard, range, browse,
    and focused-detail evidence: BP,
    challenge adherence, legacy records, and the not-ready risk-signal state
@@ -240,7 +249,9 @@ At the beginning of a new Work session:
 2. Read the current Notion 19-day roadmap, then treat any mismatch as work to
    reconcile rather than as permission to change code.
 3. Confirm the latest upstream `main` SHA and recent merged PRs.
-4. Confirm there is at most one active Issue and no unreviewed local work.
+4. Confirm one Issue, short branch and PR per substantive workstream. Reconcile
+   and preserve each worktree's saved changes, following the user-authorized
+   parallel plan in [upgrade execution](upgrade-execution.md).
 5. Inspect the latest relevant deployment run only when the next task concerns
    runtime state.
 6. Choose the highest open P0 evidence item, create or confirm its Issue, and
@@ -326,7 +337,8 @@ explicit release criteria remain unresolved.
 
 Issue #221 completed its documentation scope in PR #222: [draft model card](model-card.md),
 [unsupported input mappings and question drafts](model-input-adapter-contract.md),
-and [readiness matrix and separately approved one-time test protocol](model-release-readiness.md).
+and [readiness matrix and proposed one-time test procedure](model-release-readiness.md)
+requiring separate approval.
 Named reviewers, supported population, justified quality criteria, final model,
 preprocessing and signal thresholds are not yet approved. No actual model/test
 execution or product change is part of the question review package. Issue #223 adds

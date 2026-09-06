@@ -4,3 +4,6 @@
 
 # Preserve this approved Windows evidence archive byte-for-byte.
 /docs/evidence/model-uncertainty.json -text
+
+# Original companion generation records the exact committed authoring bytes.
+/tools/companions/*.py text eol=lf
