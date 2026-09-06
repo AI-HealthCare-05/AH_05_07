@@ -159,7 +159,7 @@ standard/light side and rear-oblique special sequences, the short upturned tail
 stayed behind the pelvis. The successful functional reports and failed candidate
 are retained; a lowered body alone does not satisfy “꼬리를 감싸고 앉기”.
 
-The next fox candidate uses one authored structural correction: a longer, low
+The corrected fox candidate uses one authored structural correction: a longer, low
 curved tail, the same two tail bones with pivots aligned to that geometry, and a
 quarter-turn at each hinge around the rest-space vertical axis. This routes the
 tip around the right flank to the seated front. Two complementary smooth skin
@@ -175,10 +175,14 @@ nondegenerate cage deformation at 97 special phases. These are an independent
 two-hinge linear-skin calculation of the actual authored cage, not Blender's
 evaluated subdivision or a guarantee against every surface intersection. The
 visible hip creases in `fox-v001` have not been diagnosed as self-intersections.
-The new candidate still needs actual neutral side/rear views, special wrap/return
-and hip/foot contact inspection, the existing import/original/playback/floor/video
-gates, and human species/style review. Do not reuse `fox-v001`'s quality evidence
-for the changed geometry or relabel its failed gesture as complete.
+The separate `fox-v002`, generated at
+`7d9d97ee520bebe73556cf9787a4eea2de73d327`, passed the actual static, fresh-original,
+import, playback, floor-sample and video checks. Three-view special samples show
+the white tip reaching the seated front and returning. Its deep hip crease and
+tail overlap obscure some arm/leg surfaces: exact surface clearance and every-frame
+collision remain unverified. The separate `g5-technical-review-fox-v002-001.json`
+records this declared technical scope and pending human species/style review.
+The changed geometry does not reuse `fox-v001`'s failed gesture evidence.
 
 The seal's anatomical shear previously tilted the root bone and therefore sent a
 local-Y bounce partly sideways. The root alone is now excluded from that shear;
@@ -186,8 +190,14 @@ the mesh, non-root anatomy and authored motion amplitudes remain unchanged. Pure
 regression checks fail on the previous source. A fresh Blender armature-only probe
 then checked all seven actions at 97 frames each: no sampled horizontal root motion,
 matching loop endpoints, and the existing `0.09`/`0.16` move/celebrate heights.
-This is a movement-anchor check without mesh creation, export or rendering. The
-future seal still requires complete body/flipper deformation and playback QA.
+This is a movement-anchor check without mesh creation, export or rendering.
+The later `seal-v001` passed static/import/playback checks but failed the requested
+clap because its flippers stayed separated. One proposed structural repair was
+tested in memory and rejected for central body and mutual flipper intersections.
+Diagnostic exit 0 records that result; it is not quality acceptance. The proposal
+was not integrated, further exploration of the same approach stopped, and seal
+remains `needs_revision`, excluded from the completed-asset count. A new manual
+flipper/rig design and full deformation review are still required.
 
 For the penguin, inspect special at fractions `0.375` and `0.625` as well as a full
 loop: quarter/midpoint stills miss its alternating spine roll. For the squirrel,
@@ -239,8 +249,14 @@ The crown origins are now `0.04` lower; all 77 quills, tips' relative dimensions
 face design and the `0.04` base embedding guard remain. The corrected fixture
 passes the existing attachment/topology tests. It is still an approximation of
 OpenSubdiv geometry: the observed two native cages differ from pure coordinates
-by up to about `0.0038` in nearest-point comparison. A new native 77-quill probe
-and full candidate rendering are required before accepting this repair. The
+by up to about `0.0038` in nearest-point comparison. A new memory-only native probe
+at `7d9d97ee520bebe73556cf9787a4eea2de73d327` passed all 77 SUBSURF tag/attachment
+checks with the guards unchanged. The separate `hedgehog-v004` then passed full
+standard/light rendering, fresh-original/import, browser playback, floor samples
+and video checks. The special is a small head/upper-body tuck and return, not a
+complete ball roll. Thick stylized quills and the shared rounded face still need
+human design review; the sampled inspection does not certify every animated
+intersection. `g5-technical-review-hedgehog-v004-001.json` records the scope. The
 failed `hedgehog-v003` and original reports remain unchanged.
 
 ## Storage and resumption
