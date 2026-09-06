@@ -59,6 +59,8 @@ def coat_profiles(kind):
     head = (0.64, 0.47, 0.54) if kind in ("fox", "squirrel", "cat") else (0.67, 0.51, 0.59)
     if kind == "capybara":
         head = (0.60, 0.62, 0.46)
+    elif kind == "hedgehog":
+        head = (0.55, 0.47, 0.48)
     return (
         ((0, 0.015, 1.05), (width, 0.45, 0.81), 0.18, 1),
         ((0, -0.01, 2.10), head, 0.10, 0.70 if kind == "capybara" else 0.86),
@@ -92,7 +94,7 @@ def coat_front_y(kind, x, z):
 
 def eye_surface_offset(kind):
     """Preserve eye embedding when a species has a different cranium profile."""
-    if kind not in ("cat", "fox", "squirrel", "capybara"):
+    if kind not in ("cat", "fox", "squirrel", "capybara", "hedgehog"):
         return 0.0
     return coat_front_y(kind, 0.25, 2.25) - coat_front_y("bear", 0.25, 2.25)
 
@@ -809,6 +811,58 @@ def penguin_tail_weights(co):
     return {"tail.01": 1 - blend, "tail.02": blend}
 
 
+def hedgehog_face(rig, cream, dark):
+    """A small pointed snout with a tip nose, seated into the narrower cranium."""
+    rings = []
+    for y, z, width, height in (
+        (None, 2.05, 0.235, 0.145),
+        (-0.550, 2.05, 0.165, 0.110),
+        (-0.690, 2.065, 0.085, 0.065),
+        (-0.780, 2.075, 0.035, 0.030),
+    ):
+        ring = []
+        for index in range(24):
+            angle = 2 * math.pi * index / 24
+            x, height_z = width * math.cos(angle), z + height * math.sin(angle)
+            depth = coat_front_y("hedgehog", x, height_z) + 0.06 if y is None else y
+            ring.append((x, depth, height_z))
+        rings.append(ring)
+    snout = closed_taper("Hedgehog pointed snout", rings, (0, -0.815, 2.075), cream)
+    bind(snout, rig, fixed("head"))
+    nose = surface("Hedgehog tip nose", (0, -0.806, 2.09), (0.056, 0.040, 0.042), dark, 16, 24)
+    bind(nose, rig, fixed("head"))
+
+
+def hedgehog_quill_specs():
+    """Deterministic staggered back/crown layout, not seven aligned comb rows.
+
+    Dimensions describe this stylized asset, not measured hedgehog anatomy.
+    The existing evaluated-band attachment still seats every actual quill.
+    """
+    specs = []
+    golden_angle = math.pi * (3 - math.sqrt(5))
+    for region, count, bottom, span in (("back", 55, 0.83, 1.48), ("crown", 22, 2.26, 0.26)):
+        for index in range(count):
+            phase = (index + (0.5 if region == "crown" else 0)) * golden_angle
+            height = bottom + span * (index + 0.5) / count
+            lower, upper = coat_x_interval("hedgehog", height)
+            lateral = (0.80 if region == "crown" else 0.90) * math.sin(phase)
+            x = (lower + upper) / 2 + (upper - lower) * lateral / 2
+            base = (x, coat_back_y("hedgehog", x, height) - 0.015, height)
+            direction = (
+                0.75 * lateral + 0.13 * math.sin(phase * 1.7),
+                0.35 if region == "crown" else 0.80,
+                0.90 if region == "crown" else 0.30 + 0.12 * math.cos(phase),
+            )
+            size = math.sqrt(sum(value * value for value in direction))
+            direction = tuple(value / size for value in direction)
+            length = (0.245 if region == "crown" else 0.215) + 0.045 * (0.5 + 0.5 * math.sin(phase * 1.3))
+            radius = 0.050 + 0.008 * (0.5 + 0.5 * math.cos(phase * 1.9))
+            points = [tuple(base[axis] + direction[axis] * length * t for axis in range(3)) for t in (0, 0.52, 1)]
+            specs.append({"region": region, "points": points, "radii": [radius, radius * 0.64, 0.0045]})
+    return specs
+
+
 def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt profiles
     z = 2.6
     rx, rz = (0.21, 0.23)
@@ -934,6 +988,8 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     elif kind == "penguin":
         beak = penguin_beak(material("Warm beak", (0.77, 0.40, 0.10)))
         bind(beak, rig, fixed("head"))
+    elif kind == "hedgehog":
+        hedgehog_face(rig, cream, dark)
     else:
         muzzle = surface("Sculpted muzzle", (0, -0.493, 2.06), (muzzle_width, 0.15, 0.205), cream, 24, 40, flatten=0.83)
         warp_face(muzzle, kind, muzzle_width)
@@ -998,21 +1054,9 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             },
         )
     if kind == "hedgehog":
-        for row in range(7):
-            for col in range(11):
-                a = math.pi * (0.1 + 0.8 * col / 10)
-                z = 0.77 + row * 0.205
-                radius = 0.54 if z < 1.65 else 0.58
-                x, y = radius * math.cos(a), 0.04 + 0.41 * math.sin(a)
-                quill = tube(
-                    "Soft sculpted quill",
-                    [(x, y, z), (x * 1.13, y + 0.11, z + 0.10), (x * 1.18, y + 0.18, z + 0.22)],
-                    [0.07, 0.052, 0.006],
-                    inner,
-                    8,
-                    attach_quill=True,
-                )
-                bind(quill, rig, skin_weights)
+        for spec in hedgehog_quill_specs():
+            quill = tube("Soft sculpted quill", spec["points"], spec["radii"], inner, 8, attach_quill=True)
+            bind(quill, rig, skin_weights)
     if kind == "seal":
         bpy.data.objects.remove(tail, do_unlink=True)
         for sign in (-1, 1):

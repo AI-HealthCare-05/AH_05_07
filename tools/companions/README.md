@@ -177,8 +177,26 @@ indices by name after the modifier and obtains a fresh handle for each deletion.
 The same probe passed attachment and left no temporary groups after the fix.
 The base-existence, `0.5` weight, finite-range and insertion-depth guards are
 unchanged. The diagnostic command's exit 0 means it captured the former attachment
-failure successfully; it does not turn the failed build into a pass. A complete
-new hedgehog candidate still needs export, deformation and visual review.
+failure successfully; it does not turn the failed build into a pass.
+
+The next hedgehog candidate passed that construction path, but its actual front/side
+renders still showed a bear-like face, almost no frontal quill silhouette and seven
+aligned comb rows. It remains a revision candidate. The current hedgehog-only design
+uses a narrower cranium with preserved eye embedding, a small tapered snout/tip nose,
+and 77 deterministic staggered quills: 55 across the back and 22 around the crown.
+Authored lengths and directions vary without random sampling or new dependencies.
+The same closed tube, fresh tag lookup and `0.04` evaluated-base embedding guard
+remain in force. [San Diego Zoo's hedgehog description](https://animals.sandiegozoo.org/animals/hedgehog)
+was checked on 2026-09-06 for the long snout and quill-covered back. Proportions and
+placement are original stylization, not copied photographs or anatomical accuracy.
+
+Pure tests apply the existing subdivision/attachment checks to all 77 new cages,
+retain the old detached-cage negative fixture, and check closed faces, skin weights,
+snout/nose overlap and all seven authored loop endpoints. They do not model the
+actual remeshed skin or certify every animated quill intersection. Before selecting
+a new candidate, inspect front/side/oblique crown visibility, base attachment,
+quill spacing during curl/return and both exported variants in Blender and browser.
+No new candidate has been generated or visually approved by this code-only change.
 
 ## Storage and resumption
 

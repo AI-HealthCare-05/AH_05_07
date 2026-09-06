@@ -70,7 +70,7 @@ class FaceGeometryTests(unittest.TestCase):
     def test_shallow_cranium_eyes_preserve_embedding_and_original_species_stay_fixed(self):
         reference = -0.487 + 0.040 - GEOMETRY["coat_front_y"]("bear", 0.25, 2.25)
         self.assertGreater(reference, 0.015)
-        for kind in ("cat", "fox", "squirrel"):
+        for kind in ("cat", "fox", "squirrel", "hedgehog"):
             coat = GEOMETRY["coat_front_y"](kind, 0.25, 2.25)
             self.assertLess(-0.487 + 0.040 - coat, -0.02, "Reproduce the old detached eye centerline")
             offset = GEOMETRY["eye_surface_offset"](kind)
@@ -79,7 +79,7 @@ class FaceGeometryTests(unittest.TestCase):
         coat = GEOMETRY["coat_front_y"]("capybara", 0.25, 2.25)
         offset = GEOMETRY["eye_surface_offset"]("capybara")
         self.assertAlmostEqual(-0.487 + offset + 0.040 - coat, reference)
-        for kind in ("bear", "rabbit", "dog", "red_panda", "otter", "hedgehog", "penguin", "seal"):
+        for kind in ("bear", "rabbit", "dog", "red_panda", "otter", "penguin", "seal"):
             self.assertEqual(GEOMETRY["eye_surface_offset"](kind), 0)
 
     def test_profile_matches_known_ellipse_and_actual_rounded_pear_vertices(self):

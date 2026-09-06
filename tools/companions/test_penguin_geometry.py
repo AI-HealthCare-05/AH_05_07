@@ -147,7 +147,7 @@ class PenguinGeometryTests(unittest.TestCase):
             self.assertTrue(all(0 <= value <= 1 for value in weights.values()))
 
     def test_other_species_keep_existing_face_and_tail_dispatch(self):
-        for kind in ("bear", "rabbit", "cat", "dog", "red_panda", "otter", "hedgehog", "seal", "fox", "squirrel"):
+        for kind in ("bear", "rabbit", "cat", "dog", "red_panda", "otter", "seal", "fox", "squirrel"):
             with self.subTest(kind=kind):
                 g, made = geometry()
                 g["dispatch"](kind)

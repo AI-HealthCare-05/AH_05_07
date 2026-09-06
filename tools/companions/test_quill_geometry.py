@@ -16,6 +16,7 @@ def load_geometry():
         "coat_x_interval",
         "attach_quill_points",
         "skin_weights",
+        "hedgehog_quill_specs",
     }
     nodes = [
         node
@@ -47,18 +48,25 @@ def normalize(point):
 
 
 def quill_fixture(row, col):
-    """Authored 7-by-11 quill cage with extra scalar base/tip tag coordinates.
+    """Actual authored quill cage with extra scalar base/tip tag coordinates."""
+    spec = GEOMETRY["hedgehog_quill_specs"]()[row * 11 + col]
+    return quill_cage(spec["points"], spec["radii"])
 
-    The fixture is independent of Blender allocation and modifier APIs. Its
-    closed cage uses the original centers, radii and tangent-oriented rings.
-    """
+
+def legacy_quill_fixture(row, col):
+    """Retain the detached old cage as a negative regression fixture."""
     angle = math.pi * (0.1 + 0.8 * col / 10)
     z = 0.77 + row * 0.205
     radius = 0.54 if z < 1.65 else 0.58
     x, y = radius * math.cos(angle), 0.04 + 0.41 * math.sin(angle)
     centers = [(x, y, z), (x * 1.13, y + 0.11, z + 0.10), (x * 1.18, y + 0.18, z + 0.22)]
+    return quill_cage(centers, (0.07, 0.052, 0.006))
+
+
+def quill_cage(centers, radii):
+    """Pure tangent rings and interpolated tags; no Blender allocation emulation."""
     points = []
-    for ring, (center, radius) in enumerate(zip(centers, (0.07, 0.052, 0.006), strict=True)):
+    for ring, (center, radius) in enumerate(zip(centers, radii, strict=True)):
         before, after = centers[max(0, ring - 1)], centers[min(2, ring + 1)]
         tangent = normalize(tuple(b - a for a, b in zip(before, after, strict=True)))
         axis = normalize(cross(tangent, (0, 1, 0)))
@@ -124,8 +132,8 @@ def subdivide(points, faces):
     return mapped, quads
 
 
-def evaluate_fixture(row, col, levels=2):
-    points, faces = quill_fixture(row, col)
+def evaluate_fixture(row, col, levels=2, legacy=False):
+    points, faces = legacy_quill_fixture(row, col) if legacy else quill_fixture(row, col)
     for _ in range(levels):
         points, faces = subdivide(points, faces)
     coordinates = [point[:3] for point in points]
@@ -152,7 +160,7 @@ class QuillGeometryTests(unittest.TestCase):
     def test_rear_profile_uses_torso_head_neck_union(self):
         back = GEOMETRY["coat_back_y"]
         self.assertAlmostEqual(back("hedgehog", 0, 1.05), 0.465)
-        self.assertGreater(back("hedgehog", 0, 2.10), 0.49)
+        self.assertAlmostEqual(back("hedgehog", 0, 2.10), 0.46)
         # The torso/neck join is continuous, including the originally detached row.
         for z in (1.50, 1.59, 1.70):
             values = [back("hedgehog", 0, z + offset) for offset in (-1e-8, 0, 1e-8)]
@@ -168,6 +176,10 @@ class QuillGeometryTests(unittest.TestCase):
                     for old, new, root, end in zip(before, after, base, tip, strict=True):
                         self.assertEqual(new[2], old[2])
                         self.assertEqual(GEOMETRY["skin_weights"](old), GEOMETRY["skin_weights"](new))
+                        weights = [value for value in GEOMETRY["skin_weights"](new).values() if value > 0]
+                        self.assertLessEqual(len(weights), 4)
+                        self.assertAlmostEqual(sum(weights), 1)
+                        self.assertTrue(all(math.isfinite(value) and 0 < value <= 1 for value in weights))
                         if root >= 0.5:
                             base_count += 1
                             self.assertAlmostEqual(new[0] - old[0], offset[0])
@@ -216,7 +228,7 @@ class QuillGeometryTests(unittest.TestCase):
                         self.assertEqual(edge_counts, {2})
 
     def test_original_detached_quill_and_center_only_repair_are_detected(self):
-        before, after, _, base, _, _ = evaluate_fixture(4, 5, levels=0)
+        before, after, _, base, _, _ = evaluate_fixture(4, 5, levels=0, legacy=True)
         back = GEOMETRY["coat_back_y"]
         self.assertGreater(min(point[1] - back("hedgehog", point[0], point[2]) for point in before), 0.0279)
         center = mean([point for point, weight in zip(before, base, strict=True) if weight >= 0.5])
