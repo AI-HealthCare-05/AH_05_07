@@ -16,6 +16,26 @@ model inference path. No clinical/model-input file is accessed. See
 - CPU renders use three threads at most. Coordinate an idle host for API or browser
   measurements; if other work overlaps, record it instead of claiming isolation.
 
+## Verify a preserved selection
+
+The read-only selection verifier compares a supplied inventory with its supplied
+external asset root. It hashes the inventory's selected direct files, checks the
+catalog and generated-manifest contract, counts `(species, clip)` pairs, rejects a
+selected seal, and rejects byte-identical selected files except shared
+`generator.py` source snapshots. It creates no output file and never renders,
+copies, moves, uploads, or approves an asset.
+
+```powershell
+python tools/companions/verify_selection.py `
+  --inventory $INVENTORY --assets $ASSETS --checkpoint $CHECKPOINT
+```
+
+`$CHECKPOINT` is optional; when supplied, it must name and SHA-256-match the
+inventory under its existing `asset_inventory` record. The tool intentionally
+checks only the inventory's direct known-file scope. Old versions, review output
+folders, hidden or unrecognized files, visual quality, human design approval and
+independent backup status remain outside this check.
+
 ## Regenerate a new candidate
 
 Substitute explicit local paths. `OUTPUT` must not exist. Keep the previous candidate.
