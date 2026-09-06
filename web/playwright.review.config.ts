@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const useSoftwareWebGL = Boolean(process.env.CI || process.env.GITHUB_ACTIONS);
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "companion-review.spec.ts",
@@ -7,7 +9,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4173",
     launchOptions: {
-      args: process.env.CI ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [],
+      args: useSoftwareWebGL ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [],
     },
   },
   webServer: {
