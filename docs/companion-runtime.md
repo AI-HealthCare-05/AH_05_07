@@ -1,8 +1,18 @@
 # S3 companion 런타임 기반
 
-Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결정을 런타임
-배포 승인으로 확장하지 않는다. 화면별 사용 맥락·허용/제한 동작·사용 권리는
-여전히 [S2 기록](s2-design-selection.md)의 `pending` 항목이다.
+Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결정과 S3B
+게시를 런타임 활성화로 확장하지 않는다. 화면별 사용 범위와 동작 제한은
+[S2 기록](s2-design-selection.md)의 Issue #242 사람 결정에 따른다.
+
+## S3 상태
+
+- S3A: 사람 사용 범위·동작 제한·권리 결정 완료.
+- S3B: `companion/v1/` 11종 `standard/lite` 22개 R2 게시 및 source↔remote/public
+  byte/SHA/header 검증 완료. 상세 근거는 [companion-r2-v1.json](evidence/companion-r2-v1.json)이다.
+- S3C: 아직 시작하지 않음. 검증된 manifest를 review runtime에 연결하는
+  [successor Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)에서만
+  구현한다.
+- `CompanionRuntimeBoundary`와 production 기본값 `off`는 그대로 유지한다.
 
 ## 중앙 계약
 
@@ -18,11 +28,11 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 해석한다. 누락·오타·다른 값은 모두 `off`다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
 현재 두 모드에서 시각 요소나 자산을 렌더링하지 않으며, GLB import/fetch와
 네트워크 요청을 하지 않는다. 따라서 production 기본값은 효과가 없는 `off`이고,
-검토 모드도 권리·배포 위치가 승인될 때까지 자산 로더를 열지 않는다.
+검토 모드도 S3C successor Issue가 시작되기 전까지 자산 로더를 열지 않는다.
 
 화면 정책은 S02 오늘의 기록, S03 7일 챌린지 선택, S05 저장 완료, S10 7일
-돌아보기만 로컬 검토 후보로 둔다. S04, S07, S08, S09, S11, S12, S13, S14는
-중앙 정책에서 제외한다. 후보 목록은 운영 승인 목록이나 최종 화면 배정이 아니다.
+돌아보기만 review 후보로 둔다. S04, S07, S08, S09, S11, S12, S13, S14는
+중앙 정책에서 제외한다. 이는 비운영 review 범위이며 최종 운영 화면 배정이 아니다.
 
 ## 동작 의미 경계
 
@@ -48,9 +58,10 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 
 ## 자산 및 운영 경계
 
-이번 단계에는 GLB Git 추가, 로컬 자산 복사, R2·외부 업로드, 생성·모델링·재렌더,
-제품 화면 적용, 운영 배포, 모델/ML 변경, test 접근을 하지 않는다. 실제 origin,
-manifest, 허용 화면·동작과 권리는 별도 승인 Issue에서 확정한 뒤에만 연결한다.
+S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했지만 GLB Git 추가, 로컬 자산
+복사, 생성·모델링·재렌더, 제품 화면 적용, 운영 배포, 모델/ML 변경, test 접근은
+하지 않았다. 실제 GLB import/fetch와 review 화면 연결은 S3C successor Issue에서만
+수행하며, 기존 `visual/v1/` 자산을 대체하지 않는다.
 
 ## 검증 범위
 
