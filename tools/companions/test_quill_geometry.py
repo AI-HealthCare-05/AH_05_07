@@ -88,10 +88,11 @@ def quill_cage(centers, radii):
 
 
 def subdivide(points, faces):
-    """Standard closed Catmull-Clark fixture, including interpolated scalar tags.
+    """Closed Catmull-Clark geometry with linearly interpolated group tags.
 
-    This provides dense curved band samples. It is not an assertion that a
-    particular Blender build produces byte-identical subdivision coordinates.
+    Actual Blender groups retained old-vertex weights and used edge/face means;
+    smoothing those tags with the geometry hid high crown base-band vertices.
+    This is still a geometry approximation, not byte-identical OpenSubdiv output.
     """
     face_points = [mean([points[index] for index in face]) for face in faces]
     edges, neighbors, incident = defaultdict(list), defaultdict(set), defaultdict(list)
@@ -108,13 +109,16 @@ def subdivide(points, faces):
         count = len(neighbors[index])
         face_mean = mean([face_points[face] for face in incident[index]])
         edge_mean = mean([mean([point, points[other]]) for other in neighbors[index]])
-        mapped.append(
-            tuple((face_mean[axis] + 2 * edge_mean[axis] + (count - 3) * point[axis]) / count for axis in range(5))
+        geometry = tuple(
+            (face_mean[axis] + 2 * edge_mean[axis] + (count - 3) * point[axis]) / count for axis in range(3)
         )
+        mapped.append((*geometry, *point[3:]))
     edge_ids = {}
     for edge, adjacent in edges.items():
         edge_ids[edge] = len(mapped)
-        mapped.append(mean([points[edge[0]], points[edge[1]], *(face_points[index] for index in adjacent)]))
+        geometry = mean([points[edge[0]][:3], points[edge[1]][:3], *(face_points[index][:3] for index in adjacent)])
+        tags = mean([points[edge[0]][3:], points[edge[1]][3:]])
+        mapped.append((*geometry, *tags))
     face_start = len(mapped)
     mapped.extend(face_points)
     quads = []

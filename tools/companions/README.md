@@ -223,7 +223,25 @@ snout/nose overlap and all seven authored loop endpoints. They do not model the
 actual remeshed skin or certify every animated quill intersection. Before selecting
 a new candidate, inspect front/side/oblique crown visibility, base attachment,
 quill spacing during curl/return and both exported variants in Blender and browser.
-No new candidate has been generated or visually approved by this code-only change.
+That source-only design change was followed by the native candidate checks below;
+its pure test success did not constitute visual approval.
+
+The first native build with that new crown layout then stopped at the existing
+coat-height guard. A memory-only Blender probe of all 77 quills identified crown
+indices 75/76: their evaluated base bands reached Z `2.590556`/`2.589648`, above
+the authored head maximum `2.58`. The probe command succeeded in recording these
+failures; it did not certify attachment. Native group tags used linear scalar
+interpolation (`0.5`, `0.75`, `1.0` in the base band), whereas the prior pure
+fixture smoothed tags with geometry and missed these vertices. Updating the
+fixture reproduced both failing cages without changing the attachment guard.
+
+The crown origins are now `0.04` lower; all 77 quills, tips' relative dimensions,
+face design and the `0.04` base embedding guard remain. The corrected fixture
+passes the existing attachment/topology tests. It is still an approximation of
+OpenSubdiv geometry: the observed two native cages differ from pure coordinates
+by up to about `0.0038` in nearest-point comparison. A new native 77-quill probe
+and full candidate rendering are required before accepting this repair. The
+failed `hedgehog-v003` and original reports remain unchanged.
 
 ## Storage and resumption
 
