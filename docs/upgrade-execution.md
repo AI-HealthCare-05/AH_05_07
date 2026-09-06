@@ -163,6 +163,28 @@ G4 `7d9d97e`와 G5 `b28596c`까지 포함한 통합 문서의 상대 파일 링�
 보호된 소스 범위를 대조했다. 이후 소스 통합 검사는 별도 기록한다.
 원래 사용자 worktree나 운영 환경에 이 통합 checkout을 적용하지 않았다.
 
+## S1 보존·최종 조합 검사
+
+Issue [#240](https://github.com/AI-HealthCare-05/AH_05_07/issues/240)는 S0 이후
+`3561e0c66c518c53c8be204ae7258ec4ba577a3b` 기준에서 수행했다. 호출 시 제공한 local
+asset root와 `selected-inventory-eleven-001.json`(SHA-256
+`9fb23a63a612c7a30e8d01b6150bab258c239e4242d1f15224deeff5a1ecbd6f`)을 기존
+`manifest-checkpoint-eleven-001.json`의 inventory bytes/SHA-256 계약과 대조했다.
+새 `verify_selection.py`는 이 inventory의 선택 direct known-file만 read-only로
+재해시하고 catalog·generated manifest를 대조한다.
+
+- 선택은 11종이며, 각 종의 7개 선언 clip을 `(species, clip)`으로 세어 77개 고유
+  논리 동작임을 확인했다. 표준/경량은 별도 종이나 동작으로 중복 계산하지 않았다.
+- 물범은 `needs_revision`, `not_selected`, 선택 파일 0으로 유지되고, 미선택 목록의
+  `seal-v001`도 counted false다.
+- 선택 352개 파일(479,157,979 bytes)은 존재·bytes·SHA-256와 inventory가 일치했다.
+  누락·선택 경로 충돌·논리 중복은 0이다. 동일 바이트 3그룹·7파일은 같은
+  `generator.py` source snapshot을 공유하는 의도된 구조이며 다른 동일 바이트 선택
+  파일은 없다.
+- 이번 S1에서는 외부 업로드, 새 생성, 재렌더, 자산 이동·사본 생성, 제품 적용을
+  수행하지 않았다. 이 실행만으로 과거 외부 업로드 부재·독립 backup·시각 품질·사람
+  디자인 승인까지 증명하지 않으며, 이전 버전·QA 폴더·숨김/미인식 파일도 범위 밖이다.
+
 ## 제작·보관 경계
 
 - 로컬 실행 폴더에는 실행 상태, 재개 지침, 실패 기록, 파일 크기·SHA-256·도구
