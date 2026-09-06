@@ -167,6 +167,10 @@ def coat_marking_outlines(kind):
     # Match the existing shared X/Z warp; no shape or bone transform changes.
     scale = {"otter": (0.88, 0.98), "penguin": (0.89, 0.95), "seal": (1.08, 0.64)}.get(kind, (1, 1))
     result = [marking_outline((0, -0.405, 1.14), (0.32, 0.064, 0.43), 0.13, scale)]
+    if kind == "penguin":
+        # A broad breast on the same closed skin, rather than a small belly dot.
+        # The existing eye surrounds and blink pivots retain their attachment.
+        result = [marking_outline((0, -0.405, 1.22), (0.50, 0.064, 0.82), 0.04, scale)]
     if kind == "red_panda":
         result += [marking_outline((sign * 0.41, -0.397, 2.18), (0.15, 0.05, 0.17), scale=scale) for sign in (-1, 1)]
     elif kind == "penguin":
@@ -748,6 +752,63 @@ def capybara_face(rig, coat, dark):
     bind(mouth, rig, fixed("head"))
 
 
+def closed_taper(name, rings, tip, mat):
+    """Close ordered oval rings along Y, including a possibly curved buried base."""
+    sides = len(rings[0])
+    base = tuple(sum(point[axis] for point in rings[0]) / sides for axis in range(3))
+    vertices = [base, *(point for ring in rings for point in ring), tip]
+    faces = [(0, 1 + (i + 1) % sides, 1 + i) for i in range(sides)]
+    for row in range(len(rings) - 1):
+        start = 1 + row * sides
+        for i in range(sides):
+            nxt = (i + 1) % sides
+            faces.append((start + i, start + nxt, start + sides + nxt, start + sides + i))
+    last = 1 + (len(rings) - 1) * sides
+    faces += [(last + i, last + (i + 1) % sides, len(vertices) - 1) for i in range(sides)]
+    if tip[1] > base[1]:
+        faces = [tuple(reversed(face)) for face in faces]
+    return mesh(name, vertices, faces, mat)
+
+
+def penguin_beak(mat):
+    """Short tapered bill seated directly in the cranium, without a muzzle shell."""
+    rings = []
+    for y, z, width, height in (
+        (None, 2.135, 0.155, 0.075),
+        (-0.565, 2.135, 0.120, 0.060),
+        (-0.650, 2.125, 0.075, 0.038),
+        (-0.720, 2.115, 0.030, 0.017),
+    ):
+        ring = []
+        for index in range(24):
+            angle = 2 * math.pi * index / 24
+            x, height_z = width * math.cos(angle), z + height * math.sin(angle)
+            depth = coat_front_y("penguin", x, height_z) + 0.06 if y is None else y
+            ring.append((x, depth, height_z))
+        rings.append(ring)
+    return closed_taper("Penguin attached bill", rings, (0, -0.765, 2.110), mat)
+
+
+def penguin_tail(mat):
+    """Low short feather-like wedge; the existing two tail controls remain in use."""
+    body = coat_profiles("penguin")[0]
+    rings = []
+    for y, z, width, height in ((None, 0.55, 0.145, 0.060), (0.53, 0.51, 0.105, 0.043), (0.66, 0.47, 0.050, 0.024)):
+        ring = []
+        for index in range(24):
+            angle = 2 * math.pi * index / 24
+            x, height_z = width * math.cos(angle), z + height * math.sin(angle)
+            depth = 2 * body[0][1] - profile_front_y(x, height_z, *body) - 0.06 if y is None else y
+            ring.append((x, depth, height_z))
+        rings.append(ring)
+    return closed_taper("Penguin short tail", rings, (0, 0.74, 0.45), mat)
+
+
+def penguin_tail_weights(co):
+    blend = min(1, max(0, (co.y - 0.6) / 0.4))
+    return {"tail.01": 1 - blend, "tail.02": blend}
+
+
 def ear(name, x, kind, mat, inner, rig):  # noqa: C901 - explicit species sculpt profiles
     z = 2.6
     rx, rz = (0.21, 0.23)
@@ -870,6 +931,9 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
     muzzle_width = 0.30 if kind not in ("capybara", "seal", "otter") else 0.39
     if kind == "capybara":
         capybara_face(rig, base, dark)
+    elif kind == "penguin":
+        beak = penguin_beak(material("Warm beak", (0.77, 0.40, 0.10)))
+        bind(beak, rig, fixed("head"))
     else:
         muzzle = surface("Sculpted muzzle", (0, -0.493, 2.06), (muzzle_width, 0.15, 0.205), cream, 24, 40, flatten=0.83)
         warp_face(muzzle, kind, muzzle_width)
@@ -877,11 +941,6 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
         nose = surface(
             "Rounded triangular nose", (0, -0.642, 2.14), (0.093, 0.054, 0.061), dark, 16, 28, pear=-0.4, flatten=0.9
         )
-        if kind == "penguin":
-            nose.data.materials.clear()
-            nose.data.materials.append(material("Warm beak", (0.77, 0.40, 0.10)))
-            for vertex in nose.data.vertices:
-                vertex.co.y = -0.58 + (vertex.co.y + 0.58) * 2.1
         warp_face(nose, kind, muzzle_width)
         bind(nose, rig, fixed("head"))
         for sign in (-1, 1):
@@ -927,11 +986,13 @@ def character(kind):  # noqa: C901 - authored anatomy and markings, not applicat
             tail_points = [(0, 0.38, 0.65), (0, 0.63, 0.42), (0, 0.96, 0.27), (0, 1.28, 0.2)]
             tail_radii = [0.18, 0.16, 0.11, 0.018]
     if kind != "capybara":
-        tail = tube("Species tail", tail_points, tail_radii, base)
+        tail = penguin_tail(base) if kind == "penguin" else tube("Species tail", tail_points, tail_radii, base)
         bind(
             tail,
             rig,
-            lambda co: {
+            penguin_tail_weights
+            if kind == "penguin"
+            else lambda co: {
                 "tail.01": max(0, 1 - min(1, (co.y - 0.6) / 0.4)),
                 "tail.02": min(1, max(0, (co.y - 0.6) / 0.4)),
             },

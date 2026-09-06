@@ -100,7 +100,8 @@ class MarkingBoundaryTests(unittest.TestCase):
 
     def test_species_warp_matches_existing_footprint_and_unmarked_species_stay_unmarked(self):
         base = G["coat_marking_outlines"]("fox")[0]
-        for kind, scale in (("otter", (0.88, 0.98)), ("penguin", (0.89, 0.95)), ("seal", (1.08, 0.64))):
+        # Penguin now has its own broader breast, covered by penguin geometry tests.
+        for kind, scale in (("otter", (0.88, 0.98)), ("seal", (1.08, 0.64))):
             warped = G["coat_marking_outlines"](kind)[0]
             for a, b in zip(base, warped, strict=True):
                 self.assertEqual(b, (a[0] * scale[0], a[1] * scale[1]))
