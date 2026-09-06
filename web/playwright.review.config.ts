@@ -4,7 +4,12 @@ export default defineConfig({
   testDir: "./e2e",
   testMatch: "companion-review.spec.ts",
   workers: process.env.CI ? 1 : undefined,
-  use: { baseURL: "http://127.0.0.1:4173" },
+  use: {
+    baseURL: "http://127.0.0.1:4173",
+    launchOptions: {
+      args: process.env.CI ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [],
+    },
+  },
   webServer: {
     command: "npm run build && npm run preview -- --host 127.0.0.1 --port 4173",
     env: {
