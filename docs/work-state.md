@@ -22,6 +22,8 @@
 - S2 사람 선정 기록: [s2-design-selection.md](s2-design-selection.md). 11개 후보를
   모두 `selected`로 기록했으나 화면별 사용 범위·동작 제한·권리 확인은 pending이며
   제품 적용이나 출시 승인을 의미하지 않는다.
+- S3 런타임 기반: [companion-runtime.md](companion-runtime.md)와 중앙 TypeScript
+  계약·기본 OFF 경계를 구현했다. 실제 자산 로드·화면 적용·권리 확인은 pending이다.
 
 ## 미결 결정
 
@@ -38,7 +40,7 @@
 | S0 | 병합 기록 정리와 짧은 인계 | 이 문서, [작업 대기열](work-queue.md), 로컬 `HANDOFF-LITE.md`, 문서 검사와 PR. |
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정과 기준을 [S2 기록](s2-design-selection.md)에 반영했다. 화면별 사용 범위·동작 제한·권리 확인은 pending이며 S3 선행 조건이다. |
-| S3 | 화면 적용 검토 | S2 결정, 별도 Issue/ADR 필요성 검토, semantic HTML/CSS·반응형·접근성 및 운영 경계를 확인. |
+| S3 | 화면 적용 검토 | #244에서 중앙 companion 계약, 기본 OFF/fail-closed 게이트, 화면·동작 정책과 접근성 경계를 합성 검증했다. 실제 GLB 연결·화면 적용·권리/운영 승인은 별도 선행 조건이다. |
 | S4 | 1회차 마감 | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·

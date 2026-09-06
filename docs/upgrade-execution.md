@@ -200,6 +200,20 @@ Issue [#242](https://github.com/AI-HealthCare-05/AH_05_07/issues/242)에서 사�
 선행 자료로만 사용한다. 이번 반영에서 새 생성·모델링·재렌더·UI 변경·외부 업로드·
 운영 배포·ML 변경은 수행하지 않았다.
 
+## S3 companion 런타임 기반
+
+Issue [#244](https://github.com/AI-HealthCare-05/AH_05_07/issues/244)에서 제품 적용 전
+안전 경계를 코드로 고정했다. [`companion.ts`](../web/src/ui/companion.ts)에 S2의
+11종·7 clip을 타입 안전하게 중앙화하고, `VITE_SK7_COMPANION_MODE`가 정확히
+`review`일 때만 검토 모드로 해석하며 누락·오류는 `off`로 닫는다. 화면 후보는
+S02/S03/S05/S10, 제외 화면은 S04/S07/S08/S09/S11/S12/S13/S14다.
+
+`CompanionRuntimeBoundary`는 현재 두 모드 모두 시각 자산을 렌더링하거나 GLB를
+요청하지 않는다. `celebrate`는 저장 성공, `move`는 비의미적 장면 이동에서만
+조건부이고 `special`은 보류한다. 정책 입력에는 혈압·위험·모델·챌린지 성공률·
+건강 개선 사실이 없다. 합성 계약/브라우저 검사는 통과했지만 실제 자산 연결,
+권리·화면별 사용 범위 결정, 운영 성능과 제품 활성화는 후속 검토다.
+
 ## 제작·보관 경계
 
 - 로컬 실행 폴더에는 실행 상태, 재개 지침, 실패 기록, 파일 크기·SHA-256·도구

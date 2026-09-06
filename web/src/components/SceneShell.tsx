@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
+import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
 import { primaryNavigation, type ScreenId } from "../ui/journey";
 
 type SceneShellProps = {
@@ -14,6 +15,7 @@ type SceneShellProps = {
 export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut }: SceneShellProps) {
   return (
     <main className="app-shell" data-screen={activeScreen}>
+      <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} />
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")} aria-label="오늘의 기록으로 이동">
