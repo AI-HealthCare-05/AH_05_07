@@ -2,6 +2,13 @@
 
 입력 기반 위험군 선별 신호와 7일 관찰 기록을 분리하도록 설계한 웹 서비스.
 
+# 미리보기
+
+배포 주소 : https://ah-05-07-pages.ahnsangkyoon.workers.dev/
+이메일로 매직링크를 보내고, 최소 며칠간 접속이 유지됩니다.
+
+테크스택 : vite, google cloud run, cloudflare R2/CDN, supabase, 서브도메인사용 - gomdory.com/gkrry.com
+
 ## Contract
 
 - 검증된 아티팩트가 준비된 뒤에만 공개하는 입력 기반 위험군 선별 신호
