@@ -59,6 +59,9 @@ jobs:
       - name: Run review-only companion runtime verification
         run: npm run test:e2e:review
 
+      - name: Run S3E production-on companion verification
+        run: npm run test:e2e:production:on
+
       - name: Check local submission capture script syntax
         run: |
           node --check ../tools/mvp1-capture.cjs

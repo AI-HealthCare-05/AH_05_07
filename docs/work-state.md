@@ -41,10 +41,11 @@
 | S3B | 완료 | [companion-r2-v1.json](evidence/companion-r2-v1.json): 22개, 17,867,184 bytes, source↔remote/public 검증 PASS. |
 | S3C | review runtime implemented/verified | [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248): evidence-generated manifest, explicit selector, lazy Three.js `0.185.1`, 22/22 GLB, policy/network/responsive/failure tests. |
 | S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. production activation **NOT PERFORMED**. |
+| S3E | code implementation **PREPARED** | #252 범위의 exact `production` mode, 고정 S05 bear-lite profile, confirmed save 이후 one-shot `celebrate → idle`, production-off/review 회귀 및 production-on E2E를 준비했다. live production activation **NOT YET PERFORMED**; Phase B가 필요하다. |
 
 ## 미결 결정
 
-- S3E approved rollout implementation: [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252). S3D 승인 범위만 구현하며 production activation은 별도 gate로 검증한다.
+- S3E approved rollout implementation: [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)의 code/test 단계는 준비했다. S3D 승인 범위만 구현했으며 production activation, smoke, rollback은 별도 Phase B gate로 남아 있다. #252를 완료로 기록하지 않는다.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - 제출 시트 대조, 공유·납품 수용, 사용자 최종 검토: [1회차 마감](mvp1-closeout.md).
 - 현재 횡단면 입력 기반 위험군 선별 신호와 발병 가능성·변화 추이 요구의 범위 수용: [미발송 질의](mvp1-closeout.md#발주사-확인용-질의-초안--미발송).

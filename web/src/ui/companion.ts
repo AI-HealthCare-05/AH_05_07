@@ -28,11 +28,11 @@ export type CompanionReviewScreen = (typeof companionReviewScreens)[number];
 
 export const companionExcludedScreens = ["S04", "S07", "S08", "S09", "S11", "S12", "S13", "S14"] as const;
 
-export type CompanionMode = "off" | "review";
+export type CompanionMode = "off" | "review" | "production";
 export type CompanionRuntimeConfig = Readonly<{
   mode: CompanionMode;
   enabled: boolean;
-  assetLoading: "disabled" | "lazy-review";
+  assetLoading: "disabled" | "lazy-review" | "lazy-production";
   networkPolicy: "none" | "single-approved-glb";
   reducedMotion: boolean;
 }>;
@@ -43,12 +43,14 @@ export type CompanionRuntimeOptions = Readonly<{
 }>;
 
 export type CompanionSelectionContext = "save_success" | "non_semantic";
+export type CompanionAnimationSequence = "celebrate_then_idle";
 export type CompanionSelection = Readonly<{
   screen: CompanionReviewScreen;
   species: CompanionSpecies;
   variant: CompanionVariant;
   clip: CompanionClip;
   context?: CompanionSelectionContext;
+  sequence?: CompanionAnimationSequence;
 }>;
 export type CompanionDecision = Readonly<{
   status: "allowed" | "conditional" | "blocked";
@@ -57,9 +59,10 @@ export type CompanionDecision = Readonly<{
 
 const generalClips: ReadonlySet<CompanionClip> = new Set(["idle", "greet", "curious", "rest"]);
 
-/** Only an explicit review value can open the future local review boundary. */
+/** Only exact, explicitly configured values can open a companion boundary. */
 export function resolveCompanionMode(rawMode: unknown): CompanionMode {
-  return rawMode === "review" ? "review" : "off";
+  if (rawMode === "review" || rawMode === "production") return rawMode;
+  return "off";
 }
 
 /**
@@ -74,10 +77,30 @@ export function resolveCompanionRuntimeConfig(
   const mode = resolveCompanionMode(rawMode);
   return {
     mode,
-    enabled: mode === "review",
-    assetLoading: mode === "review" ? "lazy-review" : "disabled",
-    networkPolicy: mode === "review" ? "single-approved-glb" : "none",
+    enabled: mode !== "off",
+    assetLoading: mode === "review" ? "lazy-review" : mode === "production" ? "lazy-production" : "disabled",
+    networkPolicy: mode === "off" ? "none" : "single-approved-glb",
     reducedMotion: options.reducedMotion === true,
+  };
+}
+
+/**
+ * Production is intentionally narrower than review. This resolver has no query input:
+ * the S3D-approved profile is the only production selection that can be constructed.
+ */
+export function resolveProductionCompanion(
+  mode: CompanionMode,
+  screen: ScreenId,
+  confirmedSave: boolean,
+): CompanionSelection | null {
+  if (mode !== "production" || screen !== "S05" || !confirmedSave) return null;
+  return {
+    screen: "S05",
+    species: "bear",
+    variant: "lite",
+    clip: "celebrate",
+    context: "save_success",
+    sequence: "celebrate_then_idle",
   };
 }
 

@@ -13,9 +13,11 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   명시적 query selection으로만 실제 GLB를 읽는다.
 - S3D visual acceptance: **APPROVED**. [결정 기록](s3d-companion-visual-acceptance.md)은
   `bear` primary, `lite` candidate, S05 `save_success` only로 범위를 좁힌다.
-- production activation: **NOT PERFORMED**. `VITE_SK7_COMPANION_MODE` 기본값은
-  계속 `off`이며, 운영 화면·자동 species 배정·모델/입력 기반 위험군 선별 신호/BP
-  연동은 하지 않는다. 구현은 successor [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서만 다룬다.
+- S3E code implementation prepared: **READY FOR ROLLOUT GATE**. exact
+  `production` mode는 고정된 S05 `bear`/`lite` profile만 만들고, confirmed save
+  이후 같은 GLB의 mixer에서 `celebrate` one-shot 뒤 `idle`로 전환한다.
+- live production activation: **NOT YET PERFORMED**. Phase B에서만 실제
+  Cloudflare variable activation, smoke, rollback을 수행한다.
 
 ## S3D 사람 시각 수용 결정
 
@@ -59,10 +61,12 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 
 ## 게이트와 자산 경계
 
-`VITE_SK7_COMPANION_MODE`가 정확히 `review`일 때만 명시적 로컬 검토 모드로
-해석한다. 누락·빈 문자열·오타·다른 값은 모두 `off`다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
-mode, 허용 화면, explicit species/variant/clip, animation policy를 모두 통과한
-뒤에만 `CompanionReviewRenderer`를 lazy import한다. [evidence manifest](evidence/companion-r2-v1.json)를
+`VITE_SK7_COMPANION_MODE`는 exact `off`, `review`, `production`만 허용한다.
+누락·빈 문자열·오타·unknown은 모두 `off`다. `review`는 기존 explicit query
+selection을 유지하지만 `production`은 query를 읽지 않고 승인된 고정 profile만
+생성한다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
+mode, 화면, selection, animation policy를 모두 통과한 뒤에만 renderer를 lazy import한다.
+[evidence manifest](evidence/companion-r2-v1.json)를
 읽는 generator가 만드는 [`companionAssets.generated.ts`](../web/src/ui/companionAssets.generated.ts) 외의
 URL/version/file name은 사용하지 않는다.
 
@@ -76,6 +80,12 @@ URL/version/file name은 사용하지 않는다.
 - `celebrate`: S05의 명시적 `save_success` UI 이벤트에서만 조건부
 - `move`: `non_semantic` 장면 이동에서만 조건부
 - `special`: 별도 검토 전 보류
+
+Production sequence는 confirmed successful save가 확인된 S05에서만
+`celebrate`를 `LoopOnce`/1회로 재생하고 mixer `finished` event 뒤 `idle` loop로
+전환한다. sequence 중 selection을 바꾸지 않으므로 approved bear-lite GLB는
+정확히 한 번만 요청된다. `prefers-reduced-motion: reduce`에서는 action과 RAF를
+시작하지 않고 neutral static model만 표시한다.
 
 정책 함수는 화면·clip·비의미적 UI context만 받는다. 혈압 수치/변화, 위험 점수·
 위험군, 모델 결과·준비 상태, 챌린지 성공률, 건강 개선 여부는 입력 타입이나
@@ -93,8 +103,9 @@ presentation boolean으로 전달하며, reduced motion에서는 animation mixer
 
 ## 자산 및 운영 경계
 
-S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했고, S3C는 별도 runtime
-delivery hostname으로 그 object를 review-only로 읽기만 한다. GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
+S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했고, S3C review와 S3E
+production-on 검증은 별도 runtime delivery hostname으로 그 object를 읽기만 한다.
+GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 일반 사용자 활성화, 모델/ML 변경, test 접근은 하지 않았다. Three.js `0.185.1`과
 `GLTFLoader`는 product entry에서 정적으로 import하지 않고 gate 뒤 lazy chunk에서만
 로드한다. 기존 `visual/v1/` 자산은 대체하지 않는다.
@@ -105,6 +116,10 @@ delivery hostname으로 그 object를 review-only로 읽기만 한다. GLB Git �
 없는지 검증한다. `npm run test:e2e:review`의 review suite는 22/22 GLB load, 각
 7 clip runtime name set, 허용/조건부/차단 policy, 제외 화면 network=0, reduced motion,
 404/abort 실패 격리, 1366/390/320 responsive 경계를 실제 브라우저에서 검증한다.
+`npm run test:e2e:production:on`은 실제 runtime delivery의 S05 production-on
+경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`, 제외
+화면, query 무시, reduced motion, failure isolation, 1366/390/320 non-overlap을
+검증한다. 이 테스트의 production variable은 local test web server에만 주입한다.
 
 S3C CORS 계약은 그대로 유지한다. 최종 origin은
 `https://ah-05-07-pages.ahnsangkyoon.workers.dev`와 `http://127.0.0.1:4173` 두 개이며,
@@ -120,3 +135,16 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
   `11,803,720`, 전체 `17,867,184` bytes (evidence 기준)
 - valid first companion render: lazy renderer chunk 1개 + GLB 1개, 추가 network 2회
 - production/off initial route: renderer chunk 0, companion GLB 0
+
+## S3E rollout and rollback contract
+
+- Production selection source: `resolveProductionCompanion`의 고정 계약. 입력은
+  mode, S05 screen, `confirmedSave` boolean뿐이며 BP value, 입력 기반 위험군
+  선별 신호, model output, challenge adherence/result를 받지 않는다.
+- S05 trigger: 실제 save request가 성공으로 resolve된 뒤에만 `confirmedSave=true`;
+  요청 시작, optimistic UI, timeout/unknown, 4xx/5xx, 저장 확인 전에는 false다.
+- Production-off rollback: `VITE_SK7_COMPANION_MODE=off` 또는 variable 제거 후
+  rebuild/deploy하고, renderer request 0 및 GLB request 0을 확인한다.
+- Phase A는 위 code/test/deployment procedure evidence만 준비했다. live
+  Cloudflare environment variable 변경, production activation/smoke/rollback은
+  수행하지 않았으며 Phase B가 필요하다.
