@@ -41,6 +41,28 @@ The following common fields apply to every row in the delivery register:
 - Replacement/supersession: new `companion/v1/` delivery; it does not replace
   or supersede `visual/v1/` assets.
 
+### S3B provenance and S3C runtime delivery
+
+The historical S3B public verification provenance is preserved exactly in the
+table below and in `docs/evidence/companion-r2-v1.json`:
+
+- Original S3B custom domain: `https://sk7-assets.gomdory.com`.
+- R2 bucket: `sk7-assets-prod`.
+- The 22 object keys, bytes, and SHA-256 values are unchanged; no GLB was
+  re-uploaded, overwritten, or deleted.
+- S3C review runtime delivery: `https://sk7-companion.gkrry.com` using the
+  same `companion/v1/` keys.
+- The split exists because the old `gomdory.com` zone's Free Bot Fight Mode
+  returned a managed challenge to GitHub Actions Microsoft ASN and
+  HeadlessChrome traffic. The `gkrry.com` static delivery zone has Bot Fight
+  Mode set to OFF.
+- This runtime delivery record is not approval for production activation.
+
+The S3B `Public URL` column remains historical provenance; runtime code builds
+its URLs from the separate S3C runtime delivery contract and the unchanged R2
+object key. R2 CORS was not changed for this hostname split: the existing two
+allowed origins and `GET`, `HEAD` methods remain in force, with no wildcard.
+
 Each row below is one complete delivery record with those common fields and
 the row-specific identity, digest, size, key, and URL. The local `light.glb`
 filename is preserved; only its R2 object variant is mapped to `lite`.

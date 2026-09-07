@@ -14,6 +14,22 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
 - production activation: **NOT APPROVED**. `VITE_SK7_COMPANION_MODE` 기본값은
   계속 `off`이며, 운영 화면·자동 species 배정·모델/위험/BP 연동은 하지 않는다.
 
+## S3B provenance와 S3C runtime delivery 분리
+
+- R2 bucket은 계속 `sk7-assets-prod`다.
+- S3B의 original delivery provenance는 `https://sk7-assets.gomdory.com`이며,
+  evidence의 기존 `public_url` 기록은 역사적 사실로 보존한다.
+- S3C review runtime delivery hostname은
+  `https://sk7-companion.gkrry.com`이다. 두 hostname은 동일한
+  `companion/v1/` object key를 가리킨다.
+- 22개 object의 key, bytes, SHA-256은 불변이며 GLB 재업로드·overwrite·delete는
+  수행하지 않았다.
+- 분리 이유는 old `gomdory.com` zone의 Free Bot Fight Mode가 GitHub Actions
+  Microsoft ASN 및 HeadlessChrome의 legitimate review traffic에 managed
+  challenge를 반환했기 때문이다. `gkrry.com` static delivery zone에서는 Bot
+  Fight Mode가 OFF다. 이는 `gkrry.com` 전체에 보안이 없다는 의미가 아니다.
+- runtime delivery 전환은 production activation 승인이 아니다.
+
 ## 중앙 계약
 
 웹 계약은 [`web/src/ui/companion.ts`](../web/src/ui/companion.ts)에만 둔다.
@@ -58,8 +74,8 @@ presentation boolean으로 전달하며, reduced motion에서는 animation mixer
 
 ## 자산 및 운영 경계
 
-S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했고, S3C는 그 public URL을
-review-only로 읽기만 한다. GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
+S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했고, S3C는 별도 runtime
+delivery hostname으로 그 object를 review-only로 읽기만 한다. GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 일반 사용자 활성화, 모델/ML 변경, test 접근은 하지 않았다. Three.js `0.185.1`과
 `GLTFLoader`는 product entry에서 정적으로 import하지 않고 gate 뒤 lazy chunk에서만
 로드한다. 기존 `visual/v1/` 자산은 대체하지 않는다.
@@ -71,11 +87,10 @@ review-only로 읽기만 한다. GLB Git 추가, 로컬 자산 복사, 생성·�
 7 clip runtime name set, 허용/조건부/차단 policy, 제외 화면 network=0, reduced motion,
 404/abort 실패 격리, 1366/390/320 responsive 경계를 실제 브라우저에서 검증한다.
 
-S3C CORS는 변경 전 Wrangler read-only 결과(Workers origin 1개, `GET, HEAD`)를
-기록한 뒤 local Playwright fetch 실패를 재현하여 최소 변경했다. 최종 origin은
+S3C CORS 계약은 그대로 유지한다. 최종 origin은
 `https://ah-05-07-pages.ahnsangkyoon.workers.dev`와 `http://127.0.0.1:4173` 두 개이며,
 methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local port는 허용하지
-않는다. 변경은 R2 CORS 설정에만 적용했고 GLB object는 수정하지 않았다.
+않는다. 새 runtime hostname 때문에 CORS를 변경하지 않았고 GLB object도 수정하지 않았다.
 
 ## S3C 측정 결과
 

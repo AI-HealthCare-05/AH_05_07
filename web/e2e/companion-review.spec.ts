@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { companionClips, companionExcludedScreens, companionSpecies, companionVariants } from "../src/ui/companion";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
@@ -11,102 +11,18 @@ function reviewUrl(screen: string, query = selection) {
 }
 
 function companionRequests(urls: string[]) {
-  return urls.filter((url) => /sk7-assets\.gomdory\.com\/companion\/v1\/.+\.glb(?:\?|$)/i.test(url));
+  return urls.filter((url) => /sk7-companion\.gkrry\.com\/companion\/v1\/.+\.glb(?:\?|$)/i.test(url));
 }
 
-const companionRequestPattern = /sk7-assets\.gomdory\.com\/companion\/v1\//i;
-const companionDiagnosticPages = new WeakMap<Page, { flush: () => Promise<void> }>();
-
-function selectedHeaders(headers: Record<string, string>, names: string[]) {
-  return Object.fromEntries(names.map((name) => [name, headers[name] ?? "<missing>"]));
-}
-
-function attachCompanionDiagnostics(page: Page, testTitle: string) {
-  const requests: Array<Record<string, unknown>> = [];
-  const responses: Array<Record<string, unknown>> = [];
-  const responseUrls = new Set<string>();
-  const failures: Array<Record<string, unknown>> = [];
-  const consoleMessages: Array<Record<string, string>> = [];
-  const pageErrors: string[] = [];
-  const headerReads: Promise<void>[] = [];
-
-  page.on("request", (request) => {
-    if (!companionRequestPattern.test(request.url())) return;
-    const url = request.url();
-    const headers = request.allHeaders().then((allHeaders) => {
-      requests.push({
-        url,
-        method: request.method(),
-        headers: selectedHeaders(allHeaders, ["origin", "referer", "sec-fetch-site", "sec-fetch-mode", "sec-fetch-dest", "user-agent"]),
-      });
-    });
-    headerReads.push(headers);
-  });
-
-  page.on("response", (response) => {
-    if (!companionRequestPattern.test(response.url())) return;
-    const url = response.url();
-    responseUrls.add(url);
-    const headers = response.allHeaders().then((allHeaders) => {
-      responses.push({
-        url,
-        status: response.status(),
-        headers: selectedHeaders(allHeaders, ["access-control-allow-origin", "access-control-allow-methods", "content-type", "cache-control", "cf-cache-status", "cf-mitigated", "location"]),
-      });
-    });
-    headerReads.push(headers);
-  });
-
-  page.on("requestfailed", (request) => {
-    if (!companionRequestPattern.test(request.url())) return;
-    failures.push({
-      url: request.url(),
-      errorText: request.failure()?.errorText ?? "<missing>",
-      responseSeen: responseUrls.has(request.url()),
-    });
-  });
-
-  page.on("console", (message) => {
-    if (! ["error", "warning"].includes(message.type())) return;
-    const text = message.text();
-    if (!/companion|r2|cors|orb|corp|csp|network/i.test(text)) return;
-    consoleMessages.push({ type: message.type(), text });
-  });
-
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-
-  return {
-    flush: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      await Promise.allSettled(headerReads);
-      if (!requests.length && !responses.length && !failures.length && !consoleMessages.length && !pageErrors.length) return;
-      console.log(
-        "companion Playwright diagnostics",
-        JSON.stringify({
-          testTitle,
-          gltfLoaderReached: testTitle !== "diagnostic: browser fetch for companion R2" && requests.length > 0,
-          requests,
-          responses,
-          failures,
-          console: consoleMessages,
-          pageerror: pageErrors,
-        }),
-      );
-    },
-  };
-}
-
-test.beforeEach(async ({ page }, testInfo) => {
-  companionDiagnosticPages.set(page, attachCompanionDiagnostics(page, testInfo.title));
-});
-
-test.afterEach(async ({ page }) => {
-  await companionDiagnosticPages.get(page)?.flush();
-});
-
-test("diagnostic: browser fetch for companion R2", async ({ page }) => {
+test("review mode is fail-closed without a complete explicit selection", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
   await page.goto(`/?${fixture}&screen=S02`);
-  const result = await page.evaluate(async (url) => {
+  await expect(page.getByRole("heading", { name: "오늘의 기록" })).toBeVisible();
+  expect(companionRequests(requests)).toEqual([]);
+
+  const responsePromise = page.waitForResponse((response) => response.url() === companionAssetManifest.bear.lite.url);
+  const fetchPromise = page.evaluate(async (url) => {
     try {
       const response = await fetch(url, { mode: "cors" });
       return {
@@ -115,7 +31,7 @@ test("diagnostic: browser fetch for companion R2", async ({ page }) => {
         type: response.type,
         url: response.url,
         contentType: response.headers.get("content-type"),
-        error: null,
+        cfMitigated: response.headers.get("cf-mitigated"),
       };
     } catch (error) {
       return {
@@ -124,26 +40,21 @@ test("diagnostic: browser fetch for companion R2", async ({ page }) => {
         type: null,
         url,
         contentType: null,
-        error: {
-          name: error instanceof Error ? error.name : "UnknownError",
-          message: error instanceof Error ? error.message : String(error),
-        },
+        cfMitigated: null,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
-  }, "https://sk7-assets.gomdory.com/companion/v1/bear/v007/lite.glb");
-  console.log("companion Chromium manual fetch", JSON.stringify(result));
-  console.log(
-    "companion diagnostic classification",
-    result.outcome === "failed" ? "BROWSER_POLICY_OR_BROWSER_PATH" : "CHROMIUM_PAGE_FETCH_SUCCESS",
-  );
-});
-
-test("review mode is fail-closed without a complete explicit selection", async ({ page }) => {
-  const requests: string[] = [];
-  page.on("request", (request) => requests.push(request.url()));
-  await page.goto(`/?${fixture}&screen=S02`);
-  await expect(page.getByRole("heading", { name: "오늘의 기록" })).toBeVisible();
-  expect(companionRequests(requests)).toEqual([]);
+  }, companionAssetManifest.bear.lite.url);
+  const [manualResponse, manualFetch] = await Promise.all([responsePromise, fetchPromise]);
+  expect(manualResponse.status()).toBe(200);
+  expect(manualFetch.outcome).toBe("succeeded");
+  expect(manualFetch.status).toBe(200);
+  expect(manualFetch.type).toBe("cors");
+  expect(manualFetch.url).toBe(companionAssetManifest.bear.lite.url);
+  expect(manualFetch.contentType).toBe("model/gltf-binary");
+  expect(manualFetch.cfMitigated).toBeNull();
+  expect(manualResponse.headers()["content-type"]).toBe("model/gltf-binary");
+  expect(manualResponse.headers()["cf-mitigated"]).toBeUndefined();
 
   requests.length = 0;
   await page.goto(reviewUrl("S02", "companion_species=not-a-species&companion_variant=lite&companion_clip=idle"));

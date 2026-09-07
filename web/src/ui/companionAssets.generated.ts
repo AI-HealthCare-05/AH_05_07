@@ -19,7 +19,7 @@ export const companionAssetManifest = {
       "species": "bear",
       "version": "v007",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/bear/v007/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/standard.glb",
       "bytes": 1032708,
       "sha256": "48bfc97022f9799c2dccc58c0d0037a4cf06e846147e9b81864b814a5b214712"
     },
@@ -28,7 +28,7 @@ export const companionAssetManifest = {
       "species": "bear",
       "version": "v007",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/bear/v007/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
       "bytes": 518636,
       "sha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874"
     }
@@ -39,7 +39,7 @@ export const companionAssetManifest = {
       "species": "rabbit",
       "version": "v002",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/rabbit/v002/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/rabbit/v002/standard.glb",
       "bytes": 1033524,
       "sha256": "25f0165c11eea89b9f90360e72435d4ccca98bf67d30b4d45df18f8b2c580704"
     },
@@ -48,7 +48,7 @@ export const companionAssetManifest = {
       "species": "rabbit",
       "version": "v002",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/rabbit/v002/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/rabbit/v002/lite.glb",
       "bytes": 519456,
       "sha256": "b3559b2925bb16381adf954432e11541542c14bac7d6e6a52e7fa7f402825627"
     }
@@ -59,7 +59,7 @@ export const companionAssetManifest = {
       "species": "cat",
       "version": "v002",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/cat/v002/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/cat/v002/standard.glb",
       "bytes": 1043208,
       "sha256": "5635a2e619e0d2bbeabe125423462350f7eae6ed8c1a6f0b6c4ca00ec1053afb"
     },
@@ -68,7 +68,7 @@ export const companionAssetManifest = {
       "species": "cat",
       "version": "v002",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/cat/v002/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/cat/v002/lite.glb",
       "bytes": 528348,
       "sha256": "6a77bf8229d43f7094208143cb611bdbb46ffd185faf769efc5114d37e3ed960"
     }
@@ -79,7 +79,7 @@ export const companionAssetManifest = {
       "species": "dog",
       "version": "v001",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/dog/v001/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/dog/v001/standard.glb",
       "bytes": 1032876,
       "sha256": "7c20c8aae1114e0be52da20acc11fc25fc60c9a4379af9fc8440b3ad9734cf8b"
     },
@@ -88,7 +88,7 @@ export const companionAssetManifest = {
       "species": "dog",
       "version": "v001",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/dog/v001/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/dog/v001/lite.glb",
       "bytes": 518128,
       "sha256": "71762e0e00be1dd083fc0421533519921f0ac0c427fc08246632606406e92884"
     }
@@ -99,7 +99,7 @@ export const companionAssetManifest = {
       "species": "red_panda",
       "version": "v003",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/red_panda/v003/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/red_panda/v003/standard.glb",
       "bytes": 1198468,
       "sha256": "29ddc43291cbfa3fc7c7479f983e5d560eddfa83a2966094773278f471f997a7"
     },
@@ -108,7 +108,7 @@ export const companionAssetManifest = {
       "species": "red_panda",
       "version": "v003",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/red_panda/v003/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/red_panda/v003/lite.glb",
       "bytes": 644528,
       "sha256": "a6de102411b17295b2a9ea9a88592b4e4e9d4f3d8af73101f906f669ef927b48"
     }
@@ -119,7 +119,7 @@ export const companionAssetManifest = {
       "species": "otter",
       "version": "v003",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/otter/v003/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/otter/v003/standard.glb",
       "bytes": 1068024,
       "sha256": "83106523fa0ab0e360c914d4522b3c5f4b32c0bdf0c29ee712565d1f5168330e"
     },
@@ -128,7 +128,7 @@ export const companionAssetManifest = {
       "species": "otter",
       "version": "v003",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/otter/v003/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/otter/v003/lite.glb",
       "bytes": 548508,
       "sha256": "ac55dec25c28ff1cad1702f152987ed98e10620cc5f46a40862bfa6a86ffc27b"
     }
@@ -139,7 +139,7 @@ export const companionAssetManifest = {
       "species": "capybara",
       "version": "v002",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/capybara/v002/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/capybara/v002/standard.glb",
       "bytes": 1027480,
       "sha256": "de7ceab11ef6d22682737b99dfa18f5930cae345fbbd965c4776b621101f8c9a"
     },
@@ -148,7 +148,7 @@ export const companionAssetManifest = {
       "species": "capybara",
       "version": "v002",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/capybara/v002/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/capybara/v002/lite.glb",
       "bytes": 513236,
       "sha256": "c6908aff87e737f53c7c1133bc509caa8ee5623521ffec5198f5c672bd003e20"
     }
@@ -159,7 +159,7 @@ export const companionAssetManifest = {
       "species": "hedgehog",
       "version": "v004",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/hedgehog/v004/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/hedgehog/v004/standard.glb",
       "bytes": 1122852,
       "sha256": "a957fe8de2f6902198ebe4328589e2b852050a9656dda2504c5edfd89f7b0ede"
     },
@@ -168,7 +168,7 @@ export const companionAssetManifest = {
       "species": "hedgehog",
       "version": "v004",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/hedgehog/v004/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/hedgehog/v004/lite.glb",
       "bytes": 598996,
       "sha256": "7a8730bd05ef339dcdaa08af1d7e3741b54a1637d97f7c397901d107399e08fa"
     }
@@ -179,7 +179,7 @@ export const companionAssetManifest = {
       "species": "penguin",
       "version": "v002",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/penguin/v002/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/penguin/v002/standard.glb",
       "bytes": 1104748,
       "sha256": "62159b3a39f921b0948bcc5862ff186578e55fe1e5dd9e9b6df803e6138e7144"
     },
@@ -188,7 +188,7 @@ export const companionAssetManifest = {
       "species": "penguin",
       "version": "v002",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/penguin/v002/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/penguin/v002/lite.glb",
       "bytes": 576468,
       "sha256": "d209bf3f3f1390679f3d4902b09705fba3f94e75156f59041c7c9392f9549fe5"
     }
@@ -199,7 +199,7 @@ export const companionAssetManifest = {
       "species": "fox",
       "version": "v002",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/fox/v002/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/fox/v002/standard.glb",
       "bytes": 1081136,
       "sha256": "247dfd616e2be0955040961d74ef9942d63de06a5a711a04cd4f27377b4028aa"
     },
@@ -208,7 +208,7 @@ export const companionAssetManifest = {
       "species": "fox",
       "version": "v002",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/fox/v002/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/fox/v002/lite.glb",
       "bytes": 556720,
       "sha256": "f4809971e572fe133465698ef73ac2b89ddff975141c8dc87a04f71f58637660"
     }
@@ -219,7 +219,7 @@ export const companionAssetManifest = {
       "species": "squirrel",
       "version": "v001",
       "variant": "standard",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/squirrel/v001/standard.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/squirrel/v001/standard.glb",
       "bytes": 1058696,
       "sha256": "1a256a93117cda2884a11ff91dc35eac33b5544595fc3e8d3d8882828cd5afff"
     },
@@ -228,7 +228,7 @@ export const companionAssetManifest = {
       "species": "squirrel",
       "version": "v001",
       "variant": "lite",
-      "url": "https://sk7-assets.gomdory.com/companion/v1/squirrel/v001/lite.glb",
+      "url": "https://sk7-companion.gkrry.com/companion/v1/squirrel/v001/lite.glb",
       "bytes": 540440,
       "sha256": "3265086d5add45e0911852107b21db4a085349c002e743b2f403f8301426b6f5"
     }
@@ -240,7 +240,8 @@ export const companionManifestEvidence = {
   "inventorySha256": "9fb23a63a612c7a30e8d01b6150bab258c239e4242d1f15224deeff5a1ecbd6f",
   "assetCount": 22,
   "totalBytes": 17867184,
-  "customDomain": "https://sk7-assets.gomdory.com"
+  "customDomain": "https://sk7-assets.gomdory.com",
+  "runtimeDeliveryDomain": "https://sk7-companion.gkrry.com"
 } as const;
 
 export function getCompanionAsset(species: CompanionSpecies, variant: CompanionVariant): CompanionAsset {
