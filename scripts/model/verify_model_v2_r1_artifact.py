@@ -231,7 +231,12 @@ def verify(args: argparse.Namespace) -> int:
 
     verification_path = root / "model-v2-r1-verification.json"
     verification_path.write_text(
-        json.dumps(evidence, ensure_ascii=False, indent=2),
+        json.dumps(
+            evidence,
+            ensure_ascii=False,
+            indent=2,
+            default=lambda value: value.item() if isinstance(value, np.generic) else str(value),
+        ),
         encoding="utf-8",
     )
 
