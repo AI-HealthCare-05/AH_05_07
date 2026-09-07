@@ -1,10 +1,10 @@
 # S4 O1 production flow execution
 
 이 문서는 [Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의
-S4 첫 작업인 O1 운영 검증 **preflight**와 이후 승인된 실행 체크리스트다.
-현재 상태는 `READY FOR OPERATOR EXECUTION APPROVAL`이며, runtime reconciliation은
-완료되었다. 이 문서 작성 중 O1 production account·record·session 실행은 하지
-않았다.
+S4 첫 작업인 O1 운영 검증 preflight, 승인된 실행 체크리스트, 그리고 sanitized
+production execution evidence다. 현재 상태는 **COMPLETE / VERIFIED**이며,
+실행·정리·최종 public smoke까지 완료되었다. 이 문서와 별도 evidence 파일에는
+계정·레코드 식별자, 토큰, 원시 요청/응답, 스크린샷, export JSON을 보존하지 않는다.
 
 O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다. 모든 계정과
 데이터는 합성으로 한정하고, 입력 기반 위험군 선별 신호·혈압 측정값·챌린지
@@ -17,7 +17,7 @@ O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다
 
 | 항목 | 확인된 값 | 상태 / 경계 |
 | --- | --- | --- |
-| Current repository baseline | `6f90d270c9d2163f109d9806ac2cec98a935c223` | 현재 `origin/main`; deployed API artifact와 동일하다고 주장하지 않음 |
+| Current repository baseline | `01b29c5d574e18f238683551e088cba0316536f9` | 현재 `origin/main`; deployed API artifact와 동일하다고 주장하지 않음 |
 | 현재 기록된 production web source evidence | `30fd65eda8d988804c8af208276934226e0eb67d` | S3E evidence의 merged `main` baseline; 현재 `main`의 후속 문서 merge 전 runtime 근거 |
 | 실제 O1 execution target web runtime | Worker version `70f9d4d5-6377-4087-a405-63993382441c`, recorded source evidence `30fd65eda8d988804c8af208276934226e0eb67d` | S3E final restore evidence; API artifact provenance는 별도 기록 |
 | Production web Worker | `ah-05-07-pages` / `https://ah-05-07-pages.ahnsangkyoon.workers.dev` | Deployment SSOT와 S3E evidence로 확인 |
@@ -75,7 +75,8 @@ reconciliation, 특히 O3에서 후속 처리할 수 있다.
 
 **Remote inventory:** `KNOWN ADDITIVE DRIFT / NON-BLOCKING FOR O1`.
 **Readiness:** runtime reconciliation, migration disposition, cleanup path가
-완료되었고 O1은 **READY FOR OPERATOR EXECUTION APPROVAL**이다.
+완료되었고 O1 operator execution approval도 확인되었다. 최종 실행 결과는
+별도 [sanitized evidence](evidence/o1-production-execution.md)에 기록한다.
 
 ### Public smoke
 
@@ -228,42 +229,52 @@ private key를 Issue·PR·repository·공유 문서에 기록하지 않는다.
 
 | Check | Expected result | Sanitized evidence | Stop condition |
 | --- | --- | --- | --- |
-| [ ] preflight smoke PASS | public web/API/CORS 계약이 통과하고 product data/write가 없음 | `public smoke: pass`, 날짜·환경 class·source SHA | smoke 실패 또는 target mismatch |
-| [ ] Synthetic A 준비 | 승인된 synthetic owner와 실행 창·cleanup owner·active-challenge cleanup path가 확인됨 | `Synthetic A: approved`, 실제 주소/ID 없음 | 승인 또는 cleanup path 미확정 |
-| [ ] login/reload/new-tab | email-link login 후 정상 owner window, reload와 같은 browser new tab 유지 | `login/reload/new-tab: pass|fail|not run` | 링크/세션/페이지 이상 또는 민감 정보 캡처 필요 |
-| [ ] blood-pressure invalid | 안내가 입력 전에 보이고 range/equal/reversed/unknown-field는 저장 거부 `422` 또는 UI validation | `BP invalid: pass`, 영구 행 0 | 행 생성, 값 노출, 예상 밖 status |
-| [ ] blood-pressure valid save | 합성 유효 record 1회 저장 `201`, 저장 성공 UI 표시 | `BP save: pass`, record ID 없음 | `201` 아님, 저장 여부 불명확 |
-| [ ] duplicate click | 같은 submit 재클릭이 추가 write를 만들지 않음 | `BP duplicate: no additional write` | 추가 행/불명확 mutation |
-| [ ] edit | owned BP record의 유효 필드 수정 `200` | `BP edit: pass` | cross-user/immutable 범위 변경, `404/5xx` |
-| [ ] delete cancel | 취소 시 DELETE가 없고 record가 유지됨 | `BP delete cancel: pass` | 취소 후 부재 또는 DELETE 발생 |
-| [ ] delete confirm | 확인 후 DELETE `204`, reload/재조회에서 부재 | `BP delete confirm: pass` | 삭제 status 불일치 또는 잔존 |
-| [ ] challenge select | active challenge 1개와 승인된 action이 선택됨 `200` | `challenge select: pass` | active 2개, 예상 밖 action, `5xx` |
-| [ ] first check-in | 첫 check-in이 `completed` 또는 `skipped`로 1회 생성 `201` | `first check-in: pass` | active challenge 없음, 중복/불명확 write |
-| [ ] action lock | 다른 action 선택/교체가 거부되고 원 action 유지 (`409` 계약) | `action lock: pass` | action 교체 성공 또는 status 혼동 |
-| [ ] check-in update | 현재 owned check-in의 status만 변경 `200`; action/date/owner 불변 | `check-in status update: pass` | 다른 필드 변경 또는 non-current 수정 가능 |
-| [ ] delete cancel/confirm | 취소 시 유지, 확인 시 check-in DELETE `204`와 reload 부재 | `check-in delete cancel/confirm: pass` | 취소 DELETE, confirmed 잔존, unexpected status |
-| [ ] offline/recovery | 승인된 브라우저의 일시 offline에서 기존 data가 stale로 유지되고 retry로 복구 | `offline/recovery: pass|not run`; backend 중단 없음 | empty로 오표시, 자동 재시도, infra 조작 필요 |
-| [ ] empty/error distinction | confirmed empty와 initial/error 화면이 구분됨 | `empty/error distinction: pass` | error를 empty로 표시하거나 민감 정보 필요 |
-| [ ] optional session invalidation | 자연 발생한 invalid/expiry만 관찰; 강제 만료는 `not run` 가능 | `session invalidation: observed|not run|fail` | JWT/browser storage 조작 또는 강제 권한 필요 |
-| [ ] synthetic records cleanup | BP/check-in/approved active challenge cleanup path가 완료됨 | `synthetic records cleanup: complete|hold` | 하나라도 잔존, cleanup owner 부재 |
-| [ ] synthetic account cleanup | A가 승인된 Auth 경로로 정리됨 | `synthetic account cleanup: complete|hold` | 계정 삭제 우회 필요 또는 확인 불가 |
-| [ ] final smoke | 마지막 public smoke PASS; 추가 product write 없음 | `final public smoke: pass` | smoke 실패 또는 runtime drift |
+| [x] preflight smoke PASS | public web/API/CORS 계약이 통과하고 product data/write가 없음 | `public smoke: pass`; final smoke도 pass | smoke 실패 또는 target mismatch |
+| [x] Synthetic A 준비 | 승인된 synthetic owner와 실행 창·cleanup owner·active-challenge cleanup path가 확인됨 | `Synthetic A: approved`, 실제 주소/ID 없음 | 승인 또는 cleanup path 미확정 |
+| [x] login/reload/new-tab | email-link login 후 정상 owner window, reload와 같은 browser new tab 유지 | `login/reload/new-tab: pass` | 링크/세션/페이지 이상 또는 민감 정보 캡처 필요 |
+| [x] blood-pressure invalid | 안내가 입력 전에 보이고 range/equal/reversed는 저장 거부; unknown-field 직접 production request는 미실행 | `BP invalid: pass`, 영구 행 0 | 행 생성, 값 노출, 예상 밖 status |
+| [x] blood-pressure valid save | 합성 유효 record 1회 저장 `201`, 저장 성공 UI 표시 | `BP save: pass`, record ID 없음 | `201` 아님, 저장 여부 불명확 |
+| [x] duplicate click | 같은 submit 재클릭이 추가 write를 만들지 않음 | `BP duplicate: no additional write`; count exactly 1 | 추가 행/불명확 mutation |
+| [x] edit | owned BP record의 유효 필드 수정 `200` | `BP edit: pass`; count exactly 1 | cross-user/immutable 범위 변경, `404/5xx` |
+| [x] delete cancel | 취소 시 DELETE가 없고 record가 유지됨 | `BP delete cancel: pass` | 취소 후 부재 또는 DELETE 발생 |
+| [x] delete confirm | 확인 후 DELETE `204`, reload/재조회에서 부재 | `BP delete confirm: pass`; count 0 | 삭제 status 불일치 또는 잔존 |
+| [x] challenge select | active challenge 1개와 승인된 action이 선택됨 `200` | `challenge select: pass` | active 2개, 예상 밖 action, `5xx` |
+| [x] first check-in | 첫 check-in이 1회 생성 `201` | `first check-in: pass`; count exactly 1 | active challenge 없음, 중복/불명확 write |
+| [x] action lock | 다른 action 선택/교체가 거부되고 원 action 유지 (`409` 계약) | `action lock: pass` | action 교체 성공 또는 status 혼동 |
+| [x] check-in update | 현재 owned check-in의 status만 변경 `200`; action/date/owner 불변 | `check-in status update: pass` | 다른 필드 변경 또는 non-current 수정 가능 |
+| [x] delete cancel/confirm | 취소 시 유지, 확인 시 check-in DELETE `204`와 reload 부재 | `check-in delete cancel/confirm: pass`; count 0 | 취소 DELETE, confirmed 잔존, unexpected status |
+| [x] offline/recovery | 승인된 브라우저의 일시 offline에서 기존 data가 stale로 유지되고 retry로 복구 | `offline/recovery: pass`; browser F5 failure not counted | empty로 오표시, 자동 재시도, infra 조작 필요 |
+| [x] empty/error distinction | existing main fixture/E2E evidence plus O1 runtime observation establish the boundary; standalone scenario not re-run in O1 | `empty/error distinction: pass` with evidence references | error를 empty로 표시하거나 민감 정보 필요 |
+| [ ] optional session invalidation | 자연 발생한 invalid/expiry 관찰만 허용; 이번 실행에서는 미실행 | `session invalidation: not run` | JWT/browser storage 조작 또는 강제 권한 필요 |
+| [x] synthetic records cleanup | BP/check-in/approved active challenge cleanup path가 완료됨 | `synthetic records cleanup: complete`; aggregate orphans all 0 | 하나라도 잔존, cleanup owner 부재 |
+| [x] synthetic account cleanup | A가 승인된 Auth 경로로 정리됨 | `synthetic account cleanup: complete` | 계정 삭제 우회 필요 또는 확인 불가 |
+| [x] final smoke | 마지막 public smoke PASS; 추가 product write 없음 | `final public smoke: pass` | smoke 실패 또는 runtime drift |
 
 Valid BP save 성공 뒤 현재 production behavior에 따라 S05 bear-lite가 표시될
 수 있다. 이 현상은 저장 성공 UI/API 계약의 일부일 뿐이며 입력 기반 위험군
 선별 신호, 건강 상태, 모델 출력, 챌린지 이행 또는 인과적 개선을 의미하지
 않는다. UI redesign은 O1 범위가 아니다.
 
-## Status
+## Final status
 
-- O1 status: **READY FOR OPERATOR EXECUTION APPROVAL**
+- O1 status: **COMPLETE / VERIFIED**
 - Runtime reconciliation: **complete**
 - Migration disposition: **complete** — known additive drift / non-blocking for O1
 - Active-challenge cleanup path: **resolved** via approved Synthetic A Auth account deletion cascade
-- Production execution: **NOT STARTED**
-- Runtime deployment changes in this reconciliation: **0**
-- Production data/schema changes in this reconciliation: **0**
+- Operator execution approval: **confirmed**
+- Production execution: **COMPLETED**
+- Synthetic cleanup: **COMPLETE**
+- Final public smoke: **PASS**
+- Natural session invalidation: **NOT RUN**
+- Direct production unknown-field request: **NOT RUN**
+- Browser full-page Offline F5: **NOT COUNTED** toward application offline behavior
+- Valid in-app offline/recovery: **PASS**
+- Runtime deployment changes by this evidence PR: **0**
+- Production data/schema changes by this evidence PR: **0**
 - Diagnostic `containeranalysis.googleapis.com` project-service enablement: **recorded**
-- Product/UI/model changes in this preflight: **0**
+- Product/UI/model changes by this evidence PR: **0**
+- Deferred integrated UI/UX findings: rolling 7-day path can resemble day-7
+  progress; export success notice persists across navigation
+- Detailed sanitized result: [O1 production execution evidence](evidence/o1-production-execution.md)
 - Successor execution Issue: [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)
 - Parent Issue: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238), remains open

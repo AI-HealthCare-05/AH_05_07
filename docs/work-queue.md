@@ -64,18 +64,19 @@
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 각 항목에 실행 근거 또는 책임 있는 수용/보류가 기록된다.
 - 선행 조건: S0–S3의 해당 결과, 운영 승인, 제출 검토, 발주사·분야·통계·제품 책임자의 필요한 결정.
 
-### S4 O1 — **READY FOR OPERATOR EXECUTION APPROVAL**
+### S4 O1 — **COMPLETE / VERIFIED**
 
-- [O1 실행 문서](o1-production-flow-execution.md)의 현재 `origin/main` baseline은
-  `6f90d270c9d2163f109d9806ac2cec98a935c223`다. 이는 deployed API artifact와
+- [O1 실행 문서](o1-production-flow-execution.md)의 current documentation baseline은
+  `01b29c5d574e18f238683551e088cba0316536f9`다. 이는 deployed API artifact와
   동일하다고 주장하지 않는다.
 - 현재 기록된 production web source evidence는
   `30fd65eda8d988804c8af208276934226e0eb67d`다. API artifact는 image tag
   `921a35e` → repository commit `921a35e38261104aec1cdd7095f86a16c48f357c`
   로 operationally 매핑되며 source attestation은 unavailable/not claimed다.
-- public/no-auth deployment smoke는 PASS했다. runtime reconciliation은
-  완료되었고, 실제 production account, login, record/session 작업은 실행하지
-  않았다.
+- public/no-auth pre- and post-cleanup deployment smoke는 PASS했다. approved
+  Synthetic A production execution, session continuity, BP/challenge flow,
+  cleanup, and in-app offline/recovery were completed and recorded in the
+  [sanitized execution evidence](evidence/o1-production-execution.md).
 - O1 범위는 AC-04/06/08의 Synthetic A owner 흐름이다. 기존 #149의
   cross-user 근거를 승계하므로 Synthetic B는 새로 만들지 않는다.
 - 현재 Cloud Run revision은 `bp7-api-00013-qbz`, traffic은 `100%`, image digest는
@@ -84,11 +85,26 @@
   known/accepted non-blocking drift다. cleanup path는 Synthetic A의 정상
   product/API 삭제 후 approved Auth account deletion과 declared FK cascade로
   resolved되었다.
-- 남은 operator input은 explicit O1 execution approval, execution window,
-  cleanup operator/role, approved private Synthetic A account뿐이다. production
-  execution은 아직 **NOT STARTED**다.
+- Natural session invalidation was not run, direct production unknown-field request
+  was not run, and full-page browser Offline F5 was not counted toward application
+  offline behavior. The valid in-app offline/recovery experiment passed.
+- O1 is **COMPLETE / VERIFIED**. No identifiers, secrets, raw logs, screenshots,
+  or exported JSON were retained.
 - 실행 추적 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)이며,
   부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
+
+### S4 follow-up boundaries
+
+- O2 remains pending natural 30-day expiration or a responsible alternate-evidence
+  decision.
+- O3 remains pending clean release/revision smoke rollback/restore evidence.
+- Other #238 scope remains open: API P95 decision/evidence, submission sheet/final
+  sharing acceptance, future incidence/progression scope acceptance, and
+  input/model decisions.
+- The rolling recent-7-day path can resemble day-7 progress for a new account,
+  and the export success notice persists across navigation. Both are deferred
+  integrated UI/UX findings for the holistic UI/companion composition pass after
+  functional scope completion; do not start piecemeal UI polish in O1 closeout.
 
 S4는 모델 출시, test 실행 또는 운영 배포를 자동으로 승인하지 않는다.
 
