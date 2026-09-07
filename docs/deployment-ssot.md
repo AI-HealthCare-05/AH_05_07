@@ -112,6 +112,36 @@ Issue #146 introduces reconciliation of this ledger and the durable restart hand
 Future releases append a dated entry or replace the `Latest reviewed` section
 only when all recorded identifiers and results have been verified.
 
+### S3E production rollout evidence — 2026-09-07
+
+This is the Phase B closeout record for [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)
+and implementation [PR #255](https://github.com/AI-HealthCare-05/AH_05_07/pull/255).
+The source baseline, deployment snapshot, and Cloudflare runtime are recorded as
+separate facts.
+
+- **Source baseline:** merged implementation PR #255; upstream `main` commit
+  `30fd65eda8d988804c8af208276934226e0eb67d`.
+- **Deployment snapshot:** operator reported successful deployment mirror sync.
+  No workflow run ID or URL is recorded because the available repository evidence
+  does not tie a specific snapshot run to the merged #255 source SHA.
+- **Cloudflare build variable:** `VITE_SK7_COMPANION_MODE=production`, a normal
+  plaintext build variable; live final state is `production`.
+- **Cloudflare baseline:** Worker version
+  `c7f85901-e427-4cb7-8efe-4ca5c1a32443`.
+- **Cloudflare production:** Worker version
+  `70f9d4d5-6377-4087-a405-63993382441c`.
+- **Rollback rehearsal:** baseline restored successfully; public deployment smoke
+  passed.
+- **Final production:** Worker version
+  `70f9d4d5-6377-4087-a405-63993382441c`; restore completed and final public
+  deployment smoke passed.
+- **Public deployment smoke:** PASS at activation, rollback, and final restore.
+- **Runtime boundary:** R2/CORS/API/Cloud Run/Supabase changes were 0 for this
+  rollout evidence closeout.
+
+The complete S3E activation, rollback, and final restore evidence is in
+[`s3e-companion-production-rollout.md`](s3e-companion-production-rollout.md).
+
 ## Supabase migration gate
 
 Files in `supabase/migrations/` are version-controlled database change instructions. Git merge, GitHub Actions, Cloud Run deployment, and Cloudflare deployment do **not** execute those SQL files against the production Supabase project automatically.

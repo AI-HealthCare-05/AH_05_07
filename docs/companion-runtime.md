@@ -13,11 +13,14 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   명시적 query selection으로만 실제 GLB를 읽는다.
 - S3D visual acceptance: **APPROVED**. [결정 기록](s3d-companion-visual-acceptance.md)은
   `bear` primary, `lite` candidate, S05 `save_success` only로 범위를 좁힌다.
-- S3E code implementation prepared: **READY FOR ROLLOUT GATE**. exact
-  `production` mode는 고정된 S05 `bear`/`lite` profile만 만들고, confirmed save
-  이후 같은 GLB의 mixer에서 `celebrate` one-shot 뒤 `idle`로 전환한다.
-- live production activation: **NOT YET PERFORMED**. Phase B에서만 실제
-  Cloudflare variable activation, smoke, rollback을 수행한다.
+- S3E production rollout: **COMPLETE**. exact `production` mode는 고정된 S05
+  `bear`/`lite` profile만 만들고, confirmed save 이후 같은 GLB의 mixer에서
+  `celebrate` one-shot 뒤 `idle`로 전환한다.
+- live production state: **ACTIVE**. Phase B activation, public smoke, rollback
+  rehearsal, and final restore are verified in
+  [S3E production rollout evidence](s3e-companion-production-rollout.md).
+- The rollout is reversible, the rollback path is verified, and companion off or
+  failure preserves the S05 core UI.
 
 ## S3D 사람 시각 수용 결정
 
@@ -145,6 +148,6 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
   요청 시작, optimistic UI, timeout/unknown, 4xx/5xx, 저장 확인 전에는 false다.
 - Production-off rollback: `VITE_SK7_COMPANION_MODE=off` 또는 variable 제거 후
   rebuild/deploy하고, renderer request 0 및 GLB request 0을 확인한다.
-- Phase A는 위 code/test/deployment procedure evidence만 준비했다. live
-  Cloudflare environment variable 변경, production activation/smoke/rollback은
-  수행하지 않았으며 Phase B가 필요하다.
+- Phase B production evidence confirms the live final state is `production` with
+  S05-only bear-lite behavior, confirmed-save gating, one-shot `celebrate` to
+  `idle`, a verified rollback path, and preserved core UI when off or failed.

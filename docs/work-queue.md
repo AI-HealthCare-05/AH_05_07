@@ -36,8 +36,10 @@
   evidence-generated manifest와 lazy Three.js `0.185.1` review runtime을 연결하고,
   22/22 GLB·7 clip·정책·network·responsive·failure isolation을 검증했다.
 - 현재 결과: S3D 사람 시각 수용은 **APPROVED**. bear primary, lite candidate,
-  S05 `save_success` only이며 S02/S03/S10은 hold, S11은 제외한다. production
-  activation은 **NOT PERFORMED**다. 상세 결정은 [S3D 기록](s3d-companion-visual-acceptance.md)과
+  S05 `save_success` only이며 S02/S03/S10은 hold, S11은 제외한다. S3E Phase B
+  production activation, smoke, rollback rehearsal, and final restore는
+  [production evidence](s3e-companion-production-rollout.md)에 기록했고
+  **COMPLETE**다. 상세 S3D 결정은 [S3D 기록](s3d-companion-visual-acceptance.md)과
   [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)에 둔다.
 
 ## S3E — 승인된 S05 bear-lite 운영 rollout gate
@@ -50,16 +52,18 @@
 - 완료 기준: production-off fail-closed, S05 one-shot/network/rollback,
   responsive 1366/390/320, CTA·bottom-nav non-overlap, reduced-motion,
   accessibility, failure isolation, bundle/network evidence.
-- 선행 조건: S3D 승인 기록. 이 대기열 항목 자체는 production activation을 수행하거나
-  승인하지 않는다.
-- 현재 상태: **S3E code implementation prepared**. live Cloudflare activation/smoke/
-  rollback은 수행하지 않았고 Phase B에서만 진행한다. 이 항목과 Issue #252는
-  아직 완료로 기록하지 않는다.
+- 선행 조건: S3D 승인 기록.
+- 현재 상태: **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK
+  REHEARSED**; activation smoke, rollback rehearsal, and final restore evidence
+  are recorded in [s3e-companion-production-rollout.md](s3e-companion-production-rollout.md).
+  Issue #252 completion is pending only on this closeout PR merge.
 
-## S4 — 1회차 마감
+## S4 — 1회차 마감 — **ACTIVE**
 
 - 범위: 운영 O1/O2/O3, API P95, 제출 시트·최종 검토, 발주 범위 수용, 입력/모델 결정을 정리한다.
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 각 항목에 실행 근거 또는 책임 있는 수용/보류가 기록된다.
 - 선행 조건: S0–S3의 해당 결과, 운영 승인, 제출 검토, 발주사·분야·통계·제품 책임자의 필요한 결정.
 
 S4는 모델 출시, test 실행 또는 운영 배포를 자동으로 승인하지 않는다.
+
+기능 범위 완료 후 전체 UI/companion composition을 별도 통합 디자인 패스로 검토.
