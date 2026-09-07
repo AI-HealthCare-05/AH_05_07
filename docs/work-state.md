@@ -65,7 +65,9 @@ reconciled되었다. remote에는 O1 required first four migrations가 적용되
 additive index migration은 known/accepted non-blocking drift다. deployed API
 artifact는 current `main`보다 오래되지만 O1-required endpoint semantics는
 포함한다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
-계속 OPEN이며 실행 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)다.
+계속 OPEN이며 O1 execution successor [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
+CLOSED다. O3 execution successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)에서
+별도로 추적한다.
 
 이번 reconciliation 중 `containeranalysis.googleapis.com` diagnostic
 project-service enablement이 있었으므로, runtime deployment changes와
@@ -79,7 +81,13 @@ changes가 `0`이라고 표현하지 않는다.
   Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - S4 O2: natural 30-day expiration evidence 또는 책임 있는 alternate-evidence 결정 pending.
-- S4 O3: clean release/revision smoke rollback/restore evidence pending.
+- S4 O3: **PREPARED / OPERATOR APPROVAL REQUIRED**. [O3 preflight](o3-clean-release-preflight.md)와
+  execution Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)에
+  candidate SHA, runtime diff, migration/web decision gates, clean checkout,
+  no-traffic rollout, smoke, rollback, restore, and live target reconfirmation을 기록했다.
+- O3는 아직 COMPLETE가 아니다. 남은 결정은 migration disposition A/B, web
+  reproduction/API-only scope, exact SHA approval, execution window, rollback
+  operator, live target reconfirmation, and temporary revision/image retention이다.
 - O1 deferred integrated UI/UX findings: rolling 7-day path가 day-7 progress처럼
   보일 수 있음; export success notice가 navigation 뒤에도 남음. 기능 범위 완료 후
   holistic UI/companion composition review에서 함께 다룬다.

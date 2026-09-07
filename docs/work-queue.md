@@ -90,14 +90,19 @@
   offline behavior. The valid in-app offline/recovery experiment passed.
 - O1 is **COMPLETE / VERIFIED**. No identifiers, secrets, raw logs, screenshots,
   or exported JSON were retained.
-- 실행 추적 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)이며,
+- O1 실행 Issue [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
+  CLOSED다. O3 실행 successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)이며,
   부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
 
 ### S4 follow-up boundaries
 
 - O2 remains pending natural 30-day expiration or a responsible alternate-evidence
   decision.
-- O3 remains pending clean release/revision smoke rollback/restore evidence.
+- O3 is **PREPARED / OPERATOR APPROVAL REQUIRED**. See
+  [O3 clean-release preflight](o3-clean-release-preflight.md) and [Issue #261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261).
+- O3 remains pending exact candidate-SHA approval, migration disposition A/B,
+  web reproduction/API-only decision, live rollback-target reconfirmation,
+  execution window/rollback operator, and temporary revision/image retention.
 - Other #238 scope remains open: API P95 decision/evidence, submission sheet/final
   sharing acceptance, future incidence/progression scope acceptance, and
   input/model decisions.
