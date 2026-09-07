@@ -52,6 +52,9 @@
   accessibility, failure isolation, bundle/network evidence.
 - 선행 조건: S3D 승인 기록. 이 대기열 항목 자체는 production activation을 수행하거나
   승인하지 않는다.
+- 현재 상태: **S3E code implementation prepared**. live Cloudflare activation/smoke/
+  rollback은 수행하지 않았고 Phase B에서만 진행한다. 이 항목과 Issue #252는
+  아직 완료로 기록하지 않는다.
 
 ## S4 — 1회차 마감
 

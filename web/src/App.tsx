@@ -24,7 +24,7 @@ import {
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
 import { allowsE2eFixture, getE2eSession } from "./lib/e2eHarness";
 import { supabase, supabaseConfigured } from "./lib/supabase";
-import { resolveCompanionSelection, type CompanionSelectionContext } from "./ui/companion";
+import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 
 const challengeActions = [
@@ -144,6 +144,7 @@ function Login({ onSession, recoveryMessage }: { onSession: (session: Session) =
 
 function App() {
   const initialSearch = useMemo(() => new URLSearchParams(window.location.search), []);
+  const companionMode = useMemo(() => resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE), []);
   const e2eSession = useMemo(() => getE2eSession(initialSearch.get("e2e")), [initialSearch]);
   const fixture = useMemo(
     () => getEvidenceFixture(
@@ -170,7 +171,7 @@ function App() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [confirmedSave, setConfirmedSave] = useState(
-    () => Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
+    () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
   const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
@@ -502,7 +503,9 @@ function App() {
     : initialSearch.get("companion_context") === "non_semantic"
       ? "non_semantic"
       : undefined;
-  const companionSelection = resolveCompanionSelection(activeScreen, initialSearch, companionContext);
+  const companionSelection = companionMode === "production"
+    ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
+    : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
 
   function openRecord(item: RecordBrowseItem) {
     navigate("S09", item.key);

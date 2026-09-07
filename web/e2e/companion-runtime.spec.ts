@@ -8,7 +8,9 @@ import {
   getCompanionDecision,
   getCompanionScreenDisposition,
   isCompanionReviewCandidate,
+  resolveCompanionMode,
   resolveCompanionRuntimeConfig,
+  resolveProductionCompanion,
 } from "../src/ui/companion";
 
 test("companion contract keeps the S2 candidate and clip sets fixed", () => {
@@ -19,11 +21,13 @@ test("companion contract keeps the S2 candidate and clip sets fixed", () => {
   expect(companionExcludedScreens).toEqual(["S04", "S07", "S08", "S09", "S11", "S12", "S13", "S14"]);
 });
 
-test("mode parsing is fail closed and review mode is lazy review-only", () => {
+test("mode parsing is exact, fail closed, and production is separately gated", () => {
   expect(resolveCompanionRuntimeConfig(undefined)).toEqual({ mode: "off", enabled: false, assetLoading: "disabled", networkPolicy: "none", reducedMotion: false });
   expect(resolveCompanionRuntimeConfig("on").mode).toBe("off");
-  expect(resolveCompanionRuntimeConfig("production").mode).toBe("off");
+  expect(resolveCompanionMode("")).toBe("off");
+  expect(resolveCompanionMode("Production")).toBe("off");
   expect(resolveCompanionRuntimeConfig("review")).toEqual({ mode: "review", enabled: true, assetLoading: "lazy-review", networkPolicy: "single-approved-glb", reducedMotion: false });
+  expect(resolveCompanionRuntimeConfig("production")).toEqual({ mode: "production", enabled: true, assetLoading: "lazy-production", networkPolicy: "single-approved-glb", reducedMotion: false });
   expect(resolveCompanionRuntimeConfig("review", { reducedMotion: true }).reducedMotion).toBe(true);
 });
 
@@ -43,6 +47,20 @@ test("screen and animation policy never uses health or model facts", () => {
   expect(getCompanionDecision("S11", "idle").status).toBe("blocked");
 });
 
+test("production resolver exposes only the fixed S05 bear-lite save profile", () => {
+  expect(resolveProductionCompanion("review", "S05", true)).toBeNull();
+  expect(resolveProductionCompanion("production", "S04", true)).toBeNull();
+  expect(resolveProductionCompanion("production", "S05", false)).toBeNull();
+  expect(resolveProductionCompanion("production", "S05", true)).toEqual({
+    screen: "S05",
+    species: "bear",
+    variant: "lite",
+    clip: "celebrate",
+    context: "save_success",
+    sequence: "celebrate_then_idle",
+  });
+});
+
 test("production default does not request companion assets or alter the existing fixture UI", async ({ page }) => {
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
@@ -50,5 +68,6 @@ test("production default does not request companion assets or alter the existing
   await expect(page.getByRole("heading", { name: "오늘의 기록" })).toBeVisible();
   expect(requests.filter((url) => /\.(glb|gltf|bin)(\?|$)/i.test(url))).toEqual([]);
   expect(requests.filter((url) => /companion/i.test(url))).toEqual([]);
+  expect(requests.filter((url) => /CompanionReviewRenderer/i.test(url))).toEqual([]);
   await expect(page.locator("[data-scene=\"S02\"]")).toBeVisible();
 });

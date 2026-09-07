@@ -10,6 +10,10 @@ type CompanionReviewRendererProps = Readonly<{
   reducedMotion: boolean;
 }>;
 type RenderStatus = "loading" | "ready" | "error";
+type AnimationController = {
+  play: (selection: CompanionSelection, reducedMotion: boolean) => void;
+  dispose: () => void;
+};
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) {
@@ -34,7 +38,10 @@ function setStatus(host: HTMLDivElement, status: RenderStatus, clipNames = "") {
 
 export default function CompanionReviewRenderer({ selection, reducedMotion }: CompanionReviewRendererProps) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const controllerRef = useRef<AnimationController | null>(null);
+  const latestSelectionRef = useRef(selection);
   const [status, setStatusState] = useState<RenderStatus>("loading");
+  latestSelectionRef.current = selection;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -49,6 +56,8 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
     const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 100);
     setStatus(host, "loading");
     host.dataset.companionMotion = reducedMotion ? "stopped" : "pending";
+    host.dataset.companionPhase = reducedMotion ? "idle" : "pending";
+    host.dataset.companionCelebrateCount = "0";
     setStatusState("loading");
 
     const fail = () => {
@@ -129,10 +138,70 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
           host.dataset.companionMotion = "stopped";
           renderer?.render(scene, camera);
         } else {
-          mixer = new THREE.AnimationMixer(model);
-          mixer.clipAction(selectedClip).reset().play();
-          host.dataset.companionMotion = "playing";
-          render();
+           const animationMixer = new THREE.AnimationMixer(model);
+           mixer = animationMixer;
+           const actions = new Map(companionClips.map((clip) => [clip, animationMixer.clipAction(gltf.animations.find((candidate) => candidate.name === clip)!)] as const));
+           let currentAction: THREE.AnimationAction | null = null;
+           let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
+           const stopCurrent = () => {
+             if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
+             finishedListener = null;
+             currentAction?.stop();
+             currentAction = null;
+             animationMixer.stopAllAction();
+           };
+           const play = (nextSelection: CompanionSelection, nextReducedMotion: boolean) => {
+             stopCurrent();
+             if (nextReducedMotion) {
+               host.dataset.companionMotion = "stopped";
+               host.dataset.companionPhase = "idle";
+               renderer?.render(scene, camera);
+               return;
+             }
+             const nextAction = actions.get(nextSelection.clip);
+             if (!nextAction) {
+               fail();
+               return;
+             }
+             if (nextSelection.sequence === "celebrate_then_idle") {
+               const celebrateAction = nextAction.reset();
+               celebrateAction.setLoop(THREE.LoopOnce, 1);
+               celebrateAction.clampWhenFinished = true;
+               const onFinished = (event: { action: THREE.AnimationAction }) => {
+                 if (event.action !== celebrateAction || disposed) return;
+                 animationMixer.removeEventListener("finished", onFinished);
+                 finishedListener = null;
+                 celebrateAction.stop();
+                 const idleAction = actions.get("idle");
+                 if (!idleAction) {
+                   fail();
+                   return;
+                 }
+                 currentAction = idleAction.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+                 host.dataset.companionPhase = "idle";
+                 host.dataset.companionMotion = "playing";
+               };
+               finishedListener = onFinished;
+               animationMixer.addEventListener("finished", onFinished);
+               currentAction = celebrateAction;
+               const count = Number(host.dataset.companionCelebrateCount || "0") + 1;
+               host.dataset.companionCelebrateCount = String(count);
+               host.dataset.companionPhase = "celebrate";
+               host.dataset.companionMotion = "playing";
+               celebrateAction.play();
+             } else {
+               currentAction = nextAction.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+               host.dataset.companionPhase = nextSelection.clip;
+               host.dataset.companionMotion = "playing";
+             }
+           };
+           const controller: AnimationController = {
+             play,
+             dispose: stopCurrent,
+           };
+           controllerRef.current = controller;
+           play(latestSelectionRef.current, reducedMotion);
+           if (!reducedMotion) render();
         }
         setStatusState("ready");
       }, undefined, fail);
@@ -144,12 +213,17 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
       disposed = true;
       if (frameId !== undefined) window.cancelAnimationFrame(frameId);
       resizeObserver?.disconnect();
-      mixer?.stopAllAction();
+      controllerRef.current?.dispose();
+      controllerRef.current = null;
       if (model) disposeObject(model);
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [reducedMotion, selection]);
+  }, [reducedMotion, selection.species, selection.variant]);
+
+  useEffect(() => {
+    controllerRef.current?.play(selection, reducedMotion);
+  }, [reducedMotion, selection.clip, selection.sequence]);
 
   return <div ref={hostRef} className="companion-runtime-canvas" data-companion-status={status} />;
 }
