@@ -225,6 +225,21 @@ URL, changes cache headers, or couples a derivative to `web/`.
 
 Canva terms and the ownership basis must be reviewed again before reuse outside SK7 or transfer to a third party.
 
+## Selective visual/v1 runtime reactivation after #285
+
+The application selectively consumes approved, text-free `visual/v1/` Canva
+derivatives as optional decoration after the #285 holistic UI release. This
+does not restore the broad Issue #198 treatment: CSS Calm Clay remains the
+mandatory fallback and live semantic HTML remains authoritative.
+
+- Legacy R2 v1 bytes are unchanged and no object is moved, deleted, overwritten, or re-compressed.
+- The shared desktop/mobile backgrounds are restrained decorative layers only.
+- Active 2D scene assets are S02 base, S06 locked, S12 empty, and S13 retry.
+- S05 saved remains registered but inactive because the production bear-lite companion owns the save-success slot.
+- Mobile may suppress illustrations when the fixed navigation or content hierarchy needs the space.
+- No asset carries health semantics, measurement meaning, challenge adherence, model output, or **입력 기반 위험군 선별 신호** meaning.
+- Future replacements use the product-semantic `visual/v2/` layout documented in `docs/visual-asset-runtime.md`.
+
 ## Registered source snapshots
 
 The registered object keys identify the reviewed R2 v1 delivery. They do not

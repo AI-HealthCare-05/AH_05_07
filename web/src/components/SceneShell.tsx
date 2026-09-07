@@ -2,8 +2,10 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
+import { SceneVisualAsset, SceneVisualBackground } from "./SceneVisualAsset";
 import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui/journey";
 import type { CompanionSelection } from "../ui/companion";
+import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 
 type SceneShellProps = {
   activeScreen: ScreenId;
@@ -84,9 +86,12 @@ type SceneProps = {
 
 export function Scene({ id, eyebrow, title, body, children, actions, tone = "cream", className = "" }: SceneProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const visuals = resolveSceneVisuals(id);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [id]);
   return (
     <section className={`scene scene-${tone} ${className}`.trim()} data-scene={id} aria-labelledby={`${id}-title`}>
+      <SceneVisualBackground desktop={visuals.background.desktop} mobile={visuals.background.mobile} />
+      {visuals.illustration && <SceneVisualAsset asset={visuals.illustration} className={`scene-visual-character scene-visual-character--${id}`} />}
       <div className="scene-copy">
         <p className="eyebrow">{eyebrow}</p>
         <h1 ref={headingRef} tabIndex={-1} id={`${id}-title`}>{title}</h1>
