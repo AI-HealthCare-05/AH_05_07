@@ -36,6 +36,7 @@ SAMPLES_PER_CONDITION = 100
 CONCURRENCIES = (1, 4)
 WARMUP_COUNT = 1
 TIMEOUT_SECONDS = 8.0
+TIMEOUT_BUDGET_MS = TIMEOUT_SECONDS * 1000
 P95_THRESHOLD_MS = 3000.0
 WINDOW_TOKEN_ENV = "SK7_P95_BEARER_TOKEN"
 WINDOW_START_ENV = "SK7_P95_START_ON"
@@ -171,12 +172,22 @@ class RequestClient:
             return 0, elapsed_ms, type(error).__name__
 
 
+def classify_sample(sample: tuple[int, float, str | None]) -> tuple[int, float, str | None]:
+    """Apply the end-to-end timeout boundary without exposing internal labels."""
+
+    status, elapsed_ms, error = sample
+    if elapsed_ms > TIMEOUT_BUDGET_MS:
+        return status, elapsed_ms, "TimeoutError"
+    return status, elapsed_ms, error
+
+
 def summarize(samples: list[tuple[int, float, str | None]], expected_status: int, concurrency: int) -> dict[str, Any]:
     if not samples:
         raise ToolError("no measured samples were collected")
+    samples = [classify_sample(sample) for sample in samples]
     latencies = [sample[1] for sample in samples]
     status_counts = dict(sorted(Counter(str(sample[0]) for sample in samples).items()))
-    error_count = sum(status != expected_status for status, _, _ in samples)
+    error_count = sum(status != expected_status or error is not None for status, _, error in samples)
     transport_error_count = status_counts.get("0", 0)
     p50 = percentile_type7(latencies, 0.50)
     p95 = percentile_type7(latencies, 0.95)
@@ -212,9 +223,9 @@ def measure_condition(
         while futures:
             done, futures = wait(futures, return_when=FIRST_COMPLETED)
             for future in done:
-                sample = future.result()
+                sample = classify_sample(future.result())
                 samples.append(sample)
-                if sample[0] != expected_status:
+                if sample[0] != expected_status or sample[2] is not None:
                     stop = True
             if stop:
                 continue
@@ -495,6 +506,16 @@ def _self_test() -> None:  # noqa: C901
         exact_fail = summarize([(200, 3000.0001, None)] * 100, 200, 1)
         assert exact_pass["p95_ms"] == 3000.0 and exact_pass["pass"]
         assert exact_fail["p95_ms"] > 3000.0 and not exact_fail["pass"]
+        timeout_boundary_pass = summarize([(200, TIMEOUT_BUDGET_MS, None)] * 100, 200, 1)
+        assert timeout_boundary_pass["error_count"] == 0
+        assert timeout_boundary_pass["transport_error_count"] == 0
+        assert not timeout_boundary_pass["pass"]  # P95 failure is separate from timeout classification.
+        assert classify_sample((200, TIMEOUT_BUDGET_MS, None)) == (200, TIMEOUT_BUDGET_MS, None)
+        timeout_over_boundary = classify_sample((200, TIMEOUT_BUDGET_MS + 0.0001, None))
+        assert timeout_over_boundary == (200, TIMEOUT_BUDGET_MS + 0.0001, "TimeoutError")
+        result, ok = measure_condition(lambda: (200, TIMEOUT_BUDGET_MS + 0.0001, None), 200, 1)
+        assert not ok and result["n"] == 1 and result["status_counts"] == {"200": 1}
+        assert result["error_count"] == 1 and result["transport_error_count"] == 0
         handler.mode = "429"
         result, ok = measure_condition(lambda: client.get("/live", None), 200, 4)
         assert not ok and result["n"] <= 4 and result["status_counts"].get("429", 0) >= 1

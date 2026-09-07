@@ -60,9 +60,12 @@ def verify(evidence: dict[str, Any]) -> None:  # noqa: C901
         or method.get("concurrency") != [1, 4]
         or method.get("warmup_per_condition") != 1
         or method.get("timeout_seconds") != 8.0
+        or method.get("arrival") != "closed-loop"
         or method.get("retry") is not False
         or method.get("redirects") is not False
         or method.get("raw_samples_retained") is not False
+        or method.get("request_bodies_retained") is not False
+        or method.get("response_bodies_retained") is not False
     ):
         raise ValueError("measurement contract mismatch")
     results = evidence["results"]
@@ -131,7 +134,12 @@ def _self_test() -> None:
             "timeout_seconds": 8.0,
             "retry": False,
             "redirects": False,
+            "timer": "perf_counter_ns; request start through full response body read",
+            "arrival": "closed-loop",
+            "connections": "one reusable HTTP connection per worker thread; at most c in-flight",
             "raw_samples_retained": False,
+            "request_bodies_retained": False,
+            "response_bodies_retained": False,
         },
         "runner": {"label": "self-test"},
         "run_window": {"started_at": "2026-01-01T00:00:00+00:00", "ended_at": "2026-01-01T00:01:00+00:00"},
@@ -149,6 +157,8 @@ def _self_test() -> None:
         lambda value: value["results"][0].update({"p95_ms": 3000.1}),
         lambda value: value["results"][0].update({"token": "must-not-appear"}),
         lambda value: value.update({"scope": "client_acceptance"}),
+        lambda value: value["method"].update({"request_bodies_retained": True}),
+        lambda value: value["method"].update({"response_bodies_retained": True}),
     ):
         broken = json.loads(json.dumps(evidence))
         mutation(broken)
