@@ -162,6 +162,9 @@ ul, ol { margin: 0; padding: 0; }
 .today-ribbon span { color: var(--sk7-ink-muted); }
 .today-ribbon strong { border-left: 2px solid var(--sk7-sage-100); padding-left: 1rem; color: var(--sk7-sage-600); }
 .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sk7-space-4); }
+.recent-window-summary { display: grid; gap: var(--sk7-space-4); border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-lg); background: rgb(255 255 255 / .42); padding: 1.2rem; }
+.recent-window-summary > div { display: grid; gap: var(--sk7-space-2); }
+.recent-window-summary p:not(.eyebrow), .challenge-progress-card p:not(.eyebrow) { color: var(--sk7-ink-muted); line-height: 1.55; }
 .feature-card { position: relative; display: grid; align-content: end; gap: .6rem; min-height: 13rem; overflow: hidden; border-color: var(--sk7-border); border-radius: var(--sk7-radius-lg); color: var(--sk7-ink); padding: 1.25rem; text-align: left; box-shadow: inset 0 -5rem 7rem rgb(255 255 255 / .36); }
 .feature-card:hover:not(:disabled) { color: var(--sk7-ink); }
 .feature-card::before, .feature-card::after { position: absolute; content: ""; border-radius: 50%; opacity: .6; }
@@ -216,6 +219,7 @@ ul, ol { margin: 0; padding: 0; }
 .locked-challenge { display: grid; gap: .45rem; width: min(100%, 38rem); border-radius: var(--sk7-radius-lg); background: rgb(255 255 255 / .45); padding: 1.4rem; }
 .locked-challenge span, .locked-challenge small, .marker-row span, .today-date span { color: var(--sk7-ink-muted); }
 .locked-challenge strong { font-size: var(--sk7-text-2xl); }
+.locked-challenge > p:last-child { color: var(--sk7-ink-muted); line-height: 1.55; }
 .marker-row { display: flex; align-items: center; gap: var(--sk7-space-4); }
 .marker-row > div { display: grid; gap: .3rem; }
 .settle-marker { display: block; width: 3.8rem; height: 3.8rem; flex: 0 0 auto; border-radius: 50% 50% 50% 12%; background: var(--sk7-water-500); transform: rotate(-45deg); animation: marker-settle 260ms var(--sk7-ease-enter) both; }
@@ -238,8 +242,9 @@ ul, ol { margin: 0; padding: 0; }
 .record-detail-facts dt { color: var(--sk7-ink-muted); font-size: var(--sk7-text-xs); }
 .record-detail-facts dd { margin: .3rem 0 0; font-weight: var(--sk7-weight-bold); }
 
-.window-nav p { display: grid; flex: 1 1 auto; gap: .2rem; text-align: center; }
+.window-nav p { display: grid; flex: 1 1 auto; gap: .2rem; min-width: 0; text-align: center; }
 .window-nav p span { color: var(--sk7-ink-muted); font-size: var(--sk7-text-xs); }
+.window-nav p small { color: var(--sk7-ink-muted); line-height: 1.45; }
 .recap-pan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sk7-space-4); animation: recap-pan var(--sk7-motion-recap) var(--sk7-ease-enter) both; }
 .recap-pan section { display: grid; gap: .3rem; min-height: 9rem; align-content: center; justify-items: center; border-radius: 50% 50% 42% 58%; background: rgb(255 255 255 / .48); text-align: center; }
 .recap-pan section:nth-child(2) { background: rgb(221 229 211 / .75); }
@@ -247,6 +252,9 @@ ul, ol { margin: 0; padding: 0; }
 .recap-pan strong { font-size: 2rem; }
 .recap-pan small { color: var(--sk7-ink-muted); }
 @keyframes recap-pan { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+.challenge-progress-card { display: grid; gap: var(--sk7-space-2); border: 1px solid rgb(109 127 97 / .3); border-radius: var(--sk7-radius-lg); background: rgb(221 229 211 / .5); padding: 1.2rem; }
+.challenge-progress-card strong { color: var(--sk7-sage-600); }
+.challenge-progress-card small { color: var(--sk7-ink-muted); line-height: 1.5; }
 
 .signal-scene { grid-template-columns: minmax(14rem, .75fr) minmax(18rem, 1.25fr); align-items: center; }
 .signal-scene .scene-copy, .signal-disclaimer { grid-column: 2; }
@@ -320,6 +328,7 @@ ul, ol { margin: 0; padding: 0; }
   .window-nav p { order: -1; text-align: left; }
   .week-path { gap: .25rem; }
   .week-path li { min-height: 2.5rem; }
+  .recent-window-summary { padding: 1rem; }
   .split-actions, .form-actions { align-items: stretch; flex-direction: column; width: 100%; }
   .split-actions button, .form-actions button { width: 100%; }
   .companion-runtime-slot { right: .75rem; bottom: 1rem; width: 5.5rem; height: 6.5rem; }
