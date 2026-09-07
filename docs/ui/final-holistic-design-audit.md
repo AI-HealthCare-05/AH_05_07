@@ -7,7 +7,7 @@
 - Scope: S01–S14, visual/readability polish only
 - Evidence fixture: `VP-10` for populated states, `VP-04` for empty, `VP-11a` for load failure
 - Viewports: 1366×768, 768×1024, 390×844, 320×568
-- Additional check: 200% text zoom at 683×384 CSS pixels
+- Additional check: 200% browser-zoom layout proxy at 683×384 CSS pixels, representing a 1366×768 physical frame; root font size unchanged and native browser zoom not instrumented
 - Rendered screenshots: 70 (kept in a local temp directory; not committed)
 - Machine-readable inventory: [final-holistic-design-backlog.json](./final-holistic-design-backlog.json)
 
@@ -26,7 +26,7 @@ This is a handoff audit for one final holistic redesign. It is not an automatic 
 ### 가장 큰 디자인 문제 5개
 
 1. The fixed mobile bottom navigation visually covers live content in S02, S04, S08, and S10. The content has bottom padding, but the nav still intersects the first viewport's meaningful content rather than behaving like a reserved layout region.
-2. At 200% zoom, the five-item navigation becomes tall vertical text. It is technically contained, but orientation and scanability degrade sharply.
+2. At the corrected 200% browser-zoom layout proxy, the five-item navigation stays horizontal; the long 입력 기반 위험군 선별 신호 label wraps to three horizontal lines. It remains contained, but header height and scanability still degrade.
 3. S10 is structurally overloaded: three summary shapes, a challenge panel, three record lanes, multiple detail CTAs, and a refresh action create a long, repetitive page. It is the only screen graded C.
 4. The same rounded bordered surface is used for the scene, summary ribbon, feature cards, lanes, progress card, and settings items. This flattens hierarchy and makes the UI feel assembled from panels rather than composed as a journey.
 5. Auto-focus on the H1 creates a strong rectangular focus outline in every captured scene. The focus treatment is accessible in intent but visually reads like a selected input and competes with the page title.
@@ -47,7 +47,7 @@ This is a handoff audit for one final holistic redesign. It is not an automatic 
 - Decorative circles, horizon layers, and gradients that compete with the task on dense screens.
 - Repeating the same separation explanation in the scene body, toolbar, card caption, and progress panel.
 - Long instruction copy before the first usable control.
-- Five wide navigation labels being forced into a single pill at 200% zoom.
+- Five navigation labels being forced into one pill at the corrected 200% browser-zoom layout proxy, where the long signal label wraps to three lines.
 
 ### 절대 변경하면 안 되는 기능 계약
 
@@ -72,7 +72,7 @@ Cream, sage, lavender, water, and coral provide useful grouping. The palette is 
 
 ### Navigation
 
-Desktop navigation is legible and the active state is clear. The five-item primary nav is too wide a semantic set to remain a single horizontal pill at 200% zoom. On mobile it becomes a fixed bottom nav that intersects visible content. The final design should preserve current destinations while changing the spatial contract: navigation needs a reserved safe area, an explicit compact mode, and a less fragile active-state treatment.
+Desktop navigation is legible and the active state is clear. In the corrected 200% browser-zoom layout proxy, the five-item primary nav remains horizontal, but the long signal label wraps to three lines and increases the header's visual density. On mobile it becomes a fixed bottom nav that intersects visible content. The final design should preserve current destinations while changing the spatial contract: navigation needs a reserved safe area, an explicit compact mode, and a less fragile active-state treatment.
 
 ### Component language
 
@@ -97,7 +97,7 @@ S04 has a sensible label/input relationship and an expandable measurement guide.
 ### S02 — B
 
 - Strong points: Three entry actions are explicit; the “최근 7일 기록” separation is visible and the current day is easy to spot.
-- Problems: Three equal feature cards compete with the recent-history panel. The body and recent-history caption explain related separation rules. On mobile the fixed nav covers the second feature card; at 200% the nav becomes vertical text.
+- Problems: Three equal feature cards compete with the recent-history panel. The body and recent-history caption explain related separation rules. On mobile the fixed nav covers the second feature card; in the corrected 200% browser-zoom layout proxy, the signal nav label wraps to three horizontal lines rather than becoming vertical text.
 - Final-pass recommendation: Establish one dominant next action, demote the other two to a lighter navigation treatment, and give the recent-history block a shorter supporting role.
 
 ### S03 — B
@@ -145,7 +145,7 @@ S04 has a sensible label/input relationship and an expandable measurement guide.
 ### S10 — C
 
 - Strong points: The recent-seven-day versus challenge distinction is explicit, and counts are easy to find on desktop.
-- Problems: It has the highest desktop scroll height (1539px), reaches 2281px at 390px, and becomes extremely tall at 200% zoom. Summary shapes, challenge progress, three record lanes, multiple detail buttons, and refresh all compete. The same separation message is repeated in several places.
+- Problems: It has the highest desktop scroll height (1539px), reaches 2232px at 390px and 2281px at 320px, and remains the tallest screen in the corrected 200% browser-zoom layout proxy at 2063px. The corrected proxy is materially shorter than the prior injected-font result, but summary shapes, challenge progress, three record lanes, multiple detail buttons, and refresh still compete. The same separation message is repeated in several places.
 - Final-pass recommendation: Redesign the information architecture in the final holistic pass. Keep the three fact types and the challenge distinction, but make one compact summary lead into a progressively disclosed record list.
 
 ### S11 — B (visual only)
@@ -169,14 +169,14 @@ S04 has a sensible label/input relationship and an expandable measurement guide.
 ### S14 — B
 
 - Strong points: Four topics are easy to scan and the export destination is discoverable.
-- Problems: All four topics are presented as equal cards despite different importance and actionability. Help copy is longer than necessary; 200% zoom produces a very tall page.
+- Problems: All four topics are presented as equal cards despite different importance and actionability. Help copy is longer than necessary; the corrected 200% browser-zoom layout proxy still produces a tall 1003px page.
 - Final-pass recommendation: Use a lighter settings list with one action row and one compact help note, rather than four equal panels.
 
 ## Responsive findings
 
-1. Fixed bottom navigation intersects useful content in S02, S04, S08, and S10 at 320px and 390px. Treat the nav height as layout space, not only bottom padding.
-2. At 200% zoom, all five nav labels can become vertical columns; S02/S04/S10 show the clearest loss of orientation. Add a compact accessible navigation mode with stable label geometry.
-3. S10 is too long for small screens: the page is 2281px tall at 390px and 200% zoom magnifies the same repeated structure rather than revealing a cleaner priority.
+1. Fixed bottom navigation intersects useful content in S02, S04, S08, and S10 at both 320px and 390px. Treat the nav height as layout space, not only bottom padding.
+2. In the corrected 200% browser-zoom layout proxy, the five nav labels remain horizontal and the signal label wraps to three lines; they do not become vertical columns. S02/S04/S10 still show increased header density and loss of scanability. Add a compact accessible navigation mode with stable label geometry.
+3. S10 is too long for small screens: the page is 2232px tall at 390px, 2281px at 320px, and 2063px in the corrected proxy. The proxy is shorter than the prior injected-font result, but the repeated structure still does not reveal a cleaner priority.
 4. Above-the-fold CTA visibility degrades at 320px: S02 is partial, while S04 and S06 place the primary action below the first viewport. Preserve the task's next action within the reachable first view where practical.
 5. S08 and S14 remain usable without horizontal overflow but become tall because every group keeps its own card, border, padding, and explanatory text. Vertical reduction should come from hierarchy, not smaller type.
 
@@ -185,9 +185,9 @@ S04 has a sensible label/input relationship and an expandable measurement guide.
 - Positive: audited renders had no horizontal overflow; controls preserve a generous target size in the existing visual baseline; state screens use copy and icon/shape cues in addition to color.
 - Focus: focus rings are visible, but the automatically focused H1 receives the same strong outline as an interactive control. Keep programmatic focus for orientation, while giving non-interactive headings a quieter treatment.
 - Contrast: primary ink and focus colors read well. Final redesign QA must specifically recheck muted text on pastel surfaces, small captions, inactive nav text, and the status-pill treatment.
-- Zoom: 200% preserves content but exposes navigation wrapping and excessive vertical density. It should be a release gate for the final redesign, not a post-hoc check.
+- Zoom: The corrected 200% browser-zoom layout proxy preserves content without native zoom instrumentation, but exposes navigation wrapping and excessive vertical density. It should be a release gate for the final redesign, not a post-hoc check.
 - Motion: reduced-motion should keep the same hierarchy and a natural static state. The save ripple and S10 recap motion must not become the strongest signal when motion is enabled, and must not leave an awkward empty stage when reduced.
-- Forms and modal: field errors, edit/delete, and the confirmation dialog need a final visual pass at 320px and 200%; this audit's primary screen capture did not open a destructive modal.
+- Forms and modal: field errors, edit/delete, and the confirmation dialog need a final visual pass at 320px and the corrected 200% browser-zoom layout proxy; this audit's primary screen capture did not open a destructive modal.
 
 ## Companion findings
 
@@ -213,9 +213,9 @@ S11 is excluded from semantic/copy redesign recommendations. Its model meaning a
 
 ### P0
 
-- Rework mobile navigation as a reserved, zoom-safe layout region. Validate 320px, 390px, keyboard focus, and 200% zoom with no content collision.
+- Rework mobile navigation as a reserved, zoom-safe layout region. Validate 320px, 390px, keyboard focus, and the corrected 200% browser-zoom layout proxy with no content collision.
 - Redesign S10's hierarchy and progressive disclosure while preserving the separate fact lanes and challenge distinction.
-- Define a responsive navigation mode that does not turn five labels into vertical text at 200% zoom.
+- Define a responsive navigation mode that keeps five labels legible and stable in the corrected 200% browser-zoom layout proxy.
 
 ### P1
 
@@ -236,11 +236,11 @@ S11 is excluded from semantic/copy redesign recommendations. Its model meaning a
 
 One visual redesign PR should include:
 
-1. Shared shell/navigation geometry, including mobile safe-area behavior and 200% zoom mode.
+1. Shared shell/navigation geometry, including mobile safe-area behavior and the corrected 200% browser-zoom layout proxy.
 2. Shared scene title/focus treatment, surface tiers, spacing tokens, and state composition.
 3. S02, S03, S04, S06, S07, S08, S09, S10, and S14 hierarchy/density updates.
 4. S05 companion slot and success hierarchy refinement without changing the production contract.
 5. One copy pass limited to directness, duplication, and screen-level orientation; no S11 model semantic changes.
-6. A follow-up visual QA matrix covering S01–S14, 320/390/768/1366 widths, 200% zoom, reduced motion, focus order, touch target reachability, and no horizontal overflow.
+6. A follow-up visual QA matrix covering S01–S14, 320/390/768/1366 widths, the corrected 200% browser-zoom layout proxy, reduced motion, focus order, touch target reachability, and no horizontal overflow.
 
 The redesign PR should explicitly report: runtime UI behavior changes only where the approved visual contract requires them, model/research changes = 0, API/DB/deploy changes = 0, and S11 model semantics changes = 0.

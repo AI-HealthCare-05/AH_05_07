@@ -7,6 +7,7 @@ const baseURL = process.env.SK7_AUDIT_BASE_URL ?? "http://127.0.0.1:4173";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputPath = path.join(repoRoot, "docs", "ui", "final-holistic-design-backlog.json");
 const screenshotRoot = process.env.SK7_AUDIT_SCREENSHOT_DIR ?? path.join(process.env.TEMP ?? "C:/Temp", "sk7-ui-final-audit");
+const publicScreenshotRoot = "<local-temp>/sk7-ui-final-audit";
 
 const viewports = [
   { id: "desktop", width: 1366, height: 768 },
@@ -14,6 +15,21 @@ const viewports = [
   { id: "mobile", width: 390, height: 844 },
   { id: "boundary", width: 320, height: 568 },
 ];
+
+const zoomMethod = {
+  id: "browser-zoom-layout-proxy-200",
+  physicalReference: { width: 1366, height: 768 },
+  cssViewport: { width: 683, height: 384 },
+  rootFontOverride: false,
+  note: "Layout proxy; not native browser zoom instrumentation.",
+};
+
+const zoomViewport = {
+  id: "zoom-200",
+  width: zoomMethod.cssViewport.width,
+  height: zoomMethod.cssViewport.height,
+};
+const zoomLabel = "200% browser-zoom layout proxy";
 
 const screens = [
   { id: "S01", url: "/" },
@@ -140,19 +156,17 @@ try {
       const result = await inventoryPage(page, expectedScene, viewport, "100%");
       const screenshotPath = path.join(screenshotRoot, `${screen.id}-${viewport.id}-100.png`);
       await page.screenshot({ path: screenshotPath, fullPage: true });
-      results.push({ ...result, screenshot: screenshotPath });
+      results.push({ ...result, screenshot: path.basename(screenshotPath) });
       await page.close();
     }
 
-    const zoomViewport = { id: "zoom-200", width: 683, height: 384 };
     const page = await browser.newPage({ viewport: zoomViewport });
     await installWindowRoute(page, screen.routeWindow);
     await page.goto(`${baseURL}${screen.url}`, { waitUntil: "networkidle" });
-    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
-    const result = await inventoryPage(page, screen.id, zoomViewport, "200%");
+    const result = await inventoryPage(page, screen.id, zoomViewport, zoomLabel);
     const screenshotPath = path.join(screenshotRoot, `${screen.id}-${zoomViewport.id}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: true });
-    results.push({ ...result, screenshot: screenshotPath });
+    results.push({ ...result, screenshot: path.basename(screenshotPath) });
     await page.close();
   }
 } finally {
@@ -166,10 +180,11 @@ const backlog = {
   source: {
     branch: "ux/final-holistic-design-audit",
     screens: screens.map(({ id }) => id),
-    viewports: [...viewports, { id: "zoom-200", width: 683, height: 384, zoom: "200%" }],
+    viewports: [...viewports, { ...zoomViewport, zoom: zoomLabel }],
+    zoomMethod,
     screenshotCount: results.length,
-    screenshotRoot,
-    note: "Inventory is an evidence aid, not an automatic design score. Screenshot paths are local and intentionally not committed.",
+    screenshotRoot: publicScreenshotRoot,
+    note: "Inventory is an evidence aid, not an automatic design score. Screenshots stay in a local temp directory; JSON stores basenames only.",
   },
   inventory: byScreen,
 };
