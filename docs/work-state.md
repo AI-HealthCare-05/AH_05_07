@@ -78,32 +78,32 @@ changes가 `0`이라고 표현하지 않는다.
 
 ## S4 API P95 verification status
 
-**Operator verification contract = APPROVED / EXECUTION PENDING**<br>
-**Client acceptance = DECISION REQUIRED / NOT CLAIMED**<br>
-**Production measurement = NOT YET RUN**
+**Operator verification = EXECUTED / NOT PASSED**<br>
+**Client acceptance claim = NOT MADE**
 
-[S4 API P95 pre-flight](api-p95-verification-preflight.md)는 현재 web-used API
+Final result: `/live` and `/ready` passed at `c=1/c=4`. `/window` `c=1` warm-up
+HTTP 503 was excluded and `/window` measured `n=0`; zero-error acceptance therefore was
+not met and `/window` P95 was not calculated. Neither “P95 > 3s” nor “P95 <= 3s”, and
+no P95 PASS, is claimed. Additional P95 rerun and client acceptance claim are prohibited.
+
+[S4 API P95 pre-flight](api-p95-verification-preflight.md)는 당시 web-used API
 candidate, no-auth health, signed-in read/mutation, `model_not_ready`를
-inventory한 뒤 승인된 operator 계약과 client acceptance를 분리한다. 기존
-browser 3회 timing과 PR #235의 local 489 measurements는 방법론 참고로만
-보존하며 production P95 evidence로 승격하지 않는다. 승인된 계약은 production
-`bp7-api` revision `bp7-api-00014-jeq`의 `/live`, `/ready`, synthetic
-read-only `/api/v1/observations/window`에 대해 warm `n=100`, `c=1/c=4`,
-8초 timeout, Hyndman–Fan type 7, endpoint별 P95 `<=3초`를 요구한다. 이 PR의
-production load, repeated authenticated production requests, product writes,
-deployment, database/model/UI changes는 모두 `0`이다. 도구와 verifier는 각각
-`scripts/ops/measure_api_p95.py`와 `scripts/ci/verify_api_p95_evidence.py`이며,
-localhost self-test만 CI에서 실행한다. Successor는
+inventory한 역사적 근거다. 기존 browser 3회 timing과 PR #235의 local 489 measurements는
+방법론 참고로만 보존하며 최종 production P95 evidence로 승격하지 않는다. 도구와
+verifier는 각각 `scripts/ops/measure_api_p95.py`와
+`scripts/ci/verify_api_p95_evidence.py`이며, 이번 문서 동기화에서 추가 실행하지
+않았다. Successor는
 [Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)이고,
 Issue 자체는 부하 실행 승인이 아니다.
 
-## 미결 결정
+## 현재 결정 및 후속 경계
 
 - S3E [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252):
   **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**.
   Issue #252 completion is pending only on this closeout PR merge.
-- 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [P95 pre-flight](api-p95-verification-preflight.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
-- S4 O2: natural 30-day expiration evidence 또는 책임 있는 alternate-evidence 결정 pending.
+- 운영 O1/O2/O3와 API P95의 최종 상태: [운영 검증 기록](mvp1-operations-review.md), [P95 pre-flight](api-p95-verification-preflight.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
+- S4 O2: **alternate evidence decision COMPLETE**. production natural 30-day expiration
+  verification은 수행하지 않았다.
 - S4 O3: **COMPLETE / VERIFIED**. [O3 preflight](o3-clean-release-preflight.md)의
   역사적 게이트와 [sanitized execution evidence](evidence/o3-clean-release-execution.md)에
   approved SHA, clean checkout, reconciled migration, Cloud Build provenance,
@@ -113,10 +113,14 @@ Issue 자체는 부하 실행 승인이 아니다.
 - O1 deferred integrated UI/UX findings: rolling 7-day path가 day-7 progress처럼
   보일 수 있음; export success notice가 navigation 뒤에도 남음. 기능 범위 완료 후
   holistic UI/companion composition review에서 함께 다룬다.
-- 제출 시트 대조, 공유·납품 수용, 사용자 최종 검토: [1회차 마감](mvp1-closeout.md).
-- 현재 횡단면 입력 기반 위험군 선별 신호와 발병 가능성·변화 추이 요구의 범위 수용: [미발송 질의](mvp1-closeout.md#발주사-확인용-질의-초안--미발송).
-- 8개 feature 의미·지원 대상·adapter와 최종 모델/전처리/임계값: [입력 계약](model-input-adapter-contract.md), [출시 준비](model-release-readiness.md).
-- 품질·calibration·고연령·외부/한국 사용자 검증, 별도 승인된 단회 test: [모델 카드](model-card.md), [출시 준비](model-release-readiness.md).
+- 제출: **COMPLETE / USER ACCEPTED**. 공식 제출물 7종 / 실제 파일 8개이며, 세부
+  기록은 [1회차 마감](mvp1-closeout.md)과 [제출 패키지](mvp1-submission-package.md)에 둔다.
+- 발주 범위: **FOLLOW-UP SCOPE DECIDED**. 혈압·7일 챌린지 기록 서비스와 공개 횡단면
+  데이터 연구 보고 범위로 정리했으며, client가 축소 범위를 승인했다고 주장하지 않는다.
+- 입력/모델: **1회차 NO-GO / `model_not_ready` 유지**. D2–D6 결정은 완료되었지만
+  final model 없음, preprocessing/calibration/threshold 미고정, held-out test
+  UNOPENED / NOT AUTHORIZED, 승인 serialized artifact 없음이다.
+- 품질·calibration·고연령·외부/한국 사용자 검증, 별도 승인된 단회 test: [모델 카드](model-card.md), [출시 준비](model-release-readiness.md). 이는 향후 GO 조건이며 현재 모델 출시 승인이 아니다.
 
 ## 다음 작업
 
@@ -126,7 +130,7 @@ Issue 자체는 부하 실행 승인이 아니다.
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
 | S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved, and S3E production rollout complete. #248의 review-only 범위와 S3E의 production evidence를 각각 보존한다. |
-| S4 | 1회차 마감 — **ACTIVE** | O1/O3 실행 근거와 O2·API P95·제출·범위·입력/모델 결정의 보류 경계를 기록. O3 complete does not close parent #238 or claim S4 overall complete. |
+| S4 | 1회차 마감 — **CLOSEOUT-READY / DOCUMENTATION SYNC** | O1/O2/O3·API P95·제출·범위·입력/모델 결정의 최종 상태를 기록했다. #238은 이 문서 동기화 후 종결할 수 있는 상태이며, 모델 NO-GO와 `model_not_ready` 경계는 유지한다. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·
 숨김/미인식 파일, 시각 품질·사람 디자인 승인, 독립 backup과 과거 외부 업로드는

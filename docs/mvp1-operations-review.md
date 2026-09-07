@@ -1,6 +1,22 @@
-# 1회차 운영 검증 실행 준비
+# 1회차 운영 검증 실행 준비 — historical preflight/runbook
 
-Issue #225의 **준비 문서**다. 이번 작업에서 운영 변경·계정·행 조작은 실행하지 않았다.
+## 2026-09-07 최종 상태
+
+- **O1:** COMPLETE / VERIFIED.
+- **O2:** 1회차 alternate evidence accepted. `exact_time_retention_rls_test.sql`의
+  17 assertions 등 격리 retention/RLS 계약 근거를 일정상 대체 근거로 수용했다.
+  production natural expiry는 수행하지 않았으며, 해당 PASS를 주장하지 않는다.
+- **O3:** COMPLETE / VERIFIED.
+- **API P95:** operator verification EXECUTED / NOT PASSED. `/live`와 `/ready`는
+  `c=1/c=4`에서 PASS, `/window`는 `c=1` warm-up HTTP 503 제외 후 measured `n=0`이다.
+  zero-error acceptance를 충족하지 못해 전체 operator verification은 NOT PASSED이며,
+  `/window` P95는 계산되지 않았고 추가 rerun은 금지한다.
+
+아래 본문은 위 최종 결과 이전에 작성된 역사적 preflight/runbook이다. 절차·명령·
+선행 조건은 당시의 안전 경계를 보존하며, production natural-expiry evidence나
+현재 P95 결과로 재해석하지 않는다.
+
+Issue #225의 **역사적 준비 문서**다. 당시 작업에서 운영 변경·계정·행 조작은 실행하지 않았다.
 운영자가 환경·시간·합성 계정·대상 revision·정리 책임을 명시해 별도로 승인한 뒤에만
 아래 절차를 수행한다. [배포 SSOT](deployment-ssot.md), [RLS 계획](deployed-rls-verification-plan.md),
 [세션 체크리스트](email-link-session-verification.md)의 기존 경계를 유지한다.
