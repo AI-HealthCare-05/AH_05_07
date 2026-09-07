@@ -11,8 +11,27 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   byte/SHA/header 검증 완료. 상세 근거는 [companion-r2-v1.json](evidence/companion-r2-v1.json)이다.
 - S3C: review runtime 구현 및 자동 검증 완료. [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)의
   명시적 query selection으로만 실제 GLB를 읽는다.
-- production activation: **NOT APPROVED**. `VITE_SK7_COMPANION_MODE` 기본값은
-  계속 `off`이며, 운영 화면·자동 species 배정·모델/위험/BP 연동은 하지 않는다.
+- S3D visual acceptance: **APPROVED**. [결정 기록](s3d-companion-visual-acceptance.md)은
+  `bear` primary, `lite` candidate, S05 `save_success` only로 범위를 좁힌다.
+- production activation: **NOT PERFORMED**. `VITE_SK7_COMPANION_MODE` 기본값은
+  계속 `off`이며, 운영 화면·자동 species 배정·모델/입력 기반 위험군 선별 신호/BP
+  연동은 하지 않는다. 구현은 successor [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서만 다룬다.
+
+## S3D 사람 시각 수용 결정
+
+- 근거: [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)의
+  [승인 댓글](https://github.com/AI-HealthCare-05/AH_05_07/issues/250#issuecomment-5564180084)
+  (2026-09-07).
+- S3D: **APPROVED**. primary species는 `bear`, production candidate는 `lite`다.
+- 화면: S02 hold, S03 hold, S05 approve, S10 hold. S11과 그 밖의 화면은 제외한다.
+- 동작: `idle`/`rest` approve, `greet`/`curious`/`move`/`special` hold,
+  `celebrate`는 S05의 명시적 `save_success`에서만 한 번 실행하고
+  `idle`/`rest`로 전환한다.
+- species: bear primary; rabbit/cat/dog/red_panda/penguin/fox/squirrel secondary;
+  otter/capybara limited; hedgehog hold. 선택 GLB는 삭제하지 않는다.
+- 이 결정은 production activation이 아니다. R2의 22개 immutable object, CORS,
+  운영 flag는 변경하지 않았고, activation은 successor [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)의
+  별도 rollout gate 이후에만 가능하다.
 
 ## S3B provenance와 S3C runtime delivery 분리
 

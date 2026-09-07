@@ -22,7 +22,7 @@
 - 완료 기준: 책임 있는 검토자의 선택·보류·제외 근거가 기록된다.
 - 선행 조건: S1 조합 확인과 별도 Issue. 물범은 선택 대상이 아니다.
 - 현재 결과: 사용자가 11개 후보를 모두 `selected`로 결정했고 [S2 선정 기록](s2-design-selection.md)에 허용/제외 화면, 동작 제한, 권리 근거를 반영했다. 제품 UI 적용은 하지 않았다.
-- S3 선행 조건: S3A 사람 결정과 S3B R2 게시가 완료되었으며, 실제 화면 연결·반응형·접근성·운영 승인은 S3C successor Issue에서 별도 검토한다.
+- S3 선행 조건: S3A 사람 결정과 S3B R2 게시가 완료되었으며, 실제 화면 연결·반응형·접근성·운영 승인은 S3C/S3D review gate에서 별도 검토한다.
 
 ## S3 — 화면 적용 검토
 
@@ -35,9 +35,23 @@
   GLB를 R2에 게시하고 source↔remote/public 검증을 완료했다. Issue #248에서
   evidence-generated manifest와 lazy Three.js `0.185.1` review runtime을 연결하고,
   22/22 GLB·7 clip·정책·network·responsive·failure isolation을 검증했다.
-- 현재 경계: production activation **NOT APPROVED**. 사람의 시각 수용과 운영 여부는
-  [S3D successor Issue](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)에서
-  별도로 결정한다.
+- 현재 결과: S3D 사람 시각 수용은 **APPROVED**. bear primary, lite candidate,
+  S05 `save_success` only이며 S02/S03/S10은 hold, S11은 제외한다. production
+  activation은 **NOT PERFORMED**다. 상세 결정은 [S3D 기록](s3d-companion-visual-acceptance.md)과
+  [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)에 둔다.
+
+## S3E — 승인된 S05 bear-lite 운영 rollout gate
+
+- 범위: [#252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)의 좁은 승인 범위만 구현한다.
+- 승인 범위: `bear` + `lite` + S05 + 명시적 `save_success` 1회 `celebrate` 후
+  `idle`/`rest`, decorative only.
+- 제외: S02/S03/S10/S11 및 기타 화면, `greet`/`curious`/`move`/`special`,
+  automatic species selection, `standard`, responsive/network variant switching.
+- 완료 기준: production-off fail-closed, S05 one-shot/network/rollback,
+  responsive 1366/390/320, CTA·bottom-nav non-overlap, reduced-motion,
+  accessibility, failure isolation, bundle/network evidence.
+- 선행 조건: S3D 승인 기록. 이 대기열 항목 자체는 production activation을 수행하거나
+  승인하지 않는다.
 
 ## S4 — 1회차 마감
 

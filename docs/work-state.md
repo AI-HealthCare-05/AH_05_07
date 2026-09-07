@@ -27,9 +27,11 @@
   OFF 경계를 보존하면서 S3C review runtime을 구현했다. S3A 사람 사용 범위·권리
   결정과 S3B R2 `companion/v1/` 22개 게시 및 byte/SHA/public header 검증을 완료했고,
   실제 22개 로드·7 clip 이름·정책·responsive·failure isolation을 local review browser에서
-  검증했다. production activation은 승인하지 않았다.
+  검증했다. S3D 사람 시각 수용은 [결정 기록](s3d-companion-visual-acceptance.md)에
+  따라 승인했지만 production activation은 수행하지 않았다.
 - successor review gate: [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)
-  를 생성했다. #248은 이 사람 시각 수용·운영 결정 전까지 닫지 않는다.
+  의 사람 시각 수용을 기록했다. production rollout은 [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서
+  별도로 다룬다. #248은 S3C review runtime 구현·검증의 역사적 근거로 보존한다.
 
 ## 현재 S3 상태
 
@@ -37,10 +39,12 @@
 | --- | --- | --- |
 | S3A | 완료 | Issue #242 사람 결정: S02/S03/S05/S10만 허용, S04/S07/S08/S09/S11/S12/S13/S14 제외, 일반 4 clip, 조건부 `celebrate`/`move`, `special` 보류, 물범 제외. |
 | S3B | 완료 | [companion-r2-v1.json](evidence/companion-r2-v1.json): 22개, 17,867,184 bytes, source↔remote/public 검증 PASS. |
-| S3C | review runtime implemented/verified | [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248): evidence-generated manifest, explicit selector, lazy Three.js `0.185.1`, 22/22 GLB, policy/network/responsive/failure tests. production activation **NOT APPROVED**. |
+| S3C | review runtime implemented/verified | [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248): evidence-generated manifest, explicit selector, lazy Three.js `0.185.1`, 22/22 GLB, policy/network/responsive/failure tests. |
+| S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. production activation **NOT PERFORMED**. |
 
 ## 미결 결정
 
+- S3E approved rollout implementation: [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252). S3D 승인 범위만 구현하며 production activation은 별도 gate로 검증한다.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - 제출 시트 대조, 공유·납품 수용, 사용자 최종 검토: [1회차 마감](mvp1-closeout.md).
 - 현재 횡단면 입력 기반 위험군 선별 신호와 발병 가능성·변화 추이 요구의 범위 수용: [미발송 질의](mvp1-closeout.md#발주사-확인용-질의-초안--미발송).
@@ -54,7 +58,7 @@
 | S0 | 병합 기록 정리와 짧은 인계 | 이 문서, [작업 대기열](work-queue.md), 로컬 `HANDOFF-LITE.md`, 문서 검사와 PR. |
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
-| S3 | 화면 적용 검토 | S3A complete, S3B complete, S3C review runtime implemented/verified. #248의 review-only 범위에서만 실제 GLB를 읽었고, 운영 활성화·최종 배정은 successor S3D에서 사람 승인으로 결정한다. |
+| S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved. #248의 review-only 범위에서만 실제 GLB를 읽었고, production activation은 수행하지 않았다. successor S3E는 [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서 별도 구현·검증한다. |
 | S4 | 1회차 마감 | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·
