@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
-import { primaryNavigation, type ScreenId } from "../ui/journey";
+import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui/journey";
 import type { CompanionSelection } from "../ui/companion";
 
 type SceneShellProps = {
@@ -16,6 +16,7 @@ type SceneShellProps = {
 
 export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, companionSelection }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -41,12 +42,21 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
 
       <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
+      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
+        <CompanionRuntimeBoundary
+          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
+          selection={companionSelection}
+          reducedMotion={reducedMotion}
+        />
+        {children}
+      </div>
+
       <nav className="primary-nav" aria-label="주요 화면">
         {primaryNavigation.map((item) => (
           <button
-            className={item.screen === activeScreen ? "is-active" : ""}
+            className={item.screen === activeNavigationScreen ? "is-active" : ""}
             type="button"
-            aria-current={item.screen === activeScreen ? "page" : undefined}
+            aria-current={item.screen === activeNavigationScreen ? "page" : undefined}
             aria-label={item.label}
             onClick={() => onNavigate(item.screen)}
             key={item.screen}
@@ -57,15 +67,6 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
           </button>
         ))}
       </nav>
-
-      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
-        <CompanionRuntimeBoundary
-          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
-          selection={companionSelection}
-          reducedMotion={reducedMotion}
-        />
-        {children}
-      </div>
     </main>
   );
 }

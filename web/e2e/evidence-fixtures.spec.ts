@@ -12,7 +12,7 @@ test("record dashboard fixture masks measurements and does not invent a model re
   await page.goto("/?fixture=VP-10&screen=S10");
   await expect(page.getByText("•••/•• mmHg").first()).toBeVisible();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "선택한 7일을 돌아봐요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "최근 7일 기록" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "혈압 관찰" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "챌린지 참여" })).toBeVisible();
   await page.getByRole("button", { name: "입력 기반 위험군 선별 신호" }).click();
