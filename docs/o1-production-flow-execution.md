@@ -2,8 +2,9 @@
 
 이 문서는 [Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의
 S4 첫 작업인 O1 운영 검증 **preflight**와 이후 승인된 실행 체크리스트다.
-현재 상태는 `PREPARED / OPERATOR APPROVAL REQUIRED`이며, 이 문서 작성 중
-production account·record·session·infrastructure 변경은 수행하지 않았다.
+현재 상태는 `READY FOR OPERATOR EXECUTION APPROVAL`이며, runtime reconciliation은
+완료되었다. 이 문서 작성 중 O1 production account·record·session 실행은 하지
+않았다.
 
 O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다. 모든 계정과
 데이터는 합성으로 한정하고, 입력 기반 위험군 선별 신호·혈압 측정값·챌린지
@@ -16,23 +17,27 @@ O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다
 
 | 항목 | 확인된 값 | 상태 / 경계 |
 | --- | --- | --- |
-| Preflight repository baseline | `5b04817607a07262e7f3c1f162980d1a1530396c` | 확인 완료 (2026-09-07); preflight 기준이며 production runtime 배포 사실을 뜻하지 않음 |
+| Current repository baseline | `6f90d270c9d2163f109d9806ac2cec98a935c223` | 현재 `origin/main`; deployed API artifact와 동일하다고 주장하지 않음 |
 | 현재 기록된 production web source evidence | `30fd65eda8d988804c8af208276934226e0eb67d` | S3E evidence의 merged `main` baseline; 현재 `main`의 후속 문서 merge 전 runtime 근거 |
-| 실제 O1 execution target runtime source SHA | `operator input required` | deployment snapshot / Worker version provenance 대조 전에는 특정하지 않음 |
+| 실제 O1 execution target web runtime | Worker version `70f9d4d5-6377-4087-a405-63993382441c`, recorded source evidence `30fd65eda8d988804c8af208276934226e0eb67d` | S3E final restore evidence; API artifact provenance는 별도 기록 |
 | Production web Worker | `ah-05-07-pages` / `https://ah-05-07-pages.ahnsangkyoon.workers.dev` | Deployment SSOT와 S3E evidence로 확인 |
 | Production Worker version | `70f9d4d5-6377-4087-a405-63993382441c` | S3E final restore evidence; public smoke PASS |
-| Deployment snapshot workflow run tied to O1 source | `operator input required` | S3E evidence에는 sync 성공만 있고 run URL이 source SHA와 연결되어 있지 않음 |
 | API target | `https://bp7-api-292436735548.asia-northeast3.run.app` | Deployment SSOT 및 요청된 smoke 명령과 일치 |
 | Cloud Run service / region | `bp7-api` / `asia-northeast3` | Deployment SSOT로 확인 |
-| Current Cloud Run revision | `operator input required` | repository evidence로 현재 revision을 특정할 수 없음; 추측 금지 |
-| Supabase remote project/runtime state | `operator input required` | preflight에서 SQL, migration push, policy 변경을 수행하지 않음 |
+| Current Cloud Run revision | `bp7-api-00013-qbz` | `latestCreatedRevisionName` and `latestReadyRevisionName`; traffic `100%` |
+| API image | `sha256:f0acce9e03f480bf17851e7e025b5e1e9cde3eb27c386df957c68555d701d1ee` | immutable image digest pinned by the running revision |
+| Cloud Build artifact mapping | build `ca3ce42f-8691-45f8-9358-a9445d9cbf7d`, `SUCCESS`, `2026-09-03T05:05:16Z`; tag `921a35e` → repository commit `921a35e38261104aec1cdd7095f86a16c48f357c` | operational provenance only; source attestation unavailable / not claimed |
+| Supabase remote migration inventory | required first four migrations applied; `20260904090000_add_challenge_checkins_challenge_user_index` not applied | known additive drift; accepted non-blocking for O1 |
 
 Production Worker version은 S3E companion evidence의 runtime 사실이며, O1의
-혈압·챌린지 동작을 검증했다는 뜻이 아니다. `5b048...` preflight baseline이나
-`30fd65...` recorded source evidence가 실제 O1 execution target runtime source와
-동일하다고 추정하지 않는다. O1 실행 전에는 승인자가 deployment snapshot,
-Worker version provenance, source SHA와 실제 web/API target 및 revision을 함께
-대조해야 한다.
+혈압·챌린지 동작을 검증했다는 뜻이 아니다. deployed API artifact는 현재
+`main`보다 오래되었지만, repository commit `921a35e38261104aec1cdd7095f86a16c48f357c`
+에 O1-required endpoint semantics가 있다. 따라서 O1 실행을 위해 후속 `main`
+변경을 배포할 필요는 없으며, clean/latest release reconciliation은 O3 범위다.
+배포된 image tag `921a35e`는 repository commit에 operationally 매핑되지만,
+Cloud Build metadata의 source commit attestation과 artifact provenance의 SLSA
+build level은 노출되지 않았다. 따라서 이 매핑을 cryptographic/SLSA source
+attestation으로 주장하지 않는다.
 
 ### Schema and migration readiness
 
@@ -48,20 +53,29 @@ O1에 필요한 동작은 첫 네 migration이 제공하는
 `blood_pressure_observations`, `active_challenges`, `challenge_checkins`와
 소유자 RLS·7일 challenge·첫 check-in 이후 action lock·30일 retention이다.
 기존 production inventory evidence (#149, source
-`1c00e903a6bf189bcabc46708d140bd8103045bc`)는 첫 네 migration과 일치했고,
-합성 owner CRUD·cross-user non-disclosure·anonymous denial·first-check-in
-lock을 정상 경로로 통과시킨 뒤 계정과 행을 정리했다.
+`1c00e903a6bf189bcabc46708d140bd8103045bc`)와 이번 read-only remote inventory는
+첫 네 migration이 적용된 것을 확인했다. 실제 remote inventory는 다음과 같다.
 
-다섯 번째 migration은 `challenge_checkins(challenge_id, user_id)` additive
-index로 API 의미를 바꾸지 않는다. 다만 현재 remote에 적용되었는지는 이
-repository evidence만으로 확정할 수 없으므로 `operator input required`다.
-O1 preflight에서는 SQL 실행이나 `supabase db push`를 하지 않는다. 실행 전
-운영자는 승인된 read-only inventory로 대상 schema와 현재 runtime을 대조하고,
-불일치하면 O1을 중단한다.
+- APPLIED: `20260902020059_create_observation_lifecycle`
+- APPLIED: `20260902020806_harden_observation_table_grants`
+- APPLIED: `20260902142005_active_seven_day_challenges`
+- APPLIED: `20260903055923_enforce_exact_time_retention`
+- NOT APPLIED: `20260904090000_add_challenge_checkins_challenge_user_index`
 
-**Readiness:** O1의 필요한 schema 계약은 repository와 기존 production
-inventory에서 확인되지만, 현재 remote migration inventory 및 현재 Cloud Run
-revision 대조가 남아 있으므로 `PREPARED / OPERATOR APPROVAL REQUIRED`다.
+마지막 migration은 `challenge_checkins(challenge_id, user_id)` additive index만
+생성하며 rows, RLS, grants, triggers, API semantics를 변경하지 않는다. 이는
+repository와 remote inventory가 동일하다는 뜻이 아니다.
+
+다섯 번째 migration은 성능/supporting index에 불과하므로 O1 behavior는 그
+존재에 의존하지 않는다. `20260904090000_add_challenge_checkins_challenge_user_index`
+의 known additive drift는 **O1에 non-blocking으로 수용**한다. inventory drift만
+없애기 위해 O1 직전에 production DDL을 적용하는 것은 불필요한 운영 위험을
+추가하므로 migration을 적용하지 않는다. 이 drift는 clean release/schema
+reconciliation, 특히 O3에서 후속 처리할 수 있다.
+
+**Remote inventory:** `KNOWN ADDITIVE DRIFT / NON-BLOCKING FOR O1`.
+**Readiness:** runtime reconciliation, migration disposition, cleanup path가
+완료되었고 O1은 **READY FOR OPERATOR EXECUTION APPROVAL**이다.
 
 ### Public smoke
 
@@ -95,11 +109,21 @@ Preflight 실행 결과: `deployment-smoke verification: passed`.
 | `PUT` | `/api/v1/observations/challenges/checkins/{record_id}` | `200` | `401`, `404`, `409` non-current/non-editable, `422`, `503` |
 | `DELETE` | `/api/v1/observations/challenges/checkins/{record_id}` | `204` | `401`, `404`, `409` non-current/non-editable, `503` |
 
+Deployed API compatibility was checked at repository commit
+`921a35e38261104aec1cdd7095f86a16c48f357c`: the deployed artifact contains
+`GET /observations/window`, `POST/PUT/DELETE /observations/blood-pressure`,
+`POST /observations/challenges/active`, `POST /observations/challenges/active/checkins`,
+and `PUT/DELETE /observations/challenges/checkins/{record_id}` (with the API
+prefix, these are the O1-required `/api/v1/...` routes). This confirms endpoint
+semantics required by O1; it does not claim that deployed API and current `main`
+are identical.
+
 O1의 challenge delete는 active challenge 자체가 아니라 현재 owned
 `challenge_checkin`의 확인 삭제다. 현재 API contract에는 active challenge
-자체의 `DELETE` route가 없다. 따라서 check-in 삭제 뒤 남는 synthetic
-`active_challenge`를 어떤 승인된 정상 cleanup path로 정리할지 실행 전에
-cleanup owner가 확정해야 한다. SQL이나 미문서화 route를 사용해 우회하지 않는다.
+자체의 `DELETE` route가 없다. 확인된 schema contract는
+`active_challenges.user_id → auth.users(id) ON DELETE CASCADE`,
+`challenge_checkins → active_challenges(id, user_id) ON DELETE CASCADE`,
+`blood_pressure_observations.user_id → auth.users(id) ON DELETE CASCADE`다.
 
 ### Approved synthetic account requirements
 
@@ -129,9 +153,16 @@ cleanup owner가 확정해야 한다. SQL이나 미문서화 route를 사용해 
 - Execution window: `operator input required` (Asia/Seoul 날짜·시각)
 - Cleanup owner: `operator input required` (승인된 사람/역할만, 이름·연락처는
   repository에 기록하지 않음)
-- Active-challenge cleanup path: `operator input required`; 현재 공개 API에
-  active challenge delete가 없으므로 O1 시작 전 승인된 정상 경로가 없으면
-  **HOLD**
+- Active-challenge cleanup path: authenticated Synthetic A session에서 current
+  check-in과 BP record를 각각 normal product/API flow로 삭제하고 reload 부재를
+  확인한 뒤, session을 종료하고 approved Supabase Auth administrative
+  account-cleanup path로 Synthetic A를 삭제한다. declared FK cascade로 남은
+  active challenge와 dependent synthetic rows를 정리하고 sanitized cleanup을
+  확인한다.
+
+이 경로는 custom SQL, service-role REST workaround, new product DELETE route,
+production policy 조작을 사용하지 않는다. approved Auth account deletion을
+수행할 수 없으면 O1은 **HOLD**다.
 
 ### Cleanup order
 
@@ -141,18 +172,25 @@ cleanup owner가 확정해야 한다. SQL이나 미문서화 route를 사용해 
    정상 삭제하고 reload 후 부재를 확인한다.
 3. 인증된 Synthetic A owner session을 유지한 상태에서 blood-pressure record를
    정상 삭제하고 reload 후 부재를 확인한다.
-4. 사전 승인된 active-challenge cleanup path를 수행한다. 현재 공개 API에는
-   active challenge 자체의 `DELETE` route가 없으므로 이 경로가 관리자 경로라면
-   그 경계를 승인된 운영 절차로 명시한다. 승인되지 않은 관리자 경로·SQL·
-   미문서화 route 우회는 금지하며, 승인된 경로가 없으면 **HOLD**다.
-5. owner product records가 정리된 것을 확인한다.
-6. 그 다음 Synthetic A product session을 sign-out/종료한다.
-7. 승인된 Auth account cleanup을 수행한다.
-8. 관련 synthetic row cleanup 완료 여부를 확인하고 sanitized evidence만 남긴다.
-9. final public smoke를 다시 실행한다.
+4. 다른 의도적으로 생성한 O1 owner record가 없는지 확인한다.
+5. 그 다음 Synthetic A product session을 sign-out/종료한다.
+6. 승인된 Auth administrative account cleanup으로 Synthetic A를 삭제한다.
+7. declared `ON DELETE CASCADE`에 따른 active challenge/dependent row cleanup과
+   sanitized cleanup 완료를 확인한다.
+8. final public smoke를 다시 실행한다.
 
-정리 실패, owner record 잔존, active challenge cleanup 미확정, 승인되지 않은
-관리자 경로 필요, 또는 account 삭제 권한 부재는 O1 완료가 아니라 **HOLD**다.
+정리 실패, owner record 잔존, 승인되지 않은 관리자 경로 필요, 또는 account
+삭제 권한 부재는 O1 완료가 아니라 **HOLD**다.
+
+### Diagnostic project-service note
+
+Provenance inspection 중 GCP project `ah-05-07-api`에서
+`containeranalysis.googleapis.com`이 diagnostic/project-service 용도로
+enable되었다. 이 enablement은 Cloud Run revision·traffic, image,
+Supabase data/schema 또는 product/runtime deployment를 변경하지 않았다.
+따라서 이번 세션은 runtime deployment changes `0`, production data/schema
+changes `0`으로 기록하되, 전체 infrastructure/project configuration changes가
+`0`이라고 표현하지 않는다.
 
 ### Stop conditions
 
@@ -218,10 +256,14 @@ Valid BP save 성공 뒤 현재 production behavior에 따라 S05 bear-lite가 �
 
 ## Status
 
-- O1 status: **PREPARED / OPERATOR APPROVAL REQUIRED**
-- Production execution: **not run**
-- Production writes in this preflight: **0**
-- Infrastructure changes in this preflight: **0**
+- O1 status: **READY FOR OPERATOR EXECUTION APPROVAL**
+- Runtime reconciliation: **complete**
+- Migration disposition: **complete** — known additive drift / non-blocking for O1
+- Active-challenge cleanup path: **resolved** via approved Synthetic A Auth account deletion cascade
+- Production execution: **NOT STARTED**
+- Runtime deployment changes in this reconciliation: **0**
+- Production data/schema changes in this reconciliation: **0**
+- Diagnostic `containeranalysis.googleapis.com` project-service enablement: **recorded**
 - Product/UI/model changes in this preflight: **0**
 - Successor execution Issue: [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)
 - Parent Issue: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238), remains open
