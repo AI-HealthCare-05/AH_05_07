@@ -45,14 +45,16 @@
 | S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. Successor S3E production rollout is now complete. |
 | S3E | **COMPLETE** | Exact `production` mode, 고정 S05 bear-lite profile, confirmed save 이후 one-shot `celebrate → idle`, activation smoke, rollback rehearsal, and final restore are verified. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**. |
 
-## S4 O1 runtime reconciliation status
+## S4 O1 production execution status
 
-O1은 **READY FOR OPERATOR EXECUTION APPROVAL**다. 현재 `origin/main`은
-`6f90d270c9d2163f109d9806ac2cec98a935c223`이며, runtime reconciliation,
-migration disposition, active-challenge cleanup path를 완료했다. 실제
-production account/login/record/session 실행, SQL·migration push, Cloud Run/
-Cloudflare/Supabase/R2 변경, UI·model 실행은 하지 않았다. 실행 문서와 체크리스트는
-[O1 preflight](o1-production-flow-execution.md)에 둔다.
+O1은 **COMPLETE / VERIFIED**다. 실행 승인 후 approved Synthetic A production
+flow를 완료했고, product cleanup·Auth account cleanup·final public smoke까지
+완료했다. 상세 sanitized evidence는 [O1 production execution evidence](evidence/o1-production-execution.md),
+체크리스트와 경계는 [O1 execution document](o1-production-flow-execution.md)에 둔다.
+
+이번 evidence PR은 production account/record를 생성·수정·삭제하지 않으며,
+SQL·migration push, Cloud Run/Cloudflare/Supabase/R2 변경, UI·model 실행 또는
+배포를 수행하지 않았다.
 
 현재 기록된 production web source evidence/Worker는 S3E evidence의
 `30fd65eda8d988804c8af208276934226e0eb67d` /
@@ -76,6 +78,11 @@ changes가 `0`이라고 표현하지 않는다.
   **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**.
   Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
+- S4 O2: natural 30-day expiration evidence 또는 책임 있는 alternate-evidence 결정 pending.
+- S4 O3: clean release/revision smoke rollback/restore evidence pending.
+- O1 deferred integrated UI/UX findings: rolling 7-day path가 day-7 progress처럼
+  보일 수 있음; export success notice가 navigation 뒤에도 남음. 기능 범위 완료 후
+  holistic UI/companion composition review에서 함께 다룬다.
 - 제출 시트 대조, 공유·납품 수용, 사용자 최종 검토: [1회차 마감](mvp1-closeout.md).
 - 현재 횡단면 입력 기반 위험군 선별 신호와 발병 가능성·변화 추이 요구의 범위 수용: [미발송 질의](mvp1-closeout.md#발주사-확인용-질의-초안--미발송).
 - 8개 feature 의미·지원 대상·adapter와 최종 모델/전처리/임계값: [입력 계약](model-input-adapter-contract.md), [출시 준비](model-release-readiness.md).
