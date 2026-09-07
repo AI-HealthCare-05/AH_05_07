@@ -127,6 +127,7 @@ test("422 input rejection is distinguished from an uncertain write", async ({ pa
 
 for (const viewport of [
   { name: "desktop", width: 1366, height: 768 },
+  { name: "tablet", width: 768, height: 1024 },
   { name: "390", width: 390, height: 844 },
   { name: "320", width: 320, height: 844 },
   { name: "zoom-200-layout", width: 683, height: 384 },

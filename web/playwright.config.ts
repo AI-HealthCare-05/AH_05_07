@@ -9,6 +9,8 @@ export default defineConfig({
     command: "npm run build && npm run preview -- --host 127.0.0.1",
     env: {
       VITE_API_BASE_URL: "http://e2e.invalid",
+      VITE_SUPABASE_URL: "https://e2e.invalid",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "e2e-test-publishable-key",
       VITE_SK7_E2E_MODE: "1",
     },
     port: 4173,
