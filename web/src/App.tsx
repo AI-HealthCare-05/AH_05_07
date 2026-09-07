@@ -49,6 +49,14 @@ type RecordBrowseItem =
   | { key: string; kind: "blood-pressure"; record: BloodPressureObservation }
   | { key: string; kind: "challenge-checkin"; record: ChallengeCheckin }
   | { key: string; kind: "legacy"; record: ChallengeEvent };
+type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail";
+type HomeAction = {
+  key: HomeDestinationKey;
+  title: string;
+  support: string;
+  action: string;
+  screen: ScreenId;
+};
 
 function makeNotice(
   kind: Notice["kind"],
@@ -533,11 +541,35 @@ function App() {
   const companionSelection = companionMode === "production"
     ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
     : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
-  const homeLead = !todayMeasurement
-    ? { title: "오늘 혈압 기록", body: "오늘 측정한 값을 남겨요.", action: "혈압 기록하기", screen: "S04" as ScreenId }
+  const challengeDestination: ScreenId = activeChallenge && !activeChallengeEnded && !todayMeasurement ? "S06" : "S03";
+  const homeLead: HomeAction = !todayMeasurement
+    ? { key: "blood-pressure", title: "오늘 혈압 기록", support: "오늘 측정한 값을 남겨요.", action: "혈압 기록하기", screen: "S04" }
     : !activeChallenge || activeChallengeEnded
-      ? { title: "7일 챌린지 고르기", body: "이어갈 행동을 선택해요.", action: "챌린지 고르기", screen: "S03" as ScreenId }
-      : { title: "오늘 기록 확인", body: "오늘 남긴 기록을 확인해요.", action: "오늘 상세 보기", screen: "S07" as ScreenId };
+      ? { key: "challenge", title: "7일 챌린지 고르기", support: "이어갈 행동을 선택해요.", action: "챌린지 고르기", screen: "S03" }
+      : { key: "today-detail", title: "오늘 기록 확인", support: "오늘 남긴 기록을 확인해요.", action: "오늘 상세 보기", screen: "S07" };
+  const homeSecondaryActions = ([
+    {
+      key: "blood-pressure",
+      title: "혈압 관찰",
+      support: todayMeasurement ? "혈압 기록 화면 열기" : "오늘 측정값을 남겨요",
+      action: "혈압 관찰 열기",
+      screen: "S04",
+    },
+    {
+      key: "challenge",
+      title: "7일 챌린지",
+      support: activeChallenge && !activeChallengeEnded ? `${challengeLabel(activeChallenge.action_id)} 이어가기` : "이어갈 행동 고르기",
+      action: "7일 챌린지 열기",
+      screen: challengeDestination,
+    },
+    {
+      key: "today-detail",
+      title: "오늘 상세",
+      support: "오늘 남긴 기록 확인",
+      action: "오늘 상세 열기",
+      screen: "S07",
+    },
+  ] as HomeAction[]).filter((item) => item.key !== homeLead.key);
 
   function openRecord(item: RecordBrowseItem) {
     navigate("S09", item.key);
@@ -593,7 +625,7 @@ function App() {
     }
 
     if (activeScreen === "S02") {
-      return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.body}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기"><button type="button" onClick={() => navigate(activeChallenge?.first_checkin_on && !todayMeasurement ? "S06" : "S03")}><span><strong>7일 챌린지</strong><small>{activeChallenge && !activeChallengeEnded ? `${challengeLabel(activeChallenge.action_id)} 이어가기` : "이어갈 행동 고르기"}</small></span><span aria-hidden="true">→</span></button><button type="button" onClick={() => navigate(todayMeasurement ? "S04" : "S07")}><span><strong>{todayMeasurement ? "혈압 관찰" : "오늘 상세"}</strong><small>{todayMeasurement ? "오늘 기록을 다시 확인해요" : "오늘 남긴 사실을 확인해요"}</small></span><span aria-hidden="true">→</span></button></nav><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
+      return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
 
     if (activeScreen === "S03") {

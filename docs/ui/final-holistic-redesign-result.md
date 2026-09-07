@@ -11,9 +11,9 @@ The redesign keeps the S01–S14 journey and existing data/API contracts intact 
 
 P0 results:
 
-- Mobile navigation/content collision: resolved. On 320px and 390px the nav is a reserved layout region after the scene, with safe-area-aware spacing and no fixed overlay.
+- Mobile navigation/content collision: resolved. On 320px and 390px the primary nav remains persistently reachable as a fixed bottom navigation while its measured height, safe area, and clearance are reserved in layout, preventing content collision.
 - 200% layout proxy navigation readability: pass. Short labels remain horizontal, readable, and contained; full labels remain available through `aria-label`.
-- S10: reduced from 8 audited panel/card surfaces to 5. Mobile height reduced from 2232px to 1803px; boundary height reduced from 2281px to 1803px; corrected proxy reduced from 2063px to 1531px.
+- S10: reduced from 8 audited panel/card surfaces to 5. Mobile height is 1795px at both 390px and 320px; corrected proxy remains 1531px, with no meaningful height regression.
 
 ## Screen grades after
 
@@ -36,8 +36,9 @@ P0 results:
 
 ## Design changes
 
-- Navigation moved out of the mobile overlay model and into the page layout; desktop keeps the compact top navigation and tablet/zoom uses short labels.
-- S02 now leads with one state-derived next action, followed by two secondary navigation rows and a lighter recent-seven-day summary.
+- Desktop/tablet navigation keeps the current redesign. On mobile, the primary nav is fixed to the viewport bottom with short labels, full `aria-label` names, and a CSS-variable height plus `env(safe-area-inset-bottom)` reserved in the shell and scroll padding.
+- S02 now leads with one state-derived next action, followed by the two remaining conceptual destinations (`blood-pressure`, `challenge`, `today-detail`) so lead and secondary navigation cannot duplicate a destination.
+- S02 secondary copy matches its destination: `혈압 관찰` opens S04, `오늘 상세` opens S07, and `7일 챌린지` opens the approved challenge destination for the current state.
 - S10 keeps blood pressure observation, challenge check-ins, legacy records, the selected seven-day window, and active challenge period as separate facts. It now uses one compact summary, an optional challenge section, and one grouped record list.
 - S08 shares the grouped-record visual language with S10 while keeping browsing/detail access as its primary purpose.
 - Rounded bordered surfaces were reduced in favor of spacing, dividers, tint, and typography. S14 no longer presents four equal cards.
@@ -47,7 +48,8 @@ P0 results:
 ## QA and boundaries
 
 - `npm run build`: passed.
-- Browser contract E2E: 50 passed; production fixture boundary: 1 passed.
+- Browser contract E2E includes 320px/390px fixed-nav reachability, bottom-clearance checks, mid-page S10 navigation, and the three-state S02 destination matrix.
+- Browser contract E2E: 54 passed; production fixture boundary: 1 passed.
 - New responsive E2E: mobile nav collision and 200% label geometry passed.
 - New S05 companion reserved-slot E2E passed at 1366px, 390px, and 320px in review mode.
 - `git diff --check`: passed.

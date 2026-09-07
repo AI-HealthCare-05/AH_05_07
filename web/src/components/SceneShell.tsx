@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
-import { primaryNavigation, type ScreenId } from "../ui/journey";
+import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui/journey";
 import type { CompanionSelection } from "../ui/companion";
 
 type SceneShellProps = {
@@ -16,6 +16,7 @@ type SceneShellProps = {
 
 export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, companionSelection }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -53,9 +54,9 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
       <nav className="primary-nav" aria-label="주요 화면">
         {primaryNavigation.map((item) => (
           <button
-            className={item.screen === activeScreen ? "is-active" : ""}
+            className={item.screen === activeNavigationScreen ? "is-active" : ""}
             type="button"
-            aria-current={item.screen === activeScreen ? "page" : undefined}
+            aria-current={item.screen === activeNavigationScreen ? "page" : undefined}
             aria-label={item.label}
             onClick={() => onNavigate(item.screen)}
             key={item.screen}

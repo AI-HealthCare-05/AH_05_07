@@ -27,6 +27,14 @@ export const primaryNavigation: ReadonlyArray<{ screen: ScreenId; label: string;
   { screen: "S14", label: "설정과 도움말", shortLabel: "설정" },
 ];
 
+export function primaryNavigationScreen(screen: ScreenId): ScreenId {
+  if (screen === "S08" || screen === "S09") return "S08";
+  if (screen === "S10") return "S10";
+  if (screen === "S11") return "S11";
+  if (screen === "S14") return "S14";
+  return "S02";
+}
+
 export function parseScreen(value: string | null): ScreenId {
   return signedInScreenIds.includes(value as ScreenId) ? value as ScreenId : "S02";
 }

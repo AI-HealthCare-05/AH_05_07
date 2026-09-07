@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+const headers = {
+  "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+  "Access-Control-Allow-Headers": "authorization,content-type",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+};
+
 const emptyWindow = {
   start_on: "2026-08-29",
   end_on: "2026-09-04",
@@ -8,6 +14,37 @@ const emptyWindow = {
   active_challenge: null,
   challenge_checkins: [],
 };
+
+const matrixStates = [
+  {
+    name: "BP 없음 / active challenge 없음",
+    window: { ...emptyWindow, challenge_events: [{ id: "matrix-legacy", observed_on: "2026-09-04", action_id: "sleep-routine", status: "completed" as const }] },
+    lead: "blood-pressure",
+    secondary: ["challenge", "today-detail"],
+    destinations: { challenge: "S03", "today-detail": "S07" },
+  },
+  {
+    name: "BP 있음 / active challenge 없음",
+    window: {
+      ...emptyWindow,
+      blood_pressure_observations: [{ id: "matrix-bp", observed_on: "2026-09-08", period: "morning", systolic: 120, diastolic: 80 }],
+    },
+    lead: "challenge",
+    secondary: ["blood-pressure", "today-detail"],
+    destinations: { "blood-pressure": "S04", "today-detail": "S07" },
+  },
+  {
+    name: "BP 있음 / active challenge 있음",
+    window: {
+      ...emptyWindow,
+      blood_pressure_observations: [{ id: "matrix-bp-active", observed_on: "2026-09-08", period: "morning", systolic: 120, diastolic: 80 }],
+      active_challenge: { id: "matrix-challenge", action_id: "walk-10-minutes", starts_on: "2026-09-01", ends_on: "2026-09-10", first_checkin_on: "2026-09-01", status: "active" as const },
+    },
+    lead: "today-detail",
+    secondary: ["blood-pressure", "challenge"],
+    destinations: { "blood-pressure": "S04", challenge: "S03" },
+  },
+] as const;
 
 test("primary journey navigation updates the URL and supports browser history", async ({ page }) => {
   await page.goto("/?fixture=VP-10");
@@ -82,4 +119,41 @@ test("confirmed persistence alone opens the saved scene", async ({ page }) => {
   await page.reload();
   await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+});
+
+test.describe("S02 lead and secondary destination state matrix", () => {
+  for (const state of matrixStates) {
+    test(state.name, async ({ page }) => {
+      await page.route("http://e2e.invalid/**", async (route) => {
+        const request = route.request();
+        if (request.method() === "OPTIONS") {
+          await route.fulfill({ status: 204, headers });
+          return;
+        }
+        if (new URL(request.url()).pathname === "/api/v1/observations/window") {
+          await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(state.window) });
+          return;
+        }
+        await route.abort();
+      });
+
+      await page.goto("/?e2e=signed-in&screen=S02");
+      await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+      const lead = page.locator(".home-lead");
+      const secondary = page.locator(".home-links [data-home-concept]");
+      await expect(lead).toHaveAttribute("data-home-concept", state.lead);
+      await expect(secondary).toHaveCount(2);
+      expect(await secondary.evaluateAll((elements) => elements.map((element) => element.getAttribute("data-home-concept")))).toEqual(expect.arrayContaining(state.secondary));
+      expect(await page.locator("[data-home-concept]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-home-concept")))).toHaveLength(3);
+      expect(await page.locator("[data-home-concept]").evaluateAll((elements) => new Set(elements.map((element) => element.textContent?.trim())).size)).toBe(3);
+
+      for (const key of state.secondary) {
+        await page.locator(`.home-links [data-home-concept="${key}"]`).click();
+        await expect(page).toHaveURL(new RegExp(`screen=${state.destinations[key]}`));
+        await expect(page.locator(`[data-scene="${state.destinations[key]}"]`)).toBeVisible();
+        await page.goBack();
+        await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+      }
+    });
+  }
 });

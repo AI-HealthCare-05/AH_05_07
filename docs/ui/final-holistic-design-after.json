@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-07T15:00:42.554Z",
+  "generatedAt": "2026-09-08T00:00:00.000Z",
   "source": {
     "branch": "ux/final-holistic-redesign",
     "screens": [
@@ -1085,7 +1085,7 @@
         "explanatoryParagraphsCount": 3,
         "approximateAboveFoldCtaVisibility": "none",
         "horizontalOverflow": false,
-        "documentScrollHeight": 1803,
+        "documentScrollHeight": 1795,
         "viewportHeight": 844,
         "companionPresent": false,
         "sceneWidth": 367.625,
@@ -1106,7 +1106,7 @@
         "explanatoryParagraphsCount": 3,
         "approximateAboveFoldCtaVisibility": "none",
         "horizontalOverflow": false,
-        "documentScrollHeight": 1803,
+        "documentScrollHeight": 1795,
         "viewportHeight": 568,
         "companionPresent": false,
         "sceneWidth": 297.625,

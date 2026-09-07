@@ -55,6 +55,7 @@
   --sk7-radius-lg: 1.375rem;
   --sk7-radius-xl: 1.75rem;
   --sk7-target-min: 2.75rem;
+  --sk7-mobile-nav-height: 4.75rem;
   --sk7-motion-fast: 160ms;
   --sk7-motion-base: 260ms;
   --sk7-motion-scene: 360ms;
@@ -337,15 +338,17 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 @media (max-width: 580px) {
-  .app-shell { padding-inline: .7rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); scroll-padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  .app-shell { padding-inline: .7rem; padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); scroll-padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); }
+  html { scroll-padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); }
   .app-header { padding: .7rem .2rem; }
   .brand-button small, .fixture-label { display: none; }
   .header-actions { gap: .2rem; }
   .scene-viewport { margin-top: 0; }
-  .primary-nav { position: relative; top: auto; right: auto; bottom: auto; left: auto; width: 100%; margin: 1rem auto 0; transform: none; border: 1px solid var(--sk7-border); border-radius: 1rem; background: rgb(251 248 241 / .98); box-shadow: 0 8px 24px rgb(72 61 50 / .16); padding: .25rem; }
-  .primary-nav button { display: grid; justify-items: center; gap: .24rem; min-height: 3.6rem; padding: .4rem .2rem; font-size: .8rem; }
+  .primary-nav { position: fixed; top: auto; right: 0; bottom: 0; left: 0; z-index: 10; width: 100%; height: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom)); margin: 0; transform: none; border: 1px solid var(--sk7-border); border-radius: 1rem 1rem 0 0; background: rgb(251 248 241 / .98); box-shadow: 0 -8px 24px rgb(72 61 50 / .16); padding: .25rem .7rem env(safe-area-inset-bottom); }
+  .primary-nav button { display: grid; align-content: center; justify-items: center; gap: .24rem; min-height: 3.6rem; padding: .4rem .2rem; font-size: .8rem; white-space: nowrap; }
   .nav-label-wide { display: none; }
   .nav-label-short { display: inline; }
+  .nav-label-short { white-space: nowrap; }
   .scene { min-height: calc(100vh - 10rem); gap: var(--sk7-space-6); border-radius: var(--sk7-radius-lg); padding: 1.25rem; }
   .scene[data-scene="S02"] { gap: 1.2rem; padding-top: 1rem; }
   .scene::after { right: -12rem; }

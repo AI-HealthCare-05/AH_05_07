@@ -45,21 +45,45 @@ test("reduced motion keeps the main scenes understandable", async ({ page }) => 
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
 });
 
-test("mobile navigation is reserved in layout and never covers scene content", async ({ page }) => {
+test("mobile navigation stays reachable and never covers scene content", async ({ page }) => {
   for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     for (const screen of ["S02", "S04", "S08", "S10"] as const) {
       await page.goto(`/?fixture=VP-10&screen=${screen}`);
       const nav = page.locator(".primary-nav");
       await expect(nav).toBeVisible();
-      expect(await nav.evaluate((element) => getComputedStyle(element).position)).not.toBe("fixed");
-      const navBox = await nav.boundingBox();
-      const sceneBox = await page.locator(`[data-scene="${screen}"]`).boundingBox();
-      expect(navBox).not.toBeNull();
-      expect(sceneBox).not.toBeNull();
-      expect(navBox!.y).toBeGreaterThanOrEqual(sceneBox!.y + sceneBox!.height - 1);
+      const navGeometry = await nav.evaluate((element) => {
+        const style = getComputedStyle(element);
+        const box = element.getBoundingClientRect();
+        return { position: style.position, bottom: box.bottom, viewportBottom: innerHeight, height: box.height, declaredHeight: style.getPropertyValue("--sk7-mobile-nav-height") };
+      });
+      expect(navGeometry.position).toBe("fixed");
+      expect(navGeometry.bottom).toBeGreaterThanOrEqual(viewport.height - 1);
+      expect(navGeometry.height).toBeGreaterThanOrEqual(72);
+      expect(navGeometry.declaredHeight).toBe("4.75rem");
+      await expect(nav.locator(".nav-label-short")).toHaveCount(5);
+      await expect(nav.locator(".is-active")).toBeVisible();
+
+      await page.evaluate(() => document.scrollingElement?.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
+      const lastContentControl = page.locator(`[data-scene="${screen}"] button, [data-scene="${screen}"] input, [data-scene="${screen}"] select, [data-scene="${screen}"] summary`).last();
+      const contentGeometry = await lastContentControl.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const navRect = document.querySelector(".primary-nav")!.getBoundingClientRect();
+        return { controlBottom: rect.bottom, navTop: navRect.top };
+      });
+      expect(contentGeometry.controlBottom).toBeLessThanOrEqual(contentGeometry.navTop + 1);
     }
   }
+});
+
+test("primary navigation remains usable from the middle of a long mobile recap", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?fixture=VP-10&screen=S10");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight / 2));
+  await expect(page.getByRole("button", { name: "오늘의 기록", exact: true })).toBeInViewport();
+  await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
+  await expect(page).not.toHaveURL(/screen=/);
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
 });
 
 test("200% layout proxy keeps compact navigation labels readable", async ({ page }) => {
