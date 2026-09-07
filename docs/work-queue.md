@@ -64,21 +64,29 @@
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 각 항목에 실행 근거 또는 책임 있는 수용/보류가 기록된다.
 - 선행 조건: S0–S3의 해당 결과, 운영 승인, 제출 검토, 발주사·분야·통계·제품 책임자의 필요한 결정.
 
-### S4 O1 — **PREPARED / OPERATOR APPROVAL REQUIRED**
+### S4 O1 — **READY FOR OPERATOR EXECUTION APPROVAL**
 
-- [O1 실행 preflight](o1-production-flow-execution.md)의 repository baseline은
-  `5b04817607a07262e7f3c1f162980d1a1530396c`다. 이는 production exact runtime
-  source가 아니다.
+- [O1 실행 문서](o1-production-flow-execution.md)의 현재 `origin/main` baseline은
+  `6f90d270c9d2163f109d9806ac2cec98a935c223`다. 이는 deployed API artifact와
+  동일하다고 주장하지 않는다.
 - 현재 기록된 production web source evidence는
-  `30fd65eda8d988804c8af208276934226e0eb67d`이며, 실제 O1 execution target
-  runtime source SHA는 provenance 대조 전까지 `operator input required`다.
-- public/no-auth deployment smoke는 PASS했다. 실제 production account, login,
-  record/session 작업과 infrastructure 변경은 **0**이다.
+  `30fd65eda8d988804c8af208276934226e0eb67d`다. API artifact는 image tag
+  `921a35e` → repository commit `921a35e38261104aec1cdd7095f86a16c48f357c`
+  로 operationally 매핑되며 source attestation은 unavailable/not claimed다.
+- public/no-auth deployment smoke는 PASS했다. runtime reconciliation은
+  완료되었고, 실제 production account, login, record/session 작업은 실행하지
+  않았다.
 - O1 범위는 AC-04/06/08의 Synthetic A owner 흐름이다. 기존 #149의
   cross-user 근거를 승계하므로 Synthetic B는 새로 만들지 않는다.
-- 현재 Cloud Run revision, remote migration inventory의 최신 적용 상태,
-  execution window, cleanup owner와 active-challenge cleanup path는
-  `operator input required`다. 이 조건이 확인되기 전에는 실행하지 않는다.
+- 현재 Cloud Run revision은 `bp7-api-00013-qbz`, traffic은 `100%`, image digest는
+  `sha256:f0acce9e03f480bf17851e7e025b5e1e9cde3eb27c386df957c68555d701d1ee`다.
+  remote에는 첫 네 required migration이 있고 additive index migration은
+  known/accepted non-blocking drift다. cleanup path는 Synthetic A의 정상
+  product/API 삭제 후 approved Auth account deletion과 declared FK cascade로
+  resolved되었다.
+- 남은 operator input은 explicit O1 execution approval, execution window,
+  cleanup operator/role, approved private Synthetic A account뿐이다. production
+  execution은 아직 **NOT STARTED**다.
 - 실행 추적 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)이며,
   부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
 
