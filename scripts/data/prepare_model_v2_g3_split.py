@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import json
 import os
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -215,9 +214,13 @@ def role_for(kstrata, psu) -> str:
     return "final_test"
 
 
-def reset_dir(path: Path) -> None:
-    if path.exists():
-        shutil.rmtree(path)
+def prepare_output_root(path: Path) -> None:
+    if path.exists() and any(path.iterdir()):
+        raise SystemExit(
+            "STOP: G3 output root already exists and is non-empty. "
+            "Frozen roles are create-once. Use --output-root with a fresh path "
+            "only for reproducibility checks."
+        )
     path.mkdir(parents=True, exist_ok=True)
 
 
@@ -231,18 +234,29 @@ def write_role(df: pd.DataFrame, path: Path, locked: bool) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", type=Path, required=True)
+    ap.add_argument(
+        "--output-root",
+        type=Path,
+        help="Fresh output directory for one-time creation or reproducibility checks.",
+    )
     args = ap.parse_args()
 
     g2_root = args.root.expanduser().resolve()
     source = find_source(g2_root)
-    out_root = g2_root.parent.parent / "model-v2-g3" / "knhanes-2024"
+    out_root = (
+        args.output_root.expanduser().resolve()
+        if args.output_root
+        else g2_root.parent.parent / "model-v2-g3" / "knhanes-2024"
+    )
+
+    prepare_output_root(out_root)
 
     dev_dir = out_root / "development"
     val_dir = out_root / "locked-validation"
     test_dir = out_root / "locked-final-test"
     audit_dir = out_root / "audit"
-    for d in (dev_dir, val_dir, test_dir, audit_dir):
-        reset_dir(d)
+    for directory in (dev_dir, val_dir, test_dir, audit_dir):
+        directory.mkdir(parents=True, exist_ok=False)
 
     df, _ = pyreadstat.read_sas7bdat(str(source), usecols=RAW_COLUMNS)
     if df["ID"].isna().any() or df["ID"].duplicated().any():
@@ -292,10 +306,18 @@ def main() -> int:
     val_meta = write_role(parts["validation"], val_dir / "validation.parquet", True)
     test_meta = write_role(parts["final_test"], test_dir / "final-test.parquet", True)
 
-    (val_dir / "DO_NOT_OPEN_UNTIL_G6.txt").write_text("Validation locked until G6 approval.\n", encoding="utf-8")
-    (test_dir / "DO_NOT_OPEN_UNTIL_G8.txt").write_text(
-        "Final internal test locked until explicit G8 approval.\n", encoding="utf-8"
+    validation_marker = val_dir / "DO_NOT_OPEN_UNTIL_G6.txt"
+    final_test_marker = test_dir / "DO_NOT_OPEN_UNTIL_G8.txt"
+    validation_marker.write_text("Validation locked until G6 approval.\n", encoding="utf-8")
+    final_test_marker.write_text(
+        "Final internal test locked until explicit G8 approval.\n",
+        encoding="utf-8",
     )
+
+    os.chmod(validation_marker, 0o400)
+    os.chmod(final_test_marker, 0o400)
+    os.chmod(val_dir, 0o500)
+    os.chmod(test_dir, 0o500)
 
     manifest = {
         "gate": "Model V2 G3",

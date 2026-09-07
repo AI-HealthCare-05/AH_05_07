@@ -127,6 +127,11 @@ The split does not inspect model performance or target prevalence.
 Participant-level role files remain outside Git.
 Repository stores only code, aggregate counts, hashes, and reproducibility metadata.
 
+The canonical G3 output root is **create-once**. The split-preparation script must
+fail closed if that root already contains role files; it must never delete or
+overwrite frozen validation or final-test data. Reproducibility checks must use
+a separate fresh `--output-root`.
+
 ## 11. Metric-role freeze
 Before any performance is observed:
 - primary: survey-weighted AUROC
