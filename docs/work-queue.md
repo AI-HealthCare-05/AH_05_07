@@ -66,8 +66,12 @@
 
 ### S4 O1 — **PREPARED / OPERATOR APPROVAL REQUIRED**
 
-- [O1 실행 preflight](o1-production-flow-execution.md)를 최신 `origin/main`
-  `5b04817607a07262e7f3c1f162980d1a1530396c` 기준으로 준비했다.
+- [O1 실행 preflight](o1-production-flow-execution.md)의 repository baseline은
+  `5b04817607a07262e7f3c1f162980d1a1530396c`다. 이는 production exact runtime
+  source가 아니다.
+- 현재 기록된 production web source evidence는
+  `30fd65eda8d988804c8af208276934226e0eb67d`이며, 실제 O1 execution target
+  runtime source SHA는 provenance 대조 전까지 `operator input required`다.
 - public/no-auth deployment smoke는 PASS했다. 실제 production account, login,
   record/session 작업과 infrastructure 변경은 **0**이다.
 - O1 범위는 AC-04/06/08의 Synthetic A owner 흐름이다. 기존 #149의

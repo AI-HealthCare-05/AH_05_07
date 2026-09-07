@@ -16,9 +16,9 @@ O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다
 
 | 항목 | 확인된 값 | 상태 / 경계 |
 | --- | --- | --- |
-| 기준 `origin/main` | `5b04817607a07262e7f3c1f162980d1a1530396c` | 확인 완료 (2026-09-07) |
-| O1 실행 대상 source SHA | `5b04817607a07262e7f3c1f162980d1a1530396c` | 이 docs-only 준비 변경을 포함하지 않은 최신 `main` 기준 |
-| 최신 production web source evidence | `30fd65eda8d988804c8af208276934226e0eb67d` | S3E evidence의 merged `main` baseline; 현재 `main`의 후속 문서 merge 전 runtime 근거 |
+| Preflight repository baseline | `5b04817607a07262e7f3c1f162980d1a1530396c` | 확인 완료 (2026-09-07); preflight 기준이며 production runtime 배포 사실을 뜻하지 않음 |
+| 현재 기록된 production web source evidence | `30fd65eda8d988804c8af208276934226e0eb67d` | S3E evidence의 merged `main` baseline; 현재 `main`의 후속 문서 merge 전 runtime 근거 |
+| 실제 O1 execution target runtime source SHA | `operator input required` | deployment snapshot / Worker version provenance 대조 전에는 특정하지 않음 |
 | Production web Worker | `ah-05-07-pages` / `https://ah-05-07-pages.ahnsangkyoon.workers.dev` | Deployment SSOT와 S3E evidence로 확인 |
 | Production Worker version | `70f9d4d5-6377-4087-a405-63993382441c` | S3E final restore evidence; public smoke PASS |
 | Deployment snapshot workflow run tied to O1 source | `operator input required` | S3E evidence에는 sync 성공만 있고 run URL이 source SHA와 연결되어 있지 않음 |
@@ -28,9 +28,11 @@ O1은 AC-04/06/08의 정상 owner 흐름과 안전한 복구 관찰만 다룬다
 | Supabase remote project/runtime state | `operator input required` | preflight에서 SQL, migration push, policy 변경을 수행하지 않음 |
 
 Production Worker version은 S3E companion evidence의 runtime 사실이며, O1의
-혈압·챌린지 동작을 검증했다는 뜻이 아니다. `5b048...` source가 현재 운영
-Worker에 배포되었다고 추정하지 않는다. O1 실행 전에는 승인자가 source SHA와
-실제 web/API target 및 revision을 함께 대조해야 한다.
+혈압·챌린지 동작을 검증했다는 뜻이 아니다. `5b048...` preflight baseline이나
+`30fd65...` recorded source evidence가 실제 O1 execution target runtime source와
+동일하다고 추정하지 않는다. O1 실행 전에는 승인자가 deployment snapshot,
+Worker version provenance, source SHA와 실제 web/API target 및 revision을 함께
+대조해야 한다.
 
 ### Schema and migration readiness
 
@@ -135,19 +137,22 @@ cleanup owner가 확정해야 한다. SQL이나 미문서화 route를 사용해 
 
 1. offline/retry 및 진행 중인 요청을 종료하고, 미확정 mutation은 fresh read로
    존재 여부를 확인한다. 자동 재시도하지 않는다.
-2. Synthetic A session을 종료한다.
-3. current owned challenge check-in을 UI 확인 절차로 삭제하고 `204`/reload 부재를
-   확인한다.
-4. owned blood-pressure record를 UI 확인 절차로 삭제하고 `204`/reload 부재를
-   확인한다.
-5. 실행 전에 승인된 active-challenge cleanup path로 synthetic challenge를
-   정리한다. 이 단계의 SQL·관리자 우회는 사전 승인된 문서가 없으면 금지한다.
-6. Synthetic A account를 승인된 Auth cleanup path로 삭제하고 관련 행 정리
-   완료만 sanitized evidence로 남긴다.
-7. 마지막으로 public smoke를 다시 실행한다.
+2. 인증된 Synthetic A owner session을 유지한 상태에서 challenge check-in을
+   정상 삭제하고 reload 후 부재를 확인한다.
+3. 인증된 Synthetic A owner session을 유지한 상태에서 blood-pressure record를
+   정상 삭제하고 reload 후 부재를 확인한다.
+4. 사전 승인된 active-challenge cleanup path를 수행한다. 현재 공개 API에는
+   active challenge 자체의 `DELETE` route가 없으므로 이 경로가 관리자 경로라면
+   그 경계를 승인된 운영 절차로 명시한다. 승인되지 않은 관리자 경로·SQL·
+   미문서화 route 우회는 금지하며, 승인된 경로가 없으면 **HOLD**다.
+5. owner product records가 정리된 것을 확인한다.
+6. 그 다음 Synthetic A product session을 sign-out/종료한다.
+7. 승인된 Auth account cleanup을 수행한다.
+8. 관련 synthetic row cleanup 완료 여부를 확인하고 sanitized evidence만 남긴다.
+9. final public smoke를 다시 실행한다.
 
-정리 실패, owner record 잔존, active challenge cleanup 미확정, 또는 account
-삭제 권한 부재는 O1 완료가 아니라 **HOLD**다.
+정리 실패, owner record 잔존, active challenge cleanup 미확정, 승인되지 않은
+관리자 경로 필요, 또는 account 삭제 권한 부재는 O1 완료가 아니라 **HOLD**다.
 
 ### Stop conditions
 
