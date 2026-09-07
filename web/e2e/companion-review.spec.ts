@@ -189,3 +189,21 @@ test("review slot preserves responsive core layout at 1366, 390, and 320", async
     await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
   }
 });
+
+test("S05 companion stays in its reserved slot beside confirmation and actions", async ({ page }) => {
+  for (const width of [1366, 390, 320]) {
+    await page.setViewportSize({ width, height: width === 1366 ? 900 : 844 });
+    await page.goto(reviewUrl("S05", "companion_species=bear&companion_variant=lite&companion_clip=celebrate&companion_context=save_success"));
+    await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    const scene = page.locator('[data-scene="S05"]');
+    const companion = page.locator(".companion-runtime-slot");
+    const title = scene.getByRole("heading", { name: "기록을 저장했어요" });
+    const action = scene.getByRole("button", { name: "오늘의 기록 보기" });
+    const boxes = await Promise.all([companion.boundingBox(), title.boundingBox(), action.boundingBox()]);
+    expect(boxes.every(Boolean)).toBe(true);
+    const [companionBox, titleBox, actionBox] = boxes as [{ x: number; y: number; width: number; height: number }, { x: number; y: number; width: number; height: number }, { x: number; y: number; width: number; height: number }];
+    const overlaps = (left: typeof companionBox, right: typeof companionBox) => left.x < right.x + right.width && left.x + left.width > right.x && left.y < right.y + right.height && left.y + left.height > right.y;
+    expect(overlaps(companionBox, titleBox)).toBe(false);
+    expect(overlaps(companionBox, actionBox)).toBe(false);
+  }
+});
