@@ -142,6 +142,33 @@ separate facts.
 The complete S3E activation, rollback, and final restore evidence is in
 [`s3e-companion-production-rollout.md`](s3e-companion-production-rollout.md).
 
+### S4 O3 API-only release ledger — 2026-09-07
+
+This dated entry records the completed O3 execution. Source, build, image, and
+runtime are separate facts; the documentation baseline is not the runtime
+release SHA.
+
+- **Approved release source:**
+  `3106537d61396b20a18a85cd6d0d74c498a91aab`.
+- **Cloud Build:** `60c0a23f-6383-47c4-b966-616379116a0d` — **SUCCESS**.
+- **Image tag:**
+  `asia-northeast3-docker.pkg.dev/ah-05-07-api/bp7/api:o3-3106537`.
+- **Immutable image digest:**
+  `sha256:34131105048ca654a4e0e1cf9a1982bc909e7120d1f6320042170262d64e2399`.
+- **Cloud Run:** `bp7-api-00014-jeq` in `asia-northeast3`.
+- **Previous rollback revision:** `bp7-api-00013-qbz`.
+- **Smoke results:** no-traffic **PASS**; activation **PASS**; rollback
+  **PASS**; restore/final **PASS**.
+- **Final traffic:** `bp7-api-00014-jeq` at `100%`.
+- **Supabase migration:**
+  `20260904090000_add_challenge_checkins_challenge_user_index` applied and
+  migration history aligned.
+- **Web:** not redeployed; the existing production Worker remains separate
+  from this API release.
+
+The complete sanitized record is in
+[`o3-clean-release-execution.md`](evidence/o3-clean-release-execution.md).
+
 ## Supabase migration gate
 
 Files in `supabase/migrations/` are version-controlled database change instructions. Git merge, GitHub Actions, Cloud Run deployment, and Cloudflare deployment do **not** execute those SQL files against the production Supabase project automatically.
@@ -151,10 +178,13 @@ Files in `supabase/migrations/` are version-controlled database change instructi
 The current production project has had schema changes applied manually. Until its remote migration history has been reconciled with the repository and a linked CLI release procedure is reviewed, the approved production path is an operator-mediated execution in the Supabase SQL Editor.
 
 Issue #160 adds the additive `challenge_checkins(challenge_id, user_id)` index
-for the current Advisor finding. Apply it only through this gate, then re-run
-the Advisor and the sanitized signed-in observation-window measurement in
-[`observation-load-baseline.md`](observation-load-baseline.md). Do not treat a
-merged migration file as a deployed index.
+for the current Advisor finding. The migration
+`20260904090000_add_challenge_checkins_challenge_user_index` was applied and
+its migration history was aligned during the O3 execution; the sanitized
+schema check confirmed the index is present. The immediate post-DDL Advisor
+finding is `unused_index` at INFO because the new index has not accumulated
+usage yet. This is not evidence that the index is unnecessary, and no
+performance magnitude is claimed. Do not remove it as part of O3.
 
 ### Deployed ownership verification
 

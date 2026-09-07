@@ -267,3 +267,16 @@ raw secret/identifier/log must be retained.
 
 Until these inputs are recorded, O3 remains **PREPARED / OPERATOR APPROVAL
 REQUIRED** and is not complete.
+
+## Execution outcome and successor evidence — 2026-09-07
+
+The sections above retain their original purpose as the historical preflight
+record. They describe the gates and intended commands before execution; they
+are not rewritten as though they had always been an execution log. The
+operator-approved execution was completed afterward and is recorded in the
+[sanitized O3 execution evidence](evidence/o3-clean-release-execution.md).
+
+**O3: COMPLETE / VERIFIED.** The approved scope was an API-only clean release.
+Web reproduction was intentionally not performed because the approved
+candidate had no web runtime delta from the recorded production web source.
+No Cloudflare Worker deployment, web rollback, or web restore was performed.

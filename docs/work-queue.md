@@ -79,10 +79,9 @@
   [sanitized execution evidence](evidence/o1-production-execution.md).
 - O1 범위는 AC-04/06/08의 Synthetic A owner 흐름이다. 기존 #149의
   cross-user 근거를 승계하므로 Synthetic B는 새로 만들지 않는다.
-- 현재 Cloud Run revision은 `bp7-api-00013-qbz`, traffic은 `100%`, image digest는
-  `sha256:f0acce9e03f480bf17851e7e025b5e1e9cde3eb27c386df957c68555d701d1ee`다.
-  remote에는 첫 네 required migration이 있고 additive index migration은
-  known/accepted non-blocking drift다. cleanup path는 Synthetic A의 정상
+- O1 execution 당시 Cloud Run revision은 `bp7-api-00013-qbz`, traffic은 `100%`,
+  image digest는 `sha256:f0acce9e03f480bf17851e7e025b5e1e9cde3eb27c386df957c68555d701d1ee`다.
+  O3 final runtime은 아래 S4 O3 항목에 별도로 기록한다. O1의 cleanup path는 Synthetic A의 정상
   product/API 삭제 후 approved Auth account deletion과 declared FK cascade로
   resolved되었다.
 - Natural session invalidation was not run, direct production unknown-field request
@@ -94,15 +93,32 @@
   CLOSED다. O3 실행 successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)이며,
   부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
 
+### S4 O3 — **COMPLETE / VERIFIED**
+
+- [Sanitized O3 execution evidence](evidence/o3-clean-release-execution.md)는
+  approved/runtime SHA `3106537d61396b20a18a85cd6d0d74c498a91aab`, Cloud Build
+  `60c0a23f-6383-47c4-b966-616379116a0d` **SUCCESS**, and immutable image
+  digest `sha256:34131105048ca654a4e0e1cf9a1982bc909e7120d1f6320042170262d64e2399`를
+  기록한다.
+- `bp7-api-00014-jeq`의 no-traffic, activation, rollback, restore/final smoke는
+  모두 **PASS**다. Final traffic은 `bp7-api-00014-jeq` `100%`다.
+- `20260904090000_add_challenge_checkins_challenge_user_index`는 한 번 적용되었고
+  migration history가 정렬되었다. Schema check는 index **PRESENT**를 확인했으며,
+  즉시 Advisor `unused_index` **INFO**는 post-creation context로 보존한다.
+- Web은 재배포하지 않았다. O3는 API-only이며 product writes/model/R2/UI/
+  Cloudflare changes는 모두 `0`이다.
+
 ### S4 follow-up boundaries
 
 - O2 remains pending natural 30-day expiration or a responsible alternate-evidence
   decision.
-- O3 is **PREPARED / OPERATOR APPROVAL REQUIRED**. See
-  [O3 clean-release preflight](o3-clean-release-preflight.md) and [Issue #261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261).
-- O3 remains pending exact candidate-SHA approval, migration disposition A/B,
-  web reproduction/API-only decision, live rollback-target reconfirmation,
-  execution window/rollback operator, and temporary revision/image retention.
+- O3 is **COMPLETE / VERIFIED**. See the historical [O3 clean-release preflight](o3-clean-release-preflight.md),
+  [sanitized execution evidence](evidence/o3-clean-release-execution.md), and
+  [Issue #261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261).
+- O3 was API-only: web reproduction was intentionally not performed because the
+  approved candidate had no web runtime delta from the recorded production web
+  source. The additive index was applied once and migration history was aligned;
+  the immediate Advisor `unused_index` INFO is retained as post-creation context.
 - Other #238 scope remains open: API P95 decision/evidence, submission sheet/final
   sharing acceptance, future incidence/progression scope acceptance, and
   input/model decisions.

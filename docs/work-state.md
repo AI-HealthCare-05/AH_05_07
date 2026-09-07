@@ -59,12 +59,14 @@ SQL·migration push, Cloud Run/Cloudflare/Supabase/R2 변경, UI·model 실행 �
 현재 기록된 production web source evidence/Worker는 S3E evidence의
 `30fd65eda8d988804c8af208276934226e0eb67d` /
 `70f9d4d5-6377-4087-a405-63993382441c`다. API는 revision
-`bp7-api-00013-qbz`, traffic `100%`, immutable digest
-`sha256:f0acce9e03f480bf17851e7e025b5e1e9cde3eb27c386df957c68555d701d1ee`로
-reconciled되었다. remote에는 O1 required first four migrations가 적용되었고,
-additive index migration은 known/accepted non-blocking drift다. deployed API
-artifact는 current `main`보다 오래되지만 O1-required endpoint semantics는
-포함한다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
+`bp7-api-00014-jeq`, traffic `100%`, immutable digest
+`sha256:34131105048ca654a4e0e1cf9a1982bc909e7120d1f6320042170262d64e2399`로
+O3 final state가 기록되었다. O3 승인 release SHA는
+`3106537d61396b20a18a85cd6d0d74c498a91aab`이며 documentation baseline과
+동일하다고 주장하지 않는다. O1 기록과 O3 실행은 각각의 sanitized evidence에
+분리되어 있다. `20260904090000_add_challenge_checkins_challenge_user_index`는
+적용되었고 migration history도 repository version으로 정렬되었으며, schema
+check에서 index가 확인되었다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
 계속 OPEN이며 O1 execution successor [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
 CLOSED다. O3 execution successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)에서
 별도로 추적한다.
@@ -81,13 +83,12 @@ changes가 `0`이라고 표현하지 않는다.
   Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - S4 O2: natural 30-day expiration evidence 또는 책임 있는 alternate-evidence 결정 pending.
-- S4 O3: **PREPARED / OPERATOR APPROVAL REQUIRED**. [O3 preflight](o3-clean-release-preflight.md)와
-  execution Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)에
-  candidate SHA, runtime diff, migration/web decision gates, clean checkout,
-  no-traffic rollout, smoke, rollback, restore, and live target reconfirmation을 기록했다.
-- O3는 아직 COMPLETE가 아니다. 남은 결정은 migration disposition A/B, web
-  reproduction/API-only scope, exact SHA approval, execution window, rollback
-  operator, live target reconfirmation, and temporary revision/image retention이다.
+- S4 O3: **COMPLETE / VERIFIED**. [O3 preflight](o3-clean-release-preflight.md)의
+  역사적 게이트와 [sanitized execution evidence](evidence/o3-clean-release-execution.md)에
+  approved SHA, clean checkout, reconciled migration, Cloud Build provenance,
+  API-only no-traffic rollout, activation, rollback, restore, and final smoke를
+  기록했다. 실행 Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)은
+  이 closeout PR과 연결한다.
 - O1 deferred integrated UI/UX findings: rolling 7-day path가 day-7 progress처럼
   보일 수 있음; export success notice가 navigation 뒤에도 남음. 기능 범위 완료 후
   holistic UI/companion composition review에서 함께 다룬다.
@@ -104,7 +105,7 @@ changes가 `0`이라고 표현하지 않는다.
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
 | S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved, and S3E production rollout complete. #248의 review-only 범위와 S3E의 production evidence를 각각 보존한다. |
-| S4 | 1회차 마감 — **ACTIVE** | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. Issue #252 completion is pending only on this closeout PR merge. |
+| S4 | 1회차 마감 — **ACTIVE** | O1/O3 실행 근거와 O2·API P95·제출·범위·입력/모델 결정의 보류 경계를 기록. O3 complete does not close parent #238 or claim S4 overall complete. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·
 숨김/미인식 파일, 시각 품질·사람 디자인 승인, 독립 backup과 과거 외부 업로드는
