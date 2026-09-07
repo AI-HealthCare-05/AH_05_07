@@ -64,6 +64,24 @@
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 각 항목에 실행 근거 또는 책임 있는 수용/보류가 기록된다.
 - 선행 조건: S0–S3의 해당 결과, 운영 승인, 제출 검토, 발주사·분야·통계·제품 책임자의 필요한 결정.
 
+### S4 O1 — **PREPARED / OPERATOR APPROVAL REQUIRED**
+
+- [O1 실행 preflight](o1-production-flow-execution.md)의 repository baseline은
+  `5b04817607a07262e7f3c1f162980d1a1530396c`다. 이는 production exact runtime
+  source가 아니다.
+- 현재 기록된 production web source evidence는
+  `30fd65eda8d988804c8af208276934226e0eb67d`이며, 실제 O1 execution target
+  runtime source SHA는 provenance 대조 전까지 `operator input required`다.
+- public/no-auth deployment smoke는 PASS했다. 실제 production account, login,
+  record/session 작업과 infrastructure 변경은 **0**이다.
+- O1 범위는 AC-04/06/08의 Synthetic A owner 흐름이다. 기존 #149의
+  cross-user 근거를 승계하므로 Synthetic B는 새로 만들지 않는다.
+- 현재 Cloud Run revision, remote migration inventory의 최신 적용 상태,
+  execution window, cleanup owner와 active-challenge cleanup path는
+  `operator input required`다. 이 조건이 확인되기 전에는 실행하지 않는다.
+- 실행 추적 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)이며,
+  부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
+
 S4는 모델 출시, test 실행 또는 운영 배포를 자동으로 승인하지 않는다.
 
 기능 범위 완료 후 전체 UI/companion composition을 별도 통합 디자인 패스로 검토.

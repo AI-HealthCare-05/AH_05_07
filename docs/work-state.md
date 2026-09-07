@@ -45,6 +45,26 @@
 | S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. Successor S3E production rollout is now complete. |
 | S3E | **COMPLETE** | Exact `production` mode, 고정 S05 bear-lite profile, confirmed save 이후 one-shot `celebrate → idle`, activation smoke, rollback rehearsal, and final restore are verified. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**. |
 
+## S4 O1 preflight status
+
+O1은 **PREPARED / OPERATOR APPROVAL REQUIRED**다. 기준 `origin/main`은
+`5b04817607a07262e7f3c1f162980d1a1530396c`로 확인했고, 읽기 전용 public
+smoke만 실행해 PASS를 확인했다. 실제 production account/login/record/session
+작업, SQL·migration push, Cloud Run/Cloudflare/Supabase/R2 변경, UI·model
+실행은 하지 않았다. 실행 문서와 체크리스트는
+[O1 preflight](o1-production-flow-execution.md)에 둔다.
+
+Preflight repository baseline은 `5b04817607a07262e7f3c1f162980d1a1530396c`다.
+현재 기록된 production web source evidence/Worker는 S3E evidence의
+`30fd65eda8d988804c8af208276934226e0eb67d` /
+`70f9d4d5-6377-4087-a405-63993382441c`다. 실제 O1 execution target runtime
+source SHA는 deployment snapshot과 Worker provenance가 대조될 때까지
+`operator input required`이며, preflight baseline을 production exact runtime
+source로 간주하지 않는다. 현재 Cloud Run revision, remote migration
+inventory의 현재 상태, 실행 창, cleanup owner와 active-challenge cleanup path는
+repository evidence만으로 특정할 수 없어 `operator input required`다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
+계속 OPEN이며 실행 successor는 [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)다.
+
 ## 미결 결정
 
 - S3E [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252):
