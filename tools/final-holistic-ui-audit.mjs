@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const baseURL = process.env.SK7_AUDIT_BASE_URL ?? "http://127.0.0.1:4173";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const outputPath = path.join(repoRoot, "docs", "ui", "final-holistic-design-backlog.json");
+const outputPath = process.env.SK7_AUDIT_OUTPUT_PATH ?? path.join(repoRoot, "docs", "ui", "final-holistic-design-backlog.json");
 const screenshotRoot = process.env.SK7_AUDIT_SCREENSHOT_DIR ?? path.join(process.env.TEMP ?? "C:/Temp", "sk7-ui-final-audit");
 const publicScreenshotRoot = "<local-temp>/sk7-ui-final-audit";
 
@@ -177,8 +177,8 @@ const byScreen = Object.fromEntries(screens.map(({ id }) => [id, results.filter(
 const backlog = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
-  source: {
-    branch: "ux/final-holistic-design-audit",
+    source: {
+      branch: process.env.SK7_AUDIT_BRANCH ?? "ux/final-holistic-design-audit",
     screens: screens.map(({ id }) => id),
     viewports: [...viewports, { ...zoomViewport, zoom: zoomLabel }],
     zoomMethod,

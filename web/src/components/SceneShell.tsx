@@ -41,6 +41,15 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
 
       <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
+      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
+        <CompanionRuntimeBoundary
+          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
+          selection={companionSelection}
+          reducedMotion={reducedMotion}
+        />
+        {children}
+      </div>
+
       <nav className="primary-nav" aria-label="주요 화면">
         {primaryNavigation.map((item) => (
           <button
@@ -57,15 +66,6 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
           </button>
         ))}
       </nav>
-
-      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
-        <CompanionRuntimeBoundary
-          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
-          selection={companionSelection}
-          reducedMotion={reducedMotion}
-        />
-        {children}
-      </div>
     </main>
   );
 }
