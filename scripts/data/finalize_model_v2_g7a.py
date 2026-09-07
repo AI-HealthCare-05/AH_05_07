@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Finalize repository-safe Model V2 G7-A compatibility report."""
+"""Finalize repository-safe revised Model V2 G7-A compatibility report."""
 
 from __future__ import annotations
 
@@ -17,25 +17,28 @@ def main() -> int:
     evidence = json.loads(args.evidence.expanduser().resolve().read_text(encoding="utf-8"))
     if evidence.get("gate") != "Model V2 G7-A":
         raise SystemExit("STOP: not G7-A evidence")
-    if evidence.get("status") != "metadata_only_schema_screen_complete":
-        raise SystemExit("STOP: incomplete G7-A evidence")
+    if evidence.get("status") != "revised_metadata_only_schema_screen_complete":
+        raise SystemExit("STOP: incomplete revised G7-A evidence")
 
     safety = evidence["safety"]
-    required_false = [
-        "participant_rows_read",
-        "target_distribution_inspected",
-        "model_fitting_performed",
-        "predictions_computed",
-        "performance_metrics_computed",
-        "knhanes_2024_final_test_accessed",
-        "v1_validation_or_test_accessed",
-    ]
-    if any(safety.get(name) is not False for name in required_false):
+    if any(
+        safety.get(name) is not False
+        for name in [
+            "participant_rows_read",
+            "target_distribution_inspected",
+            "model_fitting_performed",
+            "predictions_computed",
+            "performance_metrics_computed",
+            "knhanes_2024_final_test_accessed",
+            "v1_validation_or_test_accessed",
+        ]
+    ):
         raise SystemExit("STOP: G7-A safety boundary violated")
 
-    decision = evidence["decision"]
-    missing = evidence["missing_required_columns"]
     source = evidence["source"]
+    missing = evidence["missing_required_columns"]
+    decision = evidence["decision"]
+    sleep = evidence["external_sleep_harmonization"]
 
     lines = [
         "# Model V2 G7-A — KNHANES 2023 External Compatibility Result",
@@ -44,53 +47,58 @@ def main() -> int:
         "",
         "## Scope",
         "",
-        "- documentation + schema-only screen",
+        "- metadata-only schema screen after pre-performance contract revision",
         "- participant rows read: **False**",
         "- target prevalence accessed: **False**",
         "- model fitting/prediction/performance: **False**",
         "- KNHANES 2024 final internal test accessed: **False**",
         "",
-        "## Source metadata",
+        "## Source",
         "",
         f"- filename: `{source['filename']}`",
         f"- SHA-256: `{source['sha256']}`",
-        f"- SAS columns: **{int(source['column_count']):,}**",
+        f"- columns: **{int(source['column_count']):,}**",
         "",
-        "## Frozen mapping compatibility",
+        "## Sleep measurement shift discovered before external evaluation",
         "",
-        "The G3 Model V2-A feature, target, cohort, survey-design, and leakage",
-        "contracts were checked against the KNHANES 2023 main-database schema.",
+        "KNHANES 2023 and 2024 measure the sleep-duration construct using different",
+        "source instruments.",
         "",
-        f"- missing required columns: **{len(missing)}**",
+        "- 2023 weekday sleep source: `BP16_1`",
+        "- 2023 weekend sleep source: `BP16_2`",
+        f"- external weekday harmonization: `{sleep['weekday_sleep_minutes']}`",
+        f"- external weekend harmonization: `{sleep['weekend_sleep_minutes']}`",
+        "- 88/99 are treated as missing",
+        "- measurement shift versus 2024: **True**",
+        "- mapping selected from performance: **False**",
+        "",
+        "Therefore G7 is interpreted as a temporal Korean transportability",
+        "evaluation with a predeclared sleep-measurement shift, not an exact",
+        "same-instrument temporal replication.",
+        "",
+        "## Revised schema compatibility",
+        "",
+        f"- missing revised required columns: **{len(missing)}**",
     ]
     if missing:
-        for name in missing:
-            lines.append(f"  - `{name}`")
+        lines.extend(f"  - `{name}`" for name in missing)
     else:
-        lines.append("- all frozen source/target/survey/leakage columns present: **True**")
+        lines.append("- all revised required columns present: **True**")
 
     lines.extend(
         [
             "",
-            "## Documentation semantic review",
+            "Expected absent 2024-only sleep clock fields:",
             "",
-            "- same KNHANES 9th cycle (2022–2024): **True**",
-            "- `HE_HP` 1/2/3/4 hypertension-state semantics compatible: **True**",
-            "- `HE_prg` current-pregnancy exclusion available: **True**",
-            "- `wt_itvex`, `kstrata`, `psu` survey roles compatible: **True**",
-            "- walking/strength source variables compatible: **True**",
-            "- weekday/weekend sleep clock-time variables compatible: **True**",
-            "- smoking and alcohol source variables compatible: **True**",
-            "- BP and hypertension diagnosis/treatment leakage guard fields present: "
-            f"**{not any(name in missing for name in evidence['required_columns'] if name.startswith(('HE_sbp', 'HE_dbp', 'DI1_')))}**",
+            *[f"- `{name}`" for name in evidence["expected_absent_clock_columns"]],
             "",
             "## Decision",
             "",
             f"**{decision}**",
             "",
-            "This decision concerns dataset/mapping compatibility only. It is not",
-            "external performance evidence and does not authorize access to the",
-            "KNHANES 2024 final internal test.",
+            "Approval means compatibility for the explicitly defined G7",
+            "transportability evaluation. It is not external performance evidence.",
+            "The KNHANES 2024 final internal test remains locked.",
             "",
         ]
     )
@@ -99,7 +107,7 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines), encoding="utf-8")
     print("wrote:", out)
-    print("G7-A repository-safe compatibility report complete")
+    print("G7-A revised repository-safe compatibility report complete")
     return 0
 
 

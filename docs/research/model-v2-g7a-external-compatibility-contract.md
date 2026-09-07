@@ -1,109 +1,136 @@
 # Model V2 G7-A — KNHANES 2023 External Compatibility Screen
 
-Status: **documentation + schema-only screening; no participant-level outcome/performance access**
+Status: **contract mapping revision after metadata-only schema finding**
 
-## Purpose
+## 1. Finding that triggered this revision
 
-Determine whether KNHANES 2023 can serve as the temporally separate Korean
-external evaluation dataset for Model V2-A without changing the frozen G3
-feature/target semantics.
+The first metadata-only audit of `hn23_all.sas7bdat` found that KNHANES 2023
+does not contain the 2024 sleep clock-time source variables:
 
-## Evidence boundary
+- `BP16_11`, `BP16_12`, `BP16_13`, `BP16_14`
+- `BP16_21`, `BP16_22`, `BP16_23`, `BP16_24`
 
-Allowed in G7-A:
+No participant rows, target prevalence, predictions, or performance were
+accessed before this revision.
 
-- official KNHANES 2023 guide/code documentation
-- SAS file metadata and column names
-- variable labels
-- file SHA-256
-- schema compatibility checks
+The KNHANES 9th-cycle documentation states that:
 
-Prohibited in G7-A:
+- 2022–2023 use direct average sleep-duration fields `BP16_1`, `BP16_2`;
+- 2024 uses bed/wake clock-time fields from which sleep duration is derived.
 
-- participant-level values
-- target prevalence
-- model fitting
-- prediction
-- AUROC/AP/Brier/calibration
-- subgroup performance
-- performance-driven mapping changes
+Therefore KNHANES 2023 is not an exact source-instrument replication of the 2024
+feature contract.
 
-## Frozen Model V2-A mapping to verify
+## 2. G7 interpretation
+
+G7 will be treated as a **temporal Korean transportability evaluation with a
+predeclared sleep-measurement instrument shift**, not as an exact
+same-instrument temporal replication.
+
+This distinction must remain visible in all G7 result documentation.
+
+## 3. Frozen external harmonization
+
+All non-sleep source mappings remain identical to the G3 contract.
+
+For KNHANES 2023 only:
+
+- `weekday_sleep_minutes` <- `BP16_1 * 60`
+- `weekend_sleep_minutes` <- `BP16_2 * 60`
+- `BP16_1` values `88`, `99`, or missing -> missing
+- `BP16_2` values `88`, `99`, or missing -> missing
+
+No clipping, interpolation, imputation, rescaling, or performance-driven mapping
+change is allowed before model preprocessing.
+
+The frozen model itself is unchanged:
+
+- exact G3 11 semantic features
+- `logistic_regression`
+- exact G4/G5/G6 model and preprocessing configuration
+- no refitting choice based on external performance
+
+The measurement difference is solely in the external source-to-feature
+harmonization for the two sleep-duration features.
+
+## 4. Required KNHANES 2023 columns
 
 Predictor sources:
 
-- `age_years` <- `age`
-- `sex_knhanes` <- `sex`
-- `bmi_from_height_weight` <- `HE_ht`, `HE_wt`
-- `cigarette_smoking_state` <- `BS1_1`, `BS3_1`
-- `alcohol_frequency` <- `BD1_11`
-- `alcohol_amount_category` <- `BD2_1`
-- `walking_days_7d` <- `BE3_31`
-- `walking_minutes_per_active_day` <- `BE3_32`, `BE3_33`
-- `strength_days_7d` <- `BE5_1`
-- `weekday_sleep_minutes` <- `BP16_11`, `BP16_12`, `BP16_13`, `BP16_14`
-- `weekend_sleep_minutes` <- `BP16_21`, `BP16_22`, `BP16_23`, `BP16_24`
+- `age`
+- `sex`
+- `HE_ht`, `HE_wt`
+- `BS1_1`, `BS3_1`
+- `BD1_11`, `BD2_1`
+- `BE3_31`, `BE3_32`, `BE3_33`
+- `BE5_1`
+- `BP16_1`, `BP16_2`
 
-Target:
+Target/cohort/survey:
 
-- `v2_hypertension_state` <- `HE_HP == 4`
+- `ID`
+- `HE_HP`
+- `HE_prg`
+- `wt_itvex`
+- `kstrata`
+- `psu`
 
-Cohort/survey:
-
-- adult age >= 19
-- explicit current pregnancy exclusion: `HE_prg == 1`
-- positive `wt_itvex`
-- present `kstrata`, `psu`
-
-Leakage fields that must remain excluded:
+Leakage guards:
 
 - `HE_sbp1`, `HE_dbp1`
 - `HE_sbp2`, `HE_dbp2`
 - `HE_sbp3`, `HE_dbp3`
 - `HE_sbp`, `HE_dbp`
-- `HE_HP`
 - `DI1_dg`, `DI1_ag`, `DI1_pr`, `DI1_pt`, `DI1_2`
 
-## Documentation findings to freeze before schema inspection
+## 5. Expected 2023/2024 sleep-instrument difference
 
-The KNHANES 9th-cycle documentation identifies 2023 as the second year of the
-same 2022–2024 cycle. The documented semantics relevant to Model V2-A are
-compatible with the frozen 2024 contract:
+The following 2024 source variables are **not required** in KNHANES 2023 and
+their absence is expected:
 
-- `wt_itvex` is the health interview/examination survey weight.
-- `kstrata` and `psu` are the complex-survey stratum and primary sampling unit.
-- `HE_HP` uses categories 1 normal, 2 elevated-attention, 3 pre-hypertension,
-  4 hypertension, with hypertension based on final SBP/DBP or antihypertensive
-  medication.
-- `HE_prg` is current pregnancy status.
-- `HE_sbp1/2/3`, `HE_dbp1/2/3`, `HE_sbp`, `HE_dbp` and
-  `DI1_dg/ag/pr/pt/2` remain target-adjacent leakage.
-- walking uses `BE3_31/32/33`.
-- strength uses `BE5_1`.
-- sleep clock-time fields use `BP16_11..14` and `BP16_21..24` with 88/99
-  missing codes.
-- alcohol frequency/amount retain `BD1_11` and `BD2_1`.
-- cigarette lifetime/current state retain `BS1_1` and `BS3_1`.
+- `BP16_11`, `BP16_12`, `BP16_13`, `BP16_14`
+- `BP16_21`, `BP16_22`, `BP16_23`, `BP16_24`
 
-No G7-A documentation finding currently requires a feature or target semantic
-change. The final G7-A decision is withheld until the actual KNHANES 2023 main
-database metadata confirms all required columns.
+Their absence must be recorded as an expected instrument difference, not as a
+missing-required-column failure.
 
-## Schema-only decision
+## 6. Evidence boundary
 
-The schema audit produces exactly one decision:
+Still allowed in G7-A:
+
+- official documentation
+- SAS metadata only
+- column names and labels
+- SHA-256
+
+Still prohibited:
+
+- participant-level values
+- target prevalence
+- model fitting
+- predictions
+- performance metrics
+- subgroup performance
+
+## 7. Revised G7-A decision
+
+Approve KNHANES 2023 only if:
+
+1. every revised required source/target/survey/leakage column is present;
+2. `BP16_1` and `BP16_2` are present;
+3. no other semantic incompatibility is identified;
+4. participant-level values/performance remain uninspected.
+
+Decision values remain:
 
 - `APPROVE_KNHANES_2023_FOR_G7`
 - `NEEDS_CONTRACT_MAPPING_REVISION`
+- `REJECT_KNHANES_2023_FOR_G7`
 
-`REJECT_KNHANES_2023_FOR_G7` is reserved for a documented fundamental semantic
-incompatibility, not a missing local file.
+An approval means “approved for the predeclared transportability evaluation with
+sleep-measurement shift.” It does not mean same-instrument equivalence.
 
-A schema approval authorizes preparation of a separate G7 participant-level
-evaluation contract. It does **not** authorize model fitting or external
-performance evaluation by itself.
-
-## Still locked
+## 8. Still locked
 
 - KNHANES 2024 final internal test: 804 rows / 27 PSU groups
 - V1 validation/test
