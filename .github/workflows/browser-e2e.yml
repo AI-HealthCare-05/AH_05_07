@@ -53,6 +53,12 @@ jobs:
       - name: Run browser evidence fixtures
         run: npm run test:e2e
 
+      - name: Verify companion runtime transport
+        run: node scripts/diagnose-companion-r2.mjs
+
+      - name: Run review-only companion runtime verification
+        run: npm run test:e2e:review
+
       - name: Check local submission capture script syntax
         run: |
           node --check ../tools/mvp1-capture.cjs

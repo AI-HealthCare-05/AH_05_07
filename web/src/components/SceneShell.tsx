@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
 import { primaryNavigation, type ScreenId } from "../ui/journey";
+import type { CompanionSelection } from "../ui/companion";
 
 type SceneShellProps = {
   activeScreen: ScreenId;
@@ -10,12 +11,22 @@ type SceneShellProps = {
   evidenceLabel?: string;
   onNavigate: (screen: ScreenId) => void;
   onSignOut?: () => void;
+  companionSelection: CompanionSelection | null;
 };
 
-export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut }: SceneShellProps) {
+export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, companionSelection }: SceneShellProps) {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
   return (
     <main className="app-shell" data-screen={activeScreen}>
-      <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} />
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")} aria-label="오늘의 기록으로 이동">
@@ -47,7 +58,14 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
         ))}
       </nav>
 
-      <div id="scene-content" className="scene-viewport" tabIndex={-1}>{children}</div>
+      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
+        <CompanionRuntimeBoundary
+          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
+          selection={companionSelection}
+          reducedMotion={reducedMotion}
+        />
+        {children}
+      </div>
     </main>
   );
 }

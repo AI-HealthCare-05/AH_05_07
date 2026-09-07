@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "published_and_verified",
   "delivery_version": "companion-r2-v1",
   "bucket": "sk7-assets-prod",
@@ -49,14 +49,39 @@
     "cache_control": "public, max-age=31536000, immutable",
     "sha256_match": true
   },
+  "runtime_delivery": {
+    "custom_domain": "https://sk7-companion.gkrry.com",
+    "bucket": "sk7-assets-prod",
+    "prefix": "companion/v1/",
+    "reason": "Dedicated static companion delivery hostname avoids zone-level Bot Fight Mode challenge on legitimate GitHub Actions/headless review traffic.",
+    "source_objects_unchanged": true,
+    "object_count": 22,
+    "verification": {
+      "result": "pass",
+      "objects_checked": 22,
+      "http_status": 200,
+      "content_type": "model/gltf-binary",
+      "bytes_match": true,
+      "sha256_match": true,
+      "cache_control": "public, max-age=31536000, immutable",
+      "redirects": "none",
+      "cf_mitigated_absent": true,
+      "node_fetch_origin": "http://127.0.0.1:4173",
+      "node_fetch_cors": "pass",
+      "chromium_fetch": "pass",
+      "verified_at": "2026-09-07"
+    }
+  },
   "cors_current_state": {
     "result": "read_only_recorded",
-    "allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev"],
+    "allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev", "http://127.0.0.1:4173"],
     "allowed_methods": ["GET", "HEAD"],
     "allowed_headers": [],
     "exposed_headers": ["ETag", "Content-Length", "Content-Type", "Cache-Control"],
     "max_age_seconds": 86400,
-    "wildcard_added": false
+    "wildcard_added": false,
+    "s3c_local_review_origin_added": true,
+    "s3c_previous_allowed_origins": ["https://ah-05-07-pages.ahnsangkyoon.workers.dev"]
   },
   "runtime_boundary": {
     "default_mode": "off",

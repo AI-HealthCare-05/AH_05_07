@@ -9,10 +9,26 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
 - S3A: 사람 사용 범위·동작 제한·권리 결정 완료.
 - S3B: `companion/v1/` 11종 `standard/lite` 22개 R2 게시 및 source↔remote/public
   byte/SHA/header 검증 완료. 상세 근거는 [companion-r2-v1.json](evidence/companion-r2-v1.json)이다.
-- S3C: 아직 시작하지 않음. 검증된 manifest를 review runtime에 연결하는
-  [successor Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)에서만
-  구현한다.
-- `CompanionRuntimeBoundary`와 production 기본값 `off`는 그대로 유지한다.
+- S3C: review runtime 구현 및 자동 검증 완료. [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248)의
+  명시적 query selection으로만 실제 GLB를 읽는다.
+- production activation: **NOT APPROVED**. `VITE_SK7_COMPANION_MODE` 기본값은
+  계속 `off`이며, 운영 화면·자동 species 배정·모델/위험/BP 연동은 하지 않는다.
+
+## S3B provenance와 S3C runtime delivery 분리
+
+- R2 bucket은 계속 `sk7-assets-prod`다.
+- S3B의 original delivery provenance는 `https://sk7-assets.gomdory.com`이며,
+  evidence의 기존 `public_url` 기록은 역사적 사실로 보존한다.
+- S3C review runtime delivery hostname은
+  `https://sk7-companion.gkrry.com`이다. 두 hostname은 동일한
+  `companion/v1/` object key를 가리킨다.
+- 22개 object의 key, bytes, SHA-256은 불변이며 GLB 재업로드·overwrite·delete는
+  수행하지 않았다.
+- 분리 이유는 old `gomdory.com` zone의 Free Bot Fight Mode가 GitHub Actions
+  Microsoft ASN 및 HeadlessChrome의 legitimate review traffic에 managed
+  challenge를 반환했기 때문이다. `gkrry.com` static delivery zone에서는 Bot
+  Fight Mode가 OFF다. 이는 `gkrry.com` 전체에 보안이 없다는 의미가 아니다.
+- runtime delivery 전환은 production activation 승인이 아니다.
 
 ## 중앙 계약
 
@@ -25,10 +41,11 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 ## 게이트와 자산 경계
 
 `VITE_SK7_COMPANION_MODE`가 정확히 `review`일 때만 명시적 로컬 검토 모드로
-해석한다. 누락·오타·다른 값은 모두 `off`다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
-현재 두 모드에서 시각 요소나 자산을 렌더링하지 않으며, GLB import/fetch와
-네트워크 요청을 하지 않는다. 따라서 production 기본값은 효과가 없는 `off`이고,
-검토 모드도 S3C successor Issue가 시작되기 전까지 자산 로더를 열지 않는다.
+해석한다. 누락·빈 문자열·오타·다른 값은 모두 `off`다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
+mode, 허용 화면, explicit species/variant/clip, animation policy를 모두 통과한
+뒤에만 `CompanionReviewRenderer`를 lazy import한다. [evidence manifest](evidence/companion-r2-v1.json)를
+읽는 generator가 만드는 [`companionAssets.generated.ts`](../web/src/ui/companionAssets.generated.ts) 외의
+URL/version/file name은 사용하지 않는다.
 
 화면 정책은 S02 오늘의 기록, S03 7일 챌린지 선택, S05 저장 완료, S10 7일
 돌아보기만 review 후보로 둔다. S04, S07, S08, S09, S11, S12, S13, S14는
@@ -48,24 +65,39 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 
 ## 접근성 및 실패 격리
 
-기존 화면은 companion 없이도 정보·폼·탐색을 제공한다. 경계는 장식용 요소를
-읽기 순서·키보드 포커스에 추가하지 않으며, 로드 실패를 본문·버튼·폼·탐색으로
-전파할 자산 로더가 없다. `CompanionRuntimeBoundary`는 호스트가 전달한
-`reducedMotion` boolean만 계약에 보관하며, 이를 혈압·위험·모델 사실로 추론하지
-않는다. 현재는 두 모드 모두 `null`을 반환하므로 포커스·정보 전달·실패 표면이
-생기지 않는다. 기존 CSS의 `prefers-reduced-motion: reduce` 정책을 그대로
-유지하고, 향후 시각 요소를 추가할 때도 이 경계를 선행 조건으로 삼는다.
+기존 화면은 companion 없이도 정보·폼·탐색을 제공한다. canvas와 bounded slot은
+`aria-hidden`, `pointer-events: none`이며 tab index·accessible name이 없다.
+renderer 오류는 error boundary와 loader failure path에서 장식만 제거하고 본문·버튼·
+폼·탐색에 전파하지 않는다. `prefers-reduced-motion: reduce`는 host가 읽은
+presentation boolean으로 전달하며, reduced motion에서는 animation mixer/지속 RAF를
+시작하지 않는다.
 
 ## 자산 및 운영 경계
 
-S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했지만 GLB Git 추가, 로컬 자산
-복사, 생성·모델링·재렌더, 제품 화면 적용, 운영 배포, 모델/ML 변경, test 접근은
-하지 않았다. 실제 GLB import/fetch와 review 화면 연결은 S3C successor Issue에서만
-수행하며, 기존 `visual/v1/` 자산을 대체하지 않는다.
+S3B에서 승인된 22개 GLB를 `companion/v1/`에 게시했고, S3C는 별도 runtime
+delivery hostname으로 그 object를 review-only로 읽기만 한다. GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
+일반 사용자 활성화, 모델/ML 변경, test 접근은 하지 않았다. Three.js `0.185.1`과
+`GLTFLoader`는 product entry에서 정적으로 import하지 않고 gate 뒤 lazy chunk에서만
+로드한다. 기존 `visual/v1/` 자산은 대체하지 않는다.
 
 ## 검증 범위
 
-`web/e2e/companion-runtime.spec.ts`는 계약 배열·fail-closed 파싱·화면/동작
-정책을 직접 검증하고, fixture 화면에서 GLB/companion 네트워크 요청이 없으며
-기존 S02 UI가 유지되는지 확인한다. 이는 정책과 경계의 합성 검증이며 실제 GLB
-재생 품질·권리·운영 성능·최종 디자인 승인을 검증하지 않는다.
+`web/e2e/companion-runtime.spec.ts`는 production/off에서 renderer chunk와 GLB 요청이
+없는지 검증한다. `npm run test:e2e:review`의 review suite는 22/22 GLB load, 각
+7 clip runtime name set, 허용/조건부/차단 policy, 제외 화면 network=0, reduced motion,
+404/abort 실패 격리, 1366/390/320 responsive 경계를 실제 브라우저에서 검증한다.
+
+S3C CORS 계약은 그대로 유지한다. 최종 origin은
+`https://ah-05-07-pages.ahnsangkyoon.workers.dev`와 `http://127.0.0.1:4173` 두 개이며,
+methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local port는 허용하지
+않는다. 새 runtime hostname 때문에 CORS를 변경하지 않았고 GLB object도 수정하지 않았다.
+
+## S3C 측정 결과
+
+- baseline `origin/main` main JS: 233,732 raw / 71,800 gzip bytes
+- after S3C main JS: 237,275 raw / 73,181 gzip bytes
+- lazy review renderer chunk: 627,706 raw / 161,318 gzip bytes
+- approved GLB bytes: lite 11종 합계 `6,063,464`, standard 11종 합계
+  `11,803,720`, 전체 `17,867,184` bytes (evidence 기준)
+- valid first companion render: lazy renderer chunk 1개 + GLB 1개, 추가 network 2회
+- production/off initial route: renderer chunk 0, companion GLB 0
