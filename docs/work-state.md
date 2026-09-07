@@ -76,18 +76,25 @@ project-service enablement이 있었으므로, runtime deployment changes와
 production data/schema changes는 `0`으로 기록하되 전체 project configuration
 changes가 `0`이라고 표현하지 않는다.
 
-## S4 API P95 pre-flight status
+## S4 API P95 verification status
 
-**API P95 = PREPARED / ACCEPTANCE CONTRACT DECISION REQUIRED**
+**Operator verification contract = APPROVED / EXECUTION PENDING**<br>
+**Client acceptance = DECISION REQUIRED / NOT CLAIMED**<br>
+**Production measurement = NOT YET RUN**
 
 [S4 API P95 pre-flight](api-p95-verification-preflight.md)는 현재 web-used API
 candidate, no-auth health, signed-in read/mutation, `model_not_ready`를
-inventory하고 Talos의 external API P95 `<= 3초` threshold와 미확정 acceptance
-fields를 분리한다. 기존 browser 3회 timing과 PR #235의 local 489 measurements는
-방법론 참고로만 보존하며 production P95 evidence로 승격하지 않는다. 이번 작업의
+inventory한 뒤 승인된 operator 계약과 client acceptance를 분리한다. 기존
+browser 3회 timing과 PR #235의 local 489 measurements는 방법론 참고로만
+보존하며 production P95 evidence로 승격하지 않는다. 승인된 계약은 production
+`bp7-api` revision `bp7-api-00014-jeq`의 `/live`, `/ready`, synthetic
+read-only `/api/v1/observations/window`에 대해 warm `n=100`, `c=1/c=4`,
+8초 timeout, Hyndman–Fan type 7, endpoint별 P95 `<=3초`를 요구한다. 이 PR의
 production load, repeated authenticated production requests, product writes,
-deployment, database/model/UI changes는 모두 `0`이다. Successor는
-[Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)이며,
+deployment, database/model/UI changes는 모두 `0`이다. 도구와 verifier는 각각
+`scripts/ops/measure_api_p95.py`와 `scripts/ci/verify_api_p95_evidence.py`이며,
+localhost self-test만 CI에서 실행한다. Successor는
+[Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)이고,
 Issue 자체는 부하 실행 승인이 아니다.
 
 ## 미결 결정

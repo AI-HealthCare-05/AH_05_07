@@ -1,12 +1,16 @@
 # S4 API P95 verification pre-flight
 
-**상태: PREPARED / ACCEPTANCE CONTRACT DECISION REQUIRED**
+**상태: OPERATOR VERIFICATION CONTRACT APPROVED / EXECUTION PENDING**
 
 이 문서는 Talos의 external API P95 기준을 실제로 측정하기 전, 측정 대상과
 판정 계약을 고정하기 위한 DOCS / READ-ONLY ANALYSIS ONLY 기록이다. 이 문서와
 successor Issue는 production load, 반복 authenticated production request,
 product data write, 배포, Supabase SQL/migration, model execution, UI 변경을
 승인하지 않는다.
+
+초기 저장소 분석의 `DECISION REQUIRED` 표기는 아래에 보존된 pre-approval
+상태다. 현재 operator contract는 별도 승인으로 고정되었지만, 이 PR은 실행을
+수행하지 않으며 client acceptance를 주장하지 않는다.
 
 ## 결론
 
@@ -203,14 +207,70 @@ approved non-production을 택하면 그 결과의 environment, revision, topolo
 data class를 명시하고 production equivalent 또는 production acceptance라고
 주장하지 않는다.
 
+## Approved operator verification contract
+
+The operator contract is now explicitly approved for a later, separately gated
+production run. It is not executed by this PR.
+
+- target: production `bp7-api`, expected revision `bp7-api-00014-jeq`
+- endpoints: `GET /live`, `GET /ready`, and the approved synthetic-account,
+  read-only `GET /api/v1/observations/window`
+- warm only; one excluded warm-up per endpoint/condition; closed-loop;
+  concurrency `1` and `4` as separate conditions
+- exactly `n=100` measured requests per endpoint/condition; no retry; timeout 8s
+- measurement spans request start through complete response-body read
+- P50/P95/max use Hyndman–Fan type 7; each endpoint/condition is judged
+  independently; P95 `<= 3000.0 ms` and zero unexpected/transport errors is PASS
+- cold start, export, mutation/write, auth churn, model execution, risk-signal,
+  R2/UI/DB/deployment changes, and client acceptance are out of scope
+
+The operator must perform a separate read-only target check before execution:
+service `bp7-api`, expected revision `bp7-api-00014-jeq`, traffic `100%`. The
+measurement tool does not call `gcloud`, change traffic, or change a revision.
+
+## Tooling added in this PR
+
+The bounded harness is [scripts/ops/measure_api_p95.py](../scripts/ops/measure_api_p95.py).
+It has an exact GET/path allowlist, requires `--execute` plus the literal
+operator confirmation for real execution, rejects non-HTTPS or malformed real
+targets, disables redirects and retries, and writes only sanitized aggregate
+evidence. `SK7_P95_BEARER_TOKEN` is read only from the environment and is sent
+only to `window`; the token, headers, cookies, bodies, identities, health/BP
+values, and raw timing rows are never retained or printed.
+
+The offline verifier is
+[scripts/ci/verify_api_p95_evidence.py](../scripts/ci/verify_api_p95_evidence.py).
+Both tools have localhost-only/no-network self-tests wired into the local
+reliability workflow. CI does not contact a production host.
+
+Later production command template (do not paste a token into chat, GitHub,
+Issues, PRs, or logs):
+
+```bash
+export SK7_P95_BEARER_TOKEN='<set locally; do not paste into chat>'
+export SK7_P95_START_ON='YYYY-MM-DD'
+export SK7_P95_END_ON='YYYY-MM-DD'
+
+python scripts/ops/measure_api_p95.py \
+  --execute \
+  --confirm-operator-verification 'I_UNDERSTAND_OPERATOR_VERIFICATION_NO_PRODUCTION_LOAD_TEST' \
+  --base-url '<production API base URL>' \
+  --expected-revision 'bp7-api-00014-jeq' \
+  --runner-label 'google-cloud-shell' \
+  --output '<local aggregate JSON path>'
+```
+
 ## This pre-flight result
 
 - production load performed: **0**
 - repeated authenticated production requests: **0**
 - product data writes: **0**
 - deploy / database / migration / model / UI changes: **0**
+- operator verification contract: **APPROVED / EXECUTION PENDING**
+- client acceptance: **DECISION REQUIRED / NOT CLAIMED**
+- production measurement: **NOT YET RUN**
 - external API P95 <= 3s: **UNVERIFIED**
-- state: **PREPARED / ACCEPTANCE CONTRACT DECISION REQUIRED**
+- production network requests performed by this PR: **0**
 - successor: [Issue #264 — perf: execute S4 API P95 verification](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)
 
 Issue #264는 위 결정이 기록된 뒤의 실행을 추적하는 successor Issue일 뿐이며,

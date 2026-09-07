@@ -108,20 +108,27 @@
 - Web은 재배포하지 않았다. O3는 API-only이며 product writes/model/R2/UI/
   Cloudflare changes는 모두 `0`이다.
 
-### S4 API P95 — **PREPARED / ACCEPTANCE CONTRACT DECISION REQUIRED**
+### S4 API P95 — **OPERATOR VERIFICATION APPROVED / EXECUTION PENDING**
 
 - [S4 API P95 pre-flight](api-p95-verification-preflight.md)에서 generated
   OpenAPI와 현재 web 호출을 대조해 no-auth health, signed-in read,
   signed-in mutation, `model_not_ready` 후보를 분류했다.
-- Talos의 external API P95 `<= 3초` threshold는 확인했지만 endpoint,
-  environment, request count, concurrency/arrival, percentile algorithm,
-  cold/warm, timeout, HTTP success/error classification, endpoint aggregation은
-  **OPERATOR/CLIENT DECISION REQUIRED**다.
+- Operator contract is **APPROVED / EXECUTION PENDING** for production
+  `bp7-api` revision `bp7-api-00014-jeq`: `GET /live`, `GET /ready`, and the
+  approved synthetic read-only `GET /api/v1/observations/window`; warm only,
+  one excluded warm-up per condition, closed-loop, `n=100` at separate `c=1`
+  and `c=4`, no retry, 8s timeout, Hyndman–Fan type 7, and endpoint-local
+  P95 `<=3000ms` with zero unexpected/transport errors.
+- Client acceptance is **DECISION REQUIRED / NOT CLAIMED**. Cold-start,
+  export, mutation/write, auth churn, model execution, risk-signal, and
+  R2/UI/DB/deployment changes remain excluded.
 - `observation-load-baseline.md`의 수동 browser n=3 timing과 PR #235의 local
   synthetic 489 measurements는 production P95로 사용하지 않는다. 기존 수치는
   재계산·재실행하지 않았다.
-- 이번 pre-flight의 production load, repeated authenticated production
-  requests, product writes, deployment, database/model/UI changes는 모두 `0`이다.
+- Production measurement is **NOT YET RUN**; this tooling PR performed zero
+  production network requests. The bounded harness is
+  `scripts/ops/measure_api_p95.py`, and its offline aggregate verifier is
+  `scripts/ci/verify_api_p95_evidence.py`.
 - Successor [Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)
   는 실행을 추적하지만 부하 실행 승인이 아니다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
   계속 OPEN이다.
