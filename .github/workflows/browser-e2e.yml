@@ -53,6 +53,9 @@ jobs:
       - name: Run browser evidence fixtures
         run: npm run test:e2e
 
+      - name: Diagnose companion R2 browser transport
+        run: node scripts/diagnose-companion-r2.mjs
+
       - name: Run review-only companion runtime verification
         run: npm run test:e2e:review
 
