@@ -68,7 +68,8 @@ concurrency 4, local cold 정의 등은 **방법론 참고**이지 Talos의 승�
 
 두 경로는 Supabase JWT를 사용하고 RLS-owned read를 수행한다. production에서
 반복 authenticated request를 실행하지 않았으며, 측정 시 synthetic/no-real-PHI
-경계와 별도 승인이 필요하다.
+경계와 별도 승인이 필요하다. 다만 production 권장 최소 acceptance-bearing
+세트에는 `window`만 포함한다. `export`는 아래 실행 계약에 따라 기본 제외한다.
 
 ### 3. Signed-in mutation endpoints
 
@@ -137,10 +138,15 @@ P95 대상에 넣을 근거가 없으므로 후보 endpoint로 확정하지 않�
    production P95로 표현하지 않는다. production을 선택하면 먼저 final
    revision/origin/approval을 대조한다.
 2. **Endpoint matrix**: endpoint × cold/warm × concurrency 조건별 결과를
-   분리한다. 최소 acceptance-bearing set은 `/live`, `/ready`(ready 상태),
-   current web-connected signed-in read 2개로 제안한다. mutation은 production에서
-   제외하고, 필요 시 approved non-production에서 별도 matrix로 실행한다.
-   `model_not_ready`는 expected `503` contract probe로만 별도 보고한다.
+   분리한다. production 권장 최소 acceptance-bearing set은 `/live`, `/ready`의
+   ready 상태, 그리고 별도 승인된 synthetic account의 read-only
+   `GET /api/v1/observations/window`다. `GET /api/v1/observations/export`는
+   production 반복 P95 load에서 기본 제외한다. client/operator가 Talos
+   acceptance에 export가 필요하다고 명시적으로 결정한 경우에만 approved
+   non-production synthetic fixture에서 별도 측정하며, 그 결과를 production
+   P95라고 주장하지 않는다. mutation은 production에서 제외하고, 필요 시
+   approved non-production에서 별도 matrix로 실행한다. `model_not_ready`는
+   expected `503` contract probe로만 별도 보고한다.
 3. **Request count**: warm P95는 endpoint·concurrency별 `n=100`을 권장한다.
    cold를 acceptance-bearing으로 요구하면 approved non-production에서 endpoint별
    독립 cold start `n=20` 이상을 별도 수집한다. cold `n=1`은 P95 evidence가
