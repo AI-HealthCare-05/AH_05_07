@@ -161,7 +161,8 @@ history entry was bookkeeping reconciliation, not a second schema migration.
 
 - O1 remains **COMPLETE / VERIFIED**; its product-flow evidence is not repeated
   here.
-- O2 remains pending natural expiration or an alternate-evidence decision.
+- At the time this O3 evidence was captured, O2 had not yet received its later
+  alternate-evidence decision; this line is historical and not the current O2 state.
 - API P95, submission/final sharing, scope acceptance, and input/model decisions
   remain separate [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)
   scope.

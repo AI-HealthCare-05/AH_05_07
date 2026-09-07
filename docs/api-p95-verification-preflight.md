@@ -1,6 +1,7 @@
-# S4 API P95 verification pre-flight
+# S4 API P95 verification pre-flight — historical snapshot
 
-**상태: OPERATOR VERIFICATION CONTRACT APPROVED / EXECUTION PENDING**
+**상태: HISTORICAL PRE-FLIGHT SNAPSHOT.** 최종 operator verification 결과는
+[work-state](work-state.md)와 [운영 검증 기록](mvp1-operations-review.md)에 둔다.
 
 이 문서는 Talos의 external API P95 기준을 실제로 측정하기 전, 측정 대상과
 판정 계약을 고정하기 위한 DOCS / READ-ONLY ANALYSIS ONLY 기록이다. 이 문서와
@@ -273,20 +274,20 @@ harness in this PR was reviewed.
 - investigation found that the thread-local worker connections were not
   transport-warmed by the single main-thread warm-up
 - no product writes, export, mutation, or model execution occurred
-- client acceptance was not claimed; rerun is pending corrected harness review
+- at that snapshot, client acceptance was not claimed and corrected harness review was pending
 
 No token, email, UUID, request body, or raw request log is retained here.
 
-## This pre-flight result
+## This pre-flight result — historical snapshot before operator execution
 
 - production load performed: **0**
 - repeated authenticated production requests: **0**
 - product data writes: **0**
 - deploy / database / migration / model / UI changes: **0**
-- operator verification contract: **APPROVED / EXECUTION PENDING**
+- operator verification contract at snapshot: **APPROVED / awaiting execution**
 - client acceptance: **DECISION REQUIRED / NOT CLAIMED**
-- production measurement: **NOT YET RUN**
-- external API P95 <= 3s: **UNVERIFIED**
+- production measurement at snapshot: **not performed**
+- external API P95 <= 3s at snapshot: **UNVERIFIED**
 - production network requests performed by this PR: **0**
 - successor: [Issue #264 — perf: execute S4 API P95 verification](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)
 

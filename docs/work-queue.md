@@ -58,11 +58,30 @@
   are recorded in [s3e-companion-production-rollout.md](s3e-companion-production-rollout.md).
   Issue #252 completion is pending only on this closeout PR merge.
 
-## S4 — 1회차 마감 — **ACTIVE**
+## S4 — 1회차 마감 — **CLOSEOUT-READY / DOCUMENTATION SYNC**
 
 - 범위: 운영 O1/O2/O3, API P95, 제출 시트·최종 검토, 발주 범위 수용, 입력/모델 결정을 정리한다.
-- 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 각 항목에 실행 근거 또는 책임 있는 수용/보류가 기록된다.
-- 선행 조건: S0–S3의 해당 결과, 운영 승인, 제출 검토, 발주사·분야·통계·제품 책임자의 필요한 결정.
+- 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 모든 completion condition에 실행 근거 또는 책임 있는 수용/보류가 기록되었다.
+- 현재 상태: **completion conditions satisfied; #238 closeout after this documentation sync**.
+  후속 기능으로 이동하지 않으며, UI/UX deferred findings는 아래에 보존한다.
+
+### S4 최종 결정 요약
+
+- **O1:** COMPLETE / VERIFIED.
+- **O2:** 1회차 alternate evidence accepted. 격리 `exact_time_retention_rls_test.sql`
+  17 assertions 등의 retention/RLS 계약 근거를 일정상 수용했으며 production natural
+  expiry는 수행하지 않았다.
+- **O3:** COMPLETE / VERIFIED.
+- **API P95:** EXECUTED / OPERATOR VERIFICATION NOT PASSED. `/live`와 `/ready`는
+  `c=1/c=4` PASS, `/window` `c=1` warm-up HTTP 503 제외 후 measured `n=0`이다.
+  zero-error acceptance를 충족하지 못해 전체 operator verification은 NOT PASSED이며,
+  `/window` P95는 계산되지 않았고 추가 rerun은 금지한다.
+- **제출:** COMPLETE / USER ACCEPTED. 공식 제출물 7종 / 실제 파일 8개.
+- **범위:** FOLLOW-UP SCOPE DECIDED. 혈압·7일 챌린지 기록 서비스와 공개 횡단면 데이터
+  연구 보고 범위이며, Talos 필수 요구 전체 충족이나 client의 축소 범위 승인을 주장하지 않는다.
+- **입력/모델:** 1회차 NO-GO / `model_not_ready`. final model 없음, release
+  preprocessing/calibration/threshold 미고정, held-out test UNOPENED / NOT AUTHORIZED,
+  승인 serialized artifact 없음.
 
 ### S4 O1 — **COMPLETE / VERIFIED**
 
@@ -108,26 +127,22 @@
 - Web은 재배포하지 않았다. O3는 API-only이며 product writes/model/R2/UI/
   Cloudflare changes는 모두 `0`이다.
 
-### S4 API P95 — **OPERATOR VERIFICATION APPROVED / EXECUTION PENDING**
+### S4 API P95 — **EXECUTED / OPERATOR VERIFICATION NOT PASSED**
 
 - [S4 API P95 pre-flight](api-p95-verification-preflight.md)에서 generated
   OpenAPI와 현재 web 호출을 대조해 no-auth health, signed-in read,
   signed-in mutation, `model_not_ready` 후보를 분류했다.
-- Operator contract is **APPROVED / EXECUTION PENDING** for production
-  `bp7-api` revision `bp7-api-00014-jeq`: `GET /live`, `GET /ready`, and the
-  approved synthetic read-only `GET /api/v1/observations/window`; warm only,
-  one excluded warm-up per condition, closed-loop, `n=100` at separate `c=1`
-  and `c=4`, no retry, 8s timeout, Hyndman–Fan type 7, and endpoint-local
-  P95 `<=3000ms` with zero unexpected/transport errors.
-- Client acceptance is **DECISION REQUIRED / NOT CLAIMED**. Cold-start,
-  export, mutation/write, auth churn, model execution, risk-signal, and
-  R2/UI/DB/deployment changes remain excluded.
+- Operator verification executed against the approved scope. `/live`와 `/ready`는
+  `c=1/c=4`에서 PASS했다. `/window`는 `c=1` warm-up HTTP 503을 제외했고 measured
+  `n=0`이므로 P95를 계산하지 않았다.
+- 따라서 `/window` P95가 3초 초과 또는 이하였다고 주장하지 않으며 P95 PASS도 주장하지
+  않는다. cold-start, export, mutation/write, auth churn, model execution,
+  risk-signal, and R2/UI/DB/deployment changes remain excluded.
 - `observation-load-baseline.md`의 수동 browser n=3 timing과 PR #235의 local
   synthetic 489 measurements는 production P95로 사용하지 않는다. 기존 수치는
   재계산·재실행하지 않았다.
-- Production measurement is **NOT YET RUN**; this tooling PR performed zero
-  production network requests. The bounded harness is
-  `scripts/ops/measure_api_p95.py`, and its offline aggregate verifier is
+- This final verification result does not authorize or require another run. The bounded
+  harness is `scripts/ops/measure_api_p95.py`, and its offline aggregate verifier is
   `scripts/ci/verify_api_p95_evidence.py`.
 - Successor [Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)
   는 실행을 추적하지만 부하 실행 승인이 아니다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
@@ -135,8 +150,8 @@
 
 ### S4 follow-up boundaries
 
-- O2 remains pending natural 30-day expiration or a responsible alternate-evidence
-  decision.
+- O2 natural 30-day expiration verification was not performed; the alternate-evidence
+  decision is complete for the first submission.
 - O3 is **COMPLETE / VERIFIED**. See the historical [O3 clean-release preflight](o3-clean-release-preflight.md),
   [sanitized execution evidence](evidence/o3-clean-release-execution.md), and
   [Issue #261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261).
@@ -144,9 +159,8 @@
   approved candidate had no web runtime delta from the recorded production web
   source. The additive index was applied once and migration history was aligned;
   the immediate Advisor `unused_index` INFO is retained as post-creation context.
-- Other #238 scope remains open: API P95 decision/evidence, submission sheet/final
-  sharing acceptance, future incidence/progression scope acceptance, and
-  input/model decisions.
+- The submission, scope, and input/model decisions are complete as decisions. They do not
+  mean client scope approval, model validation, held-out test execution, or model release.
 - The rolling recent-7-day path can resemble day-7 progress for a new account,
   and the export success notice persists across navigation. Both are deferred
   integrated UI/UX findings for the holistic UI/companion composition pass after
