@@ -24,3 +24,7 @@ jobs:
         run: python tools/local-reliability/test_controls.py
       - name: Check committed local aggregates (no HTTP or SQL execution)
         run: python tools/local-reliability/verify_report.py docs/evidence/local-reliability.json
+      - name: Check bounded API P95 tooling (localhost mock only)
+        run: python scripts/ops/measure_api_p95.py --self-test
+      - name: Check API P95 evidence verifier (no network)
+        run: python scripts/ci/verify_api_p95_evidence.py --self-test
