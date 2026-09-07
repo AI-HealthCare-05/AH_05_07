@@ -32,6 +32,8 @@
 - successor review gate: [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250)
   의 사람 시각 수용을 기록했다. production rollout은 [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서
   별도로 다룬다. #248은 S3C review runtime 구현·검증의 역사적 근거로 보존한다.
+  S3E Phase B production activation, rollback rehearsal, and final restore are
+  complete; the evidence is in [s3e-companion-production-rollout.md](s3e-companion-production-rollout.md).
 
 ## 현재 S3 상태
 
@@ -40,12 +42,14 @@
 | S3A | 완료 | Issue #242 사람 결정: S02/S03/S05/S10만 허용, S04/S07/S08/S09/S11/S12/S13/S14 제외, 일반 4 clip, 조건부 `celebrate`/`move`, `special` 보류, 물범 제외. |
 | S3B | 완료 | [companion-r2-v1.json](evidence/companion-r2-v1.json): 22개, 17,867,184 bytes, source↔remote/public 검증 PASS. |
 | S3C | review runtime implemented/verified | [Issue #248](https://github.com/AI-HealthCare-05/AH_05_07/issues/248): evidence-generated manifest, explicit selector, lazy Three.js `0.185.1`, 22/22 GLB, policy/network/responsive/failure tests. |
-| S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. production activation **NOT PERFORMED**. |
-| S3E | code implementation **PREPARED** | #252 범위의 exact `production` mode, 고정 S05 bear-lite profile, confirmed save 이후 one-shot `celebrate → idle`, production-off/review 회귀 및 production-on E2E를 준비했다. live production activation **NOT YET PERFORMED**; Phase B가 필요하다. |
+| S3D | visual acceptance **APPROVED** | [Issue #250](https://github.com/AI-HealthCare-05/AH_05_07/issues/250) 승인 댓글과 [결정 기록](s3d-companion-visual-acceptance.md): bear primary, lite candidate, S05 `save_success` only. Successor S3E production rollout is now complete. |
+| S3E | **COMPLETE** | Exact `production` mode, 고정 S05 bear-lite profile, confirmed save 이후 one-shot `celebrate → idle`, activation smoke, rollback rehearsal, and final restore are verified. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**. |
 
 ## 미결 결정
 
-- S3E approved rollout implementation: [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)의 code/test 단계는 준비했다. S3D 승인 범위만 구현했으며 production activation, smoke, rollback은 별도 Phase B gate로 남아 있다. #252를 완료로 기록하지 않는다.
+- S3E [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252):
+  **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**.
+  Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95: [운영 검증 준비](mvp1-operations-review.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - 제출 시트 대조, 공유·납품 수용, 사용자 최종 검토: [1회차 마감](mvp1-closeout.md).
 - 현재 횡단면 입력 기반 위험군 선별 신호와 발병 가능성·변화 추이 요구의 범위 수용: [미발송 질의](mvp1-closeout.md#발주사-확인용-질의-초안--미발송).
@@ -59,8 +63,8 @@
 | S0 | 병합 기록 정리와 짧은 인계 | 이 문서, [작업 대기열](work-queue.md), 로컬 `HANDOFF-LITE.md`, 문서 검사와 PR. |
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
-| S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved. #248의 review-only 범위에서만 실제 GLB를 읽었고, production activation은 수행하지 않았다. successor S3E는 [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252)에서 별도 구현·검증한다. |
-| S4 | 1회차 마감 | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. |
+| S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved, and S3E production rollout complete. #248의 review-only 범위와 S3E의 production evidence를 각각 보존한다. |
+| S4 | 1회차 마감 — **ACTIVE** | #238의 운영·제출·범위·입력/모델 결정과 최종 검토를 충족하거나 명시적 수용/보류를 기록. Issue #252 completion is pending only on this closeout PR merge. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·
 숨김/미인식 파일, 시각 품질·사람 디자인 승인, 독립 backup과 과거 외부 업로드는
