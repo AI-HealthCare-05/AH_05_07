@@ -63,6 +63,11 @@ def verify(evidence: dict[str, Any]) -> None:  # noqa: C901
         or method.get("arrival") != "closed-loop"
         or method.get("retry") is not False
         or method.get("redirects") is not False
+        or method.get("connections") != "one preconnected reusable HTTP connection per worker thread"
+        or method.get("executor")
+        != "one executor per condition; reused for transport prewarm, HTTP warm-up, and measured samples"
+        or method.get("transport_prewarm") is not True
+        or method.get("transport_prewarm_measured") is not False
         or method.get("raw_samples_retained") is not False
         or method.get("request_bodies_retained") is not False
         or method.get("response_bodies_retained") is not False
@@ -136,7 +141,10 @@ def _self_test() -> None:
             "redirects": False,
             "timer": "perf_counter_ns; request start through full response body read",
             "arrival": "closed-loop",
-            "connections": "one reusable HTTP connection per worker thread; at most c in-flight",
+            "connections": "one preconnected reusable HTTP connection per worker thread",
+            "executor": "one executor per condition; reused for transport prewarm, HTTP warm-up, and measured samples",
+            "transport_prewarm": True,
+            "transport_prewarm_measured": False,
             "raw_samples_retained": False,
             "request_bodies_retained": False,
             "response_bodies_retained": False,
@@ -157,6 +165,7 @@ def _self_test() -> None:
         lambda value: value["results"][0].update({"p95_ms": 3000.1}),
         lambda value: value["results"][0].update({"token": "must-not-appear"}),
         lambda value: value.update({"scope": "client_acceptance"}),
+        lambda value: value["method"].update({"transport_prewarm": False}),
         lambda value: value["method"].update({"request_bodies_retained": True}),
         lambda value: value["method"].update({"response_bodies_retained": True}),
     ):

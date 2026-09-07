@@ -260,6 +260,23 @@ python scripts/ops/measure_api_p95.py \
   --output '<local aggregate JSON path>'
 ```
 
+## First production attempt (sanitized diagnostic record)
+
+The first production attempt is **INVALID / TOOLING DIAGNOSTIC** and is not an
+operator P95 PASS or FAIL. It occurred before the corrected warm-connection
+harness in this PR was reviewed.
+
+- live `c=1` completed: `n=100`, P95 `46.297ms`, errors `0`
+- live `c=4` stopped after `n=4`
+- ready/window were not run
+- Cloud Run `/live` server-side latencies were observed around `2–4ms`
+- investigation found that the thread-local worker connections were not
+  transport-warmed by the single main-thread warm-up
+- no product writes, export, mutation, or model execution occurred
+- client acceptance was not claimed; rerun is pending corrected harness review
+
+No token, email, UUID, request body, or raw request log is retained here.
+
 ## This pre-flight result
 
 - production load performed: **0**

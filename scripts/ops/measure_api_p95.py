@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode, urlsplit
 
-TOOL_VERSION = "api-p95-measurement-v1"
+TOOL_VERSION = "api-p95-measurement-v2"
 EXPECTED_REVISION = "bp7-api-00014-jeq"
 EXPECTED_ENVIRONMENT = "production"
 EXPECTED_SERVICE = "bp7-api"
@@ -151,6 +151,19 @@ class RequestClient:
             self.local.connection = connection
         return connection
 
+    def preconnect(self) -> None:
+        """Establish this worker's transport without issuing an HTTP request."""
+
+        connection = self._connection()
+        try:
+            connection.connect()
+        except Exception:
+            try:
+                connection.close()
+            finally:
+                self.local.connection = None
+            raise
+
     def get(self, target: str, token: str | None) -> tuple[int, float, str | None]:
         headers = {"Accept": "application/json", "Connection": "keep-alive"}
         if token is not None:
@@ -209,6 +222,8 @@ def measure_condition(
     call: Callable[[], tuple[int, float, str | None]],
     expected_status: int,
     concurrency: int,
+    *,
+    executor: ThreadPoolExecutor | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Collect at most n samples, stopping launches after the first failure."""
 
@@ -216,7 +231,9 @@ def measure_condition(
     futures: set[Future[tuple[int, float, str | None]]] = set()
     next_sample = 0
     stop = False
-    with ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="p95") as pool:
+    owns_executor = executor is None
+    pool = executor or ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="p95")
+    try:
         while next_sample < SAMPLES_PER_CONDITION and len(futures) < concurrency:
             futures.add(pool.submit(call))
             next_sample += 1
@@ -232,8 +249,52 @@ def measure_condition(
             while next_sample < SAMPLES_PER_CONDITION and len(futures) < concurrency:
                 futures.add(pool.submit(call))
                 next_sample += 1
+    finally:
+        if owns_executor:
+            pool.shutdown(wait=True)
     result = summarize(samples, expected_status, concurrency)
     return result, not stop and len(samples) == SAMPLES_PER_CONDITION
+
+
+def _preconnect_worker(client: RequestClient, barrier: threading.Barrier) -> bool:
+    try:
+        client.preconnect()
+    except Exception:
+        barrier.abort()
+        return False
+    try:
+        barrier.wait()
+    except threading.BrokenBarrierError:
+        return False
+    return True
+
+
+def preconnect_workers(client: RequestClient, executor: ThreadPoolExecutor, concurrency: int) -> bool:
+    """Preconnect exactly one transport on each of c executor workers."""
+
+    barrier = threading.Barrier(concurrency)
+    futures = [executor.submit(_preconnect_worker, client, barrier) for _ in range(concurrency)]
+    return all(future.result() for future in futures)
+
+
+def _failed_condition_result(
+    endpoint: str,
+    concurrency: int,
+    expected_status: int,
+    *,
+    status_counts: dict[str, int],
+    transport_error_count: int,
+) -> dict[str, Any]:
+    return {
+        "endpoint": endpoint,
+        "concurrency": concurrency,
+        "n": 0,
+        "expected_status": expected_status,
+        "status_counts": status_counts,
+        "error_count": 1,
+        "transport_error_count": transport_error_count,
+        "pass": False,
+    }
 
 
 def measure_endpoint_condition(
@@ -244,24 +305,34 @@ def measure_endpoint_condition(
     expected_status: int,
     concurrency: int,
 ) -> tuple[dict[str, Any], bool]:
-    warmup_status, _, _ = client.get(target, token)
-    if warmup_status != expected_status:
-        return (
-            {
-                "endpoint": endpoint,
-                "concurrency": concurrency,
-                "n": 0,
-                "expected_status": expected_status,
-                "status_counts": {str(warmup_status): 1},
-                "error_count": 1,
-                "transport_error_count": int(warmup_status == 0),
-                "pass": False,
-            },
-            False,
+    with ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="p95") as executor:
+        if not preconnect_workers(client, executor, concurrency):
+            return _failed_condition_result(
+                endpoint,
+                concurrency,
+                expected_status,
+                status_counts={},
+                transport_error_count=1,
+            ), False
+
+        warmup_status, warmup_elapsed_ms, warmup_error = executor.submit(client.get, target, token).result()
+        warmup_status, warmup_elapsed_ms, warmup_error = classify_sample(
+            (warmup_status, warmup_elapsed_ms, warmup_error)
         )
-    result, condition_ok = measure_condition(lambda: client.get(target, token), expected_status, concurrency)
-    result["endpoint"] = endpoint
-    return result, condition_ok
+        if warmup_status != expected_status or warmup_error is not None:
+            return _failed_condition_result(
+                endpoint,
+                concurrency,
+                expected_status,
+                status_counts={str(warmup_status): 1},
+                transport_error_count=int(warmup_status == 0),
+            ), False
+
+        result, condition_ok = measure_condition(
+            lambda: client.get(target, token), expected_status, concurrency, executor=executor
+        )
+        result["endpoint"] = endpoint
+        return result, condition_ok
 
 
 def make_aggregate(
@@ -287,7 +358,10 @@ def make_aggregate(
             "redirects": False,
             "timer": "perf_counter_ns; request start through full response body read",
             "arrival": "closed-loop",
-            "connections": "one reusable HTTP connection per worker thread; at most c in-flight",
+            "connections": "one preconnected reusable HTTP connection per worker thread",
+            "executor": "one executor per condition; reused for transport prewarm, HTTP warm-up, and measured samples",
+            "transport_prewarm": True,
+            "transport_prewarm_measured": False,
             "raw_samples_retained": False,
             "request_bodies_retained": False,
             "response_bodies_retained": False,
@@ -372,6 +446,7 @@ def execute(args: argparse.Namespace) -> int:  # noqa: C901
 class _MockHandler(BaseHTTPRequestHandler):
     """Local-only test server that records headers, not bodies."""
 
+    protocol_version = "HTTP/1.1"
     requests: list[tuple[str, str, dict[str, str]]] = []
     in_flight = 0
     max_in_flight = 0
@@ -389,6 +464,7 @@ class _MockHandler(BaseHTTPRequestHandler):
             if type(self).mode == "redirect":
                 self.send_response(HTTPStatus.FOUND)
                 self.send_header("Location", "/live")
+                self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
             if type(self).mode == "429" and self.path == "/live":
@@ -427,6 +503,45 @@ class _MockServer:
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
+
+
+class _FakeTransportClient:
+    """Deterministic transport double for orchestration-only self-tests."""
+
+    def __init__(
+        self,
+        *,
+        preconnect_failure: bool = False,
+        warmup_failure: bool = False,
+        warmup_elapsed_ms: float = 1.0,
+        measured_elapsed_ms: float = 1.0,
+    ):
+        self.preconnect_failure = preconnect_failure
+        self.warmup_failure = warmup_failure
+        self.warmup_elapsed_ms = warmup_elapsed_ms
+        self.measured_elapsed_ms = measured_elapsed_ms
+        self.lock = threading.Lock()
+        self.preconnected_threads: set[int] = set()
+        self.measured_threads: set[int] = set()
+        self.get_calls = 0
+
+    def preconnect(self) -> None:
+        if self.preconnect_failure:
+            raise OSError("synthetic transport failure")
+        time.sleep(0.005)
+        with self.lock:
+            self.preconnected_threads.add(threading.get_ident())
+
+    def get(self, _target: str, _token: str | None) -> tuple[int, float, str | None]:
+        with self.lock:
+            self.get_calls += 1
+            call_number = self.get_calls
+            self.measured_threads.add(threading.get_ident())
+            assert threading.get_ident() in self.preconnected_threads
+        if self.warmup_failure and call_number == 1:
+            return 503, self.warmup_elapsed_ms, None
+        elapsed_ms = self.warmup_elapsed_ms if call_number == 1 else self.measured_elapsed_ms
+        return 200, elapsed_ms, None
 
 
 def _self_test() -> None:  # noqa: C901
@@ -524,6 +639,23 @@ def _self_test() -> None:  # noqa: C901
         assert not ok and not result["pass"]
         timeout_result, timeout_ok = measure_condition(lambda: (0, TIMEOUT_SECONDS * 1000, "TimeoutError"), 200, 1)
         assert not timeout_ok and timeout_result["transport_error_count"] == 1
+
+    for concurrency in (1, 4):
+        fake = _FakeTransportClient(warmup_elapsed_ms=250.0, measured_elapsed_ms=1.0)
+        result, ok = measure_endpoint_condition(fake, "live", "/live", None, 200, concurrency)
+        assert ok and result["n"] == SAMPLES_PER_CONDITION
+        assert result["p95_ms"] == result["max_ms"] == 1.0
+        assert len(fake.preconnected_threads) == concurrency
+        assert fake.measured_threads <= fake.preconnected_threads
+        assert fake.get_calls == WARMUP_COUNT + SAMPLES_PER_CONDITION
+    fake = _FakeTransportClient(preconnect_failure=True)
+    result, ok = measure_endpoint_condition(fake, "live", "/live", None, 200, 4)
+    assert not ok and result["n"] == 0 and result["transport_error_count"] == 1
+    assert fake.get_calls == 0
+    fake = _FakeTransportClient(warmup_failure=True)
+    result, ok = measure_endpoint_condition(fake, "live", "/live", None, 200, 4)
+    assert not ok and result["n"] == 0 and result["status_counts"] == {"503": 1}
+    assert fake.get_calls == WARMUP_COUNT
     aggregate_text = json.dumps(
         make_aggregate(runner_label="self-test", results=[], status="failed", started="a", ended="b")
     )
