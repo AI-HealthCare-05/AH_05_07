@@ -1,16 +1,41 @@
 # SK7 1회차 마감 기준
 
-**상태: 진행 중.** 통합 관리 Issue [#225](https://github.com/AI-HealthCare-05/AH_05_07/issues/225).
-기준 main은 PR #224 병합 `255c904414943e21ee0a8596690e2a1adebb3ebc`이다.
-제출 검토본 제작 기준은 PR #226 병합 `d3d1a1a2903c558778eef7be0f249057e40ee769`이며
+**상태: S4 closeout-ready / documentation sync.** 최종 종결 추적 Issue는
+[#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)이다. #225는 1회차
+제출 준비의 역사적 추적 Issue로 보존한다.
+역사적 기준 main은 PR #224 병합 `255c904414943e21ee0a8596690e2a1adebb3ebc`이며,
+역사적 제출 검토본 제작 기준은 PR #226 병합
+`d3d1a1a2903c558778eef7be0f249057e40ee769`이고
 [PPTX/PDF/MP4 실제 파일의 검사 기록](mvp1-submission-package.md)을 연결한다.
 이 문서는 요구사항을 축소 승인하거나 연구 결과를 운영 기능으로 승격하지 않는다.
-사용자는 로컬 질문 검토 화면의 **작동·항목 표시**만 확인했다. 한국어 자연화는
-후속 개선이며, 질문 의미·adapter·지원 대상·모델 출시 승인은 여전히 대기다.
+2026-09-07 현재 O1/O3는 COMPLETE / VERIFIED, O2는 1회차 alternate evidence
+accepted이며 production 30일 자연 만료 검증은 수행하지 않았다. API P95 operator
+verification은 EXECUTED / NOT PASSED이고 `/window` measured n=0으로 P95를 주장하지
+않는다. 공식 제출 준비는 COMPLETE / USER ACCEPTED이며, 발주 범위는 FOLLOW-UP SCOPE
+DECIDED, 모델은 NO-GO / `model_not_ready`다.
 후속 [고도화 실행](upgrade-execution.md)의 사용성·격리 로컬 신뢰성·모델 적용 설계와
-로컬 자산 보존 변경은 main에 병합되었으나, 운영 기능·운영 검증·모델 승인으로
-표현하지 않는다. 제출 검토본 9개 파일은 기존 manifest의 크기·해시와 일치함을
-다시 확인했다. 캐릭터 제작과 개발용 뷰어는 별도 로컬 자산 작업이다.
+로컬 자산 보존 변경은 운영 기능·운영 검증·모델 승인으로 표현하지 않는다.
+캐릭터 제작과 개발용 뷰어는 별도 로컬 자산 작업이다.
+
+## 2026-09-07 최종 S4 상태
+
+- **O1:** COMPLETE / VERIFIED.
+- **O2:** 1회차 alternate evidence accepted. `exact_time_retention_rls_test.sql`
+  등의 격리 retention/RLS 계약 근거를 일정상 대체 근거로 수용했으며, production
+  natural expiry는 수행하지 않았고 PASS라고 주장하지 않는다.
+- **O3:** COMPLETE / VERIFIED.
+- **API P95:** operator verification EXECUTED / NOT PASSED. `/live`와 `/ready`는
+  `c=1/c=4`에서 PASS, `/window`는 `c=1` warm-up HTTP 503이 제외되어 measured
+  `n=0`이다. zero-error acceptance를 충족하지 못해 전체 operator verification은
+  NOT PASSED다. `/window` P95는 계산되지 않았으므로 3초 초과·이하 또는 P95 PASS를
+  주장하지 않으며 추가 rerun도 하지 않는다.
+- **제출:** 공식 제출물 7종 / 실제 파일 8개, 사용자 최종 검토·수용 COMPLETE.
+- **범위:** 1회차 혈압·7일 챌린지 기록 서비스와 공개 횡단면 데이터 연구 보고 범위를
+  FOLLOW-UP SCOPE DECIDED로 기록한다. Talos 필수 요구 전체 충족이나 client의 축소
+  범위 승인을 주장하지 않는다.
+- **모델:** 1회차 NO-GO. final model 없음, release preprocessing/calibration/threshold
+  미고정, held-out test UNOPENED / NOT AUTHORIZED, 승인 serialized artifact 없음,
+  `POST /api/v1/risk-signal`은 `503 model_not_ready`를 유지한다.
 
 ## 판단 기준과 근거의 버전
 
@@ -43,10 +68,11 @@
 | --- | --- | --- | --- |
 | 공개 데이터 기반 만성질환 발병 가능성 모델 | FR-01/02, NFR-02/03, AC-02/03 | NHANES 횡단면 BP 임계값 라벨의 LR/HGB 연구 비교·탐색적 조건부 구간. [모델 카드](model-card.md). 제품은 503 model_not_ready | **외부 판단 필요 + 구현 필요**. 발병 예측 수용 범위/대상 질환/예측 기간부터 확인. 현재 라벨로 미래 발병을 설명할 수 없음. 원 요구 유지 시 종단 outcome·발병 시점·추적 기간/검열·baseline 비발병 정의, 추가 개발/검증 필요 |
 | 활동/건강 입력 시각화 및 모델 기반 발병 가능성 변화 추이·변화율 | FR-03/05/07, AC-04/07 | 현재/이전7일 기록·상세·혈압과 이행의 분리. [UI](../web/src/App.tsx), [정상 캡처](evidence/mvp1/normal-1366.png). 모델 확률 시계열은 없음 | **구현 필요 + 외부 판단 필요**. 기록 목록/회고는 예측 추이/변화율 차트가 아님. 수용된 출력 정의·시간 기준·반복 측정 자료와 모델 검증이 선행; 그 후 차트/결측/오류 및 비인과 표현을 검증 |
-| 생활습관 챌린지 | FR-04, AC-06 | 활성1개, 7일, 첫 체크인 후 action 잠금, 상태 수정·확인 삭제. [계약](observation-challenge-contract.md), 기존 합성 E2E·DB 검사 | **구현 완료 / 운영 검증 필요**. 최신 web/API/migration 버전에서 해당 owner 흐름과 정리 증거 확보. 질환 개선 효과를 입증한 것으로 설명하지 않음 |
+| 생활습관 챌린지 | FR-04, AC-06 | 활성1개, 7일, 첫 체크인 후 action 잠금, 상태 수정·확인 삭제. [계약](observation-challenge-contract.md), O1 evidence | **O1 COMPLETE / VERIFIED**. 질환 개선 효과를 입증한 것으로 설명하지 않음 |
 
 기록 서비스와 연구 보고의 제출은 원 필수 요구 전체 충족을 뜻하지 않는다.
-사용자가 축소 납품 범위를 이미 승인했다는 기록은 없다. 당뇨 예측 기능도 없다.
+FOLLOW-UP SCOPE가 결정되었지만 client가 축소 납품 범위를 승인했다고 주장하지 않는다.
+당뇨 예측 기능도 없다.
 LLM 추천·식단 이미지 분류·알림은 Talos **선택** 항목이며 이번 마감에 추가하지 않는다.
 
 ### 발주사 확인용 질의 초안 — 미발송
@@ -77,16 +103,16 @@ LLM 추천·식단 이미지 분류·알림은 Talos **선택** 항목이며 이
 | FR-04 | AC-06, migrations·E2E | 구현·합성 **완료**, **검증 필요** | O1의 활성1개·잠금·상태 수정/삭제·정리 |
 | FR-05 | AC-07, [UX](ux-flow.md), 현재/이전/상세 E2E | 기록 lane **완료**, 모델/추이 **구현 + 외부 판단 필요** | 기록 변화와 모델 변화의 정의·발주 범위 수용, 승인 모델이 선행. 실제 없는 그래프/예측을 시연하지 않음 |
 | FR-06 | [피드백 원칙](architecture.md), Talos 3-4 | **구현 + 외부 판단 필요** | 구조화 feedback 저장·검토·모델 개선 반영의 절차/담당/보존·동의 결정 후 구현. 온라인 라벨로 즉시 재사용 금지 |
-| FR-07 | AC-05/06, RLS·export·E2E | 현재 owner CRUD **완료**, 만료 운영 **검증 필요** | O2에서 만료 직전/이후 CRUD/export 비노출, 정리. 이전 창/legacy는 계약대로 읽기 전용 |
+| FR-07 | AC-05/06, RLS·export·E2E | 현재 owner CRUD **완료**, O2 alternate evidence **accepted** | production natural expiry는 수행하지 않음. local retention/RLS 계약 근거를 대체 근거로 수용했고 이전 창/legacy는 계약대로 읽기 전용 |
 | FR-08 | AC-08, signed-in harness | 합성 복구 **완료**, **검증 필요** | O1의 실환경 확인; 성공·빈 상태·실패·stale·미확정 저장을 혼동하지 않음 |
 | FR-09 | ADR-0001/0002, Talos 3-2 | **외부 판단 필요**, 조건부 **구현 필요** | 측정된 모델 지연/기간/신뢰성 요구와 ADR 없으면 worker 미도입. 평가 항목 미충족을 숨기지 않음 |
-| NFR-01 | [부하 baseline](observation-load-baseline.md), [고도화 PR #235](https://github.com/AI-HealthCare-05/AH_05_07/pull/235), Talos 5-1 | 격리 로컬 측정 **완료**, 운영·수용 **검증/판단 필요** | 실제 loopback API 경로 489회 응답의 endpoint·cold/warm·동시성·표본·오류·분위수와 호스트 부하 중첩을 보고. 운영 P95나 발주 조건 충족으로 대체하지 않음. 3초의 적용 부하·환경은 외부 확인 필요 |
+| NFR-01 | [API P95 preflight](api-p95-verification-preflight.md), Talos 5-1 | operator verification **EXECUTED / NOT PASSED** | `/live`·`/ready`는 PASS, `/window` measured `n=0`으로 P95 미계산. 3초 초과·이하 및 P95 PASS를 주장하지 않으며 추가 rerun 금지 |
 | NFR-02 | AC-02, 모델 metadata scaffold | **구현 + 검증 필요** | 승인된 입력/불변 artifact/모델 버전으로 반복 입력 API 일관성. 연구 재현성으로 대체 불가 |
 | NFR-03 | Gate/비교/불확실성 공개 JSON | 데이터 분리·두 모델/복수 지표 연구 증거 **완료** | 품질 충분성·한국 일반화·calibration·고연령 검증은 모델 게이트에서 계속 미완료 |
-| NFR-04 | AC-05, #149, pgTAP | 소유권 구현/정상 운영 **완료**, 만료 운영 **검증 필요** | O2. local pgTAP가 실제 배포 정책을 검사한 것은 아님 |
+| NFR-04 | AC-05, #149, pgTAP | 소유권 구현/정상 운영 **완료**, O2 alternate evidence **accepted** | production natural expiry는 수행하지 않음. local pgTAP가 실제 production 자연 만료를 검사한 것은 아님 |
 | NFR-05 | AC-09, secret verifier·합성 fixture | 코드 경계·기존 제한 로그 검토 **완료** | 제출 파일에 식별자/토큰/실제 건강값 없음 확인. 변경된 logging 경로는 별도 운영 재검토 |
-| NFR-06 | AC-10, deployment SSOT | 구성·과거 rollback **완료**, **검증 필요** | O3의 clean release/revision·smoke·rollback/restore 증거. local build만으로 완료 불가 |
-| NFR-07 | health tests, smoke | 구현·로컬 **완료**, release **검증 필요** | O3에서 실제 revision의 /live·/ready·CORS. readiness는 DB 연결 검사가 아님 |
+| NFR-06 | AC-10, deployment SSOT | O3 **COMPLETE / VERIFIED** | clean release/revision·smoke·rollback/restore evidence를 보존. local build만으로 완료 처리하지 않음 |
+| NFR-07 | health tests, smoke | O3 **COMPLETE / VERIFIED** | 실제 revision의 /live·/ready·CORS evidence를 보존. readiness는 DB 연결 검사가 아님 |
 | NFR-08 | 시각 QA·합성 캡처 | 반응형·키보드 일부 **완료**, **검증 필요** | 최신 운영 UI, 전체 핵심 상태 대비/200% zoom/키보드/실기기 검토. screenshot 존재만으로 전체 접근성 통과 아님 |
 | NFR-09 | 조건부 비동기 ADR | **외부 판단 필요** | Talos 평가의 모델 비동기 개선 증거는 없음. 측정/ADR로 도입 필요성을 먼저 판단 |
 
@@ -121,11 +147,10 @@ Talos 공통 평가 원문과 내부 우선순위가 다른 항목도 제외했�
 | 09 | source/bundle verifier, #166 제한 로그 검토 | 새 logging 변경 없음. 제출본 보안/공유 권한 최종 검토 |
 | 10 | 과거 rollback/restore, 이번 로컬 build/smoke | O3 clean 환경의 실제 release/revision/rollback·정리. 환경 재현과 bit-identical image는 구분 |
 
-## 제출물 7종
+## 제출물 7종 — 역사적 계획 snapshot
 
-원본 목록은 [개인 프로젝트 제출 현황](https://app.notion.com/p/3cff58c8594681229cf4e510c74045b6)을
-2026-09-06 확인했다. 외부 시트/Canva의 상세 셀·권한·최종 export는 이번에 검사하지
-않았으므로 링크가 있다는 이유로 제출 완료 처리하지 않는다.
+원본 목록과 아래 표는 2026-09-06 당시의 계획·검토 상태를 보존한다. 현재 공식 제출
+상태는 위의 2026-09-07 섹션을 따른다.
 
 | 제출물 | 원본 위치 / 이번 준비물 | 현재 상태 / 남은 작업 |
 | --- | --- | --- |
@@ -134,12 +159,22 @@ Talos 공통 평가 원문과 내부 우선순위가 다른 항목도 제외했�
 | 3 API 명세서 | [제출 시트](https://docs.google.com/spreadsheets/d/1LBiCp6sfI1OOphBTpOHxgYh84zNJ2usK3_5n8PMNVNc/edit), [API SSOT](api-contract.md), `/api/openapi.json` | 작성본 링크 확인. 현재 generated OpenAPI의 method/path/status와 대조, legacy/product 구분·503 상태 표시·최종 export 필요 |
 | 4 ERD·아키텍처 | [원본](architecture.md), [아키텍처 SVG](diagrams/mvp1-architecture.svg), [ERD SVG](diagrams/mvp1-erd.svg) | 실제와 목표를 분리한 제출용 도면 준비. 운영 inventory/revision 대조와 최종 제출 형식 선택 필요 |
 | 5 UI·와이어프레임 | [Canva](https://www.canva.com/folder/FAHUPpTo5FI), [14화면 기준](https://app.notion.com/p/3d1f58c859468143a071d4991c2f85fe), [인계](https://app.notion.com/p/3d1f58c8594681449053d238bc8ce2c1), [캡처 목록](mvp1-validation.md) | 현재 CSS-first UI의 정상/빈/오류/준비 중 합성8장 확보. 디자인 목표와 runtime 차이 설명·공유 권한·최종 선별 필요 |
-| 6 시연 영상 | [실제 파일·검사](mvp1-submission-package.md), [대본](mvp1-demo.md) | **4분21.28초 무음 자막 MP4 제출 검토본 준비**. 실제 로컬 합성 브라우저 녹화·정상 재생 확인. 사용자 최종 검토·공유 대상/권한·납품 수용 필요 |
-| 7 발표 자료 | [실제 파일·검사](mvp1-submission-package.md), [7장 원고](mvp1-demo.md#발표-내용-초안) | **편집 가능한7장 PPTX·대응 PDF 제출 검토본 준비**. 렌더·집계 표·출처 검사. 발표 리허설·사용자 최종 검토·납품 수용 필요 |
+| 6 시연 영상 | [실제 파일·검사](mvp1-submission-package.md), [대본](mvp1-demo.md) | 당시 **4분21.28초 무음 자막 MP4 제출 검토본 준비**. 아래 현재 공식 제출 상태와 구분한다 |
+| 7 발표 자료 | [실제 파일·검사](mvp1-submission-package.md), [7장 원고](mvp1-demo.md#발표-내용-초안) | 당시 **편집 가능한7장 PPTX·대응 PDF 제출 검토본 준비**. 아래 현재 공식 제출 상태와 구분한다 |
 
-## 1회차 종료 검토 조건과 후속 개선
+## 2026-09-07 공식 제출 준비 상태
 
-종료 **공백 검토**는 이 패키지로 시작할 수 있으나 종료 **승인** 조건은 미충족이다.
+공식 제출물은 **7종 / 실제 파일 8개**다. 결과보고서는 **14장 PPTX와 PDF**로
+준비되었고, 실제 기능 시연영상은 **4분21초** 전체를 1배속으로 재생 확인했다.
+사용자 최종 검토·수용은 **COMPLETE / USER ACCEPTED**다. 영상 SHA-256은
+`a297bdc1587e76b070bad7744a7470c4d88046aeecf01b495a2619a6099cbe03`이다.
+요구사항 정의서·API 명세서·ERD·와이어프레임·제출 링크 검토와
+`FINAL_SUBMISSION_SHA256.txt` 및 upload-ready 패키지 생성도 완료했다. 로컬 제출
+패키지 바이너리는 Git에 추가하지 않았고, 외부 업로드 완료는 주장하지 않는다.
+
+## 1회차 종료 검토 조건과 후속 개선 — 역사적 검토본 기준
+
+종료 **공백 검토**는 이 역사적 패키지로 시작할 수 있으나 당시 종료 **승인** 조건은 미충족이었다.
 다음 항목을 모두 확인하거나, 제외 항목을 발주사와 사용자가 명시적으로 수용해야 한다.
 
 - 발주 필수 요구와 실제 납품 범위 차이의 서면 수용, 잔여 조건·일정·책임자 기록.
@@ -147,7 +182,8 @@ Talos 공통 평가 원문과 내부 우선순위가 다른 항목도 제외했�
 - 입력 의미/모델 포함 시 [출시 판정표](model-release-readiness.md)의 별도 책임자 승인.
 - API P95·피드백·비동기 등 평가 공백의 증거 또는 적용/유예 판단 명시.
 - 제출물7종 최종 파일/URL·버전·공유 권한·3–5분 영상·발표 파일·주장 근거 검토.
-- 사용자 최종 검토. PR 병합/연구 evidence 공개/질문 화면 작동 확인을 대체 승인으로 쓰지 않음.
+- 사용자 최종 검토는 당시 대기 상태였다. PR 병합/연구 evidence 공개/질문 화면 작동 확인을
+  대체 승인으로 쓰지 않음. 현재 수용 결과는 위 2026-09-07 섹션에 기록한다.
 
 후속 개선: 한국어 문장 자연화, 설문 이해도·의미/측정 검토, calibration·고연령·외부/한국
 검증, 명시적 출시 기준, 구조화 feedback, 성능 표본 확대, 접근성 심화, 선택 알림/R2
