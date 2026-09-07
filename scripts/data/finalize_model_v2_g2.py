@@ -17,7 +17,6 @@ import json
 from datetime import date
 from pathlib import Path
 
-
 TARGET_COMPONENTS = [
     "HE_HP",
     "HE_sbp",
@@ -66,7 +65,7 @@ LEAKAGE_EXCLUSIONS = [
 def pct(n: int, d: int) -> str:
     if d <= 0:
         return "n/a"
-    return f"{(100*n/d):.1f}%"
+    return f"{(100 * n / d):.1f}%"
 
 
 def load_json(path: Path) -> dict:
@@ -82,10 +81,7 @@ def row_for(name: str, variables: dict, total_rows: int) -> str:
     non_null = int(v.get("non_null", 0))
     missing = int(v.get("missing", 0))
     label = str(v.get("label") or "").replace("|", "\\|")
-    return (
-        f"| `{name}` | present | {label} | "
-        f"{non_null:,} | {missing:,} ({pct(missing, total_rows)}) |"
-    )
+    return f"| `{name}` | present | {label} | {non_null:,} | {missing:,} ({pct(missing, total_rows)}) |"
 
 
 def main() -> int:
@@ -125,9 +121,7 @@ def main() -> int:
     lines = []
     lines.append("# Model V2 G2 — KNHANES 2024 Schema and Feasibility Audit")
     lines.append("")
-    lines.append(
-        f"Status: **G2 audit complete — proceed to G3 design only; model fitting remains prohibited**"
-    )
+    lines.append("Status: **G2 audit complete — proceed to G3 design only; model fitting remains prohibited**")
     lines.append("")
     lines.append("## 1. Scope")
     lines.append("")
@@ -148,7 +142,9 @@ def main() -> int:
     lines.append(f"- SHA-256: `{source['sha256']}`")
     lines.append("- participant-level source remains outside Git")
     lines.append("")
-    lines.append("The earlier nutrition-detail file `hn24_24rc` was identified as the wrong sub-database and excluded from the strict main-DB audit.")
+    lines.append(
+        "The earlier nutrition-detail file `hn24_24rc` was identified as the wrong sub-database and excluded from the strict main-DB audit."
+    )
     lines.append("")
     lines.append("## 3. Safety boundary verification")
     lines.append("")
@@ -201,9 +197,7 @@ def main() -> int:
     lines.append("")
     lines.append("## 6. Product-input feasibility candidates")
     lines.append("")
-    lines.append(
-        "These variables are feasibility candidates only. G2 does not select a final feature set."
-    )
+    lines.append("These variables are feasibility candidates only. G2 does not select a final feature set.")
     lines.append("")
     lines.append("| Variable | Status | Official label | Non-null | Missing |")
     lines.append("| --- | --- | --- | ---: | ---: |")
@@ -213,12 +207,20 @@ def main() -> int:
     lines.append("### Current interpretation")
     lines.append("")
     lines.append("- `age`: strong product-native candidate.")
-    lines.append("- `sex`: candidate only if the product input preserves the KNHANES survey meaning; do not silently reinterpret it as gender identity.")
-    lines.append("- `HE_ht` + `HE_wt`: preferred product-facing anthropometry inputs; BMI can be calculated identically in product code.")
-    lines.append("- `HE_BMI`: research convenience field; product parity requires deriving BMI from product-entered height/weight rather than asking users for BMI.")
+    lines.append(
+        "- `sex`: candidate only if the product input preserves the KNHANES survey meaning; do not silently reinterpret it as gender identity."
+    )
+    lines.append(
+        "- `HE_ht` + `HE_wt`: preferred product-facing anthropometry inputs; BMI can be calculated identically in product code."
+    )
+    lines.append(
+        "- `HE_BMI`: research convenience field; product parity requires deriving BMI from product-entered height/weight rather than asking users for BMI."
+    )
     lines.append("- `BS3_1`: compact current-cigarette-smoking candidate.")
     lines.append("- `BD1_11` + `BD2_14`: compact drinking frequency/amount candidates.")
-    lines.append("- walking / strength / aerobic activity candidates remain to be reduced to the smallest semantically reproducible questionnaire contract.")
+    lines.append(
+        "- walking / strength / aerobic activity candidates remain to be reduced to the smallest semantically reproducible questionnaire contract."
+    )
     lines.append("- `BP16_1` / `BP16_2`: sleep-duration candidates if present and confirmed by the official codebook.")
     lines.append("")
     lines.append("## 7. Age feasibility")
@@ -229,9 +231,7 @@ def main() -> int:
         if key in age_counts:
             lines.append(f"| {key} | {int(age_counts[key]):,} |")
     lines.append("")
-    lines.append(
-        "G2 does not choose a supported product age range from predictive performance."
-    )
+    lines.append("G2 does not choose a supported product age range from predictive performance.")
     lines.append("")
     lines.append("## 8. Survey design")
     lines.append("")

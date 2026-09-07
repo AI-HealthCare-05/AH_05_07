@@ -17,11 +17,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pyreadstat
-
 
 CANDIDATES = [
     # target / leakage audit
@@ -32,7 +31,6 @@ CANDIDATES = [
     "DI1_pr",
     "DI1_pt",
     "DI1_2",
-
     # minimal product-input candidates
     "age",
     "sex",
@@ -47,7 +45,6 @@ CANDIDATES = [
     "BE3_33",
     "BE5_1",
     "pa_aerobic",
-
     # sleep candidates from the Cycle 9 guide
     "BP16_1",
     "BP16_2",
@@ -71,11 +68,7 @@ def sha256(path: Path) -> str:
 
 
 def find_main(root: Path) -> Path:
-    matches = sorted(
-        p.resolve()
-        for p in (root / "raw").rglob("hn24_all.sas7bdat")
-        if p.is_file()
-    )
+    matches = sorted(p.resolve() for p in (root / "raw").rglob("hn24_all.sas7bdat") if p.is_file())
     if not matches:
         raise SystemExit("STOP: hn24_all.sas7bdat not found")
     hashes = {sha256(p) for p in matches}
@@ -123,7 +116,7 @@ def main() -> int:
     out = {
         "audit_gate": "Model V2 G2-A",
         "dataset": "KNHANES 2024 annual main DB",
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "source_file": sas.name,
         "source_sha256": sha256(sas),
         "candidate_columns_present": present,
@@ -151,11 +144,7 @@ def main() -> int:
     print("\n[present]")
     for c in present:
         v = variables[c]
-        print(
-            f"{c}: {v['label']} | "
-            f"non_null={v['non_null']} missing={v['missing']} "
-            f"unique={v['n_unique_non_null']}"
-        )
+        print(f"{c}: {v['label']} | non_null={v['non_null']} missing={v['missing']} unique={v['n_unique_non_null']}")
 
     print("\n[absent]")
     for c in absent:

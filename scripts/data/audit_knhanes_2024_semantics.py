@@ -18,11 +18,10 @@ import argparse
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pyreadstat
-
 
 EXPECTED_NAMES = {"hn24_all.sas7bdat"}
 
@@ -60,11 +59,7 @@ def sha256(path: Path) -> str:
 
 def find_main(root: Path) -> Path:
     raw = root / "raw"
-    candidates = [
-        p.resolve()
-        for p in raw.rglob("hn24_all.sas7bdat")
-        if p.is_file()
-    ]
+    candidates = [p.resolve() for p in raw.rglob("hn24_all.sas7bdat") if p.is_file()]
     if not candidates:
         raise SystemExit(f"STOP: hn24_all.sas7bdat not found under {raw}")
 
@@ -74,8 +69,7 @@ def find_main(root: Path) -> Path:
 
     if len(hashes) > 1:
         raise SystemExit(
-            "STOP: multiple non-identical hn24_all.sas7bdat files found. "
-            "Resolve provenance before semantic audit."
+            "STOP: multiple non-identical hn24_all.sas7bdat files found. Resolve provenance before semantic audit."
         )
 
     return sorted(candidates)[0]
@@ -92,6 +86,28 @@ def sanitize_value(v):
     if isinstance(v, (str, int, float, bool)):
         return v
     return str(v)
+
+
+def discover_domains(
+    names: list[str],
+    name_to_label: dict[str, str | None],
+) -> tuple[dict[str, list[str]], list[str]]:
+    domains = {key: [] for key in DOMAIN_KEYWORDS}
+
+    for name in names:
+        label = name_to_label.get(name) or ""
+        for domain, keywords in DOMAIN_KEYWORDS.items():
+            hint = NAME_HINTS.get(domain)
+            by_label = text_matches(label, keywords)
+            by_name = bool(hint and hint.search(name))
+            if by_label or by_name:
+                domains[domain].append(name)
+
+    for domain, values in domains.items():
+        domains[domain] = list(dict.fromkeys(values))
+
+    selected = list(dict.fromkeys(name for domain_names in domains.values() for name in domain_names))
+    return domains, selected
 
 
 def main() -> int:
@@ -112,30 +128,7 @@ def main() -> int:
     name_to_label = dict(meta.column_names_to_labels or {})
     variable_value_labels = dict(meta.variable_value_labels or {})
 
-    domains = {k: [] for k in DOMAIN_KEYWORDS}
-
-    for name in names:
-        label = name_to_label.get(name) or ""
-
-        for domain, keywords in DOMAIN_KEYWORDS.items():
-            by_label = text_matches(label, keywords)
-            by_name = bool(NAME_HINTS.get(domain) and NAME_HINTS[domain].search(name))
-
-            if by_label or by_name:
-                domains[domain].append(name)
-
-    # De-duplicate while retaining SAS column order.
-    for domain in domains:
-        seen = set()
-        domains[domain] = [
-            n for n in domains[domain]
-            if not (n in seen or seen.add(n))
-        ]
-
-    selected = []
-    for domain in domains:
-        selected.extend(domains[domain])
-    selected = [n for i, n in enumerate(selected) if n not in selected[:i]]
+    domains, selected = discover_domains(names, name_to_label)
 
     # Read only semantically selected columns to obtain aggregate code counts.
     # 6,997 rows means this remains a bounded audit, not model development.
@@ -152,16 +145,10 @@ def main() -> int:
         code_counts = None
         if unique_non_null <= 30:
             vc = s.value_counts(dropna=False)
-            code_counts = {
-                str(sanitize_value(k)): int(v)
-                for k, v in vc.items()
-            }
+            code_counts = {str(sanitize_value(k)): int(v) for k, v in vc.items()}
 
         raw_labels = variable_value_labels.get(name, {}) or {}
-        value_labels = {
-            str(sanitize_value(k)): str(v)
-            for k, v in raw_labels.items()
-        }
+        value_labels = {str(sanitize_value(k)): str(v) for k, v in raw_labels.items()}
 
         variable_records[name] = {
             "label": name_to_label.get(name),
@@ -182,7 +169,7 @@ def main() -> int:
             "rows_reported_by_metadata": meta.number_rows,
             "columns_reported_by_metadata": meta.number_columns,
         },
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "semantic_source": "official SAS variable labels/value labels embedded in hn24_all",
         "domains": domains,
         "variables": variable_records,

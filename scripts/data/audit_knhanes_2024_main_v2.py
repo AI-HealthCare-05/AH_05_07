@@ -17,42 +17,29 @@ import argparse
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
-
 
 EXPECTED_NAMES = {"hn24_all.sas7bdat", "hn24_all.xpt"}
 
 PATTERNS = {
     "age": re.compile(r"^age$", re.I),
     "sex_gender": re.compile(r"^sex$", re.I),
-
     # Strict: do not confuse BP_PHQ / BP_GAD with blood pressure.
     "blood_pressure": re.compile(r"^HE_(?:sbp|dbp)(?:[123])?$", re.I),
-
-    "anthropometry": re.compile(
-        r"^HE_(?:ht|wt|wc|BMI|BMI_pct)$", re.I
-    ),
-
+    "anthropometry": re.compile(r"^HE_(?:ht|wt|wc|BMI|BMI_pct)$", re.I),
     # Domain discovery only; exact semantics still require the official codebook.
     "smoking": re.compile(r"^(?:BS|sm_)", re.I),
     "alcohol": re.compile(r"^BD", re.I),
     "physical_activity": re.compile(r"^(?:BE|pa_)", re.I),
-
     # Intentionally broad for discovery; absence is not interpreted as proof
     # that sleep was not surveyed until checked against official docs.
     "sleep": re.compile(r"(?:sleep|slp|^SL[_0-9A-Za-z])", re.I),
-
-    "survey_design": re.compile(
-        r"^(?:psu|kstrata|wt_[A-Za-z0-9_]+)$", re.I
-    ),
-
+    "survey_design": re.compile(r"^(?:psu|kstrata|wt_[A-Za-z0-9_]+)$", re.I),
     # Documentation candidates, not model predictors.
-    "hypertension_history_or_medication": re.compile(
-        r"(?:hypert|htn|^HE_HP|^DI1)", re.I
-    ),
+    "hypertension_history_or_medication": re.compile(r"(?:hypert|htn|^HE_HP|^DI1)", re.I),
 }
 
 
@@ -66,10 +53,7 @@ def sha256(path: Path) -> str:
 
 def read_main(path: Path) -> pd.DataFrame:
     if path.name.lower() not in EXPECTED_NAMES:
-        raise RuntimeError(
-            f"Refusing non-main KNHANES DB: {path.name}. "
-            "Expected hn24_all.sas7bdat or hn24_all.xpt."
-        )
+        raise RuntimeError(f"Refusing non-main KNHANES DB: {path.name}. Expected hn24_all.sas7bdat or hn24_all.xpt.")
 
     if path.suffix.lower() == ".sas7bdat":
         return pd.read_sas(path, format="sas7bdat")
@@ -79,24 +63,15 @@ def read_main(path: Path) -> pd.DataFrame:
 
 
 def choose_main(raw_dir: Path) -> Path:
-    candidates = [
-        p.resolve()
-        for p in raw_dir.rglob("*")
-        if p.is_file() and p.name.lower() in EXPECTED_NAMES
-    ]
+    candidates = [p.resolve() for p in raw_dir.rglob("*") if p.is_file() and p.name.lower() in EXPECTED_NAMES]
 
     if not candidates:
-        raise SystemExit(
-            f"STOP: hn24_all main DB not found directly in {raw_dir}"
-        )
+        raise SystemExit(f"STOP: hn24_all main DB not found directly in {raw_dir}")
 
     if len(candidates) > 1:
         hashes = {sha256(p) for p in candidates}
         if len(hashes) != 1:
-            raise SystemExit(
-                "STOP: multiple non-identical hn24_all files found. "
-                "Resolve provenance before continuing."
-            )
+            raise SystemExit("STOP: multiple non-identical hn24_all files found. Resolve provenance before continuing.")
 
     return sorted(candidates)[0]
 
@@ -123,10 +98,7 @@ def small_code_counts(df: pd.DataFrame, name: str) -> dict | None:
         return None
 
     counts = s.value_counts(dropna=False).head(30)
-    return {
-        str(k): int(v)
-        for k, v in counts.items()
-    }
+    return {str(k): int(v) for k, v in counts.items()}
 
 
 def age_groups(df: pd.DataFrame) -> dict:
@@ -171,15 +143,9 @@ def main() -> int:
     df = read_main(main_file)
     columns = [str(c) for c in df.columns]
 
-    groups = {
-        group: [c for c in columns if pattern.search(c)]
-        for group, pattern in PATTERNS.items()
-    }
+    groups = {group: [c for c in columns if pattern.search(c)] for group, pattern in PATTERNS.items()}
 
-    candidate_schema = {
-        group: [variable_meta(df, c) for c in names]
-        for group, names in groups.items()
-    }
+    candidate_schema = {group: [variable_meta(df, c) for c in names] for group, names in groups.items()}
 
     low_cardinality_counts = {}
     for group in (
@@ -198,20 +164,21 @@ def main() -> int:
 
     # Required structural checks only, not target definition.
     expected_bp = [
-        "HE_sbp1", "HE_dbp1",
-        "HE_sbp2", "HE_dbp2",
-        "HE_sbp3", "HE_dbp3",
-        "HE_sbp", "HE_dbp",
+        "HE_sbp1",
+        "HE_dbp1",
+        "HE_sbp2",
+        "HE_dbp2",
+        "HE_sbp3",
+        "HE_dbp3",
+        "HE_sbp",
+        "HE_dbp",
     ]
-    bp_presence = {
-        name: name in df.columns
-        for name in expected_bp
-    }
+    bp_presence = {name: name in df.columns for name in expected_bp}
 
     output = {
         "audit_gate": "Model V2 G2-A",
         "dataset": "KNHANES 2024 annual main DB",
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "source_file": {
             "name": main_file.name,
             "bytes": main_file.stat().st_size,
@@ -248,10 +215,7 @@ def main() -> int:
     )
 
     print("=== KNHANES 2024 G2-A strict main-DB audit ===")
-    print(
-        f"source: {main_file.name} "
-        f"rows={df.shape[0]} cols={df.shape[1]}"
-    )
+    print(f"source: {main_file.name} rows={df.shape[0]} cols={df.shape[1]}")
     for group in (
         "blood_pressure",
         "age",
