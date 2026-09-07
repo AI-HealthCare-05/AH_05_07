@@ -274,7 +274,11 @@ def canonicalize_features(frame: pd.DataFrame) -> pd.DataFrame:
     return features
 
 
-def make_preprocessor(sparse_output: bool) -> ColumnTransformer:
+def make_preprocessor(
+    sparse_output: bool,
+    *,
+    sparse_threshold: float | None = None,
+) -> ColumnTransformer:
     numeric = Pipeline(
         [
             ("impute", SimpleImputer(strategy="median")),
@@ -300,13 +304,16 @@ def make_preprocessor(sparse_output: bool) -> ColumnTransformer:
             ),
         ]
     )
+    kwargs: dict[str, Any] = {}
+    if sparse_threshold is not None:
+        kwargs["sparse_threshold"] = sparse_threshold
     return ColumnTransformer(
         [
             ("numeric", numeric, NUMERIC),
             ("categorical", categorical, CATEGORICAL),
         ],
         remainder="drop",
-        sparse_threshold=1.0 if sparse_output else 0.0,
+        **kwargs,
     )
 
 
@@ -410,7 +417,16 @@ def fit_one_model(
         if len(np.unique(y[train])) != 2 or len(np.unique(y[heldout])) != 2:
             raise SystemExit(f"STOP: fold {fold} lacks both classes")
 
-        preprocessor = make_preprocessor(sparse_output=not dense)
+        if name == "logistic_regression":
+            # Preserve the exact G4 representation semantics:
+            # OneHotEncoder(sparse_output=True) plus ColumnTransformer's
+            # default sparse_threshold=0.3.
+            preprocessor = make_preprocessor(sparse_output=True)
+        else:
+            preprocessor = make_preprocessor(
+                sparse_output=not dense,
+                sparse_threshold=0.0 if dense else 1.0,
+            )
         train_x = preprocessor.fit_transform(x.loc[train])
         heldout_x = preprocessor.transform(x.loc[heldout])
         if dense:
