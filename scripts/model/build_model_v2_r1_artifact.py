@@ -47,7 +47,6 @@ NUMERIC = [
     "bmi_from_height_weight",
     "walking_days_7d",
     "walking_minutes_per_active_day",
-    "strength_days_7d",
     "weekday_sleep_minutes",
     "weekend_sleep_minutes",
 ]
@@ -56,6 +55,7 @@ CATEGORICAL = [
     "cigarette_smoking_state",
     "alcohol_frequency",
     "alcohol_amount_category",
+    "strength_days_7d",
 ]
 
 PREPROCESSING_CONFIG = {
@@ -164,7 +164,8 @@ def canonicalize_features(frame: pd.DataFrame) -> pd.DataFrame:
     for column in NUMERIC:
         x[column] = pd.to_numeric(x[column], errors="coerce")
     for column in CATEGORICAL:
-        x[column] = x[column].astype("string")
+        values = x[column].astype("object")
+        x[column] = values.where(pd.notna(values), np.nan)
     return x
 
 

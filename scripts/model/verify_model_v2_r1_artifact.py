@@ -35,7 +35,6 @@ NUMERIC = [
     "bmi_from_height_weight",
     "walking_days_7d",
     "walking_minutes_per_active_day",
-    "strength_days_7d",
     "weekday_sleep_minutes",
     "weekend_sleep_minutes",
 ]
@@ -44,6 +43,7 @@ CATEGORICAL = [
     "cigarette_smoking_state",
     "alcohol_frequency",
     "alcohol_amount_category",
+    "strength_days_7d",
 ]
 
 
@@ -64,7 +64,8 @@ def canonicalize(frame: pd.DataFrame) -> pd.DataFrame:
     for c in NUMERIC:
         x[c] = pd.to_numeric(x[c], errors="coerce")
     for c in CATEGORICAL:
-        x[c] = x[c].astype("string")
+        values = x[c].astype("object")
+        x[c] = values.where(pd.notna(values), np.nan)
     return x
 
 

@@ -53,7 +53,6 @@ Numeric:
 - `bmi_from_height_weight`
 - `walking_days_7d`
 - `walking_minutes_per_active_day`
-- `strength_days_7d`
 - `weekday_sleep_minutes`
 - `weekend_sleep_minutes`
 
@@ -63,6 +62,7 @@ Categorical:
 - `cigarette_smoking_state`
 - `alcohol_frequency`
 - `alcohol_amount_category`
+- `strength_days_7d`
 
 ## Frozen preprocessing
 
