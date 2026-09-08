@@ -389,5 +389,8 @@ async def export_observations(
                 "challenge_checkins": challenge_checkins,
             }
         ),
-        headers={"Content-Disposition": f'attachment; filename="bp7-observations-{start_on}-{end_on}.json"'},
+        headers={
+            "Cache-Control": "no-store",
+            "Content-Disposition": f'attachment; filename="bp7-observations-{start_on}-{end_on}.json"',
+        },
     )
