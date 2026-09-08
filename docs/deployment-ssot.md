@@ -1,5 +1,15 @@
 # Deployment SSOT
 
+## Latest non-model activation record — 2026-09-08
+
+See [account-removal production baseline](account-removal-production-baseline.md)
+for source `9713ed5aab4a4e74b145d79c4d536affab3c010b`, API revision
+`bp7-api-00031-rel`, immutable image, Worker version, and server-secret binding.
+Issue #355 records activation/rollback/restore success, not actual account deletion.
+Earlier dated ledgers below remain historical. No redeployment is required for
+this documentation change. Re-read control-plane state before any future operation.
+
+
 ## Authority
 
 | Concern | Single source of truth | Rule |

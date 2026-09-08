@@ -1,5 +1,25 @@
 # SK7 작업 대기열
 
+## 2026-09-08 non-model reconciliation
+
+Source baseline: `9713ed5aab4a4e74b145d79c4d536affab3c010b`.
+The [account-removal activation ledger](account-removal-production-baseline.md)
+records the latest operator-reported runtime; older runtime identifiers below
+remain historical evidence. This documentation pass did not inspect the cloud
+control planes or perform production mutations.
+
+- #238 is CLOSED: first-round completion decisions are recorded, not a claim
+  that every quality check passed or that the client approved the reduced scope.
+- #342 design, #346 / PR #348 implementation, and #355 production activation
+  are complete. Actual signed-in production deletion remains NOT EXERCISED.
+- Next: review the [synthetic deletion gate](account-removal-synthetic-gate.md).
+  This plan does not authorize execution or create synthetic accounts.
+- Preserve API P95 EXECUTED / NOT PASSED, measured `/window` n=0, and the
+  existing prohibition on another run. Do not reopen completed work by default.
+- Model work is owned by its separate workstream. First-round model statements
+  below are historical; no current Model V2 readiness is inferred here.
+
+
 ## S0 — 병합 후 기록 정리와 인계
 
 - 범위: PR #231/#234/#235/#236/#237 병합 상태를 현재화하고 작업 상태·로컬 인계를 만든다.
@@ -56,13 +76,13 @@
 - 현재 상태: **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK
   REHEARSED**; activation smoke, rollback rehearsal, and final restore evidence
   are recorded in [s3e-companion-production-rollout.md](s3e-companion-production-rollout.md).
-  Issue #252 completion is pending only on this closeout PR merge.
+  Issue #252 is closed; preserve its rollout evidence as historical.
 
-## S4 — 1회차 마감 — **CLOSEOUT-READY / DOCUMENTATION SYNC**
+## S4 — 1회차 마감 — **CLOSED / DECISIONS RECORDED**
 
 - 범위: 운영 O1/O2/O3, API P95, 제출 시트·최종 검토, 발주 범위 수용, 입력/모델 결정을 정리한다.
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 모든 completion condition에 실행 근거 또는 책임 있는 수용/보류가 기록되었다.
-- 현재 상태: **completion conditions satisfied; #238 closeout after this documentation sync**.
+- 현재 상태: **completion decisions recorded; #238 CLOSED**.
   현재 비모델 후속 경계는 아래 Round 2 reconciliation에 기록한다.
 
 ### S4 최종 결정 요약
@@ -90,7 +110,7 @@
 - [O1 실행 문서](o1-production-flow-execution.md)의 current documentation baseline은
   `01b29c5d574e18f238683551e088cba0316536f9`다. 이는 deployed API artifact와
   동일하다고 주장하지 않는다.
-- 현재 기록된 production web source evidence는
+- 역사적으로 기록된 production web source evidence는
   `30fd65eda8d988804c8af208276934226e0eb67d`다. API artifact는 image tag
   `921a35e` → repository commit `921a35e38261104aec1cdd7095f86a16c48f357c`
   로 operationally 매핑되며 source attestation은 unavailable/not claimed다.
@@ -112,7 +132,7 @@
   or exported JSON were retained.
 - O1 실행 Issue [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
   CLOSED다. O3 실행 successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)이며,
-  부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 계속 OPEN이다.
+  부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은 CLOSED다.
 
 ### S4 O3 — **COMPLETE / VERIFIED**
 
@@ -151,7 +171,7 @@
   `scripts/ci/verify_api_p95_evidence.py`.
 - Successor [Issue #264](https://github.com/AI-HealthCare-05/AH_05_07/issues/264)
   는 실행을 추적하지만 부하 실행 승인이 아니다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
-  계속 OPEN이다.
+  CLOSED다.
 
 ### S4 follow-up boundaries
 
@@ -194,8 +214,9 @@
 
 ### Product lifecycle design
 
-- Account-removal operational/support route is unresolved. The current `/users/me` API
-  provides read/update only; O1 operator cleanup does not establish a self-service route.
+- Self-service `DELETE /api/v1/account` is implemented and activated (#348 / #355).
+  Actual production deletion is deferred to the separately approved synthetic gate.
+  O1 historical operator cleanup does not validate this route.
 
 ### Error boundary
 
