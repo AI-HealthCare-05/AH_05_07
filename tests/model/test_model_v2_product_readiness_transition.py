@@ -114,8 +114,8 @@ def test_transition_is_deterministic():
     assert first == second == CURRENT_T8_READINESS
 
 
-def test_t9_and_t10_remain_blocked():
-    assert CURRENT_T9_EVALUATION.decision == "BLOCKED"
+def test_t9_is_pass_after_t14_while_t10_remains_blocked():
+    assert CURRENT_T9_EVALUATION.decision == "PASS"
     assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
 
 
@@ -124,7 +124,7 @@ def test_t11_rederived_snapshot_reads_product_pass_but_remains_no_go():
 
     assert result.technical_readiness == "PASS"
     assert result.product_readiness == "PASS"
-    assert result.privacy_readiness == "BLOCKED"
+    assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "BLOCKED"
     assert result.explicit_activation_approval is False
     assert result.decision == "NO_GO"
@@ -132,7 +132,7 @@ def test_t11_rederived_snapshot_reads_product_pass_but_remains_no_go():
 
 def test_imported_t11_current_snapshot_is_no_go():
     assert CURRENT_T11_EVALUATION.product_readiness == "PASS"
-    assert CURRENT_T11_EVALUATION.privacy_readiness == "BLOCKED"
+    assert CURRENT_T11_EVALUATION.privacy_readiness == "PASS"
     assert CURRENT_T11_EVALUATION.operational_readiness == "BLOCKED"
     assert CURRENT_T11_EVALUATION.explicit_activation_approval is False
     assert CURRENT_T11_EVALUATION.decision == "NO_GO"

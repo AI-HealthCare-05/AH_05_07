@@ -6,6 +6,7 @@ from app.services.model_v2_activation_contract import CURRENT_T7_EVALUATION
 from app.services.model_v2_privacy_readiness import (
     CONTRACT_VERSION,
     CURRENT_T9_EVALUATION,
+    PRE_T14_T9_EVALUATION,
     PrivacyReadiness,
     PrivacyReadinessContractError,
     evaluate_privacy_readiness,
@@ -102,16 +103,18 @@ def test_decision_object_contains_only_t9_contract_fields():
         assert prohibited not in joined
 
 
-def test_current_t9_snapshot_is_blocked_only_by_notice_collection_gate():
-    assert CURRENT_T9_EVALUATION.decision == "BLOCKED"
-    assert CURRENT_T9_EVALUATION.purpose_limitation_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.data_minimization_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.transient_processing_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.logging_monitoring_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.analytics_boundary_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.data_separation_approved == "PASS"
-    assert CURRENT_T9_EVALUATION.user_notice_collection_approved == "BLOCKED"
-    assert CURRENT_T9_EVALUATION.retention_deletion_approved == "PASS"
+def test_pre_t14_t9_snapshot_is_blocked_only_by_notice_collection_gate():
+    assert PRE_T14_T9_EVALUATION.decision == "BLOCKED"
+    assert PRE_T14_T9_EVALUATION.user_notice_collection_approved == "BLOCKED"
+
+
+def test_current_t9_snapshot_is_pass_after_t14():
+    assert CURRENT_T9_EVALUATION.decision == "PASS"
+    assert all(
+        value == "PASS"
+        for name, value in CURRENT_T9_EVALUATION.__dict__.items()
+        if name not in {"contract_version", "decision"}
+    )
 
 
 def test_t7_current_decision_remains_no_go_and_privacy_not_rewritten():
@@ -119,8 +122,8 @@ def test_t7_current_decision_remains_no_go_and_privacy_not_rewritten():
     assert CURRENT_T7_EVALUATION.privacy_readiness == "NOT_REVIEWED"
 
 
-def test_t8_current_product_readiness_remains_blocked():
-    assert CURRENT_T8_EVALUATION.decision == "BLOCKED"
+def test_t8_current_product_readiness_remains_pass():
+    assert CURRENT_T8_EVALUATION.decision == "PASS"
 
 
 def test_privacy_readiness_evaluation_does_not_mutate_environment(monkeypatch):
