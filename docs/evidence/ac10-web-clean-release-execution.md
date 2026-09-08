@@ -121,6 +121,7 @@ AC-10 remains **Partial**. Phase B production rehearsal still requires separate 
 - **Restored runtime:** `026fafcb-b8e8-45ed-a331-ee2d3279e3f7` at 100%, using the already-created version.
 - **Final smoke:** PASS.
 - **Final production:** `026fafcb-b8e8-45ed-a331-ee2d3279e3f7` at 100%.
+- **Post-rerun delayed runtime observation:** `de2d96be-2649-4ccc-800a-362a92d1e636` appeared at 100% during a later read-only final-state recheck. No smoke was run against that unplanned version; the already-created `NEW_WORKER` was restored exactly to 100% and the identical final smoke passed again. A stability recheck continued to show `NEW_WORKER` at 100%.
 
 ### Phase B boundaries
 
