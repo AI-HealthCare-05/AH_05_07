@@ -19,6 +19,7 @@
 ## Repository map
 
 - [Requirements](docs/requirements.md)
+- [Model V2 current product contract — proposed, production disabled](docs/model-v2-product-contract.md)
 - [Architecture and ERD](docs/architecture.md)
 - [Data contract](docs/data-contract.md)
 - [API contract](docs/api-contract.md)
