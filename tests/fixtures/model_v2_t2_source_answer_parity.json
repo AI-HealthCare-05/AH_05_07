@@ -1,0 +1,78 @@
+[
+  {
+    "name": "active_walking_and_drinking",
+    "source_answers": {
+      "age": 35,
+      "sex": 1,
+      "HE_ht": 170.0,
+      "HE_wt": 67.915,
+      "BS1_1": 3,
+      "BS3_1": 9,
+      "BD1_11": 2,
+      "BD2_1": 1,
+      "BE3_31": 5,
+      "BE3_32": 0,
+      "BE3_33": 40,
+      "BE5_1": 3,
+      "BP16_11": 23,
+      "BP16_12": 0,
+      "BP16_13": 7,
+      "BP16_14": 0,
+      "BP16_21": 24,
+      "BP16_22": 0,
+      "BP16_23": 8,
+      "BP16_24": 0
+    },
+    "semantic_payload": {
+      "age_years": 35,
+      "sex_knhanes": 1,
+      "bmi_from_height_weight": 23.5,
+      "cigarette_smoking_state": "never_smoked",
+      "alcohol_frequency": "lt_monthly",
+      "alcohol_amount_category": "1_2_drinks",
+      "walking_days_7d": 4,
+      "walking_minutes_per_active_day": 40,
+      "strength_days_7d": "2_days",
+      "weekday_sleep_minutes": 480,
+      "weekend_sleep_minutes": 480
+    }
+  },
+  {
+    "name": "structural_no_walk_and_no_drink",
+    "source_answers": {
+      "age": 52,
+      "sex": 2,
+      "HE_ht": 160.0,
+      "HE_wt": 61.44,
+      "BS1_1": 2,
+      "BS3_1": 3,
+      "BD1_11": 1,
+      "BD2_1": 5,
+      "BE3_31": 1,
+      "BE3_32": 99,
+      "BE3_33": 99,
+      "BE5_1": 1,
+      "BP16_11": 23,
+      "BP16_12": 30,
+      "BP16_13": 6,
+      "BP16_14": 30,
+      "BP16_21": 23,
+      "BP16_22": 30,
+      "BP16_23": 7,
+      "BP16_24": 30
+    },
+    "semantic_payload": {
+      "age_years": 52,
+      "sex_knhanes": 2,
+      "bmi_from_height_weight": 24.0,
+      "cigarette_smoking_state": "former_currently_not_smoking",
+      "alcohol_frequency": "none_past_year",
+      "alcohol_amount_category": "none",
+      "walking_days_7d": 0,
+      "walking_minutes_per_active_day": 0,
+      "strength_days_7d": "0_days",
+      "weekday_sleep_minutes": 420,
+      "weekend_sleep_minutes": 480
+    }
+  }
+]
