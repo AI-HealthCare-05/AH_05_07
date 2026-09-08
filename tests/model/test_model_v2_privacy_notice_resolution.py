@@ -157,7 +157,7 @@ def test_transition_fails_closed_if_t9_baseline_changed():
         )
 
 
-def test_current_integrated_release_remains_no_go_after_privacy_pass():
+def test_current_integrated_release_is_go_after_t16_activation_approval():
     result = derive_current_release_readiness()
 
     assert CURRENT_T8_EVALUATION.decision == "PASS"
@@ -167,8 +167,8 @@ def test_current_integrated_release_remains_no_go_after_privacy_pass():
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "PASS"
-    assert result.explicit_activation_approval is False
-    assert result.decision == "NO_GO"
+    assert result.explicit_activation_approval is True
+    assert result.decision == "GO"
     assert CURRENT_T11_EVALUATION == result
 
 
@@ -210,4 +210,4 @@ def test_no_artifact_or_production_credentials_are_required(monkeypatch):
 
     assert CURRENT_T14_EVALUATION.decision == "PASS"
     assert CURRENT_T9_EVALUATION.decision == "PASS"
-    assert derive_current_release_readiness().decision == "NO_GO"
+    assert derive_current_release_readiness().decision == "GO"

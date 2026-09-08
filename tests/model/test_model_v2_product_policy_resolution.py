@@ -96,10 +96,10 @@ def test_current_t8_snapshot_is_pass_after_t13():
     assert CURRENT_T8_EVALUATION.decision == "PASS"
 
 
-def test_later_release_gates_preserve_current_no_go():
+def test_later_release_gates_are_go_after_t16_activation_approval():
     assert CURRENT_T9_EVALUATION.decision == "PASS"
     assert CURRENT_T10_EVALUATION.decision == "PASS"
-    assert CURRENT_T11_EVALUATION.decision == "NO_GO"
+    assert CURRENT_T11_EVALUATION.decision == "GO"
 
 
 def test_resolution_is_deterministic():
