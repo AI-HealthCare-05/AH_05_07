@@ -103,13 +103,13 @@ def test_non_boolean_activation_approval_is_rejected(bad_value: object):
 def test_current_child_snapshots_derive_expected_release_no_go():
     result = derive_current_release_readiness()
 
-    assert CURRENT_T8_EVALUATION.decision == "BLOCKED"
-    assert CURRENT_T9_EVALUATION.decision == "BLOCKED"
+    assert CURRENT_T8_EVALUATION.decision == "PASS"
+    assert CURRENT_T9_EVALUATION.decision == "PASS"
     assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
 
     assert result.technical_readiness == "PASS"
-    assert result.product_readiness == "BLOCKED"
-    assert result.privacy_readiness == "BLOCKED"
+    assert result.product_readiness == "PASS"
+    assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "BLOCKED"
     assert result.explicit_activation_approval is False
     assert result.decision == "NO_GO"

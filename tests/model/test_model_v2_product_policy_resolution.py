@@ -96,8 +96,8 @@ def test_current_t8_snapshot_is_pass_after_t13():
     assert CURRENT_T8_EVALUATION.decision == "PASS"
 
 
-def test_other_release_gates_remain_blocked_or_no_go():
-    assert CURRENT_T9_EVALUATION.decision == "BLOCKED"
+def test_later_release_gates_preserve_current_no_go():
+    assert CURRENT_T9_EVALUATION.decision == "PASS"
     assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
     assert CURRENT_T11_EVALUATION.decision == "NO_GO"
 

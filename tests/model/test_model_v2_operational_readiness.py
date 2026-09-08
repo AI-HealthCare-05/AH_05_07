@@ -134,12 +134,12 @@ def test_t7_current_decision_remains_no_go_and_operational_not_rewritten():
     assert CURRENT_T7_EVALUATION.explicit_activation_approval is False
 
 
-def test_t8_product_readiness_remains_blocked():
-    assert CURRENT_T8_EVALUATION.decision == "BLOCKED"
+def test_t8_product_readiness_remains_pass():
+    assert CURRENT_T8_EVALUATION.decision == "PASS"
 
 
-def test_t9_privacy_readiness_remains_blocked():
-    assert CURRENT_T9_EVALUATION.decision == "BLOCKED"
+def test_t9_privacy_readiness_remains_pass_after_t14():
+    assert CURRENT_T9_EVALUATION.decision == "PASS"
 
 
 def test_operational_evaluation_does_not_mutate_environment(monkeypatch):

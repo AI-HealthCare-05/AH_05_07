@@ -4,7 +4,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
+from app.services.model_v2_privacy_notice_resolution import (
+    CONTRACT_VERSION as T14_CONTRACT_VERSION,
+)
+from app.services.model_v2_privacy_notice_resolution import (
+    CURRENT_T14_EVALUATION,
+    PrivacyNoticeResolutionEvaluation,
+)
+
 CONTRACT_VERSION = "model-v2-privacy-readiness-v1"
+T14_TRANSITION_VERSION = "model-v2-privacy-readiness-t14-transition-v1"
 
 DimensionState = Literal["PASS", "BLOCKED", "NOT_REVIEWED"]
 PrivacyReadinessDecision = Literal["PASS", "BLOCKED"]
@@ -25,6 +34,10 @@ DIMENSION_STATES = frozenset({"PASS", "BLOCKED", "NOT_REVIEWED"})
 
 class PrivacyReadinessContractError(ValueError):
     """Raised when a T9 privacy-readiness payload violates the contract."""
+
+
+class PrivacyReadinessTransitionError(PrivacyReadinessContractError):
+    """Raised when the T14 notice evidence does not authorize the T9 transition."""
 
 
 @dataclass(frozen=True)
@@ -77,7 +90,8 @@ def parse_privacy_readiness(payload: Mapping[str, object]) -> PrivacyReadiness:
             "data_minimization_approved", payload["data_minimization_approved"]
         ),
         transient_processing_approved=_dimension_state(
-            "transient_processing_approved", payload["transient_processing_approved"]
+            "transient_processing_approved",
+            payload["transient_processing_approved"],
         ),
         logging_monitoring_approved=_dimension_state(
             "logging_monitoring_approved", payload["logging_monitoring_approved"]
@@ -137,7 +151,7 @@ def evaluate_privacy_readiness_payload(
     return evaluate_privacy_readiness(parse_privacy_readiness(payload))
 
 
-CURRENT_T9_READINESS = PrivacyReadiness(
+PRE_T14_T9_READINESS = PrivacyReadiness(
     purpose_limitation_approved="PASS",
     data_minimization_approved="PASS",
     transient_processing_approved="PASS",
@@ -146,6 +160,38 @@ CURRENT_T9_READINESS = PrivacyReadiness(
     data_separation_approved="PASS",
     user_notice_collection_approved="BLOCKED",
     retention_deletion_approved="PASS",
+)
+
+PRE_T14_T9_EVALUATION = evaluate_privacy_readiness(PRE_T14_T9_READINESS)
+
+
+def transition_privacy_readiness_after_t14(
+    *,
+    previous: PrivacyReadiness,
+    t14_evaluation: PrivacyNoticeResolutionEvaluation,
+) -> PrivacyReadiness:
+    if t14_evaluation.contract_version != T14_CONTRACT_VERSION:
+        raise PrivacyReadinessTransitionError("T14 privacy-notice evidence contract version mismatch")
+    if t14_evaluation.decision != "PASS":
+        raise PrivacyReadinessTransitionError("T14 privacy-notice resolution must be PASS before T9 transition")
+    if previous != PRE_T14_T9_READINESS:
+        raise PrivacyReadinessTransitionError("T9 pre-transition snapshot does not match the reviewed T14 baseline")
+
+    return PrivacyReadiness(
+        purpose_limitation_approved=previous.purpose_limitation_approved,
+        data_minimization_approved=previous.data_minimization_approved,
+        transient_processing_approved=previous.transient_processing_approved,
+        logging_monitoring_approved=previous.logging_monitoring_approved,
+        analytics_boundary_approved=previous.analytics_boundary_approved,
+        data_separation_approved=previous.data_separation_approved,
+        user_notice_collection_approved="PASS",
+        retention_deletion_approved=previous.retention_deletion_approved,
+    )
+
+
+CURRENT_T9_READINESS = transition_privacy_readiness_after_t14(
+    previous=PRE_T14_T9_READINESS,
+    t14_evaluation=CURRENT_T14_EVALUATION,
 )
 
 CURRENT_T9_EVALUATION = evaluate_privacy_readiness(CURRENT_T9_READINESS)
