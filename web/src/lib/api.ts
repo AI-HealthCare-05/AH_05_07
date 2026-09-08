@@ -86,6 +86,44 @@ export type ObservationExport = {
   filename: string;
 };
 
+export type ModelV2ProductInput = {
+  age_years: number;
+  sex_knhanes: 1 | 2;
+  height_cm: number;
+  weight_kg: number;
+  cigarette_smoking_state: string;
+  alcohol_frequency: string;
+  alcohol_amount_category: string;
+  walking_days_7d: number;
+  walking_active_day_hours: number;
+  walking_active_day_minutes: number;
+  strength_days_7d: string;
+  weekday_bed_hour: number;
+  weekday_bed_minute: number;
+  weekday_wake_hour: number;
+  weekday_wake_minute: number;
+  weekend_bed_hour: number;
+  weekend_bed_minute: number;
+  weekend_wake_hour: number;
+  weekend_wake_minute: number;
+};
+
+export type ModelV2ScoreResponse = {
+  schema_version: string;
+  product_wording: string;
+};
+
+export function scoreModelV2ProductInput(
+  session: Session,
+  payload: ModelV2ProductInput,
+): Promise<ModelV2ScoreResponse> {
+  return apiFetch<ModelV2ScoreResponse>("/api/v1/model-v2/product-score", session, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+
 export function deleteAccount(session: Session): Promise<void> {
   return apiFetch<void>("/api/v1/account", session, { method: "DELETE" });
 }
