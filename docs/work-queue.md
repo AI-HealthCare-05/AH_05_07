@@ -195,9 +195,8 @@
 
 ### Error boundary
 
-- R-06 remains Partial only for the explicit browser assertion of a server
-  `409` / `observation_conflict` response. Do not add an implementation or E2E test in
-  this documentation-only reconciliation.
+- R-06 error normalization browser evidence — **RESOLVED**. The signed-in harness explicitly
+  covers server `409` / `observation_conflict` recovery without retry or false success.
 
 S4는 모델 출시, test 실행 또는 운영 배포를 자동으로 승인하지 않는다.
 
