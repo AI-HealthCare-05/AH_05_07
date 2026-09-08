@@ -22,7 +22,7 @@ import {
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
-import { allowsE2eFixture, getE2eSession } from "./lib/e2eHarness";
+import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
@@ -57,6 +57,8 @@ type HomeAction = {
   action: string;
   screen: ScreenId;
 };
+type SessionIdentity = { userId: string | null; generation: number };
+type RequestContext = { userId: string; generation: number; accessToken: string };
 
 function makeNotice(
   kind: Notice["kind"],
@@ -165,6 +167,7 @@ function Login({ onSession, recoveryMessage }: { onSession: (session: Session) =
           <button type="submit" disabled={pending}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
         </form>
         {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
+        <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         <p className="welcome-footnote">혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시됩니다.</p>
       </section>
     </main>
@@ -213,11 +216,86 @@ function App() {
   const diastolicRef = useRef<HTMLInputElement>(null);
   const windowRequestId = useRef(0);
   const editOriginKey = useRef<string | null>(null);
+  const sessionRef = useRef<Session | null>(e2eSession);
+  const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
+  const sessionUpdateVersionRef = useRef(0);
+  const [signOutPending, setSignOutPending] = useState(false);
+
+  function applySession(nextSession: Session | null) {
+    sessionUpdateVersionRef.current += 1;
+    const nextUserId = nextSession?.user.id ?? null;
+    const currentIdentity = sessionIdentityRef.current;
+    if (currentIdentity.userId === nextUserId) {
+      sessionRef.current = nextSession;
+      setSession(nextSession);
+      return;
+    }
+
+    sessionIdentityRef.current = { userId: nextUserId, generation: currentIdentity.generation + 1 };
+    sessionRef.current = nextSession;
+    windowRequestId.current += 1;
+    setSession(nextSession);
+    setSignOutPending(false);
+    setWindowData(null);
+    setWindowState("loading");
+    setNotice(null);
+    setPendingAction(null);
+    setConfirmedSave(false);
+    setBloodPressureDraft(emptyBloodPressureDraft(today));
+    setBloodPressureError("");
+    setEditingBloodPressureId(null);
+    setPendingBloodPressureDeletion(null);
+    setEditingChallengeCheckin(null);
+    setPendingChallengeCheckinDeletion(null);
+    setSelectedRecordKey(null);
+    setRequestedScreen("S02");
+    setDashboardWindow("current");
+    editOriginKey.current = null;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("screen");
+    url.searchParams.delete("record");
+    url.searchParams.delete("dashboard_window");
+    window.history.replaceState({ ...(window.history.state ?? {}), sk7UserId: nextUserId }, "", url);
+  }
+
+  function captureRequestContext(activeSession: Session | null = sessionRef.current): RequestContext | null {
+    const userId = activeSession?.user.id;
+    if (!activeSession || !userId) return null;
+    return { userId, generation: sessionIdentityRef.current.generation, accessToken: activeSession.access_token };
+  }
+
+  function isCurrentRequestContext(context: RequestContext): boolean {
+    const identity = sessionIdentityRef.current;
+    return identity.userId === context.userId && identity.generation === context.generation;
+  }
+
+  function hasNewerToken(context?: RequestContext): boolean {
+    return Boolean(context && isCurrentRequestContext(context) && sessionRef.current && sessionRef.current.access_token !== context.accessToken);
+  }
 
   useEffect(() => {
-    if (evidenceMode || e2eSession || !supabase) return;
-    void supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
+    const currentUserId = sessionIdentityRef.current.userId;
+    if (currentUserId) {
+      window.history.replaceState({ ...(window.history.state ?? {}), sk7UserId: currentUserId }, "", window.location.href);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (evidenceMode) return;
+    if (allowsE2eFixture()) {
+      const onSyntheticSession = (event: Event) => {
+        applySession((event as CustomEvent<Session | null>).detail ?? null);
+      };
+      window.addEventListener(e2eSessionEventName, onSyntheticSession);
+      return () => window.removeEventListener(e2eSessionEventName, onSyntheticSession);
+    }
+    if (!supabase) return;
+    const bootstrapVersion = sessionUpdateVersionRef.current;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (sessionUpdateVersionRef.current === bootstrapVersion) applySession(data.session);
+    });
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => applySession(nextSession));
     return () => subscription.subscription.unsubscribe();
   }, [evidenceMode, e2eSession]);
 
@@ -229,6 +307,32 @@ function App() {
   useEffect(() => {
     const onPopState = () => {
       const search = new URLSearchParams(window.location.search);
+      const currentUserId = sessionIdentityRef.current.userId;
+      const entryUserId = window.history.state?.sk7UserId ?? null;
+      if (currentUserId && entryUserId !== currentUserId) {
+        const safeUrl = new URL(window.location.href);
+        safeUrl.searchParams.delete("screen");
+        safeUrl.searchParams.delete("record");
+        safeUrl.searchParams.delete("dashboard_window");
+        window.history.replaceState({ ...(window.history.state ?? {}), sk7UserId: currentUserId }, "", safeUrl);
+        windowRequestId.current += 1;
+        setWindowData(null);
+        setWindowState("loading");
+        setRequestedScreen("S02");
+        setDashboardWindow("current");
+        setSelectedRecordKey(null);
+        setPendingAction(null);
+        setConfirmedSave(false);
+        setBloodPressureDraft(emptyBloodPressureDraft(today));
+        setBloodPressureError("");
+        setEditingBloodPressureId(null);
+        setPendingBloodPressureDeletion(null);
+        setEditingChallengeCheckin(null);
+        setPendingChallengeCheckinDeletion(null);
+        editOriginKey.current = null;
+        if (dashboardWindow === "current") void refreshWindow(sessionRef.current);
+        return;
+      }
       setNotice((current) => current?.persistence === "until-navigation" ? null : current);
       setPendingBloodPressureDeletion(null);
       setPendingChallengeCheckinDeletion(null);
@@ -264,16 +368,16 @@ function App() {
     else url.searchParams.set("screen", screen);
     if (recordKey) url.searchParams.set("record", recordKey);
     else url.searchParams.delete("record");
-    window.history[replace ? "replaceState" : "pushState"]({}, "", url);
+    window.history[replace ? "replaceState" : "pushState"]({ ...(window.history.state ?? {}), sk7UserId: sessionIdentityRef.current.userId }, "", url);
     setRequestedScreen(screen);
     setSelectedRecordKey(recordKey ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export") {
-    if (isSessionError(error)) {
+  function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export", requestContext?: RequestContext) {
+    if (isSessionError(error) && !hasNewerToken(requestContext)) {
       void supabase?.auth.signOut({ scope: "local" });
-      setSession(null);
+      applySession(null);
       setNotice(makeNotice("warning", "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.", { origin: "session" }));
       return;
     }
@@ -301,18 +405,23 @@ function App() {
     setNotice(makeNotice("warning", message, { origin: "request-error", reload: context !== "export" }));
   }
 
-  async function refreshWindow(activeSession = session) {
-    if (!activeSession || evidenceMode) return;
+  async function refreshWindow(activeSession = sessionRef.current, allowTokenRefreshRetry = true) {
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || evidenceMode) return;
     const requestId = ++windowRequestId.current;
     setWindowState(windowData ? "refreshing" : "loading");
     try {
       const nextData = await getObservationWindow(activeSession, startOn, endOn);
-      if (requestId !== windowRequestId.current) return;
+      if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       setWindowData(nextData);
       setWindowState("ready");
     } catch (error) {
-      if (requestId !== windowRequestId.current) return;
-      presentRequestError(error, "load");
+      if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
+      if (allowTokenRefreshRetry && isSessionError(error) && hasNewerToken(requestContext)) {
+        await refreshWindow(sessionRef.current, false);
+        return;
+      }
+      presentRequestError(error, "load", requestContext);
     }
   }
 
@@ -324,11 +433,34 @@ function App() {
     if (nextWindow === "prior") url.searchParams.set("dashboard_window", "prior");
     else url.searchParams.delete("dashboard_window");
     url.searchParams.delete("record");
-    window.history.pushState({}, "", url);
+    window.history.pushState({ ...(window.history.state ?? {}), sk7UserId: sessionIdentityRef.current.userId }, "", url);
     setSelectedRecordKey(null);
     setWindowData(null);
     setWindowState("loading");
     setDashboardWindow(nextWindow);
+  }
+
+  async function handleSignOut() {
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || signOutPending || !supabase) return;
+    setSignOutPending(true);
+    setNotice(null);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      if (!isCurrentRequestContext(requestContext)) return;
+      if (error) {
+        setNotice(makeNotice("warning", "로그아웃을 완료하지 못했어요. 다시 시도해 주세요.", { origin: "session" }));
+        return;
+      }
+      applySession(null);
+    } catch {
+      if (isCurrentRequestContext(requestContext)) {
+        setNotice(makeNotice("warning", "로그아웃을 완료하지 못했어요. 다시 시도해 주세요.", { origin: "session" }));
+      }
+    } finally {
+      if (isCurrentRequestContext(requestContext)) setSignOutPending(false);
+    }
   }
 
   function validateBloodPressure(): BloodPressureObservationInput | null {
@@ -355,27 +487,31 @@ function App() {
 
   async function submitBloodPressure(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!session || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
     const payload = validateBloodPressure();
     if (!payload) return;
     setPendingAction("blood-pressure");
     try {
       if (editingBloodPressureId) {
-        await updateBloodPressureObservation(session, editingBloodPressureId, payload);
-        setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
+        await updateBloodPressureObservation(activeSession, editingBloodPressureId, payload);
       } else {
-        await createBloodPressureObservation(session, payload);
-        setNotice(null);
+        await createBloodPressureObservation(activeSession, payload);
       }
+      if (!isCurrentRequestContext(requestContext)) return;
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
+      if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
+      else setNotice(null);
       setBloodPressureDraft(emptyBloodPressureDraft(today));
       setEditingBloodPressureId(null);
       setConfirmedSave(true);
-      await refreshWindow(session);
       navigate("S05");
     } catch (error) {
-      presentRequestError(error, "save");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "save", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
@@ -397,91 +533,114 @@ function App() {
   }
 
   async function confirmBloodPressureDeletion() {
-    if (!session || !pendingBloodPressureDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || !pendingBloodPressureDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
     setPendingAction("blood-pressure");
     try {
-      await deleteBloodPressureObservation(session, pendingBloodPressureDeletion.id);
+      await deleteBloodPressureObservation(activeSession, pendingBloodPressureDeletion.id);
+      if (!isCurrentRequestContext(requestContext)) return;
       setPendingBloodPressureDeletion(null);
       setSelectedRecordKey(null);
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "혈압 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      await refreshWindow(session);
       navigate("S08");
     } catch (error) {
-      presentRequestError(error, "delete");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
   async function selectChallenge(actionId: string) {
-    if (!session || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
     setPendingAction("challenge-selection");
     try {
-      await selectActiveChallenge(session, actionId);
+      await selectActiveChallenge(activeSession, actionId);
+      if (!isCurrentRequestContext(requestContext)) return;
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "7일 챌린지를 선택했습니다.", { origin: "mutation-success" }));
-      await refreshWindow(session);
       navigate("S02");
     } catch (error) {
-      presentRequestError(error, "save");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "save", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
   async function submitActiveChallengeCheckin(status: "completed" | "skipped") {
-    if (!session || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
     setPendingAction("challenge-checkin");
     try {
-      await createActiveChallengeCheckin(session, { observed_on: today, status });
+      await createActiveChallengeCheckin(activeSession, { observed_on: today, status });
+      if (!isCurrentRequestContext(requestContext)) return;
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
       setNotice(null);
       setConfirmedSave(true);
-      await refreshWindow(session);
       navigate("S05");
     } catch (error) {
-      presentRequestError(error, "save");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "save", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
   async function updateOwnedChallengeCheckin(status: ChallengeCheckin["status"]) {
-    if (!session || !editingChallengeCheckin || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || !editingChallengeCheckin || evidenceMode || isPriorDashboard || pendingAction) return;
     setPendingAction("challenge-checkin");
     try {
-      await updateChallengeCheckin(session, editingChallengeCheckin.id, status);
+      await updateChallengeCheckin(activeSession, editingChallengeCheckin.id, status);
+      if (!isCurrentRequestContext(requestContext)) return;
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
       setEditingChallengeCheckin(null);
       setNotice(makeNotice("success", "챌린지 상태를 수정했습니다.", { origin: "mutation-success" }));
-      await refreshWindow(session);
     } catch (error) {
-      presentRequestError(error, "save");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "save", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
   async function confirmChallengeCheckinDeletion() {
-    if (!session || !pendingChallengeCheckinDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || !pendingChallengeCheckinDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
     setPendingAction("challenge-checkin");
     try {
-      await deleteChallengeCheckin(session, pendingChallengeCheckinDeletion.id);
+      await deleteChallengeCheckin(activeSession, pendingChallengeCheckinDeletion.id);
+      if (!isCurrentRequestContext(requestContext)) return;
       setPendingChallengeCheckinDeletion(null);
       setEditingChallengeCheckin(null);
       setSelectedRecordKey(null);
+      await refreshWindow(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "챌린지 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      await refreshWindow(session);
       navigate("S08");
     } catch (error) {
-      presentRequestError(error, "delete");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
   async function exportRecentRecords() {
-    if (!session || evidenceMode || pendingAction) return;
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (!activeSession || !requestContext || evidenceMode || pendingAction) return;
     setPendingAction("export");
     try {
-      const exported = await exportObservations(session, startOn, endOn);
+      const exported = await exportObservations(activeSession, startOn, endOn);
+      if (!isCurrentRequestContext(requestContext)) return;
       const objectUrl = URL.createObjectURL(exported.blob);
       const link = document.createElement("a");
       link.href = objectUrl;
@@ -492,9 +651,9 @@ function App() {
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
       setNotice(makeNotice("success", "내보내기 파일을 준비했어요. 본인 기기에 안전하게 보관해 주세요.", { origin: "export-success" }));
     } catch (error) {
-      presentRequestError(error, "export");
+      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "export", requestContext);
     } finally {
-      setPendingAction(null);
+      if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
   }
 
@@ -502,7 +661,7 @@ function App() {
     return <main className="welcome-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   }
   if (!evidenceMode && !session) {
-    return <Login onSession={setSession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
@@ -522,7 +681,11 @@ function App() {
   const selectedRecord = selectedRecordKey ? recordBrowseItems.find((record) => record.key === selectedRecordKey) : null;
   const selectedRecordMissing = Boolean(selectedRecordKey && !selectedRecord);
   const ready = windowState === "ready" || windowState === "refreshing" || windowState === "refresh-error";
-  const automaticallyEmpty = ready && requestedScreen === "S02" && isWindowEmpty(windowData) && !confirmedSave;
+  const automaticallyEmpty =
+    ready &&
+    requestedScreen === "S02" &&
+    isWindowEmpty(windowData) &&
+    !confirmedSave;
   const truthfulFallback: ScreenId = isWindowEmpty(windowData) ? "S12" : "S02";
   const activeScreen: ScreenId = windowState === "error"
     ? "S13"
@@ -713,11 +876,11 @@ function App() {
       return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card"><span className="status-pill">아직 준비 중이에요</span><h2>검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.</h2><p>현재는 점수, 확률, 등급을 표시하지 않습니다.</p></div><p className="signal-disclaimer">이 신호는 진단·치료·예방 판단을 제공하지 않습니다.</p></Scene>;
     }
 
-    return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>기록을 JSON으로 내보낼 수 있어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")}>7일 기록 보기</button></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+    return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>현재 화면에는 Auth 계정 삭제 기능이 없습니다. 30일 후 계정이나 이메일이 자동 삭제된다는 뜻은 아니에요.</p></div></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   return (
-    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void supabase?.auth.signOut() : undefined} companionSelection={companionSelection}>
+    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending} companionSelection={companionSelection}>
       {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>이전 7일 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}

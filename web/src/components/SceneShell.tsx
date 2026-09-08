@@ -13,10 +13,11 @@ type SceneShellProps = {
   evidenceLabel?: string;
   onNavigate: (screen: ScreenId) => void;
   onSignOut?: () => void;
+  signOutPending?: boolean;
   companionSelection: CompanionSelection | null;
 };
 
-export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, companionSelection }: SceneShellProps) {
+export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
@@ -38,7 +39,7 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
         </button>
         <div className="header-actions">
           {evidenceLabel && <span className="fixture-label">검토 상태 · {evidenceLabel}</span>}
-          {onSignOut && <button className="text-button" type="button" onClick={onSignOut}>로그아웃</button>}
+          {onSignOut && <button className="text-button" type="button" onClick={onSignOut} disabled={signOutPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "로그아웃"}</button>}
         </div>
       </header>
 

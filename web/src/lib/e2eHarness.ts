@@ -1,6 +1,9 @@
 import type { Session } from "@supabase/supabase-js";
 
-export const e2eHarnessEnabled = import.meta.env.VITE_SK7_E2E_MODE === "1";
+const e2eEnvironment = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
+
+export const e2eHarnessEnabled = e2eEnvironment?.VITE_SK7_E2E_MODE === "1";
+export const e2eSessionEventName = "sk7:e2e-session-change";
 
 export function allowsE2eFixture(): boolean {
   return e2eHarnessEnabled;
