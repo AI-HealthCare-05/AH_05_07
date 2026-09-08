@@ -162,11 +162,11 @@ def test_current_integrated_release_remains_no_go_after_privacy_pass():
 
     assert CURRENT_T8_EVALUATION.decision == "PASS"
     assert CURRENT_T9_EVALUATION.decision == "PASS"
-    assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
+    assert CURRENT_T10_EVALUATION.decision == "PASS"
     assert result.technical_readiness == "PASS"
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
-    assert result.operational_readiness == "BLOCKED"
+    assert result.operational_readiness == "PASS"
     assert result.explicit_activation_approval is False
     assert result.decision == "NO_GO"
     assert CURRENT_T11_EVALUATION == result

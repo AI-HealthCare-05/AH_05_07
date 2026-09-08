@@ -4,7 +4,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
+from app.services.model_v2_operational_owner_resolution import (
+    CONTRACT_VERSION as T15_CONTRACT_VERSION,
+)
+from app.services.model_v2_operational_owner_resolution import (
+    CURRENT_T15_EVALUATION,
+    OperationalOwnerResolutionEvaluation,
+)
+
 CONTRACT_VERSION = "model-v2-operational-readiness-v1"
+T15_TRANSITION_VERSION = "model-v2-operational-readiness-t15-transition-v1"
 
 FROZEN_ARTIFACT_FILENAME = "model-v2-r1-a.joblib"
 FROZEN_ARTIFACT_SHA256 = "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84"
@@ -31,6 +40,10 @@ DIMENSION_STATES = frozenset({"PASS", "BLOCKED", "NOT_REVIEWED"})
 
 class OperationalReadinessContractError(ValueError):
     """Raised when a T10 operational-readiness payload violates the contract."""
+
+
+class OperationalReadinessTransitionError(OperationalReadinessContractError):
+    """Raised when T15 owner evidence does not authorize the T10 transition."""
 
 
 @dataclass(frozen=True)
@@ -153,7 +166,7 @@ def evaluate_operational_readiness_payload(
     return evaluate_operational_readiness(parse_operational_readiness(payload))
 
 
-CURRENT_T10_READINESS = OperationalReadiness(
+PRE_T15_T10_READINESS = OperationalReadiness(
     artifact_integrity_approved="PASS",
     schema_integrity_approved="PASS",
     disabled_fail_closed_approved="PASS",
@@ -165,4 +178,38 @@ CURRENT_T10_READINESS = OperationalReadiness(
     enablement_runbook_approved="PASS",
 )
 
+PRE_T15_T10_EVALUATION = evaluate_operational_readiness(PRE_T15_T10_READINESS)
+
+
+def transition_operational_readiness_after_t15(
+    *,
+    previous: OperationalReadiness,
+    t15_evaluation: OperationalOwnerResolutionEvaluation,
+) -> OperationalReadiness:
+    if t15_evaluation.contract_version != T15_CONTRACT_VERSION:
+        raise OperationalReadinessTransitionError("T15 operational-owner evidence contract version mismatch")
+    if t15_evaluation.decision != "PASS":
+        raise OperationalReadinessTransitionError("T15 operational-owner resolution must be PASS before T10 transition")
+    if previous != PRE_T15_T10_READINESS:
+        raise OperationalReadinessTransitionError(
+            "T10 pre-transition snapshot does not match the reviewed T15 baseline"
+        )
+
+    return OperationalReadiness(
+        artifact_integrity_approved=previous.artifact_integrity_approved,
+        schema_integrity_approved=previous.schema_integrity_approved,
+        disabled_fail_closed_approved=previous.disabled_fail_closed_approved,
+        authenticated_smoke_approved=previous.authenticated_smoke_approved,
+        rollback_kill_switch_approved=previous.rollback_kill_switch_approved,
+        monitoring_boundary_approved=previous.monitoring_boundary_approved,
+        incident_response_approved=previous.incident_response_approved,
+        operational_owner_approved="PASS",
+        enablement_runbook_approved=previous.enablement_runbook_approved,
+    )
+
+
+CURRENT_T10_READINESS = transition_operational_readiness_after_t15(
+    previous=PRE_T15_T10_READINESS,
+    t15_evaluation=CURRENT_T15_EVALUATION,
+)
 CURRENT_T10_EVALUATION = evaluate_operational_readiness(CURRENT_T10_READINESS)

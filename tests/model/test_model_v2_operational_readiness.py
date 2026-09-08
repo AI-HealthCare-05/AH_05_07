@@ -10,6 +10,7 @@ from app.services.model_v2_operational_readiness import (
     FROZEN_ARTIFACT_SHA256,
     FROZEN_FEATURE_COUNT,
     FROZEN_SCHEMA_VERSION,
+    PRE_T15_T10_EVALUATION,
     OperationalReadiness,
     OperationalReadinessContractError,
     evaluate_operational_readiness,
@@ -115,17 +116,14 @@ def test_decision_object_contains_only_t10_contract_fields():
         assert prohibited not in joined
 
 
-def test_current_t10_snapshot_is_blocked_only_by_operational_owner():
-    assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
-    assert CURRENT_T10_EVALUATION.artifact_integrity_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.schema_integrity_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.disabled_fail_closed_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.authenticated_smoke_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.rollback_kill_switch_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.monitoring_boundary_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.incident_response_approved == "PASS"
-    assert CURRENT_T10_EVALUATION.operational_owner_approved == "BLOCKED"
-    assert CURRENT_T10_EVALUATION.enablement_runbook_approved == "PASS"
+def test_pre_t15_t10_snapshot_is_blocked_only_by_operational_owner():
+    assert PRE_T15_T10_EVALUATION.decision == "BLOCKED"
+    assert PRE_T15_T10_EVALUATION.operational_owner_approved == "BLOCKED"
+
+
+def test_current_t10_snapshot_is_pass_after_t15():
+    assert CURRENT_T10_EVALUATION.decision == "PASS"
+    assert CURRENT_T10_EVALUATION.operational_owner_approved == "PASS"
 
 
 def test_t7_current_decision_remains_no_go_and_operational_not_rewritten():
