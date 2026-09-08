@@ -102,17 +102,23 @@ Issue 자체는 부하 실행 승인이 아니다.
   **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**.
   Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95의 최종 상태: [운영 검증 기록](mvp1-operations-review.md), [P95 pre-flight](api-p95-verification-preflight.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
-- S4 O2: **alternate evidence decision COMPLETE**. production natural 30-day expiration
-  verification은 수행하지 않았다.
-- S4 O3: **COMPLETE / VERIFIED**. [O3 preflight](o3-clean-release-preflight.md)의
-  역사적 게이트와 [sanitized execution evidence](evidence/o3-clean-release-execution.md)에
-  approved SHA, clean checkout, reconciled migration, Cloud Build provenance,
-  API-only no-traffic rollout, activation, rollback, restore, and final smoke를
-  기록했다. 실행 Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)은
+- S4 O2: **alternate evidence decision COMPLETE**. `exact_time_retention_rls_test.sql`
+  의 local retention/RLS contract는 수용했지만 production natural 30-day expiration
+  verification은 수행하지 않았다. deployed expired-row invisibility before physical
+  purge는 별도 승인된 evidence gap으로 남긴다.
+- S4 O3 API clean-release/rehearsal portion: **COMPLETE / VERIFIED**. [O3
+  preflight](o3-clean-release-preflight.md)의 역사적 게이트와 [sanitized execution
+  evidence](evidence/o3-clean-release-execution.md)에 approved SHA, clean checkout,
+  reconciled migration, Cloud Build provenance, API-only no-traffic rollout,
+  activation, rollback, restore, and final smoke를 기록했다. O3는 API-only였으며
+  web clean-environment reproduction은 수행하지 않았으므로 AC-10 overall은
+  **Partial**이다. 실행 Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)은
   이 closeout PR과 연결한다.
-- O1 deferred integrated UI/UX findings: rolling 7-day path가 day-7 progress처럼
-  보일 수 있음; export success notice가 navigation 뒤에도 남음. 기능 범위 완료 후
-  holistic UI/companion composition review에서 함께 다룬다.
+- O1 historical integrated UI/UX findings were later resolved in source: the export
+  success notice is cleared by primary navigation and `popstate`, and recent-seven-day
+  history is labeled separately from challenge progress. Historical O3 evidence remains
+  unchanged and records the findings as they existed then.
+
 - 제출: **COMPLETE / USER ACCEPTED**. 공식 제출물 7종 / 실제 파일 8개이며, 세부
   기록은 [1회차 마감](mvp1-closeout.md)과 [제출 패키지](mvp1-submission-package.md)에 둔다.
 - 발주 범위: **FOLLOW-UP SCOPE DECIDED**. 혈압·7일 챌린지 기록 서비스와 공개 횡단면
@@ -121,6 +127,44 @@ Issue 자체는 부하 실행 승인이 아니다.
   final model 없음, preprocessing/calibration/threshold 미고정, held-out test
   UNOPENED / NOT AUTHORIZED, 승인 serialized artifact 없음이다.
 - 품질·calibration·고연령·외부/한국 사용자 검증, 별도 승인된 단회 test: [모델 카드](model-card.md), [출시 준비](model-release-readiness.md). 이는 향후 GO 조건이며 현재 모델 출시 승인이 아니다.
+
+## Round 2 non-model status
+
+### Completed in source
+
+- T3 session privacy boundary — #304 / PR #306: authenticated `user.id` browser identity
+  boundary, account identity generation, account A → logout/B state clearing, delayed
+  previous-account read/mutation completion suppression, stale previous-account export
+  suppression, same-user token refresh continuity, Back/Forward private-state blocking,
+  and explicit local logout UX are complete in source and browser evidence.
+- Observation export retains the existing bounded eight-second timeout and sends
+  `Cache-Control: no-store`.
+- S01/S14 distinguish product-record retention from the Auth account/email lifecycle and
+  explain that downloaded JSON is a local file outside server retention. The O1
+  operator-approved Auth cleanup is historical operational cleanup, not a user-facing
+  account-removal route.
+- The sign-in empty-state routing regression remains covered.
+- Export-success notice navigation persistence and recent-seven-day/challenge-seven-day
+  ambiguity are resolved against the later source implementation.
+
+### Unresolved / evidence-bound
+
+- Deployed expired-row invisibility before physical purge.
+- AC-10 web clean-environment reproduction.
+- Account-removal operational/support route.
+- R-06 remains **Partial**: source normalization and recovery coverage exist, but an
+  explicit browser assertion for a server `409` / `observation_conflict` response is
+  still absent.
+
+### Production approval required
+
+- Any deployed expiry exercise requires separate production approval.
+
+### Separate implementation Issue required
+
+- Account-removal lifecycle design/implementation.
+- Any actual remaining R-06 implementation gap, if the evidence gap requires code.
+- Web clean-environment reproduction, if pursued.
 
 ## 다음 작업
 

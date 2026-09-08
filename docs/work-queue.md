@@ -63,14 +63,15 @@
 - 범위: 운영 O1/O2/O3, API P95, 제출 시트·최종 검토, 발주 범위 수용, 입력/모델 결정을 정리한다.
 - 완료 기준: [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)의 모든 completion condition에 실행 근거 또는 책임 있는 수용/보류가 기록되었다.
 - 현재 상태: **completion conditions satisfied; #238 closeout after this documentation sync**.
-  후속 기능으로 이동하지 않으며, UI/UX deferred findings는 아래에 보존한다.
+  현재 비모델 후속 경계는 아래 Round 2 reconciliation에 기록한다.
 
 ### S4 최종 결정 요약
 
 - **O1:** COMPLETE / VERIFIED.
 - **O2:** 1회차 alternate evidence accepted. 격리 `exact_time_retention_rls_test.sql`
   17 assertions 등의 retention/RLS 계약 근거를 일정상 수용했으며 production natural
-  expiry는 수행하지 않았다.
+  expiry는 수행하지 않았다. Deployed expired-row invisibility before physical purge는
+  별도 승인-bound evidence로 남긴다.
 - **O3:** COMPLETE / VERIFIED.
 - **API P95:** EXECUTED / OPERATOR VERIFICATION NOT PASSED. `/live`와 `/ready`는
   `c=1/c=4` PASS, `/window` `c=1` warm-up HTTP 503 제외 후 measured `n=0`이다.
@@ -125,7 +126,9 @@
   migration history가 정렬되었다. Schema check는 index **PRESENT**를 확인했으며,
   즉시 Advisor `unused_index` **INFO**는 post-creation context로 보존한다.
 - Web은 재배포하지 않았다. O3는 API-only이며 product writes/model/R2/UI/
-  Cloudflare changes는 모두 `0`이다.
+  Cloudflare changes는 모두 `0`이다. API clean-release/rehearsal portion은
+  **COMPLETE / VERIFIED**지만 web clean-environment reproduction은 outstanding하여
+  AC-10 overall은 **Partial**이다.
 
 ### S4 API P95 — **EXECUTED / OPERATOR VERIFICATION NOT PASSED**
 
@@ -161,10 +164,40 @@
   the immediate Advisor `unused_index` INFO is retained as post-creation context.
 - The submission, scope, and input/model decisions are complete as decisions. They do not
   mean client scope approval, model validation, held-out test execution, or model release.
-- The rolling recent-7-day path can resemble day-7 progress for a new account,
-  and the export success notice persists across navigation. Both are deferred
-  integrated UI/UX findings for the holistic UI/companion composition pass after
-  functional scope completion; do not start piecemeal UI polish in O1 closeout.
+- The rolling recent-7-day/challenge-progress ambiguity and export-success notice
+  navigation persistence were historical findings. Later source implementation and
+  browser evidence resolve both; the historical O3 evidence is not rewritten.
+
+## Round 2 non-model reconciliation
+
+### Resolved since first closeout evidence
+
+- T3 session privacy boundary — #304 / PR #306, including account-scoped state reset,
+  delayed previous-account read/mutation/export suppression, same-user token refresh,
+  Back/Forward blocking, and explicit local logout.
+- Recent-seven-day/challenge-seven-day ambiguity.
+- Export-success notice navigation persistence.
+
+### Approval-bound evidence
+
+- AC-05 deployed expiry behavior: production approval is required before any deployed
+  expired-row exercise. Local exact-time retention pgTAP evidence does not replace it.
+
+### Operations evidence
+
+- AC-10 web clean-environment reproduction remains outstanding. O3 API clean release,
+  public smoke, rollback rehearsal, and final restore are complete and verified.
+
+### Product lifecycle design
+
+- Account-removal operational/support route is unresolved. The current `/users/me` API
+  provides read/update only; O1 operator cleanup does not establish a self-service route.
+
+### Error boundary
+
+- R-06 remains Partial only for the explicit browser assertion of a server
+  `409` / `observation_conflict` response. Do not add an implementation or E2E test in
+  this documentation-only reconciliation.
 
 S4는 모델 출시, test 실행 또는 운영 배포를 자동으로 승인하지 않는다.
 
