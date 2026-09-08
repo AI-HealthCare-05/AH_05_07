@@ -11,7 +11,14 @@ import { Scene } from "./SceneShell";
 
 type Props = {
   session: Session;
-  onSessionExpired: () => void;
+  captureRequestContext: (activeSession: Session | null) => ModelV2RequestContext | null;
+  onSessionExpired: (requestContext: ModelV2RequestContext) => void;
+};
+
+export type ModelV2RequestContext = {
+  userId: string;
+  generation: number;
+  accessToken: string;
 };
 
 type ResultState = "idle" | "input_invalid" | "temporarily_unavailable" | "processed";
@@ -117,14 +124,17 @@ function buildPayload(draft: Draft): ModelV2ProductInput | null {
   };
 }
 
-export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
+export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpired }: Props) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [noticeAccepted, setNoticeAccepted] = useState(false);
   const [pending, setPending] = useState(false);
   const [resultState, setResultState] = useState<ResultState>("idle");
   const [message, setMessage] = useState("");
+  const [inputErrorTarget, setInputErrorTarget] = useState<"form" | "age" | "consent" | null>(null);
   const requestInFlight = useRef(false);
   const mounted = useRef(true);
+
+  const inputErrorId = "model-v2-input-error";
 
   useEffect(() => () => {
     mounted.current = false;
@@ -137,6 +147,7 @@ export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
     setDraft((current) => ({ ...current, [key]: value }));
     setResultState("idle");
     setMessage("");
+    setInputErrorTarget(null);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -147,19 +158,24 @@ export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
     if (!payload) {
       setResultState("input_invalid");
       setMessage("필수 입력 항목을 모두 확인해 주세요.");
+      setInputErrorTarget("form");
       return;
     }
     if (payload.age_years < 19) {
       setResultState("input_invalid");
       setMessage("이 기능은 만 19세 이상에서만 사용할 수 있습니다.");
+      setInputErrorTarget("age");
       return;
     }
     if (!noticeAccepted) {
       setResultState("input_invalid");
       setMessage("입력과 결과가 저장되지 않는다는 안내를 확인해 주세요.");
+      setInputErrorTarget("consent");
       return;
     }
 
+    const requestContext = captureRequestContext(session);
+    if (!requestContext) return;
     requestInFlight.current = true;
     setPending(true);
     setResultState("idle");
@@ -172,12 +188,13 @@ export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
     } catch (error) {
       if (!mounted.current) return;
       if (error instanceof ApiRequestError && error.status === 401) {
-        onSessionExpired();
+        onSessionExpired(requestContext);
         return;
       }
       if (error instanceof ApiRequestError && error.status === 422) {
         setResultState("input_invalid");
         setMessage("입력 조합을 확인해 주세요. 수정한 뒤 다시 시도할 수 있습니다.");
+        setInputErrorTarget("form");
         return;
       }
       setResultState("temporarily_unavailable");
@@ -209,10 +226,15 @@ export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
         </p>
       )}
 
-      <form className="measurement-panel" onSubmit={submit} noValidate>
+      <form
+        className="measurement-panel"
+        onSubmit={submit}
+        noValidate
+        aria-describedby={resultState === "input_invalid" ? inputErrorId : undefined}
+      >
         <div className="field-grid">
           <label htmlFor="model-age">나이
-            <input id="model-age" type="number" min="19" step="1" inputMode="numeric" value={draft.age} onChange={(event) => update("age", event.target.value)} disabled={pending} required />
+            <input id="model-age" type="number" min="19" step="1" inputMode="numeric" value={draft.age} onChange={(event) => update("age", event.target.value)} disabled={pending} required aria-invalid={inputErrorTarget === "age" || undefined} aria-describedby={inputErrorTarget === "age" ? inputErrorId : undefined} />
           </label>
           <label htmlFor="model-sex">성별
             <select id="model-sex" value={draft.sex} onChange={(event) => update("sex", event.target.value as Draft["sex"])} disabled={pending} required>
@@ -294,11 +316,11 @@ export function ModelV2InputFlow({ session, onSessionExpired }: Props) {
         </div>
 
         <label className="signal-consent" htmlFor="model-notice-accepted">
-          <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted} onChange={(event) => setNoticeAccepted(event.target.checked)} disabled={pending} />
+          <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted} onChange={(event) => { setNoticeAccepted(event.target.checked); setResultState("idle"); setMessage(""); setInputErrorTarget(null); }} disabled={pending} aria-invalid={inputErrorTarget === "consent" || undefined} aria-describedby={inputErrorTarget === "consent" ? inputErrorId : undefined} />
           위 안내를 확인했습니다.
         </label>
 
-        {resultState === "input_invalid" && <p className="notice notice-error" role="alert">{message}</p>}
+        {resultState === "input_invalid" && <p id={inputErrorId} className="notice notice-error" role="alert">{message}</p>}
         {resultState === "temporarily_unavailable" && <p className="notice notice-warning" role="status">지금은 신호를 준비할 수 없습니다. 자동으로 다시 요청하지 않습니다.</p>}
         {resultState === "processed" && (
           <div className="signal-card" data-model-v2-user-result="processed" role="status" aria-live="polite">
