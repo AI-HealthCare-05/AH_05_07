@@ -14,7 +14,7 @@ guarantees, every future schema version, or natural thirty-day observation.
 
 - **Phase A source:** `f6a53d17e4c1503e1263e0aba2f8d23629cc21f2`
 - **Phase B execution source:** `8a479fa0aefb9e0dce945cce9fde51c4d77d77d0`
-- **Documentation baseline:** `8a479fa0aefb9e0dce945cce9fde51c4d77d77d0` (`origin/main` at documentation time)
+- **Documentation baseline:** `49763e499e7bf782e7a397da9f92214ebc563275` (latest `origin/main` incorporated before final PR verification)
 
 Between Phase A and Phase B, the Supabase migration and exact-time retention
 contract were rechecked and remained unchanged. This documentation records the
