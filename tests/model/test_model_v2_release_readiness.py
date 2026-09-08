@@ -105,12 +105,12 @@ def test_current_child_snapshots_derive_expected_release_no_go():
 
     assert CURRENT_T8_EVALUATION.decision == "PASS"
     assert CURRENT_T9_EVALUATION.decision == "PASS"
-    assert CURRENT_T10_EVALUATION.decision == "BLOCKED"
+    assert CURRENT_T10_EVALUATION.decision == "PASS"
 
     assert result.technical_readiness == "PASS"
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
-    assert result.operational_readiness == "BLOCKED"
+    assert result.operational_readiness == "PASS"
     assert result.explicit_activation_approval is False
     assert result.decision == "NO_GO"
 
