@@ -7,6 +7,7 @@ Production scoring remains disabled until a later explicit release gate.
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -47,6 +48,48 @@ CATEGORICAL = {
     "alcohol_frequency",
     "alcohol_amount_category",
     "strength_days_7d",
+}
+
+SEX_KNHANES_CATEGORIES = (1, 2)
+CIGARETTE_SMOKING_CATEGORIES = (
+    "daily_current",
+    "occasional_current",
+    "former_currently_not_smoking",
+    "never_smoked",
+)
+ALCOHOL_FREQUENCY_CATEGORIES = (
+    "none_past_year",
+    "lt_monthly",
+    "monthly_once",
+    "monthly_2_4",
+    "weekly_2_3",
+    "weekly_4_plus",
+    "lifetime_nonapplicable",
+)
+ALCOHOL_AMOUNT_CATEGORIES = (
+    "1_2_drinks",
+    "3_4_drinks",
+    "5_6_drinks",
+    "7_9_drinks",
+    "10_plus_drinks",
+    "none",
+)
+STRENGTH_DAYS_CATEGORIES = (
+    "0_days",
+    "1_day",
+    "2_days",
+    "3_days",
+    "4_days",
+    "5_plus_days",
+)
+NON_DRINKING_FREQUENCIES = {"none_past_year", "lifetime_nonapplicable"}
+
+CANONICAL_CATEGORIES = {
+    "sex_knhanes": SEX_KNHANES_CATEGORIES,
+    "cigarette_smoking_state": CIGARETTE_SMOKING_CATEGORIES,
+    "alcohol_frequency": ALCOHOL_FREQUENCY_CATEGORIES,
+    "alcohol_amount_category": ALCOHOL_AMOUNT_CATEGORIES,
+    "strength_days_7d": STRENGTH_DAYS_CATEGORIES,
 }
 
 
@@ -101,56 +144,99 @@ def _require_exact_keys(payload: Mapping[str, Any]) -> None:
         raise ModelV2InputError(f"unexpected Model V2 features: {extra}")
 
 
-def _coerce_optional_float(name: str, value: Any) -> float | None:
+def _validate_optional_number(name: str, value: Any) -> float | None:
     if value is None:
         return None
-    try:
-        result = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ModelV2InputError(f"{name}: expected numeric value or null") from exc
-
-    import math
-
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ModelV2InputError(f"{name}: expected numeric value or null")
+    result = float(value)
     if not math.isfinite(result):
         raise ModelV2InputError(f"{name}: non-finite numeric value")
     return result
 
 
-def validate_semantic_input(payload: Mapping[str, Any]) -> dict[str, Any]:
-    _require_exact_keys(payload)
-    clean = dict(payload)
+def _validate_optional_string_category(name: str, value: Any, allowed: tuple[str, ...]) -> None:
+    if value is None:
+        return
+    if not isinstance(value, str) or value not in allowed:
+        raise ModelV2InputError(f"{name}: noncanonical category")
 
-    numeric_values = {name: _coerce_optional_float(name, clean[name]) for name in NUMERIC}
 
-    def bounds(
-        name: str,
-        *,
-        low: float | None = None,
-        high: float | None = None,
-        open_low: bool = False,
-    ) -> None:
+def _validate_optional_sex_category(value: Any) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ModelV2InputError("sex_knhanes: expected numeric category 1 or 2 or null")
+    numeric = float(value)
+    if not math.isfinite(numeric) or numeric not in SEX_KNHANES_CATEGORIES:
+        raise ModelV2InputError("sex_knhanes: noncanonical category")
+
+
+def _validate_numeric_domains(numeric_values: Mapping[str, float | None]) -> None:
+    bounds = {
+        "age_years": (19, None, False),
+        "bmi_from_height_weight": (0, None, True),
+        "walking_days_7d": (0, 7, False),
+        "walking_minutes_per_active_day": (0, 1440, False),
+        "weekday_sleep_minutes": (0, 1440, False),
+        "weekend_sleep_minutes": (0, 1440, False),
+    }
+    for name, (low, high, open_low) in bounds.items():
         value = numeric_values[name]
         if value is None:
-            return
+            continue
         if low is not None:
-            violates = value <= low if open_low else value < low
-            if violates:
+            violates_low = value <= low if open_low else value < low
+            if violates_low:
                 raise ModelV2InputError(f"{name}: below allowed domain")
         if high is not None and value > high:
             raise ModelV2InputError(f"{name}: above allowed domain")
 
-    bounds("age_years", low=19)
-    bounds("bmi_from_height_weight", low=0, open_low=True)
-    bounds("walking_days_7d", low=0, high=7)
-    bounds("walking_minutes_per_active_day", low=0, high=1440)
-    bounds("weekday_sleep_minutes", low=0, high=1440)
-    bounds("weekend_sleep_minutes", low=0, high=1440)
+    walking_days = numeric_values["walking_days_7d"]
+    if walking_days is not None and not walking_days.is_integer():
+        raise ModelV2InputError("walking_days_7d: expected whole-day count")
 
-    # strength_days_7d is frozen as a categorical predictor, but its semantic
-    # domain remains an encoded 0..5 day count.
-    strength = _coerce_optional_float("strength_days_7d", clean["strength_days_7d"])
-    if strength is not None and not (0 <= strength <= 5):
-        raise ModelV2InputError("strength_days_7d: outside allowed domain")
+
+def _validate_categorical_domains(clean: Mapping[str, Any]) -> None:
+    _validate_optional_sex_category(clean["sex_knhanes"])
+    categorical_validators = (
+        (
+            "cigarette_smoking_state",
+            CIGARETTE_SMOKING_CATEGORIES,
+        ),
+        ("alcohol_frequency", ALCOHOL_FREQUENCY_CATEGORIES),
+        ("alcohol_amount_category", ALCOHOL_AMOUNT_CATEGORIES),
+        ("strength_days_7d", STRENGTH_DAYS_CATEGORIES),
+    )
+    for name, allowed in categorical_validators:
+        _validate_optional_string_category(name, clean[name], allowed)
+
+
+def _validate_structural_consistency(clean: Mapping[str, Any], numeric_values: Mapping[str, float | None]) -> None:
+    walking_days = numeric_values["walking_days_7d"]
+    walking_minutes = numeric_values["walking_minutes_per_active_day"]
+    if walking_days == 0 and walking_minutes != 0:
+        raise ModelV2InputError("walking_minutes_per_active_day: zero walking days requires structural zero minutes")
+
+    alcohol_frequency = clean["alcohol_frequency"]
+    alcohol_amount = clean["alcohol_amount_category"]
+    if alcohol_frequency in NON_DRINKING_FREQUENCIES and alcohol_amount != "none":
+        raise ModelV2InputError("alcohol_amount_category: non-drinking branch requires none")
+    if alcohol_frequency is not None and alcohol_frequency not in NON_DRINKING_FREQUENCIES and alcohol_amount == "none":
+        raise ModelV2InputError("alcohol_amount_category: none contradicts drinking frequency")
+
+
+def validate_semantic_input(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ModelV2InputError("Model V2 payload must be a mapping")
+
+    _require_exact_keys(payload)
+    clean = dict(payload)
+    numeric_values = {name: _validate_optional_number(name, clean[name]) for name in NUMERIC}
+
+    _validate_numeric_domains(numeric_values)
+    _validate_categorical_domains(clean)
+    _validate_structural_consistency(clean, numeric_values)
 
     for name, value in numeric_values.items():
         clean[name] = value

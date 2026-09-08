@@ -13,6 +13,7 @@ from pathlib import Path
 import joblib
 
 from app.services.model_v2_inference import (
+    CANONICAL_CATEGORIES,
     EXPECTED_ARTIFACT_SHA256,
     EXPECTED_PRODUCT_WORDING,
     EXPECTED_SCHEMA_VERSION,
@@ -27,6 +28,13 @@ from app.services.model_v2_inference import (
 
 PASS = "PASS_INFERENCE_INTEGRATION_READY_PRODUCTION_DISABLED"
 STOP = "STOP_INFERENCE_INTEGRATION_FAILED"
+CATEGORICAL_FEATURES = [
+    "sex_knhanes",
+    "cigarette_smoking_state",
+    "alcohol_frequency",
+    "alcohol_amount_category",
+    "strength_days_7d",
+]
 
 
 def sha256(path: Path) -> str:
@@ -40,14 +48,14 @@ def sha256(path: Path) -> str:
 def valid_payload() -> dict[str, object]:
     return {
         "age_years": 35,
-        "sex_knhanes": "1.0",
+        "sex_knhanes": 1,
         "bmi_from_height_weight": 23.5,
-        "cigarette_smoking_state": "never",
-        "alcohol_frequency": "2.0",
-        "alcohol_amount_category": "1.0",
+        "cigarette_smoking_state": "never_smoked",
+        "alcohol_frequency": "lt_monthly",
+        "alcohol_amount_category": "1_2_drinks",
         "walking_days_7d": 4,
         "walking_minutes_per_active_day": 40,
-        "strength_days_7d": 2,
+        "strength_days_7d": "2_days",
         "weekday_sleep_minutes": 420,
         "weekend_sleep_minutes": 480,
     }
@@ -81,6 +89,91 @@ def schema_mismatch_rejected(artifact: Path) -> bool:
         ModelV2ArtifactError,
         lambda: _validate_artifact_payload(altered),
     )
+
+
+def _plain_category(value):
+    item = getattr(value, "item", None)
+    return item() if callable(item) else value
+
+
+def fitted_category_parity(artifact_payload: dict) -> dict[str, dict[str, object]]:
+    pipeline = artifact_payload["pipeline"]
+    preprocess = pipeline.named_steps["preprocess"]
+    categorical = preprocess.named_transformers_["categorical"]
+    encoder = categorical.named_steps["encoder"]
+    fitted = encoder.categories_
+
+    if len(fitted) != len(CATEGORICAL_FEATURES):
+        raise SystemExit("STOP: fitted categorical encoder width does not match frozen feature contract")
+
+    result: dict[str, dict[str, object]] = {}
+    for feature, fitted_values in zip(CATEGORICAL_FEATURES, fitted, strict=True):
+        expected_values = list(CANONICAL_CATEGORIES[feature])
+        actual_values = [_plain_category(value) for value in fitted_values.tolist()]
+        expected = set(expected_values)
+        actual = set(actual_values)
+        missing_expected = [value for value in expected_values if value not in actual]
+        unexpected = [value for value in actual_values if value not in expected and value != "__missing__"]
+        result[feature] = {
+            "expected": expected_values,
+            "fitted": actual_values,
+            "missing_expected": missing_expected,
+            "unexpected": unexpected,
+            "passed": not missing_expected and not unexpected,
+        }
+
+    return result
+
+
+def fitted_category_transform_parity(artifact_payload: dict) -> dict[str, dict[str, object]]:
+    """Prove each canonical category activates its fitted one-hot path."""
+    import numpy as np
+
+    pipeline = artifact_payload["pipeline"]
+    preprocess = pipeline.named_steps["preprocess"]
+    categorical = preprocess.named_transformers_["categorical"]
+    encoder = categorical.named_steps["encoder"]
+    fitted = [list(values.tolist()) for values in encoder.categories_]
+
+    if len(fitted) != len(CATEGORICAL_FEATURES):
+        raise SystemExit("STOP: fitted categorical encoder width does not match frozen feature contract")
+
+    offsets: list[int] = []
+    offset = 0
+    for values in fitted:
+        offsets.append(offset)
+        offset += len(values)
+
+    baseline = [CANONICAL_CATEGORIES[feature][0] for feature in CATEGORICAL_FEATURES]
+    result: dict[str, dict[str, object]] = {}
+
+    for feature_index, feature in enumerate(CATEGORICAL_FEATURES):
+        feature_results: dict[str, bool] = {}
+        actual_values = [_plain_category(value) for value in fitted[feature_index]]
+        feature_start = offsets[feature_index]
+        feature_end = feature_start + len(actual_values)
+
+        for canonical in CANONICAL_CATEGORIES[feature]:
+            if canonical not in actual_values:
+                feature_results[str(canonical)] = False
+                continue
+
+            row = list(baseline)
+            row[feature_index] = canonical
+            transformed = encoder.transform(np.asarray([row], dtype=object))
+            dense = transformed.toarray()[0] if hasattr(transformed, "toarray") else np.asarray(transformed)[0]
+            expected_index = feature_start + actual_values.index(canonical)
+            feature_slice = dense[feature_start:feature_end]
+            feature_results[str(canonical)] = bool(
+                dense[expected_index] == 1 and np.isclose(float(feature_slice.sum()), 1.0)
+            )
+
+        result[feature] = {
+            "canonical_transform_paths": feature_results,
+            "passed": all(feature_results.values()),
+        }
+
+    return result
 
 
 def legacy_route_remains_fail_closed(repo_root: Path) -> bool:
@@ -122,6 +215,16 @@ def verify(args: argparse.Namespace) -> int:
 
     # The real artifact is loaded only after explicit enabled=True and exact hash verification.
     boundary = ModelV2InferenceBoundary(artifact, enabled=True)
+    artifact_payload = load_verified_artifact(artifact, enabled=True)
+    category_parity = fitted_category_parity(artifact_payload)
+    fitted_categories_match = all(item["passed"] for item in category_parity.values())
+    if not fitted_categories_match:
+        raise SystemExit("STOP: frozen artifact fitted categories do not match G3 semantic contract")
+
+    category_transform_parity = fitted_category_transform_parity(artifact_payload)
+    fitted_category_transform_matches = all(item["passed"] for item in category_transform_parity.values())
+    if not fitted_category_transform_matches:
+        raise SystemExit("STOP: canonical category did not activate its fitted encoder path")
 
     base = valid_payload()
     result_a = boundary.score(base)
@@ -139,11 +242,17 @@ def verify(args: argparse.Namespace) -> int:
     bad_walk_days = dict(base)
     bad_walk_days["walking_days_7d"] = 8
 
+    fractional_walk_days = dict(base)
+    fractional_walk_days["walking_days_7d"] = 2.5
+
     bad_walk_minutes = dict(base)
     bad_walk_minutes["walking_minutes_per_active_day"] = -1
 
     bad_strength = dict(base)
-    bad_strength["strength_days_7d"] = 6
+    bad_strength["strength_days_7d"] = 2
+
+    bad_sex = dict(base)
+    bad_sex["sex_knhanes"] = "1.0"
 
     bad_sleep = dict(base)
     bad_sleep["weekday_sleep_minutes"] = 1441
@@ -159,11 +268,12 @@ def verify(args: argparse.Namespace) -> int:
     unknown_category["cigarette_smoking_state"] = "__r2_unknown_fixture__"
 
     missing_value_score = boundary.score(missing_values)
-    unknown_category_score = boundary.score(unknown_category)
 
     checks = {
         "artifact_exists": artifact.is_file(),
         "artifact_sha_matches_frozen_r1": sha256(artifact) == EXPECTED_ARTIFACT_SHA256,
+        "fitted_categories_match_g3_semantics": fitted_categories_match,
+        "canonical_categories_activate_fitted_paths": fitted_category_transform_matches,
         "scoring_disabled_blocks_before_artifact_access": disabled_blocks,
         "missing_artifact_fails_closed": missing_blocks,
         "artifact_sha_mismatch_fails_closed": artifact_sha_mismatch_fails_closed(artifact),
@@ -185,13 +295,21 @@ def verify(args: argparse.Namespace) -> int:
             ModelV2InputError,
             lambda: boundary.score(bad_walk_days),
         ),
+        "fractional_walking_days_rejected": expect_raises(
+            ModelV2InputError,
+            lambda: boundary.score(fractional_walk_days),
+        ),
         "negative_walking_minutes_rejected": expect_raises(
             ModelV2InputError,
             lambda: boundary.score(bad_walk_minutes),
         ),
-        "strength_days_above_5_rejected": expect_raises(
+        "noncanonical_strength_numeric_rejected": expect_raises(
             ModelV2InputError,
             lambda: boundary.score(bad_strength),
+        ),
+        "noncanonical_sex_string_rejected": expect_raises(
+            ModelV2InputError,
+            lambda: boundary.score(bad_sex),
         ),
         "sleep_above_1440_rejected": expect_raises(
             ModelV2InputError,
@@ -202,7 +320,10 @@ def verify(args: argparse.Namespace) -> int:
             lambda: boundary.score(bad_bmi),
         ),
         "valid_missing_values_score": 0.0 <= missing_value_score.score <= 1.0,
-        "unknown_category_scores_safely": 0.0 <= unknown_category_score.score <= 1.0,
+        "unknown_category_rejected": expect_raises(
+            ModelV2InputError,
+            lambda: boundary.score(unknown_category),
+        ),
         "repeated_inference_identical": result_a.score == result_b.score,
         "score_in_unit_interval": 0.0 <= result_a.score <= 1.0,
         "audit_sha_matches": result_a.artifact_sha256 == EXPECTED_ARTIFACT_SHA256,
@@ -225,6 +346,8 @@ def verify(args: argparse.Namespace) -> int:
         "artifact_sha256": EXPECTED_ARTIFACT_SHA256,
         "schema_version": result_a.schema_version,
         "product_wording": result_a.product_wording,
+        "fitted_category_parity": category_parity,
+        "fitted_category_transform_parity": category_transform_parity,
         "repeated_score_abs_diff": abs(result_a.score - result_b.score),
         "production_scoring_enabled": False,
         "threshold_applied": False,
@@ -248,6 +371,8 @@ def verify(args: argparse.Namespace) -> int:
 
     print("R2 decision:", decision)
     print("artifact SHA-256:", EXPECTED_ARTIFACT_SHA256)
+    print("fitted category parity:", fitted_categories_match)
+    print("fitted category transform parity:", fitted_category_transform_matches)
     print("repeated score abs diff:", f"{abs(result_a.score - result_b.score):.3e}")
     print("production scoring enabled: False")
     print("evidence:", out)
