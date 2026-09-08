@@ -26,6 +26,10 @@ import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eH
 import { supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
+import {
+  getModelV2ResultView,
+  resolveModelV2ResultState,
+} from "./ui/modelV2ResultState";
 
 const challengeActions = [
   { id: "walk-10-minutes", label: "10분 걷기", note: "가볍게 바깥 공기를 만나는 시간" },
@@ -188,6 +192,11 @@ function App() {
   );
   const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
   const evidenceMode = Boolean(fixture);
+  const modelV2ResultState = useMemo(
+    () => resolveModelV2ResultState(initialSearch.get("model_v2_state"), allowsE2eFixture()),
+    [initialSearch],
+  );
+  const modelV2ResultView = getModelV2ResultView(modelV2ResultState);
   const [requestedScreen, setRequestedScreen] = useState<ScreenId>(() => parseScreen(initialSearch.get("screen")));
   const [dashboardWindow, setDashboardWindow] = useState<DashboardWindow>(() => initialSearch.get("dashboard_window") === "prior" ? "prior" : "current");
   const selectedBounds = useMemo(
@@ -873,7 +882,7 @@ function App() {
     }
 
     if (activeScreen === "S11") {
-      return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card"><span className="status-pill">아직 준비 중이에요</span><h2>검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.</h2><p>현재는 점수, 확률, 등급을 표시하지 않습니다.</p></div><p className="signal-disclaimer">이 신호는 진단·치료·예방 판단을 제공하지 않습니다.</p></Scene>;
+      return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-result-state={modelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{modelV2ResultView.status}</span><h2>{modelV2ResultView.heading}</h2><p>{modelV2ResultView.body}</p></div><p className="signal-disclaimer">{modelV2ResultView.disclaimer}</p></Scene>;
     }
 
     return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>현재 화면에는 Auth 계정 삭제 기능이 없습니다. 30일 후 계정이나 이메일이 자동 삭제된다는 뜻은 아니에요.</p></div></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
