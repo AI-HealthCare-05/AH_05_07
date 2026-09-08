@@ -103,9 +103,10 @@ Issue 자체는 부하 실행 승인이 아니다.
   Issue #252 completion is pending only on this closeout PR merge.
 - 운영 O1/O2/O3와 API P95의 최종 상태: [운영 검증 기록](mvp1-operations-review.md), [P95 pre-flight](api-p95-verification-preflight.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - S4 O2: **alternate evidence decision COMPLETE**. `exact_time_retention_rls_test.sql`
-  의 local retention/RLS contract는 수용했지만 production natural 30-day expiration
-  verification은 수행하지 않았다. deployed expired-row invisibility before physical
-  purge는 별도 승인된 evidence gap으로 남긴다.
+  의 17 assertions 등 local retention/RLS contract와 owner-approved deployed
+  synthetic expiry evidence가 모두 기록되었다. [AC-05 deployed expiry evidence](evidence/ac05-deployed-expiry-invisibility.md)는
+  physical presence와 physical purge 전 owner invisibility를 확인하며, natural
+  thirty-day observation이나 broader security guarantee는 주장하지 않는다.
 - S4 O3 API clean-release/rehearsal portion: **COMPLETE / VERIFIED**. [O3
   preflight](o3-clean-release-preflight.md)의 역사적 게이트와 [sanitized execution
   evidence](evidence/o3-clean-release-execution.md)에 approved SHA, clean checkout,
@@ -157,12 +158,11 @@ Issue 자체는 부하 실행 승인이 아니다.
 
 ### Unresolved / evidence-bound
 
-- Deployed expired-row invisibility before physical purge.
 - Account-removal operational/support route.
 
-### Production approval required
+### Completed evidence
 
-- Any deployed expiry exercise requires separate production approval.
+- Deployed expired-row invisibility before physical purge — AC-05 / R-03 evidence is recorded in [the sanitized evidence record](evidence/ac05-deployed-expiry-invisibility.md).
 
 ### Separate implementation Issue required
 

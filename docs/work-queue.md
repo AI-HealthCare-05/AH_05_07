@@ -69,9 +69,10 @@
 
 - **O1:** COMPLETE / VERIFIED.
 - **O2:** 1회차 alternate evidence accepted. 격리 `exact_time_retention_rls_test.sql`
-  17 assertions 등의 retention/RLS 계약 근거를 일정상 수용했으며 production natural
-  expiry는 수행하지 않았다. Deployed expired-row invisibility before physical purge는
-  별도 승인-bound evidence로 남긴다.
+  17 assertions 등의 retention/RLS 계약 근거와 owner-approved deployed synthetic
+  expiry evidence가 기록되었다. Production natural thirty-day observation은 수행하지
+  않았지만, deployed expired-row invisibility before physical purge는 [sanitized
+  evidence](evidence/ac05-deployed-expiry-invisibility.md)로 확인되었다.
 - **O3:** COMPLETE / VERIFIED.
 - **API P95:** EXECUTED / OPERATOR VERIFICATION NOT PASSED. `/live`와 `/ready`는
   `c=1/c=4` PASS, `/window` `c=1` warm-up HTTP 503 제외 후 measured `n=0`이다.
@@ -179,10 +180,11 @@
 - Recent-seven-day/challenge-seven-day ambiguity.
 - Export-success notice navigation persistence.
 
-### Approval-bound evidence
+### Completed evidence
 
-- AC-05 deployed expiry behavior: production approval is required before any deployed
-  expired-row exercise. Local exact-time retention pgTAP evidence does not replace it.
+- AC-05 deployed expiry behavior: **COMPLETE**. The owner-approved deployed synthetic
+  exercise confirms physical presence plus authenticated-owner invisibility before purge,
+  rollback, and zero residual synthetic rows in [the evidence record](evidence/ac05-deployed-expiry-invisibility.md).
 
 ### Operations evidence
 
