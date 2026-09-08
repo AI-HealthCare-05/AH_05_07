@@ -149,9 +149,7 @@ def test_evaluation_does_not_mutate_scoring_environment(monkeypatch):
     monkeypatch.setenv("MODEL_V2_SCORING_ENABLED", "false")
     before = dict(os.environ)
 
-    result = evaluate_activation_payload(
-        {**ALL_PASS_NO_APPROVAL, "explicit_activation_approval": True}
-    )
+    result = evaluate_activation_payload({**ALL_PASS_NO_APPROVAL, "explicit_activation_approval": True})
 
     assert result.decision == "GO"
     assert dict(os.environ) == before

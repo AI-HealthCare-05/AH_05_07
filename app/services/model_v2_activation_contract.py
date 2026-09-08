@@ -46,9 +46,7 @@ class ActivationEvaluation:
 
 def _readiness_state(name: str, value: object) -> ReadinessState:
     if not isinstance(value, str) or value not in READINESS_STATES:
-        raise ActivationContractError(
-            f"{name} must be one of PASS, BLOCKED, NOT_REVIEWED"
-        )
+        raise ActivationContractError(f"{name} must be one of PASS, BLOCKED, NOT_REVIEWED")
     return value  # type: ignore[return-value]
 
 
@@ -60,27 +58,17 @@ def parse_activation_readiness(payload: Mapping[str, object]) -> ActivationReadi
     missing = [name for name in REQUIRED_DIMENSIONS if name not in payload]
     extra = [name for name in keys if name not in REQUIRED_DIMENSIONS]
     if missing or extra:
-        raise ActivationContractError(
-            f"activation readiness fields mismatch: missing={missing}, extra={extra}"
-        )
+        raise ActivationContractError(f"activation readiness fields mismatch: missing={missing}, extra={extra}")
 
     explicit = payload["explicit_activation_approval"]
     if type(explicit) is not bool:
         raise ActivationContractError("explicit_activation_approval must be boolean")
 
     return ActivationReadiness(
-        technical_readiness=_readiness_state(
-            "technical_readiness", payload["technical_readiness"]
-        ),
-        product_readiness=_readiness_state(
-            "product_readiness", payload["product_readiness"]
-        ),
-        privacy_readiness=_readiness_state(
-            "privacy_readiness", payload["privacy_readiness"]
-        ),
-        operational_readiness=_readiness_state(
-            "operational_readiness", payload["operational_readiness"]
-        ),
+        technical_readiness=_readiness_state("technical_readiness", payload["technical_readiness"]),
+        product_readiness=_readiness_state("product_readiness", payload["product_readiness"]),
+        privacy_readiness=_readiness_state("privacy_readiness", payload["privacy_readiness"]),
+        operational_readiness=_readiness_state("operational_readiness", payload["operational_readiness"]),
         explicit_activation_approval=explicit,
     )
 
@@ -97,11 +85,7 @@ def evaluate_activation_readiness(
             readiness.operational_readiness,
         )
     )
-    decision: ActivationDecision = (
-        "GO"
-        if readiness_passed and readiness.explicit_activation_approval
-        else "NO_GO"
-    )
+    decision: ActivationDecision = "GO" if readiness_passed and readiness.explicit_activation_approval else "NO_GO"
 
     return ActivationEvaluation(
         contract_version=CONTRACT_VERSION,
