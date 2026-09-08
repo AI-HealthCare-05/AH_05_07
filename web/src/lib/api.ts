@@ -86,6 +86,10 @@ export type ObservationExport = {
   filename: string;
 };
 
+export function deleteAccount(session: Session): Promise<void> {
+  return apiFetch<void>("/api/v1/account", session, { method: "DELETE" });
+}
+
 async function boundedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
   let timedOut = false;

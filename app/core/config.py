@@ -42,6 +42,7 @@ class Config(BaseSettings):
 
     SUPABASE_URL: str = ""
     SUPABASE_PUBLISHABLE_KEY: str = ""
+    SUPABASE_SECRET_KEY: str = ""
     API_CORS_ORIGINS: str = ""
 
     JWT_ALGORITHM: str = "HS256"
