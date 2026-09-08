@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
@@ -27,11 +28,48 @@ async def request_account_delete(**kwargs):
         return await client.request("DELETE", "/api/v1/account", **kwargs)
 
 
+class FakeAuthResponse:
+    def __init__(self, status_code: int, payload: object):
+        self.status_code = status_code
+        self._payload = payload
+
+    def json(self):
+        if isinstance(self._payload, Exception):
+            raise self._payload
+        return self._payload
+
+
+class FakeAuthClient:
+    def __init__(self, response: FakeAuthResponse | None = None, error: Exception | None = None):
+        self.response = response
+        self.error = error
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        return None
+
+    async def get(self, *_args, **_kwargs):
+        if self.error is not None:
+            raise self.error
+        return self.response
+
+
+def mock_auth_provider(monkeypatch: pytest.MonkeyPatch, *, response=None, error=None):
+    monkeypatch.setattr(
+        supabase_auth.httpx,
+        "AsyncClient",
+        lambda timeout: FakeAuthClient(response=response, error=error),
+    )
+
+
 @pytest.mark.asyncio
 async def test_no_auth_returns_401(supabase_runtime):
     response = await request_account_delete()
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json() == {"detail": {"code": "supabase_session_required"}}
 
 
 @pytest.mark.asyncio
@@ -70,6 +108,104 @@ async def test_mocked_supabase_user_401_denies_access_token(supabase_runtime, mo
         await supabase_auth.validate_supabase_access_token("old-access-token")
 
     assert error.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert error.value.detail == {"code": "supabase_session_invalid"}
+
+
+@pytest.mark.asyncio
+async def test_valid_supabase_token_returns_authenticated_session(supabase_runtime, monkeypatch):
+    mock_auth_provider(
+        monkeypatch,
+        response=FakeAuthResponse(status.HTTP_200_OK, {"id": CALLER_ID, "email": "provider@example.test"}),
+    )
+
+    session = await supabase_auth.validate_supabase_access_token("access-token")
+
+    assert session == SupabaseSession(user_id=CALLER_ID, access_token="access-token")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error_type",
+    [httpx.ReadTimeout, httpx.ConnectError],
+)
+async def test_auth_transport_failures_are_not_invalid_sessions(supabase_runtime, monkeypatch, error_type):
+    mock_auth_provider(monkeypatch, error=error_type("provider failure"))
+
+    with pytest.raises(HTTPException) as error:
+        await supabase_auth.validate_supabase_access_token("secret-access-token")
+
+    assert error.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert error.value.detail == {
+        "code": "auth_unavailable",
+        "message": "Authentication provider is temporarily unavailable.",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [status.HTTP_429_TOO_MANY_REQUESTS, 500, 502, 503, 400])
+async def test_auth_non_rejection_responses_are_dependency_unavailable(supabase_runtime, monkeypatch, status_code):
+    mock_auth_provider(
+        monkeypatch,
+        response=FakeAuthResponse(
+            status_code,
+            {"message": "provider-internal-detail", "access_token": "upstream-token"},
+        ),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await supabase_auth.validate_supabase_access_token("secret-access-token")
+
+    assert error.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert error.value.detail == {
+        "code": "auth_unavailable",
+        "message": "Authentication provider is temporarily unavailable.",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"message": "provider-internal-detail", "access_token": "upstream-token"},
+        ValueError("malformed provider response"),
+        ["unexpected", "shape"],
+    ],
+)
+async def test_malformed_auth_success_response_is_dependency_unavailable(supabase_runtime, monkeypatch, payload):
+    mock_auth_provider(monkeypatch, response=FakeAuthResponse(status.HTTP_200_OK, payload))
+
+    with pytest.raises(HTTPException) as error:
+        await supabase_auth.validate_supabase_access_token("secret-access-token")
+
+    assert error.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert error.value.detail == {
+        "code": "auth_unavailable",
+        "message": "Authentication provider is temporarily unavailable.",
+    }
+
+
+@pytest.mark.asyncio
+async def test_auth_unavailable_api_response_is_stable_and_sanitized(supabase_runtime, monkeypatch):
+    mock_auth_provider(
+        monkeypatch,
+        response=FakeAuthResponse(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            {"message": "provider-internal-detail", "access_token": "upstream-token"},
+        ),
+    )
+
+    response = await request_account_delete(headers={"Authorization": "Bearer secret-access-token"})
+
+    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json() == {
+        "detail": {
+            "code": "auth_unavailable",
+            "message": "Authentication provider is temporarily unavailable.",
+        }
+    }
+    assert b"secret-access-token" not in response.content
+    assert b"upstream-token" not in response.content
+    assert b"provider-internal-detail" not in response.content
 
 
 @pytest.mark.asyncio
