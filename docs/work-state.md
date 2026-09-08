@@ -111,8 +111,11 @@ Issue 자체는 부하 실행 승인이 아니다.
   evidence](evidence/o3-clean-release-execution.md)에 approved SHA, clean checkout,
   reconciled migration, Cloud Build provenance, API-only no-traffic rollout,
   activation, rollback, restore, and final smoke를 기록했다. O3는 API-only였으며
-  web clean-environment reproduction은 수행하지 않았으므로 AC-10 overall은
-  **Partial**이다. 실행 Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)은
+  web clean-environment reproduction은 [AC-10 web evidence](evidence/ac10-web-clean-release-execution.md)에
+  승인된 source freeze, mirror sync, activation smoke, exact-version rollback,
+  rollback smoke, restore, and final smoke와 함께 기록했다. API O3와 web
+  clean-release/rollback rehearsal이 모두 complete이므로 AC-10 overall은
+  **COMPLETE / VERIFIED**이다. 실행 Issue [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)은
   이 closeout PR과 연결한다.
 - O1 historical integrated UI/UX findings were later resolved in source: the export
   success notice is cleared by primary navigation and `popstate`, and recent-seven-day
@@ -155,7 +158,6 @@ Issue 자체는 부하 실행 승인이 아니다.
 ### Unresolved / evidence-bound
 
 - Deployed expired-row invisibility before physical purge.
-- AC-10 web clean-environment reproduction.
 - Account-removal operational/support route.
 
 ### Production approval required
