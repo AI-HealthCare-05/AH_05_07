@@ -127,8 +127,9 @@
   즉시 Advisor `unused_index` **INFO**는 post-creation context로 보존한다.
 - Web은 재배포하지 않았다. O3는 API-only이며 product writes/model/R2/UI/
   Cloudflare changes는 모두 `0`이다. API clean-release/rehearsal portion은
-  **COMPLETE / VERIFIED**지만 web clean-environment reproduction은 outstanding하여
-  AC-10 overall은 **Partial**이다.
+  **COMPLETE / VERIFIED**이며 web clean-environment release/rollback rehearsal도
+  [AC-10 web evidence](evidence/ac10-web-clean-release-execution.md)에 기록되어
+  AC-10 overall은 **COMPLETE / VERIFIED**이다.
 
 ### S4 API P95 — **EXECUTED / OPERATOR VERIFICATION NOT PASSED**
 
@@ -185,8 +186,9 @@
 
 ### Operations evidence
 
-- AC-10 web clean-environment reproduction remains outstanding. O3 API clean release,
-  public smoke, rollback rehearsal, and final restore are complete and verified.
+- AC-10 is **COMPLETE / VERIFIED**. O3 API clean release and the web
+  clean-environment release, public smoke, rollback rehearsal, rollback smoke,
+  and final restore are complete and recorded in the AC-10 web evidence.
 
 ### Product lifecycle design
 

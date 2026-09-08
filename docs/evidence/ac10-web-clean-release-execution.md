@@ -91,3 +91,44 @@ Original Phase A blockers resolved for baseline `dc83c9ed60ffd3caece47c028a3d054
 **Phase B gate:** rollback candidate READY; latest-main clean-build refresh REQUIRED immediately before Phase B.
 
 AC-10 remains **Partial**. Phase B production rehearsal still requires separate explicit owner approval.
+
+## Phase B — first source-race failure
+
+- **Workflow run:** `34186498061`
+- **Mirror snapshot:** `39abf269a0f062ed78999f849be5c97eddc1503a`
+- **Mirror message:** `sync: 70d3a2e`
+- **Result:** the snapshot did not map to the approved source freeze, so the normal Phase B path was stopped. This failed-attempt history is retained; no second sync was used to conceal it.
+
+## Phase B — delayed deployment recovery
+
+- **Delayed mismatched Worker:** `ae67f59a-9f57-438d-955c-573d1b1367d8`
+- **Safety restore:** `34c9ab45-4896-4c49-9842-8de9bacca483` restored to 100%.
+- **Safety smoke:** PASS.
+
+## Phase B — final successful rerun
+
+- **Approved source:** `0fa4684cd098ee0d3594f03d40126b15bf0ad022`
+- **Source freeze:** PASS immediately before sync and immediately before workflow dispatch; `origin/main` matched exactly.
+- **Latest-main clean reproduction:** PASS — detached exact-source checkout, clean `npm ci`, and `npm run build` exit 0. No production public-variable values were retained.
+- **Mirror pre-sync:** `39abf269a0f062ed78999f849be5c97eddc1503a` — `sync: 70d3a2e`
+- **Mirror workflow:** `34187377748` — [workflow run](https://github.com/emotigom/ah-05-07-pages/actions/runs/34187377748) — SUCCESS.
+- **Mirror snapshot:** `96d893f19e5daed0b45e972bf957b0336094dad2` — `sync: 0fa4684`.
+- **PRE_DEPLOY_WORKER:** `34c9ab45-4896-4c49-9842-8de9bacca483` at 100% before deployment.
+- **NEW_WORKER:** `026fafcb-b8e8-45ed-a331-ee2d3279e3f7`, identified after the successful mirror mapping and active at 100%.
+- **Activation smoke:** PASS.
+- **Rollback runtime:** `34c9ab45-4896-4c49-9842-8de9bacca483` at 100%.
+- **Rollback smoke:** PASS.
+- **Restored runtime:** `026fafcb-b8e8-45ed-a331-ee2d3279e3f7` at 100%, using the already-created version.
+- **Final smoke:** PASS.
+- **Final production:** `026fafcb-b8e8-45ed-a331-ee2d3279e3f7` at 100%.
+
+### Phase B boundaries
+
+- **API deployment:** 0
+- **DB/RLS/migration changes:** 0
+- **Account actions:** 0
+- **Product/health data writes:** 0
+- **AI Model actions:** 0
+- **Raw Wrangler JSON, tokens, VITE values, account metadata, and product data:** not retained.
+
+**AC-10 web clean-release rehearsal = COMPLETE.**
