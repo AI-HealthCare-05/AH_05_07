@@ -94,10 +94,10 @@ def test_enabled_path_uses_frozen_semantic_validator(monkeypatch: pytest.MonkeyP
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
-        "score": 0.42,
         "schema_version": "model-v2-r1-schema-v1",
         "product_wording": "입력 기반 위험군 선별 신호",
     }
+    assert "score" not in response.json()
 
 
 def test_enabled_path_rejects_malformed_semantic_payload(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -19,7 +19,6 @@ model_v2_router = APIRouter(prefix="/model-v2", tags=["model-v2"])
 
 
 class ModelV2ScoreResponse(BaseModel):
-    score: float
     schema_version: str
     product_wording: str
 
@@ -78,14 +77,13 @@ async def score_model_v2(
         raise _model_not_ready()
 
     try:
-        result = ModelV2InferenceBoundary().score(payload)
+        ModelV2InferenceBoundary().score(payload)
     except ModelV2InputError as exc:
         raise _model_input_invalid() from exc
     except (ModelV2DisabledError, ModelV2ArtifactError, ModelV2BoundaryError) as exc:
         raise _model_not_ready() from exc
 
     return ModelV2ScoreResponse(
-        score=result.score,
         schema_version=EXPECTED_SCHEMA_VERSION,
         product_wording=EXPECTED_PRODUCT_WORDING,
     )
