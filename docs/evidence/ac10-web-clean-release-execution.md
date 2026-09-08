@@ -56,3 +56,38 @@
 - **Production public smoke:** NOT RUN
 
 Phase B production rehearsal requires separate explicit owner approval.
+
+## Phase A.5 — operator clean-build unblock
+
+- **Execution type:** operator-executed clean reproduction
+- **Clean-build source SHA:** `dc83c9ed60ffd3caece47c028a3d0546f40c6de6`
+- **Production public build-variable classes available:** PASS
+- **Clean worktree:** PASS
+- **`web/node_modules` initially absent:** PASS
+- **`web/dist` initially absent:** PASS
+- **`npm ci`:** PASS
+- **Production-equivalent build:** PASS
+- **Generated secret boundary:** PASS
+- **Production traffic changes:** 0
+- **Deployment mirror sync:** NOT RUN
+- **Worker deployment:** NOT RUN
+- **Rollback:** NOT RUN
+- **Restore:** NOT RUN
+
+The earlier production-variable and rollback-candidate BLOCKED history is retained above and was subsequently resolved for the clean-build baseline recorded here.
+
+## Phase A.5 — read-only rollback candidate resolution
+
+- **Current active complete Worker version:** `34c9ab45-4896-4c49-9842-8de9bacca483`
+- **Most recent distinct previous real production deployment:** `2e3c04cb-a323-4074-83cf-6a8911526bf8`
+- **Complete previous version:** `2e3c04cb-a323-4074-83cf-6a8911526bf8`
+- **Previous candidate preview-only:** NO — it was listed as a 100% deployment; version detail identified it as a Wrangler-uploaded version. Preview capability does not make it preview-only.
+- **Candidate distinct from current:** PASS
+- **Candidate identity verification:** PASS — full UUID matched and identity was unambiguous.
+- **Raw JSON and sensitive metadata:** not retained.
+
+Original Phase A blockers resolved for baseline `dc83c9ed60ffd3caece47c028a3d0546f40c6de6`.
+
+**Phase B gate:** rollback candidate READY; latest-main clean-build refresh REQUIRED immediately before Phase B.
+
+AC-10 remains **Partial**. Phase B production rehearsal still requires separate explicit owner approval.
