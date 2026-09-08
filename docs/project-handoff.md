@@ -52,8 +52,10 @@ canonical architecture contracts are [architecture invariants](architecture/ARCH
 [technical depth plan](architecture/TECHNICAL_DEPTH_PLAN.md),
 [workstreams](architecture/WORKSTREAMS.md), and
 [release contract](architecture/RELEASE_CONTRACT.md). Runtime and deployment
-evidence is [deployment SSOT](deployment-ssot.md). Issue #363 is still a branch
-candidate here; do not describe it as merged.
+evidence is [deployment SSOT](deployment-ssot.md). When these contracts are read
+from the pre-merge #363 branch, they are candidate contracts. After #363 is
+merged, the resulting main merge SHA becomes Checkpoint 0; always resolve
+origin/main before starting a workstream.
 
 The historical closeout-preparation authority is [MVP1 closeout](mvp1-closeout.md),
 Issue #225. Its remaining conditions are now tracked by [Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
