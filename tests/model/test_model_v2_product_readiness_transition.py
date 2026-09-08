@@ -119,23 +119,23 @@ def test_t9_and_t10_are_pass_after_t15():
     assert CURRENT_T10_EVALUATION.decision == "PASS"
 
 
-def test_t11_rederived_snapshot_reads_product_pass_but_remains_no_go():
+def test_t11_rederived_snapshot_is_go_after_t16():
     result = derive_current_release_readiness()
 
     assert result.technical_readiness == "PASS"
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "PASS"
-    assert result.explicit_activation_approval is False
-    assert result.decision == "NO_GO"
+    assert result.explicit_activation_approval is True
+    assert result.decision == "GO"
 
 
-def test_imported_t11_current_snapshot_is_no_go():
+def test_imported_t11_current_snapshot_is_go_after_t16():
     assert CURRENT_T11_EVALUATION.product_readiness == "PASS"
     assert CURRENT_T11_EVALUATION.privacy_readiness == "PASS"
     assert CURRENT_T11_EVALUATION.operational_readiness == "PASS"
-    assert CURRENT_T11_EVALUATION.explicit_activation_approval is False
-    assert CURRENT_T11_EVALUATION.decision == "NO_GO"
+    assert CURRENT_T11_EVALUATION.explicit_activation_approval is True
+    assert CURRENT_T11_EVALUATION.decision == "GO"
 
 
 def test_transition_does_not_mutate_environment(monkeypatch):
@@ -157,4 +157,4 @@ def test_no_artifact_or_production_credentials_are_required(monkeypatch):
     monkeypatch.delenv("MODEL_V2_SCORING_ENABLED", raising=False)
 
     assert CURRENT_T8_EVALUATION.decision == "PASS"
-    assert derive_current_release_readiness().decision == "NO_GO"
+    assert derive_current_release_readiness().decision == "GO"
