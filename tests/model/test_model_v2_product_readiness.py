@@ -6,6 +6,7 @@ from app.services.model_v2_activation_contract import CURRENT_T7_EVALUATION
 from app.services.model_v2_product_readiness import (
     CONTRACT_VERSION,
     CURRENT_T8_EVALUATION,
+    PRE_T13_T8_EVALUATION,
     ProductReadiness,
     ProductReadinessContractError,
     evaluate_product_readiness,
@@ -97,13 +98,17 @@ def test_decision_object_contains_only_t8_contract_fields():
         assert prohibited not in joined
 
 
-def test_current_t8_snapshot_is_blocked():
-    assert CURRENT_T8_EVALUATION.decision == "BLOCKED"
+def test_pre_t13_t8_snapshot_is_blocked():
+    assert PRE_T13_T8_EVALUATION.decision == "BLOCKED"
+
+
+def test_current_t8_snapshot_is_pass_after_t13():
+    assert CURRENT_T8_EVALUATION.decision == "PASS"
     assert CURRENT_T8_EVALUATION.product_term_approved == "PASS"
     assert CURRENT_T8_EVALUATION.result_visibility_approved == "PASS"
-    assert CURRENT_T8_EVALUATION.age_applicability_approved == "BLOCKED"
+    assert CURRENT_T8_EVALUATION.age_applicability_approved == "PASS"
     assert CURRENT_T8_EVALUATION.missing_policy_approved == "PASS"
-    assert CURRENT_T8_EVALUATION.research_product_applicability_approved == "BLOCKED"
+    assert CURRENT_T8_EVALUATION.research_product_applicability_approved == "PASS"
     assert CURRENT_T8_EVALUATION.data_separation_approved == "PASS"
 
 

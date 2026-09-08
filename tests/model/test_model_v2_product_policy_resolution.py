@@ -11,7 +11,10 @@ from app.services.model_v2_product_policy_resolution import (
     ProductPolicyResolutionContractError,
     evaluate_product_policy_resolution_payload,
 )
-from app.services.model_v2_product_readiness import CURRENT_T8_EVALUATION
+from app.services.model_v2_product_readiness import (
+    CURRENT_T8_EVALUATION,
+    PRE_T13_T8_EVALUATION,
+)
 from app.services.model_v2_release_readiness import CURRENT_T11_EVALUATION
 
 ALL_PASS = {
@@ -81,10 +84,16 @@ def test_current_t12_policy_snapshot_is_pass():
     assert CURRENT_T12_EVALUATION.decision == "PASS"
 
 
-def test_current_t8_historical_snapshot_remains_blocked():
-    assert CURRENT_T8_EVALUATION.age_applicability_approved == "BLOCKED"
-    assert CURRENT_T8_EVALUATION.research_product_applicability_approved == "BLOCKED"
-    assert CURRENT_T8_EVALUATION.decision == "BLOCKED"
+def test_pre_t13_t8_historical_snapshot_remains_blocked():
+    assert PRE_T13_T8_EVALUATION.age_applicability_approved == "BLOCKED"
+    assert PRE_T13_T8_EVALUATION.research_product_applicability_approved == "BLOCKED"
+    assert PRE_T13_T8_EVALUATION.decision == "BLOCKED"
+
+
+def test_current_t8_snapshot_is_pass_after_t13():
+    assert CURRENT_T8_EVALUATION.age_applicability_approved == "PASS"
+    assert CURRENT_T8_EVALUATION.research_product_applicability_approved == "PASS"
+    assert CURRENT_T8_EVALUATION.decision == "PASS"
 
 
 def test_other_release_gates_remain_blocked_or_no_go():
