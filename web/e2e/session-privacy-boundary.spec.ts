@@ -67,6 +67,15 @@ async function routeWindow(page: Page, resolveWindow: (token: string) => unknown
   });
 }
 
+test("normal synthetic sign-in keeps the existing empty-state routing", async ({ page }) => {
+  await routeWindow(page, () => emptyWindow);
+  await page.goto("/");
+  await dispatchSession(page, accountA);
+
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
+});
+
 test("A to logout to B clears private records and keeps only B window", async ({ page }) => {
   await routeWindow(page, (token) => token === accountB.access_token ? windowWithMeasurement("b-record", 130, 85) : windowWithMeasurement("a-record", 120, 80));
   await page.goto("/?e2e=signed-in&screen=S10");

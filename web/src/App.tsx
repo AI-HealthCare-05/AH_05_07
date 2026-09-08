@@ -219,7 +219,6 @@ function App() {
   const sessionRef = useRef<Session | null>(e2eSession);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
   const sessionUpdateVersionRef = useRef(0);
-  const suppressEmptyStateRedirectGeneration = useRef<number | null>(null);
   const [signOutPending, setSignOutPending] = useState(false);
 
   function applySession(nextSession: Session | null) {
@@ -233,7 +232,6 @@ function App() {
     }
 
     sessionIdentityRef.current = { userId: nextUserId, generation: currentIdentity.generation + 1 };
-    suppressEmptyStateRedirectGeneration.current = nextUserId ? sessionIdentityRef.current.generation : null;
     sessionRef.current = nextSession;
     windowRequestId.current += 1;
     setSession(nextSession);
@@ -683,8 +681,11 @@ function App() {
   const selectedRecord = selectedRecordKey ? recordBrowseItems.find((record) => record.key === selectedRecordKey) : null;
   const selectedRecordMissing = Boolean(selectedRecordKey && !selectedRecord);
   const ready = windowState === "ready" || windowState === "refreshing" || windowState === "refresh-error";
-  const automaticallyEmpty = ready && requestedScreen === "S02" && isWindowEmpty(windowData) && !confirmedSave
-    && suppressEmptyStateRedirectGeneration.current !== sessionIdentityRef.current.generation;
+  const automaticallyEmpty =
+    ready &&
+    requestedScreen === "S02" &&
+    isWindowEmpty(windowData) &&
+    !confirmedSave;
   const truthfulFallback: ScreenId = isWindowEmpty(windowData) ? "S12" : "S02";
   const activeScreen: ScreenId = windowState === "error"
     ? "S13"
