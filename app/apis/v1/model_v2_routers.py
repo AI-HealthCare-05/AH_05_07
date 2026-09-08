@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.dependencies.supabase_auth import SupabaseSession, get_supabase_session
-from app.services.model_v2_input_adapter import ModelV2AdapterError, adapt_product_input_v1
 from app.services.model_v2_inference import (
     EXPECTED_PRODUCT_WORDING,
     EXPECTED_SCHEMA_VERSION,
@@ -15,6 +14,7 @@ from app.services.model_v2_inference import (
     ModelV2InputError,
     scoring_enabled,
 )
+from app.services.model_v2_input_adapter import ModelV2AdapterError, adapt_product_input_v1
 
 model_v2_router = APIRouter(prefix="/model-v2", tags=["model-v2"])
 
