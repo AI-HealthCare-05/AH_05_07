@@ -229,7 +229,7 @@ test("S01 and S14 explain the retention, Auth, and local export boundaries", asy
   await page.goto("/?e2e=signed-in&screen=S14");
   await expect(page.locator('[data-scene="S14"]')).toContainText("30일 보관 계약");
   await expect(page.locator('[data-scene="S14"]')).toContainText("Auth와 이메일은 별도");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("Auth 계정 삭제 기능이 없습니다");
+  await expect(page.locator('[data-scene="S14"]')).toContainText("계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다");
   await expect(page.locator('[data-scene="S14"]')).toContainText("로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제");
 });
 

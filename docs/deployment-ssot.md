@@ -24,6 +24,8 @@ The Cloudflare build that publishes the production Worker owns the frontend buil
 
 Do not create `VITE_*` secrets. Never place a Supabase `service_role` key, SMTP credential, Cloudflare API token, or any server-only secret in the web build.
 
+The API account-removal route also requires the server-only `SUPABASE_SECRET_KEY` runtime secret. Bind it only to the API service after the deployment owner has approved the production secret change; it must never be copied to Cloudflare, `VITE_*`, browser assets, logs, fixtures, or API responses.
+
 ## Release classification
 
 Classify the merged change before deploying it. A merged Git commit is not, by itself, a database, API, or web deployment.

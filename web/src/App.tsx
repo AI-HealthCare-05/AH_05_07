@@ -4,8 +4,10 @@ import type { Session } from "@supabase/supabase-js";
 
 import { Scene, SceneShell } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
+import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
 import {
   ApiRequestError,
+  deleteAccount,
   createActiveChallengeCheckin,
   createBloodPressureObservation,
   deleteBloodPressureObservation,
@@ -126,6 +128,14 @@ function isSessionError(error: unknown): boolean {
     && (error.status === 401 || error.code === "supabase_session_required" || error.code === "supabase_session_invalid");
 }
 
+function hasStatus(error: unknown, expectedStatus: number): boolean {
+  return typeof error === "object" && error !== null && "status" in error && (error as { status?: unknown }).status === expectedStatus;
+}
+
+function isAccountDeletionRecoveryCandidate(error: unknown): boolean {
+  return !(error instanceof ApiRequestError) || [0, 401, 502].includes(error.status);
+}
+
 function isWindowEmpty(windowData: ObservationWindow | null): boolean {
   return Boolean(windowData)
     && !windowData?.active_challenge
@@ -228,7 +238,11 @@ function App() {
   const sessionRef = useRef<Session | null>(e2eSession);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
   const sessionUpdateVersionRef = useRef(0);
+  const accountDeletionStartedRef = useRef(false);
   const [signOutPending, setSignOutPending] = useState(false);
+  const [accountDeletionOpen, setAccountDeletionOpen] = useState(false);
+  const [accountDeletionPending, setAccountDeletionPending] = useState(false);
+  const [accountDeletionRecovery, setAccountDeletionRecovery] = useState<AccountDeletionRecovery>(null);
 
   function applySession(nextSession: Session | null) {
     sessionUpdateVersionRef.current += 1;
@@ -245,6 +259,10 @@ function App() {
     windowRequestId.current += 1;
     setSession(nextSession);
     setSignOutPending(false);
+    accountDeletionStartedRef.current = false;
+    setAccountDeletionOpen(false);
+    setAccountDeletionPending(false);
+    setAccountDeletionRecovery(null);
     setWindowData(null);
     setWindowState("loading");
     setNotice(null);
@@ -416,7 +434,7 @@ function App() {
 
   async function refreshWindow(activeSession = sessionRef.current, allowTokenRefreshRetry = true) {
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode) return;
+    if (!activeSession || !requestContext || evidenceMode || accountDeletionPending) return;
     const requestId = ++windowRequestId.current;
     setWindowState(windowData ? "refreshing" : "loading");
     try {
@@ -449,10 +467,74 @@ function App() {
     setDashboardWindow(nextWindow);
   }
 
+  async function finishAccountDeletion() {
+    windowRequestId.current += 1;
+    accountDeletionStartedRef.current = false;
+    setAccountDeletionPending(false);
+    setAccountDeletionOpen(false);
+    setAccountDeletionRecovery(null);
+    try {
+      await supabase?.auth.signOut({ scope: "local" });
+    } catch {
+      // The Auth account is already deleted. Local cleanup below remains authoritative.
+    }
+    applySession(null);
+  }
+
+  async function inspectAccountDeletionOutcome(requestContext: RequestContext): Promise<"terminal" | "still-valid" | "ambiguous"> {
+    if (!supabase) return "ambiguous";
+    try {
+      const { data, error } = await supabase.auth.getUser(requestContext.accessToken);
+      if (!isCurrentRequestContext(requestContext)) return "ambiguous";
+      if (data.user) return "still-valid";
+      if (!error || hasStatus(error, 401)) return "terminal";
+      return "ambiguous";
+    } catch {
+      return "ambiguous";
+    }
+  }
+
+  async function confirmAccountDeletion() {
+    const activeSession = sessionRef.current;
+    const requestContext = captureRequestContext(activeSession);
+    if (
+      !activeSession
+      || !requestContext
+      || evidenceMode
+      || accountDeletionPending
+      || accountDeletionStartedRef.current
+    ) return;
+
+    accountDeletionStartedRef.current = true;
+    setAccountDeletionPending(true);
+    setAccountDeletionRecovery(null);
+    try {
+      await deleteAccount(activeSession);
+      if (!isCurrentRequestContext(requestContext)) return;
+      await finishAccountDeletion();
+    } catch (error) {
+      if (!isCurrentRequestContext(requestContext)) return;
+      if (isAccountDeletionRecoveryCandidate(error)) {
+        const outcome = await inspectAccountDeletionOutcome(requestContext);
+        if (outcome === "terminal") {
+          await finishAccountDeletion();
+          return;
+        }
+        accountDeletionStartedRef.current = false;
+        setAccountDeletionPending(false);
+        setAccountDeletionRecovery(outcome === "still-valid" ? "still-valid" : "ambiguous");
+        return;
+      }
+      accountDeletionStartedRef.current = false;
+      setAccountDeletionPending(false);
+      setAccountDeletionRecovery("failed");
+    }
+  }
+
   async function handleSignOut() {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || signOutPending || !supabase) return;
+    if (!activeSession || !requestContext || signOutPending || accountDeletionPending || !supabase) return;
     setSignOutPending(true);
     setNotice(null);
     try {
@@ -498,7 +580,7 @@ function App() {
     event.preventDefault();
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     const payload = validateBloodPressure();
     if (!payload) return;
     setPendingAction("blood-pressure");
@@ -544,7 +626,7 @@ function App() {
   async function confirmBloodPressureDeletion() {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || !pendingBloodPressureDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || !pendingBloodPressureDeletion || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     setPendingAction("blood-pressure");
     try {
       await deleteBloodPressureObservation(activeSession, pendingBloodPressureDeletion.id);
@@ -565,7 +647,7 @@ function App() {
   async function selectChallenge(actionId: string) {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     setPendingAction("challenge-selection");
     try {
       await selectActiveChallenge(activeSession, actionId);
@@ -584,7 +666,7 @@ function App() {
   async function submitActiveChallengeCheckin(status: "completed" | "skipped") {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     setPendingAction("challenge-checkin");
     try {
       await createActiveChallengeCheckin(activeSession, { observed_on: today, status });
@@ -604,7 +686,7 @@ function App() {
   async function updateOwnedChallengeCheckin(status: ChallengeCheckin["status"]) {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || !editingChallengeCheckin || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || !editingChallengeCheckin || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     setPendingAction("challenge-checkin");
     try {
       await updateChallengeCheckin(activeSession, editingChallengeCheckin.id, status);
@@ -623,7 +705,7 @@ function App() {
   async function confirmChallengeCheckinDeletion() {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || !pendingChallengeCheckinDeletion || evidenceMode || isPriorDashboard || pendingAction) return;
+    if (!activeSession || !requestContext || !pendingChallengeCheckinDeletion || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     setPendingAction("challenge-checkin");
     try {
       await deleteChallengeCheckin(activeSession, pendingChallengeCheckinDeletion.id);
@@ -645,7 +727,7 @@ function App() {
   async function exportRecentRecords() {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || pendingAction) return;
+    if (!activeSession || !requestContext || evidenceMode || pendingAction || accountDeletionPending) return;
     setPendingAction("export");
     try {
       const exported = await exportObservations(activeSession, startOn, endOn);
@@ -680,7 +762,7 @@ function App() {
     ? (windowData?.challenge_checkins.filter((checkin) => checkin.challenge_id === activeChallenge.id) ?? [])
     : [];
   const todayMeasurement = windowData?.blood_pressure_observations.find((record) => record.observed_on === today);
-  const controlsDisabled = pendingAction !== null || isPriorDashboard;
+  const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const displayMeasurement = (record: BloodPressureObservation) => evidenceMode ? "•••/•• mmHg" : `${record.systolic}/${record.diastolic} mmHg`;
   const recordBrowseItems: RecordBrowseItem[] = [
     ...(windowData?.blood_pressure_observations.map((record) => ({ key: `blood-pressure:${record.id}`, kind: "blood-pressure" as const, record })) ?? []),
@@ -867,7 +949,7 @@ function App() {
               )}
               <div className="inline-actions">
                 <button className="secondary" type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
-                {!evidenceMode && <button className="text-button" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>새로고침</button>}
+                {!evidenceMode && <button className="text-button" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>새로고침</button>}
               </div>
             </article>
           ) : (
@@ -878,23 +960,24 @@ function App() {
     }
 
     if (activeScreen === "S10") {
-      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing"}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
+      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
     }
 
     if (activeScreen === "S11") {
       return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-result-state={modelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{modelV2ResultView.status}</span><h2>{modelV2ResultView.heading}</h2><p>{modelV2ResultView.body}</p></div><p className="signal-disclaimer">{modelV2ResultView.disclaimer}</p></Scene>;
     }
 
-    return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>현재 화면에는 Auth 계정 삭제 기능이 없습니다. 30일 후 계정이나 이메일이 자동 삭제된다는 뜻은 아니에요.</p></div></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   return (
-    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending} companionSelection={companionSelection}>
+    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection}>
       {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>이전 7일 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}
       {pendingBloodPressureDeletion && <DeleteConfirmation title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingBloodPressureDeletion(null)} onConfirm={() => void confirmBloodPressureDeletion()} />}
       {pendingChallengeCheckinDeletion && <DeleteConfirmation title={`${dateLabel(pendingChallengeCheckinDeletion.observed_on)} 챌린지 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingChallengeCheckinDeletion(null)} onConfirm={() => void confirmChallengeCheckinDeletion()} />}
+      {accountDeletionOpen && <AccountDeletionConfirmation pending={accountDeletionPending} recovery={accountDeletionRecovery} onCancel={() => { if (!accountDeletionPending) { setAccountDeletionOpen(false); setAccountDeletionRecovery(null); } }} onConfirm={() => void confirmAccountDeletion()} />}
       {renderScene()}
     </SceneShell>
   );
