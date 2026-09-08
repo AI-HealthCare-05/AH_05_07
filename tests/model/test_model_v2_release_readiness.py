@@ -100,7 +100,7 @@ def test_non_boolean_activation_approval_is_rejected(bad_value: object):
         evaluate(approval=bad_value)
 
 
-def test_current_child_snapshots_derive_expected_release_no_go():
+def test_current_child_snapshots_derive_expected_release_go_after_t16():
     result = derive_current_release_readiness()
 
     assert CURRENT_T8_EVALUATION.decision == "PASS"
@@ -111,8 +111,8 @@ def test_current_child_snapshots_derive_expected_release_no_go():
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "PASS"
-    assert result.explicit_activation_approval is False
-    assert result.decision == "NO_GO"
+    assert result.explicit_activation_approval is True
+    assert result.decision == "GO"
 
 
 def test_current_constant_matches_derived_current_snapshot():
@@ -148,7 +148,7 @@ def test_integration_does_not_mutate_environment(monkeypatch):
 
     result = derive_current_release_readiness()
 
-    assert result.decision == "NO_GO"
+    assert result.decision == "GO"
     assert dict(os.environ) == before
     assert os.environ["MODEL_V2_SCORING_ENABLED"] == "false"
 
@@ -157,4 +157,4 @@ def test_no_artifact_or_production_credentials_are_required(monkeypatch):
     monkeypatch.delenv("MODEL_V2_ARTIFACT_PATH", raising=False)
     monkeypatch.delenv("MODEL_V2_SCORING_ENABLED", raising=False)
 
-    assert derive_current_release_readiness().decision == "NO_GO"
+    assert derive_current_release_readiness().decision == "GO"

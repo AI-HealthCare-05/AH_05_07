@@ -115,14 +115,14 @@ def test_current_t10_is_pass_after_t15():
     assert CURRENT_T10_EVALUATION.operational_owner_approved == "PASS"
 
 
-def test_release_remains_no_go_without_explicit_activation():
+def test_release_is_go_after_separate_t16_activation_approval():
     result = derive_current_release_readiness()
     assert result.technical_readiness == "PASS"
     assert result.product_readiness == "PASS"
     assert result.privacy_readiness == "PASS"
     assert result.operational_readiness == "PASS"
-    assert result.explicit_activation_approval is False
-    assert result.decision == "NO_GO"
+    assert result.explicit_activation_approval is True
+    assert result.decision == "GO"
 
 
 def test_t15_evaluation_does_not_mutate_environment(monkeypatch):

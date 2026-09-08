@@ -3,6 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from app.services.model_v2_activation_approval_resolution import (
+    CONTRACT_VERSION as T16_CONTRACT_VERSION,
+)
+from app.services.model_v2_activation_approval_resolution import (
+    CURRENT_T16_EVALUATION,
+    ActivationApprovalResolutionEvaluation,
+)
 from app.services.model_v2_operational_readiness import (
     CONTRACT_VERSION as T10_CONTRACT_VERSION,
 )
@@ -23,6 +30,7 @@ from app.services.model_v2_product_readiness import (
 )
 
 CONTRACT_VERSION = "model-v2-release-readiness-integration-v1"
+T16_TRANSITION_VERSION = "model-v2-release-readiness-t16-transition-v1"
 
 ReadinessState = Literal["PASS", "BLOCKED"]
 ReleaseDecision = Literal["GO", "NO_GO"]
@@ -53,6 +61,10 @@ class ReleaseReadinessEvaluation:
 
 class ReleaseReadinessContractError(ValueError):
     """Raised when a T11 release-readiness input violates the contract."""
+
+
+class ReleaseReadinessTransitionError(ReleaseReadinessContractError):
+    """Raised when T16 approval evidence does not authorize the T11 transition."""
 
 
 def _state(name: str, value: object) -> ReadinessState:
@@ -111,13 +123,50 @@ def evaluate_release_readiness(
     )
 
 
-def derive_current_release_readiness() -> ReleaseReadinessEvaluation:
+PRE_T16_T11_EVALUATION = evaluate_release_readiness(
+    technical_readiness="PASS",
+    product_readiness=CURRENT_T8_EVALUATION.decision,
+    privacy_readiness=CURRENT_T9_EVALUATION.decision,
+    operational_readiness=CURRENT_T10_EVALUATION.decision,
+    explicit_activation_approval=False,
+)
+
+
+def transition_release_readiness_after_t16(
+    *,
+    previous: ReleaseReadinessEvaluation,
+    t16_evaluation: ActivationApprovalResolutionEvaluation,
+) -> ReleaseReadinessEvaluation:
+    if t16_evaluation.contract_version != T16_CONTRACT_VERSION:
+        raise ReleaseReadinessTransitionError("T16 activation-approval evidence contract version mismatch")
+    if t16_evaluation.decision != "PASS":
+        raise ReleaseReadinessTransitionError("T16 activation approval must be PASS before T11 transition")
+    if previous != PRE_T16_T11_EVALUATION:
+        raise ReleaseReadinessTransitionError("T11 pre-transition snapshot does not match the reviewed T16 baseline")
+    if (
+        previous.technical_readiness != "PASS"
+        or previous.product_readiness != "PASS"
+        or previous.privacy_readiness != "PASS"
+        or previous.operational_readiness != "PASS"
+        or previous.explicit_activation_approval is not False
+    ):
+        raise ReleaseReadinessTransitionError(
+            "T11 pre-transition readiness must be all PASS with explicit approval false"
+        )
+
     return evaluate_release_readiness(
-        technical_readiness="PASS",
-        product_readiness=CURRENT_T8_EVALUATION.decision,
-        privacy_readiness=CURRENT_T9_EVALUATION.decision,
-        operational_readiness=CURRENT_T10_EVALUATION.decision,
-        explicit_activation_approval=False,
+        technical_readiness=previous.technical_readiness,
+        product_readiness=previous.product_readiness,
+        privacy_readiness=previous.privacy_readiness,
+        operational_readiness=previous.operational_readiness,
+        explicit_activation_approval=True,
+    )
+
+
+def derive_current_release_readiness() -> ReleaseReadinessEvaluation:
+    return transition_release_readiness_after_t16(
+        previous=PRE_T16_T11_EVALUATION,
+        t16_evaluation=CURRENT_T16_EVALUATION,
     )
 
 
