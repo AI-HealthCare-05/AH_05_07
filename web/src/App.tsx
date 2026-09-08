@@ -133,7 +133,7 @@ function hasStatus(error: unknown, expectedStatus: number): boolean {
 }
 
 function isAccountDeletionRecoveryCandidate(error: unknown): boolean {
-  return !(error instanceof ApiRequestError) || error.status === 0 || error.status === 401;
+  return !(error instanceof ApiRequestError) || [0, 401, 502].includes(error.status);
 }
 
 function isWindowEmpty(windowData: ObservationWindow | null): boolean {

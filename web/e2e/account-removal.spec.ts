@@ -112,6 +112,63 @@ test("lost response is neutral until server-backed validation, then explicit ret
   expect(deleteRequests).toBe(2);
 });
 
+test("502 deletion failure with terminal user validation completes deletion recovery", async ({ page }) => {
+  let deleteRequests = 0;
+  await page.route("**://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: headers() });
+    if (url.pathname === "/api/v1/observations/window") return route.fulfill({ status: 200, headers: headers(), contentType: "application/json", body: JSON.stringify(emptyWindow) });
+    if (url.pathname === "/api/v1/account" && request.method() === "DELETE") {
+      deleteRequests += 1;
+      return route.fulfill({ status: 502, headers: headers(), contentType: "application/json", body: JSON.stringify({ detail: { code: "account_deletion_failed", message: "Account deletion could not be completed." } }) });
+    }
+    if (url.pathname === "/auth/v1/user" && request.method() === "GET") {
+      return route.fulfill({ status: 401, headers: headers(), contentType: "application/json", body: JSON.stringify({ error: "user not found" }) });
+    }
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.getByRole("button", { name: "계정 삭제" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "계속" }).click();
+  await dialog.getByRole("button", { name: "최종 삭제" }).click();
+
+  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+  expect(deleteRequests).toBe(1);
+});
+
+test("502 deletion failure with valid user validation stays retryable without automatic DELETE", async ({ page }) => {
+  let deleteRequests = 0;
+  await page.route("**://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: headers() });
+    if (url.pathname === "/api/v1/observations/window") return route.fulfill({ status: 200, headers: headers(), contentType: "application/json", body: JSON.stringify(emptyWindow) });
+    if (url.pathname === "/api/v1/account" && request.method() === "DELETE") {
+      deleteRequests += 1;
+      return route.fulfill({ status: 502, headers: headers(), contentType: "application/json", body: JSON.stringify({ detail: { code: "account_deletion_failed", message: "Account deletion could not be completed." } }) });
+    }
+    if (url.pathname === "/auth/v1/user" && request.method() === "GET") {
+      return route.fulfill({ status: 200, headers: headers(), contentType: "application/json", body: JSON.stringify(accountA.user) });
+    }
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.getByRole("button", { name: "계정 삭제" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "계속" }).click();
+  await dialog.getByRole("button", { name: "최종 삭제" }).click();
+
+  await expect(dialog).toContainText("계정이 아직 유효한 것으로 확인됐어요.");
+  expect(deleteRequests).toBe(1);
+  await dialog.getByRole("button", { name: "최종 삭제" }).click();
+  await expect(dialog).toContainText("계정이 아직 유효한 것으로 확인됐어요.");
+  expect(deleteRequests).toBe(2);
+});
+
 test("ambiguous lost response stays neutral and terminal invalid session completes cleanup without restoring A state", async ({ page }) => {
   let mode: "ambiguous" | "terminal" = "ambiguous";
   let deleteRequests = 0;

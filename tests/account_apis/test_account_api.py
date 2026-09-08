@@ -47,7 +47,7 @@ async def test_invalid_supabase_token_returns_401(supabase_runtime, monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_deleted_old_token_is_denied_by_protected_session_validation(supabase_runtime, monkeypatch):
+async def test_mocked_supabase_user_401_denies_access_token(supabase_runtime, monkeypatch):
     class DeletedUserResponse:
         status_code = status.HTTP_401_UNAUTHORIZED
 
@@ -172,7 +172,7 @@ async def test_admin_helper_uses_exact_caller_uuid_and_server_only_secret(monkey
     assert calls == [
         (
             f"https://supabase.test/auth/v1/admin/users/{CALLER_ID}",
-            {"apikey": "admin-test-secret", "Authorization": "Bearer admin-test-secret"},
+            {"apikey": "admin-test-secret"},
         )
     ]
 

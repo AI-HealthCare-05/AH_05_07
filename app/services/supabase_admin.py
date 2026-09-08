@@ -30,7 +30,6 @@ async def delete_auth_user(user_id: str) -> None:
                 f"{config.SUPABASE_URL.rstrip('/')}/auth/v1/admin/users/{target_id}",
                 headers={
                     "apikey": config.SUPABASE_SECRET_KEY,
-                    "Authorization": f"Bearer {config.SUPABASE_SECRET_KEY}",
                 },
             )
     except httpx.TimeoutException as error:
