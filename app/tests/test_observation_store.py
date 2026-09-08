@@ -163,6 +163,7 @@ async def test_export_observations_sets_json_attachment_header() -> None:
     assert (
         response.headers["content-disposition"] == 'attachment; filename="bp7-observations-2026-09-01-2026-09-07.json"'
     )
+    assert response.headers["cache-control"] == "no-store"
     assert json.loads(response.body) == {
         "start_on": "2026-09-01",
         "end_on": "2026-09-07",

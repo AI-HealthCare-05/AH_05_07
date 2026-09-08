@@ -86,10 +86,7 @@ export type ObservationExport = {
   filename: string;
 };
 
-async function apiFetch<T>(path: string, session: Session, init: RequestInit = {}): Promise<T> {
-  if (!apiBaseUrl) {
-    throw new Error("VITE_API_BASE_URL is not configured.");
-  }
+async function boundedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
   let timedOut = false;
   const timeout = setTimeout(() => {
@@ -97,23 +94,7 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
     controller.abort();
   }, apiRequestTimeoutMs);
   try {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
-      ...init,
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        "Content-Type": "application/json",
-        ...init.headers,
-      },
-    });
-    if (!response.ok) {
-      const error = (await response.json().catch(() => ({}))) as ApiError;
-      throw parseApiError(error, response.status);
-    }
-    if (response.status === 204) {
-      return undefined as T;
-    }
-    return (await response.json()) as T;
+    return await fetch(input, { ...init, signal: controller.signal });
   } catch (error) {
     if (timedOut) {
       throw new ApiRequestError(0, "request_timeout", "요청 응답 시간을 초과했습니다.");
@@ -122,6 +103,28 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function apiFetch<T>(path: string, session: Session, init: RequestInit = {}): Promise<T> {
+  if (!apiBaseUrl) {
+    throw new Error("VITE_API_BASE_URL is not configured.");
+  }
+  const response = await boundedFetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+      ...init.headers,
+    },
+  });
+  if (!response.ok) {
+    const error = (await response.json().catch(() => ({}))) as ApiError;
+    throw parseApiError(error, response.status);
+  }
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  return (await response.json()) as T;
 }
 
 export type BloodPressureObservationInput = Omit<BloodPressureObservation, "id">;
@@ -217,7 +220,7 @@ export async function exportObservations(
   }
 
   const query = new URLSearchParams({ start_on: startOn, end_on: endOn });
-  const response = await fetch(`${apiBaseUrl}/api/v1/observations/export?${query}`, {
+  const response = await boundedFetch(`${apiBaseUrl}/api/v1/observations/export?${query}`, {
     headers: {
       Accept: "application/json",
       Authorization: `Bearer ${session.access_token}`,

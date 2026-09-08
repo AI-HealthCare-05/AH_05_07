@@ -8,6 +8,14 @@
 - Export: users export their own 1–30 day observation window as JSON through `GET /api/v1/observations/export`; the current web action requests the recent seven-day window.
 - Access: RLS limits reads, writes, and deletes to `(select auth.uid()) = user_id and expires_at > now()`; no administrative read path exists. Database triggers assign the 30-day deadline on insert and reject later expiry extension.
 
+## Unresolved Auth boundary
+
+- The 30-day retention contract applies only to observation/challenge product-record tables.
+- Auth user and email lifecycle is separate from product-record retention.
+- The current web UI has no self-service Auth account-deletion control.
+- A downloaded JSON export is a local file outside server retention; the user is responsible for storing or deleting it safely.
+- The final Auth account-removal operational/support route is not yet established in this repository.
+
 ## Non-negotiable boundaries
 
 - Do not store free-text health history, diagnosis, medication, treatment, original document, or contact details with these records.
