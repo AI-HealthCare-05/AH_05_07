@@ -1,4 +1,4 @@
-﻿from typing import Any
+from typing import Any
 
 import pytest
 from fastapi import FastAPI, HTTPException, status
