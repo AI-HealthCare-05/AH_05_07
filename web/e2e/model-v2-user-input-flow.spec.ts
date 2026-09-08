@@ -148,6 +148,51 @@ test("S11 blocks under-19 input before sending a request", async ({ page }) => {
   expect(routed.requests()).toBe(0);
 });
 
+test("S11 connects locally detectable errors to the relevant control or form", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+
+  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  const error = page.locator("#model-v2-input-error");
+  const form = page.locator("form.measurement-panel");
+  const expectErrorCleanup = async () => {
+    await expect(error).toHaveCount(0);
+    await expect(form).not.toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
+    await expect(page.locator('[aria-describedby~="model-v2-input-error"]')).toHaveCount(0);
+    const danglingReferences = await page.locator('[aria-describedby]').evaluateAll((elements) =>
+      elements.flatMap((element) =>
+        (element.getAttribute("aria-describedby") ?? "").split(/\s+/).filter((id) =>
+          id && !document.getElementById(id),
+        ),
+      ),
+    );
+    expect(danglingReferences).toEqual([]);
+  };
+  await expect(error).toBeVisible();
+  await expect(form).toHaveAttribute("aria-describedby", "model-v2-input-error");
+
+  await fillValidForm(page, "18");
+  await expectErrorCleanup();
+  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await expect(page.getByLabel("나이")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("나이")).toHaveAttribute("aria-describedby", "model-v2-input-error");
+
+  await page.getByLabel("나이").fill("35");
+  await expect(page.getByLabel("나이")).not.toHaveAttribute("aria-invalid");
+  await expect(page.getByLabel("나이")).not.toHaveAttribute("aria-describedby", "model-v2-input-error");
+  await expectErrorCleanup();
+
+  await page.getByLabel("위 안내를 확인했습니다.").uncheck();
+  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await expect(page.getByLabel("위 안내를 확인했습니다.")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("위 안내를 확인했습니다.")).toHaveAttribute("aria-describedby", "model-v2-input-error");
+  await expect(error).toBeVisible();
+  await page.getByLabel("위 안내를 확인했습니다.").check();
+  await expect(page.getByLabel("위 안내를 확인했습니다.")).not.toHaveAttribute("aria-invalid");
+  await expect(page.getByLabel("위 안내를 확인했습니다.")).not.toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
+  await expectErrorCleanup();
+});
+
 test("S11 shows explicit applicability limitation for age 80+", async ({
   page,
 }) => {
@@ -175,6 +220,11 @@ test("S11 maps 422 to a correctable input state without echoing raw values", asy
   );
   await expect(page.getByLabel(/키/)).toHaveValue("170");
   await expect(page.getByRole("alert")).not.toContainText("170");
+  await expect(page.locator("form.measurement-panel")).toHaveAttribute(
+    "aria-describedby",
+    "model-v2-input-error",
+  );
+  await expect(page.getByLabel(/키/)).not.toHaveAttribute("aria-invalid");
   expect(routed.requests()).toBe(1);
 });
 
@@ -205,6 +255,97 @@ test("S11 maps 401 to the existing signed-out recovery path", async ({
   await page.getByRole("button", { name: "신호 준비하기" }).click();
 
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+});
+
+test("S11 ignores a stale 401 after the same user receives a newer session token", async ({ page }) => {
+  let releaseOldRequest!: () => void;
+  const oldRequestPending = new Promise<void>((resolve) => { releaseOldRequest = resolve; });
+  let modelRequests = 0;
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ status: 200, headers, contentType: "application/json", body: JSON.stringify(emptyWindow) });
+      return;
+    }
+    if (url.pathname === "/api/v1/model-v2/product-score") {
+      modelRequests += 1;
+      if (modelRequests === 1) {
+        const usesSessionA = await request.headerValue("authorization") === "Bearer e2e-synthetic-access-token";
+        expect(usesSessionA, "First Model V2 request uses synthetic session A").toBe(true);
+        await oldRequestPending;
+        await route.fulfill({ status: 401, headers, contentType: "application/json", body: JSON.stringify({ detail: { code: "supabase_session_invalid" } }) });
+        return;
+      }
+      const usesSessionB = await request.headerValue("authorization") === "Bearer e2e-refreshed-session-token";
+      expect(usesSessionB, "Next Model V2 request uses refreshed synthetic session B").toBe(true);
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify({ schema_version: "model-v2-r1-schema-v1", product_wording: "입력 기반 위험군 선별 신호" }),
+      });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await fillValidForm(page);
+  const originalRequestStarted = page.waitForRequest((request) =>
+    request.method() === "POST" && new URL(request.url()).pathname === "/api/v1/model-v2/product-score",
+  );
+  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  const originalRequest = await originalRequestStarted;
+  await expect(page.getByRole("button", { name: "신호 준비 중" })).toBeDisabled();
+
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", {
+      detail: {
+        access_token: "e2e-refreshed-session-token",
+        refresh_token: "e2e-refreshed-session-refresh",
+        expires_in: 3600,
+        expires_at: 1800000000,
+        token_type: "bearer",
+        user: {
+          id: "e2e-synthetic-user",
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: "2026-09-01T00:00:00.000Z",
+        },
+      },
+    }));
+  });
+  const originalRequestFinished = page.waitForEvent("requestfinished", {
+    predicate: (request) => request === originalRequest,
+  });
+  releaseOldRequest();
+  await originalRequestFinished;
+  expect((await originalRequest.response())?.status()).toBe(401);
+  await expect(page.getByRole("button", { name: "신호 준비 중" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "신호 준비하기" })).toBeEnabled();
+  await expect(page.locator("form.measurement-panel :disabled")).toHaveCount(0);
+
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "로그아웃", exact: true })).toBeEnabled();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(modelRequests).toBe(1);
+
+  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await expect(page.locator('[data-model-v2-user-result="processed"]')).toBeVisible();
+  expect(modelRequests).toBe(2);
 });
 
 test("leaving S11 discards the transient draft and result", async ({

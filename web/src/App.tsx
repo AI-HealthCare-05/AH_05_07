@@ -5,7 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { Scene, SceneShell } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
-import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
+import { ModelV2InputFlow, type ModelV2RequestContext } from "./components/ModelV2InputFlow";
 import {
   ApiRequestError,
   deleteAccount,
@@ -65,7 +65,7 @@ type HomeAction = {
   screen: ScreenId;
 };
 type SessionIdentity = { userId: string | null; generation: number };
-type RequestContext = { userId: string; generation: number; accessToken: string };
+type RequestContext = ModelV2RequestContext;
 
 function makeNotice(
   kind: Notice["kind"],
@@ -972,7 +972,9 @@ function App() {
         <ModelV2InputFlow
           key={session.user.id}
           session={session}
-          onSessionExpired={() => {
+          captureRequestContext={captureRequestContext}
+          onSessionExpired={(requestContext) => {
+            if (!isCurrentRequestContext(requestContext) || hasNewerToken(requestContext)) return;
             void supabase?.auth.signOut({ scope: "local" });
             applySession(null);
           }}
