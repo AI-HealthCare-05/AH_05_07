@@ -1,6 +1,12 @@
 # Deployment SSOT
 
-## Latest non-model activation record — 2026-09-08
+## Latest/current Model V2 S11 production record
+
+**OPERATOR-VERIFIED PRODUCTION EVIDENCE.** Current source is `f25fddfc442be63721daae671e4beb267ead5f5f`; the deployment mirror snapshot is `e390c343d87f032f278db0df22e9fbfb1bbb0b3a`; Cloud Run revision is `bp7-api-s11-f25fddf` with immutable image `sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c`; Cloudflare Worker is `8975da2f-2162-40ea-adf4-f5187c1cc5f2`; and Model V2 is `model-v2-r1-schema-v1` with artifact `d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84` and wording `입력 기반 위험군 선별 신호`. The API rollback identity is `bp7-api-00031-rel` / `sha256:a68b30ef6182f9d13a709008542ad248afd55a74664dc67a1616a5a3c6795ecf`; the web rollback Worker is `b5880118-4afe-4259-8ca9-d5157506b65c`.
+
+Operator rollout verification recorded candidate `/live`/`/ready` 200, OpenAPI endpoint presence, unauthenticated 401, authenticated synthetic 200, exact two-field output, no numeric exposure, generic non-echoing 422, sanitized candidate logs, CORS preflight, 100% API activation, production health/API checks, bundled endpoint/wording, signed-in browser submission, approved wording, absent numeric result, and under-19 error as PASS. This Codex session has not independently re-read runtime control planes; see [the canonical release contract](architecture/RELEASE_CONTRACT.md). A documentation commit does not redeploy or re-verify runtime.
+
+## Previous non-model activation record — 2026-09-08
 
 See [account-removal production baseline](account-removal-production-baseline.md)
 for source `9713ed5aab4a4e74b145d79c4d536affab3c010b`, API revision

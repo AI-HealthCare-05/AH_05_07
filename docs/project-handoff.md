@@ -346,5 +346,4 @@ Named reviewers, supported population, justified quality criteria, final model,
 preprocessing and signal thresholds are not yet approved. No actual model/test
 execution or product change is part of the question review package. Issue #223 adds
 [CDC source comparison and a synthetic-only local review screen](input-question-review.md);
-translation, measurement equivalence and adapter support remain pending. The API remains
-model_not_ready; evidence, CONFIGs and lock are unchanged.
+translation and measurement equivalence remain pending for that historical question-review scope. The current frozen Model V2 product path is separately connected at `/api/v1/model-v2/product-score`; it returns only the schema version and `입력 기반 위험군 선별 신호`. See [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md) and [release contract](architecture/RELEASE_CONTRACT.md). The legacy `/api/v1/risk-signal` scaffold remains `model_not_ready`.

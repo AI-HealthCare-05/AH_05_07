@@ -33,13 +33,22 @@ Every storage operation uses the caller's JWT and an RLS-protected Supabase requ
 
 The active-challenge migration keeps legacy `challenge_events` separate from the new `active_challenges` and `challenge_checkins` records. Database constraints, RLS, and triggers enforce one active row per user, a seven-day window, a same-user check-in, and an immutable action after the first check-in. The API, not the browser, sets the Korea-date challenge start. A check-in update accepts only `status`; its date, action, challenge link, and owner remain immutable. The API permits check-in change or delete only while that check-in belongs to the current active, unexpired seven-day challenge.
 
-## Risk-signal scaffold
+## Model V2 surface
 
-| Method | Path | Auth | Current behavior | Release gate |
-|---|---|---|---|---|
-| POST | `/api/v1/risk-signal` | Not yet product-connected | `503 model_not_ready` even with artifact configuration | [Input semantics and release approvals](model-release-readiness.md), verified artifact/metadata, split digest, repeatability, model version and wording must all pass before a separately reviewed implementation. |
+| Method | Path | Auth | Success | Current behavior |
+|---|---|---|---:|---|
+| POST | `/api/v1/model-v2/product-score` | Supabase JWT | `200` | S11 product path; response is exactly the two fields below. |
+| POST | `/api/v1/model-v2/score` | Supabase JWT | `200` | Authenticated semantic route present in generated OpenAPI; uses the same two-field response projection. |
+| POST | `/api/v1/risk-signal` | Not product-connected | `503` | Legacy scaffold; not the current Model V2 product surface. |
 
-No fallback rule, random score, or provisional probability may be returned. Authentication and final success status must be reviewed when the product flow is connected.
+```json
+{
+  "schema_version": "model-v2-r1-schema-v1",
+  "product_wording": "입력 기반 위험군 선별 신호"
+}
+```
+
+Model V2 `422` is a generic `model_v2_input_invalid` response and does not echo raw input. When Model V2 is disabled, unavailable, or its artifact boundary cannot be used, it returns `503 model_not_ready` without numeric output. Current Auth-provider failure semantics are an R1 gap: do not interpret the existing invalid-session `401` behavior as an implemented `auth_unavailable` response.
 
 ## Accepted P0 additions
 
@@ -48,7 +57,7 @@ These capabilities are accepted, but their final paths become contractual only w
 - Select exactly one active seven-day challenge.
 - Read the active challenge and create its daily check-in.
 - Prevent challenge replacement after the first check-in.
-- Return versioned risk-signal results to an authenticated product user.
+- Preserve the authenticated Model V2 two-field product projection.
 
 ## Service health
 
