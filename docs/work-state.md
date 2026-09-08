@@ -168,7 +168,6 @@ Issue 자체는 부하 실행 승인이 아니다.
 
 - Account-removal lifecycle design/implementation.
 - Any actual remaining R-06 implementation gap, if the evidence gap requires code.
-- Web clean-environment reproduction, if pursued.
 
 ## 다음 작업
 
