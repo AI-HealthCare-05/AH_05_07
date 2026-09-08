@@ -222,9 +222,7 @@ def verify(args: argparse.Namespace) -> int:
         raise SystemExit("STOP: frozen artifact fitted categories do not match G3 semantic contract")
 
     category_transform_parity = fitted_category_transform_parity(artifact_payload)
-    fitted_category_transform_matches = all(
-        item["passed"] for item in category_transform_parity.values()
-    )
+    fitted_category_transform_matches = all(item["passed"] for item in category_transform_parity.values())
     if not fitted_category_transform_matches:
         raise SystemExit("STOP: canonical category did not activate its fitted encoder path")
 

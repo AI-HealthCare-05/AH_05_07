@@ -198,10 +198,10 @@ def test_drinking_branch_rejects_none_amount() -> None:
         validate_semantic_input(payload)
 
 
-
 def test_payload_container_must_be_mapping() -> None:
     with pytest.raises(ModelV2InputError):
         validate_semantic_input([])  # type: ignore[arg-type]
+
 
 def test_disabled_prevents_artifact_access(tmp_path: Path) -> None:
     path = tmp_path / "missing.joblib"

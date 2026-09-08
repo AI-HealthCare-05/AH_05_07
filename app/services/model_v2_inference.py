@@ -212,25 +212,17 @@ def _validate_categorical_domains(clean: Mapping[str, Any]) -> None:
         _validate_optional_string_category(name, clean[name], allowed)
 
 
-def _validate_structural_consistency(
-    clean: Mapping[str, Any], numeric_values: Mapping[str, float | None]
-) -> None:
+def _validate_structural_consistency(clean: Mapping[str, Any], numeric_values: Mapping[str, float | None]) -> None:
     walking_days = numeric_values["walking_days_7d"]
     walking_minutes = numeric_values["walking_minutes_per_active_day"]
     if walking_days == 0 and walking_minutes != 0:
-        raise ModelV2InputError(
-            "walking_minutes_per_active_day: zero walking days requires structural zero minutes"
-        )
+        raise ModelV2InputError("walking_minutes_per_active_day: zero walking days requires structural zero minutes")
 
     alcohol_frequency = clean["alcohol_frequency"]
     alcohol_amount = clean["alcohol_amount_category"]
     if alcohol_frequency in NON_DRINKING_FREQUENCIES and alcohol_amount != "none":
         raise ModelV2InputError("alcohol_amount_category: non-drinking branch requires none")
-    if (
-        alcohol_frequency is not None
-        and alcohol_frequency not in NON_DRINKING_FREQUENCIES
-        and alcohol_amount == "none"
-    ):
+    if alcohol_frequency is not None and alcohol_frequency not in NON_DRINKING_FREQUENCIES and alcohol_amount == "none":
         raise ModelV2InputError("alcohol_amount_category: none contradicts drinking frequency")
 
 
