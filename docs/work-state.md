@@ -146,15 +146,17 @@ Issue 자체는 부하 실행 승인이 아니다.
 - The sign-in empty-state routing regression remains covered.
 - Export-success notice navigation persistence and recent-seven-day/challenge-seven-day
   ambiguity are resolved against the later source implementation.
+- R-06 browser conflict evidence is complete: the signed-in harness drives a server `409` /
+  `observation_conflict` response and verifies the stable recovery notice, single mutation,
+  preserved blood-pressure draft, recovered save control, session continuity, and no false
+  success or S05 navigation. This is regression evidence only; it does not claim production
+  verification.
 
 ### Unresolved / evidence-bound
 
 - Deployed expired-row invisibility before physical purge.
 - AC-10 web clean-environment reproduction.
 - Account-removal operational/support route.
-- R-06 remains **Partial**: source normalization and recovery coverage exist, but an
-  explicit browser assertion for a server `409` / `observation_conflict` response is
-  still absent.
 
 ### Production approval required
 

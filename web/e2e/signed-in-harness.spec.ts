@@ -124,6 +124,56 @@ test("synthetic signed-in session keeps invalid measurement in the browser", asy
   expect(saveRequests).toBe(0);
 });
 
+test("synthetic signed-in session handles observation conflict without retry or false success", async ({ page }) => {
+  let saveRequests = 0;
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(emptyWindow) });
+      return;
+    }
+    if (url.pathname === "/api/v1/observations/blood-pressure" && request.method() === "POST") {
+      saveRequests += 1;
+      await route.fulfill({
+        contentType: "application/json",
+        status: 409,
+        headers,
+        body: JSON.stringify({ detail: { code: "observation_conflict" } }),
+      });
+      return;
+    }
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S04");
+  await expect(page.getByRole("heading", { name: "혈압 기록" })).toBeVisible();
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+  const saveButton = page.locator("form.measurement-panel button[type=submit]");
+  await saveButton.click();
+
+  await expect(page.getByRole("status")).toContainText("같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.");
+  await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
+  await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "혈압 기록" })).toBeVisible();
+  await expect(page.getByLabel(/수축기/)).toHaveValue("120");
+  await expect(page.getByLabel(/이완기/)).toHaveValue("80");
+  await expect(saveButton).toBeEnabled();
+  expect(saveRequests).toBe(1);
+  await page.waitForTimeout(100);
+  expect(saveRequests).toBe(1);
+});
+
 test("synthetic signed-in session returns to login after a 401 window response", async ({ page }) => {
   await routeApiWindow(page, 401, { detail: { code: "supabase_session_invalid" } });
 
