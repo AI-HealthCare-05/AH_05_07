@@ -1,12 +1,32 @@
 # SK7 작업 상태
 
+## 2026-09-08 non-model reconciliation
+
+Source baseline: `9713ed5aab4a4e74b145d79c4d536affab3c010b`.
+The [account-removal activation ledger](account-removal-production-baseline.md)
+records the latest operator-reported runtime; older runtime identifiers below
+remain historical evidence. This documentation pass did not inspect the cloud
+control planes or perform production mutations.
+
+- #238 is CLOSED: first-round completion decisions are recorded, not a claim
+  that every quality check passed or that the client approved the reduced scope.
+- #342 design, #346 / PR #348 implementation, and #355 production activation
+  are complete. Actual signed-in production deletion remains NOT EXERCISED.
+- Next: review the [synthetic deletion gate](account-removal-synthetic-gate.md).
+  This plan does not authorize execution or create synthetic accounts.
+- Preserve API P95 EXECUTED / NOT PASSED, measured `/window` n=0, and the
+  existing prohibition on another run. Do not reopen completed work by default.
+- Model work is owned by its separate workstream. First-round model statements
+  below are historical; no current Model V2 readiness is inferred here.
+
+
 ## 기준
 
 - S3C 작업 시작 기준 main: `41361189110f9903acce8704bdef6d375ab913ea`.
   이 값은 작업 시작 당시의 역사적 기준이며, 현재/미래 main을 가리키는 포인터가 아니다.
 - S1 검사 기준: `3561e0c66c518c53c8be204ae7258ec4ba577a3b` (PR #239), `origin/main` 대조 완료.
 - 작업 안전·주장 경계: [AGENTS.md](../AGENTS.md), [프로젝트 인계](project-handoff.md).
-- #225는 1회차 제출 준비 작업의 종료 이력으로 보존한다. 남은 조건은 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)에서 추적한다.
+- #225는 1회차 제출 준비 작업의 종료 이력으로 보존한다. 완료 결정은 종료된 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)에 보존한다.
 
 ## 완료된 범위
 
@@ -56,7 +76,7 @@ flow를 완료했고, product cleanup·Auth account cleanup·final public smoke�
 SQL·migration push, Cloud Run/Cloudflare/Supabase/R2 변경, UI·model 실행 또는
 배포를 수행하지 않았다.
 
-현재 기록된 production web source evidence/Worker는 S3E evidence의
+역사적으로 기록된 production web source evidence/Worker는 S3E evidence의
 `30fd65eda8d988804c8af208276934226e0eb67d` /
 `70f9d4d5-6377-4087-a405-63993382441c`다. API는 revision
 `bp7-api-00014-jeq`, traffic `100%`, immutable digest
@@ -67,7 +87,7 @@ O3 final state가 기록되었다. O3 승인 release SHA는
 분리되어 있다. `20260904090000_add_challenge_checkins_challenge_user_index`는
 적용되었고 migration history도 repository version으로 정렬되었으며, schema
 check에서 index가 확인되었다. 부모 [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238)은
-계속 OPEN이며 O1 execution successor [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
+CLOSED이며 O1 execution successor [#257](https://github.com/AI-HealthCare-05/AH_05_07/issues/257)은
 CLOSED다. O3 execution successor는 [#261](https://github.com/AI-HealthCare-05/AH_05_07/issues/261)에서
 별도로 추적한다.
 
@@ -100,7 +120,7 @@ Issue 자체는 부하 실행 승인이 아니다.
 
 - S3E [Issue #252](https://github.com/AI-HealthCare-05/AH_05_07/issues/252):
   **COMPLETE**. Production rollout is **ACTIVE + VERIFIED + ROLLBACK REHEARSED**.
-  Issue #252 completion is pending only on this closeout PR merge.
+  Issue #252 is closed; preserve its rollout evidence as historical.
 - 운영 O1/O2/O3와 API P95의 최종 상태: [운영 검증 기록](mvp1-operations-review.md), [P95 pre-flight](api-p95-verification-preflight.md), [#238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
 - S4 O2: **alternate evidence decision COMPLETE**. `exact_time_retention_rls_test.sql`
   의 17 assertions 등 local retention/RLS contract와 owner-approved deployed
@@ -158,7 +178,7 @@ Issue 자체는 부하 실행 승인이 아니다.
 
 ### Unresolved / evidence-bound
 
-- Account-removal operational/support route.
+- Actual signed-in production account deletion: NOT EXERCISED; see the synthetic gate above.
 
 ### Completed evidence
 
@@ -166,7 +186,7 @@ Issue 자체는 부하 실행 승인이 아니다.
 
 ### Separate implementation Issue required
 
-- Account-removal lifecycle design/implementation.
+- Account-removal design/implementation and activation are complete (#342 / #346 / #348 / #355); a separate production synthetic gate remains.
 - Any actual remaining R-06 implementation gap, if the evidence gap requires code.
 
 ## 다음 작업
@@ -177,7 +197,7 @@ Issue 자체는 부하 실행 승인이 아니다.
 | S1 | 자산 보존·최종 조합 검사 | #240에서 inventory/asset/checkpoint SHA 대조 완료. 새 생성·렌더·이동·복사·외부 업로드는 수행하지 않았다. |
 | S2 | 디자인 선정 | 사람의 11개 후보 `selected` 결정, 허용/제외 화면, 동작 제한, 권리 근거를 [S2 기록](s2-design-selection.md)에 반영했다. 제품 UI 적용은 하지 않았다. |
 | S3 | 화면 적용 검토 | S3A/S3B complete, S3C review runtime implemented/verified, S3D visual acceptance approved, and S3E production rollout complete. #248의 review-only 범위와 S3E의 production evidence를 각각 보존한다. |
-| S4 | 1회차 마감 — **CLOSEOUT-READY / DOCUMENTATION SYNC** | O1/O2/O3·API P95·제출·범위·입력/모델 결정의 최종 상태를 기록했다. #238은 이 문서 동기화 후 종결할 수 있는 상태이며, 모델 NO-GO와 `model_not_ready` 경계는 유지한다. |
+| S4 | 1회차 마감 — **CLOSED / DECISIONS RECORDED** | O1/O2/O3·API P95·제출·범위·입력/모델 결정의 최종 상태를 기록했다. #238은 종료됐으며, 모델 NO-GO와 `model_not_ready` 경계는 유지한다. |
 
 이 검사는 inventory의 선택 direct known-file 범위만 다룬다. 이전 버전·검토 산출물·
 숨김/미인식 파일, 시각 품질·사람 디자인 승인, 독립 backup과 과거 외부 업로드는
