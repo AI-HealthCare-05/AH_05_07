@@ -11,11 +11,14 @@ than silently choosing one:
 
 1. `AGENTS.md` for safety, privacy, claim, and contribution boundaries.
 2. `docs/requirements.md` and the domain contracts for accepted product scope.
-3. Migrations, generated OpenAPI, implementation, and automated tests for
+3. The canonical architecture contracts: `docs/architecture/ARCHITECTURE_INVARIANTS.md`,
+   `docs/architecture/TECHNICAL_DEPTH_PLAN.md`, `docs/architecture/WORKSTREAMS.md`,
+   and `docs/architecture/RELEASE_CONTRACT.md`.
+4. Migrations, generated OpenAPI, implementation, and automated tests for
    executable behavior.
-4. `docs/deployment-ssot.md` for release topology and operator gates.
-5. The linked GitHub Issue, pull request, and immutable commit for one change.
-6. The Notion 19-day roadmap as the execution mirror and presentation plan.
+5. `docs/deployment-ssot.md` for release topology and operator gates.
+6. The linked GitHub Issue, pull request, and immutable commit for one change.
+7. The Notion 19-day roadmap as the execution mirror and presentation plan.
 
 Notion must reflect repository evidence, but it must not declare code, schema,
 test, or deployment work complete before the repository evidence exists.
@@ -38,15 +41,27 @@ test, or deployment work complete before the repository evidence exists.
 
 ## Current checkpoint
 
+At restart, resolve the current repository `main` from `origin/main`; do not
+hard-code an old docs-only main SHA as the runtime source of truth. The latest
+deployed application source is `f25fddfc442be63721daae671e4beb267ead5f5f`,
+as recorded in [deployment SSOT](deployment-ssot.md). The current production
+Model V2 S11 path is deployed and product-connected at
+`/api/v1/model-v2/product-score`; it returns only the frozen schema version and
+`입력 기반 위험군 선별 신호`, while input and result remain transient. The
+canonical architecture contracts are [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md),
+[technical depth plan](architecture/TECHNICAL_DEPTH_PLAN.md),
+[workstreams](architecture/WORKSTREAMS.md), and
+[release contract](architecture/RELEASE_CONTRACT.md). Runtime and deployment
+evidence is [deployment SSOT](deployment-ssot.md). Issue #363 is still a branch
+candidate here; do not describe it as merged.
+
 The historical closeout-preparation authority is [MVP1 closeout](mvp1-closeout.md),
 Issue #225. Its remaining conditions are now tracked by [Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
-The current source baseline is `e63b35473080fc0f3a614702eb4ec4457652ffff` (PR #237),
-confirmed against origin/main. PR #231/#234/#235/#236/#237 are merged. Status: in
-progress. The seven-slide PPTX/PDF and 4:21 silent-caption MP4 review package are
-preserved; submission acceptance, operations and model/input approvals remain
-pending. [Upgrade execution](upgrade-execution.md) tracks the separate usability,
-local reliability, model-design and original-character workstreams. These merged
-source changes are not a production release.
+The 2026-09-06-and-earlier source snapshot and review package below are retained
+as historical evidence only. [Upgrade execution](upgrade-execution.md) tracks the
+separate usability, local reliability, model-design and original-character
+workstreams. These historical source changes are not the current production
+release.
 #213 is closed for PR #214's implementation scope only. The user's question-screen
 operation/display review and language polishing do not approve semantics, an adapter
 or a model. Historical deployment rows below remain evidence for their stated
@@ -63,16 +78,18 @@ versions, not this source SHA's deployment.
 | API | Cloud Run `bp7-api` in `asia-northeast3` |
 | Record ownership | Supabase JWT plus PostgreSQL RLS |
 | AI toolchain authority | `docs/ai-toolchain-ssot.md`, ADR-0002, and exact versions in `uv.lock` |
-| Model evidence / current follow-up | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 documentation completed via PR #222; #223 reviews input questions; no selected/released artifact |
+| Historical model evidence / pre-S11 follow-up (2026-09-06 and earlier) | Preparation, comparison and exploratory uncertainty evidence published through PR #220; #217 implementation and #219 disclosure closed. #221 documentation completed via PR #222; #223 reviews input questions; no selected/released artifact in that historical checkpoint |
 | Handoff reconciliation | Historical reconciliation completed through [PR #147](https://github.com/AI-HealthCare-05/AH_05_07/pull/147), merge `50039ee1604bf984aae99e945a798db13595862f`; [Issue #146](https://github.com/AI-HealthCare-05/AH_05_07/issues/146) is closed. Current workstreams are tracked in [upgrade execution](upgrade-execution.md). |
 | Ownership verification | Issue #149: preflight plus approved synthetic A/B browser verification passed; anonymous denial, owner CRUD/export, cross-user non-disclosure, and first-check-in action lock passed; cleanup complete |
 | Rollback evidence | Issue #151: rollback to `38bb08b6-66ca-4933-8cbe-ee857aa4ece7` and restore to `6d100754-7e85-4d43-b466-e7944c61a0c0` both passed public smoke |
 | UI production handoff | Issue #190 implements the Calm Clay Journey tokens, copy, motion limits, and S01–S14 screen structure. Issue #192 responsive QA passed at `1366 × 768`, `390 × 844`, and `320 × 844` with reduced motion. R2 `visual/v1/` delivery exists after Issue #196, but Issue #200 restored the app to CSS-first rendering after the initial runtime binding caused responsive regression. |
 
-Non-model deployment rows retain the historical handoff snapshot; the model row
-is updated through PR #222 and the Issue #223 question review package. At every restart,
-resolve the current upstream `main` SHA and recent merged pull requests before
-treating any source commit as current.
+The table above is a historical handoff snapshot; its pre-S11 model row is not
+current release authority. The current S11 source, product connection, and
+runtime evidence are the records named in the current checkpoint and
+`docs/deployment-ssot.md`. At every restart, resolve the current upstream
+`main` SHA and recent merged pull requests before treating any source commit as
+current.
 
 Issue #143 records a passed public web/API/CORS smoke, magic-link sign-in and
 session refresh, and a clean browser console/network review for the G4 web
@@ -112,10 +129,11 @@ and the remaining Gate C evidence still require separate approval and execution.
   joblib for artifact serialization. CI rejects silent dependency drift; exact
   resolved versions remain in `uv.lock`.
 
-The risk-signal UI remains unreleased. Frozen split/leakage evidence and approved
-internal validation aggregates now exist, but quality acceptance, external
-validation, verified artifact/metadata, input adapter and release repeatability
-remain incomplete. See `docs/model-comparison-evidence.md` for limitations.
+The historical pre-S11 checkpoint recorded the risk-signal UI as unreleased and
+the model release gate as incomplete. That dated state is superseded for the
+current S11 product path by the deployment and release records named above; the
+older evidence remains available in `docs/model-comparison-evidence.md` and the
+related model reports.
 
 ## Open evidence and next priority
 
@@ -151,21 +169,20 @@ remain incomplete. See `docs/model-comparison-evidence.md` for limitations.
    rendering is the current production contract; any new binding needs a
    separate visual review and responsive evidence. A verified model fact
    remains separate follow-up work; do not use causal-improvement language.
-4. Follow `docs/ai-toolchain-ssot.md` when starting the risk-signal release
-   gate. Issue #204 freezes the selected tools, internal pipeline, deferred
+4. Preserve the pre-S11 model-development evidence when reviewing model history.
+   Issue #204 freezes the selected tools, internal pipeline, deferred
    alternatives, and change-control contract. Issue #206 defines the external
    local seven-module audit, derived-table, frozen-split, and sanitized-evidence
-   sequence. Issue #208 now has a Windows operator report and user-approved
-   evidence in `docs/model-gate-1b-evidence.md`; its evidence PR #212 is merged. The later actual comparison report is in
-   `docs/model-comparison-evidence.md`; promotion remains unperformed. The release gate starts
-   only after the operational evidence above is
-   reconciled and a separate Issue defines its bounded scope. The gate needs
-   immutable artifact and metadata, frozen split digest, leakage audit, at
-   least two-model and multiple-metric comparison, model card, and repeated-
-   input consistency evidence.
-5. Consider asynchronous model processing only if a separate ADR documents a
-   measured latency, duration, or reliability trigger. Persist job state and
-   results in PostgreSQL; do not add Redis or a worker merely to mirror a
+   sequence. Issue #208's Windows operator report and user-approved evidence
+   remain in `docs/model-gate-1b-evidence.md`, and the historical comparison
+   reports remain in `docs/model-comparison-evidence.md`. Those pre-S11 research
+   records do not override the current S11 release contract; use
+   `docs/deployment-ssot.md` and `docs/architecture/RELEASE_CONTRACT.md` for
+   current artifact and runtime status.
+5. Consider a distinct future asynchronous assessment architecture only if a
+   separate ADR and explicit product/data contract document a measured latency,
+   duration, or reliability trigger. Its persistence rules must remain outside
+   the frozen Model V2 boundary. Do not add Redis or a worker merely to mirror a
    reference architecture. OCR, prescription/medical-document handling, and
    LLM guidance are outside SK7 scope.
 
@@ -248,7 +265,11 @@ applied.
 At the beginning of a new Work session:
 
 1. Read `AGENTS.md`, this file, `docs/requirements.md`,
-   `docs/acceptance-test-plan.md`, and `docs/deployment-ssot.md`.
+   `docs/acceptance-test-plan.md`, the canonical architecture contracts
+   (`docs/architecture/ARCHITECTURE_INVARIANTS.md`,
+   `docs/architecture/TECHNICAL_DEPTH_PLAN.md`,
+   `docs/architecture/WORKSTREAMS.md`, and
+   `docs/architecture/RELEASE_CONTRACT.md`), and `docs/deployment-ssot.md`.
 2. Read the current Notion 19-day roadmap, then treat any mismatch as work to
    reconcile rather than as permission to change code.
 3. Confirm the latest upstream `main` SHA and recent merged PRs.

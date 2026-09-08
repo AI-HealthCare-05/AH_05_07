@@ -84,7 +84,16 @@ The active-challenge portion of the target diagram is now implemented by the rev
 
 ## Conditional asynchronous assessment boundary (not implemented)
 
-This is a decision boundary, not an implementation commitment. If a verified-model request or offline training requires background processing, the API must persist a minimal job record before returning a status reference. An ephemeral queue by itself is not a source of truth.
+This is a decision boundary for a future distinct assessment architecture, not an
+implementation commitment and not the current frozen Model V2 product path. It
+does not apply to frozen Model V2: current Model V2 input and result remain
+transient and non-persistent. An ADR alone cannot authorize persistence that
+violates the frozen Model V2 invariants. Any future distinct assessment
+architecture that requires persistence must first receive a separate explicit
+product/data contract approval outside the frozen Model V2 boundary. Only then,
+if a verified-model request or offline training requires background processing,
+may the API persist a minimal job record before returning a status reference.
+An ephemeral queue by itself is not a source of truth.
 
 ```mermaid
 flowchart LR
@@ -95,7 +104,7 @@ flowchart LR
     API --> STATUS["Sanitized status or SSE"]
 ```
 
-The ADR must define the measured trigger, state transitions, idempotency key, retry and timeout policy, result retention, authorization, and failure behavior. It must also show why synchronous verified CPU inference is insufficient. No Redis, worker, status endpoint, SSE channel, or new table may be presented as implemented before that ADR and the matching executable contract are merged.
+The ADR must define the measured trigger, state transitions, idempotency key, retry and timeout policy, result retention, authorization, and failure behavior. It must also show why synchronous verified CPU inference is insufficient. No Redis, worker, status endpoint, SSE channel, or new table may be presented as implemented before the separate product/data contract, that ADR, and the matching executable contract are approved and merged. None of those approvals authorize persistence or other changes inside the frozen Model V2 boundary.
 
 ## Data classification
 
@@ -106,4 +115,4 @@ The ADR must define the measured trigger, state transitions, idempotency key, re
 | Public asset | Tutorial image, synthetic demo video, licensed audio | Cloudflare R2 with provenance and lifecycle metadata. |
 | Forbidden | Name, contact, free-text history, original document, device export, JWT, service-role key | Do not collect or place in product tables, R2, logs, demos, or Git. |
 
-Feedback remains review data rather than a training label. BP readings and BP-derived aggregates that define the label remain excluded from model predictors. A future asynchronous job must persist state and result in PostgreSQL; an ephemeral queue alone is insufficient.
+Feedback remains review data rather than a training label. BP readings and BP-derived aggregates that define the label remain excluded from model predictors. A future distinct assessment architecture outside the frozen Model V2 boundary must persist its approved state and result in PostgreSQL; an ephemeral queue alone is insufficient.
