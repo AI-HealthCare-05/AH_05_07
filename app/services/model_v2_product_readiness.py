@@ -4,7 +4,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
+from app.services.model_v2_product_policy_resolution import (
+    CONTRACT_VERSION as T12_CONTRACT_VERSION,
+)
+from app.services.model_v2_product_policy_resolution import (
+    CURRENT_T12_EVALUATION,
+    ProductPolicyResolutionEvaluation,
+)
+
 CONTRACT_VERSION = "model-v2-product-readiness-v1"
+T13_TRANSITION_VERSION = "model-v2-product-readiness-t13-transition-v1"
 
 DimensionState = Literal["PASS", "BLOCKED", "NOT_REVIEWED"]
 ProductReadinessDecision = Literal["PASS", "BLOCKED"]
@@ -23,6 +32,10 @@ DIMENSION_STATES = frozenset({"PASS", "BLOCKED", "NOT_REVIEWED"})
 
 class ProductReadinessContractError(ValueError):
     """Raised when a T8 product-readiness payload violates the contract."""
+
+
+class ProductReadinessTransitionError(ProductReadinessContractError):
+    """Raised when the T13 readiness transition is not authorized by T12 evidence."""
 
 
 @dataclass(frozen=True)
@@ -117,13 +130,43 @@ def evaluate_product_readiness_payload(
     return evaluate_product_readiness(parse_product_readiness(payload))
 
 
-CURRENT_T8_READINESS = ProductReadiness(
+PRE_T13_T8_READINESS = ProductReadiness(
     product_term_approved="PASS",
     result_visibility_approved="PASS",
     age_applicability_approved="BLOCKED",
     missing_policy_approved="PASS",
     research_product_applicability_approved="BLOCKED",
     data_separation_approved="PASS",
+)
+
+PRE_T13_T8_EVALUATION = evaluate_product_readiness(PRE_T13_T8_READINESS)
+
+
+def transition_product_readiness_after_t12(
+    *,
+    previous: ProductReadiness,
+    t12_evaluation: ProductPolicyResolutionEvaluation,
+) -> ProductReadiness:
+    if t12_evaluation.contract_version != T12_CONTRACT_VERSION:
+        raise ProductReadinessTransitionError("T12 product-policy evidence contract version mismatch")
+    if t12_evaluation.decision != "PASS":
+        raise ProductReadinessTransitionError("T12 product-policy resolution must be PASS before T8 transition")
+    if previous != PRE_T13_T8_READINESS:
+        raise ProductReadinessTransitionError("T8 pre-transition snapshot does not match the reviewed T13 baseline")
+
+    return ProductReadiness(
+        product_term_approved=previous.product_term_approved,
+        result_visibility_approved=previous.result_visibility_approved,
+        age_applicability_approved="PASS",
+        missing_policy_approved=previous.missing_policy_approved,
+        research_product_applicability_approved="PASS",
+        data_separation_approved=previous.data_separation_approved,
+    )
+
+
+CURRENT_T8_READINESS = transition_product_readiness_after_t12(
+    previous=PRE_T13_T8_READINESS,
+    t12_evaluation=CURRENT_T12_EVALUATION,
 )
 
 CURRENT_T8_EVALUATION = evaluate_product_readiness(CURRENT_T8_READINESS)
