@@ -160,9 +160,7 @@ def validate(
         "external report SHA-256 format",
     )
     emit_check(
-        isinstance(report.get("bytes"), int)
-        and not isinstance(report.get("bytes"), bool)
-        and report["bytes"] > 0,
+        isinstance(report.get("bytes"), int) and not isinstance(report.get("bytes"), bool) and report["bytes"] > 0,
         "external report size",
     )
     emit_equal(report.get("repository_copy_retained"), False, "external report not copied to repository")
@@ -281,9 +279,7 @@ def run_self_test(manifest: dict[str, Any], contract: str, repo_root: Path) -> i
     print("PASS self-test rejects reopened owner gate")
 
     stale_objective = copy.deepcopy(manifest)
-    stale_objective["recovery_objectives"]["required_production_data_rpo"] = (
-        "OWNER_DECISION_REQUIRED"
-    )
+    stale_objective["recovery_objectives"]["required_production_data_rpo"] = "OWNER_DECISION_REQUIRED"
     if not validate(stale_objective, contract, repo_root, show=False):
         print("FAIL self-test did not reject stale unresolved RPO objective")
         return 1
