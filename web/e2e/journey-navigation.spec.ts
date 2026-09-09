@@ -137,6 +137,10 @@ test.describe("S02 lead and secondary destination state matrix", () => {
         await route.abort();
       });
 
+      await page.clock.setFixedTime(
+        new Date("2026-09-08T12:00:00+09:00"),
+      );
+
       await page.goto("/?e2e=signed-in&screen=S02");
       await expect(page.locator('[data-scene="S02"]')).toBeVisible();
       const lead = page.locator(".home-lead");
