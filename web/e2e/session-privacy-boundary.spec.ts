@@ -179,6 +179,104 @@ test("export timeout shows bounded warning and re-enables the button", async ({ 
   await expect(exportButton).toBeEnabled();
 });
 
+test("export times out when headers arrive but the blob body stalls", async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+
+    window.fetch = async (input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+
+      if (
+        new URL(url, window.location.href).pathname ===
+        "/api/v1/observations/export"
+      ) {
+        const requestCount =
+          Number(sessionStorage.getItem("e2e-body-stall-export-requests") ?? "0") + 1;
+        sessionStorage.setItem(
+          "e2e-body-stall-export-requests",
+          String(requestCount),
+        );
+
+        const signal = init?.signal;
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            const abort = () =>
+              controller.error(
+                signal?.reason ?? new DOMException("Aborted", "AbortError"),
+              );
+
+            if (signal?.aborted) {
+              abort();
+            } else {
+              signal?.addEventListener("abort", abort, { once: true });
+            }
+          },
+        });
+
+        return new Response(body, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Disposition": 'attachment; filename="observations.json"',
+          },
+        });
+      }
+
+      return nativeFetch(input, init);
+    };
+  });
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+    };
+
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify(windowWithMeasurement("b-record", 130, 85)),
+      });
+      return;
+    }
+
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+
+  const exportButton = page.getByRole("button", {
+    name: "선택한 7일 내보내기",
+  });
+  await exportButton.click();
+
+  await expect(page.getByRole("status")).toContainText(
+    "파일을 내려받지 못했습니다.",
+    { timeout: 10_000 },
+  );
+  await expect(exportButton).toBeEnabled();
+
+  const requestCount = await page.evaluate(() =>
+    Number(sessionStorage.getItem("e2e-body-stall-export-requests") ?? "0"),
+  );
+  expect(requestCount).toBe(1);
+});
+
 test("stale export cannot download or show success after account change", async ({ page }) => {
   let releaseExport!: () => void;
   const pendingExport = new Promise<void>((resolve) => { releaseExport = resolve; });
