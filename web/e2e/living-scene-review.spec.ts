@@ -6,6 +6,13 @@ import posterR2 from "../../docs/evidence/scene-clay-r2.json" with { type: "json
 import type { Page } from "@playwright/test";
 
 const url = "/?fixture=VP-10&screen=S02";
+async function completedSceneNetwork(completed: Request[]) {
+  // WebGL readiness does not imply completion of the independent CDN poster.
+  await expect.poll(() => completed.filter(request => /\/scene-review\/s02\//.test(request.url())).length, { timeout: 15000 }).toBe(1);
+  return Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)|\/scene-review\/s02\//.test(request.url()))
+    .map(async request => ({ url: request.url(), ...await request.sizes() })));
+}
+
 for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]]) {
   test(`review renders at ${width}x${height}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });
@@ -29,7 +36,7 @@ for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]])
     const composition = sceneComposition(findSceneRecipe("S02", "footbridge")!, width);
     expect(bounds.height).toBeGreaterThanOrEqual(composition.subjectMinHeight);
     expect(bounds.height).toBeLessThanOrEqual(composition.subjectMaxHeight);
-    const network = await Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)|\/scene-review\/s02\//.test(request.url())).map(async request => ({ url: request.url(), ...await request.sizes() })));
+    const network = await completedSceneNetwork(completed);
     expect(network.filter(request => /\.glb(?:\?|$)/.test(request.url))).toHaveLength(1);
     expect(network.some(request => /GLTFLoader/.test(request.url))).toBe(true);
     expect(network.some(request => /ThreeSceneRenderer/.test(request.url))).toBe(true);
@@ -42,6 +49,35 @@ for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]])
     await page.screenshot({ path: testInfo.outputPath("scene.png"), fullPage: true });
   });
 }
+
+test("ready WebGL does not wait for a pending poster transfer", async ({ page }) => {
+  const completed: Request[] = [];
+  page.on("requestfinished", request => completed.push(request));
+  let releasePoster!: () => void;
+  const posterGate = new Promise<void>(resolve => { releasePoster = resolve; });
+  let posterStarted = false;
+  await page.route("**/scene-review/s02/v1/*.webp", async route => {
+    posterStarted = true;
+    await posterGate;
+    await route.continue();
+  });
+  try {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+    await expect.poll(() => posterStarted).toBe(true);
+    await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready", { timeout: 20000 });
+    await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
+    expect(completed.filter(request => /\/scene-review\/s02\//.test(request.url()))).toHaveLength(0);
+    const observation = completedSceneNetwork(completed);
+    releasePoster();
+    const network = await observation;
+    expect(network.filter(request => /\/scene-review\/s02\//.test(request.url))).toHaveLength(1);
+    expect(network.filter(request => /\.glb(?:\?|$)/.test(request.url))).toHaveLength(1);
+  } finally {
+    releasePoster();
+  }
+});
 
 test("GLB and poster failures preserve the task controls", async ({ page }) => {
   await page.route("**/*.glb", route => route.abort());
