@@ -27,7 +27,7 @@ Runtime selection consumes the verified asset URL, fallback URL, responsive stag
 
 ## Evidence and delivery constraints
 
-Local tests: 34 manifest tests, seven Chromium review tests and five scene policy/default-off tests pass. Ruff check and format now pass repository-wide after restructuring and formatting the imported GLB scripts; the forensics output is unchanged.
+Local tests: 34 manifest tests, eight Chromium review tests and five scene policy/default-off tests pass. Ruff check and format now pass repository-wide after restructuring and formatting the imported GLB scripts; the forensics output is unchanged.
 
 `docs/evidence/scene-review-network.json` records four viewports, projected character bounds and Playwright response-size observations. The selected scene resources total approximately 699 KB in a fresh browser context. Protocol attribution limitations, semantic-shell exclusions and real-device gaps are explicit in the evidence. CI runs the manifest tests and the dedicated S02 browser suite.
 
@@ -42,3 +42,7 @@ The previous character-preview isolation check matched the lazy `GLTFLoader-*.js
 Windows checkout converted the procedural source to CRLF and correctly failed the source hash check. `.gitattributes` now pins the source module, authored manifest and generated runtime manifest to LF on every platform. The hash check remains byte-exact.
 
 Local full character-preview synthetic smoke passed: 14 clip/variant checks and 21 checks, with finalized recording. Latest CI results are tracked on PR #391; no production rollout occurs in this PR.
+
+## Weekday visual follow-up
+
+All seven S02 weekday recipes were rendered at 320px using a fixed synthetic date and synthetic API responses. The initial shade-tree canopy clipped at the top; its two mobile camera spans were expanded from 2.85 to 3.5. The other six mobile scene crops showed their main subjects inside the stage. The browser suite now captures all seven weekday stages for continued visual review. Screenshots are retained in `docs/evidence/scene-weekdays/`. The corrected shade-tree canopy is fully visible. These procedural geometries remain review candidates, not final clay assets.

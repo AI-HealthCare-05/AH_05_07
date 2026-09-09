@@ -503,7 +503,7 @@ export const sceneManifest = {
           ],
           "secondaryCropping": false,
           "camera": {
-            "verticalSpan": 2.85,
+            "verticalSpan": 3.5,
             "position": [
               3.5,
               4,
@@ -538,7 +538,7 @@ export const sceneManifest = {
           ],
           "secondaryCropping": false,
           "camera": {
-            "verticalSpan": 2.85,
+            "verticalSpan": 3.5,
             "position": [
               3.5,
               4,

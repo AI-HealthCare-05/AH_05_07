@@ -71,3 +71,30 @@ test("context loss disposes the canvas and leaves navigation available", async (
   await page.locator(".home-lead button").click();
   await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
 });
+
+
+test("each weekday renders its registered mobile recipe", async ({ page }, testInfo) => {
+  test.setTimeout(90000);
+  const landmarks = ["garden-gate", "herb-garden", "shade-tree", "footbridge", "reading-shelter", "pavilion", "sunset-overlook"];
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.route("http://e2e.invalid/**", route => {
+    const requestUrl = new URL(route.request().url());
+    return route.fulfill({ status: 200, contentType: "application/json", headers: {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+    }, body: JSON.stringify({ start_on: requestUrl.searchParams.get("start_on"), end_on: requestUrl.searchParams.get("end_on"),
+      blood_pressure_observations: [], active_challenge: null, challenge_checkins: [],
+      challenge_events: [{ id: "synthetic-weekday", observed_on: requestUrl.searchParams.get("end_on"), action_id: "walk-10-minutes", status: "skipped" }],
+    }) });
+  });
+  for (let index = 0; index < landmarks.length; index++) {
+    const day = String(index + 7).padStart(2, "0");
+    await page.clock.setFixedTime(new Date(`2026-09-${day}T03:00:00Z`));
+    await page.goto("/?e2e=signed-in&screen=S02");
+    await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+    await expect(page.locator("[data-scene-recipe]")).toHaveAttribute("data-scene-recipe", `s02-${landmarks[index]}`);
+    await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready", { timeout: 20000 });
+    await page.locator(".living-visual-stage").screenshot({ path: testInfo.outputPath(`${landmarks[index]}-320.png`) });
+  }
+});
