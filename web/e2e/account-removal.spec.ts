@@ -278,6 +278,77 @@ test("stale account deletion error cannot overwrite a newer same-user session", 
   await expect(page.getByText(/계정이 아직 유효한 것으로 확인됐어요|삭제 요청 결과를 확인하지 못했어요|계정을 삭제하지 못했어요/)).toHaveCount(0);
 });
 
+test("different-user transition cannot be cleared by stale account deletion completion", async ({ page }) => {
+  let deleteRequests = 0;
+  let releaseLogout!: () => void;
+  const pendingLogout = new Promise<void>((resolve) => { releaseLogout = resolve; });
+
+  await page.addInitScript((session) => {
+    window.localStorage.setItem("sb-e2e-auth-token", JSON.stringify(session));
+  }, accountA);
+
+  await page.route("**://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: headers() });
+    if (url.pathname === "/api/v1/observations/window") {
+      const token = request.headers().authorization?.replace("Bearer ", "") ?? "";
+      const body = token === accountB.access_token
+        ? { ...emptyWindow, blood_pressure_observations: [{ id: "account-b-record", observed_on: "2026-09-08", period: "morning", systolic: 125, diastolic: 82 }] }
+        : emptyWindow;
+      return route.fulfill({ status: 200, headers: headers(), contentType: "application/json", body: JSON.stringify(body) });
+    }
+    if (url.pathname === "/api/v1/account" && request.method() === "DELETE") {
+      deleteRequests += 1;
+      return route.fulfill({ status: 204, headers: headers() });
+    }
+    if (url.pathname === "/auth/v1/logout" && request.method() === "POST") {
+      await pendingLogout;
+      return route.fulfill({ status: 204, headers: headers() });
+    }
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.getByRole("button", { name: "계정 삭제" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "계속" }).click();
+  const logoutStarted = page.waitForRequest((request) => (
+    request.method() === "POST"
+    && new URL(request.url()).pathname === "/auth/v1/logout"
+  ));
+  await dialog.getByRole("button", { name: "최종 삭제" }).click();
+  const logoutRequest = await logoutStarted;
+  expectTokenBoundLogoutRequest(logoutRequest, accountA.access_token);
+  expect(deleteRequests).toBe(1);
+
+  const accountBWindowResponse = page.waitForResponse((response) => (
+    response.request().method() === "GET"
+    && new URL(response.url()).pathname === "/api/v1/observations/window"
+    && response.request().headers().authorization === `Bearer ${accountB.access_token}`
+  ));
+  await page.evaluate((session) => {
+    window.localStorage.setItem("sb-e2e-auth-token", JSON.stringify(session));
+    window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: session }));
+  }, accountB);
+  await accountBWindowResponse;
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+  await expect(page.getByText("삭제 처리 중")).toHaveCount(0);
+  await page.getByRole("button", { name: "설정과 도움말" }).click();
+  await page.getByRole("button", { name: "7일 기록 보기" }).click();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.getByText("125/82 mmHg")).toBeVisible();
+
+  releaseLogout();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.getByText("125/82 mmHg")).toBeVisible();
+  await expect(page.locator('[data-scene="S01"]')).not.toBeVisible();
+  await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+  expect(deleteRequests).toBe(1);
+  expect(await page.evaluate(() => JSON.parse(window.localStorage.getItem("sb-e2e-auth-token") ?? "null").access_token)).toBe(accountB.access_token);
+});
+
 test("lost response is neutral until server-backed validation, then explicit retry is allowed", async ({ page }) => {
   let deleteRequests = 0;
   await page.route("**://e2e.invalid/**", async (route) => {
