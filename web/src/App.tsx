@@ -26,7 +26,7 @@ import {
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
-import { supabase, supabaseConfigured } from "./lib/supabase";
+import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
@@ -250,6 +250,12 @@ function App() {
     const nextUserId = nextSession?.user.id ?? null;
     const currentIdentity = sessionIdentityRef.current;
     if (currentIdentity.userId === nextUserId) {
+      if (sessionRef.current?.access_token !== nextSession?.access_token) {
+        accountDeletionStartedRef.current = false;
+        setAccountDeletionOpen(false);
+        setAccountDeletionPending(false);
+        setAccountDeletionRecovery(null);
+      }
       sessionRef.current = nextSession;
       setSession(nextSession);
       return;
@@ -300,6 +306,10 @@ function App() {
 
   function hasNewerToken(context?: RequestContext): boolean {
     return Boolean(context && isCurrentRequestContext(context) && sessionRef.current && sessionRef.current.access_token !== context.accessToken);
+  }
+
+  function isApplicableAccountDeletionCompletion(requestContext: RequestContext): boolean {
+    return isCurrentRequestContext(requestContext) && !hasNewerToken(requestContext);
   }
 
   useEffect(() => {
@@ -468,17 +478,31 @@ function App() {
     setDashboardWindow(nextWindow);
   }
 
-  async function finishAccountDeletion() {
+  async function finishAccountDeletion(requestContext: RequestContext) {
+    if (!isApplicableAccountDeletionCompletion(requestContext)) return;
     windowRequestId.current += 1;
+    try {
+      await requestTokenBoundLocalLogout(requestContext.accessToken);
+    } catch {
+      // The Auth account is already deleted. Local cleanup below remains authoritative.
+    }
+
+    if (!isApplicableAccountDeletionCompletion(requestContext)) return;
+    const cleanup = removePersistedSessionIfAccessToken(requestContext.accessToken);
+    if (cleanup === "different" || cleanup === "malformed") {
+      if (!isApplicableAccountDeletionCompletion(requestContext)) return;
+      accountDeletionStartedRef.current = false;
+      setAccountDeletionPending(false);
+      setAccountDeletionOpen(false);
+      setAccountDeletionRecovery(null);
+      return;
+    }
+    if (!isApplicableAccountDeletionCompletion(requestContext)) return;
+
     accountDeletionStartedRef.current = false;
     setAccountDeletionPending(false);
     setAccountDeletionOpen(false);
     setAccountDeletionRecovery(null);
-    try {
-      await supabase?.auth.signOut({ scope: "local" });
-    } catch {
-      // The Auth account is already deleted. Local cleanup below remains authoritative.
-    }
     applySession(null);
   }
 
@@ -486,7 +510,7 @@ function App() {
     if (!supabase) return "ambiguous";
     try {
       const { data, error } = await supabase.auth.getUser(requestContext.accessToken);
-      if (!isCurrentRequestContext(requestContext)) return "ambiguous";
+      if (!isApplicableAccountDeletionCompletion(requestContext)) return "ambiguous";
       if (data.user) return "still-valid";
       if (!error || hasStatus(error, 401)) return "terminal";
       return "ambiguous";
@@ -511,21 +535,24 @@ function App() {
     setAccountDeletionRecovery(null);
     try {
       await deleteAccount(activeSession);
-      if (!isCurrentRequestContext(requestContext)) return;
-      await finishAccountDeletion();
+      if (!isApplicableAccountDeletionCompletion(requestContext)) return;
+      await finishAccountDeletion(requestContext);
     } catch (error) {
-      if (!isCurrentRequestContext(requestContext)) return;
+      if (!isApplicableAccountDeletionCompletion(requestContext)) return;
       if (isAccountDeletionRecoveryCandidate(error)) {
         const outcome = await inspectAccountDeletionOutcome(requestContext);
+        if (!isApplicableAccountDeletionCompletion(requestContext)) return;
         if (outcome === "terminal") {
-          await finishAccountDeletion();
+          await finishAccountDeletion(requestContext);
           return;
         }
+        if (!isApplicableAccountDeletionCompletion(requestContext)) return;
         accountDeletionStartedRef.current = false;
         setAccountDeletionPending(false);
         setAccountDeletionRecovery(outcome === "still-valid" ? "still-valid" : "ambiguous");
         return;
       }
+      if (!isApplicableAccountDeletionCompletion(requestContext)) return;
       accountDeletionStartedRef.current = false;
       setAccountDeletionPending(false);
       setAccountDeletionRecovery("failed");
