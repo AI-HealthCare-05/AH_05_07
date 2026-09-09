@@ -61,7 +61,7 @@ test("production S05 loads bear-lite once after confirmed save and transitions c
   await page.goto("/?e2e=signed-in&screen=S05&companion_species=cat&companion_variant=standard&companion_clip=greet");
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   expect(companionRequests(requests)).toEqual([]);
-  expect(page.locator("[data-companion-status]")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
   expect(requests.filter((url) => /CompanionReviewRenderer/i.test(url))).toEqual([]);
 
   await page.goto("/?e2e=signed-in&screen=S04&companion_species=cat&companion_variant=standard&companion_clip=greet");
@@ -95,7 +95,7 @@ test("production excludes every non-S05 screen and ignores query overrides", asy
     await page.goto(`/?e2e=signed-in&screen=${screen}&companion_species=rabbit&companion_variant=standard&companion_clip=greet&companion_context=save_success`);
     await expect(page.locator(".app-shell")).not.toHaveAttribute("data-screen", "S05");
     expect(companionRequests(requests)).toEqual([]);
-    expect(page.locator("[data-companion-status]")).toHaveCount(0);
+    await expect(page.locator("[data-companion-status]")).toHaveCount(0);
   }
 });
 
