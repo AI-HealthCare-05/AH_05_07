@@ -1,0 +1,121 @@
+{
+  "schema": "ah-05-07.recovery-audit.v1",
+  "audit_issue": 387,
+  "audit_round": "R10",
+  "baseline": {
+    "repository": "AI-HealthCare-05/AH_05_07",
+    "commit_sha": "bd5a80cad4e8428f39b97c2f0c5a4e2dee728182"
+  },
+  "production_backup_state": {
+    "observed_at": "2026-09-09",
+    "project_name": "ah-05-07-prod",
+    "project_ref": "fglyixpysarmxfxwcgby",
+    "region": "ap-northeast-2",
+    "project_status": "ACTIVE_HEALTHY",
+    "plan": "free",
+    "scheduled_managed_backup": "unavailable_on_current_plan",
+    "pitr": "not_active",
+    "managed_restore_point": "none_observed",
+    "inspection_mode": "read_only",
+    "production_mutation_performed": false
+  },
+  "recovery_objectives": {
+    "required_production_data_rpo": "NOT_SET_RESIDUAL_RISK_ACCEPTED",
+    "current_provider_managed_data_rpo": "FINITE_RPO_NOT_ESTABLISHED",
+    "required_production_database_auth_rto": "NOT_SET_RESIDUAL_RISK_ACCEPTED",
+    "observed_production_managed_restore_rto": "NOT_MEASURED"
+  },
+  "isolated_reconstruction": {
+    "result": "PASS",
+    "run_id": "issue-387-20260909-193015",
+    "production_credentials_used": false,
+    "production_data_used": false,
+    "source_commit": "bd5a80cad4e8428f39b97c2f0c5a4e2dee728182",
+    "report": {
+      "bytes": 22650,
+      "sha256": "c15fc534d0b9564bb1381a42f2215881b841f6a57ffa63742f4453c3de2bc9ae",
+      "repository_copy_retained": false
+    },
+    "toolchain": {
+      "python": "3.13.14",
+      "node": "24.11.0",
+      "uv": "0.12.8",
+      "supabase_cli": "2.116.0",
+      "docker": "29.7.2",
+      "docker_endpoint_class": "local_unix_socket"
+    },
+    "checks": {
+      "frozen_python_install": "PASS",
+      "clean_web_install_and_build": "PASS",
+      "web_secret_boundary": "PASS",
+      "isolated_supabase_initialization": "PASS",
+      "repository_migrations": "PASS",
+      "pgtap_ownership_active_challenge_retention": "PASS",
+      "built_web_api_smoke": "PASS",
+      "synthetic_owner_crud_export": "PASS",
+      "cross_user_read_write_denied": "PASS",
+      "anonymous_contract": "PASS",
+      "duplicate_contract": "PASS",
+      "invalid_input_contract": "PASS",
+      "first_checkin_action_lock": "PASS",
+      "status_only_checkin_edit_delete": "PASS",
+      "model_not_ready_503": "PASS",
+      "local_postgrest_failure_normalization_and_recovery": "PASS",
+      "preserved_source_bytes": "PASS"
+    },
+    "cleanup": {
+      "status": "PASS",
+      "owned_container_count": 0,
+      "owned_volume_count": 0,
+      "preexisting_running_containers_preserved": true,
+      "raw_logs_retained": false,
+      "credentials_or_row_exports_retained": false
+    }
+  },
+  "production_restore_drill": {
+    "disposition": "DEFERRED",
+    "reason": "NO_CURRENT_MANAGED_RESTORE_POINT",
+    "separate_owner_approval_required": true,
+    "performed": false
+  },
+  "runtime_rollback": {
+    "api": "PREVIOUSLY_VERIFIED",
+    "web": "PREVIOUSLY_VERIFIED",
+    "restores_database_or_auth_data": false
+  },
+  "model_v2": {
+    "schema_version": "model-v2-r1-schema-v1",
+    "artifact_sha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
+    "semantic_change_performed": false,
+    "external_artifact_independent_recovery": "INCONCLUSIVE"
+  },
+  "owner_decision_gate": {
+    "status": "ACCEPTED",
+    "decision": "ACCEPT_CURRENT_RESIDUAL_RISK",
+    "accepted_at": "2026-09-09",
+    "r10_status": "COMPLETE",
+    "r10_may_be_marked_complete": true,
+    "acknowledged_residual_risk": [
+      "no_managed_database_auth_restore_point_observed",
+      "finite_managed_production_data_rpo_not_established",
+      "managed_production_restore_rto_not_measured"
+    ],
+    "does_not_authorize": [
+      "supabase_plan_upgrade",
+      "pitr_enablement",
+      "custom_backup",
+      "replication",
+      "production_restore",
+      "r12_topology_expansion"
+    ]
+  },
+  "limitations": [
+    "This evidence does not prove restoration of production user rows or Auth identities.",
+    "The isolated reconstruction is not a production RTO measurement.",
+    "No finite managed production data RPO is established for the current project state.",
+    "No managed production restore point was observed during the read-only inspection.",
+    "The external Model V2 artifact recovery/version-retention path remains inconclusive.",
+    "No production restore, plan upgrade, PITR enablement, custom backup, replication, secret export, or Model V2 semantic change was performed.",
+    "Owner accepted the current residual recovery risk on 2026-09-09; this is not evidence that production data or Auth identities are recoverable."
+  ]
+}
