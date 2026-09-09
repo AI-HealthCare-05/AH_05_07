@@ -91,6 +91,17 @@ async function bounded(promise, milliseconds, stage) {
   try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`${stage} exceeded ${milliseconds}ms`)), milliseconds); })]); }
   finally { clearTimeout(timer); }
 }
+async function observePlayback(page, before) {
+  // Two fixed wall-clock samples can land on the same pose in a looping clip.
+  // Observe an actual time AND bone change; a static/broken clip still times out.
+  const changed = await page.waitForFunction((baseline) => {
+    const current = window.previewDiagnostics.snapshot();
+    return current.actionTime !== baseline.actionTime
+      && current.bones.some((value, index) => Math.abs(value - baseline.bones[index]) > 1e-7)
+      && current;
+  }, before, { timeout: 5000 });
+  try { return await changed.jsonValue(); } finally { await changed.dispose(); }
+}
 let stage = 'startup';
 let inputProvenance = null;
 const started = Date.now();
@@ -162,7 +173,7 @@ function checkpoint(nextStage) {
         assetManifest.push({ animal: animal.id, variant, file: animal[variant], bytes: fs.statSync(file).size, sha256: digest(file), triangles: loaded.stats.triangles, materials: loaded.stats.materials, textures: loaded.stats.textureDimensions, bones: loaded.stats.bones, skinnedMeshes: loaded.stats.skinnedMeshes, clips: loaded.stats.clips });
         for (let index = 0; index < loaded.stats.clips.length; index++) {
           await page.selectOption('#clip', String(index)); await page.waitForTimeout(90); const before = await snap();
-          await page.waitForTimeout(550); const after = await snap();
+          const after = await observePlayback(page, before);
           assert.notEqual(before.actionTime, after.actionTime, `${animal.id}/${variant}/${index}: time did not advance`);
           assert(after.bones.some((v, i) => Math.abs(v - before.bones[i]) > 1e-7), `${animal.id}/${variant}/${index}: no bone change`);
           await page.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 30000 });
@@ -220,7 +231,13 @@ function checkpoint(nextStage) {
     await page.click('#pause');
     const noGround = await snap(); assert.equal(noGround.groundReference.visible, false);
     for (let index = 0; index < 4; index++) {
-      await page.locator('#ground').check(); await page.waitForTimeout(80);
+      await page.locator('#ground').check();
+      // Three registers geometry memory on the first rendered frame. Software
+      // CI can take longer than 80ms; wait for the observed allocation itself.
+      await page.waitForFunction((baseline) => {
+        const current = window.previewDiagnostics.snapshot();
+        return current.groundReference?.visible && current.memory.geometries > baseline;
+      }, noGround.memory.geometries, { timeout: 5000 });
       const fixed = await snap(); assert.equal(fixed.groundReference.actualY, fixed.groundReference.y);
       assert(fixed.memory.geometries > noGround.memory.geometries);
       for (const proportion of [0.25, 0.5, 0.75]) {
@@ -292,8 +309,7 @@ function checkpoint(nextStage) {
       await recorded.waitForFunction(() => window.previewDiagnostics?.snapshot().status === 'playing');
       await recorded.selectOption('#clip', '0');
       const before = await recorded.evaluate(() => window.previewDiagnostics.snapshot());
-      await recorded.waitForTimeout(550);
-      const after = await recorded.evaluate(() => window.previewDiagnostics.snapshot());
+      const after = await observePlayback(recorded, before);
       assert.notEqual(after.actionTime, before.actionTime);
       assert(after.bones.some((v, i) => Math.abs(v - before.bones[i]) > 1e-7));
       await recorded.waitForFunction(() => window.previewDiagnostics.snapshot().completedLoops >= 1, null, { timeout: 30000 });
