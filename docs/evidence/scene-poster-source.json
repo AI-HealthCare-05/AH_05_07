@@ -1,0 +1,13 @@
+{
+  "sourceAssetId": "CANVA-CHAR-001",
+  "logicalId": "scene.S02.homeBase",
+  "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+  "objectKey": "visual/v1/characters/sk7-character-base-cream-v01.webp",
+  "sha256": "7804f11edeaa9a2fb7a0ea990d7e99dcf92643bd19cd6cdd573a40accdcc27c0",
+  "byteLength": 17622,
+  "mime": "image/webp",
+  "owner": "emotigom",
+  "rightsBasis": "Existing SK7 decorative use; docs/asset-register.md CANVA-CHAR-001",
+  "reviewReference": "docs/asset-register.md",
+  "verification": "public-byte-hash-read-2026-09-09"
+}

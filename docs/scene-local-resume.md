@@ -2,6 +2,8 @@
 
 ## Current continuation
 
+Latest: [manifest validation and runtime recipes](scene-manifest-validation.md) completes the bounded S02 manifest verifier and records new measured browser evidence. The earlier continuation entries below describe the first recovery commit.
+
 Tracking Issue: [#390 — Local checkpoint resume](https://github.com/AI-HealthCare-05/AH_05_07/issues/390), created by the owner. Branch: `codex/living-journey-hybrid`.
 
 The earlier 4175-origin CORS failure below was caused by using the wrong local origin. The existing asset-delivery contract allows `http://127.0.0.1:4173`. No CORS or deployment change is needed.

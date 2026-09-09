@@ -202,6 +202,28 @@
         },
         "measurement": {
           "$ref": "#/$defs/measurement"
+        },
+        "sourceModule": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "const": "web/src/components/scene/environment.ts"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byteLength": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "path",
+            "sha256",
+            "byteLength"
+          ]
         }
       },
       "required": [
@@ -210,7 +232,6 @@
         "revision",
         "status",
         "provenance",
-        "delivery",
         "runtimeProfile",
         "extensionsRequired",
         "decoderIds",
@@ -219,6 +240,18 @@
         "containsText",
         "pointerPolicy",
         "measurement"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "delivery"
+          ]
+        },
+        {
+          "required": [
+            "sourceModule"
+          ]
+        }
       ]
     },
     "measurement": {
@@ -376,6 +409,24 @@
         },
         "measurement": {
           "$ref": "#/$defs/measurement"
+        },
+        "status": {
+          "enum": [
+            "review",
+            "approved"
+          ]
+        },
+        "landmarkId": {
+          "enum": [
+            null,
+            "garden-gate",
+            "herb-garden",
+            "shade-tree",
+            "footbridge",
+            "reading-shelter",
+            "pavilion",
+            "sunset-overlook"
+          ]
         }
       },
       "required": [
@@ -387,7 +438,9 @@
         "motionPolicy",
         "compositions",
         "fallback",
-        "measurement"
+        "measurement",
+        "status",
+        "landmarkId"
       ]
     },
     "composition": {
@@ -426,6 +479,16 @@
         },
         "secondaryCropping": {
           "type": "boolean"
+        },
+        "camera": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/camera"
+            }
+          ]
         }
       },
       "required": [
@@ -434,7 +497,62 @@
         "subjectMinHeight",
         "subjectMaxHeight",
         "focalPoint",
-        "secondaryCropping"
+        "secondaryCropping",
+        "camera"
+      ]
+    },
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verticalSpan": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "characterAnchor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "environmentAnchor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "environmentScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "verticalSpan",
+        "position",
+        "target",
+        "characterAnchor",
+        "environmentAnchor",
+        "environmentScale"
       ]
     }
   }

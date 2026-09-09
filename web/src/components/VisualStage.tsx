@@ -1,8 +1,8 @@
-import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
-import { visualAssetCatalog } from "../ui/r2VisualAssets";
+
 
 const ThreeSceneRenderer = lazy(() => import("./scene/ThreeSceneRenderer"));
 
@@ -12,10 +12,10 @@ class SceneFailureBoundary extends Component<{ children: ReactNode; fallback: Re
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-export function StaticSceneFallback({ screen }: { screen: "S02" | "S10" }) {
+export function StaticSceneFallback({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
   return <div className="living-scene-fallback" aria-hidden="true">
-    {screen === "S02" && !failed && <img src={visualAssetCatalog["scene.S02.homeBase"].currentUrl} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />}
+    {!failed && <img src={url} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />}
   </div>;
 }
 
@@ -49,12 +49,12 @@ function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
     return () => window.clearTimeout(timeout);
   }, [active, ready, failed, plan.tier]);
 
-  const fallback = <StaticSceneFallback screen={plan.screen} />;
+  const fallback = <StaticSceneFallback url={plan.recipe.fallbackUrl} />;
   return <div ref={host} className="living-scene-runtime" aria-hidden="true" data-living-scene-status={failed ? "fallback" : ready ? "ready" : "poster"}>
     {(!ready || failed || plan.tier === 1) && fallback}
     {active && !failed && plan.tier === 2 && <SceneFailureBoundary fallback={fallback}>
       <Suspense fallback={null}>
-        <ThreeSceneRenderer landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
+        <ThreeSceneRenderer recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
       </Suspense>
     </SceneFailureBoundary>}
   </div>;
@@ -72,7 +72,11 @@ export function VisualStage({ screen, calendarDate }: { screen: JourneyScreenId;
   const plan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
     webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE });
   if (!plan) return null;
-  return <div className="living-visual-stage" data-living-scene={screen} aria-hidden="true">
-    <SceneRuntimeBoundary key={`${plan.screen}:${plan.landmark.id}:${plan.tier}`} plan={plan} />
+  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={plan.recipe.id} aria-hidden="true" style={{
+    "--scene-height-320": `${plan.recipe.compositions.mobile320.stageHeight}px`,
+    "--scene-height-390": `${plan.recipe.compositions.mobile390.stageHeight}px`,
+    "--scene-height-desktop": `${plan.recipe.compositions.desktop.stageHeight}px`,
+  } as CSSProperties}>
+    <SceneRuntimeBoundary key={`${plan.recipe.id}:${plan.tier}`} plan={plan} />
   </div>;
 }

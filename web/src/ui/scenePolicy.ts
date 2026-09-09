@@ -1,3 +1,4 @@
+import { findSceneRecipe, type SceneRecipe } from "./sceneRecipes";
 import type { JourneyScreenId } from "./journey";
 
 export const sceneLandmarks = [
@@ -52,6 +53,7 @@ export type ScenePlan = Readonly<{
   landmark: SceneLandmark;
   tier: 1 | 2;
   pose: "neutral-static";
+  recipe: SceneRecipe;
 }>;
 
 /** Presentation-only firewall; never accept a session, API response or domain object. */
@@ -63,5 +65,7 @@ export function resolveScenePlan(input: ScenePresentation): ScenePlan | null {
   if (input.screen !== "S02" && input.screen !== "S10") return null;
   const landmark = landmarkForCalendarDate(input.calendarDate);
   if (!landmark) return null;
-  return { screen: input.screen, landmark, tier: input.reducedMotion || !input.webglAvailable ? 1 : 2, pose: "neutral-static" };
+  const recipe = findSceneRecipe(input.screen, landmark.id);
+  if (!recipe) return null;
+  return { screen: input.screen, landmark, recipe, tier: input.reducedMotion || !input.webglAvailable ? 1 : 2, pose: "neutral-static" };
 }

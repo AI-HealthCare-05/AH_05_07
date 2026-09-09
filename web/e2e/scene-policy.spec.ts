@@ -16,7 +16,7 @@ test("fixed Seoul weekday journey crosses UTC midnight without challenge inputs"
 test("new renderer remains review-only and S05 policy is never reinterpreted", () => {
   for (const gate of [undefined, null, "", "on", "Review", "production"]) expect(resolveScenePlan({ ...presentation, gate })).toBeNull();
   expect(resolveSceneGate("production")).toBe("production");
-  for (const screen of allScreenIds) expect(resolveScenePlan({ ...presentation, screen }) !== null).toBe(screen === "S02" || screen === "S10");
+  for (const screen of allScreenIds) expect(resolveScenePlan({ ...presentation, screen }) !== null).toBe(screen === "S02");
   expect(screenVisualModes.S05).toBe("legacy-s05");
   expect(screenVisualModes.S11).toBe("layered");
 });

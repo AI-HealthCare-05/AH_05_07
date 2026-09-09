@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { getCompanionAsset } from "../../ui/companionAssets.generated";
+import { sceneComposition, type SceneRecipe } from "../../ui/sceneRecipes";
 import type { SceneLandmark } from "../../ui/scenePolicy";
 import { createLandmark } from "./environment";
 
-type Props = { landmark: SceneLandmark["id"]; visible: boolean; onReady: () => void; onFailure: () => void };
+type Props = { recipe: SceneRecipe; landmark: SceneLandmark["id"]; visible: boolean; onReady: () => void; onFailure: () => void };
 
 function disposeTree(root: THREE.Object3D) {
   const geometries = new Set<THREE.BufferGeometry>();
@@ -29,10 +29,12 @@ function disposeTree(root: THREE.Object3D) {
 }
 
 /** Neutral-pose prototype. No AnimationMixer and no animation frame loop. */
-export default function ThreeSceneRenderer({ landmark, visible, onReady, onFailure }: Props) {
+export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady, onFailure }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onReady, onFailure });
   callbacks.current = { onReady, onFailure };
+  const recipeRef = useRef(recipe);
+  recipeRef.current = recipe;
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
   const invalidate = useRef<(() => void) | null>(null);
@@ -58,6 +60,17 @@ export default function ThreeSceneRenderer({ landmark, visible, onReady, onFailu
         renderer.render(scene, camera);
         element.dataset.drawCalls = String(renderer.info.render.calls);
         element.dataset.triangles = String(renderer.info.render.triangles);
+        if (model) {
+          const bounds = new THREE.Box3().setFromObject(model);
+          const corners = [bounds.min.x, bounds.max.x].flatMap(x =>
+            [bounds.min.y, bounds.max.y].flatMap(y => [bounds.min.z, bounds.max.z].map(z =>
+              new THREE.Vector3(x, y, z).project(camera))));
+          const left = Math.min(...corners.map(point => point.x));
+          const right = Math.max(...corners.map(point => point.x));
+          const bottom = Math.min(...corners.map(point => point.y));
+          const top = Math.max(...corners.map(point => point.y));
+          element.dataset.subjectBounds = JSON.stringify({ left, right, bottom, top, height: (top - bottom) * element.clientHeight / 2 });
+        }
         callbacks.current.onReady();
       } catch { fail(); }
     };
@@ -65,19 +78,19 @@ export default function ThreeSceneRenderer({ landmark, visible, onReady, onFailu
       if (!renderer || disposed) return;
       const width = Math.max(1, element.clientWidth);
       const height = Math.max(1, element.clientHeight);
-      const mobile = width < 581;
-      const vertical = mobile ? 2.85 : 3.8;
+      const { camera: cameraRecipe } = sceneComposition(recipeRef.current, window.innerWidth);
+      const vertical = cameraRecipe.verticalSpan;
       const horizontal = vertical * width / height;
       camera.left = -horizontal / 2;
       camera.right = horizontal / 2;
       camera.top = vertical / 2;
       camera.bottom = -vertical / 2;
-      camera.position.set(mobile ? 3.5 : 5, 4, 6);
-      camera.lookAt(mobile ? 0 : 0.25, 0.65, 0);
+      camera.position.fromArray(cameraRecipe.position);
+      camera.lookAt(new THREE.Vector3().fromArray(cameraRecipe.target));
       camera.updateProjectionMatrix();
-      environment.position.x = mobile ? 0.3 : 0.65;
-      environment.scale.setScalar(mobile ? 0.8 : 1);
-      if (model) model.position.x = mobile ? -0.65 : -1.1;
+      environment.position.fromArray(cameraRecipe.environmentAnchor);
+      environment.scale.setScalar(cameraRecipe.environmentScale);
+      if (model) model.position.fromArray(cameraRecipe.characterAnchor);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height, false);
       render();
@@ -97,7 +110,7 @@ export default function ThreeSceneRenderer({ landmark, visible, onReady, onFailu
       observer.observe(element);
       invalidate.current = resize;
       resize();
-      new GLTFLoader().load(getCompanionAsset("bear", "lite").url, (gltf) => {
+      new GLTFLoader().load(recipe.characterUrl, (gltf) => {
         if (disposed) { disposeTree(gltf.scene); return; }
         if (!gltf.animations.some((clip) => clip.name === "idle")) { disposeTree(gltf.scene); fail(); return; }
         const normalized = new THREE.Group();
@@ -128,7 +141,7 @@ export default function ThreeSceneRenderer({ landmark, visible, onReady, onFailu
       disposeTree(scene);
       renderer?.dispose();
     };
-  }, [landmark]);
+  }, [landmark, recipe.id, recipe.characterUrl]);
 
   return <div className="living-three-scene" ref={host} aria-hidden="true" />;
 }

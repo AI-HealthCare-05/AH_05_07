@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify scene manifest rejection boundaries
+        run: npm run test:scene-manifest
+
       - name: Build web client
         run: npm run build
 

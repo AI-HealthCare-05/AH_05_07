@@ -1,6 +1,7 @@
 # Living Journey Hybrid implementation checkpoint — 2026-09-09
 
 ## Latest local continuation
+[Manifest validation and runtime recipes](scene-manifest-validation.md) now covers S02 source/provenance checks, fallback references, conservative budgets and camera/anchor integration. Local manifest/browser checks pass; production remains disabled.
 See [scene-local-resume.md](scene-local-resume.md) for Issue #390, corrected local-origin browser verification and repeated schema/GLB validation. The original checkpoint statements below are historical. Production remains disabled; this work is a review prototype.
 
 ## Authorization and source
@@ -37,7 +38,7 @@ Build warns about a lazy shared Three chunk exceeding 500KB raw. It is approxima
 `VITE_SK7_SCENE_MODE=review` permits the S02 prototype. Missing/unknown/off disables it. `production` is recognized but deliberately returns no plan until production recipes pass visual/performance acceptance. Existing `VITE_SK7_COMPANION_MODE` remains separate. Do not remove this guard merely to satisfy rollout wording.
 
 ## Remaining work in order
-1. Complete schema cross-reference/provenance/budget verifier and runtime recipe integration; current JSON Schema validates structure, not all semantic constraints.
+1. S02 schema cross-reference/provenance/budget verifier and runtime recipe integration are complete for the bounded review profile. Extend this verifier explicitly when registering new production assets or screens; see scene-manifest-validation.md.
 2. Measure prototype in actual browser at 320x568, 320x844, 390x844 and 1366x768. Verify focal-size bounds, shape/material quality, no clipped subjects, CSS fallback, first-use bytes, navigation and image failures.
 3. Compare current body bind pose with approved neutral pose. Consider approved idle pose sampling only after visual evidence. Check camera framing and character anchor centering against actual bounds.
 4. Replace/accept procedural environment candidates through asset forensics, source/provenance registration and visual acceptance. They are not finished production clay assets.

@@ -1,0 +1,1150 @@
+{
+  "schemaVersion": 2,
+  "manifestRevision": "s02-review-002",
+  "sourceCommit": "2b1a723df33e21e49e21b3b6fe58ed982a2afbd2",
+  "assets": [
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-bear-lite",
+      "kind": "character",
+      "revision": "v007",
+      "status": "review",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-001",
+        "sourceHash": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+        "objectKey": "companion/v1/bear/v007/lite.glb",
+        "sha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
+        "byteLength": 518636,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "s02-neutral-poster",
+      "kind": "poster",
+      "revision": "v01",
+      "status": "review",
+      "provenance": {
+        "sourceAssetId": "CANVA-CHAR-001",
+        "sourceHash": "7804f11edeaa9a2fb7a0ea990d7e99dcf92643bd19cd6cdd573a40accdcc27c0",
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 decorative use; docs/asset-register.md CANVA-CHAR-001",
+        "reviewReference": "docs/asset-register.md"
+      },
+      "delivery": {
+        "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+        "objectKey": "visual/v1/characters/sk7-character-base-cream-v01.webp",
+        "sha256": "7804f11edeaa9a2fb7a0ea990d7e99dcf92643bd19cd6cdd573a40accdcc27c0",
+        "byteLength": 17622,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "procedural-landmarks",
+      "kind": "environment",
+      "revision": "review-001",
+      "status": "review",
+      "provenance": {
+        "sourceAssetId": "web/src/components/scene/environment.ts",
+        "sourceHash": "e762ff220891c59dc63c82ee1df2bb9c5caf54337eadb717e89f67d0ebb9ae1d",
+        "owner": "AI-HealthCare-05/AH_05_07",
+        "rightsBasis": "Repository-authored procedural review geometry",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
+      },
+      "sourceModule": {
+        "path": "web/src/components/scene/environment.ts",
+        "sha256": "e762ff220891c59dc63c82ee1df2bb9c5caf54337eadb717e89f67d0ebb9ae1d",
+        "byteLength": 3440
+      }
+    }
+  ],
+  "recipes": [
+    {
+      "id": "s02-poster",
+      "status": "review",
+      "landmarkId": null,
+      "screens": [
+        "S02"
+      ],
+      "mode": "static",
+      "assetIds": [
+        "s02-neutral-poster"
+      ],
+      "maxTier": 1,
+      "motionPolicy": "none",
+      "compositions": {
+        "mobile320": {
+          "projection": "poster",
+          "stageHeight": 200,
+          "subjectMinHeight": 0,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": null
+        },
+        "mobile390": {
+          "projection": "poster",
+          "stageHeight": 240,
+          "subjectMinHeight": 0,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": null
+        },
+        "desktop": {
+          "projection": "poster",
+          "stageHeight": 360,
+          "subjectMinHeight": 0,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": null
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": null,
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-garden-gate",
+      "status": "review",
+      "landmarkId": "garden-gate",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-herb-garden",
+      "status": "review",
+      "landmarkId": "herb-garden",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-shade-tree",
+      "status": "review",
+      "landmarkId": "shade-tree",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-footbridge",
+      "status": "review",
+      "landmarkId": "footbridge",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-reading-shelter",
+      "status": "review",
+      "landmarkId": "reading-shelter",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-pavilion",
+      "status": "review",
+      "landmarkId": "pavilion",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    },
+    {
+      "id": "s02-sunset-overlook",
+      "status": "review",
+      "landmarkId": "sunset-overlook",
+      "screens": [
+        "S02"
+      ],
+      "mode": "realtime",
+      "assetIds": [
+        "moa-bear-lite",
+        "procedural-landmarks"
+      ],
+      "maxTier": 2,
+      "motionPolicy": "neutral-static",
+      "compositions": {
+        "mobile320": {
+          "projection": "orthographic",
+          "stageHeight": 200,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 180,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "mobile390": {
+          "projection": "orthographic",
+          "stageHeight": 240,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 220,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 2.85,
+            "position": [
+              3.5,
+              4,
+              6
+            ],
+            "target": [
+              0,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -0.65,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.3,
+              0,
+              0
+            ],
+            "environmentScale": 0.8
+          }
+        },
+        "desktop": {
+          "projection": "orthographic",
+          "stageHeight": 360,
+          "subjectMinHeight": 80,
+          "subjectMaxHeight": 340,
+          "focalPoint": [
+            0.35,
+            0.55
+          ],
+          "secondaryCropping": false,
+          "camera": {
+            "verticalSpan": 3.8,
+            "position": [
+              5,
+              4,
+              6
+            ],
+            "target": [
+              0.25,
+              0.65,
+              0
+            ],
+            "characterAnchor": [
+              -1.1,
+              0.05,
+              0.65
+            ],
+            "environmentAnchor": [
+              0.65,
+              0,
+              0
+            ],
+            "environmentScale": 1
+          }
+        }
+      },
+      "fallback": {
+        "tier1RecipeId": "s02-poster",
+        "tier0": "css"
+      },
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      }
+    }
+  ]
+}
