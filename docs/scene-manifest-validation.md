@@ -34,3 +34,11 @@ Local tests: 34 manifest tests, seven Chromium review tests and five scene polic
 Owner-provided infrastructure conditions: R2 has 8 GB available for assets and free egress. The per-activation budget manages client latency and memory; it does not ration total R2 storage or estimate egress charges. Additional image work may use the connected Canva MCP, followed by R2 registration with provenance, immutable identity and responsive delivery checks.
 
 Outstanding: final clay environment and matching responsive posters/layers; all-weekday visual QA; shared Seoul date rollover with draft/request safeguards; S10; S05 migration parity; real-device performance and controlled rollout. No production acceptance or activation is claimed.
+
+## Cross-platform CI follow-up
+
+The previous character-preview isolation check matched the lazy `GLTFLoader-*.js` filename recorded by Vite in its preload map. The check now parses JavaScript using the already-installed Rollup parser and follows static imports/re-exports. Lazy filename literals are excluded from implementation-marker scanning; direct, transitive and inline Three code still fails. Five graph-boundary tests cover those cases, cycles and path escape. No test gate is removed.
+
+Windows checkout converted the procedural source to CRLF and correctly failed the source hash check. `.gitattributes` now pins the source module, authored manifest and generated runtime manifest to LF on every platform. The hash check remains byte-exact.
+
+Local full character-preview synthetic smoke passed: 14 clip/variant checks and 21 checks, with finalized recording. Latest CI results are tracked on PR #391; no production rollout occurs in this PR.

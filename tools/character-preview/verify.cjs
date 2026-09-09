@@ -44,12 +44,7 @@ const localViewerMarkers = [
   /\bvendor-manifest\.json\b/i,
   /(?:^|["'\\/])vendor[\\/]/i,
 ];
-const staticThreeMarkers = [
-  /GLTFLoader/,
-  /THREE\./,
-  /three\.module/i,
-  /(?:^|["'])three\/(?:addons|src|build)\//i,
-];
+const { inspectStaticGraph } = require('./production-isolation.cjs');
 function readDistText(file) {
   return fs.readFileSync(file, 'utf8');
 }
@@ -78,9 +73,7 @@ function initialEntryFile() {
 }
 function inspectProductionIsolation() {
   const entry = initialEntryFile();
-  const entryText = readDistText(entry);
-  const marker = staticThreeMarkers.find((pattern) => pattern.test(entryText));
-  assert(!marker, `Three.js statically included in production main entry: ${path.relative(dist, entry)} (${marker})`);
+  inspectStaticGraph(entry, dist);
   const assetsDir = path.join(dist, 'assets');
   assert(fs.existsSync(assetsDir), 'Production assets directory is missing');
   assert(fs.readdirSync(assetsDir).some((name) => /^CompanionReviewRenderer-[^/]+\.js$/i.test(name)), 'Approved lazy CompanionReviewRenderer chunk is missing');

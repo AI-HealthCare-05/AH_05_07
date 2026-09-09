@@ -7,3 +7,8 @@
 
 # Original companion generation records the exact committed authoring bytes.
 /tools/companions/*.py text eol=lf
+
+# Scene source-module identities and generated source must remain byte-stable.
+/web/src/components/scene/environment.ts text eol=lf
+/web/src/ui/sceneManifest.generated.ts text eol=lf
+/web/src/ui/scene-manifest.v2.json text eol=lf
