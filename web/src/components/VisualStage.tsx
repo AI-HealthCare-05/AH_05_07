@@ -2,6 +2,7 @@ import { Component, lazy, Suspense, useEffect, useRef, useState, type CSSPropert
 
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
+import { sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
 
 
 const ThreeSceneRenderer = lazy(() => import("./scene/ThreeSceneRenderer"));
@@ -12,10 +13,23 @@ class SceneFailureBoundary extends Component<{ children: ReactNode; fallback: Re
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-export function StaticSceneFallback({ url }: { url: string }) {
+function PosterImage({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
-  return <div className="living-scene-fallback" aria-hidden="true">
-    {!failed && <img src={url} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />}
+  return failed ? null : <img src={url} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />;
+}
+
+export function StaticSceneFallback({ recipe }: { recipe: SceneRecipe }) {
+  const [profile, setProfile] = useState(() => sceneProfile(window.innerWidth));
+  useEffect(() => {
+    const queries = [window.matchMedia("(max-width: 350px)"), window.matchMedia("(max-width: 580px)")];
+    const update = () => setProfile(sceneProfile(window.innerWidth));
+    queries.forEach(query => query.addEventListener("change", update));
+    update();
+    return () => queries.forEach(query => query.removeEventListener("change", update));
+  }, []);
+  const poster = recipe.posters[profile];
+  return <div className="living-scene-fallback" aria-hidden="true" data-poster-asset={poster.id}>
+    <PosterImage key={poster.url} url={poster.url} />
   </div>;
 }
 
@@ -49,7 +63,7 @@ function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
     return () => window.clearTimeout(timeout);
   }, [active, ready, failed, plan.tier]);
 
-  const fallback = <StaticSceneFallback url={plan.recipe.fallbackUrl} />;
+  const fallback = <StaticSceneFallback recipe={plan.recipe} />;
   return <div ref={host} className="living-scene-runtime" aria-hidden="true" data-living-scene-status={failed ? "fallback" : ready ? "ready" : "poster"}>
     {(!ready || failed || plan.tier === 1) && fallback}
     {active && !failed && plan.tier === 2 && <SceneFailureBoundary fallback={fallback}>

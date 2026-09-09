@@ -9,6 +9,7 @@ Semantic HTML owns all tasks, facts, dates, labels, status and controls. VisualS
 
 VisualStage -> ScenePolicy + QualityTierResolver + SceneAssetManifest -> SceneRuntimeBoundary -> lazy ThreeSceneRenderer.
 StaticSceneFallback is visible before activation and after failure; CSS is the final fallback. Scene failure does not navigate, clear data, retry an API or announce a domain error.
+S02 now registers one clay render and three viewport-specific posters per weekday. The poster includes the same bear and landmark, so fallback owns the whole decorative scene. Camera/source hashes and WebP bytes are pinned; a source or composition edit requires recapture before the normal build can pass. Posters currently use local review delivery while R2 authentication is pending. See [clay poster workflow](scene-clay-posters.md).
 
 ## Ownership
 - VisualStage: bounded mobile/desktop layout, one visual owner, no duplicate poster and GLB character.

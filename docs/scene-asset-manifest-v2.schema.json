@@ -104,7 +104,7 @@
           "properties": {
             "url": {
               "type": "string",
-              "pattern": "^https://"
+              "pattern": "^(https://|/scene-review/s02/v1/)"
             },
             "objectKey": {
               "type": "string",
@@ -489,6 +489,10 @@
               "$ref": "#/$defs/camera"
             }
           ]
+        },
+        "posterAssetId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [

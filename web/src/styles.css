@@ -409,13 +409,11 @@ ul, ol { margin: 0; padding: 0; }
 .living-three-scene { opacity: 0; }
 [data-living-scene-status="ready"] .living-three-scene { opacity: 1; }
 .living-scene-fallback { display: grid; place-items: center; }
-.living-scene-fallback img { width: auto; max-width: 65%; height: 240px; object-fit: contain; }
+.living-scene-fallback img { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: auto; max-width: none; height: 100%; }
 .scene:has(.living-visual-stage) > .scene-visual-character { display: none; }
 @media (max-width: 580px) {
   .living-visual-stage { height: var(--scene-height-390, 240px); margin-block: 1rem; }
-  .living-scene-fallback img { height: 160px; }
 }
 @media (max-width: 350px) {
   .living-visual-stage { height: var(--scene-height-320, 200px); }
-  .living-scene-fallback img { height: 132px; }
 }

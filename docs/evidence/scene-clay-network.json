@@ -1,0 +1,190 @@
+{
+  "status": "local-observation-not-device-acceptance",
+  "manifestRevision": "s02-clay-001",
+  "sourceBaseline": "2c25a0d1cf41f8a5a2aa72f93b9dbe62cbe13d74",
+  "manifestSha256": "cef9aca897fd597636eed53b3a99c7442e40625a9280f045390bb463beda8d1a",
+  "environment": "macOS Chromium, Vite production preview on 127.0.0.1:4173; CI=1 enables ANGLE SwiftShader; fresh context per viewport",
+  "scope": "Selected ThreeSceneRenderer/GLTFLoader chunks, one GLB, one weekday poster. Excludes initial JS/CSS, semantic shell and unrelated imagery. responseBodySize is Playwright encoded body estimate; headers separate. No FPS, peak memory, GPU time or physical-device claim.",
+  "measurements": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.812405141125945,
+        "right": -0.09842728938085579,
+        "bottom": -0.6240155230674,
+        "top": 0.7146531216870375,
+        "height": 133.86686447544375
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/scene-review/s02/v1/footbridge-mobile320-7be34a4a09e04d3f.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 672,
+          "responseBodySize": 10248,
+          "responseHeadersSize": 268
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-CG5KIdFF.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 4623,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519779,
+          "responseHeadersSize": 0
+        }
+      ],
+      "selectedEncodedResponseBytes": 697511
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.812405141125945,
+        "right": -0.09842728938085579,
+        "bottom": -0.6240155230674,
+        "top": 0.7146531216870375,
+        "height": 133.86686447544375
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/scene-review/s02/v1/footbridge-mobile320-7be34a4a09e04d3f.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 672,
+          "responseBodySize": 10248,
+          "responseHeadersSize": 268
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-CG5KIdFF.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 4623,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519787,
+          "responseHeadersSize": 0
+        }
+      ],
+      "selectedEncodedResponseBytes": 697519
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.7655547832941422,
+        "right": -0.09275111441042609,
+        "bottom": -0.6240155230674,
+        "top": 0.7146531216870375,
+        "height": 160.6402373705325
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 672,
+          "responseBodySize": 12776,
+          "responseHeadersSize": 268
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-CG5KIdFF.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 4623,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519794,
+          "responseHeadersSize": 0
+        }
+      ],
+      "selectedEncodedResponseBytes": 700054
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.42232596827578606,
+        "right": -0.1484805659848216,
+        "bottom": -0.4207720939426193,
+        "top": 0.7664068015236418,
+        "height": 213.69220118392698
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/scene-review/s02/v1/footbridge-desktop-f163f48ff3ce5340.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 670,
+          "responseBodySize": 23668,
+          "responseHeadersSize": 268
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-CG5KIdFF.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 4623,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519777,
+          "responseHeadersSize": 0
+        }
+      ],
+      "selectedEncodedResponseBytes": 710929
+    }
+  ]
+}
