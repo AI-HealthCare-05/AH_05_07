@@ -46,9 +46,7 @@ def run_git(repo_root: Path, *args: str, text: bool = False) -> bytes | str:
     try:
         return subprocess.check_output(command, text=text)
     except subprocess.CalledProcessError as exc:
-        raise VerificationError(
-            f"git command failed: {' '.join(command)}"
-        ) from exc
+        raise VerificationError(f"git command failed: {' '.join(command)}") from exc
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -108,11 +106,7 @@ def is_nonempty_string(value: Any) -> bool:
 
 
 def is_nonnegative_int(value: Any) -> bool:
-    return (
-        isinstance(value, int)
-        and not isinstance(value, bool)
-        and value >= 0
-    )
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
 def validate_manifest_schema(
@@ -135,8 +129,7 @@ def validate_manifest_schema(
     )
     verify_condition(
         "audit_issue",
-        is_nonnegative_int(manifest["audit_issue"])
-        and manifest["audit_issue"] > 0,
+        is_nonnegative_int(manifest["audit_issue"]) and manifest["audit_issue"] > 0,
         failures,
     )
 
@@ -148,14 +141,12 @@ def validate_manifest_schema(
     )
     verify_condition(
         "source.commit_sha format",
-        isinstance(source["commit_sha"], str)
-        and HEX40_RE.fullmatch(source["commit_sha"]) is not None,
+        isinstance(source["commit_sha"], str) and HEX40_RE.fullmatch(source["commit_sha"]) is not None,
         failures,
     )
     verify_condition(
         "source.tree_sha format",
-        isinstance(source["tree_sha"], str)
-        and HEX40_RE.fullmatch(source["tree_sha"]) is not None,
+        isinstance(source["tree_sha"], str) and HEX40_RE.fullmatch(source["tree_sha"]) is not None,
         failures,
     )
 
@@ -176,10 +167,7 @@ def validate_manifest_schema(
         if valid and "state" in entry:
             valid = entry["state"] == "absent_at_source"
         elif valid and "sha256" in entry:
-            valid = (
-                isinstance(entry["sha256"], str)
-                and HEX64_RE.fullmatch(entry["sha256"]) is not None
-            )
+            valid = isinstance(entry["sha256"], str) and HEX64_RE.fullmatch(entry["sha256"]) is not None
         else:
             valid = False
 
@@ -190,17 +178,13 @@ def validate_manifest_schema(
 
     verify_condition(
         "application_copy_inputs.paths",
-        isinstance(copy_paths, list)
-        and bool(copy_paths)
-        and all(is_nonempty_string(item) for item in copy_paths),
+        isinstance(copy_paths, list) and bool(copy_paths) and all(is_nonempty_string(item) for item in copy_paths),
         failures,
     )
     verify_condition(
         "application_copy_inputs.git_archive_sha256 format",
         isinstance(copy_inputs["git_archive_sha256"], str)
-        and HEX64_RE.fullmatch(
-            copy_inputs["git_archive_sha256"]
-        ) is not None,
+        and HEX64_RE.fullmatch(copy_inputs["git_archive_sha256"]) is not None,
         failures,
     )
 
@@ -208,8 +192,7 @@ def validate_manifest_schema(
 
     verify_condition(
         "cloud_build.id format",
-        isinstance(cloud_build["id"], str)
-        and UUID_RE.fullmatch(cloud_build["id"]) is not None,
+        isinstance(cloud_build["id"], str) and UUID_RE.fullmatch(cloud_build["id"]) is not None,
         failures,
     )
     verify_condition(
@@ -243,14 +226,12 @@ def validate_manifest_schema(
     )
     verify_condition(
         "cloud_build.source.generation",
-        isinstance(build_source["generation"], str)
-        and build_source["generation"].isdigit(),
+        isinstance(build_source["generation"], str) and build_source["generation"].isdigit(),
         failures,
     )
     verify_condition(
         "cloud_build.source.sha256 format",
-        isinstance(build_source["sha256"], str)
-        and HEX64_RE.fullmatch(build_source["sha256"]) is not None,
+        isinstance(build_source["sha256"], str) and HEX64_RE.fullmatch(build_source["sha256"]) is not None,
         failures,
     )
     verify_equal(
@@ -278,15 +259,11 @@ def validate_manifest_schema(
     git_only_entries = context["git_only_entries"]
     verify_condition(
         "uploaded_context_verification.git_only_entries",
-        isinstance(git_only_entries, list)
-        and all(is_nonempty_string(item) for item in git_only_entries),
+        isinstance(git_only_entries, list) and all(is_nonempty_string(item) for item in git_only_entries),
         failures,
     )
 
-    if (
-        all(is_nonnegative_int(context[field]) for field in count_fields)
-        and isinstance(git_only_entries, list)
-    ):
+    if all(is_nonnegative_int(context[field]) for field in count_fields) and isinstance(git_only_entries, list):
         verify_equal(
             "uploaded context count consistency",
             context["uploaded_entries"],
@@ -338,8 +315,7 @@ def validate_manifest_schema(
     api_image = manifest["api_image"]
     verify_condition(
         "api_image.digest format",
-        isinstance(api_image["digest"], str)
-        and SHA256_DIGEST_RE.fullmatch(api_image["digest"]) is not None,
+        isinstance(api_image["digest"], str) and SHA256_DIGEST_RE.fullmatch(api_image["digest"]) is not None,
         failures,
     )
 
@@ -352,9 +328,7 @@ def validate_manifest_schema(
     verify_condition(
         "cloud_run.verified_image_digest format",
         isinstance(cloud_run["verified_image_digest"], str)
-        and SHA256_DIGEST_RE.fullmatch(
-            cloud_run["verified_image_digest"]
-        ) is not None,
+        and SHA256_DIGEST_RE.fullmatch(cloud_run["verified_image_digest"]) is not None,
         failures,
     )
     verify_condition(
@@ -372,8 +346,7 @@ def validate_manifest_schema(
     )
     verify_condition(
         "model_v2.artifact_sha256 format",
-        isinstance(model_v2["artifact_sha256"], str)
-        and HEX64_RE.fullmatch(model_v2["artifact_sha256"]) is not None,
+        isinstance(model_v2["artifact_sha256"], str) and HEX64_RE.fullmatch(model_v2["artifact_sha256"]) is not None,
         failures,
     )
     verify_condition(
@@ -401,9 +374,7 @@ def validate_manifest_schema(
     limitations = manifest["limitations"]
     verify_condition(
         "limitations",
-        isinstance(limitations, list)
-        and bool(limitations)
-        and all(is_nonempty_string(item) for item in limitations),
+        isinstance(limitations, list) and bool(limitations) and all(is_nonempty_string(item) for item in limitations),
         failures,
     )
 
@@ -487,11 +458,7 @@ def verify_manifest(manifest_path: Path, repo_root: Path) -> int:
         object_name = f"{source}:{relpath}"
 
         if "state" in entry:
-            actual_state = (
-                "present"
-                if git_object_exists(repo_root, object_name)
-                else "absent_at_source"
-            )
+            actual_state = "present" if git_object_exists(repo_root, object_name) else "absent_at_source"
             verify_equal(
                 relpath,
                 actual_state,
@@ -505,9 +472,7 @@ def verify_manifest(manifest_path: Path, repo_root: Path) -> int:
             failures.append(relpath)
             continue
 
-        actual_sha256 = sha256_bytes(
-            git_file_bytes(repo_root, source, relpath)
-        )
+        actual_sha256 = sha256_bytes(git_file_bytes(repo_root, source, relpath))
         verify_equal(
             relpath,
             actual_sha256,
@@ -557,8 +522,7 @@ def verify_manifest(manifest_path: Path, repo_root: Path) -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify an API release provenance manifest using only "
-            "local repository Git objects and manifest contents."
+            "Verify an API release provenance manifest using only local repository Git objects and manifest contents."
         )
     )
     parser.add_argument(
