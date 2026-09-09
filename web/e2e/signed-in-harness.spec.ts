@@ -579,6 +579,110 @@ test("synthetic signed-in session recovers a blood-pressure draft after the shar
   releaseRequest?.();
 });
 
+test("synthetic signed-in save times out when headers arrive but the JSON body stalls", async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+
+    window.fetch = async (input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      const method = init?.method ?? (input instanceof Request ? input.method : "GET");
+
+      if (
+        new URL(url, window.location.href).pathname ===
+          "/api/v1/observations/blood-pressure" &&
+        method === "POST"
+      ) {
+        const requestCount =
+          Number(sessionStorage.getItem("e2e-body-stall-save-requests") ?? "0") + 1;
+        sessionStorage.setItem(
+          "e2e-body-stall-save-requests",
+          String(requestCount),
+        );
+
+        const signal = init?.signal;
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            const abort = () =>
+              controller.error(
+                signal?.reason ?? new DOMException("Aborted", "AbortError"),
+              );
+
+            if (signal?.aborted) {
+              abort();
+            } else {
+              signal?.addEventListener("abort", abort, { once: true });
+            }
+          },
+        });
+
+        return new Response(body, {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      return nativeFetch(input, init);
+    };
+  });
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    if (url.pathname === "/api/v1/observations/window") {
+      await route.fulfill({
+        contentType: "application/json",
+        status: 200,
+        headers,
+        body: JSON.stringify(emptyWindow),
+      });
+      return;
+    }
+
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S04");
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+
+  const saveButton = page.locator(
+    "form.measurement-panel button[type=submit]",
+  );
+  await saveButton.click();
+
+  await expect(
+    page.getByText(
+      "저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.",
+    ),
+  ).toBeVisible({ timeout: 10_000 });
+
+  await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
+  await expect(page.getByLabel(/수축기/)).toHaveValue("120");
+  await expect(page.getByLabel(/이완기/)).toHaveValue("80");
+  await expect(saveButton).toBeEnabled();
+
+  const requestCount = await page.evaluate(() =>
+    Number(sessionStorage.getItem("e2e-body-stall-save-requests") ?? "0"),
+  );
+  expect(requestCount).toBe(1);
+});
+
 test("synthetic signed-in session opens a separated record detail and starts only the owned current edit", async ({ page }) => {
   await routeApiWindow(page, 200, recordBrowseWindow());
 
