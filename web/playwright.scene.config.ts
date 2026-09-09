@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./test-results/living-scene-review",
-  testMatch: "living-scene-review.spec.ts",
+  testMatch: ["living-scene-review.spec.ts", "seoul-date-rollover.spec.ts"],
   workers: 1,
   reporter: [["list"], ["json", { outputFile: "test-results/living-scene-review/report.json" }]],
   use: {

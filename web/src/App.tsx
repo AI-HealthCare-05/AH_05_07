@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { VisualStage } from "./components/VisualStage";
@@ -27,6 +27,8 @@ import {
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
+import { shiftDate } from "./lib/seoulDate";
+import { useSeoulDate } from "./lib/useSeoulDate";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
@@ -81,22 +83,6 @@ function makeNotice(
     origin: options.origin,
     persistence: options.origin === "export-success" ? "until-navigation" : "persistent",
   };
-}
-
-function koreaDate(): string {
-  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
-    .formatToParts(new Date())
-    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
-
-function shiftDate(value: string, offset: number): string {
-  const date = new Date(`${value}T12:00:00+09:00`);
-  date.setDate(date.getDate() + offset);
-  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
-    .formatToParts(date)
-    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
-  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 function dashboardWindowBounds(today: string, window: DashboardWindow): Pick<ObservationWindow, "start_on" | "end_on"> {
@@ -203,7 +189,7 @@ function App() {
     ),
     [initialSearch],
   );
-  const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
+  const today = useSeoulDate(fixture?.asOf);
   const evidenceMode = Boolean(fixture);
   const modelV2ResultState = useMemo(
     () => resolveModelV2ResultState(initialSearch.get("model_v2_state"), allowsE2eFixture()),
@@ -246,6 +232,15 @@ function App() {
   const [accountDeletionOpen, setAccountDeletionOpen] = useState(false);
   const [accountDeletionPending, setAccountDeletionPending] = useState(false);
   const [accountDeletionRecovery, setAccountDeletionRecovery] = useState<AccountDeletionRecovery>(null);
+  const presentationRef = useRef({ today, startOn, endOn, windowData, accountDeletionPending });
+
+  useLayoutEffect(() => {
+    const previous = presentationRef.current;
+    // Invalidate before passive refresh effects: old success AND error callbacks
+    // must not commit across a calendar/window change, even after A -> B -> A.
+    if (previous.startOn !== startOn || previous.endOn !== endOn) windowRequestId.current += 1;
+    presentationRef.current = { today, startOn, endOn, windowData, accountDeletionPending };
+  }, [today, startOn, endOn, windowData, accountDeletionPending]);
 
   function applySession(nextSession: Session | null) {
     sessionUpdateVersionRef.current += 1;
@@ -277,7 +272,7 @@ function App() {
     setNotice(null);
     setPendingAction(null);
     setConfirmedSave(false);
-    setBloodPressureDraft(emptyBloodPressureDraft(today));
+    setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
     setBloodPressureError("");
     setEditingBloodPressureId(null);
     setPendingBloodPressureDeletion(null);
@@ -341,7 +336,7 @@ function App() {
 
   useEffect(() => {
     if (evidenceMode || !session) return;
-    void refreshWindow(session);
+    void refreshWindow();
   }, [endOn, evidenceMode, session, startOn]);
 
   useEffect(() => {
@@ -363,14 +358,14 @@ function App() {
         setSelectedRecordKey(null);
         setPendingAction(null);
         setConfirmedSave(false);
-        setBloodPressureDraft(emptyBloodPressureDraft(today));
+        setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
         setBloodPressureError("");
         setEditingBloodPressureId(null);
         setPendingBloodPressureDeletion(null);
         setEditingChallengeCheckin(null);
         setPendingChallengeCheckinDeletion(null);
         editOriginKey.current = null;
-        if (dashboardWindow === "current") void refreshWindow(sessionRef.current);
+        if (dashboardWindow === "current") void refreshWindow();
         return;
       }
       setNotice((current) => current?.persistence === "until-navigation" ? null : current);
@@ -422,7 +417,7 @@ function App() {
       return;
     }
     if (context === "load") {
-      setWindowState(windowData ? "refresh-error" : "error");
+      setWindowState(presentationRef.current.windowData ? "refresh-error" : "error");
       return;
     }
     if (error instanceof ApiRequestError && error.status === 422) {
@@ -445,20 +440,24 @@ function App() {
     setNotice(makeNotice("warning", message, { origin: "request-error", reload: context !== "export" }));
   }
 
-  async function refreshWindow(activeSession = sessionRef.current, allowTokenRefreshRetry = true) {
+  async function refreshWindow(allowTokenRefreshRetry = true) {
+    // A pre-midnight mutation may call this old function after the date changes.
+    // Read committed presentation bounds and the latest session at invocation.
+    const activeSession = sessionRef.current;
+    const snapshot = presentationRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || accountDeletionPending) return;
+    if (!activeSession || !requestContext || evidenceMode || snapshot.accountDeletionPending) return;
     const requestId = ++windowRequestId.current;
-    setWindowState(windowData ? "refreshing" : "loading");
+    setWindowState(snapshot.windowData ? "refreshing" : "loading");
     try {
-      const nextData = await getObservationWindow(activeSession, startOn, endOn);
+      const nextData = await getObservationWindow(activeSession, snapshot.startOn, snapshot.endOn);
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       setWindowData(nextData);
       setWindowState("ready");
     } catch (error) {
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       if (allowTokenRefreshRetry && isSessionError(error) && hasNewerToken(requestContext)) {
-        await refreshWindow(sessionRef.current, false);
+        await refreshWindow(false);
         return;
       }
       presentRequestError(error, "load", requestContext);
@@ -621,11 +620,11 @@ function App() {
         await createBloodPressureObservation(activeSession, payload);
       }
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
       else setNotice(null);
-      setBloodPressureDraft(emptyBloodPressureDraft(today));
+      setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
       setEditingBloodPressureId(null);
       setConfirmedSave(true);
       navigate("S05");
@@ -663,7 +662,7 @@ function App() {
       if (!isCurrentRequestContext(requestContext)) return;
       setPendingBloodPressureDeletion(null);
       setSelectedRecordKey(null);
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "혈압 기록을 삭제했습니다.", { origin: "mutation-success" }));
       navigate("S08");
@@ -682,7 +681,7 @@ function App() {
     try {
       await selectActiveChallenge(activeSession, actionId);
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "7일 챌린지를 선택했습니다.", { origin: "mutation-success" }));
       navigate("S02");
@@ -701,7 +700,7 @@ function App() {
     try {
       await createActiveChallengeCheckin(activeSession, { observed_on: today, status });
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(null);
       setConfirmedSave(true);
@@ -721,7 +720,7 @@ function App() {
     try {
       await updateChallengeCheckin(activeSession, editingChallengeCheckin.id, status);
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setEditingChallengeCheckin(null);
       setNotice(makeNotice("success", "챌린지 상태를 수정했습니다.", { origin: "mutation-success" }));
@@ -743,7 +742,7 @@ function App() {
       setPendingChallengeCheckinDeletion(null);
       setEditingChallengeCheckin(null);
       setSelectedRecordKey(null);
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "챌린지 기록을 삭제했습니다.", { origin: "mutation-success" }));
       navigate("S08");

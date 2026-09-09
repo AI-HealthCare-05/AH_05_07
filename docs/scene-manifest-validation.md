@@ -33,7 +33,7 @@ Local tests: 34 manifest tests, eight Chromium review tests and five scene polic
 
 Owner-provided infrastructure conditions: R2 has 8 GB available for assets and free egress. The per-activation budget manages client latency and memory; it does not ration total R2 storage or estimate egress charges. Additional image work may use the connected Canva MCP, followed by R2 registration with provenance, immutable identity and responsive delivery checks.
 
-Outstanding: final clay environment and matching responsive posters/layers; all-weekday visual QA; shared Seoul date rollover with draft/request safeguards; S10; S05 migration parity; real-device performance and controlled rollout. No production acceptance or activation is claimed.
+Shared Seoul date rollover with draft/request safeguards is implemented; see [date rollover verification](scene-date-rollover.md). Outstanding: final clay environment and matching responsive posters/layers; final-art all-weekday visual QA; S10; S05 migration parity; real-device performance and controlled rollout. No production acceptance or activation is claimed.
 
 ## Cross-platform CI follow-up
 
