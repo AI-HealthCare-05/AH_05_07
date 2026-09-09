@@ -62,7 +62,10 @@ jobs:
       - name: Run S3E production-on companion verification
         run: npm run test:e2e:production:on
 
-      - name: Run S02 review scene verification
+      - name: Run S05 review migration parity
+        run: npm run test:e2e:saved-scene
+
+      - name: Run S02 and S10 review scene verification
         run: npm run test:e2e:scene
 
       - name: Check local submission capture script syntax

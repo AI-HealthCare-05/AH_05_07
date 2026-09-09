@@ -15,6 +15,7 @@
     "test:e2e": "playwright test && playwright test --config=playwright.production.config.ts",
     "verify:scene-manifest": "node scripts/verify-scene-manifest.mjs",
     "test:scene-manifest": "node --test scripts/scene-manifest.test.mjs",
+    "test:e2e:saved-scene": "playwright test --config=playwright.saved-scene.config.ts",
     "test:e2e:scene": "playwright test --config=playwright.scene.config.ts",
     "test:e2e:review": "playwright test --config=playwright.review.config.ts",
     "test:e2e:production:on": "playwright test --config=playwright.production-on.config.ts",

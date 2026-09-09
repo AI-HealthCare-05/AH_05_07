@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { SavedSceneBoundary } from "./SavedSceneBoundary";
+import { allowsSavedScene, type SavedSceneEvent } from "../ui/savedScene";
+
 import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
 import { SceneVisualAsset, SceneVisualBackground } from "./SceneVisualAsset";
 import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui/journey";
@@ -15,10 +18,11 @@ type SceneShellProps = {
   onSignOut?: () => void;
   signOutPending?: boolean;
   companionSelection: CompanionSelection | null;
+  savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection }: SceneShellProps) {
-  const [reducedMotion, setReducedMotion] = useState(false);
+export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
   useEffect(() => {
@@ -46,11 +50,13 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
       <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
       <div id="scene-content" className="scene-viewport" tabIndex={-1}>
-        <CompanionRuntimeBoundary
+        {allowsSavedScene(import.meta.env.VITE_SK7_SCENE_MODE, activeScreen, Boolean(savedSceneEvent)) && savedSceneEvent
+          ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} />
+          : <CompanionRuntimeBoundary
           mode={import.meta.env.VITE_SK7_COMPANION_MODE}
           selection={companionSelection}
           reducedMotion={reducedMotion}
-        />
+        />}
         {children}
       </div>
 

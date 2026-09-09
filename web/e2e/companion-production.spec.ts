@@ -75,6 +75,8 @@ test("production S05 loads bear-lite once after confirmed save and transitions c
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   expect(companionRequests(requests)).toEqual([productionAssetUrl]);
   expect(requests.filter((url) => /CompanionReviewRenderer/i.test(url))).toHaveLength(1);
+  expect(requests.filter((url) => /SavedSceneRenderer/i.test(url))).toEqual([]);
+  await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-phase", "celebrate");
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-celebrate-count", "1");
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-phase", "idle", { timeout: 30_000 });

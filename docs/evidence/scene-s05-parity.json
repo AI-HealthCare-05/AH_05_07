@@ -1,0 +1,217 @@
+{
+  "scope": "S05 review migration only; production Vite preview with synthetic API responses and public immutable R2 bear-lite",
+  "recordedOn": "2026-09-10",
+  "baseHead": "aaf833219427690a9eaf52481d24a591fa849436",
+  "sourceSha256": {
+    "web/src/ui/savedScene.ts": "616467f2491c7d8fb6b4c9d551073cebb402ea19ff5a4e83151d407486501c52",
+    "web/src/lib/useSavedSceneEvent.ts": "35d2939a6d93a685927bd69c32a21c7d3a2a22bc8059d2a2e300b017ef5d9189",
+    "web/src/components/SavedSceneBoundary.tsx": "7b584437d9d7eacdacff6acb1ce3619096627d99354e01dd0b79109acd5ea1cd",
+    "web/src/components/scene/SavedSceneRenderer.tsx": "f95ff68af7060e7008815df50ea33d88c8351c97b380a9baddb75e60921301e6",
+    "web/src/components/SceneShell.tsx": "75eeff85057d264b0f5f1664bf10c5eecf2008001067d0b6a3b584fb8ef991d1",
+    "web/src/App.tsx": "e92b5d4162528f45388bd940e2ac94a9e6d3007f54b1a3cf2d6b373cef0d96ae",
+    "web/e2e/saved-scene-review.spec.ts": "8b7842f2bd54e648c452cc0e557c77e95d7294aca2671d3d3a729b29c3b51209",
+    "web/playwright.saved-scene.config.ts": "394a29e7d2bf3ad59b2e19ba17af445a4b7e588395b3bc8a1ee772c0d4f133b9"
+  },
+  "runtime": {
+    "browser": "Playwright Chromium",
+    "graphics": "ANGLE SwiftShader requested with CI=1",
+    "sceneMode": "review",
+    "companionMode": "production",
+    "physicalDevice": false
+  },
+  "command": "CI=1 npm --prefix web run test:e2e:saved-scene",
+  "evidenceSource": "Playwright list reporter from the final complete invocation",
+  "passed": 35,
+  "failed": 0,
+  "cases": [
+    {
+      "title": "saved scene gate needs exact review, S05 and a host confirmation; event claim cannot repeat",
+      "status": "passed",
+      "duration": "34ms"
+    },
+    {
+      "title": "direct S05 query and fixture cannot create a real saved-scene event",
+      "status": "passed",
+      "duration": "4.5s"
+    },
+    {
+      "title": "persistence and refresh pending keep S04; one confirmed event settles to idle with no RAF",
+      "status": "passed",
+      "duration": "7.0s"
+    },
+    {
+      "title": "unknown save never celebrates; explicit successful retry creates one event",
+      "status": "passed",
+      "duration": "2.2s"
+    },
+    {
+      "title": "conflict save never celebrates; explicit successful retry creates one event",
+      "status": "passed",
+      "duration": "1.9s"
+    },
+    {
+      "title": "invalid-json save never celebrates; explicit successful retry creates one event",
+      "status": "passed",
+      "duration": "1.9s"
+    },
+    {
+      "title": "8-second API timeout, late success and refresh cannot create confirmation or auto retry",
+      "status": "passed",
+      "duration": "9.4s"
+    },
+    {
+      "title": "confirmed save remains truthful when its refresh fails; recovery does not replay",
+      "status": "passed",
+      "duration": "1.9s"
+    },
+    {
+      "title": "remount/back/forward and viewport changes never replay or refetch; next save is independent",
+      "status": "passed",
+      "duration": "5.1s"
+    },
+    {
+      "title": "reduce at before-save consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "1.6s"
+    },
+    {
+      "title": "hidden at before-save consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "1.7s"
+    },
+    {
+      "title": "reduce at loading consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "2.6s"
+    },
+    {
+      "title": "hidden at loading consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "2.7s"
+    },
+    {
+      "title": "reduce at playing consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "2.0s"
+    },
+    {
+      "title": "hidden at playing consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "1.7s"
+    },
+    {
+      "title": "reduce at refresh-pending consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "2.1s"
+    },
+    {
+      "title": "hidden at refresh-pending consumes the opportunity and never queues a replay",
+      "status": "passed",
+      "duration": "1.7s"
+    },
+    {
+      "title": "glb stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "2.0s"
+    },
+    {
+      "title": "chunk stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "2.0s"
+    },
+    {
+      "title": "corrupt stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "2.1s"
+    },
+    {
+      "title": "webgl stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "2.0s"
+    },
+    {
+      "title": "context stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "2.1s"
+    },
+    {
+      "title": "load-timeout stays at CSS across motion changes and return; semantic controls survive",
+      "status": "passed",
+      "duration": "13.6s"
+    },
+    {
+      "title": "confirmed 기록함 uses the same one-shot presentation",
+      "status": "passed",
+      "duration": "1.7s"
+    },
+    {
+      "title": "confirmed 건너뜀 uses the same one-shot presentation",
+      "status": "passed",
+      "duration": "1.7s"
+    },
+    {
+      "title": "session replacement drops an already confirmed event while refresh is pending",
+      "status": "passed",
+      "duration": "927ms"
+    },
+    {
+      "title": "S05 keyboard and decorative bounds at 320x568",
+      "status": "passed",
+      "duration": "1.3s"
+    },
+    {
+      "title": "S05 keyboard and decorative bounds at 390x844",
+      "status": "passed",
+      "duration": "1.4s"
+    },
+    {
+      "title": "S05 keyboard and decorative bounds at 1366x900",
+      "status": "passed",
+      "duration": "1.6s"
+    },
+    {
+      "title": "offscreen interruption stops rendering and route exit releases every context",
+      "status": "passed",
+      "duration": "3.4s"
+    },
+    {
+      "title": "leaving while the renderer chunk is pending consumes the visit without a late mount",
+      "status": "passed",
+      "duration": "1.2s"
+    },
+    {
+      "title": "page reload forgets confirmation and does not restore a saved event from URL or storage",
+      "status": "passed",
+      "duration": "2.1s"
+    },
+    {
+      "title": "late mutation response after logout cannot issue a saved event",
+      "status": "passed",
+      "duration": "1.1s"
+    },
+    {
+      "title": "200 percent zoom and total media failure preserve keyboard completion",
+      "status": "passed",
+      "duration": "1.5s"
+    },
+    {
+      "title": "a fresh confirmation replaces a failed old S05 visit only after refresh completes",
+      "status": "passed",
+      "duration": "2.8s"
+    }
+  ],
+  "limitations": [
+    "No physical Safari/Android, GPU/peak-memory or screen-reader acceptance",
+    "CSS zoom is a reflow check, not physical browser zoom",
+    "No production activation, merge, deployment or API write-idempotency guarantee",
+    "GLB cache is one verified raw public buffer; route-owned GPU resources are recreated and released"
+  ],
+  "adjacentVerification": {
+    "productionS05": 5,
+    "navigationSessionReliabilityCompanionPolicy": 31,
+    "calendarS02S10Date": 52,
+    "manifest": 71,
+    "totalIncludingS05": 194,
+    "productionBuild": "TypeScript/Vite pass; existing large lazy Three chunk warning"
+  }
+}

@@ -72,6 +72,7 @@ L0: no scene downloads. L1: viewport-specific asynchronous image/layers only. L3
 | performance tier | semantic |
 
 ## S05
+Review migration and recovery matrix: [confirmed-save candidate](scene-s05-migration.md). Production remains the existing independent path.
 | Field | Contract |
 |---|---|
 | visual mode | existing real-time |

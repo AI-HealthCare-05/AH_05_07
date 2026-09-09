@@ -1,8 +1,8 @@
 # Scene motion contract
 ## Baseline
-New prototype uses neutral static pose and demand rendering. Environment static; no perpetual water/leaves/clouds/camera motion. No look/turn asset is assumed to exist. Existing S05 one-shot then idle is retained separately.
+New prototype uses neutral static pose and demand rendering. Environment static; no perpetual water/leaves/clouds/camera motion. No look/turn asset is assumed to exist. Existing production S05 one-shot then idle is retained separately. The [S05 review migration](scene-s05-migration.md) plays the same approved celebration once per eligible confirmed event, then samples a static idle frame; interruption consumes the event without replay.
 
-Screen entrances: existing 260–360ms grammar; no navigation, focus or DOM rendering waits for animation. Reduced motion: no character/camera action or continuous RAF; existing short fade at most 160ms. New runtime defaults to Tier 1 for reduced motion. Existing S05 neutral static GLB remains unchanged.
+Screen entrances: existing 260–360ms grammar; no navigation, focus or DOM rendering waits for animation. Reduced motion: no character/camera action or continuous RAF; existing short fade at most 160ms. The calendar runtime defaults to Tier 1 for reduced motion. Existing S05 neutral static GLB remains unchanged.
 
 Future idle/rest loops need a separate keyboard-accessible DOM pause control. Pause/reduce/hidden/offscreen/route exit stop mixer and RAF; resume never catches up hidden time. Use bounded elapsed delta, not fixed 1/60 per display frame. Avoid autoplay beyond 5 seconds without a pause/stop/hide mechanism (WCAG 2.2 SC 2.2.2).
 

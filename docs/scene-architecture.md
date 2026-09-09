@@ -2,7 +2,7 @@
 Status: implementation authorized by owner on 2026-09-09; production activation requires the evidence gates below. Source baseline: `9361983ea00afa244da560ac62f0d533e9f9e942`. This is not a repeat architecture audit.
 
 ## Immutable boundaries
-Keep topology, API/DB/auth/deployment semantics, Model V2 frozen contract, Three.js 0.185.1, raw WebGLRenderer and GLTFLoader. No new router, R3F, WebGPU, service, dependency or health inference. Existing S05 CompanionRuntimeBoundary remains its own production path.
+Keep topology, API/DB/auth/deployment semantics, Model V2 frozen contract, Three.js 0.185.1, raw WebGLRenderer and GLTFLoader. No new router, R3F, WebGPU, service, dependency or health inference. Existing S05 CompanionRuntimeBoundary remains its own production path. A separate [S05 review migration boundary](scene-s05-migration.md) consumes only an ephemeral confirmed-save presentation event; it is excluded from calendar recipes.
 
 ## Composition
 Semantic HTML owns all tasks, facts, dates, labels, status and controls. VisualStage reserves a responsive decorative surface; it never contains the semantic content in its Suspense/error boundary. Hierarchy: task/content, Moa or primary visual, primary landmark, secondary decoration. One large focal subject, not small scattered objects.
