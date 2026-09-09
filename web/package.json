@@ -13,6 +13,7 @@
     "build": "tsc -b && vite build",
     "verify:companion-manifest": "node scripts/verify-companion-manifest.mjs",
     "test:e2e": "playwright test && playwright test --config=playwright.production.config.ts",
+    "test:e2e:scene": "playwright test --config=playwright.scene.config.ts",
     "test:e2e:review": "playwright test --config=playwright.review.config.ts",
     "test:e2e:production:on": "playwright test --config=playwright.production-on.config.ts",
     "preview": "vite preview"

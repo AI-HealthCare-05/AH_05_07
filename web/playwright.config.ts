@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: ["**/production-fixture-boundary.spec.ts", "**/companion-review.spec.ts", "**/companion-production.spec.ts"],
+  testIgnore: ["**/living-scene-review.spec.ts", "**/production-fixture-boundary.spec.ts", "**/companion-review.spec.ts", "**/companion-production.spec.ts"],
   workers: process.env.CI ? 1 : undefined,
   use: { baseURL: "http://127.0.0.1:4173" },
   webServer: {

@@ -1,0 +1,21 @@
+{
+  "status": "OFFLINE_EXPERIMENT_NOT_FOR_RUNTIME",
+  "source_sha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
+  "derivative_sha256": "4e830416480a2f1b5fa76fe95198a7499fe0f5577d53071d1a80519d410a52d1",
+  "source_bytes": 518636,
+  "derivative_bytes": 461680,
+  "saved_bytes": 56956,
+  "retained_clips": [
+    "idle",
+    "rest",
+    "celebrate"
+  ],
+  "retained_accessor_count": 151,
+  "retained_accessor_bytes_and_metadata_identical": true,
+  "estimated_source_gzip_bytes": 262092,
+  "estimated_derivative_gzip_bytes": 246692,
+  "visual_parity": "NOT_MEASURED",
+  "runtime_decode": "NOT_MEASURED",
+  "immutable_sources_modified": 0,
+  "runtime_selection_changed": false
+}

@@ -1,0 +1,15 @@
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./e2e",
+  outputDir: "./test-results/living-scene-review",
+  testMatch: "living-scene-review.spec.ts",
+  workers: 1,
+  use: { baseURL: "http://127.0.0.1:4173", screenshot: "only-on-failure" },
+  webServer: {
+    command: "npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort",
+    env: { VITE_API_BASE_URL: "http://e2e.invalid", VITE_SK7_E2E_MODE: "1", VITE_SK7_SCENE_MODE: "review" },
+    port: 4173,
+    reuseExistingServer: false,
+  },
+});
