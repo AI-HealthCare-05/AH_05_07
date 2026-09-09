@@ -21,12 +21,12 @@ VALUES
 INSERT INTO public.active_challenges
   (id, user_id, action_id, starts_on, ends_on, expires_at)
 VALUES
-  ('bbbbbbbb-0000-0000-0000-000000000003', '55555555-5555-5555-5555-555555555555', 'walk-10-minutes', '2026-09-03', '2026-09-09', now() + interval '365 days');
+  ('bbbbbbbb-0000-0000-0000-000000000003', '55555555-5555-5555-5555-555555555555', 'walk-10-minutes', (timezone('Asia/Seoul', now()))::date, (timezone('Asia/Seoul', now()))::date + 6, now() + interval '365 days');
 
 INSERT INTO public.challenge_checkins
   (id, challenge_id, user_id, action_id, observed_on, status, expires_at)
 VALUES
-  ('bbbbbbbb-0000-0000-0000-000000000004', 'bbbbbbbb-0000-0000-0000-000000000003', '55555555-5555-5555-5555-555555555555', 'walk-10-minutes', '2026-09-03', 'completed', now() + interval '365 days');
+  ('bbbbbbbb-0000-0000-0000-000000000004', 'bbbbbbbb-0000-0000-0000-000000000003', '55555555-5555-5555-5555-555555555555', 'walk-10-minutes', (timezone('Asia/Seoul', now()))::date, 'completed', now() + interval '365 days');
 
 SELECT ok(
   (SELECT expires_at > now() + interval '29 days' AND expires_at < now() + interval '31 days'

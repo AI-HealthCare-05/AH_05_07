@@ -25,8 +25,8 @@ SELECT results_eq(
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       '11111111-1111-1111-1111-111111111111',
       'walk-10-minutes',
-      '2026-09-02',
-      '2026-09-08'
+      (timezone('Asia/Seoul', now()))::date,
+      (timezone('Asia/Seoul', now()))::date + 6
     )
     RETURNING action_id
   $$,
@@ -41,7 +41,7 @@ SELECT results_eq(
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       '11111111-1111-1111-1111-111111111111',
       'walk-10-minutes',
-      '2026-09-02',
+      (timezone('Asia/Seoul', now()))::date,
       'completed'
     )
     RETURNING status
@@ -102,7 +102,7 @@ SELECT results_eq(
     FROM public.active_challenges
     WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
   $$,
-  ARRAY['2026-09-02'],
+  ARRAY[(timezone('Asia/Seoul', now()))::date::text],
   'the first check-in remains recorded after denied writes'
 );
 

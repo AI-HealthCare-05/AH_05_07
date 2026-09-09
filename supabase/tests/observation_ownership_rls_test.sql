@@ -69,7 +69,7 @@ SELECT results_eq(
     INSERT INTO public.active_challenges
       (id, user_id, action_id, starts_on, ends_on)
     VALUES
-      ('aaaaaaaa-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'walk-10-minutes', '2026-09-02', '2026-09-08')
+      ('aaaaaaaa-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'walk-10-minutes', (timezone('Asia/Seoul', now()))::date, (timezone('Asia/Seoul', now()))::date + 6)
     RETURNING id
   $$,
   ARRAY['aaaaaaaa-0000-0000-0000-000000000003'::uuid],
@@ -81,7 +81,7 @@ SELECT results_eq(
     INSERT INTO public.challenge_checkins
       (id, challenge_id, user_id, action_id, observed_on, status)
     VALUES
-      ('aaaaaaaa-0000-0000-0000-000000000004', 'aaaaaaaa-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'walk-10-minutes', '2026-09-02', 'completed')
+      ('aaaaaaaa-0000-0000-0000-000000000004', 'aaaaaaaa-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'walk-10-minutes', (timezone('Asia/Seoul', now()))::date, 'completed')
     RETURNING id
   $$,
   ARRAY['aaaaaaaa-0000-0000-0000-000000000004'::uuid],
