@@ -1,0 +1,99 @@
+{
+  "schema": "ah-05-07.api-release-provenance.v1",
+  "release": "S11",
+  "audit_issue": 385,
+  "source": {
+    "repository": "AI-HealthCare-05/AH_05_07",
+    "commit_sha": "f25fddfc442be63721daae671e4beb267ead5f5f",
+    "tree_sha": "97c8929c951c138e8740d1eca66fb63fdd8ed12c"
+  },
+  "repository_inputs": {
+    ".dockerignore": {
+      "state": "absent_at_source"
+    },
+    ".gcloudignore": {
+      "state": "absent_at_source"
+    },
+    ".gitignore": {
+      "sha256": "189c4de0ab3569467b1ce9c046dbf5a6ff10b6f85bd34415dd79d10f4fe577de"
+    },
+    "app/Dockerfile": {
+      "sha256": "c912f744e5fbbf5c03973d849d28b898cdd9649994eca036d1952547b5804a0c"
+    },
+    "cloudbuild.api.yaml": {
+      "sha256": "27778d24f127db7de0aeb5204cd6b47ce3283aada5082b847d4ae23d9b9f3247"
+    },
+    "pyproject.toml": {
+      "sha256": "8de2f83ca1c62616bd4a0690884dce742ba7b6c29511acd5b1500de4dc66af63"
+    },
+    "uv.lock": {
+      "sha256": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912"
+    },
+    "application_copy_inputs": {
+      "paths": [
+        "pyproject.toml",
+        "uv.lock",
+        "app"
+      ],
+      "git_archive_sha256": "206ddf65ad62ea2b8de8fe2633acdaf23e552306025102375db986b9c3abe7a7"
+    }
+  },
+  "cloud_build": {
+    "id": "5879d114-b625-4422-af99-80ff1a1e479d",
+    "location": "global",
+    "status": "SUCCESS",
+    "source": {
+      "type": "gcs_storage_source",
+      "bucket": "ah-05-07-api_cloudbuild",
+      "object": "source/1788880703.826394-d591d86a218a436dad9d864d45f85b09.tgz",
+      "generation": "1788880709733796",
+      "sha256": "f6274537a669625c13325a4d12b4132d593d90b873f9cb4fb3c053ad17107d51",
+      "resolved_repo_source": "absent"
+    },
+    "uploaded_context_verification": {
+      "result": "PASS",
+      "uploaded_entries": 461,
+      "git_tracked_entries": 465,
+      "common_entries": 461,
+      "tar_only_entries": 0,
+      "git_only_entries": [
+        ".gitignore",
+        "data/.gitignore",
+        "supabase/.gitignore",
+        "web/.gitignore"
+      ],
+      "content_mismatches": 0
+    },
+    "resolved_external_images": {
+      "gcr.io/cloud-builders/docker": "sha256:2e8d40d8e48dc14fab4213d5e532d74f63fd403d9e8d7f6463096a75820286c3",
+      "python:3.13-slim": "sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285",
+      "ghcr.io/astral-sh/uv:latest": "sha256:2bb3ebca0a796a155094a27773d290c4b074572e6107f171d88d086682fd2500"
+    }
+  },
+  "api_image": {
+    "digest": "sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c"
+  },
+  "cloud_run": {
+    "revision": "bp7-api-s11-f25fddf",
+    "verified_image_digest": "sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c",
+    "traffic": "not_asserted_by_this_manifest"
+  },
+  "model_v2": {
+    "reference_only": true,
+    "artifact_sha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
+    "schema_version": "model-v2-r1-schema-v1"
+  },
+  "verification": {
+    "source_archive_sha256_match": "PASS",
+    "uploaded_context_matches_recorded_git_source": "PASS",
+    "native_git_to_cloud_build_source_binding": "ABSENT",
+    "historical_external_image_resolution": "PASS",
+    "production_revision_image_identity": "PASS"
+  },
+  "limitations": [
+    "Cloud Build provenance identifies the submitted GCS source archive but does not natively bind it to the recorded Git commit SHA.",
+    "Mutable Docker image references are recorded with their historical resolved digests; this manifest does not pin those references in the Dockerfile.",
+    "This manifest records release provenance and does not claim a hermetic or bit-for-bit reproducible build.",
+    "No production deployment, runtime mutation, or Model V2 change was performed by R9."
+  ]
+}
