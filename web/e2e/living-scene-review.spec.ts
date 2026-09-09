@@ -2,6 +2,7 @@ import type { Request } from "@playwright/test";
 import { findSceneRecipe, sceneComposition } from "../src/ui/sceneRecipes";
 import { expect, test } from "@playwright/test";
 import posterEvidence from "../../docs/evidence/scene-clay-posters.json" with { type: "json" };
+import posterR2 from "../../docs/evidence/scene-clay-r2.json" with { type: "json" };
 import type { Page } from "@playwright/test";
 
 const url = "/?fixture=VP-10&screen=S02";
@@ -124,8 +125,9 @@ async function expectPoster(page: Page, landmarkId: string, width: number) {
   const evidence = posterEvidence.posters.find(p => p.landmarkId === landmarkId && p.profile === profile)!;
   await expect(page.locator("[data-poster-asset]")).toHaveAttribute("data-poster-asset", evidence.id);
   const image = page.locator(".living-scene-fallback img");
-  await expect(image).toHaveAttribute("src", evidence.delivery.url);
-  await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(evidence.width);
+  await expect(image).toHaveAttribute("src", posterR2.objects.find(p => p.id === evidence.id)!.url);
+  // Public CDN delivery can outlast Playwright's default five-second assertion.
+  await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth), { timeout: 15000 }).toBe(evidence.width);
   const stage = (await page.locator(".living-visual-stage").boundingBox())!;
   const box = (await image.boundingBox())!;
   const { left, right, top, bottom } = evidence.subjectBounds;
@@ -144,6 +146,7 @@ async function expectPoster(page: Page, landmarkId: string, width: number) {
 }
 
 for (const width of [320, 390, 1366]) test(`all weekday posters select one matching asset at ${width}px`, async ({ page }, testInfo) => {
+  test.setTimeout(90000);
   await page.setViewportSize({ width, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await syntheticCalendar(page);
@@ -160,6 +163,20 @@ for (const width of [320, 390, 1366]) test(`all weekday posters select one match
     expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)/.test(url))).toEqual([]);
     await page.locator(".living-visual-stage").screenshot({ path: testInfo.outputPath(`${landmark}-poster-${width}.png`) });
   }
+});
+
+test("public poster permits browser CORS and returns the registered bytes", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(url);
+  const poster = posterR2.objects[0];
+  const response = await page.evaluate(async publicUrl => {
+    const result = await fetch(publicUrl, { mode: "cors", redirect: "error" });
+    const bytes = await result.arrayBuffer();
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return { status: result.status, mime: result.headers.get("content-type"), cache: result.headers.get("cache-control"),
+      byteLength: bytes.byteLength, sha256: Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, "0")).join("") };
+  }, poster.url);
+  expect(response).toEqual({ status: 200, mime: "image/webp", cache: "max-age=14400", byteLength: poster.byteLength, sha256: poster.sha256 });
 });
 
 test("poster preserves focal size across responsive breakpoints", async ({ page }) => {

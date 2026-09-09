@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { loadInputs, verifySceneManifest, generateSceneSource } from "./verify-scene-manifest.mjs";
+import { loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery } from "./verify-scene-manifest.mjs";
 
 const original = JSON.parse(fs.readFileSync(new URL("../src/ui/scene-manifest.v2.json", import.meta.url), "utf8"));
 const inputs = loadInputs();
@@ -100,7 +100,47 @@ test("renderer changes require a fresh capture", () => {
 test("matching metadata cannot authorize an arbitrary delivery URL", () => {
   const manifest = structuredClone(original), posters = structuredClone(inputs.posters);
   manifest.assets[1].delivery.url = posters.posters[0].delivery.url = "https://example.invalid/unreviewed.webp";
-  assert.throws(() => verifySceneManifest(manifest, { ...inputs, posters }), /local review URL/);
+  assert.throws(() => verifySceneManifest(manifest, { ...inputs, posters }), /local capture URL/);
+});
+for (const [name, mutate, message] of [
+  ["missing proof", i => { i.posterR2 = null; }, /R2 evidence/],
+  ["wrong origin", i => { i.posterR2.publicOrigin = "https://example.invalid"; }, /R2 evidence/],
+  ["wrong bucket", i => { i.posterR2.bucket = "other"; }, /R2 evidence/],
+  ["unverified status", i => { i.posterR2.status = "pending"; }, /R2 evidence/],
+  ["missing object", i => { i.posterR2.objects.shift(); }, /R2 binary/],
+  ["duplicate object", i => { i.posterR2.objects.push(i.posterR2.objects[0]); }, /duplicate id/],
+  ["HTTP error", i => { i.posterR2.objects[0].status = 403; }, /R2 binary/],
+  ["different public bytes", i => { i.posterR2.objects[0].sha256 = "a".repeat(64); }, /R2 binary/],
+  ["different byte count", i => { i.posterR2.objects[0].byteLength += 1; }, /R2 binary/],
+  ["wrong MIME", i => { i.posterR2.objects[0].headers["content-type"] = "text/html"; }, /R2 delivery headers/],
+  ["wrong CORS origin", i => { i.posterR2.objects[0].headers["access-control-allow-origin"] = "http://127.0.0.1:4175"; }, /R2 delivery headers/],
+  ["unobserved cache policy", i => { i.posterR2.objects[0].headers["cache-control"] = "public, max-age=31536000, immutable"; }, /R2 delivery headers/],
+]) test(`rejects R2 ${name}`, () => {
+  const changed = { ...inputs, posterR2: structuredClone(inputs.posterR2) }; mutate(changed);
+  assert.throws(() => verifySceneManifest(original, changed), message);
+});
+for (const suffix of ["?unregistered=1", "/../other.webp"]) test(`rejects a modified public URL: ${suffix}`, () => {
+  const manifest = structuredClone(original), posterR2 = structuredClone(inputs.posterR2);
+  manifest.assets[1].delivery.url += suffix;
+  posterR2.objects[0].url = manifest.assets[1].delivery.url;
+  assert.throws(() => verifySceneManifest(manifest, { ...inputs, posterR2 }), /registered poster URL/);
+});
+test("local authoring remains valid without R2 evidence", () => {
+  const manifest = structuredClone(original);
+  for (const asset of manifest.assets.filter(a => a.kind === "poster")) {
+    asset.delivery = inputs.posters.posters.find(p => p.id === asset.id).delivery;
+  }
+  assert.doesNotThrow(() => verifySceneManifest(manifest, { ...inputs, posterR2: null }));
+});
+test("registration preserves verified delivery and keeps uncaptured public identities local", () => {
+  for (const poster of inputs.posters.posters) {
+    assert.deepEqual(selectPosterDelivery(poster, inputs.posterR2), original.assets.find(a => a.id === poster.id).delivery);
+    assert.deepEqual(selectPosterDelivery(poster, null), poster.delivery);
+  }
+  const newPoster = structuredClone(inputs.posters.posters[0]); newPoster.delivery.sha256 = "a".repeat(64);
+  assert.deepEqual(selectPosterDelivery(newPoster, inputs.posterR2), newPoster.delivery);
+  const invalidProof = structuredClone(inputs.posterR2); invalidProof.objects[0].headers["content-type"] = "text/html";
+  assert.throws(() => selectPosterDelivery(inputs.posters.posters[0], invalidProof), /R2 delivery headers/);
 });
 test("matching metadata cannot authorize a path outside the poster directory", () => {
   const manifest = structuredClone(original), posters = structuredClone(inputs.posters);

@@ -1,6 +1,6 @@
 {
   "status": "review-only",
-  "deliveryStatus": "local-review; R2 authentication pending",
+  "deliveryStatus": "local capture originals; verified public delivery recorded separately in scene-clay-r2.json",
   "intendedR2Bucket": "sk7-assets-prod",
   "intendedPublicOrigin": "https://sk7-companion.gkrry.com",
   "source": "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching",

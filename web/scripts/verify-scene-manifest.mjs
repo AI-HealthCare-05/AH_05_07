@@ -11,6 +11,34 @@ const requireValue = (condition, message) => { if (!condition) throw new Error(m
 const equal = (actual, expected, label) => requireValue(isDeepStrictEqual(actual, expected), `${label}: evidence mismatch`);
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 const posterKey = /^scene-review\/s02\/v1\/(garden-gate|herb-garden|shade-tree|footbridge|reading-shelter|pavilion|sunset-overlook)-(mobile320|mobile390|desktop)-[a-f0-9]{16}\.webp$/;
+export const posterDeliveryOrigin = "https://sk7-companion.gkrry.com";
+export const posterRequestOrigin = "http://127.0.0.1:4173";
+
+export function verifiedPosterDelivery(poster, proof) {
+  requireValue(proof?.status === "verified-public-delivery-review-only"
+    && proof.bucket === "sk7-assets-prod" && proof.publicOrigin === posterDeliveryOrigin
+    && proof.requestOrigin === posterRequestOrigin && Number.isFinite(Date.parse(proof.verifiedAt))
+    && proof.applicationDeployment === false && Array.isArray(proof.objects), "missing or invalid poster R2 evidence");
+  const objects = uniqueById(proof.objects, "poster R2 evidence");
+  const record = objects.get(poster.id);
+  const { objectKey, sha256, byteLength } = poster.delivery;
+  const url = `${posterDeliveryOrigin}/${objectKey}`;
+  requireValue(record?.status === 200 && record.url === url && record.objectKey === objectKey
+    && record.sha256 === sha256 && record.byteLength === byteLength, `${poster.id}: R2 binary identity mismatch`);
+  requireValue(record.headers?.["content-type"] === "image/webp"
+    && record.headers["content-length"] === String(byteLength)
+    && record.headers["access-control-allow-origin"] === posterRequestOrigin
+    && record.headers["cache-control"] === "max-age=14400", `${poster.id}: R2 delivery headers mismatch`);
+  return { ...poster.delivery, url };
+}
+
+// New art stays local until its exact bytes have their own public delivery proof.
+export function selectPosterDelivery(poster, proof) {
+  const record = proof?.objects?.find(item => item.id === poster.id);
+  return record?.sha256 === poster.delivery.sha256 && record.objectKey === poster.delivery.objectKey
+    && record.byteLength === poster.delivery.byteLength
+    ? verifiedPosterDelivery(poster, proof) : poster.delivery;
+}
 
 export function webpDimensions(bytes) {
   requireValue(bytes.length >= 30 && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP" && bytes.readUInt32LE(4) + 8 === bytes.length, "invalid WebP container");
@@ -97,6 +125,7 @@ export function loadInputs() {
     companion: read("docs/evidence/companion-r2-v1.json"),
     forensics: read("docs/evidence/scene-glb-forensics.json"),
     posters, posterBytes,
+    posterR2: fs.existsSync(path.join(root, "docs/evidence/scene-clay-r2.json")) ? read("docs/evidence/scene-clay-r2.json") : null,
     sourceHashes: Object.fromEntries(sourcePaths.map(source => [source, hash(fs.readFileSync(path.join(root, source)))])),
     moduleBytes: fs.readFileSync(path.join(root, "web/src/components/scene/environment.ts")),
   };
@@ -136,10 +165,14 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
     } else if (asset.kind === "poster") {
       const evidence = posterEvidence.get(asset.id);
       requireValue(evidence && asset.status === "review" && asset.clips.length === 0, `${asset.id}: unregistered poster or approval`);
-      equal(asset.delivery, evidence.delivery, asset.id);
+      equal({ ...asset.delivery, url: evidence.delivery.url }, evidence.delivery, asset.id);
       const { objectKey, sha256, byteLength } = asset.delivery;
       requireValue(posterKey.test(objectKey) && objectKey === `scene-review/s02/v1/${evidence.landmarkId}-${evidence.profile}-${sha256.slice(0, 16)}.webp`, `${asset.id}: unregistered poster object key`);
-      equal(asset.delivery.url, `/${objectKey}`, `${asset.id} local review URL`);
+      equal(evidence.delivery.url, `/${objectKey}`, `${asset.id} local capture URL`);
+      if (asset.delivery.url !== evidence.delivery.url) {
+        equal(asset.delivery.url, `${posterDeliveryOrigin}/${objectKey}`, `${asset.id} registered poster URL`);
+        equal(asset.delivery, verifiedPosterDelivery(evidence, inputs.posterR2), `${asset.id} R2 delivery`);
+      }
       equal(asset.delivery.mime, "image/webp", `${asset.id} MIME`);
       const bytes = inputs.posterBytes.get(asset.id);
       requireValue(bytes && bytes.length === byteLength && hash(bytes) === sha256, `${asset.id}: poster binary identity mismatch`);

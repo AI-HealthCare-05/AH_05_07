@@ -24,7 +24,11 @@ Chromium screenshots use a 2× device scale; the renderer retains its 1.25 DPR c
 
 Canva designs `DAHUPjn8shI` and `DAHUPjDn-Rw` were read as visual direction and register references. These pixels are repository-authored scene captures, **not new Canva generation or exports**. The existing bear-lite binary and its registered use-scope remain unchanged. No semantic text or user records are embedded in images.
 
-Posters currently live at `web/public/scene-review/s02/v1/` and use strict same-origin review paths. R2 delivery is pending authentication: Wrangler 4.130.0 reported `loggedIn: false`, and the Cloudflare dashboard was also logged out. No object upload or remote delivery validation is claimed. The known intended bucket is `sk7-assets-prod`, with public origin `https://sk7-companion.gkrry.com`. After login, upload these exact hash-addressed files with `image/webp` and immutable cache metadata, verify public bytes/MIME/CORS from the permitted origin, then register the verified remote delivery. Do not switch URLs on an assumed upload success.
+All 21 exact WebP files were uploaded through the authenticated Cloudflare dashboard to `sk7-assets-prod/scene-review/s02/v1/` on 2026-09-10 KST. The destination prefix was empty before upload. The registered runtime URLs now use `https://sk7-companion.gkrry.com`; local originals remain under `web/public/scene-review/s02/v1/` for byte verification and reproducible authoring.
+
+`docs/evidence/scene-clay-r2.json` records public GET status, SHA-256, bytes, MIME, CORS, ETag and cache headers for every object. All 21 returned the exact captured bytes with `image/webp` and the existing permitted origin `http://127.0.0.1:4173`. The observed CDN policy is **`cache-control: max-age=14400` (4 hours)**. No `immutable` response directive is claimed or newly configured; hash-addressed keys must not be overwritten. Dashboard login was sufficient for upload; no Wrangler credentials or wider OAuth scopes were created.
+
+Remote registration requires matching capture identity and delivery evidence at the exact registered origin/key. A missing proof, duplicate identity, hash/size mismatch, wrong MIME/CORS/cache observation or modified URL fails validation. Re-registration preserves verified delivery for identical art; newly captured bytes remain local until independently uploaded and verified.
 
 R2 capacity/egress terms are separate from client transfer and memory budgets. No worker, service, package dependency or bucket configuration was added.
 
@@ -39,17 +43,28 @@ npm --prefix web run test:scene-manifest
 npm --prefix web run build
 ```
 
-The authoring command builds an isolated temporary review preview from the authored manifest, with synthetic dates and API fixtures. This permits a deliberate source/camera edit to be recaptured before verification. It never replaces the generated runtime module or deploys that temporary build. Registration verifies the complete replacement before writing authored/generated manifests; normal prebuild still refuses stale data. Inspect the new WebP files and remove superseded local exports after reviewing the manifest diff. Keep existing immutable R2 objects until an explicit retention decision.
+The authoring command builds an isolated temporary review preview from the authored manifest, with synthetic dates and API fixtures. This permits a deliberate source/camera edit to be recaptured before verification. It never replaces the generated runtime module or deploys that temporary build. Registration verifies the complete replacement before writing authored/generated manifests; normal prebuild still refuses stale data. Inspect the new WebP files and remove superseded local exports after reviewing the manifest diff. Keep existing hash-addressed R2 objects until an explicit retention decision.
+
+After an authorized upload of new files, verify public delivery and register it with:
+
+```sh
+node web/scripts/verify-scene-poster-delivery.mjs --write
+node web/scripts/register-scene-posters.mjs
+```
+
+Without `--write`, the delivery verifier checks public GET responses without changing evidence. It never uploads, changes bucket settings or runs during ordinary builds. A failed verification leaves the previous evidence untouched.
 
 Changes to delivery or other metadata that do not change rendered pixels can use `node web/scripts/verify-scene-manifest.mjs --write` after their evidence is verified. Generated TypeScript is never hand-edited.
 
 ## Validation and remaining work
 
-The manifest suite has 45 passing checks. The review browser suite covers 15 visual cases (including all seven landmarks in realtime and static form at three master widths), plus the existing 15 Seoul-date/draft/request-race cases. Intermediate widths 350, 351, 580, 581 and 768 check focal size and cropping. Failure, profile change and date recovery preserve navigation; reduced motion requests one poster and no renderer/GLB.
+The manifest suite has 61 passing checks. The review browser suite covers 16 visual/delivery cases (including all seven landmarks in realtime and static form at three master widths), plus the existing 15 Seoul-date/draft/request-race cases. Intermediate widths 350, 351, 580, 581 and 768 check focal size and cropping. Failure, profile change and date recovery preserve navigation; reduced motion requests one poster and no renderer/GLB.
 
-The previous `scene-review-network.json` describes the primitive prototype and remains historical. Current scene network observations are recorded separately in `scene-clay-network.json`: **697,511–710,929 encoded response bytes** across four viewports with ANGLE SwiftShader enabled. They exclude the semantic shell and are cold local Chromium observations, not full-page or real-device budgets. The five default-off/policy checks and five existing production S05 checks also passed, for 85 distinct local checks including the 45 manifest and 30 review/date cases. The four network cases additionally passed with CI-style software WebGL.
+The previous `scene-review-network.json` describes the primitive prototype. `scene-clay-network.json` records the clay scene with local poster delivery: **697,511–710,929 encoded response bytes** across four viewports with ANGLE SwiftShader enabled. They exclude the semantic shell and are cold local Chromium observations, not full-page or real-device budgets. The earlier local-delivery increment passed 85 checks, including the existing production S05 regression. The R2 increment passes 61 manifest, 31 review/date and five default-off/policy checks (97 distinct cases across the initial run and targeted rerun), including a real browser CORS fetch with SHA-256 comparison. The default-off test also rejects new poster requests. Public R2 scene observations are recorded separately in `scene-clay-r2-network.json`: **697,989–711,433 bytes** across the same four viewports. These are Playwright protocol estimates; HTTP/2/3 can leave headers unattributed in body estimates. Exact poster body sizes come from the independent public hash check.
 
-Remaining: R2 upload/delivery verification, owner review of final art, physical Safari/Android performance and accessibility, S10 expansion, S05 migration parity, controlled rollout. Existing production S05 is a separate path; passing its regression tests does not complete migration. API, DB, auth and Model V2 contracts remain unchanged.
+The first R2 browser run passed 30/31 cases; the 320px Sunday poster had not decoded within the old five-second image assertion. The assertion now allows up to 15 seconds for public delivery, with a 90-second ceiling for each seven-weekday test. Exact URL, decoded dimensions, focal bounds and one-request assertions remain in place. All seven affected poster/failure/delivery cases passed on the targeted rerun; the 320px Sunday capture was visually inspected. This timing allowance is not a load-time acceptance result.
+
+Remaining: owner review of final art, physical Safari/Android performance and accessibility, S10 expansion, S05 migration parity, controlled rollout. Existing production S05 is a separate path; passing its regression tests does not complete migration. API, DB, auth and Model V2 contracts remain unchanged.
 
 ## CI follow-up
 
