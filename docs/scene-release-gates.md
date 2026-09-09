@@ -2,11 +2,11 @@
 
 Continuation of Issue #390 / draft PR #391. Implementation authorization is recorded in [architecture](scene-architecture.md); it does not satisfy owner visual acceptance or physical-device measurements. Current results are in [implementation status](scene-implementation-status.md). This checklist prepares the remaining work; no production gate is opened by this document.
 
-## Owner visual review — awaiting decision
+## Owner visual review — S02/S10 accepted
 
 Review all seven weekdays on S02 and S10, separately at 320, 390 and 1366 CSS px. Use the matching original WebPs in [S02 posters](../web/public/scene-review/s02/v1/) and [S10 posters](../web/public/scene-review/s10/v1/), with the exact file/camera/source mapping in [S02 evidence](evidence/scene-clay-posters.json) and [S10 evidence](evidence/scene-diorama-posters.json). Compare realtime and fallback in the review build, plus 320×568 and intermediate widths 350/351/580/581/768.
 
-For each screen/profile record accepted or changes requested, reviewed source revision, weekday(s), and the concrete reason. Review the bear's face/ears/silhouette, focal landmark hierarchy, neutral composition, clay geometry and palette, and whether any background implies a health or participation outcome. S10 must show today's scenery even while browsing the prior record window. Sunday/Monday must not read as a completion/reset reward. Final owner decisions are **not recorded yet**.
+For each screen/profile record accepted or changes requested, reviewed source revision, weekday(s), and the concrete reason. Review the bear's face/ears/silhouette, focal landmark hierarchy, neutral composition, clay geometry and palette, and whether any background implies a health or participation outcome. S10 must show today's scenery even while browsing the prior record window. Sunday/Monday must not read as a completion/reset reward. **Owner decision recorded 2026-09-10 KST:** “현재 S02·S10 아트 승인”. This accepts the current S02/S10 art at source commit `37eec04a11a6c51ff728eddd059cc9d1c0b59dc1`, with the unchanged 42 poster identities in the linked evidence. It does not approve future recaptures, physical-device cost, S05 migration release or production activation.
 
 S05 now has a behavior migration candidate using its existing composition; see [S05 migration](scene-s05-migration.md). Its CSS fallback and semantic controls remain the baseline. A small-screen screenshot pass is not an owner art signoff.
 
@@ -27,7 +27,7 @@ Keep raw traces local if they contain unsanitized browser data. Commit only sani
 
 ## Controlled web rollout and rollback — blocked by open gates
 
-1. Close owner art, S05 parity and physical-device gates with the exact candidate revision. Check CI on the final PR HEAD. Retain the existing Issue/branch/PR and draft status while any required gate is open.
+1. Retain the recorded S02/S10 owner art acceptance and automated S05 parity evidence, then close the physical-device gates on the exact candidate revision. Check CI on the final PR HEAD. Retain the existing Issue/branch/PR and draft status while any required gate is open.
 2. Prepare and review a separately explicit production activation change. `VITE_SK7_SCENE_MODE=production` currently selects no new scene; setting the build variable alone cannot activate this candidate. Do not deploy `review` as a shortcut. Preserve the independent companion production setting.
 3. After release authorization and passing gates, squash merge the verified PR into upstream `main`, following [deployment SSOT](deployment-ssot.md#deployment-flow). Record the complete upstream revision, current known-good Worker version, previous build variables and rollback target **at release time**; historical IDs in old documents are not current rollback evidence.
 4. Run the existing `Sync deployment branch` workflow in `emotigom/ah-05-07-pages`. Let the existing Cloudflare source build publish the web-only change. Record mirror revision, build configuration and complete Worker version. No direct branch upload, mirror edit, API deployment or database migration belongs to this web-only release.
