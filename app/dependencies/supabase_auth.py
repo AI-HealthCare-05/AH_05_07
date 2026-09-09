@@ -58,7 +58,7 @@ async def validate_supabase_access_token(access_token: str) -> SupabaseSession:
     except httpx.HTTPError as error:
         raise auth_unavailable() from error
 
-    if response.status_code == status.HTTP_401_UNAUTHORIZED:
+    if response.status_code in {status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN}:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "supabase_session_invalid"})
 
     if response.status_code != status.HTTP_200_OK:

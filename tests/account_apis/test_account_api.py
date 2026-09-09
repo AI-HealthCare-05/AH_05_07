@@ -112,6 +112,29 @@ async def test_mocked_supabase_user_401_denies_access_token(supabase_runtime, mo
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"code": "bad_jwt", "message": "JWT signature rejected", "access_token": "upstream-bad-jwt-token"},
+        {
+            "code": "session_not_found",
+            "message": "Session no longer exists",
+            "access_token": "upstream-missing-session-token",
+        },
+        {"code": "user_not_found", "message": "User no longer exists", "access_token": "upstream-missing-user-token"},
+    ],
+)
+async def test_mocked_supabase_user_403_rejections_deny_access_token(supabase_runtime, monkeypatch, payload):
+    mock_auth_provider(monkeypatch, response=FakeAuthResponse(status.HTTP_403_FORBIDDEN, payload))
+
+    with pytest.raises(HTTPException) as error:
+        await supabase_auth.validate_supabase_access_token("secret-access-token")
+
+    assert error.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert error.value.detail == {"code": "supabase_session_invalid"}
+
+
+@pytest.mark.asyncio
 async def test_valid_supabase_token_returns_authenticated_session(supabase_runtime, monkeypatch):
     mock_auth_provider(
         monkeypatch,
@@ -206,6 +229,30 @@ async def test_auth_unavailable_api_response_is_stable_and_sanitized(supabase_ru
     assert b"secret-access-token" not in response.content
     assert b"upstream-token" not in response.content
     assert b"provider-internal-detail" not in response.content
+
+
+@pytest.mark.asyncio
+async def test_supabase_403_api_response_is_invalid_session_and_sanitized(supabase_runtime, monkeypatch):
+    mock_auth_provider(
+        monkeypatch,
+        response=FakeAuthResponse(
+            status.HTTP_403_FORBIDDEN,
+            {
+                "code": "bad_jwt",
+                "message": "provider rejected upstream token",
+                "access_token": "upstream-secret-token",
+            },
+        ),
+    )
+
+    response = await request_account_delete(headers={"Authorization": "Bearer client-secret-token"})
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json() == {"detail": {"code": "supabase_session_invalid"}}
+    assert b"bad_jwt" not in response.content
+    assert b"provider rejected upstream token" not in response.content
+    assert b"upstream-secret-token" not in response.content
+    assert b"client-secret-token" not in response.content
 
 
 @pytest.mark.asyncio

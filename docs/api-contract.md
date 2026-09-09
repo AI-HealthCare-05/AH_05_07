@@ -97,8 +97,8 @@ Request validation errors use a normalized response that never returns the submi
 |---|---:|---|
 | Invalid body or date window | `422` | Stable `validation_error` code and generic message; no submitted input values are returned. |
 | Missing Supabase session | `401` | `supabase_session_required`; the web clears the local session and asks the user to sign in again. |
-| Supabase positively rejects the presented session | `401` | `supabase_session_invalid`; the web clears the local session and asks the user to sign in again. |
-| Supabase Auth cannot reliably determine session validity | `503` | `auth_unavailable` with a generic message; no upstream body, token, header, URL, key, or exception detail is returned. Timeout, transport failure, `429`, `5xx`, other non-`401` responses, and malformed successful responses use this contract. |
+| Supabase positively rejects the presented session (the current user-verification endpoint returns provider `401` or `403`) | `401` | `supabase_session_invalid`; the web clears the local session and asks the user to sign in again. |
+| Supabase Auth cannot reliably determine session validity | `503` | `auth_unavailable` with a generic message; no upstream body, token, header, URL, key, or exception detail is returned. Timeout, transport failure, `429`, `5xx`, other unclassified responses, and malformed successful responses use this contract. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
 | Model artifact not ready | `503` | No provisional signal. |
