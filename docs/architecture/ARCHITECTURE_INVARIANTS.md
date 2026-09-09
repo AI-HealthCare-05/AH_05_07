@@ -4,7 +4,7 @@ This is the repository-local, canonical contract for current and planned work. S
 
 | ID | Statement | Owner / boundary | Enforcement or evidence | State |
 |---|---|---|---|---|
-| AUTH-01 | A missing or invalid authenticated identity is distinct from an Auth-provider outage. | W API error contract; M consumer | R1 tests and API contract | PARTIAL — outage distinction is R1 work. |
+| AUTH-01 | A missing or invalid authenticated identity is distinct from an Auth-provider outage. | W API error contract; M consumer | R1 tests and API contract | ENFORCED in source; runtime status is INCONCLUSIVE. |
 | AUTH-02 | An obsolete request, session, or token must not invalidate a newer session for the same user. | M session state; W API assumptions | RequestContext user, generation, and token comparison tests | PLANNED |
 | AUTH-03 | Completion of an older account deletion must not clear a newer session. | M session state; W deletion boundary | R2 race test | PLANNED |
 | AUTH-04 | Admin credentials are permitted only at the explicit account-deletion boundary. | W API/runtime | Secret-boundary checks and route review | ENFORCED in current source; runtime status is INCONCLUSIVE. |

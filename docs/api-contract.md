@@ -48,7 +48,7 @@ The active-challenge migration keeps legacy `challenge_events` separate from the
 }
 ```
 
-Model V2 `422` is a generic `model_v2_input_invalid` response and does not echo raw input. When Model V2 is disabled, unavailable, or its artifact boundary cannot be used, it returns `503 model_not_ready` without numeric output. Current Auth-provider failure semantics are an R1 gap: do not interpret the existing invalid-session `401` behavior as an implemented `auth_unavailable` response.
+Model V2 `422` is a generic `model_v2_input_invalid` response and does not echo raw input. When Model V2 is disabled, unavailable, or its artifact boundary cannot be used, it returns `503 model_not_ready` without numeric output.
 
 ## Accepted P0 additions
 
@@ -96,7 +96,9 @@ Request validation errors use a normalized response that never returns the submi
 | Condition | Status | Contract |
 |---|---:|---|
 | Invalid body or date window | `422` | Stable `validation_error` code and generic message; no submitted input values are returned. |
-| Missing or invalid Supabase session | `401` | Stable machine-readable code; the web clears the local session and asks the user to sign in again. |
+| Missing Supabase session | `401` | `supabase_session_required`; the web clears the local session and asks the user to sign in again. |
+| Supabase positively rejects the presented session (the current user-verification endpoint returns provider `401` or `403`) | `401` | `supabase_session_invalid`; the web clears the local session and asks the user to sign in again. |
+| Supabase Auth cannot reliably determine session validity | `503` | `auth_unavailable` with a generic message; no upstream body, token, header, URL, key, or exception detail is returned. Timeout, transport failure, `429`, `5xx`, other unclassified responses, and malformed successful responses use this contract. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
 | Model artifact not ready | `503` | No provisional signal. |
