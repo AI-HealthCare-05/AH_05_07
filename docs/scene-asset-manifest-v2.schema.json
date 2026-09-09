@@ -104,7 +104,7 @@
           "properties": {
             "url": {
               "type": "string",
-              "pattern": "^(https://|/scene-review/s02/v1/)"
+              "pattern": "^(https://|/scene-review/(s02|s10)/v1/)"
             },
             "objectKey": {
               "type": "string",
@@ -208,7 +208,10 @@
           "additionalProperties": false,
           "properties": {
             "path": {
-              "const": "web/src/components/scene/environment.ts"
+              "enum": [
+                "web/src/components/scene/environment.ts",
+                "web/src/components/scene/diorama.ts"
+              ]
             },
             "sha256": {
               "type": "string",
@@ -427,6 +430,10 @@
             "pavilion",
             "sunset-overlook"
           ]
+        },
+        "environmentAssetId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [

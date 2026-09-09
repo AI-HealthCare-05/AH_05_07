@@ -16,7 +16,7 @@ test("fixed Seoul weekday journey crosses UTC midnight without challenge inputs"
 test("new renderer remains review-only and S05 policy is never reinterpreted", () => {
   for (const gate of [undefined, null, "", "on", "Review", "production"]) expect(resolveScenePlan({ ...presentation, gate })).toBeNull();
   expect(resolveSceneGate("production")).toBe("production");
-  for (const screen of allScreenIds) expect(resolveScenePlan({ ...presentation, screen }) !== null).toBe(screen === "S02");
+  for (const screen of allScreenIds) expect(resolveScenePlan({ ...presentation, screen }) !== null).toBe(screen === "S02" || screen === "S10");
   expect(screenVisualModes.S05).toBe("legacy-s05");
   expect(screenVisualModes.S11).toBe("layered");
 });
@@ -30,9 +30,11 @@ test("presentation fallbacks retain calendar identity and neutral pose", () => {
 });
 
 test("untrusted extra domain properties cannot affect scene selection", () => {
-  const baseline = resolveScenePlan(presentation);
+  for (const screen of ["S02", "S10"] as const) {
+  const baseline = resolveScenePlan({ ...presentation, screen });
   for (const systolic of [80, 120, 200]) for (const status of ["completed", "skipped"]) {
-    const tainted = { ...presentation, systolic, diastolic: 60, score: systolic / 200, risk: "synthetic", status, challengeStart: "2026-09-01", modelReady: true };
+    const tainted = { ...presentation, screen, systolic, diastolic: 60, score: systolic / 200, risk: "synthetic", status, challengeStart: "2026-09-01", modelReady: true };
     expect(resolveScenePlan(tainted)).toEqual(baseline);
+  }
   }
 });

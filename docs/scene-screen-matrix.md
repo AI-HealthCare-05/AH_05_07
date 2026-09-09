@@ -157,15 +157,17 @@ L0: no scene downloads. L1: viewport-specific asynchronous image/layers only. L3
 | performance tier | semantic |
 
 ## S10
+Review implementation: [calendar diorama and responsive posters](scene-s10-diorama.md). Production gate remains closed.
+
 | Field | Contract |
 |---|---|
 | visual mode | real-time candidate |
 | primary visual | focal diorama |
 | character presence | bear max 1 |
-| environment presence | seven modular landmarks |
+| environment presence | seven desktop landmarks; focal + one neighbor instantiated on mobile |
 | semantic DOM relationship | current/prior facts separate from challenge |
-| mobile composition | one landmark and neighbor fragment |
-| desktop composition | large focal region + surroundings |
+| mobile composition | dedicated 240/280px stage; one landmark and neighbor fragment |
+| desktop composition | 420px stage; large focal region + surroundings |
 | allowed animation | neutral; future short transition/idle |
 | prohibited animation | completion/score/weather/automatic tour |
 | loading strategy | L3 |

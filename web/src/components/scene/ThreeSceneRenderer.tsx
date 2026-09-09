@@ -2,9 +2,10 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { sceneComposition, type SceneRecipe } from "../../ui/sceneRecipes";
+import { sceneComposition, sceneProfile, type SceneRecipe } from "../../ui/sceneRecipes";
 import type { SceneLandmark } from "../../ui/scenePolicy";
 import { createLandmark } from "./environment";
+import { createDiorama } from "./diorama";
 
 type Props = { recipe: SceneRecipe; landmark: SceneLandmark["id"]; visible: boolean; onReady: () => void; onFailure: () => void };
 
@@ -51,7 +52,8 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     let model: THREE.Object3D | undefined;
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-2, 2, 1.5, -1.5, 0.1, 40);
-    const environment = createLandmark(landmark);
+    let profile = sceneProfile(window.innerWidth);
+    let environment = recipe.environment === "diorama" ? createDiorama(landmark, profile) : createLandmark(landmark);
     scene.add(environment);
     // A tiny authored alpha mask grounds the neutral pose without a shadow map.
     const shadowPixels = new Uint8Array(64 * 64 * 4);
@@ -90,6 +92,16 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       if (!renderer || disposed) return;
       const width = Math.max(1, element.clientWidth);
       const height = Math.max(1, element.clientHeight);
+      const nextProfile = sceneProfile(window.innerWidth);
+      if (recipe.environment === "diorama" && nextProfile !== profile) {
+        scene.remove(environment);
+        disposeTree(environment);
+        environment = createDiorama(landmark, nextProfile);
+        scene.add(environment);
+      }
+      profile = nextProfile;
+      element.dataset.environmentKind = recipe.environment;
+      element.dataset.environmentLandmarks = JSON.stringify(environment.userData.landmarkIds ?? [landmark]);
       const { camera: cameraRecipe } = sceneComposition(recipeRef.current, window.innerWidth);
       const vertical = cameraRecipe.verticalSpan;
       const horizontal = vertical * width / height;
@@ -156,6 +168,8 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       }
       disposeTree(scene);
       renderer?.dispose();
+      // Release the context itself on route/recipe exit, not just its assets.
+      renderer?.forceContextLoss();
     };
   }, [landmark, recipe.id, recipe.characterUrl]);
 

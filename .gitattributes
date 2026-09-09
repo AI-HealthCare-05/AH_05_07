@@ -15,3 +15,11 @@
 /docs/evidence/scene-clay-posters.json text eol=lf
 /web/src/ui/sceneManifest.generated.ts text eol=lf
 /web/src/ui/scene-manifest.v2.json text eol=lf
+/web/src/components/scene/diorama.ts text eol=lf
+/docs/evidence/scene-diorama-posters.json text eol=lf
+
+# Every authored dependency used in scene poster captures.
+/web/src/components/VisualStage.tsx text eol=lf
+/web/src/ui/sceneRecipes.ts text eol=lf
+/web/src/ui/scenePolicy.ts text eol=lf
+/web/src/styles.css text eol=lf

@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
@@ -7,10 +7,11 @@ import { sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
 
 const ThreeSceneRenderer = lazy(() => import("./scene/ThreeSceneRenderer"));
 
-class SceneFailureBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
+class SceneFailureBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+  componentDidCatch() { this.props.onFailure(); }
+  render() { return this.state.failed ? null : this.props.children; }
 }
 
 function PosterImage({ url }: { url: string }) {
@@ -33,12 +34,11 @@ export function StaticSceneFallback({ recipe }: { recipe: SceneRecipe }) {
   </div>;
 }
 
-function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
+function SceneTierBoundary({ plan, failed, onFailure }: { plan: ScenePlan; failed: boolean; onFailure: () => void }) {
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
   const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const element = host.current;
@@ -59,19 +59,26 @@ function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
 
   useEffect(() => {
     if (!active || ready || failed || plan.tier !== 2) return;
-    const timeout = window.setTimeout(() => setFailed(true), 12_000);
+    const timeout = window.setTimeout(onFailure, 12_000);
     return () => window.clearTimeout(timeout);
-  }, [active, ready, failed, plan.tier]);
+  }, [active, ready, failed, plan.tier, onFailure]);
 
   const fallback = <StaticSceneFallback recipe={plan.recipe} />;
   return <div ref={host} className="living-scene-runtime" aria-hidden="true" data-living-scene-status={failed ? "fallback" : ready ? "ready" : "poster"}>
     {(!ready || failed || plan.tier === 1) && fallback}
-    {active && !failed && plan.tier === 2 && <SceneFailureBoundary fallback={fallback}>
+    {active && !failed && plan.tier === 2 && <SceneFailureBoundary onFailure={onFailure}>
       <Suspense fallback={null}>
-        <ThreeSceneRenderer recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
+        <ThreeSceneRenderer recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={onFailure} />
       </Suspense>
     </SceneFailureBoundary>}
   </div>;
+}
+
+function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
+  // A tier change resets canvas readiness, but cannot retry a failed recipe visit.
+  const [failed, setFailed] = useState(false);
+  const onFailure = useCallback(() => setFailed(true), []);
+  return <SceneTierBoundary key={plan.tier} plan={plan} failed={failed} onFailure={onFailure} />;
 }
 
 /** Separate review boundary. Existing S05 and all semantic children stay outside. */
@@ -86,11 +93,11 @@ export function VisualStage({ screen, calendarDate }: { screen: JourneyScreenId;
   const plan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
     webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE });
   if (!plan) return null;
-  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={plan.recipe.id} aria-hidden="true" style={{
+  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={plan.recipe.id} data-scene-date={calendarDate} aria-hidden="true" style={{
     "--scene-height-320": `${plan.recipe.compositions.mobile320.stageHeight}px`,
     "--scene-height-390": `${plan.recipe.compositions.mobile390.stageHeight}px`,
     "--scene-height-desktop": `${plan.recipe.compositions.desktop.stageHeight}px`,
   } as CSSProperties}>
-    <SceneRuntimeBoundary key={`${plan.recipe.id}:${plan.tier}`} plan={plan} />
+    <SceneRuntimeBoundary key={plan.recipe.id} plan={plan} />
   </div>;
 }

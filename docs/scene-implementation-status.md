@@ -1,51 +1,47 @@
-# Living Journey Hybrid implementation checkpoint — 2026-09-09
+# Living Journey Hybrid implementation checkpoint — 2026-09-10
 
-## Latest local continuation
-[Manifest validation and runtime recipes](scene-manifest-validation.md) now covers S02 source/provenance checks, fallback references, conservative budgets and camera/anchor integration. Local manifest/browser checks pass; production remains disabled.
-See [scene-local-resume.md](scene-local-resume.md) for Issue #390, corrected local-origin browser verification and repeated schema/GLB validation. The original checkpoint statements below are historical. Production remains disabled; this work is a review prototype.
+Current checkout: `/Users/gom/Projects/AH_05_07`, branch `codex/living-journey-hybrid`, [Issue #390](https://github.com/AI-HealthCare-05/AH_05_07/issues/390), [draft PR #391](https://github.com/AI-HealthCare-05/AH_05_07/pull/391). Continue these existing artifacts. The restored checkpoint has already been applied and pushed; do not reapply its ZIP or create a duplicate Issue/PR.
 
-## Authorization and source
-Owner authorized implementation and production activation after Phase 0 chat review. Baseline main: `9361983ea00afa244da560ac62f0d533e9f9e942`. Working branch: `codex/living-journey-hybrid` (local only).
+This current status supersedes the original local-only/GitHub-403/browser-blocked notes. Historical details remain in Git and `scene-local-resume.md`. The user's original local `scene-next-task-handoff.md` is preserved separately as an untracked historical handoff.
 
-GitHub Issue creation returned HTTP 403 `Resource not accessible by integration`. No remote Issue, branch, commit, PR, merge, mirror sync or production activation was performed. Do not infer a remote artifact from this local branch name. Restore repository write access before the existing Issue/branch/PR/squash workflow.
+## Completed review implementation
 
-## Completed local work
-- Eight Phase 0 contract/schema files; weekday calendar policy; screen/motion/fallback/test matrices.
-- Read-only forensics of 22 immutable GLBs: all source SHA-256 and sizes match; 77 unique species/clip pairs; zero texture assets and zero external binary dependencies.
-- Offline bear-lite clip subset experiment: idle/rest/celebrate; 518636 -> 461680 bytes (56956 saved, approximately 10.98%). Retained accessor metadata and bytes match. Original assets are unchanged. Derivative is NOT selected at runtime and has NOT passed visual parity.
-- S02-only review prototype integration. VisualStage, separate lazy renderer, seven modular procedural landmark candidates, neutral bear-lite, bounded DPR 1.25, no mixer and no persistent RAF. Visibility-gated activation, resize-demand rendering, loading timeout, image/error/context fallback and disposal.
-- S10 policy remains a candidate; no S10 runtime integration or complete diorama is claimed. S05 implementation is unchanged. Other screens retain existing product behavior.
+- Shared Seoul date rollover: one App snapshot for semantic dates, current/prior window bounds and both scene screens; midnight, visible-tab recovery and pageshow; fixed fixture dates, unsaved drafts and request/session-generation safeguards. See [date verification](scene-date-rollover.md).
+- S02: seven clay landmarks and 21 matching responsive posters. Geometry and neutral bear composition remain review candidates. All 21 original R2 file identities are unchanged after recapturing shared source changes. See [S02 workflow](scene-clay-posters.md).
+- S10: calendar diorama with one focal landmark/bear, seven desktop landmarks and focal plus one neighbor on mobile. Its 21 responsive posters use independently authored profile cameras. Prior-window selection and changing facts cannot change today's scenery. See [S10 implementation](scene-s10-diorama.md).
+- Manifest: 45 assets / 28 recipes, with explicit environment roots, complete geometry dependencies, same-screen weekday/profile fallbacks, exact source/camera/image hashes, public delivery evidence and conservative budgets. Shared stylesheet/presentation changes now require recapture. See [manifest verification](scene-manifest-validation.md).
+- Failure/resource ownership: one poster on chunk failure, no failed-3D retry on motion-tier changes, one character load across viewport changes, and explicit WebGL context release on route/recipe exit. No perpetual RAF, mixer or new dependency.
+- R2: all 42 S02/S10 posters uploaded and registered at `https://sk7-companion.gkrry.com`, verified by exact public bytes/MIME/CORS and existing four-hour cache headers. Authenticated dashboard upload did not change bucket security, CORS or OAuth scopes. Local capture originals are retained for reproducible verification.
+- Existing 22 GLBs / 77 species-and-clip pairs remain unchanged. Earlier import-graph, Windows LF and synthetic-viewer timing checks remain in place. API/DB/auth/Model V2 and production S05 contracts are unchanged.
 
-## Validation actually performed
+## Verification of the S10 increment
+
 | Check | Result |
-|---|---|
-| TypeScript + Vite production build | PASS |
-| Existing generated companion manifest | 22/22 PASS |
-| Scene policy/calendar unit tests | 4 PASS |
-| JSON Schema Draft 2020-12 schema validity | PASS |
-| Wrong schema version / unknown root field rejection | PASS |
-| 22 GLB hash/size/structure inventory | PASS |
-| Retained subset accessor metadata/bytes | PASS |
-| git diff --check | PASS |
-| Browser visual QA | BLOCKED: cloud browser ERR_BLOCKED_BY_CLIENT despite healthy preview |
-| Browser E2E suite | NOT RUN: browser binary download timed out and ended HTTP 502 |
-| Mobile/Safari performance and visual acceptance | NOT MEASURED |
-| Runtime first-activation transfer | NOT MEASURED |
+| --- | --- |
+| Manifest rejection/registration suite | 71 PASS |
+| Independent Draft 2020-12 schema and manifest | PASS |
+| TypeScript / Vite production build | PASS; existing large lazy Three chunk warning retained |
+| S02/S10/date Chromium review suite | 52 cases pass across full run and targeted correction |
+| Default-off and policy | 6 PASS |
+| Existing production S05 regression | 5 PASS |
+| S10 public GET identity / MIME / CORS / cache | 21/21 PASS; S02's existing 21 identities retained |
+| Master widths | Seven weekdays, realtime and poster, at 320/390/1366px on each screen |
+| Intermediate widths | 350/351/580/581/768px focal bounds and poster scale |
+| Physical Safari/Android, GPU/memory/FPS, final art acceptance | NOT MEASURED / NOT ACCEPTED |
 
-Build warns about a lazy shared Three chunk exceeding 500KB raw. It is approximately 161KB gzip; this warning is retained, not silenced. Actual cold transfer and task responsiveness still require browser evidence. The dependency versions and lockfile are unchanged.
+The full public-delivery run passed 51/52; the added S10 CORS test reused a no-CORS image memory-cache entry and failed. A controlled comparison confirmed a clean CORS request returns the exact public bytes. The test now starts on a page without that image and passes, keeping the same URL/hash/header assertions. Product image delivery and bucket settings were unchanged. Earlier authoring tests exposed 581px clipping; the desktop bear anchor and all seven affected captures were corrected before upload. A too-strict prior-window canvas-identity assertion was narrowed to preserve the existing loading/remount contract while still checking current calendar scenery.
 
-## Runtime gate
-`VITE_SK7_SCENE_MODE=review` permits the S02 prototype. Missing/unknown/off disables it. `production` is recognized but deliberately returns no plan until production recipes pass visual/performance acceptance. Existing `VITE_SK7_COMPANION_MODE` remains separate. Do not remove this guard merely to satisfy rollout wording.
+Current CI status belongs to the exact HEAD shown on PR #391. The preceding S02 commit `6e68338207537ab232779ccf0202d26f381a6178` passed all 21 GitHub checks; that result is historical and does not substitute for the new S10 HEAD checks.
 
-## Remaining work in order
-1. S02 schema cross-reference/provenance/budget verifier and runtime recipe integration are complete for the bounded review profile. Extend this verifier explicitly when registering new production assets or screens; see scene-manifest-validation.md.
-2. Measure prototype in actual browser at 320x568, 320x844, 390x844 and 1366x768. Verify focal-size bounds, shape/material quality, no clipped subjects, CSS fallback, first-use bytes, navigation and image failures.
-3. Compare current body bind pose with approved neutral pose. Consider approved idle pose sampling only after visual evidence. Check camera framing and character anchor centering against actual bounds.
-4. Replace/accept procedural environment candidates through asset forensics, source/provenance registration and visual acceptance. They are not finished production clay assets.
-5. Build matching responsive 2.5D layers/posters. Existing S02 image is a temporary reviewed-source fallback; S10 has no new approved poster yet.
-6. Resolve shared Seoul date rollover. Prototype intentionally uses the host's existing `today` snapshot, so it cannot independently drift from DOM. Existing midnight-refresh contract remains unimplemented here; preserve unsaved drafts and request-generation safeguards when addressing it.
-7. Complete S02 signature composition; then S10 diorama; then S05 migration only with normal/recovery/remount/reduce/fallback exactly-once parity. Do not merge the review prototype as a finished redesign.
-8. Execute existing regression/browser/privacy/model suites, real-device performance, release classification and controlled web-only rollout with rollback. API/DB/auth/model/topology/deployment semantics remain frozen.
+S10's conservative planning range is 841,029–844,147 bytes per realtime recipe; the gate is 900,000 bytes. `scene-diorama-r2-network.json` records **699,980–752,515 selected encoded response bytes** over four viewports in local Chromium with ANGLE SwiftShader and public R2 media. These protocol estimates exclude the semantic shell, can include unattributed response overhead, and are not whole-page or physical-device performance acceptance. Exact image bodies are independently hashed. S10 capture counters reach 75 draw calls / 89,654 triangles on desktop; device costs remain unmeasured.
 
-## Resume in the owner's local checkout
-Canonical local path remains `/Users/gom/Projects/AH_05_07`. First inspect branch, HEAD and working tree; preserve unrelated edits. The delivered patch is based on the exact baseline above. Apply only after checking applicability on an isolated branch. If main moved, review/rebase the narrow patch and rerun affected checks. Do not change backend or deploy from the mirror. Use the existing upstream main -> deployment mirror sync -> Cloudflare Worker flow only after release gates pass.
+## Gate and remaining work
+
+`VITE_SK7_SCENE_MODE=review` permits the registered S02/S10 scenes. Missing, unknown, off and production modes remain closed. Existing `VITE_SK7_COMPANION_MODE` and S05 are independent. R2 asset upload does not deploy or activate the application. PR #391 remains draft; no merge or rollout is included.
+
+1. Final owner visual review of S02/S10 clay art and neutral composition.
+2. S05 migration parity: confirmed persistence and exactly-once behavior across timeout/unknown/409/retry/remount/back/reduced-motion/hidden/fallback cases. Existing S05 tests alone do not complete this migration.
+3. Physical Safari/Android performance and accessibility, including interaction responsiveness, decode/shader/main-thread cost, GPU/peak memory and cache behavior.
+4. Controlled web-only rollout and rollback through the existing upstream-main → deployment-mirror → Cloudflare flow only after release gates pass.
+
+For continuation, inspect the branch/working tree and current PR HEAD, preserve unrelated changes, and read `scene-s10-diorama.md` plus the contract for the next bounded increment. Run checks appropriate to actual changes; do not repeat completed forensic or browser work just to reread the checkpoint. No new services, health inference, dependency or production gate should be introduced to bypass an open acceptance condition.

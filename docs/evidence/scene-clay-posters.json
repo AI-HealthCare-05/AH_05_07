@@ -1,13 +1,17 @@
 {
   "status": "review-only",
-  "deliveryStatus": "local capture originals; verified public delivery recorded separately in scene-clay-r2.json",
+  "deliveryStatus": "local capture originals; public delivery requires separate evidence",
   "intendedR2Bucket": "sk7-assets-prod",
   "intendedPublicOrigin": "https://sk7-companion.gkrry.com",
   "source": "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching",
   "sourceHashes": {
     "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
-    "web/src/components/scene/ThreeSceneRenderer.tsx": "54e9929c7ec9480f909ba4a2cd9be617ed303f44535d1f4e949cad70912e592b",
-    "web/scripts/capture-scene-posters.mjs": "27058cea8ca3aa156e4ca396d86dd0a2b4bd7d3e7797f61319acc1958082aad5"
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "b7e8c4a0c28206829f3771dc5c54edef039b214604a66787a6c4dd8078b917d6",
+    "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+    "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+    "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+    "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+    "web/scripts/capture-scene-posters.mjs": "9803b44984b176f289f2ad759b4d3f99147862c3583dd79deddd1ca6d62a9430"
   },
   "characterSha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
   "characterRightsReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242",

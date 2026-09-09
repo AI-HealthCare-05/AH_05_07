@@ -2,6 +2,8 @@
 
 Issue #390 · draft PR #391 · `codex/living-journey-hybrid`. This increment remains review-only. Production scene activation, merge and application deployment are not included.
 
+This document records the S02 increment and its historical validation. The current S02/S10 registration and shared runtime follow-up are in [S10 diorama](scene-s10-diorama.md) and [implementation status](scene-implementation-status.md). S02's 21 public file identities remain unchanged after the shared-source recapture.
+
 ## Implementation
 
 Seven weekday landmarks now share rounded clay geometry, a connected ground/path, wood/stone/sage/lavender colors and a neutral bear pose. Roof tiles, garden plants, bridge rails, shelter and pavilion are authored with existing Three.js 0.185.1 geometries. Geometry is merged by palette. ACES tone mapping and a small static alpha contact shadow provide consistent lighting without dynamic shadow passes, animation mixers or a frame loop. DPR remains capped at 1.25.
@@ -37,7 +39,7 @@ R2 capacity/egress terms are separate from client transfer and memory budgets. N
 From the repository root, with port 4173 free and Playwright Chromium installed:
 
 ```sh
-node web/scripts/capture-scene-posters.mjs
+node web/scripts/capture-scene-posters.mjs --screen=S02
 node web/scripts/register-scene-posters.mjs
 npm --prefix web run test:scene-manifest
 npm --prefix web run build
@@ -64,7 +66,7 @@ The previous `scene-review-network.json` describes the primitive prototype. `sce
 
 The first R2 browser run passed 30/31 cases; the 320px Sunday poster had not decoded within the old five-second image assertion. The assertion now allows up to 15 seconds for public delivery, with a 90-second ceiling for each seven-weekday test. Exact URL, decoded dimensions, focal bounds and one-request assertions remain in place. All seven affected poster/failure/delivery cases passed on the targeted rerun; the 320px Sunday capture was visually inspected. This timing allowance is not a load-time acceptance result.
 
-Remaining: owner review of final art, physical Safari/Android performance and accessibility, S10 expansion, S05 migration parity, controlled rollout. Existing production S05 is a separate path; passing its regression tests does not complete migration. API, DB, auth and Model V2 contracts remain unchanged.
+S10 expansion is now implemented as a review candidate; see the linked follow-up. Remaining: owner review of final art, physical Safari/Android performance and accessibility, S05 migration parity, controlled rollout. Existing production S05 is a separate path; passing its regression tests does not complete migration. API, DB, auth and Model V2 contracts remain unchanged.
 
 ## CI follow-up
 

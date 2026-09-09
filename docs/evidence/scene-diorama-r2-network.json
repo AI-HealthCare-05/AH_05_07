@@ -1,0 +1,196 @@
+{
+  "status": "local-preview-with-public-R2-not-device-acceptance",
+  "observedAt": "2026-09-09T16:17:55.465Z",
+  "manifestRevision": "s02-s10-clay-r2-001",
+  "sourceBaseline": "6e68338207537ab232779ccf0202d26f381a6178",
+  "manifestSha256": "3c52f4b3617b21365c95ed05733e45539db5ebc5ee0259e5d50e1ac98df3c990",
+  "environment": "macOS Chromium, Vite production preview on 127.0.0.1:4173; CI=1 enables ANGLE SwiftShader; fresh browser context per viewport; existing public CDN cache may be warm",
+  "scope": "Selected ThreeSceneRenderer/GLTFLoader chunks, one GLB and one S10 public R2 weekday poster. Excludes initial JS/CSS, semantic shell and unrelated imagery. Playwright responseBodySize is a protocol estimate that may include unattributed overhead when responseHeadersSize is zero. Exact poster body sizes are independently verified in scene-diorama-r2.json. No FPS, peak memory, GPU time or physical-device claim.",
+  "measurements": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "requests": [
+        {
+          "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 786,
+          "responseBodySize": 12261,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-lWjG0tBq.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 5067,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519792,
+          "responseHeadersSize": 0
+        }
+      ],
+      "environment": {
+        "drawCalls": "30",
+        "triangles": "27098",
+        "landmarks": [
+          "footbridge",
+          "reading-shelter"
+        ]
+      },
+      "selectedEncodedResponseBytes": 699981
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "requests": [
+        {
+          "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 786,
+          "responseBodySize": 12269,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-lWjG0tBq.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 5067,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519783,
+          "responseHeadersSize": 0
+        }
+      ],
+      "environment": {
+        "drawCalls": "30",
+        "triangles": "27098",
+        "landmarks": [
+          "footbridge",
+          "reading-shelter"
+        ]
+      },
+      "selectedEncodedResponseBytes": 699980
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-lWjG0tBq.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 5067,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 786,
+          "responseBodySize": 14667,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519784,
+          "responseHeadersSize": 0
+        }
+      ],
+      "environment": {
+        "drawCalls": "31",
+        "triangles": "31862",
+        "landmarks": [
+          "footbridge",
+          "reading-shelter"
+        ]
+      },
+      "selectedEncodedResponseBytes": 702379
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "requests": [
+        {
+          "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 782,
+          "responseBodySize": 64803,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-lWjG0tBq.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 5067,
+          "responseHeadersSize": 354
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-raHLAUCc.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 162861,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519784,
+          "responseHeadersSize": 0
+        }
+      ],
+      "environment": {
+        "drawCalls": "75",
+        "triangles": "89654",
+        "landmarks": [
+          "footbridge",
+          "shade-tree",
+          "reading-shelter",
+          "herb-garden",
+          "garden-gate",
+          "sunset-overlook",
+          "pavilion"
+        ]
+      },
+      "selectedEncodedResponseBytes": 752515
+    }
+  ]
+}

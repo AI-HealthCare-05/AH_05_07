@@ -7,18 +7,17 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import { build, preview } from "vite";
+import { sceneRegistrations } from "./scene-asset-inputs.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const web = path.join(root, "web");
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 const manifest = JSON.parse(await fs.readFile(path.join(web, "src/ui/scene-manifest.v2.json"), "utf8"));
-const recipes = manifest.recipes.filter(recipe => recipe.mode === "realtime");
+const selectedScreen = process.argv.find(arg => arg.startsWith("--screen="))?.slice(9);
+if (selectedScreen && !Object.hasOwn(sceneRegistrations, selectedScreen)) throw new Error("Only S02 or S10 capture is registered");
+const screens = selectedScreen ? [selectedScreen] : Object.keys(sceneRegistrations);
 const character = manifest.assets.find(asset => asset.kind === "character");
-const directory = "scene-review/s02/v1";
-const output = path.join(web, "public", directory);
 const temporary = await fs.mkdtemp(path.join(os.tmpdir(), "sk7-poster-preview-"));
-const sources = ["web/src/components/scene/environment.ts", "web/src/components/scene/ThreeSceneRenderer.tsx", "web/scripts/capture-scene-posters.mjs"];
-const sourceHashes = Object.fromEntries(await Promise.all(sources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
 let server, browser;
 try {
   await build({ root: web, build: { outDir: temporary, emptyOutDir: true },
@@ -29,7 +28,12 @@ try {
   });
   server = await preview({ root: web, build: { outDir: temporary }, preview: { host: "127.0.0.1", port: 4173, strictPort: true } });
   browser = await chromium.launch();
-  await fs.mkdir(output, { recursive: true });
+  for (const screen of screens) {
+  const registration = sceneRegistrations[screen];
+  const { directory } = registration;
+  const sourceHashes = Object.fromEntries(await Promise.all(registration.sources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
+  const recipes = manifest.recipes.filter(recipe => recipe.mode === "realtime" && recipe.screens.includes(screen));
+  await fs.mkdir(path.join(web, "public", directory), { recursive: true });
   const posters = [];
   for (const [profile, width, height] of [["mobile320", 320, 844], ["mobile390", 390, 844], ["desktop", 1366, 900]]) {
     const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2 });
@@ -46,7 +50,7 @@ try {
     for (const [index, landmarkId] of landmarks.entries()) {
       const recipe = recipes.find(entry => entry.landmarkId === landmarkId);
       await page.clock.setFixedTime(new Date(`2026-09-${String(index + 7).padStart(2, "0")}T03:00:00Z`));
-      await page.goto("http://127.0.0.1:4173/?e2e=signed-in&screen=S02");
+      await page.goto(`http://127.0.0.1:4173/?e2e=signed-in&screen=${screen}`);
       const stage = page.locator(`.living-visual-stage[data-scene-recipe="${recipe.id}"]`);
       await stage.scrollIntoViewIfNeeded();
       await page.locator('[data-living-scene-status="ready"]').waitFor({ timeout: 20000 });
@@ -65,22 +69,23 @@ try {
       const objectKey = `${directory}/${landmarkId}-${profile}-${sha256.slice(0, 16)}.webp`;
       await fs.writeFile(path.join(web, "public", objectKey), bytes);
       const stats = await page.locator(".living-three-scene").evaluate(element => ({ drawCalls: Number(element.dataset.drawCalls), triangles: Number(element.dataset.triangles), subjectBounds: JSON.parse(element.dataset.subjectBounds) }));
-      posters.push({ id: `poster-${landmarkId}-${profile}`, landmarkId, profile, width: encoded.width, height: encoded.height, viewport: { width, height }, stage: metrics, ...stats,
+      posters.push({ id: `${registration.posterPrefix}${landmarkId}-${profile}`, landmarkId, profile, width: encoded.width, height: encoded.height, viewport: { width, height }, stage: metrics, ...stats,
         compositionHash: hash(JSON.stringify(recipe.compositions[profile])),
         delivery: { url: `/${objectKey}`, objectKey, sha256, byteLength: bytes.length, mime: "image/webp" },
       });
-      console.log(`${landmarkId} ${profile}: ${bytes.length} bytes`);
+      console.log(`${screen} ${landmarkId} ${profile}: ${bytes.length} bytes`);
     }
     await context.close();
   }
-  const evidence = { status: "review-only", deliveryStatus: "local-review; R2 authentication pending", intendedR2Bucket: "sk7-assets-prod", intendedPublicOrigin: "https://sk7-companion.gkrry.com",
+  const evidence = { status: "review-only", deliveryStatus: "local capture originals; public delivery requires separate evidence", intendedR2Bucket: "sk7-assets-prod", intendedPublicOrigin: "https://sk7-companion.gkrry.com",
     source: "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching", sourceHashes,
     characterSha256: character.delivery.sha256, characterRightsReference: character.provenance.reviewReference,
     visualDirectionReferences: ["DAHUPjn8shI", "DAHUPjDn-Rw"], visualDirectionUse: "Canva reference contract only; these posters are not Canva exports",
     renderer: { three: "0.185.1", chromium: browser.version(), deviceScaleFactor: 2, rendererDprCap: 1.25, webpQuality: 0.9 },
     posters,
   };
-  await fs.writeFile(path.join(root, "docs/evidence/scene-clay-posters.json"), `${JSON.stringify(evidence, null, 2)}\n`);
+  await fs.writeFile(path.join(root, registration.evidence), `${JSON.stringify(evidence, null, 2)}\n`);
+  }
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.httpServer.close(resolve));

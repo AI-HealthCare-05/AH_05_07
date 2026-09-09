@@ -1,0 +1,347 @@
+{
+  "status": "verified-public-delivery-review-only",
+  "verifiedAt": "2026-09-09T16:17:54.965Z",
+  "bucket": "sk7-assets-prod",
+  "publicOrigin": "https://sk7-companion.gkrry.com",
+  "requestOrigin": "http://127.0.0.1:4173",
+  "cachePolicy": "Existing CDN max-age=14400 (4 hours). No immutable response directive claimed; content-addressed keys are not overwritten.",
+  "applicationDeployment": false,
+  "objects": [
+    {
+      "id": "poster-s10-garden-gate-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
+      "objectKey": "scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
+      "status": 200,
+      "sha256": "2b8a3bf0fdc21b88e6ba53fd80fc258115d3cd7f3fac6cb92dcfcd143abc9ff6",
+      "byteLength": 11882,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "11882",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"71c1b3d4aa7e47b3e1135cb83357e231\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
+      "objectKey": "scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
+      "status": 200,
+      "sha256": "3bf0cf90abe4ce44204b1b26e55ab91f1c2b1b7f8cf4e4723edb95ecbe1c7192",
+      "byteLength": 11378,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "11378",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"5173705cffacd9b608f1b5d212c4b1d2\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
+      "objectKey": "scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
+      "status": 200,
+      "sha256": "68aefadd77296c076e47619138933a10f8d0a19cd0fbe6f43606640274e68eb3",
+      "byteLength": 11894,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "11894",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"350257b41f9d6d3d397ff8a9b9abc99c\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+      "objectKey": "scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+      "status": 200,
+      "sha256": "877ae27d9fa1cf912704b4f387df193b2e45e7fcea977ff9210039c2cd8deb97",
+      "byteLength": 11790,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "11790",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"c9544a6ebc70927c9db40658864a2839\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
+      "objectKey": "scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
+      "status": 200,
+      "sha256": "7bb3a375c3f5585eb7d148f77d0bf2517e228538bee20ed749013f5a908cadd0",
+      "byteLength": 13740,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "13740",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"34c5fd95c396995aa45f031c4d8bef2d\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
+      "objectKey": "scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
+      "status": 200,
+      "sha256": "367a1b0f27b0ff3075b0875eb40199bfa892a345a659d7d75230901c15b5c506",
+      "byteLength": 13898,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "13898",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"18135c570576510691d3e111f813cdc9\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-mobile320",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
+      "objectKey": "scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
+      "status": 200,
+      "sha256": "266e55e5ff5af64ac006e35e9e40f69725bebf154632f741304693beeae6a680",
+      "byteLength": 12238,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "12238",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"09a19887d1b31d1f31e8bfc071207309\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-garden-gate-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
+      "objectKey": "scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
+      "status": 200,
+      "sha256": "d48b2035bc3c2aa7152754ee8118750f8387b157f1b6bd8a23af1b692c943aa3",
+      "byteLength": 14416,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "14416",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"69d0f1a9d507c55a7ac439cb99ce87ef\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
+      "objectKey": "scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
+      "status": 200,
+      "sha256": "fccf71971847f36ca24c6b9c28cac40f3fbd37b5bc1eb8ae0fc6cc888fd2a1eb",
+      "byteLength": 13870,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "13870",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"4af1353b0de4651451a4fbc428ebdb3a\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
+      "objectKey": "scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
+      "status": 200,
+      "sha256": "08d2be3ae19fc48e7022473944a8ccc74f8c8d586d6162627c91d958c4099af5",
+      "byteLength": 14320,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "14320",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"1d9961855218f5a35a4be81b5eec616c\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "objectKey": "scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "status": 200,
+      "sha256": "618bad48a5f46e065236454bf3822e412fba0008dd02642e03ab40745e8b3714",
+      "byteLength": 14194,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "14194",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"78c4299acbd3bb7c17a0c935ad0531d6\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
+      "objectKey": "scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
+      "status": 200,
+      "sha256": "531e285abe20ac581cbf9a47388213c65335ca9635d19bb66545c8021966cca8",
+      "byteLength": 16656,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "16656",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"f82a719f592db1254a39bc5f17d9393b\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
+      "objectKey": "scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
+      "status": 200,
+      "sha256": "965a1fe064e99758f7c41b5c5c12c56af449538977978f599401ef1b82ecd1e0",
+      "byteLength": 16852,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "16852",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"1a0afe182745c0928507d12b23ebda32\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-mobile390",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
+      "objectKey": "scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
+      "status": 200,
+      "sha256": "22cc098d6706c087abfda82c14a75b5644d0899935b9650d54103c192a372640",
+      "byteLength": 14976,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "14976",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"59e1be9a8e43094a6ba7b4660cf4ea88\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-garden-gate-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
+      "objectKey": "scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
+      "status": 200,
+      "sha256": "f28bd765dd3ec728833ffa741eb43d03f08551a25f8bdacc053db38223d01e29",
+      "byteLength": 61182,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "61182",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"453f1eb7c564ef8ae232d13d580f3a13\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
+      "objectKey": "scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
+      "status": 200,
+      "sha256": "c233d27b9113b23fa2c9768fbcbbb87f52cff230ea2081829ff0119e22f913fb",
+      "byteLength": 62874,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "62874",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"dbcad4587262ee625d6d442e2f9617ad\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
+      "objectKey": "scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
+      "status": 200,
+      "sha256": "95a8e1d6b2873035e3c32d7c4f9f03a4a694d3b5790138c80041b35a073479ab",
+      "byteLength": 62748,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "62748",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"230880fa3259adfc7160c853766a1a55\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
+      "objectKey": "scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
+      "status": 200,
+      "sha256": "8dbd22f9f13d8bf4500ce952d7a991767a06100e6cc31e04c5c62042887c6635",
+      "byteLength": 64278,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "64278",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"3a557e0330dc5ff0b0910a1c51bd815d\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
+      "objectKey": "scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
+      "status": 200,
+      "sha256": "ef8cad2ae557982c83d0821cd8d9eedbdd9d40dc556c6daa5d4cee005e58791b",
+      "byteLength": 63216,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "63216",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"8817a5cdb40194a34d97faac1d31857b\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
+      "objectKey": "scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
+      "status": 200,
+      "sha256": "1e0b44bc3ccd5d4bca2e8b294f8a76c78c425a5d140c21caaca6fa265ad21321",
+      "byteLength": 63396,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "63396",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"403f8ae35029205063981520f07afe2a\"",
+        "cf-cache-status": "MISS"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-desktop",
+      "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
+      "objectKey": "scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
+      "status": 200,
+      "sha256": "33283033e1f4241882f34e9767c42c99a96254a2f078e0369e87e14eb0602f28",
+      "byteLength": 64300,
+      "headers": {
+        "content-type": "image/webp",
+        "content-length": "64300",
+        "cache-control": "max-age=14400",
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "etag": "\"3947269ade8e73dba5a83f7db07fc785\"",
+        "cf-cache-status": "MISS"
+      }
+    }
+  ]
+}

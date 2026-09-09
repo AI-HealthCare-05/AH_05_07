@@ -4,13 +4,14 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { buildGeneratedSource as verifyCompanionEvidence } from "./generate-companion-manifest.mjs";
+import { sceneRegistrations } from "./scene-asset-inputs.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = relative => JSON.parse(fs.readFileSync(path.join(root, relative), "utf8"));
 const requireValue = (condition, message) => { if (!condition) throw new Error(message); };
 const equal = (actual, expected, label) => requireValue(isDeepStrictEqual(actual, expected), `${label}: evidence mismatch`);
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
-const posterKey = /^scene-review\/s02\/v1\/(garden-gate|herb-garden|shade-tree|footbridge|reading-shelter|pavilion|sunset-overlook)-(mobile320|mobile390|desktop)-[a-f0-9]{16}\.webp$/;
+const posterKey = /^scene-review\/(s02|s10)\/v1\/(garden-gate|herb-garden|shade-tree|footbridge|reading-shelter|pavilion|sunset-overlook)-(mobile320|mobile390|desktop)-[a-f0-9]{16}\.webp$/;
 export const posterDeliveryOrigin = "https://sk7-companion.gkrry.com";
 export const posterRequestOrigin = "http://127.0.0.1:4173";
 
@@ -114,19 +115,22 @@ export function validateStructure(value, schema, document = schema, label = "man
 }
 
 export function loadInputs() {
-  const posters = read("docs/evidence/scene-clay-posters.json");
-  const posterBytes = new Map(posters.posters.map(poster => {
+  const posters = read(sceneRegistrations.S02.evidence);
+  const dioramaPosters = read(sceneRegistrations.S10.evidence);
+  const posterBytes = new Map([...posters.posters, ...dioramaPosters.posters].map(poster => {
     requireValue(posterKey.test(poster.delivery.objectKey), "unregistered poster object key");
     return [poster.id, fs.readFileSync(path.join(root, "web/public", poster.delivery.objectKey))];
   }));
-  const sourcePaths = ["web/src/components/scene/environment.ts", "web/src/components/scene/ThreeSceneRenderer.tsx", "web/scripts/capture-scene-posters.mjs"];
+  const hashesFor = sources => Object.fromEntries(sources.map(source => [source, hash(fs.readFileSync(path.join(root, source)))]));
+  const publicEvidence = screen => fs.existsSync(path.join(root, sceneRegistrations[screen].publicEvidence)) ? read(sceneRegistrations[screen].publicEvidence) : null;
   return {
     schema: read("docs/scene-asset-manifest-v2.schema.json"),
     companion: read("docs/evidence/companion-r2-v1.json"),
     forensics: read("docs/evidence/scene-glb-forensics.json"),
-    posters, posterBytes,
-    posterR2: fs.existsSync(path.join(root, "docs/evidence/scene-clay-r2.json")) ? read("docs/evidence/scene-clay-r2.json") : null,
-    sourceHashes: Object.fromEntries(sourcePaths.map(source => [source, hash(fs.readFileSync(path.join(root, source)))])),
+    posters, dioramaPosters, posterBytes,
+    posterR2: publicEvidence("S02"), dioramaR2: publicEvidence("S10"),
+    sourceHashes: hashesFor(sceneRegistrations.S02.sources), dioramaSourceHashes: hashesFor(sceneRegistrations.S10.sources),
+    dioramaModuleBytes: fs.readFileSync(path.join(root, "web/src/components/scene/diorama.ts")),
     moduleBytes: fs.readFileSync(path.join(root, "web/src/components/scene/environment.ts")),
   };
 }
@@ -148,9 +152,16 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
   verifyCompanionEvidence(inputs.companion);
   const assets = uniqueById(manifest.assets, "assets");
   const recipes = uniqueById(manifest.recipes, "recipes");
-  requireValue(assets.size === 23 && ["character", "environment"].every(kind => manifest.assets.filter(asset => asset.kind === kind).length === 1) && manifest.assets.filter(asset => asset.kind === "poster").length === 21, "one character, one environment and 21 responsive posters required");
-  const posterEvidence = uniqueById(inputs.posters.posters, "poster evidence");
-  requireValue(posterEvidence.size === 21, "21 poster evidence entries required");
+  requireValue(assets.size === 45 && manifest.assets.filter(asset => asset.kind === "character").length === 1
+    && manifest.assets.filter(asset => asset.kind === "environment").length === 2
+    && manifest.assets.filter(asset => asset.kind === "poster").length === 42, "one character, two environments and 42 responsive posters required");
+  const collections = [
+    { screen: "S02", evidence: inputs.posters, publicEvidence: inputs.posterR2, sourceHashes: inputs.sourceHashes },
+    { screen: "S10", evidence: inputs.dioramaPosters, publicEvidence: inputs.dioramaR2, sourceHashes: inputs.dioramaSourceHashes },
+  ];
+  collections.forEach(collection => requireValue(collection.evidence.posters.length === 21, `${collection.screen}: 21 poster evidence entries required`));
+  const posterEvidence = uniqueById(collections.flatMap(collection => collection.evidence.posters), "poster evidence");
+  const posterCollections = new Map(collections.flatMap(collection => collection.evidence.posters.map(poster => [poster.id, collection])));
   for (const asset of assets.values()) {
     verifyMeasurement(asset);
     requireValue(asset.decoderIds.length === 0 && asset.extensionsRequired.length === 0, `${asset.id}: decoder/extension support not registered`);
@@ -166,12 +177,14 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       const evidence = posterEvidence.get(asset.id);
       requireValue(evidence && asset.status === "review" && asset.clips.length === 0, `${asset.id}: unregistered poster or approval`);
       equal({ ...asset.delivery, url: evidence.delivery.url }, evidence.delivery, asset.id);
+      const collection = posterCollections.get(asset.id), registration = sceneRegistrations[collection.screen];
       const { objectKey, sha256, byteLength } = asset.delivery;
-      requireValue(posterKey.test(objectKey) && objectKey === `scene-review/s02/v1/${evidence.landmarkId}-${evidence.profile}-${sha256.slice(0, 16)}.webp`, `${asset.id}: unregistered poster object key`);
+      requireValue(asset.id === `${registration.posterPrefix}${evidence.landmarkId}-${evidence.profile}`, `${asset.id}: unregistered poster identity`);
+      requireValue(posterKey.test(objectKey) && objectKey === `${registration.directory}/${evidence.landmarkId}-${evidence.profile}-${sha256.slice(0, 16)}.webp`, `${asset.id}: unregistered poster object key`);
       equal(evidence.delivery.url, `/${objectKey}`, `${asset.id} local capture URL`);
       if (asset.delivery.url !== evidence.delivery.url) {
         equal(asset.delivery.url, `${posterDeliveryOrigin}/${objectKey}`, `${asset.id} registered poster URL`);
-        equal(asset.delivery, verifiedPosterDelivery(evidence, inputs.posterR2), `${asset.id} R2 delivery`);
+        equal(asset.delivery, verifiedPosterDelivery(evidence, collection.publicEvidence), `${asset.id} R2 delivery`);
       }
       equal(asset.delivery.mime, "image/webp", `${asset.id} MIME`);
       const bytes = inputs.posterBytes.get(asset.id);
@@ -182,31 +195,40 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       equal(asset.provenance, { sourceAssetId: `render:${asset.id}`, sourceHash: sha256, owner: "AI-HealthCare-05/AH_05_07", rightsBasis: "Repository-authored scene render with registered bear-lite; character rights retained", reviewReference: "https://github.com/AI-HealthCare-05/AH_05_07/issues/390" }, `${asset.id} provenance`);
     } else {
       requireValue(asset.kind === "environment" && asset.status === "review" && asset.clips.length === 0, `${asset.id}: unregistered asset kind or approval`);
-      const sha256 = createHash("sha256").update(inputs.moduleBytes).digest("hex");
-      const modulePath = "web/src/components/scene/environment.ts";
-      equal(asset.sourceModule, { path: modulePath, sha256, byteLength: inputs.moduleBytes.length }, `${asset.id} module`);
+      const modulePath = asset.id === "procedural-landmarks" ? "web/src/components/scene/environment.ts"
+        : asset.id === "calendar-diorama" ? "web/src/components/scene/diorama.ts" : null;
+      requireValue(modulePath, `${asset.id}: unregistered environment`);
+      const bytes = asset.id === "procedural-landmarks" ? inputs.moduleBytes : inputs.dioramaModuleBytes;
+      const sha256 = hash(bytes);
+      equal(asset.sourceModule, { path: modulePath, sha256, byteLength: bytes.length }, `${asset.id} module`);
       equal(asset.provenance, { sourceAssetId: modulePath, sourceHash: sha256, owner: "AI-HealthCare-05/AH_05_07", rightsBasis: "Repository-authored procedural review geometry", reviewReference: "https://github.com/AI-HealthCare-05/AH_05_07/issues/390" }, `${asset.id} provenance`);
     }
   }
-  equal(inputs.posters.sourceHashes, inputs.sourceHashes, "poster render source hashes");
   const character = manifest.assets.find(asset => asset.kind === "character");
-  equal(inputs.posters.characterSha256, character.delivery.sha256, "poster character identity");
-  equal(inputs.posters.characterRightsReference, character.provenance.reviewReference, "poster character rights");
+  for (const collection of collections) {
+    equal(collection.evidence.sourceHashes, collection.sourceHashes, `${collection.screen} poster render source hashes`);
+    equal(collection.evidence.characterSha256, character.delivery.sha256, `${collection.screen} poster character identity`);
+    equal(collection.evidence.characterRightsReference, character.provenance.reviewReference, `${collection.screen} poster character rights`);
+  }
   const selections = new Set();
   const posterSelections = new Set();
   const budgets = [];
   for (const recipe of recipes.values()) {
     verifyMeasurement(recipe);
-    // This implementation registers S02 only. S10 and S05 require their own recipes and acceptance.
-    equal(recipe.screens, ["S02"], `${recipe.id} screen boundary`);
+    const screen = recipe.screens[0], registration = sceneRegistrations[screen];
+    requireValue(recipe.screens.length === 1 && registration, `${recipe.id}: screen boundary`);
     const selected = recipe.assetIds.map(id => { requireValue(assets.has(id), `${recipe.id}: missing asset ${id}`); return assets.get(id); });
     requireValue(selected.every(asset => asset.status !== "reference-only" && (recipe.status !== "approved" || asset.status === "approved")), `${recipe.id}: ineligible asset status`);
     if (recipe.mode === "realtime") {
       requireValue(recipe.landmarkId !== null && recipe.maxTier === 2 && recipe.motionPolicy === "neutral-static", `${recipe.id}: unsupported realtime policy`);
-      requireValue(selected.length === 2 && selected.filter(a => a.kind === "character").length === 1 && selected.filter(a => a.kind === "environment").length === 1, `${recipe.id}: realtime assets must be one character and one environment`);
-      requireValue(!selections.has(recipe.landmarkId), `${recipe.id}: ambiguous landmark selection`);
-      selections.add(recipe.landmarkId);
+      equal(recipe.environmentAssetId, registration.environmentId, `${recipe.id} environment reference`);
+      requireValue(selected.length === 1 + registration.environmentIds.length && selected.filter(a => a.kind === "character").length === 1
+        && registration.environmentIds.every(id => selected.some(asset => asset.id === id && asset.kind === "environment")), `${recipe.id}: realtime environment dependencies mismatch`);
+      const selection = `${screen}:${recipe.landmarkId}`;
+      requireValue(!selections.has(selection), `${recipe.id}: ambiguous landmark selection`);
+      selections.add(selection);
     } else {
+      requireValue(!Object.hasOwn(recipe, "environmentAssetId"), `${recipe.id}: static environment reference`);
       requireValue(recipe.mode === "static" && recipe.maxTier === 1 && recipe.motionPolicy === "none" && recipe.landmarkId !== null, `${recipe.id}: unsupported fallback policy`);
       requireValue(selected.length === 3 && selected.every(asset => asset.kind === "poster"), `${recipe.id}: static recipe requires three responsive posters`);
     }
@@ -217,10 +239,10 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       if (recipe.mode === "realtime") requireValue(!Object.hasOwn(composition, "posterAssetId"), `${recipe.id}: realtime composition cannot select a poster`);
       else {
         const evidence = posterEvidence.get(composition.posterAssetId);
-        requireValue(selected.some(asset => asset.id === composition.posterAssetId) && evidence?.profile === profile && evidence.landmarkId === recipe.landmarkId, `${recipe.id}: mismatched poster profile or weekday`);
+        requireValue(selected.some(asset => asset.id === composition.posterAssetId) && evidence?.profile === profile && evidence.landmarkId === recipe.landmarkId && posterCollections.get(evidence.id)?.screen === screen, `${recipe.id}: mismatched poster profile or weekday or screen`);
         requireValue(!posterSelections.has(composition.posterAssetId), `${recipe.id}: reused poster composition`);
         posterSelections.add(composition.posterAssetId);
-        const source = manifest.recipes.find(entry => entry.mode === "realtime" && entry.landmarkId === recipe.landmarkId);
+        const source = manifest.recipes.find(entry => entry.mode === "realtime" && entry.landmarkId === recipe.landmarkId && entry.screens[0] === screen);
         requireValue(source, `${recipe.id}: seven weekday sources required`);
         equal(evidence.compositionHash, hash(JSON.stringify(source.compositions[profile])), `${recipe.id} capture composition`);
         const { camera: _camera, projection: _projection, ...shared } = source.compositions[profile];
@@ -237,7 +259,7 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       const fallbackId = current.fallback.tier1RecipeId;
       if (fallbackId === null) break;
       const fallback = recipes.get(fallbackId);
-      requireValue(fallback && fallback.maxTier < current.maxTier && fallback.mode === "static" && fallback.landmarkId === current.landmarkId && current.screens.every(s => fallback.screens.includes(s)), `${recipe.id}: invalid fallback reference`);
+      requireValue(fallback && fallback.maxTier < current.maxTier && fallback.mode === "static" && fallback.landmarkId === current.landmarkId && isDeepStrictEqual(current.screens, fallback.screens), `${recipe.id}: invalid fallback reference`);
       if (recipe.status === "approved") requireValue(fallback.status === "approved", `${recipe.id}: fallback is not approved`);
       current = fallback;
     }
@@ -253,7 +275,7 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
     if (recipe.measurement.status === "measured") requireValue(recipe.measurement.encodedBytes <= 900000, `${recipe.id}: measured activation exceeds budget`);
     budgets.push({ recipeId: recipe.id, plannedBytes });
   }
-  requireValue(selections.size === 7 && recipes.size === 14 && posterSelections.size === 21, "all seven weekday landmarks require unique realtime and responsive fallback recipes");
+  requireValue(selections.size === 14 && recipes.size === 28 && posterSelections.size === 42, "all seven weekday landmarks on both screens require unique realtime and responsive fallback recipes");
   return budgets;
 }
 

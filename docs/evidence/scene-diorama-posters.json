@@ -1,0 +1,726 @@
+{
+  "status": "review-only",
+  "deliveryStatus": "local capture originals; public delivery requires separate evidence",
+  "intendedR2Bucket": "sk7-assets-prod",
+  "intendedPublicOrigin": "https://sk7-companion.gkrry.com",
+  "source": "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching",
+  "sourceHashes": {
+    "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "b7e8c4a0c28206829f3771dc5c54edef039b214604a66787a6c4dd8078b917d6",
+    "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+    "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+    "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+    "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+    "web/scripts/capture-scene-posters.mjs": "9803b44984b176f289f2ad759b4d3f99147862c3583dd79deddd1ca6d62a9430",
+    "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c"
+  },
+  "characterSha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
+  "characterRightsReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242",
+  "visualDirectionReferences": [
+    "DAHUPjn8shI",
+    "DAHUPjDn-Rw"
+  ],
+  "visualDirectionUse": "Canva reference contract only; these posters are not Canva exports",
+  "renderer": {
+    "three": "0.185.1",
+    "chromium": "151.0.7922.34",
+    "deviceScaleFactor": 2,
+    "rendererDprCap": 1.25,
+    "webpQuality": 0.9
+  },
+  "posters": [
+    {
+      "id": "poster-s10-garden-gate-mobile320",
+      "landmarkId": "garden-gate",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26726,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
+        "sha256": "2b8a3bf0fdc21b88e6ba53fd80fc258115d3cd7f3fac6cb92dcfcd143abc9ff6",
+        "byteLength": 11882,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-mobile320",
+      "landmarkId": "herb-garden",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26114,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
+        "sha256": "3bf0cf90abe4ce44204b1b26e55ab91f1c2b1b7f8cf4e4723edb95ecbe1c7192",
+        "byteLength": 11378,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-mobile320",
+      "landmarkId": "shade-tree",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 29,
+      "triangles": 23006,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
+        "sha256": "68aefadd77296c076e47619138933a10f8d0a19cd0fbe6f43606640274e68eb3",
+        "byteLength": 11894,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-mobile320",
+      "landmarkId": "footbridge",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 27098,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
+        "sha256": "877ae27d9fa1cf912704b4f387df193b2e45e7fcea977ff9210039c2cd8deb97",
+        "byteLength": 11790,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-mobile320",
+      "landmarkId": "reading-shelter",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 27422,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
+        "sha256": "7bb3a375c3f5585eb7d148f77d0bf2517e228538bee20ed749013f5a908cadd0",
+        "byteLength": 13740,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-mobile320",
+      "landmarkId": "pavilion",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26426,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
+        "sha256": "367a1b0f27b0ff3075b0875eb40199bfa892a345a659d7d75230901c15b5c506",
+        "byteLength": 13898,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-mobile320",
+      "landmarkId": "sunset-overlook",
+      "profile": "mobile320",
+      "width": 514,
+      "height": 482,
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "stage": {
+        "width": 256,
+        "height": 240,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 23078,
+      "subjectBounds": {
+        "left": -0.9007068252813969,
+        "right": -0.1327937180176017,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 143.62426681825113
+      },
+      "compositionHash": "6a0f7953d7d1a19717d44cd8702a77b4a6a92b599f158a8e89ab14d8db46c96b",
+      "delivery": {
+        "url": "/scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
+        "sha256": "266e55e5ff5af64ac006e35e9e40f69725bebf154632f741304693beeae6a680",
+        "byteLength": 12238,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-garden-gate-mobile390",
+      "landmarkId": "garden-gate",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26726,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
+        "sha256": "d48b2035bc3c2aa7152754ee8118750f8387b157f1b6bd8a23af1b692c943aa3",
+        "byteLength": 14416,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-mobile390",
+      "landmarkId": "herb-garden",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26114,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
+        "sha256": "fccf71971847f36ca24c6b9c28cac40f3fbd37b5bc1eb8ae0fc6cc888fd2a1eb",
+        "byteLength": 13870,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-mobile390",
+      "landmarkId": "shade-tree",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 29,
+      "triangles": 23006,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
+        "sha256": "08d2be3ae19fc48e7022473944a8ccc74f8c8d586d6162627c91d958c4099af5",
+        "byteLength": 14320,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-mobile390",
+      "landmarkId": "footbridge",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 31,
+      "triangles": 31862,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+        "sha256": "618bad48a5f46e065236454bf3822e412fba0008dd02642e03ab40745e8b3714",
+        "byteLength": 14194,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-mobile390",
+      "landmarkId": "reading-shelter",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 27422,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
+        "sha256": "531e285abe20ac581cbf9a47388213c65335ca9635d19bb66545c8021966cca8",
+        "byteLength": 16656,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-mobile390",
+      "landmarkId": "pavilion",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 30,
+      "triangles": 26426,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
+        "sha256": "965a1fe064e99758f7c41b5c5c12c56af449538977978f599401ef1b82ecd1e0",
+        "byteLength": 16852,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-mobile390",
+      "landmarkId": "sunset-overlook",
+      "profile": "mobile390",
+      "width": 654,
+      "height": 562,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stage": {
+        "width": 326,
+        "height": 280,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 31,
+      "triangles": 27242,
+      "subjectBounds": {
+        "left": -0.8251874391126091,
+        "right": -0.12165968440058399,
+        "bottom": -0.6053364096054498,
+        "top": 0.5915324805466429,
+        "height": 167.561644621293
+      },
+      "compositionHash": "5a7d10c3a138ce8c5447291bff6f417af82080995d9d3fda89924aefd8c30fd2",
+      "delivery": {
+        "url": "/scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
+        "sha256": "22cc098d6706c087abfda82c14a75b5644d0899935b9650d54103c192a372640",
+        "byteLength": 14976,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-garden-gate-desktop",
+      "landmarkId": "garden-gate",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
+        "sha256": "f28bd765dd3ec728833ffa741eb43d03f08551a25f8bdacc053db38223d01e29",
+        "byteLength": 61182,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-herb-garden-desktop",
+      "landmarkId": "herb-garden",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
+        "sha256": "c233d27b9113b23fa2c9768fbcbbb87f52cff230ea2081829ff0119e22f913fb",
+        "byteLength": 62874,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-shade-tree-desktop",
+      "landmarkId": "shade-tree",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
+        "sha256": "95a8e1d6b2873035e3c32d7c4f9f03a4a694d3b5790138c80041b35a073479ab",
+        "byteLength": 62748,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-footbridge-desktop",
+      "landmarkId": "footbridge",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
+        "sha256": "8dbd22f9f13d8bf4500ce952d7a991767a06100e6cc31e04c5c62042887c6635",
+        "byteLength": 64278,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-reading-shelter-desktop",
+      "landmarkId": "reading-shelter",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
+        "sha256": "ef8cad2ae557982c83d0821cd8d9eedbdd9d40dc556c6daa5d4cee005e58791b",
+        "byteLength": 63216,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-pavilion-desktop",
+      "landmarkId": "pavilion",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
+        "sha256": "1e0b44bc3ccd5d4bca2e8b294f8a76c78c425a5d140c21caaca6fa265ad21321",
+        "byteLength": 63396,
+        "mime": "image/webp"
+      }
+    },
+    {
+      "id": "poster-s10-sunset-overlook-desktop",
+      "landmarkId": "sunset-overlook",
+      "profile": "desktop",
+      "width": 2140,
+      "height": 842,
+      "viewport": {
+        "width": 1366,
+        "height": 900
+      },
+      "stage": {
+        "width": 1069,
+        "height": 420,
+        "background": "rgb(251, 248, 241)"
+      },
+      "drawCalls": 75,
+      "triangles": 89654,
+      "subjectBounds": {
+        "left": -0.42749953671250424,
+        "right": -0.16008007488348655,
+        "bottom": -0.5497452285878668,
+        "top": 0.4470969535127675,
+        "height": 209.33685824113323
+      },
+      "compositionHash": "22ac3a9faf4af953db316997396142187b3366298aa3e8a9842b968e25930438",
+      "delivery": {
+        "url": "/scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
+        "sha256": "33283033e1f4241882f34e9767c42c99a96254a2f078e0369e87e14eb0602f28",
+        "byteLength": 64300,
+        "mime": "image/webp"
+      }
+    }
+  ]
+}

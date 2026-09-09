@@ -28,7 +28,7 @@ const cases = [
   ["fallback cycle", m => { m.recipes[0].fallback.tier1RecipeId = m.recipes[1].id; }, /fallback reference|cycle/],
   ["fallback required", m => { m.recipes[1].fallback.tier1RecipeId = null; }, /poster fallback/],
   ["S05 remains isolated", m => { m.recipes[1].screens = ["S05"]; }, /screen boundary/],
-  ["S10 has no registered runtime", m => { m.recipes[1].screens = ["S10"]; }, /screen boundary/],
+  ["S11 has no registered runtime", m => { m.recipes[1].screens = ["S11"]; }, /screen boundary/],
   ["no celebration on S02", m => { m.recipes[1].motionPolicy = "s05-confirmed-save"; }, /realtime policy/],
   ["duplicate weekday selection", m => { m.recipes[2].landmarkId = m.recipes[1].landmarkId; }, /ambiguous landmark/],
   ["missing weekday", m => { m.recipes.pop(); }, /seven weekday|fallback reference/],
@@ -45,7 +45,7 @@ for (const [name, mutate, message] of cases) test(`rejects ${name}`, () => {
 });
 test("registered manifest has seven budgeted weekdays and responsive fallbacks", () => {
   const budgets = verifySceneManifest(original, inputs);
-  assert.equal(budgets.length, 14);
+  assert.equal(budgets.length, 28);
   assert.ok(budgets.every(item => item.plannedBytes > 0 && item.plannedBytes <= 900000));
   assert.equal(generateSceneSource(original, inputs), fs.readFileSync(new URL("../src/ui/sceneManifest.generated.ts", import.meta.url), "utf8"));
 });
@@ -128,9 +128,9 @@ for (const suffix of ["?unregistered=1", "/../other.webp"]) test(`rejects a modi
 test("local authoring remains valid without R2 evidence", () => {
   const manifest = structuredClone(original);
   for (const asset of manifest.assets.filter(a => a.kind === "poster")) {
-    asset.delivery = inputs.posters.posters.find(p => p.id === asset.id).delivery;
+    asset.delivery = [...inputs.posters.posters, ...inputs.dioramaPosters.posters].find(p => p.id === asset.id).delivery;
   }
-  assert.doesNotThrow(() => verifySceneManifest(manifest, { ...inputs, posterR2: null }));
+  assert.doesNotThrow(() => verifySceneManifest(manifest, { ...inputs, posterR2: null, dioramaR2: null }));
 });
 test("registration preserves verified delivery and keeps uncaptured public identities local", () => {
   for (const poster of inputs.posters.posters) {
@@ -158,4 +158,34 @@ test("object key order does not change source identity", () => {
   const manifest = structuredClone(original);
   manifest.assets[0].provenance = Object.fromEntries(Object.entries(manifest.assets[0].provenance).reverse());
   assert.doesNotThrow(() => verifySceneManifest(manifest, inputs));
+});
+
+const s10 = manifest => manifest.recipes.find(recipe => recipe.id === "s10-garden-gate");
+for (const [name, mutate, message] of [
+  ["S10 missing root environment", m => { delete s10(m).environmentAssetId; }, /environment reference/],
+  ["S10 selecting S02 environment", m => { s10(m).environmentAssetId = "procedural-landmarks"; }, /environment reference/],
+  ["S10 missing shared geometry dependency", m => { s10(m).assetIds = s10(m).assetIds.filter(id => id !== "procedural-landmarks"); }, /environment dependencies/],
+  ["S10 borrowing S02 fallback", m => { s10(m).fallback.tier1RecipeId = "s02-garden-gate-poster"; }, /fallback reference/],
+  ["S10 borrowing S02 poster composition", m => {
+    const fallback = m.recipes.find(recipe => recipe.id === "s10-garden-gate-poster");
+    fallback.assetIds = m.recipes[0].assetIds;
+    fallback.compositions.mobile320.posterAssetId = m.recipes[0].compositions.mobile320.posterAssetId;
+  }, /poster profile/],
+]) test(`rejects ${name}`, () => {
+  const manifest = structuredClone(original); mutate(manifest);
+  assert.throws(() => verifySceneManifest(manifest, inputs), message);
+});
+test("S10 budgets both its composition module and shared landmark geometry", () => {
+  const recipe = s10(original), fallback = original.recipes.find(r => r.id === recipe.fallback.tier1RecipeId);
+  const byteLength = asset => (asset.delivery ?? asset.sourceModule).byteLength;
+  const expected = 250000 + recipe.assetIds.reduce((sum, id) => sum + byteLength(original.assets.find(a => a.id === id)), 0)
+    + Math.max(...fallback.assetIds.map(id => byteLength(original.assets.find(a => a.id === id))));
+  assert.equal(verifySceneManifest(original, inputs).find(b => b.recipeId === recipe.id).plannedBytes, expected);
+});
+test("S10 source geometry cannot change without registration", () => {
+  assert.throws(() => verifySceneManifest(original, { ...inputs, dioramaModuleBytes: Buffer.from("changed diorama") }), /module/);
+});
+for (const source of ["web/src/styles.css", "web/src/components/VisualStage.tsx", "web/src/ui/sceneRecipes.ts"]) test(`poster capture pins ${source}`, () => {
+  const sourceHashes = { ...inputs.sourceHashes, [source]: "a".repeat(64) };
+  assert.throws(() => verifySceneManifest(original, { ...inputs, sourceHashes }), /render source hashes/);
 });
