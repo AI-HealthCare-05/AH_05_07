@@ -1,117 +1,32 @@
 import type { Session } from "@supabase/supabase-js";
+import { decodeApiError, requestTimeoutError } from "./api-contract";
+import type {
+  ActiveChallenge,
+  BloodPressureObservation,
+  BloodPressureObservationInput,
+  ChallengeCheckin,
+  ChallengeEvent,
+  ModelV2ProductInput,
+  ModelV2ScoreResponse,
+  ObservationExport,
+  ObservationWindow,
+} from "./api-contract";
+
+export { ApiRequestError } from "./api-contract";
+export type {
+  ActiveChallenge,
+  BloodPressureObservation,
+  BloodPressureObservationInput,
+  ChallengeCheckin,
+  ChallengeEvent,
+  ModelV2ProductInput,
+  ModelV2ScoreResponse,
+  ObservationExport,
+  ObservationWindow,
+} from "./api-contract";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const apiRequestTimeoutMs = 8_000;
-
-type ApiError = {
-  detail?: unknown;
-};
-
-type ApiErrorDetail = {
-  code?: string;
-  message?: string;
-};
-
-export class ApiRequestError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ApiRequestError";
-  }
-}
-
-function parseApiError(payload: ApiError, status: number): ApiRequestError {
-  if (Array.isArray(payload.detail)) {
-    return new ApiRequestError(status, "validation_error", "입력값을 확인해 주세요.");
-  }
-
-  if (payload.detail && typeof payload.detail === "object") {
-    const detail = payload.detail as ApiErrorDetail;
-    return new ApiRequestError(
-      status,
-      detail.code || "request_failed",
-      detail.message || "요청을 처리하지 못했습니다.",
-    );
-  }
-
-  return new ApiRequestError(status, "request_failed", "요청을 처리하지 못했습니다.");
-}
-
-export type BloodPressureObservation = {
-  id: string;
-  observed_on: string;
-  period: "morning" | "evening";
-  systolic: number;
-  diastolic: number;
-};
-
-export type ChallengeEvent = {
-  id: string;
-  observed_on: string;
-  action_id: string;
-  status: "completed" | "skipped";
-};
-
-export type ActiveChallenge = {
-  id: string;
-  action_id: string;
-  starts_on: string;
-  ends_on: string;
-  first_checkin_on: string | null;
-  status: "active" | "closed";
-};
-
-export type ChallengeCheckin = {
-  id: string;
-  challenge_id: string;
-  action_id: string;
-  observed_on: string;
-  status: "completed" | "skipped";
-};
-
-export type ObservationWindow = {
-  start_on: string;
-  end_on: string;
-  blood_pressure_observations: BloodPressureObservation[];
-  challenge_events: ChallengeEvent[];
-  active_challenge: ActiveChallenge | null;
-  challenge_checkins: ChallengeCheckin[];
-};
-
-export type ObservationExport = {
-  blob: Blob;
-  filename: string;
-};
-
-export type ModelV2ProductInput = {
-  age_years: number;
-  sex_knhanes: 1 | 2;
-  height_cm: number;
-  weight_kg: number;
-  cigarette_smoking_state: string;
-  alcohol_frequency: string;
-  alcohol_amount_category: string;
-  walking_days_7d: number;
-  walking_active_day_hours: number;
-  walking_active_day_minutes: number;
-  strength_days_7d: string;
-  weekday_bed_hour: number;
-  weekday_bed_minute: number;
-  weekday_wake_hour: number;
-  weekday_wake_minute: number;
-  weekend_bed_hour: number;
-  weekend_bed_minute: number;
-  weekend_wake_hour: number;
-  weekend_wake_minute: number;
-};
-
-export type ModelV2ScoreResponse = {
-  schema_version: string;
-  product_wording: string;
-};
 
 export function scoreModelV2ProductInput(
   session: Session,
@@ -144,7 +59,7 @@ async function boundedFetch<T>(
     return await consume(response, controller.signal);
   } catch (error) {
     if (timedOut) {
-      throw new ApiRequestError(0, "request_timeout", "요청 응답 시간을 초과했습니다.");
+      throw requestTimeoutError();
     }
     throw error;
   } finally {
@@ -152,9 +67,9 @@ async function boundedFetch<T>(
   }
 }
 
-async function readApiError(response: Response, signal: AbortSignal): Promise<ApiError> {
+async function readApiError(response: Response, signal: AbortSignal): Promise<unknown> {
   try {
-    return (await response.json()) as ApiError;
+    return await response.json();
   } catch (error) {
     if (signal.aborted) {
       throw error;
@@ -180,7 +95,7 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
     async (response, signal) => {
       if (!response.ok) {
         const error = await readApiError(response, signal);
-        throw parseApiError(error, response.status);
+        throw decodeApiError(error, response.status);
       }
       if (response.status === 204) {
         return undefined as T;
@@ -189,8 +104,6 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
     },
   );
 }
-
-export type BloodPressureObservationInput = Omit<BloodPressureObservation, "id">;
 
 export function createBloodPressureObservation(
   session: Session,
@@ -294,7 +207,7 @@ export async function exportObservations(
     async (response, signal) => {
       if (!response.ok) {
         const error = await readApiError(response, signal);
-        throw parseApiError(error, response.status);
+        throw decodeApiError(error, response.status);
       }
 
       const filename = exportFilename(
