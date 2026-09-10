@@ -41,7 +41,7 @@ test("reduced motion keeps the main scenes understandable", async ({ page }) => 
   await page.goto("/?fixture=VP-10");
   await page.getByRole("button", { name: "기록 찾아보기" }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
-  await page.getByRole("button", { name: "입력 기반 위험군 선별 신호" }).click();
+  await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" }).click();
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
 });
 

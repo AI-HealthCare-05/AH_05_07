@@ -23,6 +23,19 @@ export type ModelV2RequestContext = {
 
 type ResultState = "idle" | "input_invalid" | "temporarily_unavailable" | "processed";
 
+type TimeDraftKey =
+  | "weekdayBed"
+  | "weekdayWake"
+  | "weekendBed"
+  | "weekendWake";
+
+const TIME_FIELD_KEYS: readonly TimeDraftKey[] = [
+  "weekdayBed",
+  "weekdayWake",
+  "weekendBed",
+  "weekendWake",
+];
+
 type Draft = {
   age: string;
   sex: "" | "1" | "2";
@@ -68,7 +81,12 @@ function finiteNumber(value: string): number | null {
 function clockParts(value: string): [number, number] | null {
   const match = /^(\d{2}):(\d{2})$/.exec(value);
   if (!match) return null;
-  return [Number(match[1]), Number(match[2])];
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+
+  return [hour, minute];
 }
 
 function buildPayload(draft: Draft): ModelV2ProductInput | null {
@@ -131,6 +149,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
   const [resultState, setResultState] = useState<ResultState>("idle");
   const [message, setMessage] = useState("");
   const [inputErrorTarget, setInputErrorTarget] = useState<"form" | "age" | "consent" | null>(null);
+  const [invalidTimeFields, setInvalidTimeFields] = useState<TimeDraftKey[]>([]);
   const requestInFlight = useRef(false);
   const mounted = useRef(true);
 
@@ -148,12 +167,25 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
     setResultState("idle");
     setMessage("");
     setInputErrorTarget(null);
+    setInvalidTimeFields([]);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (requestInFlight.current) return;
 
+    const incompleteTimeFields = TIME_FIELD_KEYS.filter(
+      (key) => clockParts(draft[key]) === null,
+    );
+    if (incompleteTimeFields.length > 0) {
+      setResultState("input_invalid");
+      setMessage("시간 항목을 모두 선택해 주세요.");
+      setInputErrorTarget("form");
+      setInvalidTimeFields([...incompleteTimeFields]);
+      return;
+    }
+
+    setInvalidTimeFields([]);
     const payload = buildPayload(draft);
     if (!payload) {
       setResultState("input_invalid");
@@ -207,14 +239,14 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
   return (
     <Scene
       id="S11"
-      eyebrow="입력 기반 위험군 선별 신호"
-      title="생활 정보를 직접 입력해 신호를 준비해요"
+      eyebrow="생활정보 기반 고혈압 선별 참고"
+      title="생활정보를 바탕으로 고혈압 관련 패턴을 확인해요"
       tone="lavender"
       className="signal-scene"
     >
       <section className="signal-card" aria-labelledby="model-v2-notice-title">
         <h2 id="model-v2-notice-title">입력 전에 확인해 주세요</h2>
-        <p>나이, 성별, 키·몸무게, 흡연, 음주, 걷기·활동, 근력운동, 평일·주말 수면 정보를 사용합니다.</p>
+        <p>나이, 체격, 흡연·음주, 활동량, 수면 정보를 바탕으로 연구 데이터에서 고혈압 상태와 함께 나타난 패턴을 모델로 확인합니다.</p>
         <p>이 기능은 진단, 치료, 예방 또는 임상 결정을 제공하지 않습니다.</p>
         <p>이번 입력과 결과는 저장하지 않으며 학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>
         <p>혈압 관찰, 챌린지 기록, 이전 결과, 다른 사용자의 정보와 자동으로 결합하지 않습니다.</p>
@@ -222,7 +254,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
 
       {showOlderApplicabilityNotice && (
         <p className="notice notice-warning" role="status">
-          만 80세 이상에서는 모델 개발 근거의 적용 가능성이 상대적으로 덜 확실합니다. 결과가 무효라는 뜻은 아니며 진단이나 임상 판단으로 사용하지 마세요.
+          만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
         </p>
       )}
 
@@ -302,36 +334,101 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
             </select>
           </label>
           <label htmlFor="model-weekday-bed">평일 취침 시간
-            <input id="model-weekday-bed" type="time" value={draft.weekdayBed} onChange={(event) => update("weekdayBed", event.target.value)} disabled={pending} required />
+            <input
+              id="model-weekday-bed"
+              type="time"
+              value={draft.weekdayBed}
+              onChange={(event) => update("weekdayBed", event.target.value)}
+              disabled={pending}
+              required
+              data-time-complete={clockParts(draft.weekdayBed) ? "true" : "false"}
+              aria-invalid={invalidTimeFields.includes("weekdayBed") || undefined}
+              aria-describedby={`model-weekday-bed-status${invalidTimeFields.includes("weekdayBed") ? ` ${inputErrorId}` : ""}`}
+            />
+            <span
+              id="model-weekday-bed-status"
+              className={invalidTimeFields.includes("weekdayBed") ? "field-error" : "unit"}
+            >
+              {clockParts(draft.weekdayBed) ? "선택 완료" : "시간 선택 필요"}
+            </span>
           </label>
           <label htmlFor="model-weekday-wake">평일 기상 시간
-            <input id="model-weekday-wake" type="time" value={draft.weekdayWake} onChange={(event) => update("weekdayWake", event.target.value)} disabled={pending} required />
+            <input
+              id="model-weekday-wake"
+              type="time"
+              value={draft.weekdayWake}
+              onChange={(event) => update("weekdayWake", event.target.value)}
+              disabled={pending}
+              required
+              data-time-complete={clockParts(draft.weekdayWake) ? "true" : "false"}
+              aria-invalid={invalidTimeFields.includes("weekdayWake") || undefined}
+              aria-describedby={`model-weekday-wake-status${invalidTimeFields.includes("weekdayWake") ? ` ${inputErrorId}` : ""}`}
+            />
+            <span
+              id="model-weekday-wake-status"
+              className={invalidTimeFields.includes("weekdayWake") ? "field-error" : "unit"}
+            >
+              {clockParts(draft.weekdayWake) ? "선택 완료" : "시간 선택 필요"}
+            </span>
           </label>
           <label htmlFor="model-weekend-bed">주말 취침 시간
-            <input id="model-weekend-bed" type="time" value={draft.weekendBed} onChange={(event) => update("weekendBed", event.target.value)} disabled={pending} required />
+            <input
+              id="model-weekend-bed"
+              type="time"
+              value={draft.weekendBed}
+              onChange={(event) => update("weekendBed", event.target.value)}
+              disabled={pending}
+              required
+              data-time-complete={clockParts(draft.weekendBed) ? "true" : "false"}
+              aria-invalid={invalidTimeFields.includes("weekendBed") || undefined}
+              aria-describedby={`model-weekend-bed-status${invalidTimeFields.includes("weekendBed") ? ` ${inputErrorId}` : ""}`}
+            />
+            <span
+              id="model-weekend-bed-status"
+              className={invalidTimeFields.includes("weekendBed") ? "field-error" : "unit"}
+            >
+              {clockParts(draft.weekendBed) ? "선택 완료" : "시간 선택 필요"}
+            </span>
           </label>
           <label htmlFor="model-weekend-wake">주말 기상 시간
-            <input id="model-weekend-wake" type="time" value={draft.weekendWake} onChange={(event) => update("weekendWake", event.target.value)} disabled={pending} required />
+            <input
+              id="model-weekend-wake"
+              type="time"
+              value={draft.weekendWake}
+              onChange={(event) => update("weekendWake", event.target.value)}
+              disabled={pending}
+              required
+              data-time-complete={clockParts(draft.weekendWake) ? "true" : "false"}
+              aria-invalid={invalidTimeFields.includes("weekendWake") || undefined}
+              aria-describedby={`model-weekend-wake-status${invalidTimeFields.includes("weekendWake") ? ` ${inputErrorId}` : ""}`}
+            />
+            <span
+              id="model-weekend-wake-status"
+              className={invalidTimeFields.includes("weekendWake") ? "field-error" : "unit"}
+            >
+              {clockParts(draft.weekendWake) ? "선택 완료" : "시간 선택 필요"}
+            </span>
           </label>
         </div>
 
         <label className="signal-consent" htmlFor="model-notice-accepted">
-          <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted} onChange={(event) => { setNoticeAccepted(event.target.checked); setResultState("idle"); setMessage(""); setInputErrorTarget(null); }} disabled={pending} aria-invalid={inputErrorTarget === "consent" || undefined} aria-describedby={inputErrorTarget === "consent" ? inputErrorId : undefined} />
+          <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted} onChange={(event) => { setNoticeAccepted(event.target.checked); setResultState("idle"); setMessage(""); setInputErrorTarget(null); setInvalidTimeFields([]); }} disabled={pending} aria-invalid={inputErrorTarget === "consent" || undefined} aria-describedby={inputErrorTarget === "consent" ? inputErrorId : undefined} />
           위 안내를 확인했습니다.
         </label>
 
         {resultState === "input_invalid" && <p id={inputErrorId} className="notice notice-error" role="alert">{message}</p>}
-        {resultState === "temporarily_unavailable" && <p className="notice notice-warning" role="status">지금은 신호를 준비할 수 없습니다. 자동으로 다시 요청하지 않습니다.</p>}
+        {resultState === "temporarily_unavailable" && <p className="notice notice-warning" role="status">지금은 생활정보 분석을 완료할 수 없습니다. 자동으로 다시 요청하지 않습니다.</p>}
         {resultState === "processed" && (
           <div className="signal-card" data-model-v2-user-result="processed" role="status" aria-live="polite">
-            <span className="status-pill">처리 완료</span>
-            <h2>입력 기반 위험군 선별 신호를 처리했습니다.</h2>
-            <p>점수, 확률, 등급은 표시하거나 저장하지 않습니다.</p>
-            <p>이 신호는 진단·치료·예방 판단을 제공하지 않습니다.</p>
+            <span className="status-pill">분석 완료</span>
+            <h2>생활정보 분석이 완료되었습니다.</h2>
+            <p>현재는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
+            <p>이 기능은 고혈압 진단이나 앞으로 고혈압이 생길 가능성을 알려주지 않으며, 특정 생활습관이 결과의 원인이라는 뜻도 아닙니다.</p>
+            <p>다음 단계로 실제 혈압을 확인해 보세요. 원하면 혈압 기록을 남기고, 7일 생활 챌린지는 별도로 선택할 수 있습니다.</p>
           </div>
         )}
 
-        <button type="submit" disabled={pending}>{pending ? "신호 준비 중" : "신호 준비하기"}</button>
+        <button type="submit" disabled={pending}>{pending ? "생활정보 분석 중" : "생활정보 분석하기"}</button>
       </form>
     </Scene>
   );

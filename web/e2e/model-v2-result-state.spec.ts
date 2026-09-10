@@ -56,6 +56,6 @@ for (const viewport of [
     const box = await scene.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width).toBeLessThanOrEqual(viewport.width);
-    await expect(page.getByRole("button", { name: "입력 기반 위험군 선별 신호" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })).toBeVisible();
   });
 }

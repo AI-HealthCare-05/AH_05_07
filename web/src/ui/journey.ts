@@ -23,7 +23,7 @@ export const primaryNavigation: ReadonlyArray<{ screen: ScreenId; label: string;
   { screen: "S02", label: "오늘의 기록", shortLabel: "오늘" },
   { screen: "S08", label: "기록 찾아보기", shortLabel: "기록" },
   { screen: "S10", label: "7일 돌아보기", shortLabel: "7일" },
-  { screen: "S11", label: "입력 기반 위험군 선별 신호", shortLabel: "신호" },
+  { screen: "S11", label: "생활정보 기반 고혈압 선별 참고", shortLabel: "분석" },
   { screen: "S14", label: "설정과 도움말", shortLabel: "설정" },
 ];
 
@@ -78,7 +78,7 @@ export const journeyCopy = {
     title: "최근 7일 기록",
     body: "오늘을 기준으로 기록을 확인해요. 챌린지 진행과는 별도입니다.",
   },
-  S11: { eyebrow: "준비 상태", title: "입력 기반 위험군 선별 신호" },
+  S11: { eyebrow: "생활정보 분석", title: "생활정보 기반 고혈압 선별 참고" },
   S12: {
     eyebrow: "아직 기록 없음",
     title: "아직 기록이 없어도 괜찮아요",
