@@ -84,6 +84,55 @@
       "newGlbRequestObservedAfterReturn": false
     }
   },
+  "talkBack": {
+    "sourceRevision": "665e19ba41564bc5f8f2ea88e4e706b9ddfe0183",
+    "service": "Samsung TalkBack 14.5.00.14 was bound for this inspection, then removed; accessibility_enabled was restored to 0.",
+    "method": "Android Chrome accessibility-node focus was advanced with keyboard Tab while TalkBack was active. This captures focus order and decorative focus exclusion, not audible utterances or Touch Explorer swipe handling.",
+    "S02": {
+      "initialFocus": "오늘의 기록",
+      "focusSequence": [
+        "오늘 상세 보기",
+        "혈압 관찰 · 혈압 기록 화면 열기",
+        "7일 챌린지 · 10분 걷기 이어가기",
+        "오늘의 기록"
+      ],
+      "decorativeSceneFocusObserved": false
+    },
+    "S10": {
+      "fixture": "Synthetic signed-in local mock window",
+      "initialFocus": "최근 7일 기록",
+      "semanticTreeOrder": [
+        "최근 7일 기록",
+        "이전 7일 보기",
+        "현재 7일 보기",
+        "혈압 관찰",
+        "최근 7일 챌린지 체크인 기록",
+        "이전 방식의 기록",
+        "새로고침"
+      ],
+      "keyboardFocusSequence": [
+        "이전 7일 보기",
+        "선택한 7일 내보내기",
+        "새로고침"
+      ],
+      "currentWindowControl": "현재 7일 보기 is disabled while the current window is selected and therefore not keyboard-focusable."
+    },
+    "S05": {
+      "trigger": "Confirmed synthetic S04 save through the local mock API",
+      "initialFocus": "기록을 저장했어요",
+      "focusSequence": [
+        "오늘의 기록 보기",
+        "계속 기록하기",
+        "오늘의 기록"
+      ],
+      "decorativeSceneFocusObserved": false
+    },
+    "limits": [
+      "No audible TalkBack utterance was captured or judged by a listener.",
+      "Touch Explorer swipe gestures and switch access were not exercised.",
+      "This run does not replace the existing S05 history-return or performance evidence."
+    ]
+  },
   "mainThreadObservations": {
     "S02LongTasksMs": [139, 91],
     "S10LongTasksMs": [155, 107],
@@ -93,7 +142,7 @@
   },
   "unknownOrOpen": [
     "Physical Safari/iOS browser behavior",
-    "TalkBack/VoiceOver reading and switch access",
+    "TalkBack audible utterances, Touch Explorer gestures, and switch access",
     "OS reduced-motion behavior",
     "Wi-Fi/cellular cold and warm transfer behavior",
     "GPU residency, isolated peak memory, shader/decode timing, and frame interval acceptance",
