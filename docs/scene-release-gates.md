@@ -10,11 +10,13 @@ For each screen/profile record accepted or changes requested, reviewed source re
 
 S05 now has a behavior migration candidate using its existing composition; see [S05 migration](scene-s05-migration.md). Its CSS fallback and semantic controls remain the baseline. A small-screen screenshot pass is not an owner art signoff.
 
-## Physical-device measurement — Android partial, iOS awaiting hardware
+## Physical-device measurement — Android partial, iOS VoiceOver partial
 
 Android Chrome is now observed on a Samsung SM-A528N / Android 14 / Chrome 152.0.7977.82 in portrait at 384 × 718 CSS px and DPR 2.8125. The exact sanitized results are in [Android evidence](evidence/scene-android-chrome-sm-a528n.json): S02/S10 reached the realtime renderer without horizontal overflow; cache-disabled selected activation requests were 702,216 and 702,702 bytes; R2 GLB/poster responses used disk cache on ordinary revisits; ten S02/S10-to-semantic cycles left no live renderer/context after exit. A synthetic S04 value saved through Android touch input reached S05, celebrated once, settled idle, and did not replay on history return. The source revision is `6ccf515206e2c6228db26db34386751c94c1f64a`.
 
-This is USB-local-preview evidence, not Wi-Fi/cellular acceptance. Chrome's application PSS could not isolate this page from the user's other browser tabs, and GPU/peak-memory/frame-rate values remain unknown. TalkBack was disabled and the system animation scales were unchanged. `xcrun devicectl` remains unavailable, so physical iPhone/iPad Safari and VoiceOver remain open. Avoid storing device serials or any personal/product records; use only a synthetic account/input fixture.
+The user also reported a physical iPhone 17 / iOS 26.5 VoiceOver pass for S02, S10, and S05; the exact sanitized scope is in [iPhone VoiceOver evidence](evidence/scene-ios-voiceover-user-check.json). Headings, controls, and the S05 non-repeat behavior passed, while decorative scenes did not receive focus. The browser/version and Web Inspector renderer state were not captured, and the shown S02/S10 visual was reported as not appearing full 3D. This records semantic/fallback accessibility only; it does not establish physical Safari or realtime-3D acceptance.
+
+Android evidence is USB-local-preview evidence, not Wi-Fi/cellular acceptance. Chrome's application PSS could not isolate this page from the user's other browser tabs, and GPU/peak-memory/frame-rate values remain unknown. TalkBack was disabled and the system animation scales were unchanged. `xcrun devicectl` remains unavailable. Avoid storing device serials or any personal/product records; use only a synthetic account/input fixture.
 
 | Measurement | Procedure and required evidence | Acceptance boundary |
 | --- | --- | --- |
