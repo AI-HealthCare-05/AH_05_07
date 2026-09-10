@@ -1,13 +1,70 @@
 # SK7 project handoff and restart guide
 
-This is the durable restart point for SK7 (상균7데이즈). A new Work session
-must read this file before selecting the next Issue. Chat history, deployment
-mirrors, and Notion summaries do not replace the source repository.
+## Fast start
+
+Read this section and the active Issue first. The reference sections below are
+not a mandatory reading chain. This is an index to existing authorities, not a
+new product, model, or release contract.
+
+### Source and state
+
+- Canonical development/docs repository: `AI-HealthCare-05/AH_05_07`.
+  Verify the actual checkout and canonical remote before resolving `main`;
+  do not treat the mirror's `origin/main` or a dated SHA as canonical current state.
+- Reviewed source snapshot: `f5dccbb901ccb7bbff0727c733a1b1dd932ac0f7`
+  (PR #403 squash, 2026-09-11 KST). This is an as-of reference, not a runtime ID.
+- #393/#397/#399 are merged product fixes. #401 (S02/S04/S05) and #403 (S10)
+  are merged review-only UI increments. Their merge/CI does not prove deployment.
+- Architecture audit **R1–R11 COMPLETE; R12 DEFER**. Do not restart it by default;
+  [technical depth plan](architecture/TECHNICAL_DEPTH_PLAN.md) retains its evidence.
+- [#390](https://github.com/AI-HealthCare-05/AH_05_07/issues/390) owns remaining scene
+  qualification and separately authorized activation. `review` is not production;
+  `VITE_SK7_SCENE_MODE=production` does not activate these merged review scenes.
+  The existing companion production path is independent.
+- [#396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396) owns G10 displayability
+  research. Individual scores/probabilities/percentiles/bands remain undisplayed;
+  research does not gate ordinary record UI work or authorize a release.
+- For the next task, use the user's scoped request and its live Issue/PR. Old
+  `Next`, `PENDING`, `DISABLED`, and W/M checkpoints below are dated snapshots,
+  not a command to reopen work or a replacement for live status.
+
+### Read only the affected authority
+
+| Task | Additional reading |
+| --- | --- |
+| Presentation/UI | Active Issue, affected components/tests; [scene gates](scene-release-gates.md) only for scene/activation impact |
+| Model input/result | [Model product boundary](model-v2-product-contract.md), frozen contract and affected adapter/inference tests |
+| API/auth/data | Relevant requirements/domain contract and [invariants](architecture/ARCHITECTURE_INVARIANTS.md); affected implementation/tests |
+| Release or mirror | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md), then actual control-plane evidence |
+| Historical investigation | Named dated evidence only; [work-state](work-state.md) / [work-queue](work-queue.md) are not live queues |
+
+### Preserve boundaries and keep the feedback loop short
+
+- Keep AGENTS privacy/claim rules, topology and frozen Model V2 artifact/schema/
+  11 features/preprocessing. No BP/challenge/model automatic joins, implied
+  health outcomes, numeric-result exposure, or S11 input/result persistence.
+- Preserve existing request/session/uncertain-write guards. Do not substitute
+  mock saves, simulator results, or historical device evidence for runtime PASS.
+- Keep source merge, mirror sync, runtime deployment and scene activation distinct.
+  Runtime/rollback identities are last-recorded evidence until actually re-read;
+  unresolved release identity does not block unrelated local UI work.
+- Keep the original checkout and its untracked `docs/scene-next-task-handoff.md`;
+  do not delete/move/overwrite/clean/reset/stash it. One editor per shared file.
+- During development run affected checks; retain required CI on the final candidate.
+  Reuse unchanged source/dependency/asset/config evidence with its exact scope.
+  Metadata-only status updates belong in the existing Issue/PR; avoid a new
+  evidence commit and full rerun merely to change `PENDING` to `PASS`.
+- Docs-only reconciliation changes no acceptance threshold or required check.
+  Do not sync the mirror or deploy solely to publish documentation changes.
+
+**Stop default startup reading here.** Continue below only for a named reference.
 
 ## Authority order
 
-When records disagree, use this order and open a reconciliation Issue rather
-than silently choosing one:
+Authority is concern-specific. Use this order for contracts; use actual GitHub
+state for source/Issue status and control-plane evidence for runtime status.
+Dated snapshots are not competing current decisions. Record a material unresolved
+conflict in the active Issue; do not open another Issue for every historical status:
 
 1. `AGENTS.md` for safety, privacy, claim, and contribution boundaries.
 2. `docs/requirements.md` and the domain contracts for accepted product scope.
@@ -39,23 +96,14 @@ test, or deployment work complete before the repository evidence exists.
   and a measured requirement.
 - Use synthetic accounts and synthetic values for tests, captures, and demos.
 
-## Current checkpoint
+## Historical checkpoint and retained evidence
 
-At restart, resolve the current repository `main` from `origin/main`; do not
-hard-code an old docs-only main SHA as the runtime source of truth. The latest
-deployed application source is `f25fddfc442be63721daae671e4beb267ead5f5f`,
-as recorded in [deployment SSOT](deployment-ssot.md). The current production
-Model V2 S11 path is deployed and product-connected at
-`/api/v1/model-v2/product-score`; it returns only the frozen schema version and
-`입력 기반 위험군 선별 신호`, while input and result remain transient. The
-canonical architecture contracts are [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md),
-[technical depth plan](architecture/TECHNICAL_DEPTH_PLAN.md),
-[workstreams](architecture/WORKSTREAMS.md), and
-[release contract](architecture/RELEASE_CONTRACT.md). Runtime and deployment
-evidence is [deployment SSOT](deployment-ssot.md). When these contracts are read
-from the pre-merge #363 branch, they are candidate contracts. After #363 is
-merged, the resulting main merge SHA becomes Checkpoint 0; always resolve
-origin/main before starting a workstream.
+The fast-start section is the restart index. The material below preserves the
+pre-audit/MVP handoff and its original evidence; it is not a current backlog or
+production inventory. Current release evidence is owned by
+[deployment SSOT](deployment-ssot.md); do not duplicate its runtime tuple here.
+Checkpoint 0 and R1–R11 are complete per the technical depth plan. New work does
+not require repeating their original cross-machine synchronization sequence.
 
 The historical closeout-preparation authority is [MVP1 closeout](mvp1-closeout.md),
 Issue #225. Its remaining conditions are now tracked by [Issue #238](https://github.com/AI-HealthCare-05/AH_05_07/issues/238).
@@ -137,7 +185,7 @@ current S11 product path by the deployment and release records named above; the
 older evidence remains available in `docs/model-comparison-evidence.md` and the
 related model reports.
 
-## Open evidence and next priority
+## Historical open evidence and former priorities
 
 1. The [sanitized email-link and new-tab verification checklist](email-link-session-verification.md)
    passed for its three intended signed-in session steps under Issue #182:

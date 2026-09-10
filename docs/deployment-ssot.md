@@ -1,8 +1,14 @@
 # Deployment SSOT
 
-## Latest/current Model V2 S11 production record
+## Recorded Model V2 S11 production evidence
 
-**OPERATOR-VERIFIED PRODUCTION EVIDENCE.** Current source is `f25fddfc442be63721daae671e4beb267ead5f5f`; the deployment mirror snapshot is `e390c343d87f032f278db0df22e9fbfb1bbb0b3a`; Cloud Run revision is `bp7-api-s11-f25fddf` with immutable image `sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c`; Cloudflare Worker is `8975da2f-2162-40ea-adf4-f5187c1cc5f2`; and Model V2 is `model-v2-r1-schema-v1` with artifact `d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84` and wording `입력 기반 위험군 선별 신호`. The API rollback identity is `bp7-api-00031-rel` / `sha256:a68b30ef6182f9d13a709008542ad248afd55a74664dc67a1616a5a3c6795ecf`; the web rollback Worker is `b5880118-4afe-4259-8ca9-d5157506b65c`.
+This is the last retained rollout record, not a live inventory. Current API
+revision/image/traffic and Worker version/build/source binding must be read from
+control planes at release time. [Fast start](project-handoff.md#fast-start) owns
+source-task routing; the record below does not prove deployment of later main.
+
+
+**OPERATOR-VERIFIED PRODUCTION EVIDENCE (RECORDED ROLLOUT).** Recorded source is `f25fddfc442be63721daae671e4beb267ead5f5f`; the deployment mirror snapshot is `e390c343d87f032f278db0df22e9fbfb1bbb0b3a`; Cloud Run revision is `bp7-api-s11-f25fddf` with immutable image `sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c`; Cloudflare Worker is `8975da2f-2162-40ea-adf4-f5187c1cc5f2`; and Model V2 is `model-v2-r1-schema-v1` with artifact `d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84` and wording `입력 기반 위험군 선별 신호`. The API rollback identity is `bp7-api-00031-rel` / `sha256:a68b30ef6182f9d13a709008542ad248afd55a74664dc67a1616a5a3c6795ecf`; the web rollback Worker is `b5880118-4afe-4259-8ca9-d5157506b65c`.
 
 Operator rollout verification recorded candidate `/live`/`/ready` 200, OpenAPI endpoint presence, unauthenticated 401, authenticated synthetic 200, exact two-field output, no numeric exposure, generic non-echoing 422, sanitized candidate logs, CORS preflight, 100% API activation, production health/API checks, bundled endpoint/wording, signed-in browser submission, approved wording, absent numeric result, and under-19 error as PASS. This Codex session has not independently re-read runtime control planes; see [the canonical release contract](architecture/RELEASE_CONTRACT.md). A documentation commit does not redeploy or re-verify runtime.
 
@@ -21,12 +27,44 @@ this documentation change. Re-read control-plane state before any future operati
 | Concern | Single source of truth | Rule |
 | --- | --- | --- |
 | Application code and Worker configuration | `AI-HealthCare-05/AH_05_07` `main` | `web/wrangler.jsonc` defines the production Worker name. |
-| Deployment snapshot | `emotigom/ah-05-07-pages` `main` | A derived copy of upstream `main`; do not make application changes here. |
+| Deployment snapshot | `emotigom/ah-05-07-pages` `main` | Derived from a resolved upstream source SHA; not a code/docs authority. Its sync workflow is mirror-owned. |
 | Production web service | Cloudflare Worker `ah-05-07-pages` | The public URL is `https://ah-05-07-pages.ahnsangkyoon.workers.dev`. |
 | API service | Cloud Run service `bp7-api` in `asia-northeast3` | Its allowed web origin must match the production web service. |
 | Authentication and record ownership | Supabase project configuration and migrations in this repository | Browser clients use only the publishable key; row ownership remains enforced by RLS. |
 
 `ah-05-07-pages-web` is the legacy Worker retained only during cutover verification. It is not a second production target and must not receive a separate application deployment.
+
+## Mirror ownership and synchronization
+
+Canonical code and product/docs authority stay in `AI-HealthCare-05/AH_05_07`.
+The mirror's copied README, AGENTS and `docs/**` are snapshots, not independent
+approvals or another SSOT. Fix them upstream once; do not maintain mirror-only
+copies or send them back upstream. `web/wrangler.jsonc` also stays upstream-owned.
+The sole intentional mirror-owned control file is `.github/workflows/sync-upstream.yml`;
+its implementation belongs to that repository, not a second copy in canonical.
+
+Workflow inspected at mirror control snapshot
+`91484a3657f8df86657cab12e937631f2f11361a` (2026-09-11 KST):
+
+- Manual `workflow_dispatch` requires full 40-hex `upstream_sha` and verifies the
+  resolved checkout matches. Use a reviewed source reachable from canonical main;
+  do not weaken repository-main release policy merely because the input accepts a SHA.
+- Scheduled `17 * * * *` resolves upstream `main` when it runs; this can advance
+  the mirror after a manually pinned snapshot. It is not a release approval gate.
+- The workflow snapshots upstream except `.git` and `.github/workflows`, keeps
+  its own control workflow, creates a parentless `sync: <source SHA>` commit and
+  force-pushes mirror main. Mirror SHA is therefore not the upstream source SHA.
+- Re-read the control workflow at release time. Do not assume a manual source pin
+  persists through a later schedule or that a no-content-change sync creates no commit.
+- A successful sync proves neither Cloudflare build success nor served Worker
+  identity. Record control/source/snapshot/run separately and verify runtime.
+  If automatic builds watch mirror main, scheduled snapshots may trigger them;
+  this documentation change does not establish or modify that external setting.
+
+Inspect before/after source identity, build mode/public-config fingerprint and
+rollback evidence for a release. Do not sync just to refresh documentation.
+Changing the schedule, control workflow or Cloudflare build behavior requires a
+separate scoped operations decision; this reconciliation changes none of them.
 
 ## Build configuration
 
@@ -51,14 +89,14 @@ Classify the merged change before deploying it. A merged Git commit is not, by i
 | `supabase/migrations/**` | Complete the [Supabase migration gate](#supabase-migration-gate) for each newly required schema change. | Any API or web release that depends on that schema. |
 | `app/**`, `cloudbuild.api.yaml`, or API runtime configuration | Build and deploy a new Cloud Run revision of `bp7-api`. | Browser verification of the changed API flow. |
 | `web/**` or `web/wrangler.jsonc` | Run `Sync deployment branch` in `emotigom/ah-05-07-pages`, then let Cloudflare build and deploy `ah-05-07-pages`. | Browser verification of the changed web flow. |
-| `docs/**` only | No runtime deployment is required. | N/A |
+| `docs/**`, `README.md`, `AGENTS.md` only | No runtime deployment is required; this does not disable existing scheduled sync or external auto-builds. | N/A |
 
 ## Deployment flow
 
 1. Merge a verified change into upstream `main`.
 2. Classify the change with the table above. For a release that includes a database migration, complete the migration gate first.
 3. If the API changed, build and deploy the Cloud Run revision that contains the merged commit.
-4. If the web changed, run `Sync deployment branch`. The sync workflow copies upstream `main` without upstream GitHub workflows; Cloudflare then builds `web` with the variables above and deploys the assets to `ah-05-07-pages`.
+4. For an approved web release, run the existing mirror `Sync deployment branch` with the exact reviewed `upstream_sha`, after checking the current control workflow and scheduled-sync interaction above. Record the resolved source and mirror snapshot. Independently verify the Cloudflare build, its public configuration and the served Worker version; workflow success alone is not deployment verification.
 5. Run the dependency-free deployment smoke verifier against the production web and API origins. It checks the live URL, `/live`, `/ready`, and CORS preflight for the browser methods currently used by the web client without sending authentication or product data.
 6. Verify a signed-in API read and the specific database-backed browser flow only after its migration gate has passed.
 

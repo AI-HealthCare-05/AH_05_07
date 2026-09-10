@@ -1,5 +1,11 @@
 # 상균7데이즈 (SK7)
 
+> **개발·문서 원본:** `AI-HealthCare-05/AH_05_07`.
+> `emotigom/ah-05-07-pages`에서 읽고 있다면 이 문서는 동기화된 사본입니다.
+> 수정은 원본에서만 합니다. 시작은 [짧은 인계](docs/project-handoff.md#fast-start),
+> 운영 판단은 [배포 SSOT](docs/deployment-ssot.md)를 사용합니다.
+> main 병합·미러 동기화·운영 배포·scene 활성화는 각각 별개입니다.
+
 입력 기반 위험군 선별 신호와 7일 관찰 기록을 분리하도록 설계한 웹 서비스.
 
 # 미리보기
@@ -18,8 +24,10 @@
 
 ## Repository map
 
+업무별 참고 목록입니다. 시작할 때 전부 읽지 않습니다. 최신 작업은 짧은 인계와 해당 Issue/PR에서 확인합니다.
+
 - [Requirements](docs/requirements.md)
-- [Model V2 current product contract — proposed, production disabled](docs/model-v2-product-contract.md)
+- [Model V2 product boundary — non-numeric output; lifecycle context inside](docs/model-v2-product-contract.md)
 - [Architecture and ERD](docs/architecture.md)
 - [Data contract](docs/data-contract.md)
 - [API contract](docs/api-contract.md)
@@ -32,8 +40,8 @@
 - [R2 visual v1 runtime boundary](docs/r2-visual-v1-runtime.md)
 - [Deployment SSOT](docs/deployment-ssot.md)
 - [Project handoff and restart guide](docs/project-handoff.md)
-- [Current work state](docs/work-state.md)
-- [Work queue](docs/work-queue.md)
+- [Historical work-state ledger](docs/work-state.md)
+- [Historical work queue](docs/work-queue.md)
 - [Deployed RLS ownership verification plan](docs/deployed-rls-verification-plan.md)
 - [Cloudflare Worker rollback evidence plan](docs/cloudflare-rollback-plan.md)
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
