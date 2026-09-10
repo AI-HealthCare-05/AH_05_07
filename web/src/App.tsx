@@ -229,6 +229,10 @@ function App() {
   const systolicRef = useRef<HTMLInputElement>(null);
   const diastolicRef = useRef<HTMLInputElement>(null);
   const windowRequestId = useRef(0);
+  const windowLoadSessionRef = useRef<{
+    userId: string | null;
+    accessToken: string | null;
+  }>({ userId: null, accessToken: null });
   const editOriginKey = useRef<string | null>(null);
   const sessionRef = useRef<Session | null>(e2eSession);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
@@ -341,10 +345,40 @@ function App() {
     return () => subscription.subscription.unsubscribe();
   }, [evidenceMode, e2eSession]);
 
+  const sessionUserId = session?.user.id ?? null;
+  const sessionAccessToken = session?.access_token ?? null;
+
   useEffect(() => {
-    if (evidenceMode || !session) return;
+    const previous = windowLoadSessionRef.current;
+    const sameUserTokenRefresh =
+      previous.userId !== null
+      && previous.userId === sessionUserId
+      && previous.accessToken !== sessionAccessToken;
+
+    windowLoadSessionRef.current = {
+      userId: sessionUserId,
+      accessToken: sessionAccessToken,
+    };
+
+    if (evidenceMode || !sessionUserId || !sessionAccessToken) return;
+
+    // While the very first window is still unresolved, a same-user token
+    // refresh must not start a competing GET and invalidate that pending
+    // request. If the pending request returns 401, refreshWindow() already
+    // retries once with the newer token.
+    if (
+      sameUserTokenRefresh
+      && presentationRef.current.windowData === null
+    ) return;
+
     void refreshWindow();
-  }, [endOn, evidenceMode, session, startOn]);
+  }, [
+    endOn,
+    evidenceMode,
+    sessionAccessToken,
+    sessionUserId,
+    startOn,
+  ]);
 
   useEffect(() => {
     const onPopState = () => {
