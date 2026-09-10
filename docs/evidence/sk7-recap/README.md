@@ -120,4 +120,8 @@ Candidate CI는 baseline과 분리하여 Draft PR checks에서 확인합니다. 
 
 ## 최종 전달 정보
 
-구현 commit / Draft PR / candidate CI snapshot: commit 및 PR 생성 후 기록합니다.
+- 구현 HEAD: `09c5ce95005dac211302a1847023311714349b73`. 전후 캡처와 로컬 검증은 이 구현의 UI 소스에 해당합니다.
+- Draft PR: [#403](https://github.com/AI-HealthCare-05/AH_05_07/pull/403). 최종 branch HEAD에는 이 전달 정보를 기록한 문서 전용 후속 commit이 포함됩니다. 정확한 최종 HEAD는 PR의 `headRefOid` 및 전달 메시지에서 확인합니다.
+- Candidate CI: **PENDING** (증거 문서 작성 시). [해당 PR checks](https://github.com/AI-HealthCare-05/AH_05_07/pull/403/checks)와 PR 본문에 최종 HEAD의 상태를 별도로 기록합니다. baseline 5개 SUCCESS와 구분하며, 진행 중인 검사를 성공으로 간주하지 않습니다.
+- 기존 작업 공간을 정리하거나 이전 브랜치에 commit하지 않았습니다. 새 브랜치만 push했습니다.
+- 사용자 S10 시각 승인 PENDING. main 병합 / mirror sync / 운영 배포 / production scene activation 미실시.

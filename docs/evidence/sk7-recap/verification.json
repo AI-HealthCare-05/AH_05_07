@@ -3,8 +3,8 @@
   "branch": "codex/sk7-recap",
   "worktree": "/Users/gom/Projects/AH_05_07-sk7-recap",
   "issue": 402,
-  "implementation_head": null,
-  "draft_pr": null,
+  "implementation_head": "09c5ce95005dac211302a1847023311714349b73",
+  "draft_pr": 403,
   "visual_approval": "PENDING",
   "synthetic_only": true,
   "checks": {
@@ -29,7 +29,11 @@
     "syntax_and_diff_check": "PASS"
   },
   "baseline_push_ci": "SUCCESS (5 runs; URLs in README)",
-  "candidate_ci": "PENDING until PR creation",
+  "candidate_ci": {
+    "status": "PENDING",
+    "url": "https://github.com/AI-HealthCare-05/AH_05_07/pull/403/checks",
+    "note": "Final-head snapshot is recorded in the PR body after the evidence-only follow-up commit; no candidate success is inferred from baseline CI."
+  },
   "protected_files_sha256": {
     "web/src/components/JourneyToday.tsx": "6df85d8918e1f86ef19473e0f9b33e827bbcc22e63b6811e8d7aed66ed02a507",
     "web/src/components/journey-candidate.css": "d9988cee3018fbb12867183f4307bfc2345beb7591933ae2ec8f153982389dd8",
