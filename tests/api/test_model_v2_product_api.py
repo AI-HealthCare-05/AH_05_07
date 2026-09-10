@@ -97,6 +97,45 @@ def test_product_score_uses_server_adapter_and_hides_numeric_score(
     assert "score" not in response.json()
 
 
+def test_product_score_accepts_browser_midnight_bedtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    application = _app()
+    application.dependency_overrides[get_supabase_session] = _authenticated_session
+    monkeypatch.setattr(model_v2_routers, "scoring_enabled", lambda: True)
+
+    seen: dict[str, Any] = {}
+
+    class SyntheticBoundary:
+        def score(self, payload: dict[str, Any]) -> ModelV2Score:
+            seen.update(payload)
+            validate_semantic_input(payload)
+            return ModelV2Score(
+                score=0.42,
+                schema_version="model-v2-r1-schema-v1",
+                artifact_sha256="not-exposed-by-api",
+                product_wording="입력 기반 위험군 선별 신호",
+            )
+
+    monkeypatch.setattr(model_v2_routers, "ModelV2InferenceBoundary", SyntheticBoundary)
+    payload = {
+        **VALID_PRODUCT_PAYLOAD,
+        "weekend_bed_hour": 0,
+        "weekend_bed_minute": 0,
+        "weekend_wake_hour": 8,
+        "weekend_wake_minute": 0,
+    }
+
+    response = TestClient(application).post("/api/v1/model-v2/product-score", json=payload)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert seen["weekend_sleep_minutes"] == 480.0
+    assert response.json() == {
+        "schema_version": "model-v2-r1-schema-v1",
+        "product_wording": "입력 기반 위험군 선별 신호",
+    }
+
+
 @pytest.mark.parametrize(
     "updates",
     [
@@ -138,7 +177,7 @@ def test_product_score_disabled_path_does_not_touch_adapter(
     def must_not_adapt(_: dict[str, Any]) -> dict[str, Any]:
         raise AssertionError("disabled product route touched adapter")
 
-    monkeypatch.setattr(model_v2_routers, "adapt_product_input_v1", must_not_adapt)
+    monkeypatch.setattr(model_v2_routers, "adapt_product_input_v2", must_not_adapt)
 
     response = TestClient(application).post(
         "/api/v1/model-v2/product-score",

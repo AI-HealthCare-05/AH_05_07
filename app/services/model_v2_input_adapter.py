@@ -18,7 +18,7 @@ from app.services.model_v2_inference import (
     validate_semantic_input,
 )
 
-ADAPTER_VERSION = "model-v2-product-input-adapter-v1"
+ADAPTER_VERSION = "model-v2-product-input-adapter-v2"
 
 INPUT_FIELDS = (
     "age_years",
@@ -111,6 +111,15 @@ def _derive_walking_minutes(days: float, hours: float, minutes: float) -> float:
     return hours * 60.0 + minutes
 
 
+def _normalize_product_bedtime_hour(prefix: str, bed_hour: Any) -> float:
+    """Map browser ``time`` midnight to the frozen source-clock bedtime form."""
+    normalized = _number(f"{prefix}_bed_hour", bed_hour, minimum=0, maximum=24, whole=True)
+    # Browser time controls encode midnight as 00:xx. G3's frozen clock
+    # derivation represents a midnight bedtime as 24:xx; wake times retain
+    # their submitted representation because they have distinct clock meaning.
+    return 24.0 if normalized == 0 else normalized
+
+
 def _derive_sleep_minutes(
     prefix: str,
     bed_hour: Any,
@@ -135,8 +144,8 @@ def _derive_sleep_minutes(
     return duration
 
 
-def adapt_product_input_v1(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Convert one complete synthetic adapter-v1 payload to frozen 11-feature semantics."""
+def adapt_product_input_v2(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Convert one complete synthetic adapter-v2 payload to frozen 11-feature semantics."""
     if not isinstance(payload, Mapping):
         raise ModelV2AdapterError("adapter payload must be a mapping")
 
@@ -213,14 +222,14 @@ def adapt_product_input_v1(payload: Mapping[str, Any]) -> dict[str, Any]:
         "strength_days_7d": strength,
         "weekday_sleep_minutes": _derive_sleep_minutes(
             "weekday",
-            payload["weekday_bed_hour"],
+            _normalize_product_bedtime_hour("weekday", payload["weekday_bed_hour"]),
             payload["weekday_bed_minute"],
             payload["weekday_wake_hour"],
             payload["weekday_wake_minute"],
         ),
         "weekend_sleep_minutes": _derive_sleep_minutes(
             "weekend",
-            payload["weekend_bed_hour"],
+            _normalize_product_bedtime_hour("weekend", payload["weekend_bed_hour"]),
             payload["weekend_bed_minute"],
             payload["weekend_wake_hour"],
             payload["weekend_wake_minute"],

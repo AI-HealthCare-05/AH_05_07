@@ -106,6 +106,10 @@ this G3 Cycle 9 clock adjustment; a future adapter must demonstrate parity and
 handle invalid combinations explicitly. G7's declared 2023 direct-hours
 harmonization is evaluation context, not a substitute product input contract.
 
+The versioned product adapter normalizes only browser bedtime `00:xx` to the
+source-compatible bedtime `24:xx` form before that frozen derivation. Browser
+wake `00:xx` remains unchanged because its clock meaning is distinct.
+
 ## 5. Known semantic parity blockers
 
 All five are **KNOWN BLOCKER — T2**, established by static comparison of G3

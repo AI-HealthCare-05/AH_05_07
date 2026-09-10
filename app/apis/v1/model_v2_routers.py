@@ -14,7 +14,7 @@ from app.services.model_v2_inference import (
     ModelV2InputError,
     scoring_enabled,
 )
-from app.services.model_v2_input_adapter import ModelV2AdapterError, adapt_product_input_v1
+from app.services.model_v2_input_adapter import ModelV2AdapterError, adapt_product_input_v2
 
 model_v2_router = APIRouter(prefix="/model-v2", tags=["model-v2"])
 
@@ -113,7 +113,7 @@ async def score_model_v2_product(
         raise _model_not_ready()
 
     try:
-        semantic_payload = adapt_product_input_v1(payload)
+        semantic_payload = adapt_product_input_v2(payload)
     except ModelV2AdapterError as exc:
         raise _model_input_invalid() from exc
 
