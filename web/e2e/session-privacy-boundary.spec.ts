@@ -158,6 +158,157 @@ test("same-user token refresh preserves the current private detail", async ({ pa
   await expect(page.locator('[data-scene="S09"]')).toBeVisible();
 });
 
+
+test("same-user token refresh during initial load keeps the pending successful window", async ({ page }) => {
+  let releaseInitial!: () => void;
+  let markInitialStarted!: () => void;
+
+  const initialPending = new Promise<void>((resolve) => {
+    releaseInitial = resolve;
+  });
+  const initialStarted = new Promise<void>((resolve) => {
+    markInitialStarted = resolve;
+  });
+
+  let windowRequests = 0;
+  const requestTokens: string[] = [];
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+    };
+
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    if (url.pathname !== "/api/v1/observations/window") {
+      await route.abort();
+      return;
+    }
+
+    windowRequests += 1;
+    const token =
+      request.headers().authorization?.replace("Bearer ", "") ?? "";
+    requestTokens.push(token);
+
+    if (windowRequests === 1) {
+      markInitialStarted();
+      await initialPending;
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify(windowWithMeasurement("initial-record", 120, 80)),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 503,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: { code: "request_failed" } }),
+    });
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await initialStarted;
+
+  await dispatchSession(page, accountARefreshed);
+  await page.waitForTimeout(100);
+
+  releaseInitial();
+
+  await expect(page.locator('[data-scene="S10"]')).toContainText(
+    "120/80 mmHg",
+  );
+  expect(windowRequests).toBe(1);
+  expect(requestTokens).toEqual([accountA.access_token]);
+});
+
+
+test("same-user token refresh retries an initial stale-token window once with the newer token", async ({ page }) => {
+  let releaseInitial!: () => void;
+  let markInitialStarted!: () => void;
+
+  const initialPending = new Promise<void>((resolve) => {
+    releaseInitial = resolve;
+  });
+  const initialStarted = new Promise<void>((resolve) => {
+    markInitialStarted = resolve;
+  });
+
+  const requestTokens: string[] = [];
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+    };
+
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    if (url.pathname !== "/api/v1/observations/window") {
+      await route.abort();
+      return;
+    }
+
+    const token =
+      request.headers().authorization?.replace("Bearer ", "") ?? "";
+    requestTokens.push(token);
+
+    if (requestTokens.length === 1) {
+      markInitialStarted();
+      await initialPending;
+      await route.fulfill({
+        status: 401,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify({
+          detail: { code: "supabase_session_invalid" },
+        }),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify(
+        windowWithMeasurement("refreshed-record", 121, 81),
+      ),
+    });
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await initialStarted;
+
+  await dispatchSession(page, accountARefreshed);
+  releaseInitial();
+
+  await expect(page.locator('[data-scene="S10"]')).toContainText(
+    "121/81 mmHg",
+  );
+
+  expect(requestTokens).toEqual([
+    accountA.access_token,
+    accountARefreshed.access_token,
+  ]);
+});
+
 test("export timeout shows bounded warning and re-enables the button", async ({ page }) => {
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
