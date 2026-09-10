@@ -1,3 +1,4 @@
+import "./journey-candidate.cases";
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 import { allowsSavedScene, createSavedSceneEvent } from "../src/ui/savedScene";

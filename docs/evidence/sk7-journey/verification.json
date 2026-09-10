@@ -1,0 +1,313 @@
+{
+  "baseline": "5d97f868d955c332205bf22a39afa16889d11c4c",
+  "issue": 400,
+  "branch": "codex/sk7-journey",
+  "recordedAt": "2026-09-10T17:10:46.466836+00:00",
+  "scope": "local Chromium emulation and synthetic API/browser mocks; not production or physical device evidence",
+  "sourceFiles": {
+    "web/src/App.tsx": "2a81ddcd215f4d0dd8897519bab216321edf888e8219232d1add5449a9f48e87",
+    "web/src/main.tsx": "44c2725e66e8bdd4627af0499e85a893c404bb00191072e5e5291f611410f38d",
+    "web/src/components/JourneyToday.tsx": "6df85d8918e1f86ef19473e0f9b33e827bbcc22e63b6811e8d7aed66ed02a507",
+    "web/src/components/journey-candidate.css": "d9988cee3018fbb12867183f4307bfc2345beb7591933ae2ec8f153982389dd8",
+    "web/src/components/scene/SavedSceneRenderer.tsx": "ed2f65172aff3d8c6cd8484c604b1f0df0fd0c2f184d9ec1f9eaab82b1665d8a",
+    "web/e2e/journey-candidate.cases.ts": "53d98ea87dbca283db686fcc7072dfcb310d5317dff12dfa4d8c2c1720256cb5",
+    "web/e2e/saved-scene-review.spec.ts": "f0f33f9ac7047cf33a7f7bf15dc9fa7a73f7a4e94831cc74ceb2ad3d798732d9",
+    "web/e2e/production-fixture-boundary.spec.ts": "3a7c6964499e5a72c148405195760f00844ba8c8919f589095759b9c6a6d7e71",
+    "web/scripts/journey-review-fixture.mjs": "2938eb4d58588c8d0ff2ea6b34793767635204791f49de1d748989fedfbfe1a4",
+    "web/scripts/capture-journey-review.mjs": "54d0f014fe9f8955f44436b10a4136320b423f0094fc06392b92ddd1f5b6f288",
+    "web/scripts/preview-journey-review.mjs": "4357be4dcf42684aeab396437bda198de08b230cdfdce6c3131d8540fc4744a0"
+  },
+  "captureState": {
+    "date": "2026-09-11T12:00:00+09:00",
+    "initialSameDayBP": false,
+    "syntheticLegacyEvents": 1,
+    "submittedBP": [
+      120,
+      80
+    ],
+    "reducedMotion": true,
+    "before": "untouched baseline with same review/companion gates",
+    "after": "final candidate; public poster and saved idle; source hashes above",
+    "viewports": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        1366,
+        768
+      ]
+    ]
+  },
+  "captures": {
+    "after/S02-1366x768-viewport.png": {
+      "sha256": "68d8a6d8c087a03f0a29da6638afa0f099c0a86bdfd297da8bcb66a65fcece1b",
+      "width": 1366,
+      "height": 768
+    },
+    "after/S02-1366x768.png": {
+      "sha256": "c33176fc7bad6b78336359576fabf6d25471e40d5c6c70001cbec96b00395fbc",
+      "width": 1366,
+      "height": 896
+    },
+    "after/S02-320x568-viewport.png": {
+      "sha256": "8aef862011edb315c9455ee47ab5a28e9b8ec9e33c9bfd944359ab1aeb931461",
+      "width": 320,
+      "height": 568
+    },
+    "after/S02-320x568.png": {
+      "sha256": "d6555fec0b3ef68449150b4aa93124dbd74df7207039f2e7d4b29010a45f91e9",
+      "width": 320,
+      "height": 985
+    },
+    "after/S02-390x844-viewport.png": {
+      "sha256": "73bca620f1f48338a496e3281ab07d514cefef68845e36fd7f0f442daeaea51a",
+      "width": 390,
+      "height": 844
+    },
+    "after/S02-390x844.png": {
+      "sha256": "40162f7fa31c2fc8760512b926b173f68f25ce8185c937044e3b67569bcf0e7b",
+      "width": 390,
+      "height": 1137
+    },
+    "after/S04-1366x768-viewport.png": {
+      "sha256": "e1e6b3f690a622224f6557f8d93112c84c22f86f98e09893c158ed7b4cf234c6",
+      "width": 1366,
+      "height": 768
+    },
+    "after/S04-1366x768.png": {
+      "sha256": "0bf73cf62b2c7b221b5c2929b6648804b884fec2ca733b5e197e78f2eef4168f",
+      "width": 1366,
+      "height": 804
+    },
+    "after/S04-320x568-viewport.png": {
+      "sha256": "c8740d80c28ab0054568d40cd805b9577ca656fdfe610b0cc778851274b79c62",
+      "width": 320,
+      "height": 568
+    },
+    "after/S04-320x568.png": {
+      "sha256": "0e827dc4ac1cb51bded8f06415e59184185a88f0d05501382d9e39c416a4f0ae",
+      "width": 320,
+      "height": 913
+    },
+    "after/S04-390x844-viewport.png": {
+      "sha256": "920ab971261bdbe840cba6aa5668b9805b1e489debf363e1ab3a90badb52d826",
+      "width": 390,
+      "height": 844
+    },
+    "after/S04-390x844.png": {
+      "sha256": "079e1610a5e90054cf843937684a340d8bc0ae840416c9012d3fd06156e77dd8",
+      "width": 390,
+      "height": 899
+    },
+    "after/S05-1366x768-viewport.png": {
+      "sha256": "08a87c0617ccec42d123ec53e0249e85f5f2de190027b09affafa8a7017a460e",
+      "width": 1366,
+      "height": 768
+    },
+    "after/S05-1366x768.png": {
+      "sha256": "08a87c0617ccec42d123ec53e0249e85f5f2de190027b09affafa8a7017a460e",
+      "width": 1366,
+      "height": 768
+    },
+    "after/S05-320x568-viewport.png": {
+      "sha256": "d90e0e8ffcfeb082dab4fd25dbc9accb3f058a6c23d7d4fb1795bc2e3943ee1d",
+      "width": 320,
+      "height": 568
+    },
+    "after/S05-320x568.png": {
+      "sha256": "8cf4eb65026b3b4d474491febc1c9646052604af5bc3b5714972c765ec5ace83",
+      "width": 320,
+      "height": 673
+    },
+    "after/S05-390x844-viewport.png": {
+      "sha256": "1488bbeb09bff224d7480db534090ac668137a1216c88f9ad45b9062deaaa98f",
+      "width": 390,
+      "height": 844
+    },
+    "after/S05-390x844.png": {
+      "sha256": "1488bbeb09bff224d7480db534090ac668137a1216c88f9ad45b9062deaaa98f",
+      "width": 390,
+      "height": 844
+    },
+    "before/S02-1366x768-viewport.png": {
+      "sha256": "57fe5eca1c2a60f7d790e1c5bb6fcff797e7973dc23f1934f096cc9d5718fa5f",
+      "width": 1366,
+      "height": 768
+    },
+    "before/S02-1366x768.png": {
+      "sha256": "f06b07fb91464cfc03e5f5151fdc572f383e9eb5c897ba273d6e6225fefd2112",
+      "width": 1366,
+      "height": 1439
+    },
+    "before/S02-320x568-viewport.png": {
+      "sha256": "45d4efd0f03aa09235fb1430ba124576fde74d407564de201bbbbac3df3e56ad",
+      "width": 320,
+      "height": 568
+    },
+    "before/S02-320x568.png": {
+      "sha256": "658eb284cfd1fd07a1ffda2fe5d474fc1dbc1845352a29f67bddea46c9f6c4dd",
+      "width": 320,
+      "height": 1312
+    },
+    "before/S02-390x844-viewport.png": {
+      "sha256": "1ea492869d9086af1d477da3ee61adc3792916bb48bef408d98559fdc7d8391c",
+      "width": 390,
+      "height": 844
+    },
+    "before/S02-390x844.png": {
+      "sha256": "4f16cc709fb487d78eb7cf561b7b821e1101c078d3bc22ac6ee69f17302927fd",
+      "width": 390,
+      "height": 1327
+    },
+    "before/S04-1366x768-viewport.png": {
+      "sha256": "be5bfe9fe5aeb2d7350a90e5ff6db5080bc5265c35033614f428540db5e386d7",
+      "width": 1366,
+      "height": 768
+    },
+    "before/S04-1366x768.png": {
+      "sha256": "be75800f82dd989ceedb313bb413466c438651b7a7b9886a1530eb8b068a2bee",
+      "width": 1366,
+      "height": 840
+    },
+    "before/S04-320x568-viewport.png": {
+      "sha256": "dacd82eef16060cb9b0cb83802934a6c62e8893d2b5e3a0063eeb6fb5bdf37a2",
+      "width": 320,
+      "height": 568
+    },
+    "before/S04-320x568.png": {
+      "sha256": "9457e0e6ade94a2444f2b190b575cddc36e1d5e1c62157561d253551a3f806d4",
+      "width": 320,
+      "height": 897
+    },
+    "before/S04-390x844-viewport.png": {
+      "sha256": "1c5ed1efd4d3cec4cd0d62382493ff83d6df7163133656fe47f26d7a103cd275",
+      "width": 390,
+      "height": 844
+    },
+    "before/S04-390x844.png": {
+      "sha256": "60b4e2b8080d6be95173c87ba5157571bd76b4ad8dc8e54d76bea6036c88c238",
+      "width": 390,
+      "height": 897
+    },
+    "before/S05-1366x768-viewport.png": {
+      "sha256": "24716a38fd0e5e933f5cfe5c2acd87768fbfed0bb3636ae558e932d2673e87fc",
+      "width": 1366,
+      "height": 768
+    },
+    "before/S05-1366x768.png": {
+      "sha256": "24716a38fd0e5e933f5cfe5c2acd87768fbfed0bb3636ae558e932d2673e87fc",
+      "width": 1366,
+      "height": 768
+    },
+    "before/S05-320x568-viewport.png": {
+      "sha256": "239ddda22e0a37164700ae4cea735ccf211a352d58db8dbc258a1a71a6e7e9b7",
+      "width": 320,
+      "height": 568
+    },
+    "before/S05-320x568.png": {
+      "sha256": "3e6c9069a5c9c497db7a51dcf817b1023f2d949cdcab634d612676756b29b573",
+      "width": 320,
+      "height": 725
+    },
+    "before/S05-390x844-viewport.png": {
+      "sha256": "25e02177f9ffb645bd886e7fe2e2f24f7e986989eea1df6e49e3b0c62f055986",
+      "width": 390,
+      "height": 844
+    },
+    "before/S05-390x844.png": {
+      "sha256": "b90516247551324372d266c5b2c74ddb1bdc1f1effa73459d29a06a003dde6d1",
+      "width": 390,
+      "height": 845
+    }
+  },
+  "checks": [
+    {
+      "command": "npm ci",
+      "result": "PASS; lock unchanged, 0 reported vulnerabilities"
+    },
+    {
+      "command": "CI=1 npm run test:e2e",
+      "result": "PASS; 122 baseline/frontend cases plus initial production-boundary case"
+    },
+    {
+      "command": "CI=1 npm run test:e2e:review",
+      "result": "PASS; 9 cases"
+    },
+    {
+      "command": "CI=1 npm run test:e2e:production:on",
+      "result": "PASS; 5 cases"
+    },
+    {
+      "command": "CI=1 npm run test:e2e:saved-scene",
+      "result": "PASS; 44 cases; before final S02 date/tablet correction; S05 code unchanged afterward"
+    },
+    {
+      "command": "CI=1 npm run test:e2e:scene",
+      "result": "PASS; 52 cases after date/status markup and tablet framing correction"
+    },
+    {
+      "command": "CI=1 npx playwright test --config=playwright.saved-scene.config.ts -g 'journey candidate'",
+      "result": "PASS; 7 affected candidate cases rerun on final source"
+    },
+    {
+      "command": "CI=1 npx playwright test --config=playwright.production.config.ts",
+      "result": "PASS; 2 cases including the new URL/test-auth boundary, final normal production build"
+    },
+    {
+      "command": "npm run build (normal and explicit review environments)",
+      "result": "PASS; TypeScript and Vite; preexisting large Three/GLTF chunk warning retained"
+    },
+    {
+      "command": "npm run test:scene-manifest",
+      "result": "PASS; 72 cases, no skips"
+    },
+    {
+      "command": "node --test scripts/inspect-scene-heap.test.mjs scripts/summarize-scene-heap-growth.test.mjs",
+      "result": "PASS; 5 cases"
+    },
+    {
+      "command": "node scripts/diagnose-companion-r2.mjs",
+      "result": "PASS; public registered GLB transport/CORS for localhost:4173; not production network/cache acceptance"
+    },
+    {
+      "command": "python3 scripts/ci/verify_secret_boundary.py --self-test / --web-dist web/dist",
+      "result": "PASS; normal build"
+    },
+    {
+      "command": "deployment smoke / local reliability / AI toolchain / model Gate 1B controls",
+      "result": "PASS; existing self-tests and offline contract checks, no production write"
+    },
+    {
+      "command": "node --check preview/capture/review fixture scripts",
+      "result": "PASS"
+    },
+    {
+      "command": "manual in-app browser, local preview 4177",
+      "result": "PASS; S02 → S04 → mock-confirmed S05 → S02; final preview reloaded"
+    },
+    {
+      "command": "protected diff and original preservation",
+      "result": "PASS; App controller prefix and whole measurement form byte-equal to baseline; no API/DB/auth/model/config/workflow/dependency/gate changes; original HEAD and untracked file unchanged"
+    }
+  ],
+  "reusedEvidence": "existing registered assets/posters/manifests/test contracts; historical physical-device reports reference only, never promoted to candidate PASS",
+  "notPerformed": [
+    "actual API/DB persistence",
+    "physical devices",
+    "actual Safari",
+    "new GPU/peak-memory/FPS measurements",
+    "production network/cache",
+    "production screenshot",
+    "main merge",
+    "mirror sync",
+    "deployment",
+    "production scene activation"
+  ],
+  "visualAcceptance": "agent inspected local composition; user visual acceptance PENDING",
+  "ci": "All applicable checks retained; final commit statuses are attached to the Draft PR. Main ruleset requires lint/test."
+}

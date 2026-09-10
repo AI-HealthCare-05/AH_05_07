@@ -46,7 +46,8 @@ export default function SavedSceneRenderer({ event, reducedMotion, visible, onRe
     let previousTime: number | undefined;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 100);
-    camera.position.set(0, 1.1, 3.4);
+    // Leave headroom for the full ear silhouette in the larger review slot.
+    camera.position.set(0, 1.1, 3.8);
     camera.lookAt(0, 0.8, 0);
     const allowed = () => presentation.current.visible && !presentation.current.reducedMotion
       && document.visibilityState === "visible" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
