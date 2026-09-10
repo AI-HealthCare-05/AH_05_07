@@ -1,0 +1,450 @@
+{
+  "recordedOn": "2026-09-10",
+  "scope": "Offline accounting of existing physical Android snapshots. No Android repeat probe or CI rerun. No application source changes.",
+  "analyzerSha256": "bc210d3bb1e26713073ffec19118c059baa0ef565f65113ecc35269ca5f02b38",
+  "comparisons": [
+    {
+      "label": "fixed-0-to-30",
+      "sourceRevision": "0f35db18b1f0ffdce5ff76b199380b4b3ee68642",
+      "snapshotCycles": [
+        0,
+        30
+      ],
+      "snapshotSha256": [
+        "3962f8a9a5871954fcf768193150d4f82a0150e8b652801a9440b805ac9e0cad",
+        "08062f4bc760a947c579c2a0d4f3e17cca09b716ce5dd1fcaaf2ba35dfd649df"
+      ],
+      "cdpJsHeapUsedDeltaBytes": 488276,
+      "snapshotDelta": {
+        "byType": {
+          "array": {
+            "count": 29,
+            "selfBytes": 3496
+          },
+          "closure": {
+            "count": 8,
+            "selfBytes": 228
+          },
+          "code": {
+            "count": 2186,
+            "selfBytes": 411532
+          },
+          "concatenated string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "native": {
+            "count": 3315,
+            "selfBytes": 381010
+          },
+          "number": {
+            "count": 63,
+            "selfBytes": 36
+          },
+          "object": {
+            "count": 58,
+            "selfBytes": 1244
+          },
+          "object shape": {
+            "count": 130,
+            "selfBytes": 5332
+          },
+          "regexp": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "sliced string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "string": {
+            "count": 143,
+            "selfBytes": 2180
+          },
+          "symbol": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "synthetic": {
+            "count": 0,
+            "selfBytes": 0
+          }
+        },
+        "code": {
+          "(constant pool)": {
+            "count": 39,
+            "selfBytes": 1860
+          },
+          "(context local names)": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "other code": {
+            "count": 1066,
+            "selfBytes": 54296
+          },
+          "system / BytecodeArray": {
+            "count": 48,
+            "selfBytes": 10128
+          },
+          "system / Code": {
+            "count": 223,
+            "selfBytes": 16056
+          },
+          "system / FeedbackVector": {
+            "count": 68,
+            "selfBytes": 8544
+          },
+          "system / InstructionStream": {
+            "count": 223,
+            "selfBytes": 252768
+          },
+          "system / ScopeInfo": {
+            "count": 48,
+            "selfBytes": 2368
+          },
+          "system / TrustedByteArray": {
+            "count": 471,
+            "selfBytes": 65512
+          }
+        },
+        "nativeTiming": {
+          "LayoutShift": {
+            "count": 112,
+            "selfBytes": 17024
+          },
+          "LayoutShiftAttribution": {
+            "count": 235,
+            "selfBytes": 9400
+          },
+          "PerformanceEventTiming": {
+            "count": 95,
+            "selfBytes": 24320
+          },
+          "PerformanceLongAnimationFrameTiming": {
+            "count": 154,
+            "selfBytes": 27104
+          },
+          "PerformanceLongTaskTiming": {
+            "count": 150,
+            "selfBytes": 15600
+          },
+          "PerformanceResourceTiming": {
+            "count": 120,
+            "selfBytes": 16320
+          },
+          "PerformanceScriptTiming": {
+            "count": 154,
+            "selfBytes": 18480
+          },
+          "PerformanceSoftNavigation": {
+            "count": 30,
+            "selfBytes": 3360
+          },
+          "TaskAttributionTiming": {
+            "count": 150,
+            "selfBytes": 18000
+          }
+        },
+        "nonNativeSelfBytes": 424048,
+        "nativeSelfBytes": 381010
+      },
+      "cdpDeltaMinusSnapshotNonNativeDeltaBytes": 64228
+    },
+    {
+      "label": "fixed-10-to-30",
+      "sourceRevision": "0f35db18b1f0ffdce5ff76b199380b4b3ee68642",
+      "snapshotCycles": [
+        10,
+        30
+      ],
+      "snapshotSha256": [
+        "73b278e1b114777e3f0501180c37e097bf19f14b36d526de3b45e9c17df513cb",
+        "08062f4bc760a947c579c2a0d4f3e17cca09b716ce5dd1fcaaf2ba35dfd649df"
+      ],
+      "cdpJsHeapUsedDeltaBytes": 143912,
+      "snapshotDelta": {
+        "byType": {
+          "array": {
+            "count": 3,
+            "selfBytes": 172
+          },
+          "closure": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "code": {
+            "count": 501,
+            "selfBytes": 129256
+          },
+          "concatenated string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "native": {
+            "count": 1561,
+            "selfBytes": 172876
+          },
+          "number": {
+            "count": 8,
+            "selfBytes": 36
+          },
+          "object": {
+            "count": 4,
+            "selfBytes": 72
+          },
+          "object shape": {
+            "count": 2,
+            "selfBytes": 76
+          },
+          "regexp": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "sliced string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "string": {
+            "count": 11,
+            "selfBytes": 200
+          },
+          "symbol": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "synthetic": {
+            "count": 0,
+            "selfBytes": 0
+          }
+        },
+        "code": {
+          "(constant pool)": {
+            "count": 8,
+            "selfBytes": 252
+          },
+          "(context local names)": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "other code": {
+            "count": 208,
+            "selfBytes": 19824
+          },
+          "system / BytecodeArray": {
+            "count": 8,
+            "selfBytes": 860
+          },
+          "system / Code": {
+            "count": 61,
+            "selfBytes": 4392
+          },
+          "system / FeedbackVector": {
+            "count": 6,
+            "selfBytes": 332
+          },
+          "system / InstructionStream": {
+            "count": 61,
+            "selfBytes": 76512
+          },
+          "system / ScopeInfo": {
+            "count": 8,
+            "selfBytes": 360
+          },
+          "system / TrustedByteArray": {
+            "count": 141,
+            "selfBytes": 26724
+          }
+        },
+        "nativeTiming": {
+          "LayoutShift": {
+            "count": 32,
+            "selfBytes": 4864
+          },
+          "LayoutShiftAttribution": {
+            "count": 68,
+            "selfBytes": 2720
+          },
+          "PerformanceEventTiming": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "PerformanceLongAnimationFrameTiming": {
+            "count": 103,
+            "selfBytes": 18128
+          },
+          "PerformanceLongTaskTiming": {
+            "count": 100,
+            "selfBytes": 10400
+          },
+          "PerformanceResourceTiming": {
+            "count": 80,
+            "selfBytes": 10880
+          },
+          "PerformanceScriptTiming": {
+            "count": 102,
+            "selfBytes": 12240
+          },
+          "PerformanceSoftNavigation": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "TaskAttributionTiming": {
+            "count": 100,
+            "selfBytes": 12000
+          }
+        },
+        "nonNativeSelfBytes": 129812,
+        "nativeSelfBytes": 172876
+      },
+      "cdpDeltaMinusSnapshotNonNativeDeltaBytes": 14100
+    },
+    {
+      "label": "off-0-to-30",
+      "sourceRevision": "2c9185fddaecc57066a9c8529b9b91c8fbeae489",
+      "snapshotCycles": [
+        0,
+        30
+      ],
+      "snapshotSha256": [
+        "3917a6acc8b2793c367b1dc4e0dbccbdd03d552755d5d2b27a46cebf327e1cd8",
+        "4106de85a306a6eb1ee1e8818f5e9ca6b660ce062916b85ad7225a8dafa4bb77"
+      ],
+      "cdpJsHeapUsedDeltaBytes": 351128,
+      "snapshotDelta": {
+        "byType": {
+          "array": {
+            "count": 26,
+            "selfBytes": 3324
+          },
+          "closure": {
+            "count": 8,
+            "selfBytes": 228
+          },
+          "code": {
+            "count": 1720,
+            "selfBytes": 324244
+          },
+          "concatenated string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "native": {
+            "count": 2107,
+            "selfBytes": 120070
+          },
+          "number": {
+            "count": 83,
+            "selfBytes": 0
+          },
+          "object": {
+            "count": 35,
+            "selfBytes": 740
+          },
+          "object shape": {
+            "count": 58,
+            "selfBytes": 2480
+          },
+          "regexp": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "sliced string": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "string": {
+            "count": 200,
+            "selfBytes": 3000
+          },
+          "symbol": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "synthetic": {
+            "count": 0,
+            "selfBytes": 0
+          }
+        },
+        "code": {
+          "(constant pool)": {
+            "count": 42,
+            "selfBytes": 2224
+          },
+          "(context local names)": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "other code": {
+            "count": 865,
+            "selfBytes": 42148
+          },
+          "system / BytecodeArray": {
+            "count": 52,
+            "selfBytes": 12288
+          },
+          "system / Code": {
+            "count": 160,
+            "selfBytes": 11520
+          },
+          "system / FeedbackVector": {
+            "count": 47,
+            "selfBytes": 6568
+          },
+          "system / InstructionStream": {
+            "count": 160,
+            "selfBytes": 194400
+          },
+          "system / ScopeInfo": {
+            "count": 52,
+            "selfBytes": 2736
+          },
+          "system / TrustedByteArray": {
+            "count": 342,
+            "selfBytes": 52360
+          }
+        },
+        "nativeTiming": {
+          "LayoutShift": {
+            "count": 111,
+            "selfBytes": 16872
+          },
+          "LayoutShiftAttribution": {
+            "count": 285,
+            "selfBytes": 11400
+          },
+          "PerformanceEventTiming": {
+            "count": 134,
+            "selfBytes": 34304
+          },
+          "PerformanceLongAnimationFrameTiming": {
+            "count": 1,
+            "selfBytes": 176
+          },
+          "PerformanceResourceTiming": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "PerformanceScriptTiming": {
+            "count": 0,
+            "selfBytes": 0
+          },
+          "PerformanceSoftNavigation": {
+            "count": 30,
+            "selfBytes": 3360
+          }
+        },
+        "nonNativeSelfBytes": 334016,
+        "nativeSelfBytes": 120070
+      },
+      "cdpDeltaMinusSnapshotNonNativeDeltaBytes": 17112
+    }
+  ],
+  "interpretation": [
+    "The fixed run gained 424048 non-native snapshot self bytes; 411532 were code nodes, including 252768 InstructionStream bytes. This is a category attribution of snapshot self size, not proof that all CDP JSHeapUsedSize growth is JIT overhead.",
+    "The 488276-byte CDP delta and the 424048-byte snapshot delta differ by 64228 bytes. Their collection moments and accounting differ; the residual is not attributed.",
+    "Native snapshot self size grew separately by 381010 bytes, including 149608 in the allowlisted browser timing categories. Native timing bytes must not be added to or subtracted from the CDP JavaScript heap delta.",
+    "Code growth continued from cycle 10 to 30; a plateau, full application memory stability, absolute process/GPU memory and release acceptance remain unestablished.",
+    "The historical off run uses its recorded earlier source. It supplies context, not a matched causal subtraction from the corrected run."
+  ]
+}

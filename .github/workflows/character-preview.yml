@@ -40,5 +40,7 @@ jobs:
         working-directory: web
       - run: npm run build
         working-directory: web
+      - name: Verify production import graph rejection boundaries
+        run: node --test tools/character-preview/test_production_isolation.cjs
       - name: Verify temporary synthetic fixture and production isolation
         run: node tools/character-preview/verify.cjs --synthetic --record-smoke

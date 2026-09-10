@@ -402,3 +402,18 @@ ul, ol { margin: 0; padding: 0; }
   .loading-stones i { animation: none !important; }
   @keyframes reduced-fade { from { opacity: 0; } to { opacity: 1; } }
 }
+/* Living Journey review stage: semantic controls remain outside this surface. */
+.living-visual-stage { position: relative; width: 100%; height: var(--scene-height-desktop, 360px); margin-block: 1.25rem; overflow: hidden; border-radius: 1.75rem; background: var(--sk7-cream-50, #f7ebd2); pointer-events: none; isolation: isolate; }
+.living-scene-runtime, .living-three-scene, .living-scene-fallback { position: absolute; inset: 0; }
+.living-three-scene canvas { display: block; width: 100%; height: 100%; }
+.living-three-scene { opacity: 0; }
+[data-living-scene-status="ready"] .living-three-scene { opacity: 1; }
+.living-scene-fallback { display: grid; place-items: center; }
+.living-scene-fallback img { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: auto; max-width: none; height: 100%; }
+.scene:has(.living-visual-stage) > .scene-visual-character { display: none; }
+@media (max-width: 580px) {
+  .living-visual-stage { height: var(--scene-height-390, 240px); margin-block: 1rem; }
+}
+@media (max-width: 350px) {
+  .living-visual-stage { height: var(--scene-height-320, 200px); }
+}

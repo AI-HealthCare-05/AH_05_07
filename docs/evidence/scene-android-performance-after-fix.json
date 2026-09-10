@@ -1,0 +1,1281 @@
+{
+  "recordedAt": "2026-09-10T10:10:30.346Z",
+  "sourceRevision": "0f35db18b1f0ffdce5ff76b199380b4b3ee68642",
+  "probeSha256": "44357fcd91439b11ef50d949562c8843d595c2a6dee10422fd0211c1488fa018",
+  "build": {
+    "index.html": "8d60e39185ef29df10a9acd9b42173312c889a6220b3e4d9b1cb090a86eee4f9",
+    "assets/CompanionReviewRenderer-CAWS4lNs.js": "a1c1227bb44140ba4d22b7a49c7fb279ec19e9de5602e7f3a27e1a90031b0ef1",
+    "assets/GLTFLoader-BuuAnLd3.js": "7907bd6dec56ce69fd42e96b8aaf98daa8c647d446f1c1b71a9b099484976c96",
+    "assets/SavedSceneRenderer-CKnu-ud7.js": "8e27f38f298f638a90d81efa729fda7d382faa00e3935d375ab39afdea190632",
+    "assets/ThreeSceneRenderer-TNGA4xSX.js": "a0704044d1a264225dd4b0fe70dcae6e13c9498f5a36e8a2516e8f4f536ccbef",
+    "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+    "assets/disposeScene-B6JuF6-l.js": "2aeebf8824c0f5ff999ca7e0bb10989e7c598cf30869db891a7166bfb75d8b09",
+    "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+    "assets/index-Yn9fSvcE.js": "94849e6dc5ac90ed5c343a637fa8e4e028130ee60ba28163f65bad68dab3000b",
+    "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+    "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+  },
+  "device": {
+    "model": "SM-A528N",
+    "os": "14",
+    "browser": "152.0.7977.82",
+    "viewport": {
+      "width": 384,
+      "height": 718,
+      "dpr": 2.8125,
+      "reducedMotion": false
+    }
+  },
+  "method": {
+    "application": "Production Vite review preview over adb reverse; new dedicated Chrome tab",
+    "api": "In-page synthetic fetch responses only; no API server or account writes",
+    "instrumentation": "Existing RAF callbacks, long-task observer, WebGL context-loss events and target-scoped CDP metrics; no concurrent recording",
+    "cache": "Per-target cache disabled for first-activation control, then ordinary warm cache; global browser cache NOT cleared",
+    "memory": "Target JS heap after forced GC at each exit; not isolated process PSS, peak memory or GPU bytes",
+    "network": "Selected scene CDP encodedDataLength includes protocol overhead; actual compression is recorded per response; remote transport not qualified as Wi-Fi/cellular",
+    "motion": "Browser prefers-reduced-motion emulation only; no OS animation or accessibility setting changes"
+  },
+  "activation": {
+    "S02": {
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      },
+      "longTasksMs": [
+        153,
+        131
+      ],
+      "frameIntervals": null
+    },
+    "S10": {
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      },
+      "longTasksMs": [
+        129,
+        77
+      ],
+      "frameIntervals": null
+    },
+    "S05": {
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      },
+      "longTasksMs": [
+        73,
+        76
+      ],
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.699999999999818,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.800000000000182,
+        "over33_4ms": 0
+      }
+    }
+  },
+  "motion": [
+    {
+      "cycle": 1,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.600000000000364,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.80000000000109,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 2,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 241,
+        "medianMs": 16.600000000002183,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.799999999999272,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 3,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.600000000002183,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 4,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 5,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 6,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 241,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.89999999999418,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 7,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 8,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.70000000001164,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 9,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 241,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.70000000001164,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    },
+    {
+      "cycle": 10,
+      "celebrateCount": "1",
+      "frameIntervals": {
+        "count": 242,
+        "medianMs": 16.60000000000582,
+        "p95Ms": 16.70000000001164,
+        "maxMs": 16.80000000000291,
+        "over33_4ms": 0
+      },
+      "idle": {
+        "rafCallbacksOver500ms": 0,
+        "liveContexts": 1,
+        "canvasCount": 1,
+        "horizontalOverflow": false,
+        "visibility": "visible",
+        "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)"
+      }
+    }
+  ],
+  "cycles": [
+    {
+      "cycle": 0,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 13049080,
+      "jsHeapTotalBytes": 14295040,
+      "nodes": 579
+    },
+    {
+      "cycle": 1,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 13472692,
+      "jsHeapTotalBytes": 14557184,
+      "nodes": 579
+    },
+    {
+      "cycle": 2,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 13803356,
+      "jsHeapTotalBytes": 14819328,
+      "nodes": 579
+    },
+    {
+      "cycle": 3,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 13907668,
+      "jsHeapTotalBytes": 15081472,
+      "nodes": 579
+    },
+    {
+      "cycle": 4,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14059640,
+      "jsHeapTotalBytes": 15343616,
+      "nodes": 579
+    },
+    {
+      "cycle": 5,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14086964,
+      "jsHeapTotalBytes": 15081472,
+      "nodes": 579
+    },
+    {
+      "cycle": 6,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14105024,
+      "jsHeapTotalBytes": 15343616,
+      "nodes": 579
+    },
+    {
+      "cycle": 7,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14110088,
+      "jsHeapTotalBytes": 15605760,
+      "nodes": 579
+    },
+    {
+      "cycle": 8,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14186992,
+      "jsHeapTotalBytes": 15081472,
+      "nodes": 579
+    },
+    {
+      "cycle": 9,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14199704,
+      "jsHeapTotalBytes": 15081472,
+      "nodes": 579
+    },
+    {
+      "cycle": 10,
+      "liveContexts": 0,
+      "jsHeapUsedBytes": 14219972,
+      "jsHeapTotalBytes": 15081472,
+      "nodes": 579
+    }
+  ],
+  "reducedMotion": {
+    "S02": {
+      "rafCallbacksOver500ms": 0,
+      "liveContexts": 0,
+      "canvasCount": 0,
+      "horizontalOverflow": false,
+      "visibility": "visible",
+      "renderer": null
+    },
+    "S10": {
+      "rafCallbacksOver500ms": 0,
+      "liveContexts": 0,
+      "canvasCount": 0,
+      "horizontalOverflow": false,
+      "visibility": "visible",
+      "renderer": null
+    },
+    "S05": {
+      "rafCallbacksOver500ms": 0,
+      "liveContexts": 1,
+      "canvasCount": 1,
+      "horizontalOverflow": false,
+      "visibility": "visible",
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "celebrateCount": "0"
+    }
+  },
+  "errors": [],
+  "unknownOrOpen": [
+    "Wi-Fi/cellular whole-page delivery",
+    "Absolute GPU and peak process memory",
+    "Shader/decode and input-to-paint attribution",
+    "OS reduced motion",
+    "TalkBack audible output, Touch Explorer and switch input",
+    "Physical Safari realtime 3D and performance",
+    "Owner S05 acceptance and production activation/rollback"
+  ],
+  "historyReturn": {
+    "rafCallbacksOver500ms": 0,
+    "liveContexts": 1,
+    "canvasCount": 1,
+    "horizontalOverflow": false,
+    "visibility": "visible",
+    "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+    "celebrateCount": "0"
+  },
+  "retainedHeapReview": {
+    "baselineBytes": 13049080,
+    "finalBytes": 14219972,
+    "deltaBytes": 1170892,
+    "interpretation": "Observed aggregate includes browser, history, JIT and instrumentation. Context disposal is checked separately. Positive growth does not identify an application leak or satisfy the no-growth acceptance gate; retaining-path/GPU/peak-memory review remains open."
+  },
+  "completed": true,
+  "network": [
+    {
+      "phase": "S02-cache-disabled",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 13255
+    },
+    {
+      "phase": "S02-cache-disabled",
+      "path": "/assets/disposeScene-B6JuF6-l.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": null,
+      "encodedDataLength": 887
+    },
+    {
+      "phase": "S02-cache-disabled",
+      "path": "/assets/ThreeSceneRenderer-TNGA4xSX.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 5292
+    },
+    {
+      "phase": "S02-cache-disabled",
+      "path": "/assets/GLTFLoader-BuuAnLd3.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 163217
+    },
+    {
+      "phase": "S02-cache-disabled",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 519790
+    },
+    {
+      "phase": "S10-cache-disabled",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 15524
+    },
+    {
+      "phase": "S10-cache-disabled",
+      "path": "/assets/ThreeSceneRenderer-TNGA4xSX.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 5292
+    },
+    {
+      "phase": "S10-cache-disabled",
+      "path": "/assets/disposeScene-B6JuF6-l.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": null,
+      "encodedDataLength": 887
+    },
+    {
+      "phase": "S10-cache-disabled",
+      "path": "/assets/GLTFLoader-BuuAnLd3.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 163217
+    },
+    {
+      "phase": "S10-cache-disabled",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 519511
+    },
+    {
+      "phase": "S05-cache-disabled",
+      "path": "/assets/disposeScene-B6JuF6-l.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": null,
+      "encodedDataLength": 887
+    },
+    {
+      "phase": "S05-cache-disabled",
+      "path": "/assets/companionAssets.generated-DTKYT2wX.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 1970
+    },
+    {
+      "phase": "S05-cache-disabled",
+      "path": "/assets/SavedSceneRenderer-CKnu-ud7.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 2239
+    },
+    {
+      "phase": "S05-cache-disabled",
+      "path": "/assets/GLTFLoader-BuuAnLd3.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 163217
+    },
+    {
+      "phase": "S05-cache-disabled",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 519520
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/assets/GLTFLoader-BuuAnLd3.js",
+      "origin": "USB-local-preview",
+      "status": 304,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": null,
+      "contentEncoding": null,
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/assets/ThreeSceneRenderer-TNGA4xSX.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/assets/disposeScene-B6JuF6-l.js",
+      "origin": "USB-local-preview",
+      "status": 304,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": null,
+      "contentEncoding": null,
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/assets/SavedSceneRenderer-CKnu-ud7.js",
+      "origin": "USB-local-preview",
+      "status": 304,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": null,
+      "contentEncoding": null,
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/assets/companionAssets.generated-DTKYT2wX.js",
+      "origin": "USB-local-preview",
+      "status": 304,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": null,
+      "contentEncoding": null,
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "warm-baseline",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-1",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-1",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-1",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-1",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-2",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-2",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-2",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-2",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-3",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-3",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-3",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-3",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-4",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-4",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-4",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-4",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-5",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-5",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-5",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-5",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-6",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-6",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-6",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-6",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-7",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-7",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-7",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-7",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-8",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-8",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-8",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-8",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-9",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-9",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-9",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-9",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-10",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-10",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-10",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "cycle-10",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "history-return",
+      "path": "/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "history-return",
+      "path": "/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "image/webp",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "max-age=14400",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    },
+    {
+      "phase": "history-return",
+      "path": "/assets/SavedSceneRenderer-CKnu-ud7.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "history-return",
+      "path": "/assets/disposeScene-B6JuF6-l.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": null,
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "history-return",
+      "path": "/assets/companionAssets.generated-DTKYT2wX.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "history-return",
+      "path": "/assets/GLTFLoader-BuuAnLd3.js",
+      "origin": "USB-local-preview",
+      "status": 200,
+      "mimeType": "text/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "cacheControl": "no-cache",
+      "contentEncoding": "gzip",
+      "encodedDataLength": 179
+    },
+    {
+      "phase": "history-return",
+      "path": "/companion/v1/bear/v007/lite.glb",
+      "origin": "https://sk7-companion.gkrry.com",
+      "status": 200,
+      "mimeType": "model/gltf-binary",
+      "fromDiskCache": true,
+      "fromServiceWorker": false,
+      "cacheControl": "public, max-age=31536000, immutable",
+      "contentEncoding": null,
+      "encodedDataLength": 0
+    }
+  ]
+}

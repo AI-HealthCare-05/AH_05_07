@@ -1,0 +1,199 @@
+{
+  "date": "2026-09-09",
+  "fixture": "VP-10, fixed Thursday 2026-09-03",
+  "browser": "Chromium via installed Playwright 1.62.1 on macOS, headless; new context per viewport",
+  "status": "LOCAL_REVIEW_ONLY",
+  "sourceSha256": {
+    "web/src/ui/scene-manifest.v2.json": "0f4859ac6d3a4e153138afcb1b0e414c4671b2a6c9f9f83d2bf55b120324d4c3",
+    "web/src/ui/sceneManifest.generated.ts": "09202a7a99c8edf010e24ece399070f337df66cfbd341f6bad8844ae7032600d",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "33f5d33acc2167c9e1b766ff759e93261ac426c42aa8af6e613e5f55a4fbda5d"
+  },
+  "limitations": [
+    "Request.sizes values are Playwright-reported; cross-origin header attribution is unavailable/zero and not treated as proof of zero protocol overhead.",
+    "Includes renderer, shared GLTFLoader/Three chunk, one GLB and the neutral poster. Excludes semantic shell, pre-existing backgrounds and API work.",
+    "Projected bounds are world AABB corners, not a pixel silhouette. Only Thursday geometry was rendered; other weekday art still needs visual QA.",
+    "Not a deployment, real-device, warm-cache, main-thread, GPU-memory, shader-upload or FPS acceptance result."
+  ],
+  "measurements": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.869416028222503,
+        "right": -0.10533446758302138,
+        "bottom": -0.6476904571830056,
+        "top": 0.789500270187597,
+        "height": 143.71907273706026
+      },
+      "requests": [
+        {
+          "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 769,
+          "responseBodySize": 18122,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-DZICI0AM.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 2339,
+          "responseHeadersSize": 353
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-LRnH5pF-.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 158653,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519786,
+          "responseHeadersSize": 0
+        }
+      ],
+      "reportedResponseBodyBytes": 698900
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.869416028222503,
+        "right": -0.10533446758302138,
+        "bottom": -0.6476904571830056,
+        "top": 0.789500270187597,
+        "height": 143.71907273706026
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-DZICI0AM.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 2339,
+          "responseHeadersSize": 353
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-LRnH5pF-.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 158653,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 769,
+          "responseBodySize": 18121,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519788,
+          "responseHeadersSize": 0
+        }
+      ],
+      "reportedResponseBodyBytes": 698901
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.8192779259814508,
+        "right": -0.09925996454449133,
+        "bottom": -0.6476904571830056,
+        "top": 0.789500270187597,
+        "height": 172.46288728447232
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-DZICI0AM.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 2339,
+          "responseHeadersSize": 353
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-LRnH5pF-.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 158653,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 769,
+          "responseBodySize": 18122,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519785,
+          "responseHeadersSize": 0
+        }
+      ],
+      "reportedResponseBodyBytes": 698899
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "source": "Vite production preview, cold browser context; responseBodySize is encoded body, headers separate; not device acceptance",
+      "bounds": {
+        "left": -0.3834275238293313,
+        "right": -0.13480472438095562,
+        "bottom": -0.3632118334692321,
+        "top": 0.7187672779213967,
+        "height": 194.75624005031318
+      },
+      "requests": [
+        {
+          "url": "http://127.0.0.1:4173/assets/ThreeSceneRenderer-DZICI0AM.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 615,
+          "responseBodySize": 2339,
+          "responseHeadersSize": 353
+        },
+        {
+          "url": "http://127.0.0.1:4173/assets/GLTFLoader-LRnH5pF-.js",
+          "requestBodySize": 0,
+          "requestHeadersSize": 607,
+          "responseBodySize": 158653,
+          "responseHeadersSize": 355
+        },
+        {
+          "url": "https://sk7-assets.gomdory.com/visual/v1/characters/sk7-character-base-cream-v01.webp",
+          "requestBodySize": 0,
+          "requestHeadersSize": 769,
+          "responseBodySize": 18123,
+          "responseHeadersSize": 0
+        },
+        {
+          "url": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+          "requestBodySize": 0,
+          "requestHeadersSize": 662,
+          "responseBodySize": 519786,
+          "responseHeadersSize": 0
+        }
+      ],
+      "reportedResponseBodyBytes": 698901
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "scope": "User-reported iOS Simulator VoiceOver semantic and fallback review only. The user clarified on 2026-09-10 that this was the same iPhone 17 / iOS 26.5 Simulator, not physical iPhone hardware. No personal account, record, or health input was used. This does not establish a realtime WebGL renderer, Safari version, physical-device cost, or production acceptance.",
+  "recordedOn": "2026-09-10",
+  "sourceRevision": "56421f8989633152c9c199c124fcd0467ab6e066",
+  "device": {
+    "class": "iPhone 17",
+    "os": "iOS 26.5",
+    "browser": "not recorded",
+    "screenReader": "VoiceOver",
+    "environment": "iOS Simulator"
+  },
+  "rendererQualification": "The user reported that the displayed S02/S10 visual did not appear to be full 3D. Web Inspector status and canvas presence were not captured, so realtime renderer acceptance is UNKNOWN.",
+  "results": {
+    "S02": {
+      "passed": true,
+      "assertions": [
+        "Heading through primary action read in sequence",
+        "Decorative scene did not receive VoiceOver focus"
+      ]
+    },
+    "S10": {
+      "passed": true,
+      "assertions": [
+        "Recent-seven-day heading, period controls, record lanes, and refresh action read in sequence",
+        "Decorative scene did not receive VoiceOver focus"
+      ]
+    },
+    "S05": {
+      "passed": true,
+      "assertions": [
+        "Saved heading and both next actions read",
+        "Leaving and returning did not repeat the celebration or its announcement"
+      ]
+    }
+  },
+  "unknownOrOpen": [
+    "Physical iPhone Safari and physical-device VoiceOver acceptance",
+    "Browser name and version",
+    "Realtime S02/S10/S05 canvas and GLB delivery",
+    "iPhone Safari network, GPU, peak memory, frame interval, and OS reduced-motion behavior",
+    "Switch Control and other input methods",
+    "Final production activation and rollback"
+  ],
+  "environmentCorrection": {
+    "confirmedOn": "2026-09-10",
+    "userConfirmation": "같은 Simulator에서 확인",
+    "supersedes": "Earlier physical-iPhone classification was incorrect; the reported semantic observations remain scoped to Simulator."
+  }
+}

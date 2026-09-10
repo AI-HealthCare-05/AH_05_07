@@ -1,0 +1,2061 @@
+{
+  "recordedOn": "2026-09-10",
+  "scope": "USB-local physical Android, synthetic API, companion off; retaining-resource investigation, not release approval",
+  "interpretation": "The corrected Android build completed five warmup plus 30 measured S02/S10/S05 cycles. All 31 semantic-exit samples had zero live contexts/canvases, 146 DOM nodes, one document and 189 event listeners. Native canvases and WebGL resources were absent from all three forced-GC snapshots (0/10/30). The prior DFG-LUT-retained canvas/context growth did not recur. Aggregate JS heap still increased by 488276 bytes; snapshots also contain increasing browser performance-timing records. This is a bounded scene-resource cleanup pass, not total application-memory, GPU/peak-memory, FPS or release acceptance. The earlier interrupted run remains historical and incomplete.",
+  "rootCause": {
+    "threeVersion": "0.185.1",
+    "singleton": "DFG_LUT",
+    "disposeListenersAfter105Visits": 105,
+    "representativeRetainingPath": {
+      "id": 334679,
+      "detachedness": 2,
+      "reachableByStrongPath": true,
+      "rootReached": true,
+      "path": [
+        {
+          "via": "<element:1>",
+          "edgeType": "element",
+          "type": "synthetic",
+          "name": "(GC roots)"
+        },
+        {
+          "via": "<element:29>",
+          "edgeType": "element",
+          "type": "synthetic",
+          "name": "<internal>"
+        },
+        {
+          "via": "<element:29>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:1>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:3>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:1>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "Modulator"
+        },
+        {
+          "via": "<element:4>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:2>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:1>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "InternalNode"
+        },
+        {
+          "via": "<element:1>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "system / SourceTextModule"
+        },
+        {
+          "via": "<hidden:5>",
+          "edgeType": "hidden",
+          "type": "object",
+          "name": "Generator"
+        },
+        {
+          "via": "context",
+          "edgeType": "internal",
+          "type": "object",
+          "name": "<internal>"
+        },
+        {
+          "via": "tn",
+          "edgeType": "context",
+          "type": "object",
+          "name": "Er"
+        },
+        {
+          "via": "source",
+          "edgeType": "property",
+          "type": "object",
+          "name": "yr"
+        },
+        {
+          "via": "<internal>",
+          "edgeType": "internal",
+          "type": "object",
+          "name": "Object"
+        },
+        {
+          "via": "<internal>",
+          "edgeType": "property",
+          "type": "object",
+          "name": "Object"
+        },
+        {
+          "via": "texture",
+          "edgeType": "property",
+          "type": "native",
+          "name": "WebGLTexture"
+        },
+        {
+          "via": "<element:3>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "WebGL2RenderingContext"
+        },
+        {
+          "via": "<element:17>",
+          "edgeType": "element",
+          "type": "native",
+          "name": "<canvas>"
+        }
+      ]
+    },
+    "caution": "Shortest non-weak retaining path, not a dominator proof. Listener count independently inspected in the private heap snapshot."
+  },
+  "validation": {
+    "command": "CI=1 npm --prefix web run test:e2e:saved-scene",
+    "source": "Completed Playwright list reporter",
+    "passed": 36,
+    "failed": 0,
+    "newRegression": "exited S02 S10 and S05 canvases are garbage collectible across repeat visits",
+    "regressionDurationMs": 10300,
+    "sourceSha256": {
+      "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+      "web/src/components/scene/SavedSceneRenderer.tsx": "899682e0f81e831ab84f83f0fbf0ed0a997f9d34d1484ca0d5c57dd31caf448d",
+      "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
+      "web/e2e/saved-scene-review.spec.ts": "b0c6c1c599ec91173cf181856bb1bfe71a67cbe6b5509fbff3eab081d2d20562"
+    }
+  },
+  "runs": [
+    {
+      "label": "before-review",
+      "sourceRevision": "2c9185fddaecc57066a9c8529b9b91c8fbeae489",
+      "probeSha256": "bef047acd780eeea816ba8ad38b35dd73688cfda6e6d5e67967e12f5215f7442",
+      "mode": "review",
+      "companionMode": "off",
+      "recordedAt": "2026-09-10T09:22:59.528Z",
+      "hostOs": "darwin",
+      "device": {
+        "model": "SM-A528N",
+        "os": "14",
+        "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+        "viewport": [
+          384,
+          718
+        ],
+        "dpr": 2.8125,
+        "screenWakeLock": true
+      },
+      "build": {
+        "index.html": "f998d428601e444d64ded0dc7741d7596c02d60576f2ce02bb6cd936393da2a6",
+        "assets/CompanionReviewRenderer-C9uBnNWQ.js": "0cdaf49a9e02ad3d01444037dd672a0625ad54642686392b15ea89fd9e86d909",
+        "assets/GLTFLoader-raHLAUCc.js": "feb9d33160ddb57e498f1491eb5303f4ad849b1e3b2bcb67f37a469013f2aa64",
+        "assets/SavedSceneRenderer-ECSJNKOP.js": "8ce153db6f9c280e0f5c3162921e12d923bd2f764f9a9ff18e4994fb31cb18ad",
+        "assets/ThreeSceneRenderer-FCUPs9gg.js": "cf99b9bdc12381ae8dd48c18e2b5a583e090c2be00ce9cde5a2119fa62b129fb",
+        "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+        "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+        "assets/index-CmZAV4Y0.js": "4a2d9406c9a359d3682295653fd255d4a947e870cf987f09b1b8d766a63144fe",
+        "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+        "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+      },
+      "method": "Physical Android Chrome, dedicated tab, synthetic in-page API; five warmup cycles; snapshots after forced GC at 0/10/final cycles. Heap snapshots are profiling runs, not frame-rate measurements. Raw snapshots must remain private/local.",
+      "samples": [
+        {
+          "iteration": 0,
+          "liveContexts": 0,
+          "contextCreations": 15,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7365464,
+          "nodes": 160,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-0.heapsnapshot"
+        },
+        {
+          "iteration": 1,
+          "liveContexts": 0,
+          "contextCreations": 18,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7428792,
+          "nodes": 163,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 2,
+          "liveContexts": 0,
+          "contextCreations": 21,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7473340,
+          "nodes": 166,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 3,
+          "liveContexts": 0,
+          "contextCreations": 24,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7613824,
+          "nodes": 169,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 4,
+          "liveContexts": 0,
+          "contextCreations": 27,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7718708,
+          "nodes": 172,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 5,
+          "liveContexts": 0,
+          "contextCreations": 30,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7755228,
+          "nodes": 175,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 6,
+          "liveContexts": 0,
+          "contextCreations": 33,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7799572,
+          "nodes": 178,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 7,
+          "liveContexts": 0,
+          "contextCreations": 36,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7837556,
+          "nodes": 181,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 8,
+          "liveContexts": 0,
+          "contextCreations": 39,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7878860,
+          "nodes": 184,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 9,
+          "liveContexts": 0,
+          "contextCreations": 42,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7917736,
+          "nodes": 187,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 10,
+          "liveContexts": 0,
+          "contextCreations": 45,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7954460,
+          "nodes": 190,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-10.heapsnapshot"
+        },
+        {
+          "iteration": 11,
+          "liveContexts": 0,
+          "contextCreations": 48,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7979552,
+          "nodes": 193,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 12,
+          "liveContexts": 0,
+          "contextCreations": 51,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8019608,
+          "nodes": 196,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 13,
+          "liveContexts": 0,
+          "contextCreations": 54,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8052656,
+          "nodes": 199,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 14,
+          "liveContexts": 0,
+          "contextCreations": 57,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8084420,
+          "nodes": 202,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 15,
+          "liveContexts": 0,
+          "contextCreations": 60,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8115852,
+          "nodes": 205,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 16,
+          "liveContexts": 0,
+          "contextCreations": 63,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8143696,
+          "nodes": 208,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 17,
+          "liveContexts": 0,
+          "contextCreations": 66,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8178756,
+          "nodes": 211,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 18,
+          "liveContexts": 0,
+          "contextCreations": 69,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8210060,
+          "nodes": 214,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 19,
+          "liveContexts": 0,
+          "contextCreations": 72,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8230860,
+          "nodes": 217,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 20,
+          "liveContexts": 0,
+          "contextCreations": 75,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8253376,
+          "nodes": 220,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 21,
+          "liveContexts": 0,
+          "contextCreations": 78,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8291312,
+          "nodes": 223,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 22,
+          "liveContexts": 0,
+          "contextCreations": 81,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8316392,
+          "nodes": 226,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 23,
+          "liveContexts": 0,
+          "contextCreations": 84,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8342424,
+          "nodes": 229,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 24,
+          "liveContexts": 0,
+          "contextCreations": 87,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8375356,
+          "nodes": 232,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 25,
+          "liveContexts": 0,
+          "contextCreations": 90,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8410276,
+          "nodes": 235,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 26,
+          "liveContexts": 0,
+          "contextCreations": 93,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8434220,
+          "nodes": 238,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 27,
+          "liveContexts": 0,
+          "contextCreations": 96,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8470008,
+          "nodes": 241,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 28,
+          "liveContexts": 0,
+          "contextCreations": 99,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8502304,
+          "nodes": 244,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 29,
+          "liveContexts": 0,
+          "contextCreations": 102,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8532752,
+          "nodes": 247,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 30,
+          "liveContexts": 0,
+          "contextCreations": 105,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 8555832,
+          "nodes": 250,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-30.heapsnapshot"
+        }
+      ],
+      "errors": [],
+      "completed": true,
+      "snapshots": [
+        {
+          "iteration": 0,
+          "snapshotSha256": "65354e397dc3587c1de93d5902ca9f553b6145b9a423110db2453fff6c621c82",
+          "nativeCanvases": 15,
+          "nativeWebGL": [
+            {
+              "name": "WebGL2RenderingContext",
+              "count": 15,
+              "selfBytes": 22800
+            },
+            {
+              "name": "WebGLTexture",
+              "count": 90,
+              "selfBytes": 6480
+            },
+            {
+              "name": "WebGLShader",
+              "count": 30,
+              "selfBytes": 2400
+            },
+            {
+              "name": "WebGLVertexArrayObject",
+              "count": 15,
+              "selfBytes": 1560
+            },
+            {
+              "name": "WebGLProgram",
+              "count": 15,
+              "selfBytes": 1440
+            },
+            {
+              "name": "WebGLTransformFeedback",
+              "count": 15,
+              "selfBytes": 1320
+            },
+            {
+              "name": "WebGLClipCullDistance",
+              "count": 15,
+              "selfBytes": 720
+            },
+            {
+              "name": "WebGLLoseContext",
+              "count": 15,
+              "selfBytes": 720
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "snapshotSha256": "ec10e87e47681937e630ae357cf55410558c9bae0e3d99236e6ee678479f66c2",
+          "nativeCanvases": 45,
+          "nativeWebGL": [
+            {
+              "name": "WebGL2RenderingContext",
+              "count": 45,
+              "selfBytes": 68400
+            },
+            {
+              "name": "WebGLTexture",
+              "count": 270,
+              "selfBytes": 19440
+            },
+            {
+              "name": "WebGLShader",
+              "count": 90,
+              "selfBytes": 7200
+            },
+            {
+              "name": "WebGLVertexArrayObject",
+              "count": 45,
+              "selfBytes": 4680
+            },
+            {
+              "name": "WebGLProgram",
+              "count": 45,
+              "selfBytes": 4320
+            },
+            {
+              "name": "WebGLTransformFeedback",
+              "count": 45,
+              "selfBytes": 3960
+            },
+            {
+              "name": "WebGLLoseContext",
+              "count": 45,
+              "selfBytes": 2160
+            },
+            {
+              "name": "WebGLClipCullDistance",
+              "count": 45,
+              "selfBytes": 2160
+            }
+          ]
+        },
+        {
+          "iteration": 30,
+          "snapshotSha256": "3660dcb7c549052e84e35b5250f8af5cf8e82cbfcd294aeaa47f7600aa11ef27",
+          "nativeCanvases": 105,
+          "nativeWebGL": [
+            {
+              "name": "WebGL2RenderingContext",
+              "count": 105,
+              "selfBytes": 159600
+            },
+            {
+              "name": "WebGLTexture",
+              "count": 630,
+              "selfBytes": 45360
+            },
+            {
+              "name": "WebGLShader",
+              "count": 210,
+              "selfBytes": 16800
+            },
+            {
+              "name": "WebGLVertexArrayObject",
+              "count": 105,
+              "selfBytes": 10920
+            },
+            {
+              "name": "WebGLProgram",
+              "count": 105,
+              "selfBytes": 10080
+            },
+            {
+              "name": "WebGLTransformFeedback",
+              "count": 105,
+              "selfBytes": 9240
+            },
+            {
+              "name": "WebGLClipCullDistance",
+              "count": 105,
+              "selfBytes": 5040
+            },
+            {
+              "name": "WebGLLoseContext",
+              "count": 105,
+              "selfBytes": 5040
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "off-control",
+      "sourceRevision": "2c9185fddaecc57066a9c8529b9b91c8fbeae489",
+      "probeSha256": "bef047acd780eeea816ba8ad38b35dd73688cfda6e6d5e67967e12f5215f7442",
+      "mode": "off",
+      "companionMode": "off",
+      "recordedAt": "2026-09-10T09:27:40.865Z",
+      "hostOs": "darwin",
+      "device": {
+        "model": "SM-A528N",
+        "os": "14",
+        "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+        "viewport": [
+          384,
+          718
+        ],
+        "dpr": 2.8125,
+        "screenWakeLock": true
+      },
+      "build": {
+        "index.html": "709c6f636df689a9788ae05db194e08b6e225d90ade0110d051eda209ffed3e3",
+        "assets/CompanionReviewRenderer-CQ131xMc.js": "f4c45ef80202737edd6ad49da190d702772ac39a5fea497342ab873bf297be8a",
+        "assets/GLTFLoader-raHLAUCc.js": "feb9d33160ddb57e498f1491eb5303f4ad849b1e3b2bcb67f37a469013f2aa64",
+        "assets/SavedSceneRenderer-C9-Uej60.js": "e7bfb65aa68225628a724e7678a8f20d8e55a4287b71db186ea652814fa7339e",
+        "assets/ThreeSceneRenderer-BD6MtRm9.js": "b981f687a8898967b1695cf3ad521344a9068e427c1cd098dad8224db19a70b3",
+        "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+        "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+        "assets/index-lZ4N3tSs.js": "ed6dfcf726baa3321c009e195c91c99f5818ddee0da4d1cb7c29c93c5288a182",
+        "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+        "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+      },
+      "method": "Physical Android Chrome, dedicated tab, synthetic in-page API; five warmup cycles; snapshots after forced GC at 0/10/final cycles. Heap snapshots are profiling runs, not frame-rate measurements. Raw snapshots must remain private/local.",
+      "samples": [
+        {
+          "iteration": 0,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3240524,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174,
+          "localSnapshot": "off-0.heapsnapshot"
+        },
+        {
+          "iteration": 1,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3355544,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 2,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3369396,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 3,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3380340,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 4,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3414952,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 5,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3425084,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 6,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3435648,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 7,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3444168,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 8,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3470680,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 9,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3483368,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 10,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3483696,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174,
+          "localSnapshot": "off-10.heapsnapshot"
+        },
+        {
+          "iteration": 11,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3487928,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 12,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3493528,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 13,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3503256,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 14,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3526328,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 15,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3526792,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 16,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3527484,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 17,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3531896,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 18,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3540580,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 19,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3553968,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 20,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3549720,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 21,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3560880,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 22,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3576876,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 23,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3578092,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 24,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3579808,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 25,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3579828,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 26,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3579932,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 27,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3582304,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 28,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3587468,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 29,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3589000,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174
+        },
+        {
+          "iteration": 30,
+          "liveContexts": 0,
+          "contextCreations": 0,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 3591652,
+          "nodes": 141,
+          "documents": 1,
+          "eventListeners": 174,
+          "localSnapshot": "off-30.heapsnapshot"
+        }
+      ],
+      "errors": [],
+      "completed": true,
+      "snapshots": [
+        {
+          "iteration": 0,
+          "snapshotSha256": "3917a6acc8b2793c367b1dc4e0dbccbdd03d552755d5d2b27a46cebf327e1cd8",
+          "nativeCanvases": 0,
+          "nativeWebGL": []
+        },
+        {
+          "iteration": 10,
+          "snapshotSha256": "e7b65e480d0ca85bb95617f8bc41650a4849537d65b9a25e3de699cc090bc4a7",
+          "nativeCanvases": 0,
+          "nativeWebGL": []
+        },
+        {
+          "iteration": 30,
+          "snapshotSha256": "4106de85a306a6eb1ee1e8818f5e9ca6b660ce062916b85ad7225a8dafa4bb77",
+          "nativeCanvases": 0,
+          "nativeWebGL": []
+        }
+      ]
+    },
+    {
+      "label": "fixed-review-interrupted",
+      "sourceRevision": "2c9185fddaecc57066a9c8529b9b91c8fbeae489",
+      "sourceFiles": {
+        "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
+        "web/scripts/scene-asset-inputs.mjs": "604fe9375b7d51324355335b95e3bdc494bea2eca433219eaaf48fdaa2975ca5",
+        "web/src/App.tsx": "e92b5d4162528f45388bd940e2ac94a9e6d3007f54b1a3cf2d6b373cef0d96ae",
+        "web/src/components/AccountDeletionConfirmation.tsx": "221bcd4081d1ea23f9ff58d700c6e9b6ffb5df5094fe5b55483a3222779ede0e",
+        "web/src/components/CompanionReviewRenderer.tsx": "e4cd47e2733ae96cd829c0bb6d504c610b412623d9aeddea89f65b57fed1887e",
+        "web/src/components/CompanionRuntimeBoundary.tsx": "43d397d8eab997f1afbe5411485f5555eb6d25081c55f25284146a3d380a695e",
+        "web/src/components/DeleteConfirmation.tsx": "cad71a298a88fe7171e0462df3bbfff9db3008eed6a160d255a30f9a2a3e49b9",
+        "web/src/components/ModelV2InputFlow.tsx": "544d398429acaf668ba7dac6d3e922fad88ff4aa807d6e059d7ee7032c4d5d1a",
+        "web/src/components/SavedSceneBoundary.tsx": "7b584437d9d7eacdacff6acb1ce3619096627d99354e01dd0b79109acd5ea1cd",
+        "web/src/components/SceneShell.tsx": "75eeff85057d264b0f5f1664bf10c5eecf2008001067d0b6a3b584fb8ef991d1",
+        "web/src/components/SceneVisualAsset.tsx": "2adb1e886a8dd1c27be601d38710ad5df80af5e60d725550f576de08990f7fc0",
+        "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+        "web/src/components/scene/SavedSceneRenderer.tsx": "899682e0f81e831ab84f83f0fbf0ed0a997f9d34d1484ca0d5c57dd31caf448d",
+        "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+        "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
+        "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
+        "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+        "web/src/lib/api-contract.ts": "58afbc5ebc5f193612ca9225e15c42eec69407e2f5af043b7d4cc1cfd23d47a6",
+        "web/src/lib/api.ts": "6839e09a2d54a19bd1923310d9679179bb86aa17b99531df220e1efbfcda2097",
+        "web/src/lib/e2eHarness.ts": "a0945f4a79e59ae859182d4904588f36fdb6e05bf5281a75b5574796157e105b",
+        "web/src/lib/evidenceFixtures.ts": "6b1bd7abb870249168043229db2cb80e3809ce280e0a60bb0fea33aabafef286",
+        "web/src/lib/seoulDate.ts": "b65f05b077577130996e7d6b0315c7257eb865e4d15cdc0e6f9ecf542d862d17",
+        "web/src/lib/supabase.ts": "d4b45f6e6659cf41ca7632c351a8c1299a61c42027dd873200a0351beed297fe",
+        "web/src/lib/useSavedSceneEvent.ts": "35d2939a6d93a685927bd69c32a21c7d3a2a22bc8059d2a2e300b017ef5d9189",
+        "web/src/lib/useSeoulDate.ts": "7ab70641b2153e87fb5e8a6086424eedb7a9263c7724e1105e06e642c0c290fc",
+        "web/src/main.tsx": "e07d1e1a4ad807b961838d79ff6015a3cd8eb78136ad6608f41dfe529fb8368c",
+        "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+        "web/src/ui/companion.ts": "6d5b0dfe41f22391be49535c456893f8c47e628715d4759fbc06d3972ea5c02f",
+        "web/src/ui/companionAssets.generated.ts": "908fc37f04fa2a71b86ff2ae3eef929d2387a8c1a5f73a3ea1dafa5cea1e2363",
+        "web/src/ui/journey.ts": "51e64b32bf7294c609d454cff849c3619bb2606c9e5f3204a696a78f68318ffe",
+        "web/src/ui/modelV2ResultState.ts": "586f2a6ee1befd785a2058730b3b30c7cea265e2ab81c72386d1f1be86915cba",
+        "web/src/ui/r2VisualAssets.ts": "3b0077ceac2c767da072bc1d6aff9124f489a2a3ef00860e722bf4a315d7d721",
+        "web/src/ui/savedScene.ts": "616467f2491c7d8fb6b4c9d551073cebb402ea19ff5a4e83151d407486501c52",
+        "web/src/ui/scene-manifest.v2.json": "3c52f4b3617b21365c95ed05733e45539db5ebc5ee0259e5d50e1ac98df3c990",
+        "web/src/ui/sceneManifest.generated.ts": "4d5d78b8a65619c3e58f8378cdd15f111a49b82d361018c878f85e242b329418",
+        "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+        "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+        "web/src/vite-env.d.ts": "7f7574accd1e8fbf132ce2ae2ac363b7d50ac7eb17a55f76905b1ee75f2171ee"
+      },
+      "probeSha256": "9a2ef47f29a543a2876b5492734529a81f0edb13de7cf749d7e7a4c4fe8cf8aa",
+      "mode": "review",
+      "companionMode": "off",
+      "recordedAt": "2026-09-10T09:31:25.924Z",
+      "hostOs": "darwin",
+      "device": {
+        "model": "SM-A528N",
+        "os": "14",
+        "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+        "viewport": [
+          384,
+          718
+        ],
+        "dpr": 2.8125,
+        "screenWakeLock": true
+      },
+      "build": {
+        "index.html": "7c912c6088f6b93b7192a13d7917e439ecf83b744eb120df591d0e6bb7803287",
+        "assets/CompanionReviewRenderer-DRuz0g6y.js": "97852062e93aa142809eb49c1c8c816e5b2827eaa361b69bd77f9cd3418ff8ec",
+        "assets/GLTFLoader-BuuAnLd3.js": "7907bd6dec56ce69fd42e96b8aaf98daa8c647d446f1c1b71a9b099484976c96",
+        "assets/SavedSceneRenderer-Bw4FHNL9.js": "bfa62d4d7a37886ada1544cd6ce5362f97e151ef6db743a106c7c9dd7305f968",
+        "assets/ThreeSceneRenderer-BUQUne2z.js": "5e6b719bc6d50b6c0f3bb55808bca978611c97d62cc859fc3f8202335b8e84ce",
+        "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+        "assets/disposeScene-B6JuF6-l.js": "2aeebf8824c0f5ff999ca7e0bb10989e7c598cf30869db891a7166bfb75d8b09",
+        "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+        "assets/index-DlODErJD.js": "376c00773b70fa86136f13b100a4d35d6bff82738837120d9f2c639da3171fc8",
+        "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+        "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+      },
+      "method": "Physical Android Chrome, dedicated tab, synthetic in-page API; five warmup cycles; snapshots after forced GC at 0/10/final cycles. Heap snapshots are profiling runs, not frame-rate measurements. Raw snapshots must remain private/local.",
+      "samples": [
+        {
+          "iteration": 0,
+          "liveContexts": 0,
+          "contextCreations": 15,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7196060,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-0.heapsnapshot"
+        },
+        {
+          "iteration": 1,
+          "liveContexts": 0,
+          "contextCreations": 18,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7233608,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 2,
+          "liveContexts": 0,
+          "contextCreations": 21,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7255400,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 3,
+          "liveContexts": 0,
+          "contextCreations": 24,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7286736,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 4,
+          "liveContexts": 0,
+          "contextCreations": 27,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7368808,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 5,
+          "liveContexts": 0,
+          "contextCreations": 30,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7386736,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 6,
+          "liveContexts": 0,
+          "contextCreations": 33,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7488100,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 7,
+          "liveContexts": 0,
+          "contextCreations": 36,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7506828,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 8,
+          "liveContexts": 0,
+          "contextCreations": 39,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7519184,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 9,
+          "liveContexts": 0,
+          "contextCreations": 42,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7528996,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        }
+      ],
+      "errors": [],
+      "completed": false,
+      "failure": {
+        "phase": "cycle-10",
+        "name": "TimeoutError",
+        "message": "locator.click: Timeout 20000ms exceeded.",
+        "state": {
+          "visibility": "visible",
+          "screen": "S05",
+          "stageCount": 0
+        }
+      },
+      "snapshots": [
+        {
+          "iteration": 0,
+          "snapshotSha256": "85b666220c6e10ccc1ce82e64b19f9c9787a61bfb73a0959b3dd6b6b5a2dd35b",
+          "nativeCanvases": 0,
+          "nativeWebGL": []
+        }
+      ]
+    },
+    {
+      "label": "fixed-review-complete",
+      "sourceRevision": "0f35db18b1f0ffdce5ff76b199380b4b3ee68642",
+      "sourceFiles": {
+        "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
+        "web/scripts/scene-asset-inputs.mjs": "604fe9375b7d51324355335b95e3bdc494bea2eca433219eaaf48fdaa2975ca5",
+        "web/src/App.tsx": "e92b5d4162528f45388bd940e2ac94a9e6d3007f54b1a3cf2d6b373cef0d96ae",
+        "web/src/components/AccountDeletionConfirmation.tsx": "221bcd4081d1ea23f9ff58d700c6e9b6ffb5df5094fe5b55483a3222779ede0e",
+        "web/src/components/CompanionReviewRenderer.tsx": "e4cd47e2733ae96cd829c0bb6d504c610b412623d9aeddea89f65b57fed1887e",
+        "web/src/components/CompanionRuntimeBoundary.tsx": "43d397d8eab997f1afbe5411485f5555eb6d25081c55f25284146a3d380a695e",
+        "web/src/components/DeleteConfirmation.tsx": "cad71a298a88fe7171e0462df3bbfff9db3008eed6a160d255a30f9a2a3e49b9",
+        "web/src/components/ModelV2InputFlow.tsx": "544d398429acaf668ba7dac6d3e922fad88ff4aa807d6e059d7ee7032c4d5d1a",
+        "web/src/components/SavedSceneBoundary.tsx": "7b584437d9d7eacdacff6acb1ce3619096627d99354e01dd0b79109acd5ea1cd",
+        "web/src/components/SceneShell.tsx": "75eeff85057d264b0f5f1664bf10c5eecf2008001067d0b6a3b584fb8ef991d1",
+        "web/src/components/SceneVisualAsset.tsx": "2adb1e886a8dd1c27be601d38710ad5df80af5e60d725550f576de08990f7fc0",
+        "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+        "web/src/components/scene/SavedSceneRenderer.tsx": "899682e0f81e831ab84f83f0fbf0ed0a997f9d34d1484ca0d5c57dd31caf448d",
+        "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+        "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
+        "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
+        "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+        "web/src/lib/api-contract.ts": "58afbc5ebc5f193612ca9225e15c42eec69407e2f5af043b7d4cc1cfd23d47a6",
+        "web/src/lib/api.ts": "6839e09a2d54a19bd1923310d9679179bb86aa17b99531df220e1efbfcda2097",
+        "web/src/lib/e2eHarness.ts": "a0945f4a79e59ae859182d4904588f36fdb6e05bf5281a75b5574796157e105b",
+        "web/src/lib/evidenceFixtures.ts": "6b1bd7abb870249168043229db2cb80e3809ce280e0a60bb0fea33aabafef286",
+        "web/src/lib/seoulDate.ts": "b65f05b077577130996e7d6b0315c7257eb865e4d15cdc0e6f9ecf542d862d17",
+        "web/src/lib/supabase.ts": "d4b45f6e6659cf41ca7632c351a8c1299a61c42027dd873200a0351beed297fe",
+        "web/src/lib/useSavedSceneEvent.ts": "35d2939a6d93a685927bd69c32a21c7d3a2a22bc8059d2a2e300b017ef5d9189",
+        "web/src/lib/useSeoulDate.ts": "7ab70641b2153e87fb5e8a6086424eedb7a9263c7724e1105e06e642c0c290fc",
+        "web/src/main.tsx": "e07d1e1a4ad807b961838d79ff6015a3cd8eb78136ad6608f41dfe529fb8368c",
+        "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+        "web/src/ui/companion.ts": "6d5b0dfe41f22391be49535c456893f8c47e628715d4759fbc06d3972ea5c02f",
+        "web/src/ui/companionAssets.generated.ts": "908fc37f04fa2a71b86ff2ae3eef929d2387a8c1a5f73a3ea1dafa5cea1e2363",
+        "web/src/ui/journey.ts": "51e64b32bf7294c609d454cff849c3619bb2606c9e5f3204a696a78f68318ffe",
+        "web/src/ui/modelV2ResultState.ts": "586f2a6ee1befd785a2058730b3b30c7cea265e2ab81c72386d1f1be86915cba",
+        "web/src/ui/r2VisualAssets.ts": "3b0077ceac2c767da072bc1d6aff9124f489a2a3ef00860e722bf4a315d7d721",
+        "web/src/ui/savedScene.ts": "616467f2491c7d8fb6b4c9d551073cebb402ea19ff5a4e83151d407486501c52",
+        "web/src/ui/scene-manifest.v2.json": "3c52f4b3617b21365c95ed05733e45539db5ebc5ee0259e5d50e1ac98df3c990",
+        "web/src/ui/sceneManifest.generated.ts": "4d5d78b8a65619c3e58f8378cdd15f111a49b82d361018c878f85e242b329418",
+        "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+        "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+        "web/src/vite-env.d.ts": "7f7574accd1e8fbf132ce2ae2ac363b7d50ac7eb17a55f76905b1ee75f2171ee"
+      },
+      "probeSha256": "9a2ef47f29a543a2876b5492734529a81f0edb13de7cf749d7e7a4c4fe8cf8aa",
+      "mode": "review",
+      "companionMode": "off",
+      "recordedAt": "2026-09-10T10:05:59.444Z",
+      "hostOs": "darwin",
+      "device": {
+        "model": "SM-A528N",
+        "os": "14",
+        "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+        "viewport": [
+          384,
+          718
+        ],
+        "dpr": 2.8125,
+        "screenWakeLock": true
+      },
+      "build": {
+        "index.html": "7c912c6088f6b93b7192a13d7917e439ecf83b744eb120df591d0e6bb7803287",
+        "assets/CompanionReviewRenderer-DRuz0g6y.js": "97852062e93aa142809eb49c1c8c816e5b2827eaa361b69bd77f9cd3418ff8ec",
+        "assets/GLTFLoader-BuuAnLd3.js": "7907bd6dec56ce69fd42e96b8aaf98daa8c647d446f1c1b71a9b099484976c96",
+        "assets/SavedSceneRenderer-Bw4FHNL9.js": "bfa62d4d7a37886ada1544cd6ce5362f97e151ef6db743a106c7c9dd7305f968",
+        "assets/ThreeSceneRenderer-BUQUne2z.js": "5e6b719bc6d50b6c0f3bb55808bca978611c97d62cc859fc3f8202335b8e84ce",
+        "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+        "assets/disposeScene-B6JuF6-l.js": "2aeebf8824c0f5ff999ca7e0bb10989e7c598cf30869db891a7166bfb75d8b09",
+        "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+        "assets/index-DlODErJD.js": "376c00773b70fa86136f13b100a4d35d6bff82738837120d9f2c639da3171fc8",
+        "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+        "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+      },
+      "method": "Physical Android Chrome, dedicated tab, synthetic in-page API; five warmup cycles; snapshots after forced GC at 0/10/final cycles. Heap snapshots are profiling runs, not frame-rate measurements. Raw snapshots must remain private/local.",
+      "samples": [
+        {
+          "iteration": 0,
+          "liveContexts": 0,
+          "contextCreations": 15,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7201840,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-0.heapsnapshot"
+        },
+        {
+          "iteration": 1,
+          "liveContexts": 0,
+          "contextCreations": 18,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7239724,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 2,
+          "liveContexts": 0,
+          "contextCreations": 21,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7258904,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 3,
+          "liveContexts": 0,
+          "contextCreations": 24,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7290620,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 4,
+          "liveContexts": 0,
+          "contextCreations": 27,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7374268,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 5,
+          "liveContexts": 0,
+          "contextCreations": 30,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7390136,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 6,
+          "liveContexts": 0,
+          "contextCreations": 33,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7409712,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 7,
+          "liveContexts": 0,
+          "contextCreations": 36,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7428764,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 8,
+          "liveContexts": 0,
+          "contextCreations": 39,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7439784,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 9,
+          "liveContexts": 0,
+          "contextCreations": 42,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7532508,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 10,
+          "liveContexts": 0,
+          "contextCreations": 45,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7546204,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-10.heapsnapshot"
+        },
+        {
+          "iteration": 11,
+          "liveContexts": 0,
+          "contextCreations": 48,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7549104,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 12,
+          "liveContexts": 0,
+          "contextCreations": 51,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7564592,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 13,
+          "liveContexts": 0,
+          "contextCreations": 54,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7573332,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 14,
+          "liveContexts": 0,
+          "contextCreations": 57,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7580388,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 15,
+          "liveContexts": 0,
+          "contextCreations": 60,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7588928,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 16,
+          "liveContexts": 0,
+          "contextCreations": 63,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7594060,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 17,
+          "liveContexts": 0,
+          "contextCreations": 66,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7606380,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 18,
+          "liveContexts": 0,
+          "contextCreations": 69,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7619400,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 19,
+          "liveContexts": 0,
+          "contextCreations": 72,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7618492,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 20,
+          "liveContexts": 0,
+          "contextCreations": 75,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7617920,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 21,
+          "liveContexts": 0,
+          "contextCreations": 78,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7629708,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 22,
+          "liveContexts": 0,
+          "contextCreations": 81,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7636800,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 23,
+          "liveContexts": 0,
+          "contextCreations": 84,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7643800,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 24,
+          "liveContexts": 0,
+          "contextCreations": 87,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7650596,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 25,
+          "liveContexts": 0,
+          "contextCreations": 90,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7660456,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 26,
+          "liveContexts": 0,
+          "contextCreations": 93,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7658872,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 27,
+          "liveContexts": 0,
+          "contextCreations": 96,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7671036,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 28,
+          "liveContexts": 0,
+          "contextCreations": 99,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7681424,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 29,
+          "liveContexts": 0,
+          "contextCreations": 102,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7686468,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189
+        },
+        {
+          "iteration": 30,
+          "liveContexts": 0,
+          "contextCreations": 105,
+          "domCanvases": 0,
+          "jsHeapUsedBytes": 7690116,
+          "nodes": 146,
+          "documents": 1,
+          "eventListeners": 189,
+          "localSnapshot": "review-30.heapsnapshot"
+        }
+      ],
+      "errors": [],
+      "completed": true,
+      "snapshots": [
+        {
+          "iteration": 0,
+          "snapshotSha256": "3962f8a9a5871954fcf768193150d4f82a0150e8b652801a9440b805ac9e0cad",
+          "nativeCanvases": 0,
+          "nativeWebGL": [],
+          "browserTimingClasses": [
+            {
+              "name": "PerformanceEventTiming",
+              "count": 87,
+              "selfBytes": 22272
+            },
+            {
+              "name": "DOMRectReadOnly",
+              "count": 152,
+              "selfBytes": 8512
+            },
+            {
+              "name": "LayoutShift",
+              "count": 38,
+              "selfBytes": 5776
+            },
+            {
+              "name": "PerformanceLongAnimationFrameTiming",
+              "count": 31,
+              "selfBytes": 5456
+            },
+            {
+              "name": "PerformanceScriptTiming",
+              "count": 32,
+              "selfBytes": 3840
+            },
+            {
+              "name": "PerformanceResourceTiming",
+              "count": 25,
+              "selfBytes": 3400
+            },
+            {
+              "name": "LayoutShiftAttribution",
+              "count": 76,
+              "selfBytes": 3040
+            },
+            {
+              "name": "PerformanceLongTaskTiming",
+              "count": 27,
+              "selfBytes": 2808
+            },
+            {
+              "name": "PerformanceSoftNavigation",
+              "count": 20,
+              "selfBytes": 2240
+            },
+            {
+              "name": "Performance",
+              "count": 1,
+              "selfBytes": 1424
+            },
+            {
+              "name": "PerformancePaintTiming",
+              "count": 2,
+              "selfBytes": 176
+            },
+            {
+              "name": "PerformanceNavigationTiming",
+              "count": 1,
+              "selfBytes": 168
+            },
+            {
+              "name": "PerformanceTiming",
+              "count": 1,
+              "selfBytes": 40
+            }
+          ],
+          "byType": {
+            "synthetic": {
+              "count": 32,
+              "selfBytes": 0
+            },
+            "native": {
+              "count": 28302,
+              "selfBytes": 3810802
+            },
+            "string": {
+              "count": 26340,
+              "selfBytes": 1092376
+            },
+            "object shape": {
+              "count": 8368,
+              "selfBytes": 479116
+            },
+            "code": {
+              "count": 44943,
+              "selfBytes": 4304124
+            },
+            "array": {
+              "count": 1498,
+              "selfBytes": 272636
+            },
+            "number": {
+              "count": 11750,
+              "selfBytes": 12576
+            },
+            "symbol": {
+              "count": 78,
+              "selfBytes": 368
+            },
+            "object": {
+              "count": 5671,
+              "selfBytes": 156192
+            },
+            "concatenated string": {
+              "count": 1424,
+              "selfBytes": 28480
+            },
+            "closure": {
+              "count": 6978,
+              "selfBytes": 203276
+            },
+            "sliced string": {
+              "count": 1,
+              "selfBytes": 20
+            },
+            "regexp": {
+              "count": 11,
+              "selfBytes": 264
+            }
+          }
+        },
+        {
+          "iteration": 10,
+          "snapshotSha256": "73b278e1b114777e3f0501180c37e097bf19f14b36d526de3b45e9c17df513cb",
+          "nativeCanvases": 0,
+          "nativeWebGL": [],
+          "browserTimingClasses": [
+            {
+              "name": "PerformanceEventTiming",
+              "count": 182,
+              "selfBytes": 46592
+            },
+            {
+              "name": "DOMRectReadOnly",
+              "count": 486,
+              "selfBytes": 27216
+            },
+            {
+              "name": "LayoutShift",
+              "count": 118,
+              "selfBytes": 17936
+            },
+            {
+              "name": "PerformanceLongAnimationFrameTiming",
+              "count": 82,
+              "selfBytes": 14432
+            },
+            {
+              "name": "PerformanceScriptTiming",
+              "count": 84,
+              "selfBytes": 10080
+            },
+            {
+              "name": "LayoutShiftAttribution",
+              "count": 243,
+              "selfBytes": 9720
+            },
+            {
+              "name": "PerformanceResourceTiming",
+              "count": 65,
+              "selfBytes": 8840
+            },
+            {
+              "name": "PerformanceLongTaskTiming",
+              "count": 77,
+              "selfBytes": 8008
+            },
+            {
+              "name": "PerformanceSoftNavigation",
+              "count": 50,
+              "selfBytes": 5600
+            },
+            {
+              "name": "Performance",
+              "count": 1,
+              "selfBytes": 1424
+            },
+            {
+              "name": "PerformancePaintTiming",
+              "count": 2,
+              "selfBytes": 176
+            },
+            {
+              "name": "PerformanceNavigationTiming",
+              "count": 1,
+              "selfBytes": 168
+            },
+            {
+              "name": "PerformanceTiming",
+              "count": 1,
+              "selfBytes": 40
+            }
+          ],
+          "byType": {
+            "synthetic": {
+              "count": 32,
+              "selfBytes": 0
+            },
+            "native": {
+              "count": 30056,
+              "selfBytes": 4018936
+            },
+            "string": {
+              "count": 26472,
+              "selfBytes": 1094356
+            },
+            "object shape": {
+              "count": 8496,
+              "selfBytes": 484372
+            },
+            "code": {
+              "count": 46628,
+              "selfBytes": 4586400
+            },
+            "array": {
+              "count": 1524,
+              "selfBytes": 275960
+            },
+            "number": {
+              "count": 11805,
+              "selfBytes": 12576
+            },
+            "symbol": {
+              "count": 78,
+              "selfBytes": 368
+            },
+            "object": {
+              "count": 5725,
+              "selfBytes": 157364
+            },
+            "closure": {
+              "count": 6986,
+              "selfBytes": 203504
+            },
+            "concatenated string": {
+              "count": 1424,
+              "selfBytes": 28480
+            },
+            "regexp": {
+              "count": 11,
+              "selfBytes": 264
+            },
+            "sliced string": {
+              "count": 1,
+              "selfBytes": 20
+            }
+          }
+        },
+        {
+          "iteration": 30,
+          "snapshotSha256": "08062f4bc760a947c579c2a0d4f3e17cca09b716ce5dd1fcaaf2ba35dfd649df",
+          "nativeCanvases": 0,
+          "nativeWebGL": [],
+          "browserTimingClasses": [
+            {
+              "name": "PerformanceEventTiming",
+              "count": 182,
+              "selfBytes": 46592
+            },
+            {
+              "name": "DOMRectReadOnly",
+              "count": 622,
+              "selfBytes": 34832
+            },
+            {
+              "name": "PerformanceLongAnimationFrameTiming",
+              "count": 185,
+              "selfBytes": 32560
+            },
+            {
+              "name": "LayoutShift",
+              "count": 150,
+              "selfBytes": 22800
+            },
+            {
+              "name": "PerformanceScriptTiming",
+              "count": 186,
+              "selfBytes": 22320
+            },
+            {
+              "name": "PerformanceResourceTiming",
+              "count": 145,
+              "selfBytes": 19720
+            },
+            {
+              "name": "PerformanceLongTaskTiming",
+              "count": 177,
+              "selfBytes": 18408
+            },
+            {
+              "name": "LayoutShiftAttribution",
+              "count": 311,
+              "selfBytes": 12440
+            },
+            {
+              "name": "PerformanceSoftNavigation",
+              "count": 50,
+              "selfBytes": 5600
+            },
+            {
+              "name": "Performance",
+              "count": 1,
+              "selfBytes": 1424
+            },
+            {
+              "name": "PerformancePaintTiming",
+              "count": 2,
+              "selfBytes": 176
+            },
+            {
+              "name": "PerformanceNavigationTiming",
+              "count": 1,
+              "selfBytes": 168
+            },
+            {
+              "name": "PerformanceTiming",
+              "count": 1,
+              "selfBytes": 40
+            }
+          ],
+          "byType": {
+            "synthetic": {
+              "count": 32,
+              "selfBytes": 0
+            },
+            "native": {
+              "count": 31617,
+              "selfBytes": 4191812
+            },
+            "string": {
+              "count": 26483,
+              "selfBytes": 1094556
+            },
+            "object shape": {
+              "count": 8498,
+              "selfBytes": 484448
+            },
+            "code": {
+              "count": 47129,
+              "selfBytes": 4715656
+            },
+            "array": {
+              "count": 1527,
+              "selfBytes": 276132
+            },
+            "number": {
+              "count": 11813,
+              "selfBytes": 12612
+            },
+            "symbol": {
+              "count": 78,
+              "selfBytes": 368
+            },
+            "object": {
+              "count": 5729,
+              "selfBytes": 157436
+            },
+            "closure": {
+              "count": 6986,
+              "selfBytes": 203504
+            },
+            "concatenated string": {
+              "count": 1424,
+              "selfBytes": 28480
+            },
+            "regexp": {
+              "count": 11,
+              "selfBytes": 264
+            },
+            "sliced string": {
+              "count": 1,
+              "selfBytes": 20
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "unknownOrOpen": [
+    "Aggregate application JS retention attribution",
+    "Absolute GPU/peak-process memory",
+    "Presented frames and shader/decode/input attribution",
+    "Wi-Fi/cellular whole-page delivery",
+    "OS motion and remaining audible/touch/switch checks",
+    "Physical Safari realtime 3D and performance",
+    "S05 owner acceptance and production activation"
+  ],
+  "additionalValidation": {
+    "sceneReview": {
+      "passed": 52,
+      "failed": 0,
+      "command": "CI=1 npm --prefix web run test:e2e:scene",
+      "reportSha256": "4d2bc2e57e6fde8b434ddf81020b654171aa5a1b47178e93a548420af6a0c19d"
+    },
+    "productionS05": {
+      "passed": 5,
+      "failed": 0,
+      "command": "CI=1 npm --prefix web run test:e2e:production:on"
+    },
+    "manifest": {
+      "passed": 72,
+      "failed": 0
+    },
+    "heapInspector": {
+      "passed": 4,
+      "failed": 0
+    },
+    "posters": {
+      "recaptured": 42,
+      "allPosterRecordsUnchanged": true,
+      "binaryChanges": 0
+    },
+    "defaultOffAndPolicy": {
+      "passed": 6,
+      "failed": 0,
+      "command": "CI=1 npx playwright test e2e/living-scene.spec.ts e2e/scene-policy.spec.ts"
+    },
+    "totalLocalChecks": 175
+  },
+  "completedResourceCheck": {
+    "sourceRevision": "0f35db18b1f0ffdce5ff76b199380b4b3ee68642",
+    "warmupCycles": 5,
+    "measuredCycles": 30,
+    "sceneVisits": 105,
+    "postGcNativeCanvasCounts": [
+      0,
+      0,
+      0
+    ],
+    "postGcNativeWebGLCounts": [
+      0,
+      0,
+      0
+    ],
+    "snapshotCycles": [
+      0,
+      10,
+      30
+    ],
+    "domNodeRange": [
+      146,
+      146
+    ],
+    "documentRange": [
+      1,
+      1
+    ],
+    "eventListenerRange": [
+      189,
+      189
+    ],
+    "jsHeapBaselineBytes": 7201840,
+    "jsHeapFinalBytes": 7690116,
+    "jsHeapDeltaBytes": 488276,
+    "passScope": "Previously attributed retained scene canvases/contexts and per-exit context lifecycle only"
+  }
+}

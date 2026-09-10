@@ -1,0 +1,39 @@
+{
+  "recordedOn": "2026-09-10",
+  "scope": "User-reported normal operation after receiving the smartphone HTTPS review links. Device details and the individual checks performed have not yet been supplied.",
+  "userReport": "모두 정상 작동입니다!",
+  "overallResult": "normal-operation-reported",
+  "reviewOrigin": "https://zus-pine-lynn-char.trycloudflare.com",
+  "candidateEvidence": "scene-phone-review-https-smoke.json",
+  "candidateQualification": "The links served the frozen S04 font/S05 position-fix candidate documented by the HTTPS smoke evidence. The device itself was not instrumented for this user report.",
+  "device": {
+    "context": "smartphone manual review",
+    "model": null,
+    "osVersion": null,
+    "browser": null,
+    "browserVersion": null
+  },
+  "individualCheckScope": "awaiting user clarification; the overall report is preserved without assigning unreported conditions",
+  "s05VisualDecision": {
+    "status": "accepted",
+    "recordedOn": "2026-09-10",
+    "userConfirmation": "저장 직후 애니메이션이 나타나는 위치가 살짝 어색하긴 하지만, 이번 PR 이후, 추후에 수정하면 충분할 것 같습니다. 최종 승인합니다.",
+    "scope": "Final visual acceptance of the current S05 position-fix candidate served by the smartphone review links",
+    "acceptedLimitation": "The animation's position immediately after saving feels slightly awkward",
+    "followUp": "Refine the initial animation placement after the current PR; the user explicitly accepts deferring this polish"
+  },
+  "unconfirmedConditions": [
+    "Screen-reader speech and touch exploration",
+    "OS reduced motion and large text",
+    "Wi-Fi and mobile data separately",
+    "Slow or failed media loading",
+    "Switch access"
+  ],
+  "measurementLimits": [
+    "No physical-device memory, GPU, presented FPS or input-to-paint measurements were supplied",
+    "The review uses no-store responses and same-origin GLB mirrors, so production transfer/cache qualification remains separate",
+    "Saving is synthetic and document-memory-only; this report does not establish backend persistence"
+  ],
+  "priorEvidence": "Existing Android repeat/CI results and S02/S10 art acceptance are unchanged. Earlier iPhone 17 / iOS 26.5 VoiceOver evidence remains classified as Simulator.",
+  "productionActivation": "unchanged; no release action"
+}

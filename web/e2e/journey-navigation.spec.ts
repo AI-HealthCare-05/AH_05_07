@@ -77,6 +77,8 @@ test("a selected fact opens its own URL-addressable detail screen", async ({ pag
 });
 
 test("confirmed persistence alone opens the saved scene", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", request => requests.push(request.url()));
   let saved = false;
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
@@ -113,6 +115,8 @@ test("confirmed persistence alone opens the saved scene", async ({ page }) => {
   await page.getByRole("button", { name: "혈압 기록 저장" }).click();
 
   expect(saved).toBe(true);
+  await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
+  expect(requests.filter(url => /SavedSceneRenderer|\.glb(?:\?|$)/.test(url))).toEqual([]);
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: "기록을 저장했어요" })).toBeVisible();
 

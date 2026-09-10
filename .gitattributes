@@ -7,3 +7,20 @@
 
 # Original companion generation records the exact committed authoring bytes.
 /tools/companions/*.py text eol=lf
+
+# Scene source-module identities and generated source must remain byte-stable.
+/web/src/components/scene/environment.ts text eol=lf
+/web/src/components/scene/ThreeSceneRenderer.tsx text eol=lf
+/web/src/components/scene/disposeScene.ts text eol=lf
+/web/scripts/capture-scene-posters.mjs text eol=lf
+/docs/evidence/scene-clay-posters.json text eol=lf
+/web/src/ui/sceneManifest.generated.ts text eol=lf
+/web/src/ui/scene-manifest.v2.json text eol=lf
+/web/src/components/scene/diorama.ts text eol=lf
+/docs/evidence/scene-diorama-posters.json text eol=lf
+
+# Every authored dependency used in scene poster captures.
+/web/src/components/VisualStage.tsx text eol=lf
+/web/src/ui/sceneRecipes.ts text eol=lf
+/web/src/ui/scenePolicy.ts text eol=lf
+/web/src/styles.css text eol=lf

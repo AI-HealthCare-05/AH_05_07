@@ -2,4 +2,5 @@
 
 interface ImportMetaEnv {
   readonly VITE_SK7_COMPANION_MODE?: string;
+  readonly VITE_SK7_SCENE_MODE?: string;
 }

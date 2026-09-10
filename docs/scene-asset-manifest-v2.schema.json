@@ -1,0 +1,570 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SK7 Scene Asset Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "manifestRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "recipes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/recipe"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "manifestRevision",
+    "sourceCommit",
+    "assets",
+    "recipes"
+  ],
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "character",
+            "environment",
+            "poster",
+            "layer",
+            "material",
+            "decoder"
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "reference-only",
+            "review",
+            "approved"
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sourceAssetId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "owner": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rightsBasis": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reviewReference": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "sourceAssetId",
+            "sourceHash",
+            "owner",
+            "rightsBasis",
+            "reviewReference"
+          ]
+        },
+        "delivery": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^(https://|/scene-review/(s02|s10)/v1/)"
+            },
+            "objectKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byteLength": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "mime": {
+              "enum": [
+                "model/gltf-binary",
+                "image/webp",
+                "image/avif",
+                "image/png",
+                "application/wasm",
+                "text/javascript",
+                "application/json"
+              ]
+            }
+          },
+          "required": [
+            "url",
+            "objectKey",
+            "sha256",
+            "byteLength",
+            "mime"
+          ]
+        },
+        "runtimeProfile": {
+          "const": "three-0.185.1-webgl"
+        },
+        "extensionsRequired": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "decoderIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "clips": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "enum": [
+                  "idle",
+                  "rest",
+                  "celebrate",
+                  "greet",
+                  "curious",
+                  "move",
+                  "special"
+                ]
+              },
+              "durationSeconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rootMotion": {
+                "enum": [
+                  "unknown",
+                  "none",
+                  "present"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "durationSeconds",
+              "rootMotion"
+            ]
+          }
+        },
+        "decorative": {
+          "const": true
+        },
+        "containsText": {
+          "const": false
+        },
+        "pointerPolicy": {
+          "const": "inert"
+        },
+        "measurement": {
+          "$ref": "#/$defs/measurement"
+        },
+        "sourceModule": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "enum": [
+                "web/src/components/scene/environment.ts",
+                "web/src/components/scene/diorama.ts"
+              ]
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byteLength": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "path",
+            "sha256",
+            "byteLength"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "revision",
+        "status",
+        "provenance",
+        "runtimeProfile",
+        "extensionsRequired",
+        "decoderIds",
+        "clips",
+        "decorative",
+        "containsText",
+        "pointerPolicy",
+        "measurement"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "delivery"
+          ]
+        },
+        {
+          "required": [
+            "sourceModule"
+          ]
+        }
+      ]
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "unmeasured",
+            "measured"
+          ]
+        },
+        "encodedBytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "drawCalls": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "gpuBytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "decodeMs": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "environment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "encodedBytes",
+        "drawCalls",
+        "gpuBytes",
+        "decodeMs",
+        "environment"
+      ]
+    },
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screens": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "S01",
+              "S02",
+              "S03",
+              "S04",
+              "S05",
+              "S06",
+              "S07",
+              "S08",
+              "S09",
+              "S10",
+              "S11",
+              "S12",
+              "S13",
+              "S14"
+            ]
+          }
+        },
+        "mode": {
+          "enum": [
+            "none",
+            "static",
+            "layered",
+            "realtime"
+          ]
+        },
+        "assetIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "maxTier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "motionPolicy": {
+          "enum": [
+            "none",
+            "neutral-static",
+            "idle-rest",
+            "s05-confirmed-save"
+          ]
+        },
+        "compositions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mobile320": {
+              "$ref": "#/$defs/composition"
+            },
+            "mobile390": {
+              "$ref": "#/$defs/composition"
+            },
+            "desktop": {
+              "$ref": "#/$defs/composition"
+            }
+          },
+          "required": [
+            "mobile320",
+            "mobile390",
+            "desktop"
+          ]
+        },
+        "fallback": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tier1RecipeId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tier0": {
+              "const": "css"
+            }
+          },
+          "required": [
+            "tier1RecipeId",
+            "tier0"
+          ]
+        },
+        "measurement": {
+          "$ref": "#/$defs/measurement"
+        },
+        "status": {
+          "enum": [
+            "review",
+            "approved"
+          ]
+        },
+        "landmarkId": {
+          "enum": [
+            null,
+            "garden-gate",
+            "herb-garden",
+            "shade-tree",
+            "footbridge",
+            "reading-shelter",
+            "pavilion",
+            "sunset-overlook"
+          ]
+        },
+        "environmentAssetId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "screens",
+        "mode",
+        "assetIds",
+        "maxTier",
+        "motionPolicy",
+        "compositions",
+        "fallback",
+        "measurement",
+        "status",
+        "landmarkId"
+      ]
+    },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "projection": {
+          "enum": [
+            "orthographic",
+            "perspective",
+            "poster",
+            "none"
+          ]
+        },
+        "stageHeight": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "subjectMinHeight": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subjectMaxHeight": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "focalPoint": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "secondaryCropping": {
+          "type": "boolean"
+        },
+        "camera": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/camera"
+            }
+          ]
+        },
+        "posterAssetId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "projection",
+        "stageHeight",
+        "subjectMinHeight",
+        "subjectMaxHeight",
+        "focalPoint",
+        "secondaryCropping",
+        "camera"
+      ]
+    },
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verticalSpan": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "characterAnchor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "environmentAnchor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "environmentScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "verticalSpan",
+        "position",
+        "target",
+        "characterAnchor",
+        "environmentAnchor",
+        "environmentScale"
+      ]
+    }
+  }
+}

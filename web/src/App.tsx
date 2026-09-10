@@ -1,6 +1,8 @@
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+
+import { VisualStage } from "./components/VisualStage";
 
 import { Scene, SceneShell } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
@@ -25,6 +27,9 @@ import {
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
+import { shiftDate } from "./lib/seoulDate";
+import { useSeoulDate } from "./lib/useSeoulDate";
+import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
@@ -39,6 +44,10 @@ const challengeActions = [
   { id: "sleep-routine", label: "수면 시간 지키기", note: "정한 시간에 하루를 천천히 닫기" },
   { id: "low-sodium-meal", label: "덜 짜게 먹기", note: "한 끼의 선택을 담백하게 기록하기" },
 ] as const;
+
+// Keep Safari's input focus from zooming the viewport and carrying that zoom
+// into the saved screen. User zoom and larger root text remain available.
+const measurementControlStyle = { fontSize: "max(1rem, 16px)" };
 
 type NoticeOrigin = "session" | "request-error" | "mutation-success" | "edit" | "export-success";
 type Notice = {
@@ -79,22 +88,6 @@ function makeNotice(
     origin: options.origin,
     persistence: options.origin === "export-success" ? "until-navigation" : "persistent",
   };
-}
-
-function koreaDate(): string {
-  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
-    .formatToParts(new Date())
-    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
-
-function shiftDate(value: string, offset: number): string {
-  const date = new Date(`${value}T12:00:00+09:00`);
-  date.setDate(date.getDate() + offset);
-  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
-    .formatToParts(date)
-    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
-  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 function dashboardWindowBounds(today: string, window: DashboardWindow): Pick<ObservationWindow, "start_on" | "end_on"> {
@@ -201,7 +194,7 @@ function App() {
     ),
     [initialSearch],
   );
-  const today = useMemo(() => fixture?.asOf ?? koreaDate(), [fixture]);
+  const today = useSeoulDate(fixture?.asOf);
   const evidenceMode = Boolean(fixture);
   const modelV2ResultState = useMemo(
     () => resolveModelV2ResultState(initialSearch.get("model_v2_state"), allowsE2eFixture()),
@@ -225,6 +218,7 @@ function App() {
   const [confirmedSave, setConfirmedSave] = useState(
     () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
+  const savedScene = useSavedSceneEvent();
   const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
   const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
@@ -244,6 +238,15 @@ function App() {
   const [accountDeletionOpen, setAccountDeletionOpen] = useState(false);
   const [accountDeletionPending, setAccountDeletionPending] = useState(false);
   const [accountDeletionRecovery, setAccountDeletionRecovery] = useState<AccountDeletionRecovery>(null);
+  const presentationRef = useRef({ today, startOn, endOn, windowData, accountDeletionPending });
+
+  useLayoutEffect(() => {
+    const previous = presentationRef.current;
+    // Invalidate before passive refresh effects: old success AND error callbacks
+    // must not commit across a calendar/window change, even after A -> B -> A.
+    if (previous.startOn !== startOn || previous.endOn !== endOn) windowRequestId.current += 1;
+    presentationRef.current = { today, startOn, endOn, windowData, accountDeletionPending };
+  }, [today, startOn, endOn, windowData, accountDeletionPending]);
 
   function applySession(nextSession: Session | null) {
     sessionUpdateVersionRef.current += 1;
@@ -275,7 +278,8 @@ function App() {
     setNotice(null);
     setPendingAction(null);
     setConfirmedSave(false);
-    setBloodPressureDraft(emptyBloodPressureDraft(today));
+    savedScene.clear();
+    setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
     setBloodPressureError("");
     setEditingBloodPressureId(null);
     setPendingBloodPressureDeletion(null);
@@ -339,7 +343,7 @@ function App() {
 
   useEffect(() => {
     if (evidenceMode || !session) return;
-    void refreshWindow(session);
+    void refreshWindow();
   }, [endOn, evidenceMode, session, startOn]);
 
   useEffect(() => {
@@ -361,14 +365,15 @@ function App() {
         setSelectedRecordKey(null);
         setPendingAction(null);
         setConfirmedSave(false);
-        setBloodPressureDraft(emptyBloodPressureDraft(today));
+        savedScene.clear();
+        setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
         setBloodPressureError("");
         setEditingBloodPressureId(null);
         setPendingBloodPressureDeletion(null);
         setEditingChallengeCheckin(null);
         setPendingChallengeCheckinDeletion(null);
         editOriginKey.current = null;
-        if (dashboardWindow === "current") void refreshWindow(sessionRef.current);
+        if (dashboardWindow === "current") void refreshWindow();
         return;
       }
       setNotice((current) => current?.persistence === "until-navigation" ? null : current);
@@ -420,7 +425,7 @@ function App() {
       return;
     }
     if (context === "load") {
-      setWindowState(windowData ? "refresh-error" : "error");
+      setWindowState(presentationRef.current.windowData ? "refresh-error" : "error");
       return;
     }
     if (error instanceof ApiRequestError && error.status === 422) {
@@ -443,20 +448,24 @@ function App() {
     setNotice(makeNotice("warning", message, { origin: "request-error", reload: context !== "export" }));
   }
 
-  async function refreshWindow(activeSession = sessionRef.current, allowTokenRefreshRetry = true) {
+  async function refreshWindow(allowTokenRefreshRetry = true) {
+    // A pre-midnight mutation may call this old function after the date changes.
+    // Read committed presentation bounds and the latest session at invocation.
+    const activeSession = sessionRef.current;
+    const snapshot = presentationRef.current;
     const requestContext = captureRequestContext(activeSession);
-    if (!activeSession || !requestContext || evidenceMode || accountDeletionPending) return;
+    if (!activeSession || !requestContext || evidenceMode || snapshot.accountDeletionPending) return;
     const requestId = ++windowRequestId.current;
-    setWindowState(windowData ? "refreshing" : "loading");
+    setWindowState(snapshot.windowData ? "refreshing" : "loading");
     try {
-      const nextData = await getObservationWindow(activeSession, startOn, endOn);
+      const nextData = await getObservationWindow(activeSession, snapshot.startOn, snapshot.endOn);
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       setWindowData(nextData);
       setWindowState("ready");
     } catch (error) {
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       if (allowTokenRefreshRetry && isSessionError(error) && hasNewerToken(requestContext)) {
-        await refreshWindow(sessionRef.current, false);
+        await refreshWindow(false);
         return;
       }
       presentRequestError(error, "load", requestContext);
@@ -619,12 +628,14 @@ function App() {
         await createBloodPressureObservation(activeSession, payload);
       }
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      const saveVisual = savedScene.confirmPersistence();
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
       else setNotice(null);
-      setBloodPressureDraft(emptyBloodPressureDraft(today));
+      setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
       setEditingBloodPressureId(null);
+      savedScene.present(saveVisual);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -661,7 +672,7 @@ function App() {
       if (!isCurrentRequestContext(requestContext)) return;
       setPendingBloodPressureDeletion(null);
       setSelectedRecordKey(null);
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "혈압 기록을 삭제했습니다.", { origin: "mutation-success" }));
       navigate("S08");
@@ -680,7 +691,7 @@ function App() {
     try {
       await selectActiveChallenge(activeSession, actionId);
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "7일 챌린지를 선택했습니다.", { origin: "mutation-success" }));
       navigate("S02");
@@ -699,9 +710,11 @@ function App() {
     try {
       await createActiveChallengeCheckin(activeSession, { observed_on: today, status });
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      const saveVisual = savedScene.confirmPersistence();
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(null);
+      savedScene.present(saveVisual);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -719,7 +732,7 @@ function App() {
     try {
       await updateChallengeCheckin(activeSession, editingChallengeCheckin.id, status);
       if (!isCurrentRequestContext(requestContext)) return;
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setEditingChallengeCheckin(null);
       setNotice(makeNotice("success", "챌린지 상태를 수정했습니다.", { origin: "mutation-success" }));
@@ -741,7 +754,7 @@ function App() {
       setPendingChallengeCheckinDeletion(null);
       setEditingChallengeCheckin(null);
       setSelectedRecordKey(null);
-      await refreshWindow(activeSession);
+      await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "챌린지 기록을 삭제했습니다.", { origin: "mutation-success" }));
       navigate("S08");
@@ -907,7 +920,7 @@ function App() {
     }
 
     if (activeScreen === "S02") {
-      return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
+      return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
 
     if (activeScreen === "S03") {
@@ -916,11 +929,11 @@ function App() {
     }
 
     if (activeScreen === "S04") {
-      return <Scene id="S04" eyebrow={journeyCopy.S04.eyebrow} title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title} body={journeyCopy.S04.body} tone="water"><form className="measurement-panel" onSubmit={submitBloodPressure} noValidate><details className="measurement-guide"><summary>측정 전 확인하기</summary><ul><li>조용히 앉아 몸과 호흡을 편하게 해요.</li><li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li><li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li></ul></details><div className="field-grid"><label htmlFor="observed-on">날짜<input id="observed-on" type="date" value={bloodPressureDraft.observedOn} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))} required disabled={controlsDisabled} /></label><label htmlFor="period">시간대<select id="period" value={bloodPressureDraft.period} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))} disabled={controlsDisabled}><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label><label htmlFor="systolic">수축기 <span className="unit">mmHg</span><input ref={systolicRef} id="systolic" type="number" min="60" max="260" inputMode="numeric" value={bloodPressureDraft.systolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label><label htmlFor="diastolic">이완기 <span className="unit">mmHg</span><input ref={diastolicRef} id="diastolic" type="number" min="30" max="160" inputMode="numeric" value={bloodPressureDraft.diastolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label></div>{bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}<div className="form-actions"><button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>{editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div></form></Scene>;
+      return <Scene id="S04" eyebrow={journeyCopy.S04.eyebrow} title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title} body={journeyCopy.S04.body} tone="water"><form className="measurement-panel" onSubmit={submitBloodPressure} noValidate><details className="measurement-guide"><summary>측정 전 확인하기</summary><ul><li>조용히 앉아 몸과 호흡을 편하게 해요.</li><li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li><li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li></ul></details><div className="field-grid"><label htmlFor="observed-on">날짜<input id="observed-on" style={measurementControlStyle} type="date" value={bloodPressureDraft.observedOn} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))} required disabled={controlsDisabled} /></label><label htmlFor="period">시간대<select id="period" style={measurementControlStyle} value={bloodPressureDraft.period} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))} disabled={controlsDisabled}><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label><label htmlFor="systolic">수축기 <span className="unit">mmHg</span><input ref={systolicRef} id="systolic" style={measurementControlStyle} type="number" min="60" max="260" inputMode="numeric" value={bloodPressureDraft.systolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label><label htmlFor="diastolic">이완기 <span className="unit">mmHg</span><input ref={diastolicRef} id="diastolic" style={measurementControlStyle} type="number" min="30" max="160" inputMode="numeric" value={bloodPressureDraft.diastolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label></div>{bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}<div className="form-actions"><button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>{editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div></form></Scene>;
     }
 
     if (activeScreen === "S05") {
-      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className="saved-scene"><div className="save-ripple" aria-hidden="true"><i /><i /><span>✓</span></div><div className="split-actions"><button type="button" onClick={() => { setConfirmedSave(false); navigate("S02"); }}>오늘의 기록 보기</button><button className="secondary" type="button" onClick={() => { setConfirmedSave(false); navigate("S04"); }}>계속 기록하기</button></div></Scene>;
+      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className="saved-scene"><div className="save-ripple" aria-hidden="true"><i /><i /><span>✓</span></div><div className="split-actions"><button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button><button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button></div></Scene>;
     }
 
     if (activeScreen === "S06") {
@@ -988,7 +1001,7 @@ function App() {
     }
 
     if (activeScreen === "S10") {
-      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
+      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
     }
 
     if (activeScreen === "S11") {
@@ -1013,7 +1026,7 @@ function App() {
   }
 
   return (
-    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection}>
+    <SceneShell activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection} savedSceneEvent={confirmedSave ? savedScene.event : null}>
       {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>이전 7일 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}

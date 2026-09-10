@@ -1,0 +1,151 @@
+{
+  "scope": "Physical Android Chrome review candidate only; S02, S10, and S05 use synthetic fixtures/local mock data. No production deployment, account, personal record, or health data was used.",
+  "recordedOn": "2026-09-10",
+  "sourceRevision": "6ccf515206e2c6228db26db34386751c94c1f64a",
+  "device": {
+    "class": "Samsung SM-A528N",
+    "os": "Android 14",
+    "browser": "Chrome 152.0.7977.82",
+    "orientation": "portrait",
+    "viewportCssPx": [384, 718],
+    "devicePixelRatio": 2.8125,
+    "fontScale": 1.1,
+    "screenReaderEnabled": false,
+    "systemAnimationScales": [1, 1, 1]
+  },
+  "transport": {
+    "application": "production Vite preview over USB adb reverse",
+    "sceneMode": "review",
+    "companionMode": "production",
+    "cacheControl": "Chrome DevTools cache-disabled control followed by ordinary warm revisit; Chrome cache was not cleared",
+    "networkQualification": "Not a Wi-Fi or cellular measurement"
+  },
+  "activation": {
+    "S02": {
+      "recipe": "s02-footbridge",
+      "stageCssPx": [320.1778, 240],
+      "subjectHeightCssPx": 160.6402,
+      "realtimeReady": true,
+      "horizontalOverflow": false,
+      "cacheDisabledEncodedResponseBytes": 702216,
+      "cacheDisabledResources": {
+        "GLTFLoader": 163216,
+        "ThreeSceneRenderer": 5420,
+        "bearLite": 520492,
+        "poster": 13088
+      },
+      "warmR2FromDiskCache": true,
+      "warmSelectedEncodedResponseBytes": 358
+    },
+    "S10": {
+      "recipe": "s10-footbridge",
+      "stageCssPx": [320.1778, 280],
+      "subjectHeightCssPx": 167.5616,
+      "realtimeReady": true,
+      "horizontalOverflow": false,
+      "cacheDisabledEncodedResponseBytes": 702702,
+      "cacheDisabledResources": {
+        "GLTFLoader": 163216,
+        "ThreeSceneRenderer": 5420,
+        "bearLite": 519508,
+        "poster": 14558
+      },
+      "warmR2FromDiskCache": true,
+      "warmSelectedEncodedResponseBytes": 358
+    }
+  },
+  "lifecycle": {
+    "visits": 10,
+    "sequence": "S02/S10 alternation followed by semantic S08 exit",
+    "activeRendererAndLiveContexts": 1,
+    "afterSemanticExitRendererAndLiveContexts": 0,
+    "horizontalOverflow": false
+  },
+  "s05": {
+    "trigger": "Android adb touch input on the synthetic S04 save button",
+    "initial": {
+      "screen": "S05",
+      "status": "ready",
+      "celebrateCount": 1,
+      "settledPhase": "idle",
+      "canvasCount": 1,
+      "horizontalOverflow": false,
+      "focusableDecorativeDescendants": 0
+    },
+    "afterS08Exit": {
+      "canvasCount": 0,
+      "savedScenePresent": false
+    },
+    "historyReturn": {
+      "status": "ready",
+      "phase": "idle",
+      "celebrateCount": 0,
+      "canvasCount": 1,
+      "newGlbRequestObservedAfterReturn": false
+    }
+  },
+  "talkBack": {
+    "sourceRevision": "665e19ba41564bc5f8f2ea88e4e706b9ddfe0183",
+    "service": "Samsung TalkBack 14.5.00.14 was bound for this inspection, then removed; accessibility_enabled was restored to 0.",
+    "method": "Android Chrome accessibility-node focus was advanced with keyboard Tab while TalkBack was active. This captures focus order and decorative focus exclusion, not audible utterances or Touch Explorer swipe handling.",
+    "S02": {
+      "initialFocus": "오늘의 기록",
+      "focusSequence": [
+        "오늘 상세 보기",
+        "혈압 관찰 · 혈압 기록 화면 열기",
+        "7일 챌린지 · 10분 걷기 이어가기",
+        "오늘의 기록"
+      ],
+      "decorativeSceneFocusObserved": false
+    },
+    "S10": {
+      "fixture": "Synthetic signed-in local mock window",
+      "initialFocus": "최근 7일 기록",
+      "semanticTreeOrder": [
+        "최근 7일 기록",
+        "이전 7일 보기",
+        "현재 7일 보기",
+        "혈압 관찰",
+        "최근 7일 챌린지 체크인 기록",
+        "이전 방식의 기록",
+        "새로고침"
+      ],
+      "keyboardFocusSequence": [
+        "이전 7일 보기",
+        "선택한 7일 내보내기",
+        "새로고침"
+      ],
+      "currentWindowControl": "현재 7일 보기 is disabled while the current window is selected and therefore not keyboard-focusable."
+    },
+    "S05": {
+      "trigger": "Confirmed synthetic S04 save through the local mock API",
+      "initialFocus": "기록을 저장했어요",
+      "focusSequence": [
+        "오늘의 기록 보기",
+        "계속 기록하기",
+        "오늘의 기록"
+      ],
+      "decorativeSceneFocusObserved": false
+    },
+    "limits": [
+      "No audible TalkBack utterance was captured or judged by a listener.",
+      "Touch Explorer swipe gestures and switch access were not exercised.",
+      "This run does not replace the existing S05 history-return or performance evidence."
+    ]
+  },
+  "mainThreadObservations": {
+    "S02LongTasksMs": [139, 91],
+    "S10LongTasksMs": [155, 107],
+    "S02JsHeapBytes": { "used": 37300000, "total": 44700000 },
+    "S10JsHeapBytes": { "used": 37300000, "total": 44700000 },
+    "interpretation": "Single observations, not frame-rate, interaction-latency, GPU-memory, or whole-page acceptance thresholds."
+  },
+  "unknownOrOpen": [
+    "Physical Safari/iOS browser behavior",
+    "TalkBack audible utterances, Touch Explorer gestures, and switch access",
+    "OS reduced-motion behavior",
+    "Wi-Fi/cellular cold and warm transfer behavior",
+    "GPU residency, isolated peak memory, shader/decode timing, and frame interval acceptance",
+    "Final production activation and rollback"
+  ]
+}
