@@ -16,6 +16,8 @@ This workaround depends on the pinned renderer's internal uniform layout. The br
 
 All 42 S02/S10 posters were recaptured after this lifecycle change. Their complete poster records—including SHA-256, dimensions, projected bounds, draw calls and triangle counts—are identical to the prior approved captures. Only capture source hashes changed to identify the modified renderer and new disposal helper. No GLB, camera, light, geometry, palette, poster binary, public object or production gate changed. Existing owner acceptance remains scoped to the unchanged art identities.
 
+The first CI run exposed a Windows checkout issue: the new helper lacked the existing `eol=lf` rule. A local `core.autocrlf=true` checkout reproduced a hash mismatch only for that file. Adding its `.gitattributes` entry made all nine S10/shared capture source hashes identical in the same checkout simulation. The source bytes and poster identities did not change.
+
 ## Recorded results
 
 The [sanitized evidence](evidence/scene-android-memory.json) pins each build/probe and the candidate source hashes. Both controls completed five warmup plus 30 measured cycles. The first candidate run completed warmup plus nine measured cycles, then was interrupted during cycle 10; it is explicitly incomplete and must not stand in for a complete physical acceptance run.
