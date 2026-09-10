@@ -1,0 +1,86 @@
+{
+  "observedAt": "2026-09-10T11:31:36.897Z",
+  "origin": "https://zus-pine-lynn-char.trycloudflare.com",
+  "scope": "Desktop Chromium 390x844 mobile emulation with SwiftShader over public HTTPS. Not a physical phone or cache/performance acceptance.",
+  "sourceRevision": "4393220a4c37a5160627d628491e0ac2b1175008",
+  "sourceFiles": {
+    "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
+    "web/scripts/scene-asset-inputs.mjs": "604fe9375b7d51324355335b95e3bdc494bea2eca433219eaaf48fdaa2975ca5",
+    "web/src/App.tsx": "d4625316589575d6acb9c7d249d236fc951e755181d7d37a7bc6321b033a5ef3",
+    "web/src/components/AccountDeletionConfirmation.tsx": "221bcd4081d1ea23f9ff58d700c6e9b6ffb5df5094fe5b55483a3222779ede0e",
+    "web/src/components/CompanionReviewRenderer.tsx": "e4cd47e2733ae96cd829c0bb6d504c610b412623d9aeddea89f65b57fed1887e",
+    "web/src/components/CompanionRuntimeBoundary.tsx": "43d397d8eab997f1afbe5411485f5555eb6d25081c55f25284146a3d380a695e",
+    "web/src/components/DeleteConfirmation.tsx": "cad71a298a88fe7171e0462df3bbfff9db3008eed6a160d255a30f9a2a3e49b9",
+    "web/src/components/ModelV2InputFlow.tsx": "544d398429acaf668ba7dac6d3e922fad88ff4aa807d6e059d7ee7032c4d5d1a",
+    "web/src/components/SavedSceneBoundary.tsx": "63e8ffe3546d642ef0d925f1f06a5e0f736825abb64a0455c27c4fbd5895eee0",
+    "web/src/components/SceneShell.tsx": "75eeff85057d264b0f5f1664bf10c5eecf2008001067d0b6a3b584fb8ef991d1",
+    "web/src/components/SceneVisualAsset.tsx": "2adb1e886a8dd1c27be601d38710ad5df80af5e60d725550f576de08990f7fc0",
+    "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+    "web/src/components/scene/SavedSceneRenderer.tsx": "899682e0f81e831ab84f83f0fbf0ed0a997f9d34d1484ca0d5c57dd31caf448d",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+    "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
+    "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
+    "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+    "web/src/lib/api-contract.ts": "58afbc5ebc5f193612ca9225e15c42eec69407e2f5af043b7d4cc1cfd23d47a6",
+    "web/src/lib/api.ts": "6839e09a2d54a19bd1923310d9679179bb86aa17b99531df220e1efbfcda2097",
+    "web/src/lib/e2eHarness.ts": "a0945f4a79e59ae859182d4904588f36fdb6e05bf5281a75b5574796157e105b",
+    "web/src/lib/evidenceFixtures.ts": "6b1bd7abb870249168043229db2cb80e3809ce280e0a60bb0fea33aabafef286",
+    "web/src/lib/seoulDate.ts": "b65f05b077577130996e7d6b0315c7257eb865e4d15cdc0e6f9ecf542d862d17",
+    "web/src/lib/supabase.ts": "d4b45f6e6659cf41ca7632c351a8c1299a61c42027dd873200a0351beed297fe",
+    "web/src/lib/useSavedSceneEvent.ts": "35d2939a6d93a685927bd69c32a21c7d3a2a22bc8059d2a2e300b017ef5d9189",
+    "web/src/lib/useSeoulDate.ts": "7ab70641b2153e87fb5e8a6086424eedb7a9263c7724e1105e06e642c0c290fc",
+    "web/src/main.tsx": "e07d1e1a4ad807b961838d79ff6015a3cd8eb78136ad6608f41dfe529fb8368c",
+    "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+    "web/src/ui/companion.ts": "6d5b0dfe41f22391be49535c456893f8c47e628715d4759fbc06d3972ea5c02f",
+    "web/src/ui/companionAssets.generated.ts": "908fc37f04fa2a71b86ff2ae3eef929d2387a8c1a5f73a3ea1dafa5cea1e2363",
+    "web/src/ui/journey.ts": "51e64b32bf7294c609d454cff849c3619bb2606c9e5f3204a696a78f68318ffe",
+    "web/src/ui/modelV2ResultState.ts": "586f2a6ee1befd785a2058730b3b30c7cea265e2ab81c72386d1f1be86915cba",
+    "web/src/ui/r2VisualAssets.ts": "3b0077ceac2c767da072bc1d6aff9124f489a2a3ef00860e722bf4a315d7d721",
+    "web/src/ui/savedScene.ts": "616467f2491c7d8fb6b4c9d551073cebb402ea19ff5a4e83151d407486501c52",
+    "web/src/ui/scene-manifest.v2.json": "3c52f4b3617b21365c95ed05733e45539db5ebc5ee0259e5d50e1ac98df3c990",
+    "web/src/ui/sceneManifest.generated.ts": "4d5d78b8a65619c3e58f8378cdd15f111a49b82d361018c878f85e242b329418",
+    "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+    "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+    "web/src/vite-env.d.ts": "7f7574accd1e8fbf132ce2ae2ac363b7d50ac7eb17a55f76905b1ee75f2171ee"
+  },
+  "build": {
+    "index.html": "cca4914f04ebf4688dd555193bdaa6bd1e2a16c65af98cea0c34604fc2743863",
+    "assets/CompanionReviewRenderer-Bh8uTLfx.js": "01f75fcbb15bce2841d280aa905a4b388e4b4c1a1332935f2b6e00328b037f00",
+    "assets/GLTFLoader-BuuAnLd3.js": "7907bd6dec56ce69fd42e96b8aaf98daa8c647d446f1c1b71a9b099484976c96",
+    "assets/SavedSceneRenderer-DU6y174E.js": "d9aca1cfa414648933ad4aaec551b2127e6900f133d8217eaa503085bd5ec501",
+    "assets/ThreeSceneRenderer-wrl8zxi2.js": "be28b463f49c5189872c2dc9ebc5acff0f836bf98de468ff39ff127f1813912c",
+    "assets/companionAssets.generated-DTKYT2wX.js": "26689adb8e32b419e0dfc74f408a15accbfef0994008112c166f42043bedc513",
+    "assets/disposeScene-B6JuF6-l.js": "2aeebf8824c0f5ff999ca7e0bb10989e7c598cf30869db891a7166bfb75d8b09",
+    "assets/index--NpxXpLm.css": "8c49ae2149151240982ce086bc352947e7d0c440a21973b028e498eb6e539de6",
+    "assets/index--hA2Qsoa.js": "57c088bd6a6a576d8ad3a1463beae942d153226eff79fad0cd6ea36bc91557f6",
+    "assets/moa-journey-map-v1-desktop.webp": "9be3641f08386428a0eb44acfd9dd203297376cd21724862bcbf047345adb78e",
+    "assets/moa-journey-map-v1-mobile.webp": "af1d70fb4bffbc165317352987ffe493ca9d63f0e9d73a41d3cb95e51977c558"
+  },
+  "candidate": "Uncommitted S04 font and S05 centered decorative placement; production scene gates unchanged",
+  "fixtureSha256": "f22e0f3ea7934acd39747aded398fd8626621b7fc368434f146909f49a3dd4fb",
+  "s02": "ready",
+  "s10": "ready after scrolling its lazy scene into view",
+  "s05": {
+    "oneCelebration": true,
+    "historyNoReplay": true,
+    "bounds": {
+      "x": 294.8125,
+      "y": 370.765625,
+      "width": 72,
+      "height": 80
+    }
+  },
+  "networkWrites": 0,
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "url": "https://zus-pine-lynn-char.trycloudflare.com/review-media/companion/v1/bear/v007/lite.glb",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://zus-pine-lynn-char.trycloudflare.com/review-media/companion/v1/bear/v007/lite.glb",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "delivery": "Frozen build, hash-verified GLBs mirrored at same origin, no-store; synthetic browser-memory 120/80 fixture; no telemetry endpoint"
+}

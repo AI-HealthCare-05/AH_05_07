@@ -46,6 +46,9 @@ jobs:
           node --check scripts/measure-scene-android.mjs
           node --check scripts/profile-scene-memory.mjs
           node --test scripts/inspect-scene-heap.test.mjs
+          node --test scripts/summarize-scene-heap-growth.test.mjs
+          node --check scripts/serve-scene-device-review.mjs
+          node --check scripts/serve-scene-phone-review.mjs
 
       - name: Build web client
         run: npm run build

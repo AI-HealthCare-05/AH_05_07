@@ -32,6 +32,29 @@ The corrected physical run created 105 contexts across 105 scene visits, with ze
 
 Aggregate JS heap increased by 488,276 bytes. Snapshot comparisons also show growth in browser performance-timing records, including long-frame, long-task, resource and layout-shift entries; that observation does not fully attribute the aggregate. Full application-memory stability and absolute GPU/peak-process memory acceptance therefore remain open.
 
+## Offline accounting of the remaining growth
+
+The subsequent [fixed-category accounting](evidence/scene-android-heap-growth-accounting.json) reuses those exact private 0/10/30 snapshots. It does not rerun Android cycles or CI. The new `web/scripts/summarize-scene-heap-growth.mjs` emits only fixed category names, counts, self sizes and snapshot hashes; its focused test checks native/JavaScript separation, disappearing categories and suppression of snapshot contents.
+
+| Existing corrected run, cycles 0 → 30 | Delta bytes |
+| --- | ---: |
+| CDP `JSHeapUsedSize` | 488,276 |
+| Non-native snapshot node self sizes | 424,048 |
+| Code nodes, included in the preceding row | 411,532 |
+| InstructionStream, included in code nodes | 252,768 |
+| Native snapshot node self sizes, separate accounting | 381,010 |
+| Allowlisted browser timing nodes, included in native sizes | 149,608 |
+
+Most non-native **snapshot** growth is in runtime code structures. This is not proof that the entire CDP delta is JIT overhead: the CDP and snapshot deltas differ by 64,228 bytes and were collected at different moments with different accounting. Native timing bytes must not be added to or subtracted from the JavaScript delta. The existing off control also has substantial code growth, but its earlier source is not a matched causal subtraction from the corrected candidate.
+
+Code self size still grew by 129,256 bytes between cycles 10 and 30. A plateau and full application-memory stability therefore remain unestablished. A future bounded allocation/compilation attribution probe should target that code growth and the accounting discrepancy; it should not repeat the already completed 30-cycle renderer cleanup check or treat snapshot self size as GPU/process memory.
+
+To reproduce the offline comparison using the private files from the completed run:
+
+```sh
+node web/scripts/summarize-scene-heap-growth.mjs /private/tmp/sk7-scene-heap-fixed-complete-0f35db1/review-0.heapsnapshot /private/tmp/sk7-scene-heap-fixed-complete-0f35db1/review-30.heapsnapshot /private/tmp/scene-fixed-growth.json
+```
+
 ## Post-fix presentation and delivery check
 
 The same application source also completed the [ten-cycle presentation probe](evidence/scene-android-performance-after-fix.json), separately from heap snapshots, with scene review and legacy companion production modes enabled. Each new S05 confirmation celebrated once, history return did not replay, every idle sample had zero RAF callbacks, and every exit had zero live contexts. Browser-emulated reduced motion selected calendar posters and consumed S05 without celebration. All ten clips had p95 RAF intervals of approximately 16.7 ms; the maximum observed interval was approximately 16.9 ms. These are callback intervals, not measured presented FPS.

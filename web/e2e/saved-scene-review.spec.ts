@@ -333,6 +333,27 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 900]]) test(`S05 k
   expect(state.errors).toEqual([]);
 });
 
+test("saving from a scrolled form shows S05 before its one celebration opportunity", async ({ page }) => {
+  await setup(page);
+  await page.setViewportSize({ width: 402, height: 714 });
+  const assetGate = deferred();
+  await page.route(assetUrl, async route => { await assetGate.promise; await route.continue(); });
+  await openForm(page);
+  const save = page.getByRole("button", { name: "혈압 기록 저장", exact: true });
+  await save.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  await save.press("Enter");
+  await expect(page.getByRole("heading", { name: "기록을 저장했어요" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "오늘의 기록 보기", exact: true })).toBeEnabled();
+  expect((await runtime(page).boundingBox())!.y).toBeGreaterThanOrEqual(0);
+  assetGate.release();
+  await ready(page);
+  await expectStarts(page, 1);
+  await expect(character(page)).toHaveAttribute("data-saved-scene-phase", "idle");
+  await returnVisit(page); await ready(page);
+  await expectStarts(page, 1);
+});
+
 test("offscreen interruption stops rendering and route exit releases every context", async ({ page }) => {
   const state = await setup(page);
   await page.addInitScript(() => {

@@ -53,7 +53,9 @@ export function SavedSceneBoundary({ event, reducedMotion }: { event: SavedScene
     return () => window.clearTimeout(timeout);
   }, [active, ready, failed, fail]);
 
-  return <div ref={host} className="companion-runtime-slot" aria-hidden="true" data-saved-scene-status={failed ? "fallback" : ready ? "ready" : "loading"}>
+  // Keep the review character beside the confirmation, away from the top edge
+  // that Safari can scroll under its chrome while dismissing the input keyboard.
+  return <div ref={host} className="companion-runtime-slot" style={{ top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" data-saved-scene-status={failed ? "fallback" : ready ? "ready" : "loading"}>
     {active && !failed && <SavedSceneErrorBoundary onFailure={fail}>
       <Suspense fallback={null}>
         <SavedSceneRenderer event={event} reducedMotion={reducedMotion} visible={visible} onReady={onReady} onFailure={fail} />
