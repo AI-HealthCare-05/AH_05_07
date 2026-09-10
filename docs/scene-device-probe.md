@@ -21,6 +21,28 @@ node web/scripts/measure-scene-android.mjs /private/tmp/scene-android-probe.json
 
 Review the JSON before copying it into `docs/evidence`. `completed: true` means the bounded probe completed its assertions. It is not release approval. Failures after page setup record their phase and synthetic-page state; connection/setup failures exit before creating evidence. Do not substitute a partial run for complete evidence. The output pins the source revision, probe hash and exact built files. Afterward, stop the preview and remove the two ADB mappings if they were created for this run.
 
+The dedicated test document requests a Screen Wake Lock, released on navigation or tab closure. It does not change the phone's timeout or accessibility settings. Interruptions from other phone use invalidate an incomplete run; resume with a fresh dedicated tab when Chrome is available.
+
+## Retaining-path comparison
+
+Use `web/scripts/profile-scene-memory.mjs` for the memory investigation, separately from frame timing. Build `review` and `off` variants from the same source with `VITE_SK7_COMPANION_MODE=off`, into separate directories. Serve only the variant currently being measured on port 4173; leave the other build intact. The script expects the unlocked physical Android Chrome target and ADB mappings above.
+
+```sh
+VITE_API_BASE_URL=http://e2e.invalid VITE_SK7_E2E_MODE=1 VITE_SK7_SCENE_MODE=review VITE_SK7_COMPANION_MODE=off npm --prefix web run build -- --outDir /private/tmp/scene-memory-review
+npm --prefix web run preview -- --outDir /private/tmp/scene-memory-review --host 127.0.0.1 --port 4173 --strictPort
+```
+
+In another terminal:
+
+```sh
+node web/scripts/profile-scene-memory.mjs review /private/tmp/scene-memory-review /private/tmp/scene-heap-review 30
+node web/scripts/inspect-scene-heap.mjs /private/tmp/scene-heap-review/review-0.heapsnapshot /private/tmp/scene-heap-review/review-30.heapsnapshot /private/tmp/scene-heap-review/summary.json
+```
+
+Repeat with mode `off`, using separate build/output directories and restarting the preview. Use separate checkouts/builds when comparing revisions. The probe records five warmup cycles followed by 30 measured S02/S10/S05 cycles, forced-GC metrics at every semantic exit, and snapshots at measured cycles 0/10/30. Off mode waits 4.5 seconds in S05 to approximate clip duration; this is a resource-retention control, not a timing comparison. Browser warmup, JIT, history and the profiler can affect aggregate JS heap in both variants.
+
+Source-file and built-file hashes identify an uncommitted candidate; build it from those sources before running. Verify the reported build is the one served. Raw snapshots have owner-only file permissions and must stay in a private local directory. The inspector emits class counts and at most 12 sanitized canvas paths, suppressing source/string values, page URLs and DOM attributes. Inspect the summary before committing it. A shortest non-weak retaining path is one route, not a dominator proof or GPU-memory measurement. Native canvases/contexts must be distinguished from their JavaScript prototypes.
+
 ## What the probe establishes
 
 - S02/S10 realtime readiness and visible normal-motion S05 confirmation; one celebration on each new confirmed synthetic save and no replay on history return.

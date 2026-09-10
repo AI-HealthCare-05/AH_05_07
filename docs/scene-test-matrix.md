@@ -11,6 +11,7 @@
 | Accessibility | keyboard, screen reader, 200% zoom, reduce | Every task works without scene; no focus capture |
 | Loading | cold/warm, slow, image/chunk/GLB/decoder 404/abort | Budgets measured; semantic UI works |
 | Lifecycle | hidden/offscreen, resize, route churn, context loss | No persistent inactive RAF or growing resources |
+| Renderer retention | Repeated S02/S10/S05 exits, weak canvas references plus forced GC; physical review/off heap snapshots | Removed canvases are collectible, including lost contexts; native resources distinguished from prototypes |
 | Truthfulness | VPF-1 empty/loading/error/stale/conflict/unknown | Distinct semantic states remain |
 | S11 | signed-in input flow and synthetic states | No numeric results or visual reactions |
 | Browser | Chromium/Firefox/Edge/macOS Safari/iOS Safari/Android Chrome | Browser evidence plus real-device cost |

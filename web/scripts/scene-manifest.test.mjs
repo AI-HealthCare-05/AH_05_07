@@ -185,7 +185,7 @@ test("S10 budgets both its composition module and shared landmark geometry", () 
 test("S10 source geometry cannot change without registration", () => {
   assert.throws(() => verifySceneManifest(original, { ...inputs, dioramaModuleBytes: Buffer.from("changed diorama") }), /module/);
 });
-for (const source of ["web/src/styles.css", "web/src/components/VisualStage.tsx", "web/src/ui/sceneRecipes.ts"]) test(`poster capture pins ${source}`, () => {
+for (const source of ["web/src/styles.css", "web/src/components/VisualStage.tsx", "web/src/ui/sceneRecipes.ts", "web/src/components/scene/disposeScene.ts"]) test(`poster capture pins ${source}`, () => {
   const sourceHashes = { ...inputs.sourceHashes, [source]: "a".repeat(64) };
   assert.throws(() => verifySceneManifest(original, { ...inputs, sourceHashes }), /render source hashes/);
 });

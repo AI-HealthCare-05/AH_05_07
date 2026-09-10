@@ -4,6 +4,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { companionAssetManifest } from "../../ui/companionAssets.generated";
 import type { SavedSceneEvent } from "../../ui/savedScene";
+import { disposeScene } from "./disposeScene";
 
 const asset = companionAssetManifest.bear.lite;
 // One immutable public asset, bounded to 518,636 bytes. Never retain parsed GPU
@@ -19,18 +20,6 @@ async function loadBytes(signal: AbortSignal) {
   if (bytes.byteLength !== asset.bytes || hash !== asset.sha256) throw new Error("Saved scene asset identity mismatch");
   cachedBytes = bytes;
   return bytes;
-}
-
-function disposeTree(root: THREE.Object3D) {
-  root.traverse(object => {
-    const mesh = object as THREE.Mesh;
-    mesh.geometry?.dispose();
-    const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
-    for (const material of materials) {
-      for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
-      material.dispose();
-    }
-  });
 }
 
 type Props = { event: SavedSceneEvent; reducedMotion: boolean; visible: boolean; onReady: () => void; onFailure: () => void };
@@ -118,7 +107,7 @@ export default function SavedSceneRenderer({ event, reducedMotion, visible, onRe
       observer.observe(element);
       resize();
       void loadBytes(controller.signal).then(bytes => new GLTFLoader().parseAsync(bytes, "")).then(gltf => {
-        if (disposed) { disposeTree(gltf.scene); return; }
+        if (disposed) { disposeScene(gltf.scene); return; }
         model = gltf.scene;
         scene.add(model);
         const celebrateClip = gltf.animations.find(clip => clip.name === "celebrate");
@@ -173,7 +162,7 @@ export default function SavedSceneRenderer({ event, reducedMotion, visible, onRe
       observer?.disconnect();
       mixer?.stopAllAction();
       if (model) mixer?.uncacheRoot(model);
-      disposeTree(scene);
+      disposeScene(scene, renderer);
       if (renderer) {
         renderer.domElement.removeEventListener("webglcontextlost", fail);
         renderer.domElement.remove();

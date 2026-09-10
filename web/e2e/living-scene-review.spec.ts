@@ -9,7 +9,7 @@ const url = "/?fixture=VP-10&screen=S02";
 async function completedSceneNetwork(completed: Request[]) {
   // WebGL readiness does not imply completion of the independent CDN poster.
   await expect.poll(() => completed.filter(request => /\/scene-review\/s02\//.test(request.url())).length, { timeout: 15000 }).toBe(1);
-  return Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)|\/scene-review\/s02\//.test(request.url()))
+  return Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)|\/scene-review\/s02\//.test(request.url()))
     .map(async request => ({ url: request.url(), ...await request.sizes() })));
 }
 
@@ -98,7 +98,7 @@ test("reduced motion never imports the renderer or requests GLB", async ({ page 
   await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
   await expect(page.locator(".living-scene-fallback")).toBeVisible();
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
-  expect(requests.filter(url => /ThreeSceneRenderer|\.glb(?:\?|$)/.test(url))).toEqual([]);
+  expect(requests.filter(url => /ThreeSceneRenderer|disposeScene|\.glb(?:\?|$)/.test(url))).toEqual([]);
 });
 
 
@@ -196,7 +196,7 @@ for (const width of [320, 390, 1366]) test(`all weekday posters select one match
     await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
     await expectPoster(page, landmark, width);
     expect(requests.filter(url => url.includes("/scene-review/s02/"))).toHaveLength(1);
-    expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)/.test(url))).toEqual([]);
+    expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)/.test(url))).toEqual([]);
     await page.locator(".living-visual-stage").screenshot({ path: testInfo.outputPath(`${landmark}-poster-${width}.png`) });
   }
 });

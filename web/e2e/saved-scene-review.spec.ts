@@ -365,6 +365,55 @@ test("offscreen interruption stops rendering and route exit releases every conte
   expect(glbs(state.urls)).toEqual([assetUrl]);
 });
 
+test("exited S02 S10 and S05 canvases are garbage collectible across repeat visits", async ({ page }) => {
+  const state = await setup(page);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    const seen = new WeakSet<HTMLCanvasElement>();
+    const refs: WeakRef<HTMLCanvasElement>[] = [];
+    Object.assign(window, { sceneCanvasCounts: () => ({ created: refs.length, retained: refs.filter(ref => ref.deref()).length }) });
+    HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+      const context = original.apply(this, args);
+      if (context && /^webgl/.test(args[0]) && !seen.has(this)) {
+        seen.add(this); refs.push(new WeakRef(this));
+      }
+      return context;
+    } as typeof original;
+  });
+  const cdp = await page.context().newCDPSession(page);
+  await page.goto("/?e2e=signed-in&screen=S08");
+  const route = async (screen: string) => {
+    await page.evaluate(screen => {
+      history.pushState(history.state, "", `?e2e=signed-in&screen=${screen}`);
+      dispatchEvent(new PopStateEvent("popstate", { state: history.state }));
+    }, screen);
+    await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+  };
+  const exit = async () => {
+    await page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "기록 찾아보기", exact: true }).click();
+    await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+    await expect(page.locator("canvas")).toHaveCount(0);
+  };
+  for (let i = 1; i <= 3; i++) {
+    for (const screen of ["S02", "S10"]) {
+      await route(screen);
+      await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+      await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready");
+      await exit();
+    }
+    await route("S04");
+    await page.getByLabel(/수축기/).fill("120");
+    await page.getByLabel(/이완기/).fill("80");
+    await submit(page); await ready(page); await exit();
+    await expect.poll(async () => {
+      await cdp.send("HeapProfiler.collectGarbage");
+      return page.evaluate(() => (window as unknown as { sceneCanvasCounts: () => { created: number; retained: number } }).sceneCanvasCounts());
+    }).toEqual({ created: i * 3, retained: 0 });
+  }
+  expect(state.errors).toEqual([]);
+  await cdp.detach();
+});
+
 test("leaving while the renderer chunk is pending consumes the visit without a late mount", async ({ page }) => {
   const state = await setup(page);
   const gate = deferred();

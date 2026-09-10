@@ -30,7 +30,13 @@ The final run's ten clips had a p95 interval of approximately 16.7 ms each (larg
 
 Retained JS heap and DOM-node counters increased across the ten cycles, including a control that removed probe-owned WebGL references and cleared samples before GC. No application leak is inferred from these aggregate counters, but the no-growth memory gate has **not passed**. Retaining-path attribution and absolute GPU/peak-memory review remain required. Physical Safari, OS reduced motion, Wi-Fi/cellular qualification and audible/touch/switch accessibility acceptance remain open. The existing S02/S10 owner art acceptance is unchanged; S05 owner acceptance and production activation are still separate.
 
-## Verification of the S10 increment
+## macOS host memory investigation — 2026-09-10
+
+The subsequent [retention investigation](scene-memory-investigation.md) used the connected Android device from the Mac host. It identified the repeated native canvas/context retention through Three 0.185.1's global DFG LUT. Thirty review cycles added 90 detached canvases/lost contexts; the off control added none. S02/S10 and S05 review teardown now release the compiled LUT before renderer properties are discarded, with deduplicated texture/material/geometry/skeleton cleanup. The new weak-reference/forced-GC browser regression passes, and the full S05 suite passes **36/36**.
+
+All 42 recaptured poster records match the prior art byte-for-byte; only the renderer/helper source hashes changed. The [sanitized memory evidence](evidence/scene-android-memory.json) records exact sources/builds and control snapshots. The first corrected Android run was interrupted during cycle 10: nine cycles kept DOM nodes at 146, and its warmed snapshot had no native canvases/WebGL resources, but this is **not a complete post-fix physical pass**. Chrome availability is required for the uninterrupted rerun. Aggregate application JS retention, absolute GPU/peak memory and the remaining release gates stay open. The previous 194-check and Android performance results above are historical results for their recorded revisions. The corrected candidate passes 175 local checks: S05 36, S02/S10/date 52, existing production S05 5, default-off/policy 6, manifest 72 and heap inspector 4. TypeScript/Vite builds pass with the existing lazy Three chunk warning.
+
+## Verification of the S10 increment (historical)
 
 | Check | Result |
 | --- | --- |
@@ -60,7 +66,7 @@ S10's conservative planning range is 841,029–844,147 bytes per realtime recipe
 
 1. S02/S10 owner visual acceptance: **completed** for current art on 2026-09-10 KST. Future art/source recapture changes require a new review.
 2. Physical-device and owner acceptance of the S05 review migration. Automated recovery parity is now 35/35; this is not a production release or API write-idempotency guarantee.
-3. Finish physical-device acceptance: attribute the observed Android retained-heap/node growth, then Android Wi-Fi/cellular, GPU/peak-memory/presented FPS, TalkBack audible/Touch Explorer behavior and switch access; iPhone/iPad Safari realtime 3D, network/GPU/peak-memory/FPS, reduced motion and any remaining input methods; review the recorded Android long-task observations against release criteria. The new RAF and context-lifetime probe closes only its documented bounded checks.
+3. Finish physical-device acceptance: repeat the corrected Android build without interruption, review remaining aggregate JS growth and GPU/peak-memory/presented FPS, then Wi-Fi/cellular, TalkBack audible/Touch Explorer behavior and switch access; iPhone/iPad Safari realtime 3D, network/GPU/peak-memory/FPS, reduced motion and any remaining input methods; review the recorded Android long-task observations against release criteria. The DFG LUT retention is attributed and corrected; the probes close only their documented bounded checks.
 4. Controlled web-only rollout and rollback through the existing upstream-main → deployment-mirror → Cloudflare flow only after release gates pass.
 
 For continuation, inspect the branch/working tree and current PR HEAD, preserve unrelated changes, and read `scene-s05-migration.md` plus `scene-release-gates.md` for the remaining acceptance work. Run checks appropriate to actual changes; do not repeat completed forensic or browser work just to reread the checkpoint. No new services, health inference, dependency or production gate should be introduced to bypass an open acceptance condition.

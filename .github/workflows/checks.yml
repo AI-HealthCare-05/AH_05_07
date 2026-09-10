@@ -41,8 +41,11 @@ jobs:
       - name: Verify scene manifest rejection boundaries
         run: npm run test:scene-manifest
 
-      - name: Check Android scene probe syntax
-        run: node --check scripts/measure-scene-android.mjs
+      - name: Check Android scene probes and sanitized heap inspection
+        run: |
+          node --check scripts/measure-scene-android.mjs
+          node --check scripts/profile-scene-memory.mjs
+          node --test scripts/inspect-scene-heap.test.mjs
 
       - name: Build web client
         run: npm run build

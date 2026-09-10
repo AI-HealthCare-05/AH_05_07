@@ -6,28 +6,9 @@ import { sceneComposition, sceneProfile, type SceneRecipe } from "../../ui/scene
 import type { SceneLandmark } from "../../ui/scenePolicy";
 import { createLandmark } from "./environment";
 import { createDiorama } from "./diorama";
+import { disposeScene } from "./disposeScene";
 
 type Props = { recipe: SceneRecipe; landmark: SceneLandmark["id"]; visible: boolean; onReady: () => void; onFailure: () => void };
-
-function disposeTree(root: THREE.Object3D) {
-  const geometries = new Set<THREE.BufferGeometry>();
-  const materials = new Set<THREE.Material>();
-  const textures = new Set<THREE.Texture>();
-  const skeletons = new Set<THREE.Skeleton>();
-  root.traverse((object) => {
-    const mesh = object as THREE.Mesh;
-    if (object instanceof THREE.SkinnedMesh) skeletons.add(object.skeleton);
-    if (mesh.geometry) geometries.add(mesh.geometry);
-    if (mesh.material) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
-      materials.add(material);
-      for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
-    }
-  });
-  skeletons.forEach((value) => value.dispose());
-  textures.forEach((value) => value.dispose());
-  materials.forEach((value) => value.dispose());
-  geometries.forEach((value) => value.dispose());
-}
 
 /** Neutral clay study. No AnimationMixer, dynamic shadow pass or frame loop. */
 export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady, onFailure }: Props) {
@@ -95,7 +76,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       const nextProfile = sceneProfile(window.innerWidth);
       if (recipe.environment === "diorama" && nextProfile !== profile) {
         scene.remove(environment);
-        disposeTree(environment);
+        disposeScene(environment);
         environment = createDiorama(landmark, nextProfile);
         scene.add(environment);
       }
@@ -139,8 +120,8 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       invalidate.current = resize;
       resize();
       new GLTFLoader().load(recipe.characterUrl, (gltf) => {
-        if (disposed) { disposeTree(gltf.scene); return; }
-        if (!gltf.animations.some((clip) => clip.name === "idle")) { disposeTree(gltf.scene); fail(); return; }
+        if (disposed) { disposeScene(gltf.scene); return; }
+        if (!gltf.animations.some((clip) => clip.name === "idle")) { disposeScene(gltf.scene); fail(); return; }
         const normalized = new THREE.Group();
         normalized.add(gltf.scene);
         model = new THREE.Group();
@@ -166,7 +147,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
         renderer.domElement.removeEventListener("webglcontextlost", fail);
         renderer.domElement.remove();
       }
-      disposeTree(scene);
+      disposeScene(scene, renderer);
       renderer?.dispose();
       // Release the context itself on route/recipe exit, not just its assets.
       renderer?.forceContextLoss();

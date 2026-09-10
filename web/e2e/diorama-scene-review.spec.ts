@@ -70,7 +70,7 @@ for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]])
   await page.goto(fixtureUrl);
   await expectReady(page, "footbridge", width);
   await expect.poll(() => completed.filter(request => request.url().includes("/scene-review/s10/")).length, { timeout: 15000 }).toBe(1);
-  const requests = await Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)|\/scene-review\/s10\//.test(request.url()))
+  const requests = await Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)|\/scene-review\/s10\//.test(request.url()))
     .map(async request => ({ url: request.url(), ...await request.sizes() })));
   expect(requests.filter(request => /\.glb(?:\?|$)/.test(request.url))).toHaveLength(1);
   expect(requests.some(request => /ThreeSceneRenderer/.test(request.url))).toBe(true);
@@ -108,7 +108,7 @@ for (const width of [320, 390, 1366]) test(`S10 reduced motion selects one weekd
     await stage(page).scrollIntoViewIfNeeded();
     await expectPoster(page, landmark.id, width);
     expect(requests.filter(url => /\/scene-review\/s10\//.test(url))).toHaveLength(1);
-    expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|\.glb(?:\?|$)/.test(url))).toEqual([]);
+    expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)/.test(url))).toEqual([]);
   }
 });
 

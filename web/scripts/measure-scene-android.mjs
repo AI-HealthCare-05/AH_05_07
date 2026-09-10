@@ -40,7 +40,7 @@ const report = {
 };
 const network = new Map();
 let phase = "setup";
-const selected = url => /\/(?:assets\/(?:GLTFLoader|ThreeSceneRenderer|SavedSceneRenderer|companionAssets\.generated)-[^/]+\.js|companion\/.*\.glb|scene-review\/(?:s02|s10)\/.*\.webp)$/.test(url.pathname);
+const selected = url => /\/(?:assets\/(?:GLTFLoader|ThreeSceneRenderer|SavedSceneRenderer|disposeScene|companionAssets\.generated)-[^/]+\.js|companion\/.*\.glb|scene-review\/(?:s02|s10)\/.*\.webp)$/.test(url.pathname);
 cdp.on("Network.responseReceived", ({ requestId, response }) => {
   const url = new URL(response.url);
   if (![base, "https://sk7-companion.gkrry.com"].includes(url.origin) || !selected(url)) return;
@@ -153,6 +153,12 @@ async function save() {
   await expect(page.locator("[data-saved-scene-phase]")).toHaveAttribute("data-saved-scene-phase", "idle");
 }
 
+async function goto(screen) {
+  await page.goto(`${base}/?e2e=signed-in&screen=${screen}`);
+  // A document-owned lock releases automatically when this test tab closes.
+  await page.evaluate(async () => { window.__sceneDeviceWakeLock = await navigator.wakeLock.request("screen"); });
+}
+
 try {
   assert.match(await page.evaluate(() => navigator.userAgent), /Android/);
   await page.bringToFront();
@@ -161,7 +167,7 @@ try {
   for (const screen of ["S02", "S10", "S05"]) {
     phase = `${screen}-cache-disabled`;
     await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
-    await page.goto(`${base}/?e2e=signed-in&screen=${screen === "S05" ? "S04" : screen}`);
+    await goto(screen === "S05" ? "S04" : screen);
     await mark(phase);
     report.device.viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio, reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches }));
     if (screen === "S05") {
@@ -181,7 +187,7 @@ try {
 
   // Warm all three renderers before assessing retained heap over repeated visits.
   phase = "warm-baseline";
-  await page.goto(`${base}/?e2e=signed-in&screen=S02`);
+  await goto("S02");
   await calendarReady(); await semanticExit();
   await openForm(); await save(); await semanticExit();
   await page.evaluate(() => { history.pushState(history.state, "", "?e2e=signed-in&screen=S10"); dispatchEvent(new PopStateEvent("popstate", { state: history.state })); });
@@ -216,7 +222,7 @@ try {
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const screen of ["S02", "S10"]) {
-    await page.goto(`${base}/?e2e=signed-in&screen=${screen}`);
+    await goto(screen);
     await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
     await expect(page.locator(".living-scene-fallback img")).toBeVisible();
     await expect(page.locator("canvas")).toHaveCount(0);

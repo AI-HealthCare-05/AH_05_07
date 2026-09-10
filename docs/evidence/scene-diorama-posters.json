@@ -6,7 +6,8 @@
   "source": "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching",
   "sourceHashes": {
     "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
-    "web/src/components/scene/ThreeSceneRenderer.tsx": "b7e8c4a0c28206829f3771dc5c54edef039b214604a66787a6c4dd8078b917d6",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+    "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
     "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
     "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
     "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
