@@ -3,12 +3,13 @@ from copy import deepcopy
 
 import pytest
 
+import app.services.model_v2_input_adapter as input_adapter
 from app.services.model_v2_inference import FEATURES, validate_semantic_input
 from app.services.model_v2_input_adapter import (
     ADAPTER_VERSION,
     INPUT_FIELDS,
     ModelV2AdapterError,
-    adapt_product_input_v1,
+    adapt_product_input_v2,
 )
 
 VALID_INPUT = {
@@ -37,11 +38,11 @@ VALID_INPUT = {
 def adapt(**updates):
     payload = deepcopy(VALID_INPUT)
     payload.update(updates)
-    return adapt_product_input_v1(payload)
+    return adapt_product_input_v2(payload)
 
 
 def test_adapter_version_is_explicit() -> None:
-    assert ADAPTER_VERSION == "model-v2-product-input-adapter-v1"
+    assert ADAPTER_VERSION == "model-v2-product-input-adapter-v2"
 
 
 def test_input_contract_is_exact_and_versioned() -> None:
@@ -86,14 +87,69 @@ def test_cycle9_sleep_adjustment_matches_g3_derivation() -> None:
     assert result["weekend_sleep_minutes"] == 480.0
 
 
-def test_cycle9_invalid_combination_is_not_replaced_by_generic_elapsed_time() -> None:
-    with pytest.raises(ModelV2AdapterError, match="failed frozen semantic validation"):
-        adapt(
-            weekday_bed_hour=0,
-            weekday_bed_minute=0,
-            weekday_wake_hour=8,
-            weekday_wake_minute=0,
-        )
+@pytest.mark.parametrize("prefix", ["weekday", "weekend"])
+def test_browser_midnight_bedtime_is_normalized_for_both_sleep_fields(prefix: str) -> None:
+    result = adapt(
+        **{
+            f"{prefix}_bed_hour": 0,
+            f"{prefix}_bed_minute": 0,
+            f"{prefix}_wake_hour": 8,
+            f"{prefix}_wake_minute": 0,
+        }
+    )
+
+    assert result[f"{prefix}_sleep_minutes"] == 480.0
+
+
+@pytest.mark.parametrize("prefix", ["weekday", "weekend"])
+def test_browser_midnight_bedtime_with_minutes_is_normalized(prefix: str) -> None:
+    result = adapt(
+        **{
+            f"{prefix}_bed_hour": 0,
+            f"{prefix}_bed_minute": 30,
+            f"{prefix}_wake_hour": 8,
+            f"{prefix}_wake_minute": 30,
+        }
+    )
+
+    assert result[f"{prefix}_sleep_minutes"] == 480.0
+
+
+def test_source_compatible_midnight_bedtime_remains_supported() -> None:
+    result = adapt(
+        weekend_bed_hour=24,
+        weekend_bed_minute=0,
+        weekend_wake_hour=8,
+        weekend_wake_minute=0,
+    )
+
+    assert result["weekend_sleep_minutes"] == 480.0
+
+
+def test_wake_midnight_is_not_normalized_as_a_bedtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[tuple[object, ...]] = []
+
+    def capture(*args: object) -> float:
+        seen.append(args)
+        return 480.0
+
+    monkeypatch.setattr(input_adapter, "_derive_sleep_minutes", capture)
+    adapt(weekday_bed_hour=0, weekday_wake_hour=0)
+
+    weekday_call = next(call for call in seen if call[0] == "weekday")
+    assert weekday_call[1] == 24.0
+    assert weekday_call[3] == 0
+
+
+def test_midnight_wake_retains_frozen_clock_derivation() -> None:
+    result = adapt(
+        weekday_bed_hour=23,
+        weekday_bed_minute=30,
+        weekday_wake_hour=0,
+        weekday_wake_minute=30,
+    )
+
+    assert result["weekday_sleep_minutes"] == 60.0
 
 
 def test_zero_walk_branch_requires_zero_components_and_derives_zero() -> None:
@@ -205,21 +261,45 @@ def test_sleep_clock_components_are_strict_whole_numbers() -> None:
         adapt(weekend_wake_minute=60)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("weekday_bed_hour", 25),
+        ("weekend_wake_hour", 25),
+        ("weekday_bed_minute", 60),
+        ("weekend_wake_minute", 60),
+    ],
+)
+def test_invalid_sleep_clock_bounds_remain_rejected(field: str, value: int) -> None:
+    with pytest.raises(ModelV2AdapterError, match="above allowed domain"):
+        adapt(**{field: value})
+
+
+def test_out_of_range_frozen_sleep_value_remains_rejected() -> None:
+    with pytest.raises(ModelV2AdapterError, match="failed frozen semantic validation"):
+        adapt(
+            weekday_bed_hour=0,
+            weekday_bed_minute=59,
+            weekday_wake_hour=0,
+            weekday_wake_minute=0,
+        )
+
+
 def test_missing_and_extra_adapter_fields_rejected() -> None:
     missing = deepcopy(VALID_INPUT)
     missing.pop("weight_kg")
     with pytest.raises(ModelV2AdapterError, match="missing required"):
-        adapt_product_input_v1(missing)
+        adapt_product_input_v2(missing)
 
     extra = deepcopy(VALID_INPUT)
     extra["user_id"] = "synthetic-user"
     with pytest.raises(ModelV2AdapterError, match="unexpected adapter fields"):
-        adapt_product_input_v1(extra)
+        adapt_product_input_v2(extra)
 
 
 def test_non_mapping_adapter_payload_rejected() -> None:
     with pytest.raises(ModelV2AdapterError, match="must be a mapping"):
-        adapt_product_input_v1(["not", "a", "mapping"])
+        adapt_product_input_v2(["not", "a", "mapping"])
 
 
 def test_repeated_adapter_calls_are_deterministic() -> None:
