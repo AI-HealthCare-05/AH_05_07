@@ -106,7 +106,7 @@ test("authenticated S11 sends one transient product request and exposes no numer
   await page.goto("/?e2e=signed-in&screen=S11");
   await fillValidForm(page);
 
-  const submit = page.getByRole("button", { name: "신호 준비하기" });
+  const submit = page.getByRole("button", { name: "생활정보 분석하기" });
   await submit.dblclick();
 
   await expect(
@@ -122,6 +122,9 @@ test("authenticated S11 sends one transient product request and exposes no numer
   });
 
   const sceneText = await page.locator('[data-scene="S11"]').innerText();
+  expect(sceneText).toContain("생활정보 기반 고혈압 선별 참고");
+  expect(sceneText).toContain("생활정보 분석이 완료되었습니다.");
+  expect(sceneText).not.toContain("입력 기반 위험군 선별 신호");
   expect(sceneText).not.toMatch(/\b0\.\d+\b/);
   expect(sceneText).not.toMatch(/\b\d{1,3}%\b/);
   expect(sceneText).not.toContain("저위험");
@@ -137,12 +140,70 @@ test("authenticated S11 sends one transient product request and exposes no numer
   expect(serialized).not.toContain("170");
 });
 
+test("S11 makes time completion explicit and blocks incomplete clock values locally", async ({
+  page,
+}) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+
+  const statusIds = [
+    "model-weekday-bed-status",
+    "model-weekday-wake-status",
+    "model-weekend-bed-status",
+    "model-weekend-wake-status",
+  ];
+
+  for (const id of statusIds) {
+    await expect(page.locator(`#${id}`)).toHaveText("시간 선택 필요");
+  }
+
+  await fillValidForm(page);
+
+  for (const id of statusIds) {
+    await expect(page.locator(`#${id}`)).toHaveText("선택 완료");
+  }
+
+  await page.getByLabel("주말 기상 시간").fill("");
+  await expect(page.locator("#model-weekend-wake-status")).toHaveText("시간 선택 필요");
+
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("시간 항목을 모두 선택해 주세요");
+  await expect(page.getByLabel("주말 기상 시간")).toHaveAttribute("aria-invalid", "true");
+  expect(routed.requests()).toBe(0);
+});
+
+test("S11 sends browser midnight without client-side research-clock rewriting", async ({
+  page,
+}) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await fillValidForm(page);
+
+  await page.getByLabel("주말 취침 시간").fill("00:00");
+  await expect(page.locator("#model-weekend-bed-status")).toHaveText("선택 완료");
+
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
+
+  await expect(
+    page.locator('[data-model-v2-user-result="processed"]'),
+  ).toBeVisible();
+
+  expect(routed.requests()).toBe(1);
+  expect(routed.body()).toMatchObject({
+    weekend_bed_hour: 0,
+    weekend_bed_minute: 0,
+    weekend_wake_hour: 8,
+    weekend_wake_minute: 0,
+  });
+});
+
 test("S11 blocks under-19 input before sending a request", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await fillValidForm(page, "18");
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
 
   await expect(page.getByRole("alert")).toContainText("만 19세 이상");
   expect(routed.requests()).toBe(0);
@@ -152,7 +213,7 @@ test("S11 connects locally detectable errors to the relevant control or form", a
   await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
   const error = page.locator("#model-v2-input-error");
   const form = page.locator("form.measurement-panel");
   const expectErrorCleanup = async () => {
@@ -173,7 +234,7 @@ test("S11 connects locally detectable errors to the relevant control or form", a
 
   await fillValidForm(page, "18");
   await expectErrorCleanup();
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
   await expect(page.getByLabel("나이")).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByLabel("나이")).toHaveAttribute("aria-describedby", "model-v2-input-error");
 
@@ -183,7 +244,7 @@ test("S11 connects locally detectable errors to the relevant control or form", a
   await expectErrorCleanup();
 
   await page.getByLabel("위 안내를 확인했습니다.").uncheck();
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
   await expect(page.getByLabel("위 안내를 확인했습니다.")).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByLabel("위 안내를 확인했습니다.")).toHaveAttribute("aria-describedby", "model-v2-input-error");
   await expect(error).toBeVisible();
@@ -202,7 +263,7 @@ test("S11 shows explicit applicability limitation for age 80+", async ({
   await page.getByLabel("나이").fill("80");
 
   await expect(page.getByRole("status")).toContainText(
-    "적용 가능성이 상대적으로 덜 확실",
+    "적용 근거가 상대적으로 약합니다",
   );
 });
 
@@ -213,7 +274,7 @@ test("S11 maps 422 to a correctable input state without echoing raw values", asy
   await page.goto("/?e2e=signed-in&screen=S11");
   await fillValidForm(page);
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
 
   await expect(page.getByRole("alert")).toContainText(
     "입력 조합을 확인해 주세요",
@@ -235,7 +296,7 @@ test("S11 maps 503 to unavailable without automatic retry", async ({
   await page.goto("/?e2e=signed-in&screen=S11");
   await fillValidForm(page);
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
 
   await expect(page.getByRole("status")).toContainText(
     "자동으로 다시 요청하지 않습니다",
@@ -252,7 +313,7 @@ test("S11 maps 401 to the existing signed-out recovery path", async ({
   await page.goto("/?e2e=signed-in&screen=S11");
   await fillValidForm(page);
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
 
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
 });
@@ -305,9 +366,9 @@ test("S11 ignores a stale 401 after the same user receives a newer session token
   const originalRequestStarted = page.waitForRequest((request) =>
     request.method() === "POST" && new URL(request.url()).pathname === "/api/v1/model-v2/product-score",
   );
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
   const originalRequest = await originalRequestStarted;
-  await expect(page.getByRole("button", { name: "신호 준비 중" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "생활정보 분석 중" })).toBeDisabled();
 
   await page.evaluate(() => {
     window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", {
@@ -333,8 +394,8 @@ test("S11 ignores a stale 401 after the same user receives a newer session token
   releaseOldRequest();
   await originalRequestFinished;
   expect((await originalRequest.response())?.status()).toBe(401);
-  await expect(page.getByRole("button", { name: "신호 준비 중" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "신호 준비하기" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "생활정보 분석 중" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "생활정보 분석하기" })).toBeEnabled();
   await expect(page.locator("form.measurement-panel :disabled")).toHaveCount(0);
 
   await expect(page.locator('[data-scene="S11"]')).toBeVisible();
@@ -343,7 +404,7 @@ test("S11 ignores a stale 401 after the same user receives a newer session token
   await expect(page.getByRole("alert")).toHaveCount(0);
   expect(modelRequests).toBe(1);
 
-  await page.getByRole("button", { name: "신호 준비하기" }).click();
+  await page.getByRole("button", { name: "생활정보 분석하기" }).click();
   await expect(page.locator('[data-model-v2-user-result="processed"]')).toBeVisible();
   expect(modelRequests).toBe(2);
 });
@@ -357,7 +418,7 @@ test("leaving S11 discards the transient draft and result", async ({
 
   await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
   await page
-    .getByRole("button", { name: "입력 기반 위험군 선별 신호" })
+    .getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })
     .click();
 
   await expect(page.getByLabel("나이")).toHaveValue("");
@@ -401,7 +462,7 @@ test("account switch discards prior-account transient Model V2 state", async ({
   });
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   await page
-    .getByRole("button", { name: "입력 기반 위험군 선별 신호" })
+    .getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })
     .click();
   await expect(page.getByLabel("나이")).toHaveValue("");
 });
@@ -424,7 +485,7 @@ for (const viewport of [
     expect(box).not.toBeNull();
     expect(box!.width).toBeLessThanOrEqual(viewport.width);
     await expect(
-      page.getByRole("button", { name: "신호 준비하기" }),
+      page.getByRole("button", { name: "생활정보 분석하기" }),
     ).toBeVisible();
   });
 }

@@ -61,7 +61,7 @@ test("primary journey navigation updates the URL and supports browser history", 
   await page.goForward();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
 
-  await page.getByRole("button", { name: "입력 기반 위험군 선별 신호" }).click();
+  await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" }).click();
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
   await page.getByRole("button", { name: "설정과 도움말" }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
