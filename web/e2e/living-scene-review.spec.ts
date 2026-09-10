@@ -1,3 +1,4 @@
+import "./recap-candidate.cases";
 import type { Request } from "@playwright/test";
 import { findSceneRecipe, sceneComposition } from "../src/ui/sceneRecipes";
 import { expect, test } from "@playwright/test";

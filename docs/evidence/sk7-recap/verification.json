@@ -1,0 +1,85 @@
+{
+  "baseline": "f857f0d2256386cae58f8cceba3495fb521df75d",
+  "branch": "codex/sk7-recap",
+  "worktree": "/Users/gom/Projects/AH_05_07-sk7-recap",
+  "issue": 402,
+  "implementation_head": null,
+  "draft_pr": null,
+  "visual_approval": "PENDING",
+  "synthetic_only": true,
+  "checks": {
+    "chromium_review_scene": {
+      "passed": 73
+    },
+    "webkit_recap": {
+      "passed": 21,
+      "reuse_passed": 17,
+      "focus_rechecked": 4
+    },
+    "approved_journey_regression": {
+      "passed": 10
+    },
+    "legacy_missing_gate_regression": {
+      "passed": 10
+    },
+    "production_url_boundary": {
+      "passed": 3
+    },
+    "build": "PASS",
+    "syntax_and_diff_check": "PASS"
+  },
+  "baseline_push_ci": "SUCCESS (5 runs; URLs in README)",
+  "candidate_ci": "PENDING until PR creation",
+  "protected_files_sha256": {
+    "web/src/components/JourneyToday.tsx": "6df85d8918e1f86ef19473e0f9b33e827bbcc22e63b6811e8d7aed66ed02a507",
+    "web/src/components/journey-candidate.css": "d9988cee3018fbb12867183f4307bfc2345beb7591933ae2ec8f153982389dd8",
+    "web/src/components/VisualStage.tsx": "86f376fa5d9f9e4d4b466b134b625d6c2e9d3b39dd9caaf48d5595a8fba6eda2",
+    "web/src/components/SceneShell.tsx": "75eeff85057d264b0f5f1664bf10c5eecf2008001067d0b6a3b584fb8ef991d1",
+    "web/src/ui/scenePolicy.ts": "6d094bddec4149c8d5b7a5ace7d59fc49b11693b38c4d99282bba8131e6e803b",
+    "web/src/ui/sceneRecipes.ts": "65f9bb4c3dc94afe9f495b06c7149c75dd0d9378a653fea0c8bea52a0452a7f2",
+    "web/src/ui/sceneManifest.generated.ts": "4d5d78b8a65619c3e58f8378cdd15f111a49b82d361018c878f85e242b329418",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "229762f6eef8b556367ec773097cefb67f6900d56e2add4d896f3d668517222f",
+    "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
+    "web/package.json": "800c0b82a1278c57274028bc6341fc5472046cdfcae4d3462d1b5eac17a3e921",
+    "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed"
+  },
+  "candidate_source_sha256": {
+    "web/src/App.tsx": "0f817693773e52a847a5310b54dcb916aa6a88bd718321d2986dab7b9640ad71",
+    "web/src/components/JourneyRecap.tsx": "b566072ae00011214f0071278efcf402b25ee7e382360f7c678af0b69a0e02a1",
+    "web/src/components/journey-recap.css": "197cee0a1afb241b57af49460ecc37e390e1815b190bc33c82c5e488a7f588fb",
+    "web/scripts/journey-review-fixture.mjs": "da5c93c6c4299fe2ee69ef57a06e78fde6db6bb80e4d8dbef343672aaf02784a",
+    "web/scripts/capture-recap-review.mjs": "da56a2bb89faa97b7168352085bd9bed7e799a326c6a6febf9c6e97290b5634a"
+  },
+  "baseline_app_sha256": "2a81ddcd215f4d0dd8897519bab216321edf888e8219232d1add5449a9f48e87",
+  "captures_sha256": {
+    "after/S10-current-1366x768-viewport.png": "681c4588fa4173bdbfaf83ec21a8f946c38b28959e5c50d20cd23fd3e37f5556",
+    "after/S10-current-1366x768.png": "32e83d428b8c2f7e6d6dde173cc510d3141779460d9520e878a6a4ee8435c9e1",
+    "after/S10-current-320x568-viewport.png": "4b0801ee37a3913d2208b70a7c3642f27bcdc7c88b17cb91305ecca984bdc73e",
+    "after/S10-current-320x568.png": "15715be735d3412141d91ece781deb3e5c87c946a04aa5d158ea066062004091",
+    "after/S10-current-390x844-viewport.png": "56ecf581e4a5dba3d9786246a7688ea62d6bb60c893ef04ccbc936ff270ae586",
+    "after/S10-current-390x844.png": "88381fa09ae87f37d14b5386e877d91ba61fcd32ea6397a69e2fcd2bfdf8bd05",
+    "after/S10-prior-390x844-viewport.png": "a42294ac9ece5c003ac23466062dfddbbcaeb6b9f7dafc280472f4a7d61d4eb8",
+    "after/S10-prior-390x844.png": "da6cb73ba67f7428b7a9de5824fffadbbe96c2230435efaa4a15056f95320f9c",
+    "after/S10-stale-390x844-viewport.png": "15924febbda5a7cc24b4065e21770843366f68e790f1f918f79bb907ed492efa",
+    "after/S10-stale-390x844.png": "6c19adebbaf3f00133f313a0c3e322040a5381ee4ea580dc33077eec5ec2c65c",
+    "before/S10-current-1366x768-viewport.png": "44b6523060460dfbb15c1b63e7164c5fc43d2e97643d90435d69e2c6d77fe5c4",
+    "before/S10-current-1366x768.png": "6e9853eb16acb1eff017972c0112b97cf7b9e18dafb890e3ffc063c2efa0dda8",
+    "before/S10-current-320x568-viewport.png": "a78193d73634f5cc1b1c514d6ed69aa8fef0baafd72eaf3b215baf0550da033d",
+    "before/S10-current-320x568.png": "55acbff54285b71e6fec8ece8319e693d40d64d9beebb2d47d1c1abccd840c79",
+    "before/S10-current-390x844-viewport.png": "025834f5be6b45b7dc435f0815be4f51cd61523204cec7259c575df8ecf68824",
+    "before/S10-current-390x844.png": "76fd4c2986e8bb36a1fa0f7662294dddb225598b40bad958f2edf62e4ab2e0bc",
+    "before/S10-prior-390x844-viewport.png": "39ca77f6e522c5430d5d6a3e78bb614199368d47c0fc7d22943a427d7ba2dc2e",
+    "before/S10-prior-390x844.png": "6fb10e6dcb046e5429f888de73eeadf8d9a35c692dd503ee0cc9cf980404e363",
+    "before/S10-stale-390x844-viewport.png": "1d0442c87fd5754a2642cf6cb4b54058c30fa171848b2110ab3ef2dbd4e73fec",
+    "before/S10-stale-390x844.png": "8a3a9fd409faeb1ba20d5759e6c1530e43d212fe603deac3c590a37df98bf437"
+  },
+  "not_performed": [
+    "main merge",
+    "mirror sync",
+    "production deploy",
+    "production scene activation",
+    "physical devices",
+    "production API/DB writes",
+    "GPU/FPS qualification"
+  ]
+}
