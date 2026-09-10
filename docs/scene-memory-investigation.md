@@ -20,15 +20,23 @@ The first CI run exposed a Windows checkout issue: the new helper lacked the exi
 
 ## Recorded results
 
-The [sanitized evidence](evidence/scene-android-memory.json) pins each build/probe and the candidate source hashes. Both controls completed five warmup plus 30 measured cycles. The first candidate run completed warmup plus nine measured cycles, then was interrupted during cycle 10; it is explicitly incomplete and must not stand in for a complete physical acceptance run.
+The [sanitized evidence](evidence/scene-android-memory.json) pins each build/probe and the candidate source hashes. Both controls and the corrected build at `0f35db18b1f0ffdce5ff76b199380b4b3ee68642` completed five warmup plus 30 measured cycles. The earlier interrupted candidate attempt remains in the evidence as incomplete; the new run supplies the complete physical result.
 
 | Run | Post-GC DOM nodes | Native canvases in heap snapshots | Post-GC JS heap bytes |
 | --- | --- | --- | --- |
 | Before fix, review, 30 cycles | 160 → 250 | 15 → 105 | 7,365,464 → 8,555,832 |
 | Off control, 30 cycles | 141 → 141 | 0 → 0 | 3,240,524 → 3,591,652 |
-| Fixed candidate, interrupted | 146 throughout 0–9 | 0 at warmed baseline; final snapshot unavailable | 7,196,060 → 7,528,996 at cycle 9 |
+| Fixed candidate, complete 30 cycles | 146 → 146 | 0 at cycles 0, 10 and 30 | 7,201,840 → 7,690,116 |
 
-The complete Mac Chromium S05 suite passed 36/36 with ANGLE SwiftShader, including the new three-cycle S02/S10/S05 forced-GC regression. This establishes automated browser resource cleanup and save-event parity, separately from the incomplete physical candidate run. Phone availability is required to repeat the full Android measurement. Aggregate JS growth and absolute GPU/peak-process memory remain open even after the canvas-retention correction.
+The corrected physical run created 105 contexts across 105 scene visits, with zero live contexts and zero DOM canvases at every sampled semantic exit. Native canvases and native WebGL objects were absent from all three heap snapshots. All 31 exit samples kept one document, 146 DOM nodes and 189 event listeners. The previously attributed DFG LUT retention did not recur. This closes the bounded scene-resource retention check. The separate Mac Chromium suite passed 36/36, including the three-cycle S02/S10/S05 forced-GC regression.
+
+Aggregate JS heap increased by 488,276 bytes. Snapshot comparisons also show growth in browser performance-timing records, including long-frame, long-task, resource and layout-shift entries; that observation does not fully attribute the aggregate. Full application-memory stability and absolute GPU/peak-process memory acceptance therefore remain open.
+
+## Post-fix presentation and delivery check
+
+The same application source also completed the [ten-cycle presentation probe](evidence/scene-android-performance-after-fix.json), separately from heap snapshots, with scene review and legacy companion production modes enabled. Each new S05 confirmation celebrated once, history return did not replay, every idle sample had zero RAF callbacks, and every exit had zero live contexts. Browser-emulated reduced motion selected calendar posters and consumed S05 without celebration. All ten clips had p95 RAF intervals of approximately 16.7 ms; the maximum observed interval was approximately 16.9 ms. These are callback intervals, not measured presented FPS.
+
+Cache-disabled selected response totals, including the new disposal chunk, were S02 **702,441**, S10 **704,431** and S05 **687,833** bytes. The disposal chunk contributed 887 CDP encoded bytes per cold activation, including protocol overhead. This remains USB-local selected-resource delivery, not whole-page Wi-Fi/cellular qualification. Activation long tasks reached 153 ms on S02, 129 ms on S10 and 76 ms on S05; shader/decode/input impact is not attributed. This separate probe's DOM-node counter stayed at 579, while aggregate JS heap rose 13,049,080 → 14,219,972 bytes. Its different warmup/instrumentation prevents treating those heap values as the 30-cycle profile's continuation.
 
 ## Measurement limits
 
