@@ -50,9 +50,14 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
 
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
+  const exportHint = page.locator('.recap-tools > p');
+  await expect(exportHint).toHaveText('선택한 7일의 기록을 파일로 보관할 수 있어요.');
+  await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
   await page.getByRole('button', { name: '이전 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
+  await expect(exportHint).toHaveText('이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.');
   await expect(page.locator('.window-nav')).toContainText('8월 29일');
   await expect(page.locator('.window-nav')).toContainText('9월 4일');
   await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
@@ -68,7 +73,10 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await page.getByRole('button', { name: '현재 7일 보기', exact: true }).click();
+  await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'current');
+  await expect(exportHint).toHaveText('선택한 7일의 기록을 파일로 보관할 수 있어요.');
   await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
 });
 
 for (const [kind, index, explanation] of [

@@ -35,7 +35,9 @@ export function JourneyRecap({ today, year, prior, freshness, navigation, record
       </header>
       <div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{records}</div>
       <footer className="recap-tools">
-        <p>선택한 7일의 기록을 파일로 보관할 수 있어요.</p>
+        <p>{prior
+          ? '이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.'
+          : '선택한 7일의 기록을 파일로 보관할 수 있어요.'}</p>
         <div className="scene-actions utility-actions">{actions}</div>
       </footer>
     </div>
