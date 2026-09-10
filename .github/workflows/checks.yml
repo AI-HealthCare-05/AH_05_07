@@ -41,6 +41,9 @@ jobs:
       - name: Verify scene manifest rejection boundaries
         run: npm run test:scene-manifest
 
+      - name: Check Android scene probe syntax
+        run: node --check scripts/measure-scene-android.mjs
+
       - name: Build web client
         run: npm run build
 
