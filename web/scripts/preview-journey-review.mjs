@@ -11,7 +11,9 @@ import { journeyReviewFixture } from './journey-review-fixture.mjs';
 // A separate ignored output directory prevents serving a normal production build
 // with test authentication. This tool is never part of the Vite entry graph.
 const web = fileURLToPath(new URL('../', import.meta.url));
-const dist = path.join(web, 'test-results/living-scene-review/journey-preview');
+const port = Number(process.env.JOURNEY_REVIEW_PORT ?? 4177);
+assert.ok(Number.isInteger(port) && port >= 1024 && port <= 65535, 'Use a local unprivileged port');
+const dist = path.join(web, 'test-results/living-scene-review', port === 4177 ? 'journey-preview' : `journey-preview-${port}`);
 execFileSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build', '--', '--outDir', dist], {
   cwd: web, stdio: 'inherit', env: { ...process.env, VITE_API_BASE_URL: 'http://e2e.invalid',
     VITE_SUPABASE_URL: 'https://e2e.invalid', VITE_SUPABASE_PUBLISHABLE_KEY: 'e2e-test-publishable-key',
@@ -50,9 +52,9 @@ const headers = {
 };
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.glb': 'model/gltf-binary' };
 createServer((req, res) => {
-  if (!['127.0.0.1:4177', 'localhost:4177'].includes(req.headers.host)) { res.writeHead(400); res.end(); return; }
+  if (![`127.0.0.1:${port}`, `localhost:${port}`].includes(req.headers.host)) { res.writeHead(400); res.end(); return; }
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405, headers); res.end(); return; }
-  const url = new URL(req.url, 'http://127.0.0.1:4177');
+  const url = new URL(req.url, `http://127.0.0.1:${port}`);
   if (url.pathname === '/' && url.searchParams.get('e2e') !== 'signed-in') {
     res.writeHead(302, { ...headers, Location: '/?e2e=signed-in&screen=S02' }); res.end(); return;
   }
@@ -61,4 +63,4 @@ createServer((req, res) => {
   if (!bytes) { res.writeHead(404, headers); res.end(); return; }
   res.writeHead(200, { ...headers, 'Content-Type': mime[path.extname(name)] ?? 'application/octet-stream', 'Content-Length': bytes.length });
   res.end(req.method === 'HEAD' ? undefined : bytes);
-}).listen(4177, '127.0.0.1', () => console.log('Local synthetic review: http://127.0.0.1:4177 — use only 120 / 80; no API writes or persisted inputs.'));
+}).listen(port, '127.0.0.1', () => console.log(`Local synthetic review: http://127.0.0.1:${port} — use only 120 / 80; no API writes or persisted inputs. S10: ?e2e=signed-in&screen=S10&recap_fixture=mixed; downloads are labeled synthetic.`));

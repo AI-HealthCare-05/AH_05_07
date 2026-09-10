@@ -1,0 +1,37 @@
+{
+  "synthetic": true,
+  "fixedTime": "2026-09-11T03:00:00Z",
+  "motion": "reduce",
+  "measurements": [
+    {
+      "viewport": "320x568",
+      "stage": {
+        "x": 32.1875,
+        "y": 963.359375,
+        "width": 255.625,
+        "height": 240
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "390x844",
+      "stage": {
+        "x": 32.1875,
+        "y": 963.359375,
+        "width": 325.625,
+        "height": 280
+      },
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "1366x768",
+      "stage": {
+        "x": 148.625,
+        "y": 775.4375,
+        "width": 1068.75,
+        "height": 420
+      },
+      "horizontalOverflow": false
+    }
+  ]
+}
