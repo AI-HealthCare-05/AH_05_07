@@ -1,5 +1,11 @@
 # SK7 작업 상태
 
+> **역사적 작업 기록 — 현재 작업 선택용 SSOT가 아닙니다.**
+> 시작은 [짧은 인계](project-handoff.md#fast-start)와 해당 Issue/PR을 사용합니다.
+> 아래 `현재`, `Next`, 미완료 표시는 각 기록 당시의 상태이며 완료 작업을 다시 열지 않습니다.
+> 실제 운영 상태는 [배포 SSOT](deployment-ssot.md)의 기록과 제어면 재확인을 구분합니다.
+> 과거 검증 결과·금지된 재실행·개인정보 경계는 그대로 보존합니다.
+
 ## 2026-09-08 non-model reconciliation
 
 Source baseline: `9713ed5aab4a4e74b145d79c4d536affab3c010b`.

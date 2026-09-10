@@ -1,5 +1,11 @@
 # Parallel workstreams
 
+> Restart from [Fast start](../project-handoff.md#fast-start). R1–R11 are complete;
+> the initial work and checkpoint sequence below are historical, not startup gates.
+> W/M identify ownership domains, not a requirement to switch operating systems.
+> The active Issue names the current editor; shared-file and frozen-contract
+> boundaries below remain binding. Do not create extra handoff files by default.
+
 ## Authority
 
 | Stream | Normal ownership | Initial work |

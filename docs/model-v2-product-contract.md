@@ -1,14 +1,33 @@
 # Model V2 Product Contract
 
-Status: **PROPOSED / PRODUCTION DISABLED**
+## Lifecycle reading note — 2026-09-11
 
-Round 2, PHASE 0, Task T1 · [Issue #302](https://github.com/AI-HealthCare-05/AH_05_07/issues/302)
+The product boundary remains binding; the T1 planning statuses below are not a
+live implementation or production inventory. This note updates routing/status,
+not the frozen feature schema, derivations, model, data-use or output semantics.
 
-Repository evidence baseline: `33189dc7c502173608bdee6b3392390952820140`
-(`origin/main`, checked 2026-09-08). This is the single current entry point for
-Model V2 product scope; proposed product behavior below is not shipped behavior
-or release authorization. Task IDs follow the supplied Round-2 T1 brief. No
-separate Master Design file was found in the tracked repository at this baseline.
+- S11 and authenticated `/api/v1/model-v2/product-score` are implemented; the
+  recorded rollout and exact two-field, non-numeric response are linked from
+  [deployment SSOT](deployment-ssot.md). Current runtime must be re-verified there;
+  merged #393/#397/#399 fixes are not evidence that those fixes are deployed.
+- Individual numeric/probability/percentile/band display is not approved.
+  [G10 / #396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396) owns the
+  prospective displayability decision; no cosmetic substitute may imply a score.
+- `PRODUCTION DISABLED`, `KNOWN BLOCKER — T2`, `S11 remains not ready`, future
+  task language and unresolved-decision lists in the retained T1 sections are
+  historical assessments. Do not restart completed work solely from these labels.
+  For a parity question inspect the current inference/adapter implementation and
+  its tests; this note does not invent a new parity or physical/runtime PASS.
+- Frozen invariants, exact 11-feature meanings, privacy, no persistence and
+  no BP/challenge joins remain in force. An ADR or status edit cannot relax them.
+
+## Retained T1 planning record
+
+Original status: **PROPOSED / PRODUCTION DISABLED** (2026-09-08 snapshot only).
+Round 2, PHASE 0, T1 · [Issue #302](https://github.com/AI-HealthCare-05/AH_05_07/issues/302).
+Original evidence baseline: `33189dc7c502173608bdee6b3392390952820140`.
+The sections below retain that planning record and frozen contracts. Lifecycle
+claims must be interpreted with the note above, not as new release authorization.
 
 ## 1. Purpose
 
