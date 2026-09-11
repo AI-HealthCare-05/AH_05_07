@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 const companionOff = process.env.SK7_UI_TEST_COMPANION === 'off';
 export default defineConfig({
   testDir: './e2e',
-  testMatch: companionOff ? 'ui-candidate.cases.ts' : ['ui-candidate.cases.ts', 'recap-candidate.cases.ts', 'companion-production.spec.ts', 'session-privacy-boundary.spec.ts', 'model-v2-user-input-flow.spec.ts', 'model-v2-result-state.spec.ts'],
+  testMatch: companionOff ? ['ui-candidate.cases.ts', 'challenge-daily.cases.ts'] : ['ui-candidate.cases.ts', 'challenge-daily.cases.ts', 'recap-candidate.cases.ts', 'companion-production.spec.ts', 'session-privacy-boundary.spec.ts', 'model-v2-user-input-flow.spec.ts', 'model-v2-result-state.spec.ts'],
   outputDir: './test-results/ui-release/synthetic', workers: 1,
   reporter: [['list'], ['json', { outputFile: `test-results/ui-release/synthetic-${companionOff ? 'off' : 'production'}.json` }]],
   use: { baseURL: 'http://127.0.0.1:4173', screenshot: 'only-on-failure',
