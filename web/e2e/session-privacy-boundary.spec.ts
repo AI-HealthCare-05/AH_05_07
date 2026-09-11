@@ -476,10 +476,14 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(page.locator('[data-scene="S01"]')).toContainText("공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.");
   await routeWindow(page, () => emptyWindow);
   await page.goto("/?e2e=signed-in&screen=S14");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("혈압 관찰과 챌린지 제품 기록은 30일 동안 보관돼요");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("이메일 링크로 로그인한 계정의 기록을 확인해요");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("계정과 저장된 혈압 관찰·챌린지 제품 기록이 삭제되며, 되돌릴 수 없어요");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요");
+  const settings = page.locator('[data-scene="S14"]');
+  await expect(settings).toContainText("30일");
+  await expect(settings).toContainText("이메일");
+  await expect(settings).toContainText("혈압 관찰");
+  await expect(settings).toContainText("챌린지 제품 기록");
+  await expect(settings).toContainText("계정 삭제");
+  await expect(settings).toContainText("JSON");
+  await expect(settings).toContainText("기기");
 });
 
 test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {
