@@ -1,4 +1,5 @@
 import "./journey-candidate.cases";
+import { createHash } from "node:crypto";
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 import { allowsSavedScene, createSavedSceneEvent } from "../src/ui/savedScene";
@@ -16,7 +17,22 @@ function deferred() {
   return { promise, release };
 }
 
+// Fetch the real, immutable GLB once before scene timers start; behavior tests
+// still use the real renderer. Live transport remains covered by the existing CI step.
+let assetBody: Buffer;
+test.beforeAll(async ({ request }) => {
+  const asset = companionAssetManifest.bear.lite;
+  const response = await request.get(assetUrl, { headers: { Origin: headers["Access-Control-Allow-Origin"] } });
+  expect(response.status()).toBe(200);
+  expect(response.headers()["access-control-allow-origin"]).toBe(headers["Access-Control-Allow-Origin"]);
+  assetBody = await response.body();
+  expect(assetBody.length).toBe(asset.bytes);
+  expect(createHash("sha256").update(assetBody).digest("hex")).toBe(asset.sha256);
+  await response.dispose();
+});
+
 async function setup(page: Page) {
+  await page.route(assetUrl, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body: assetBody }));
   const state = {
     posts: 0, windows: 0, urls: [] as string[], errors: [] as string[],
     outcome: "ok" as "ok" | "unknown" | "conflict" | "invalid-json",
@@ -216,7 +232,7 @@ for (const when of ["before-save", "loading", "playing", "refresh-pending"] as c
     const state = await setup(page);
     const gate = deferred();
     let assetRequested = false;
-    if (when === "loading") await page.route(assetUrl, async route => { assetRequested = true; await gate.promise; await route.continue(); });
+    if (when === "loading") await page.route(assetUrl, async route => { assetRequested = true; await gate.promise; await route.fallback(); });
     if (when === "refresh-pending") state.refreshGate = gate;
     const change = async (active: boolean) => {
       if (interruption === "hidden") return hidden(page, active);
@@ -258,7 +274,7 @@ for (const failure of ["glb", "chunk", "corrupt", "webgl", "context", "load-time
     if (failure === "glb") await page.route(assetUrl, route => route.abort());
     if (failure === "corrupt") await page.route(assetUrl, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body: "invalid" }));
     if (failure === "chunk") await page.route("**/SavedSceneRenderer-*.js", route => route.abort());
-    if (failure === "load-timeout") await page.route(assetUrl, async route => { await gate.promise; await route.continue(); });
+    if (failure === "load-timeout") await page.route(assetUrl, async route => { await gate.promise; await route.fallback(); });
     if (failure === "webgl") await page.addInitScript(() => {
       const original = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function (...args) {
@@ -338,7 +354,7 @@ test("saving from a scrolled form shows S05 before its one celebration opportuni
   await setup(page);
   await page.setViewportSize({ width: 402, height: 714 });
   const assetGate = deferred();
-  await page.route(assetUrl, async route => { await assetGate.promise; await route.continue(); });
+  await page.route(assetUrl, async route => { await assetGate.promise; await route.fallback(); });
   await openForm(page);
   const save = page.getByRole("button", { name: "혈압 기록 저장", exact: true });
   await save.scrollIntoViewIfNeeded();
@@ -490,7 +506,7 @@ test("200 percent zoom and total media failure preserve keyboard completion", as
 test("a fresh confirmation replaces a failed old S05 visit only after refresh completes", async ({ page }) => {
   const state = await setup(page);
   let failAsset = true;
-  await page.route(assetUrl, route => failAsset ? route.abort() : route.continue());
+  await page.route(assetUrl, route => failAsset ? route.abort() : route.fallback());
   await openForm(page); await submit(page);
   await expect(runtime(page)).toHaveAttribute("data-saved-scene-status", "fallback");
   await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
