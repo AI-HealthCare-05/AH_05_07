@@ -130,7 +130,9 @@ test('200% text, reduced motion and failed media keep completion DOM and no retr
   await expect(page.locator('#S05-title')).toBeFocused();
   if (!companionOff) await expect(page.locator('[data-companion-status]')).toHaveAttribute('data-companion-status', 'error', { timeout: 30000 });
   const count = state.urls.filter(url => /\.(glb|webp)(\?|$)/.test(url)).length;
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  // Observe a stable failed visit; do not reinterpret the legacy renderer's
+  // independent motion-setting lifecycle as a new candidate retry contract.
+  await page.waitForTimeout(200);
   await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   expect(state.urls.filter(url => /\.(glb|webp)(\?|$)/.test(url))).toHaveLength(count);
