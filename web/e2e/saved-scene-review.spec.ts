@@ -304,7 +304,7 @@ test("session replacement drops an already confirmed event while refresh is pend
   await expect.poll(() => state.windows).toBe(2);
   await page.evaluate(name => window.dispatchEvent(new CustomEvent(name, { detail: null })), e2eSessionEventName);
   state.refreshGate.release();
-  await expect(page.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "로그인 링크 받기" })).toBeVisible();
   await expect(runtime(page)).toHaveCount(0);
   expect(glbs(state.urls)).toEqual([]);
 });
@@ -468,7 +468,7 @@ test("late mutation response after logout cannot issue a saved event", async ({ 
   await expect.poll(() => state.posts).toBe(1);
   await page.evaluate(name => window.dispatchEvent(new CustomEvent(name, { detail: null })), e2eSessionEventName);
   state.saveGate.release();
-  await expect(page.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "로그인 링크 받기" })).toBeVisible();
   await expect(runtime(page)).toHaveCount(0);
   expect(glbs(state.urls)).toEqual([]);
 });

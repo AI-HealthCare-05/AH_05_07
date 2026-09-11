@@ -123,3 +123,38 @@
 /* Room for outstretched celebrate hands without shrinking the whole character.
    Only the inline journey S05 canvas changes; landscape and actions keep their size. */
 .app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 6rem); bottom: auto; width: 12rem; height: calc(100% - 1.5rem); }
+
+/* S01/S12 only: preserve the shared scenes and normal presentation. */
+.journey-login.welcome-shell { --sk7-focus: #3f594a; overflow: visible; padding: clamp(1.25rem, 5vw, 4rem); }
+.journey-login .journey-login-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); width: min(100%, 64rem); }
+.journey-login .journey-login-intro { display: grid; gap: 1.25rem; }
+.journey-login h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); line-height: 1.25; letter-spacing: -.06em; }
+.journey-login .eyebrow { letter-spacing: .04em; }
+.journey-login .scene-body { font-size: 1rem; }
+.journey-login .welcome-card { width: 100%; padding: clamp(1.25rem, 3vw, 2rem); box-shadow: var(--sk7-shadow-soft); animation: none; }
+.journey-login form { margin: 0; }
+.journey-login input { font-size: max(16px, 1rem); }
+.journey-login .journey-login-help, .journey-login .journey-login-steps, .journey-login .journey-login-demo, .journey-login .welcome-footnote { font-size: .875rem; line-height: 1.65; color: var(--sk7-ink-muted); }
+.journey-login .journey-login-steps { border-top: 1px solid var(--sk7-border); padding-top: 1rem; }
+.journey-login .journey-login-demo { color: var(--sk7-ink); }
+.journey-login .notice { margin: 0; }
+.journey-empty.scene { --sk7-focus: #3f594a; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.journey-empty > .scene-visual-background, .journey-empty > .scene-visual-character, .journey-empty::after { display: none; }
+.journey-empty .scene-copy { gap: .85rem; }
+.journey-empty h1 { font-size: clamp(1.75rem, 3.2vw, 2.8rem); }
+.journey-empty .scene-body { font-size: 1rem; }
+.journey-empty .journey-empty-period { color: var(--sk7-ink-muted); line-height: 1.65; }
+.journey-empty .journey-empty-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.journey-empty .journey-empty-action { display: grid; grid-template-rows: auto 1fr auto; gap: 1rem; border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-md); background: var(--sk7-surface); padding: 1.25rem; }
+.journey-empty .journey-empty-action h2 { font-size: 1.125rem; }
+.journey-empty .journey-empty-action p { color: var(--sk7-ink-muted); line-height: 1.65; }
+.journey-empty .empty-garden { justify-self: end; width: 10rem; height: 2.5rem; border-bottom-width: .35rem; }
+.journey-empty .empty-garden i { width: 2rem; height: 1.4rem; }
+.journey-empty .empty-garden i:nth-child(2) { width: 2.2rem; height: 2rem; }
+@media (max-width: 760px) {
+  .journey-login.welcome-shell { align-items: start; }
+  .journey-login .journey-login-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; max-width: 32rem; }
+  .journey-login .journey-login-intro { gap: .85rem; }
+  .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
+  .journey-empty .journey-empty-action { padding: 1rem; gap: .75rem; }
+}

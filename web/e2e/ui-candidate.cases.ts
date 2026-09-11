@@ -193,3 +193,84 @@ test('200% text, reduced motion and failed media keep completion DOM and no retr
   await page.keyboard.press('Tab'); await page.keyboard.press('Enter');
   await expect(page.locator('.journey-today')).toBeVisible();
 });
+
+for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback at ${width}`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 360 ? 800 : 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const held = deferred(); let posts = 0; let fail = false;
+  await page.route('https://e2e.invalid/auth/v1/otp**', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    posts++;
+    expect(new URL(route.request().url()).searchParams.get('redirect_to')).toBe('http://127.0.0.1:4173');
+    expect(route.request().postDataJSON().create_user).toBe(true);
+    await held.promise;
+    await route.fulfill({ status: fail ? 400 : 200, headers, contentType: 'application/json', body: fail ? JSON.stringify({ msg: 'synthetic-private-error' }) : '{}' });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '오늘을 남기고, 7일을 돌아봐요.' })).toBeVisible();
+  const email = page.getByRole('textbox', { name: '이메일', exact: true });
+  await expect(email).toHaveAccessibleDescription('이메일로 받은 링크를 열면 로그인할 수 있어요.');
+  expect(await email.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  await email.fill(`synthetic-${Date.now()}@example.invalid`);
+  await page.getByRole('button', { name: '로그인 링크 받기', exact: true }).press('Enter');
+  await expect(page.getByRole('button', { name: '보내는 중', exact: true })).toBeDisabled();
+  await expect(page.locator('form')).toHaveAttribute('aria-busy', 'true');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  expect(posts).toBe(1); held.release();
+  await expect(page.getByRole('status')).toContainText('로그인 링크를 보냈어요.');
+  fail = true;
+  await page.getByRole('button', { name: '로그인 링크 받기', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('로그인 링크를 보내지 못했습니다.');
+  await expect(page.getByText('synthetic-private-error')).toHaveCount(0);
+  expect(posts).toBe(2);
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  await email.focus(); await page.keyboard.press('Tab');
+  const button = page.getByRole('button', { name: '로그인 링크 받기', exact: true });
+  await expect(button).toBeFocused(); await expect(button).toBeInViewport({ ratio: 1 });
+  expect(await button.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current actions'} keeps empty-window semantics`, async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  const held = deferred(); const windows: string[] = []; let fail = false; let writes = 0;
+  await page.route('http://e2e.invalid/**', async route => {
+    const req = route.request(), url = new URL(req.url());
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (req.method() !== 'GET') writes++;
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    windows.push(url.searchParams.get('start_on')!); await held.promise;
+    await route.fulfill({ status: fail ? 503 : 200, headers, contentType: 'application/json', body: JSON.stringify(fail ? {} : {
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [], challenge_events: [], active_challenge: null,
+    }) });
+  });
+  await page.goto(`/?e2e=signed-in${prior ? '&dashboard_window=prior' : ''}`);
+  await expect(page.getByRole('heading', { name: '선택한 7일을 불러오는 중이에요' })).toBeVisible();
+  await expect(page.locator('[data-scene="S12"]')).toHaveCount(0); held.release();
+  await expect(page.getByRole('heading', { name: prior ? '이 기간에는 기록이 없어요.' : '이 기간에는 아직 기록이 없어요.', exact: true })).toBeFocused();
+  await expect(page.locator('.journey-empty-period time').first()).toHaveAttribute('datetime', prior ? '2026-08-29' : '2026-09-05');
+  await expect(page.locator('.journey-empty-period time').last()).toHaveAttribute('datetime', prior ? '2026-09-04' : '2026-09-11');
+  if (prior) {
+    await expect(page.getByText('이전 7일 · 읽기 전용', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '혈압 기록하기', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '7일 챌린지 시작하기', exact: true })).toHaveCount(0);
+    expect(windows).toEqual(['2026-08-29']);
+    await page.getByRole('button', { name: '현재 7일 보기', exact: true }).press('Enter');
+    await expect(page.getByRole('heading', { name: '이 기간에는 아직 기록이 없어요.', exact: true })).toBeVisible();
+    expect(windows).toEqual(['2026-08-29', '2026-09-05']); await expect(page).not.toHaveURL(/dashboard_window/);
+  }
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  await page.locator('#S12-title').focus(); await page.keyboard.press('Tab');
+  const bp = page.getByRole('button', { name: '혈압 기록하기', exact: true });
+  await expect(bp).toBeFocused(); await expect(bp).toBeInViewport({ ratio: 1 });
+  expect(await bp.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); })).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await bp.press('Enter'); await expect(page.locator('#S04-title')).toBeFocused();
+  await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+  await page.getByRole('button', { name: '7일 챌린지 시작하기', exact: true }).click();
+  await expect(page.locator('#S03-title')).toBeFocused(); expect(writes).toBe(0);
+  fail = true; await page.reload();
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible(); await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+});
