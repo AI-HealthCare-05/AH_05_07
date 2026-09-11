@@ -110,6 +110,43 @@
 }
 .journey-entry .journey-back { border: 0; background: transparent; }
 
+/* S13/S14: Journey-only load recovery and settings composition. */
+.journey-load-error.scene, .journey-settings.scene { --sk7-focus: #3f594a; max-width: 54rem; margin-inline: auto; }
+.journey-load-error > .scene-visual-background, .journey-load-error > .scene-visual-character, .journey-load-error::after,
+.journey-settings > .scene-visual-background, .journey-settings > .scene-visual-character, .journey-settings::after { display: none; }
+.journey-load-error .scene-copy, .journey-settings .scene-copy { max-width: 39rem; }
+.journey-load-error-card { display: grid; justify-items: start; gap: .75rem; border: 1px solid #dedbcf; border-top: 4px solid #c98673; border-radius: .35rem .35rem 1rem 1rem; background: #fffdf7; box-shadow: 0 8px 0 -4px #e8e5d9; padding: clamp(1.25rem, 3vw, 2rem); }
+.journey-load-error-card p { color: #55574f; line-height: 1.6; }
+.journey-load-error-card p:first-child { color: #303a31; font-size: 1.1rem; font-weight: 650; }
+.journey-load-error-card button { margin-top: .35rem; min-height: 3rem; border-radius: .5rem; }
+.journey-settings-list { display: grid; gap: 1.5rem; }
+.journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem 2rem; border-top: 1px solid #d8d7c9; padding: 1.5rem 0 0; }
+.journey-settings-section > div { display: grid; gap: .45rem; }
+.journey-settings-section h2 { font-size: 1.35rem; letter-spacing: -.04em; }
+.journey-settings-section p:not(.eyebrow) { color: #62675a; line-height: 1.65; }
+.journey-settings-section > button { min-height: 2.9rem; border-radius: .5rem; white-space: nowrap; }
+.journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: 1 / -1; margin: 0; }
+.journey-settings-note { border-left: 3px solid #a4b395; padding-left: .8rem; font-size: .88rem; }
+.journey-settings-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.journey-settings-facts div { display: grid; gap: .2rem; border: 1px solid #e1dfd3; border-radius: .45rem; background: #fffdf7; padding: .75rem .9rem; }
+.journey-settings-facts dt { color: #737365; font-size: .75rem; }
+.journey-settings-facts dd { margin: 0; color: #414c40; font-weight: 650; }
+.journey-settings-help { border: 1px solid #dedbcf; border-radius: .45rem; background: #fffdf7; padding: 0 .9rem; }
+.journey-settings-help summary { min-height: 3rem; display: list-item; align-content: center; cursor: pointer; color: #414c40; font-weight: 650; }
+.journey-settings-help p { border-top: 1px solid #e5e1d7; padding: .8rem 0 1rem; font-size: .9rem; }
+.journey-settings-account { align-items: center; border-color: #d3b6ad; padding-bottom: .25rem; }
+.journey-settings-account > button { background: #9b4c43; }
+
+@media (max-width: 580px) {
+  .journey-load-error.scene, .journey-settings.scene { max-width: none; }
+  .journey-load-error-card { padding: 1.1rem; }
+  .journey-settings-list { gap: 1.25rem; }
+  .journey-settings-section { grid-template-columns: minmax(0, 1fr); gap: .9rem; padding-top: 1.25rem; }
+  .journey-settings-section > button { width: 100%; }
+  .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: auto; }
+  .journey-settings-facts { gap: .55rem; }
+}
+
 /* S08/S09: Journey-only record reading composition. Shared S10 lanes retain
    their existing markup and layout. */
 .journey-records.scene, .journey-record-detail.scene { max-width: 58rem; margin-inline: auto; }

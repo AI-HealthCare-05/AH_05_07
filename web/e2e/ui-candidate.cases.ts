@@ -325,3 +325,71 @@ test('Journey record browsing keeps separated lanes, exact detail targets, and r
   await expect(page.locator('.journey-records')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('s08-desktop-1440.png'), fullPage: true });
 });
+
+test('Journey S13 distinguishes an unavailable window and retries with the existing read request', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  let loads = 0; const methods: string[] = [];
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    methods.push(request.method());
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    loads++;
+    return route.fulfill({ status: loads === 1 ? 503 : 200, headers, contentType: 'application/json', body: JSON.stringify(loads === 1 ? {} : {
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [], challenge_events: [], active_challenge: null,
+    }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S14');
+  const error = page.locator('.journey-load-error');
+  await expect(error).toContainText('기록을 불러오지 못했어요');
+  await expect(error).toContainText('아직 기록이 없다는 뜻은 아니에요.');
+  await expect(error).toContainText('연결을 확인한 뒤 다시 불러와 주세요.');
+  await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('s13-mobile-360.png'), fullPage: true });
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  await page.getByRole('button', { name: '다시 불러오기', exact: true }).focus();
+  await expect(page.getByRole('button', { name: '다시 불러오기', exact: true })).toBeInViewport({ ratio: 1 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.getByRole('button', { name: '다시 불러오기', exact: true }).click();
+  await expect(page.locator('.journey-settings')).toBeVisible();
+  expect(methods).toEqual(['GET', 'GET']);
+});
+
+test('Journey S14 groups guidance without writes and keeps account deletion behind its confirmation', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const methods: string[] = [];
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    methods.push(request.method());
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [], challenge_events: [{ id: 'settings-record', observed_on: '2026-09-10', action_id: 'walk-10-minutes', status: 'completed' }], active_challenge: null,
+    }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S14');
+  const settings = page.locator('.journey-settings');
+  await expect(settings).toContainText('최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요.');
+  await expect(settings).toContainText('내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.');
+  await expect(settings).toContainText('이메일 링크로 로그인한 계정의 기록을 확인해요.');
+  await settings.locator('summary').click();
+  await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.');
+  await page.screenshot({ path: testInfo.outputPath('s14-desktop-1440-help-open.png'), fullPage: true });
+  await page.getByRole('button', { name: '계정 삭제', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('계정이 삭제됩니다.');
+  await dialog.getByRole('button', { name: '취소', exact: true }).click();
+  await expect(page.getByRole('button', { name: '계정 삭제', exact: true })).toBeFocused();
+  expect(methods).toEqual(['GET']);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  const deleteControl = page.getByRole('button', { name: '계정 삭제', exact: true });
+  await deleteControl.scrollIntoViewIfNeeded();
+  await deleteControl.focus();
+  await expect(deleteControl).toBeInViewport({ ratio: 1 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200.png'), fullPage: true });
+});
