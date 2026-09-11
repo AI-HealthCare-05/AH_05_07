@@ -73,7 +73,8 @@ def load_inputs(split_dir):
         hashes[name] = sha256(path)
         if hashes[name] != evidence["partition_sha256"][name]:
             raise ValueError("input_hash_mismatch")
-        frames[name] = pd.read_parquet(path)
+        # Avoid Arrow reader-pool shutdown hangs after early preflight rejection.
+        frames[name] = pd.read_parquet(path, engine="pyarrow", use_threads=False)
         validate_frame(frames[name], manifest, evidence["row_counts"][name])
     if set(frames["train"].SEQN) & set(frames["validation"].SEQN):
         raise ValueError("partition_overlap")
