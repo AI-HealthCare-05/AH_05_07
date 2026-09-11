@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { companionAssetManifest } from '../src/ui/companionAssets.generated';
+import { installCompanionFramingProbe } from '../scripts/companion-framing-probe.mjs';
 const companionOff = process.env.SK7_UI_TEST_COMPANION === 'off';
 const headers = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
 function deferred() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
@@ -69,6 +70,7 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
   } else {
     const runtime = page.locator('[data-companion-status]');
     await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+    await expect(runtime).toHaveAttribute('data-companion-framing', 'journey-s05');
     await expect(runtime).toHaveAttribute('data-companion-celebrate-count', '1');
     await expect(runtime).toHaveAttribute('data-companion-phase', 'idle', { timeout: 10000 });
     expect(state.urls.filter(url => /\.glb(?:\?|$)/.test(url))).toEqual([companionAssetManifest.bear.lite.url]);
@@ -99,6 +101,58 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
   await expect(page.locator('[data-scene="S05"], .companion-runtime-slot')).toHaveCount(0);
   await page.reload();
   await expect(page.locator('[data-scene="S05"], .companion-runtime-slot')).toHaveCount(0);
+});
+
+// Inspect every rendered frame of the existing four-second celebrate and idle
+// clips. DOM bounds alone cannot detect an ear/hand cut inside the WebGL canvas.
+for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journey S05 neutral and full motion framing at ${width}`, async ({ page }, info) => {
+  test.skip(companionOff, 'No canvas when the independent companion gate is off');
+  await page.setViewportSize({ width, height });
+  await setup(page);
+  await page.addInitScript(installCompanionFramingProbe);
+  type Bounds = { phase: string; width: number; height: number; left: number; right: number; top: number; bottom: number; paintedHeight: number; cssClippedPixels: number };
+  type Probe = { sample: () => Bounds; report: () => { samples: Bounds[]; counts: Record<string, number>; paused: boolean }; pauseAfter: (phase: string, frames: number) => void };
+  const margins = (bounds: Bounds) => {
+    for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(5);
+    expect(bounds.paintedHeight).toBeGreaterThan(bounds.height * .8);
+    expect(bounds.cssClippedPixels, 'painted pixels inside the rounded parent clip').toBe(0);
+  };
+  const reports = [];
+  for (const motion of ['reduce', 'no-preference'] as const) {
+    await page.emulateMedia({ reducedMotion: motion });
+    await page.goto('/?e2e=signed-in&screen=S04');
+    if (motion === 'no-preference') await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.pauseAfter('idle', 241));
+    await save(page);
+    const runtime = page.locator('[data-companion-status]');
+    await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+    await expect(runtime).toHaveAttribute('data-companion-framing', 'journey-s05');
+    await expect(runtime).toHaveAttribute('data-companion-celebrate-count', motion === 'reduce' ? '0' : '1');
+    if (motion === 'reduce') {
+      const bounds = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.sample());
+      margins(bounds); reports.push({ motion, bounds });
+    } else {
+      await page.waitForFunction(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report().paused, undefined, { timeout: 20000 });
+      const report = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report());
+      expect(report.counts.celebrate).toBeGreaterThanOrEqual(235);
+      expect(report.counts.idle).toBe(241);
+      report.samples.forEach(margins); reports.push({ motion, ...report });
+    }
+    if (width === 320) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.locator('#S05-title').focus();
+      for (const name of ['오늘의 기록 보기', '계속 기록하기']) {
+        await page.keyboard.press('Tab');
+        const button = page.getByRole('button', { name, exact: true });
+        await expect(button).toBeFocused();
+        await expect(button).toBeInViewport({ ratio: 1 });
+        expect(await button.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); })).toBe(true);
+      }
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#S04-title')).toBeFocused();
+      await expect(page.locator('[data-companion-canvas]')).toHaveCount(0);
+    }
+  }
+  await info.attach(`S05-framing-${width}.json`, { body: JSON.stringify(reports), contentType: 'application/json' });
 });
 for (const outcome of ['pending', 'failure', 'duplicate', 'unknown']) test(`${outcome} save has no premature success or retry loop`, async ({ page }) => {
   const state = await setup(page, outcome);

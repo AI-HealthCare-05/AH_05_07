@@ -4,10 +4,12 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { companionClips, type CompanionSelection } from "../ui/companion";
 import { getCompanionAsset } from "../ui/companionAssets.generated";
+import type { CompanionFraming } from "./CompanionRuntimeBoundary";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
   reducedMotion: boolean;
+  framing?: CompanionFraming;
 }>;
 type RenderStatus = "loading" | "ready" | "error";
 type AnimationController = {
@@ -36,7 +38,7 @@ function setStatus(host: HTMLDivElement, status: RenderStatus, clipNames = "") {
   host.dataset.companionClipNames = clipNames;
 }
 
-export default function CompanionReviewRenderer({ selection, reducedMotion }: CompanionReviewRendererProps) {
+export default function CompanionReviewRenderer({ selection, reducedMotion, framing = "default" }: CompanionReviewRendererProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<AnimationController | null>(null);
   const latestSelectionRef = useRef(selection);
@@ -53,7 +55,9 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
     let model: THREE.Object3D | undefined;
     let resizeObserver: ResizeObserver | undefined;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 100);
+    // The larger journey S05 slot needs head/foot room throughout celebrate and idle.
+    // Keep the original camera for every legacy/review caller.
+    const camera = new THREE.PerspectiveCamera(framing === "journey-s05" ? 34 : 28, 1, 0.01, 100);
     setStatus(host, "loading");
     host.dataset.companionMotion = reducedMotion ? "stopped" : "pending";
     host.dataset.companionPhase = reducedMotion ? "idle" : "pending";
@@ -127,7 +131,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
         model.scale.setScalar(scale);
         model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
         scene.add(model);
-        camera.lookAt(0, 0.8, 0);
+        camera.lookAt(0, framing === "journey-s05" ? 0.85 : 0.8, 0);
         resize();
         const selectedClip = gltf.animations.find((clip) => clip.name === selection.clip);
         if (!selectedClip) {
@@ -219,11 +223,11 @@ export default function CompanionReviewRenderer({ selection, reducedMotion }: Co
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [reducedMotion, selection.species, selection.variant]);
+  }, [framing, reducedMotion, selection.species, selection.variant]);
 
   useEffect(() => {
     controllerRef.current?.play(selection, reducedMotion);
   }, [reducedMotion, selection.clip, selection.sequence]);
 
-  return <div ref={hostRef} className="companion-runtime-canvas" data-companion-status={status} />;
+  return <div ref={hostRef} className="companion-runtime-canvas" data-companion-status={status} data-companion-framing={framing} />;
 }

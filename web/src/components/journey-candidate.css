@@ -120,5 +120,6 @@
   .journey-today .recent-window-summary { grid-column: 1; grid-row: 6; }
 }
 
-/* Anchor the existing companion to the landscape, including when text reflows. */
-.app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 5rem); bottom: auto; width: 10rem; height: calc(100% - 1.5rem); }
+/* Room for outstretched celebrate hands without shrinking the whole character.
+   Only the inline journey S05 canvas changes; landscape and actions keep their size. */
+.app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 6rem); bottom: auto; width: 12rem; height: calc(100% - 1.5rem); }

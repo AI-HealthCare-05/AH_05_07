@@ -81,6 +81,7 @@ test("each approved review screen can load one explicit asset", async ({ page })
     page.on("request", (request) => requests.push(request.url()));
     await page.goto(reviewUrl(screen, query));
     await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    await expect(page.locator('[data-companion-framing]')).toHaveAttribute('data-companion-framing', 'default');
     expect(companionRequests(requests)).toHaveLength(1);
   }
 });

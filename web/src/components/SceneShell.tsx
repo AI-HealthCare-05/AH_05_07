@@ -43,7 +43,7 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
   const inlineCompanion = staticJourneyUi && activeScreen === "S05" && !savedSceneAllowed;
   const companion = savedSceneAllowed && savedSceneEvent
     ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} />
-    : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} />;
+    : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
 
   return (
     <main className="app-shell" data-screen={activeScreen}>
