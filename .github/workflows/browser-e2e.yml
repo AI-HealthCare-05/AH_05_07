@@ -68,6 +68,9 @@ jobs:
       - name: Run S02 and S10 review scene verification
         run: npm run test:e2e:scene
 
+      - name: Verify separate journey UI and normal auth boundaries
+        run: npm run test:e2e:ui
+
       - name: Check local submission capture script syntax
         run: |
           node --check ../tools/mvp1-capture.cjs

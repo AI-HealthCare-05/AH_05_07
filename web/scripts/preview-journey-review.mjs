@@ -11,13 +11,19 @@ import { journeyReviewFixture } from './journey-review-fixture.mjs';
 // A separate ignored output directory prevents serving a normal production build
 // with test authentication. This tool is never part of the Vite entry graph.
 const web = fileURLToPath(new URL('../', import.meta.url));
-const port = Number(process.env.JOURNEY_REVIEW_PORT ?? 4177);
+const staticCandidate = process.argv.includes('--static');
+const port = Number(process.env.JOURNEY_REVIEW_PORT ?? (staticCandidate ? 4181 : 4177));
 assert.ok(Number.isInteger(port) && port >= 1024 && port <= 65535, 'Use a local unprivileged port');
 const dist = path.join(web, 'test-results/living-scene-review', port === 4177 ? 'journey-preview' : `journey-preview-${port}`);
+const buildEnv = { ...process.env };
+// Keep the old review preview on its unset-UI compatibility path.
+delete buildEnv.VITE_SK7_UI_MODE;
+if (staticCandidate) buildEnv.VITE_SK7_UI_MODE = 'journey';
 execFileSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build', '--', '--outDir', dist], {
-  cwd: web, stdio: 'inherit', env: { ...process.env, VITE_API_BASE_URL: 'http://e2e.invalid',
+  cwd: web, stdio: 'inherit', env: { ...buildEnv, VITE_API_BASE_URL: 'http://e2e.invalid',
     VITE_SUPABASE_URL: 'https://e2e.invalid', VITE_SUPABASE_PUBLISHABLE_KEY: 'e2e-test-publishable-key',
-    VITE_SK7_E2E_MODE: '1', VITE_SK7_SCENE_MODE: 'review', VITE_SK7_COMPANION_MODE: 'production' },
+    VITE_SK7_EVIDENCE_MODE: '', VITE_SK7_EVIDENCE_FIXTURE: '',
+    VITE_SK7_E2E_MODE: '1', VITE_SK7_SCENE_MODE: staticCandidate ? 'off' : 'review', VITE_SK7_COMPANION_MODE: 'production' },
 });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const files = new Map();

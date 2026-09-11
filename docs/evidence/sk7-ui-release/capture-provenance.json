@@ -1,0 +1,37 @@
+{
+  "base": "cd6f2ad8481562fa2a4e91846f49d2a89adc7e46",
+  "scope": "Local Chromium app captures; synthetic tab-memory fixture except normal login. No actual auth/API/DB integration. S05 software WebGL production companion; no new realtime scene.",
+  "runtime_source_sha256": {
+    "web/src/App.tsx": "b566db4bf3fc3dff6840f87a91b3400b4c81249dd1908ae5d67e8c236e159926",
+    "web/src/components/SceneShell.tsx": "8f503e6528f4491b06bf959184add7e068f4f27ea0b80ddf3b6ec96227102fba",
+    "web/src/components/JourneyToday.tsx": "5742b86b15f9fd267a65b697ee6791d25dcdf8cdbd977757d78c1d424741a9ed",
+    "web/src/components/JourneyRecap.tsx": "a7f737592730e2d5e0bfa3833fef3537c18131fc18d663f5a194e2202d2b4a46",
+    "web/src/components/journey-candidate.css": "8b0289a18bb08b6dc0092218222921136177f1a1a883f66541419fd5f35f3354",
+    "web/src/components/StaticSceneFallback.tsx": "55e931b8a89c79291a4d3e15e33405c273841a6cc64130eaa5e623716a29e10e",
+    "web/src/ui/presentationPolicy.ts": "027d2ecf9dc4617980cc58462be4941815590f097d946160a5210a74d0e3c3ee",
+    "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed"
+  },
+  "build_entry_sha256": {
+    "synthetic": {
+      "assets/index-DVn6_FJy.js": "76341f570ebd5f1b5cab3404f0b80ee7a3993d8fdfbe603872cf4723ea2810c7",
+      "assets/index-DeHa_5g4.css": "0e39d050f8fe6a3c0e66ba3a40cee29774f676f24dfbf042077a56fcf76b09d9"
+    },
+    "normal": {
+      "assets/index-DeHa_5g4.css": "0e39d050f8fe6a3c0e66ba3a40cee29774f676f24dfbf042077a56fcf76b09d9",
+      "assets/index-BBn1HLER.js": "64912fbe5d88fd36df531a5ffc63d040bbc11774dd7b0dab86475e53c21a1557"
+    }
+  },
+  "captures_sha256": {
+    "normal-login-390.png": "111140fa6aa1ed9860fc05af775a819b5fb6d9ce5608e0d2feb237a3e414d02b",
+    "synthetic-S02-1366.png": "c33176fc7bad6b78336359576fabf6d25471e40d5c6c70001cbec96b00395fbc",
+    "synthetic-S02-320.png": "d6555fec0b3ef68449150b4aa93124dbd74df7207039f2e7d4b29010a45f91e9",
+    "synthetic-S02-390.png": "03d879c5f0fe7bc8c9c45b9e2cad1c57e12162490ffdefb4a212697fd4441319",
+    "synthetic-S04-390.png": "079e1610a5e90054cf843937684a340d8bc0ae840416c9012d3fd06156e77dd8",
+    "synthetic-S05-companion-1366.png": "96c42a4012e127f86d2d20056c1771e6690f066cce95556b04e760d413f6791e",
+    "synthetic-S05-companion-320.png": "6e0095fcf80affd8618daefb0af66763f164151402301c4f3e063675c4fb408a",
+    "synthetic-S05-companion-390.png": "33cdb70257e5c0fc6e0592c4931d46974d5ceee1de7bec22c5460b2e00099013",
+    "synthetic-S05-failed-media-390.png": "9a42cf34a29452be8dc287caf823e0bab630ce7a2680f2c8a1c4dba9f79cf4b2",
+    "synthetic-S10-1366.png": "c66d9ca2dbb514024ceaaaa14e84f39360023deed04df248564b980b8c88531b",
+    "synthetic-S10-390.png": "eacfa3ca224b09e8ec45c8c8aefe13404a84794fc6f8bd4b4ecd0c01123916b7"
+  }
+}
