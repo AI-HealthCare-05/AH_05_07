@@ -10,6 +10,7 @@ from app.apis.v1 import v1_routers
 from app.core import config
 from app.core.config import parse_api_cors_origins
 from app.core.db.databases import initialize_tortoise
+from app.core.model_v2_cache import ModelV2NoStoreMiddleware
 
 API_ALLOWED_METHODS = ("GET", "POST", "PUT", "DELETE")
 API_EXPOSED_HEADERS = ("Content-Disposition",)
@@ -104,6 +105,8 @@ def initialize_persistence(application: FastAPI) -> None:
     if config.ENABLE_LEGACY_MYSQL:
         initialize_tortoise(application)
 
+
+app.add_middleware(ModelV2NoStoreMiddleware)
 
 cors_origins = parse_api_cors_origins(config.API_CORS_ORIGINS)
 if cors_origins:
