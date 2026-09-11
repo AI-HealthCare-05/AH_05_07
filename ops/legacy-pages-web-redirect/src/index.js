@@ -1,4 +1,4 @@
-const PRODUCTION_ORIGIN = "https://ah-05-07-pages.ahnsangkyoon.workers.dev";
+const PRODUCTION_ORIGIN = "https://hyeol.app";
 
 export default {
   fetch(request) {
