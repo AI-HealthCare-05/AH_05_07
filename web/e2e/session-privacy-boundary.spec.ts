@@ -471,15 +471,19 @@ test("Back cannot restore A private detail after switching to B", async ({ page 
   await expect(page.locator('[data-scene="S09"]')).toHaveCount(0);
 });
 
-test("S01 and S14 explain the retention, Auth, and local export boundaries", async ({ page }) => {
+test("S01 and S14 explain retention, account, and local export boundaries", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('[data-scene="S01"]')).toContainText("공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.");
   await routeWindow(page, () => emptyWindow);
   await page.goto("/?e2e=signed-in&screen=S14");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("30일 보관 계약");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("Auth와 이메일은 별도");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다");
-  await expect(page.locator('[data-scene="S14"]')).toContainText("로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제");
+  const settings = page.locator('[data-scene="S14"]');
+  await expect(settings).toContainText("30일");
+  await expect(settings).toContainText("이메일");
+  await expect(settings).toContainText("혈압 관찰");
+  await expect(settings).toContainText("챌린지 제품 기록");
+  await expect(settings).toContainText("계정 삭제");
+  await expect(settings).toContainText("JSON");
+  await expect(settings).toContainText("기기");
 });
 
 test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {

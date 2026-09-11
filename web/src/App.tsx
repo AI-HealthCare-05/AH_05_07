@@ -1028,6 +1028,15 @@ function App() {
     }
 
     if (activeScreen === "S13") {
+      if (presentation.journey) return (
+        <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="coral" className="journey-load-error">
+          <div className="journey-load-error-card" role="alert">
+            <p>아직 기록이 없다는 뜻은 아니에요.</p>
+            <p>연결을 확인한 뒤 다시 불러와 주세요.</p>
+            <button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button>
+          </div>
+        </Scene>
+      );
       return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="coral" className="state-scene"><div className="mist-shape" aria-hidden="true" /><div className="state-message" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
     }
 
@@ -1235,6 +1244,44 @@ function App() {
       );
     }
 
+      if (presentation.journey) return (
+        <Scene id="S14" {...journeyCopy.S14} tone="cream" className="journey-settings">
+          <div className="journey-settings-list">
+            <section className="journey-settings-section">
+              <div>
+                <p className="eyebrow">기록과 파일</p>
+                <h2>기록을 찾아보고 파일을 관리해요</h2>
+                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 제품 기록은 30일 동안 보관돼요.</p>
+              </div>
+              <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
+              <p className="journey-settings-note">내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.</p>
+            </section>
+            <section className="journey-settings-section">
+              <div>
+                <p className="eyebrow">이용 안내</p>
+                <h2>기록을 확인하는 방법</h2>
+                <p>이메일 링크로 로그인한 계정의 기록을 확인해요.</p>
+              </div>
+              <dl className="journey-settings-facts">
+                <div><dt>언어</dt><dd>한국어</dd></div>
+                <div><dt>시간</dt><dd>한국 시간</dd></div>
+              </dl>
+              <details className="journey-settings-help">
+                <summary>저장 여부가 확실하지 않을 때</summary>
+                <p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p>
+              </details>
+            </section>
+            <section className="journey-settings-section journey-settings-account">
+              <div>
+                <p className="eyebrow">계정 관리</p>
+                <h2>계정 삭제</h2>
+                <p>계정과 저장된 혈압 관찰·챌린지 제품 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON은 별개로 기기에 남아요.</p>
+              </div>
+              <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button>
+            </section>
+          </div>
+        </Scene>
+      );
       return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
