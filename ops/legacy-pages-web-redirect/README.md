@@ -1,18 +1,25 @@
 # Legacy Worker redirect
 
-This Worker retires the legacy `ah-05-07-pages-web` endpoint by redirecting every request to the production Worker while preserving the path and query string.
+This Worker retires the legacy `ah-05-07-pages-web` and `ah-05-07-web-pages` endpoints by redirecting every request to the primary `https://hyeol.app` destination while preserving the path and query string. The `ah-05-07-pages.ahnsangkyoon.workers.dev` Worker remains the fallback app.
 
-Deploy it explicitly; it is not part of the frontend build:
+Deploy the same redirect source explicitly to both legacy Worker names; these deployments are not part of the frontend build:
 
 ```bash
 npx wrangler deploy --config ops/legacy-pages-web-redirect/wrangler.jsonc
+
+npx wrangler deploy \
+  --config ops/legacy-pages-web-redirect/wrangler.jsonc \
+  --name ah-05-07-web-pages
 ```
 
 Expected result:
 
 ```text
 https://ah-05-07-pages-web.ahnsangkyoon.workers.dev/*
-  -> https://ah-05-07-pages.ahnsangkyoon.workers.dev/*
+  -> https://hyeol.app/*
+
+https://ah-05-07-web-pages.ahnsangkyoon.workers.dev/*
+  -> https://hyeol.app/*
 ```
 
-Use the `308` response only after the production endpoint is the intended canonical URL. Rollback is performed by redeploying the legacy static Worker, not by changing `web/wrangler.jsonc`.
+Use the `308` response only while `https://hyeol.app` is the intended canonical URL. Rollback is performed by redeploying the legacy static Worker, not by changing `web/wrangler.jsonc`.
