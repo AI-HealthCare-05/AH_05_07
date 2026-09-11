@@ -486,7 +486,7 @@ test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 700 });
     await page.goto("/");
-    await expect(page.getByLabel("이메일")).toBeInViewport();
+    await expect(page.getByRole("textbox", { name: "이메일", exact: true })).toBeInViewport();
     expect(await page.locator("html").evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
     await routeWindow(page, () => emptyWindow);
     await page.goto("/?e2e=signed-in&screen=S14");

@@ -143,7 +143,7 @@ function isWindowEmpty(windowData: ObservationWindow | null): boolean {
     && windowData?.challenge_events.length === 0;
 }
 
-function Login({ onSession, recoveryMessage }: { onSession: (session: Session) => void; recoveryMessage?: string }) {
+function Login({ onSession, recoveryMessage, journey }: { onSession: (session: Session) => void; recoveryMessage?: string; journey: boolean }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -165,6 +165,30 @@ function Login({ onSession, recoveryMessage }: { onSession: (session: Session) =
       setPending(false);
     }
   }
+
+  if (journey) return (
+    <main className="welcome-shell journey-login" data-scene="S01">
+      <div className="journey-login-layout">
+        <section className="journey-login-intro" aria-labelledby="login-title">
+          <p className="eyebrow">상균7데이즈</p>
+          <h1 id="login-title">오늘을 남기고,<br />7일을 돌아봐요.</h1>
+          <p className="scene-body">혈압과 생활 챌린지를 각각 기록하고, 최근 7일의 기록을 확인하는 서비스예요.</p>
+        </section>
+        <section className="welcome-card" aria-label="이메일 로그인">
+          <form onSubmit={submit} aria-busy={pending}>
+            <label htmlFor="email">이메일</label>
+            <input id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <button type="submit" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
+            <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요.</p>
+          </form>
+          {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
+          <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
+          <p className="journey-login-demo">합성 데이터 체험용입니다. 실제 건강정보는 입력하지 마세요.</p>
+          <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
+        </section>
+      </div>
+    </main>
+  );
 
   return (
     <main className="welcome-shell" data-scene="S01">
@@ -828,11 +852,13 @@ function App() {
     }
   }
 
+  const presentation = resolvePresentationPolicy(import.meta.env.VITE_SK7_UI_MODE, import.meta.env.VITE_SK7_SCENE_MODE);
+
   if (!evidenceMode && !e2eSession && !supabaseConfigured) {
     return <main className="welcome-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   }
   if (!evidenceMode && !session) {
-    return <Login onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login journey={presentation.journey} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
@@ -954,8 +980,6 @@ function App() {
     );
   }
 
-  const presentation = resolvePresentationPolicy(import.meta.env.VITE_SK7_UI_MODE, import.meta.env.VITE_SK7_SCENE_MODE);
-
   function renderScene() {
     if (windowState === "loading") {
       return <section className="loading-scene" aria-busy="true" aria-live="polite"><span className="loading-stones" aria-hidden="true"><i /><i /><i /></span><p className="eyebrow">기록을 준비하고 있어요</p><h1>선택한 7일을 불러오는 중이에요</h1><p>불러오기가 끝나면 선택한 기간의 기록을 보여드려요.</p></section>;
@@ -966,6 +990,33 @@ function App() {
     }
 
     if (activeScreen === "S12") {
+      if (presentation.journey) return (
+        <Scene id="S12" eyebrow={isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}
+          title={isPriorDashboard ? "이 기간에는 기록이 없어요." : "이 기간에는 아직 기록이 없어요."}
+          body={isPriorDashboard ? "선택한 이전 구간에 남긴 기록이 없어요. 새 기록은 현재 7일에서 시작할 수 있어요." : "혈압 기록과 생활 챌린지는 각각 시작할 수 있어요."}
+          tone="sage" className="journey-empty">
+          <p className="journey-empty-period" aria-label="조회 기간"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
+          {isPriorDashboard ? (
+            <div className="journey-empty-return">
+              <button type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode}>현재 7일 보기</button>
+            </div>
+          ) : (
+            <div className="journey-empty-actions">
+              <section className="journey-empty-action">
+                <h2>혈압 기록</h2>
+                <p id="empty-bp-help">합성 혈압값을 날짜·시간대와 함께 입력해요.</p>
+                <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
+              </section>
+              <section className="journey-empty-action">
+                <h2>7일 챌린지</h2>
+                <p id="empty-challenge-help">이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
+                <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
+              </section>
+            </div>
+          )}
+          <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
+        </Scene>
+      );
       return <Scene id="S12" {...journeyCopy.S12} tone="sage" className="state-scene"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
     }
 
