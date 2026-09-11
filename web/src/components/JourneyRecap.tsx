@@ -1,8 +1,10 @@
+import { StaticJourneyLandscape } from './StaticSceneFallback';
 import type { ReactNode } from 'react';
 import { VisualStage } from './VisualStage';
 import './journey-recap.css';
 
 type JourneyRecapProps = {
+  staticLandscape: boolean;
   today: string;
   year: string;
   prior: boolean;
@@ -14,7 +16,7 @@ type JourneyRecapProps = {
 };
 
 /** Read-only composition; App retains requests, dates, focus and action guards. */
-export function JourneyRecap({ today, year, prior, freshness, navigation, records, challenge, actions }: JourneyRecapProps) {
+export function JourneyRecap({ staticLandscape, today, year, prior, freshness, navigation, records, challenge, actions }: JourneyRecapProps) {
   return <>
     <div className="recap-period">
       <p className="recap-period-label">{year}년 · {prior ? '이전 7일 · 읽기 전용' : '현재 7일 · 오늘 포함'}</p>
@@ -22,7 +24,7 @@ export function JourneyRecap({ today, year, prior, freshness, navigation, record
     </div>
     <aside className="recap-landscape" aria-label="오늘의 풍경">
       <figure className="recap-view">
-        <VisualStage screen="S10" calendarDate={today} />
+        {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={today} /> : <VisualStage screen="S10" calendarDate={today} />}
         <figcaption><span>모아와 잠깐, 오늘의 풍경</span><small>서울 {today} · 선택한 기록 기간과는 별개예요.</small></figcaption>
       </figure>
     </aside>

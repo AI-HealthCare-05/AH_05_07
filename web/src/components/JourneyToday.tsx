@@ -1,3 +1,4 @@
+import { StaticJourneyLandscape } from './StaticSceneFallback';
 import { VisualStage } from './VisualStage';
 import type { ScreenId } from '../ui/journey';
 import { shiftDate } from '../lib/seoulDate';
@@ -5,6 +6,7 @@ import { shiftDate } from '../lib/seoulDate';
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
 type JourneyTodayProps = {
+  staticLandscape: boolean;
   today: string;
   formattedDate: string;
   lead: Action;
@@ -15,10 +17,10 @@ type JourneyTodayProps = {
 };
 
 /** Presentation only: the App owns action selection; the scenery receives only a date. */
-export function JourneyToday({ today, formattedDate, lead, secondary, measurementLabel, challengeLabel, onNavigate }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, formattedDate, lead, secondary, measurementLabel, challengeLabel, onNavigate }: JourneyTodayProps) {
   return <>
     <div className="journey-view">
-      <VisualStage screen="S02" calendarDate={today} />
+      {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={today} /> : <VisualStage screen="S02" calendarDate={today} />}
       <p className="journey-view-caption">모아와 잠깐, 오늘의 풍경</p>
     </div>
     <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">

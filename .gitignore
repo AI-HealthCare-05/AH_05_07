@@ -18,3 +18,5 @@ wheels/
 /asset-review/review-v*.json
 /web/test-results/question-review/
 /web/test-results/living-scene-review/
+
+/web/test-results/ui-release/

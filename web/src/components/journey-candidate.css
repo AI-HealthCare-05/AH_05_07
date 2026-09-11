@@ -1,4 +1,4 @@
-/* Review-only, screen-scoped composition. No recipe, animation or gate changes. */
+/* Approved screen-scoped composition, selected by the build presentation policy. */
 .app-shell:has(.journey-candidate) { background: #f8f5ed; }
 .app-shell:has(.journey-candidate) .clay-horizon { display: none; }
 .app-shell:has(.journey-candidate) .primary-nav { background: #f8f5ed; box-shadow: none; }
@@ -119,3 +119,7 @@
   .journey-today .home-links { grid-column: 1; grid-row: 5; }
   .journey-today .recent-window-summary { grid-column: 1; grid-row: 6; }
 }
+
+/* Room for outstretched celebrate hands without shrinking the whole character.
+   Only the inline journey S05 canvas changes; landscape and actions keep their size. */
+.app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 6rem); bottom: auto; width: 12rem; height: calc(100% - 1.5rem); }

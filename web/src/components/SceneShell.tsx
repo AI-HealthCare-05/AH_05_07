@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { SavedSceneBoundary } from "./SavedSceneBoundary";
 import { allowsSavedScene, type SavedSceneEvent } from "../ui/savedScene";
@@ -10,7 +10,13 @@ import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui
 import type { CompanionSelection } from "../ui/companion";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 
+const SceneCompanionContext = createContext<ReactNode>(null);
+
+/** Decorative placement only; selection and lifecycle remain owned by the shell. */
+export function SceneCompanion() { return useContext(SceneCompanionContext); }
+
 type SceneShellProps = {
+  staticJourneyUi?: boolean;
   activeScreen: ScreenId;
   children: ReactNode;
   evidenceLabel?: string;
@@ -21,7 +27,7 @@ type SceneShellProps = {
   savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
+export function SceneShell({ staticJourneyUi = false, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
@@ -32,6 +38,12 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  const savedSceneAllowed = allowsSavedScene(import.meta.env.VITE_SK7_SCENE_MODE, activeScreen, Boolean(savedSceneEvent));
+  const inlineCompanion = staticJourneyUi && activeScreen === "S05" && !savedSceneAllowed;
+  const companion = savedSceneAllowed && savedSceneEvent
+    ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} />
+    : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
 
   return (
     <main className="app-shell" data-screen={activeScreen}>
@@ -50,14 +62,10 @@ export function SceneShell({ activeScreen, children, evidenceLabel, onNavigate, 
       <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
       <div id="scene-content" className="scene-viewport" tabIndex={-1}>
-        {allowsSavedScene(import.meta.env.VITE_SK7_SCENE_MODE, activeScreen, Boolean(savedSceneEvent)) && savedSceneEvent
-          ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} />
-          : <CompanionRuntimeBoundary
-          mode={import.meta.env.VITE_SK7_COMPANION_MODE}
-          selection={companionSelection}
-          reducedMotion={reducedMotion}
-        />}
-        {children}
+        {!inlineCompanion && companion}
+        <SceneCompanionContext.Provider value={inlineCompanion ? companion : null}>
+          {children}
+        </SceneCompanionContext.Provider>
       </div>
 
       <nav className="primary-nav" aria-label="주요 화면">

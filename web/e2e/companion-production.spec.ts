@@ -73,6 +73,8 @@ test("production S05 loads bear-lite once after confirmed save and transitions c
   expect(assetResponse.headers()["content-type"]).toBe("model/gltf-binary");
   expect(assetResponse.headers()["cf-mitigated"]).toBeUndefined();
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  const inlineJourney = await page.locator('.journey-saved .save-ripple > .companion-runtime-slot').count();
+  await expect(page.locator('[data-companion-framing]')).toHaveAttribute('data-companion-framing', inlineJourney ? 'journey-s05' : 'default');
   expect(companionRequests(requests)).toEqual([productionAssetUrl]);
   expect(requests.filter((url) => /CompanionReviewRenderer/i.test(url))).toHaveLength(1);
   expect(requests.filter((url) => /SavedSceneRenderer/i.test(url))).toEqual([]);
