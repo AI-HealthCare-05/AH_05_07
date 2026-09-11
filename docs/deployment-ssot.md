@@ -28,8 +28,8 @@ this documentation change. Re-read control-plane state before any future operati
 | --- | --- | --- |
 | Application code and Worker configuration | `AI-HealthCare-05/AH_05_07` `main` | `web/wrangler.jsonc` defines the production Worker name. |
 | Deployment snapshot | `emotigom/ah-05-07-pages` `main` | Derived from a resolved upstream source SHA; not a code/docs authority. Its sync workflow is mirror-owned. |
-| Production web service | Cloudflare Worker `ah-05-07-pages` | The public URL is `https://ah-05-07-pages.ahnsangkyoon.workers.dev`. |
-| API service | Cloud Run service `bp7-api` in `asia-northeast3` | Its allowed web origin must match the production web service. |
+| Production web service | Cloudflare Worker `ah-05-07-pages` | The primary public URL is `https://hyeol.app`. `https://ah-05-07-pages.ahnsangkyoon.workers.dev` remains a burn-in/rollback diagnostic operational fallback that points to the same Worker; it is not a separate production application target. |
+| API service | Cloud Run service `bp7-api` in `asia-northeast3` | Its primary browser origin is `https://hyeol.app`; explicitly maintained fallback origins may remain allowed during cutover. |
 | Authentication and record ownership | Supabase project configuration and migrations in this repository | Browser clients use only the publishable key; row ownership remains enforced by RLS. |
 
 `ah-05-07-pages-web` is the legacy Worker retained only during cutover verification. It is not a second production target and must not receive a separate application deployment.
@@ -106,7 +106,7 @@ Run this from Cloud Shell after the required Cloudflare and Cloud Run releases c
 
 ```bash
 python3 scripts/ci/verify_deployment_smoke.py \
-  --web-base-url "https://ah-05-07-pages.ahnsangkyoon.workers.dev" \
+  --web-base-url "https://hyeol.app" \
   --api-base-url "https://bp7-api-292436735548.asia-northeast3.run.app"
 ```
 
