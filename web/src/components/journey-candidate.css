@@ -110,6 +110,62 @@
 }
 .journey-entry .journey-back { border: 0; background: transparent; }
 
+/* S08/S09: Journey-only record reading composition. Shared S10 lanes retain
+   their existing markup and layout. */
+.journey-records.scene, .journey-record-detail.scene { max-width: 58rem; margin-inline: auto; }
+.journey-records .scene-copy, .journey-record-detail .scene-copy { max-width: 42rem; }
+.journey-records .scene-toolbar { border-color: #d8d7c9; padding-bottom: .8rem; }
+.journey-records .window-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: stretch; gap: 1rem; border: 1px solid #dedbcf; border-radius: .55rem; background: #fffdf7; padding: .8rem; }
+.journey-records .window-nav p { display: grid; align-content: center; text-align: left; gap: .18rem; }
+.journey-records .window-nav p strong { color: #414c40; font-size: 1rem; }
+.journey-records .window-nav p small { font-size: .75rem; }
+.journey-records .window-nav button { align-self: center; min-height: 2.8rem; white-space: nowrap; }
+.journey-records .record-groups { gap: 1.5rem; }
+.journey-records .record-groups .record-lane + .record-lane { border-top: 1px solid #d8d7c9; }
+.journey-records .record-lane { gap: .65rem; padding: 1.25rem 0 0; }
+.journey-record-lane-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.journey-record-lane-heading > div { display: grid; gap: .2rem; }
+.journey-record-lane-heading .eyebrow { font-size: .7rem; }
+.journey-record-lane-heading h2 { font-size: 1.35rem; letter-spacing: -.04em; }
+.journey-record-lane-heading > span { color: #62675a; font-size: .8rem; }
+.journey-record-lane-note { color: #696960; font-size: .83rem; line-height: 1.55; }
+.journey-records .journey-record-list { gap: .55rem; }
+.journey-records .journey-record-list li { grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; border: 1px solid #e1dfd3; border-radius: .45rem; background: #fffdf7; padding: .85rem 1rem; }
+.journey-records .journey-record-list .empty-record { display: block; border-style: dashed; color: #696960; }
+.journey-record-facts { display: grid; grid-template-columns: minmax(9rem, .85fr) minmax(0, 1.15fr); align-items: center; gap: .5rem 1rem; min-width: 0; }
+.journey-record-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .6rem; color: #62675a; font-size: .83rem; }
+.journey-record-date time { color: #414c40; font-weight: 650; }
+.journey-record-date small { color: #696960; }
+.journey-record-facts > strong { color: #303a31; font-size: .98rem; overflow-wrap: anywhere; }
+.journey-record-status { grid-column: 2; color: #62675a; font-size: .82rem; }
+.journey-records .record-action { min-width: 6.4rem; }
+.journey-record-detail .record-detail { gap: 1.4rem; border: 1px solid #dedbcf; border-top: 4px solid #879678; border-radius: .35rem .35rem .8rem .8rem; background: #fffdf7; box-shadow: 0 8px 0 -4px #e8e5d9; padding: clamp(1.25rem, 3vw, 2rem); }
+.journey-record-detail .record-detail > h2 { font-size: 1.45rem; letter-spacing: -.04em; }
+.journey-record-detail .record-detail-facts { gap: 0; border-top: 1px solid #e5e1d7; }
+.journey-record-detail .record-detail-facts div { display: grid; grid-template-columns: minmax(5rem, .6fr) minmax(0, 1.4fr); gap: 1rem; border: 0; border-bottom: 1px solid #e5e1d7; padding: .85rem 0; }
+.journey-record-detail .record-detail-facts dt { align-self: center; font-size: .78rem; }
+.journey-record-detail .record-detail-facts dd { margin: 0; overflow-wrap: anywhere; }
+.journey-record-detail .notice { margin: 0; }
+.journey-record-detail .inline-actions { gap: .65rem; }
+.journey-record-detail .record-detail > .inline-actions:last-child { justify-content: space-between; border-top: 1px solid #e5e1d7; padding-top: 1rem; }
+.journey-record-detail .danger { margin-left: auto; }
+
+@media (max-width: 580px) {
+  .journey-records.scene, .journey-record-detail.scene { max-width: none; }
+  .journey-records .window-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .journey-records .window-nav p { grid-column: 1 / -1; grid-row: 1; }
+  .journey-records .window-nav button { width: 100%; padding-inline: .45rem; font-size: .82rem; }
+  .journey-records .journey-record-list li { grid-template-columns: minmax(0, 1fr); align-items: stretch; padding: .85rem; }
+  .journey-record-facts { grid-template-columns: minmax(0, 1fr); gap: .38rem; }
+  .journey-record-status { grid-column: auto; }
+  .journey-records .record-action { width: 100%; }
+  .journey-record-detail .record-detail { padding: 1.1rem; }
+  .journey-record-detail .record-detail-facts div { grid-template-columns: minmax(4.25rem, .55fr) minmax(0, 1.45fr); }
+  .journey-record-detail .record-detail > .inline-actions:last-child { align-items: stretch; flex-direction: column; }
+  .journey-record-detail .record-detail > .inline-actions:last-child button { width: 100%; }
+  .journey-record-detail .danger { margin-left: 0; }
+}
+
 /* A desktop poster needs its full focal width; tablets keep a full-width scene. */
 @media (min-width: 581px) and (max-width: 1000px) {
   .journey-today { grid-template-columns: minmax(0, 1fr); }

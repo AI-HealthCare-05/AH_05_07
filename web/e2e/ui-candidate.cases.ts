@@ -274,3 +274,54 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   fail = true; await page.reload();
   await expect(page.locator('[data-scene="S13"]')).toBeVisible(); await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
 });
+
+test('Journey record browsing keeps separated lanes, exact detail targets, and read-only meaning', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  const methods: string[] = [];
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    methods.push(request.method());
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'),
+      blood_pressure_observations: [
+        { id: 'journey-bp-morning', observed_on: '2026-09-10', period: 'morning', systolic: 118, diastolic: 76 },
+        { id: 'journey-bp-evening', observed_on: '2026-09-10', period: 'evening', systolic: 121, diastolic: 79 },
+      ],
+      active_challenge: { id: 'journey-active', action_id: 'walk-10-minutes', starts_on: '2026-09-05', ends_on: '2026-09-11', first_checkin_on: '2026-09-05', status: 'active' },
+      challenge_checkins: [{ id: 'journey-checkin', challenge_id: 'journey-active', observed_on: '2026-09-09', action_id: 'walk-10-minutes', status: 'completed' }],
+      challenge_events: [{ id: 'journey-legacy', observed_on: '2026-09-08', action_id: 'sleep-routine', status: 'skipped' }],
+    }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S08');
+  const records = page.locator('.journey-records');
+  await expect(records).toBeVisible();
+  await expect(records).toContainText('선택한 7일의 기록을 종류별로 확인해요.');
+  await expect(records.locator('[data-record-lane="blood-pressure"]')).toContainText('118/76 mmHg');
+  await expect(records.locator('[data-record-lane="challenge"]')).toContainText('기록함');
+  await expect(records.locator('[data-record-lane="legacy"]')).toContainText('읽기 전용');
+  await page.screenshot({ path: testInfo.outputPath('s08-mobile-360.png'), fullPage: true });
+  const eveningDetail = records.getByRole('button', { name: /상세 보기 · 혈압 관찰 · 9월 10일.*저녁/ });
+  await expect(eveningDetail).toBeVisible();
+  await eveningDetail.click();
+  await expect(page).toHaveURL(/record=blood-pressure%3Ajourney-bp-evening/);
+  await expect(page.locator('.journey-record-detail [data-record-detail-kind="blood-pressure"]')).toContainText('121/79 mmHg');
+  await expect(page.getByRole('button', { name: '수정', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '삭제', exact: true })).toBeVisible();
+
+  await page.goto('/?e2e=signed-in&screen=S09&record=legacy:journey-legacy');
+  await expect(page.locator('.journey-record-detail [data-record-detail-kind="legacy"]')).toContainText('이전 방식으로 남긴 기록은 읽기 전용입니다.');
+  await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '삭제', exact: true })).toHaveCount(0);
+  expect(methods.every(method => method === 'GET')).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('s09-mobile-360.png'), fullPage: true });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?e2e=signed-in&screen=S08');
+  await expect(page.locator('.journey-records')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('s08-desktop-1440.png'), fullPage: true });
+});

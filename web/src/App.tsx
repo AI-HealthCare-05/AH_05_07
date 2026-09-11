@@ -939,15 +939,18 @@ function App() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="최근 7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>최근 7일 · {isPriorDashboard ? "이전 구간 · 읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
 
-  function renderRecordLane(kind: RecordBrowseItem["kind"], title: string, emptyText: string, journal = false) {
+  function renderRecordLane(kind: RecordBrowseItem["kind"], title: string, emptyText: string, journal = false, recordReading = false) {
     const items = recordBrowseItems.filter((item) => item.kind === kind);
     return (
       <section className="record-lane" data-record-lane={kind === "challenge-checkin" ? "challenge" : kind}>
         {journal ? <>
           <div className="recap-lane-heading"><h2>{title}</h2><span data-dashboard-lane={kind === "challenge-checkin" ? "challenge" : kind}><strong>{items.length}</strong>개 기록</span></div>
           <p className="recap-lane-note">{kind === "blood-pressure" ? "직접 남긴 측정값 · 날짜와 시간대별" : kind === "challenge-checkin" ? "기록함과 건너뜀을 구분해요. 체크인 수는 달성일이 아니에요." : "이전 방식으로 남긴 기록 · 읽기 전용"}</p>
+        </> : recordReading ? <>
+          <div className="journey-record-lane-heading"><div><p className="eyebrow">{kind === "blood-pressure" ? "측정값" : kind === "challenge-checkin" ? "체크인" : "읽기 전용"}</p><h2>{title}</h2></div><span>{items.length}개</span></div>
+          <p className="journey-record-lane-note">{kind === "blood-pressure" ? "날짜와 시간대별로 남긴 측정값이에요." : kind === "challenge-checkin" ? "행동과 기록함·건너뜀 상태를 따로 확인해요." : "이전 방식으로 남긴 기록은 수정하거나 삭제할 수 없어요."}</p>
         </> : <h2>{title}</h2>}
-        <ul className="record-list">
+        <ul className={`record-list${recordReading ? " journey-record-list" : ""}`}>
           {items.length ? items.map((item) => (
             <li key={item.key}>
               {journal ? <span className="recap-record-facts">
@@ -956,13 +959,16 @@ function App() {
                   <span className="recap-record-value">{challengeLabel(item.record.action_id)}</span>
                   <span className="recap-record-status" data-checkin-status={item.record.status}>{checkinLabel(item.record.status)}{item.kind === "legacy" ? " · 이전 기록 · 읽기 전용" : ""}</span>
                 </>}
+              </span> : recordReading ? <span className="journey-record-facts">
+                <span className="journey-record-date"><time dateTime={item.record.observed_on}>{dateLabel(item.record.observed_on)}</time>{item.kind === "blood-pressure" && <small>{periodLabel(item.record.period)}</small>}</span>
+                {item.kind === "blood-pressure" ? <strong>{displayMeasurement(item.record)}</strong> : <><strong>{challengeLabel(item.record.action_id)}</strong><span className="journey-record-status">{checkinLabel(item.record.status)}{item.kind === "legacy" ? " · 읽기 전용" : ""}</span></>}
               </span> : <span>
                 <strong>{dateLabel(item.record.observed_on)}</strong>
                 {item.kind === "blood-pressure"
                   ? ` · ${periodLabel(item.record.period)} · ${displayMeasurement(item.record)}`
                   : ` · ${challengeLabel(item.record.action_id)} · ${checkinLabel(item.record.status)}${item.kind === "legacy" ? " · 이전 기록" : ""}`}
               </span>}
-              <button className="secondary record-action" type="button" onClick={() => openRecord(item)}>상세 보기</button>
+              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item)}>상세 보기</button>
             </li>
           )) : <li className="empty-record">{emptyText}</li>}
         </ul>
@@ -1049,12 +1055,13 @@ function App() {
     }
 
     if (activeScreen === "S08") {
+      if (presentation.journey) return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body="선택한 7일의 기록을 종류별로 확인해요." tone="lavender" className="journey-candidate journey-records"><div className="scene-toolbar"><span className="utility-label">조회 기간</span><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>{renderWindowNavigation()}<div className="record-groups" aria-label="기록 종류별 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "이 기간에는 혈압 관찰 기록이 없어요.", false, true)}{renderRecordLane("challenge-checkin", "챌린지 참여", "이 기간에는 챌린지 참여 기록이 없어요.", false, true)}{renderRecordLane("legacy", "이전 방식의 기록", "이 기간에는 이전 방식의 기록이 없어요.", false, true)}</div></Scene>;
       return <Scene id="S08" {...journeyCopy.S08} tone="lavender"><div className="scene-toolbar"><span className="utility-label">기록 구간</span><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>{renderWindowNavigation()}<div className="record-groups" aria-label="기록 종류별 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식으로 남긴 기록이 없습니다.")}</div></Scene>;
     }
 
     if (activeScreen === "S09") {
       return (
-        <Scene id="S09" {...journeyCopy.S09} tone="lavender">
+        <Scene id="S09" {...journeyCopy.S09} tone="lavender" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
           {selectedRecordMissing ? (
             <div className="state-card state-error" role="alert">
               <h2>선택한 기록을 찾을 수 없습니다.</h2>
