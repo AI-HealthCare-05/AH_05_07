@@ -53,8 +53,11 @@ async function mockApi(page: Page, options: {
 }
 
 async function expectHome(page: Page, day: number, recipe: string) {
-  await expect(page.locator(".today-ribbon")).toContainText(`9월 ${day}일`);
-  await expect(page.locator("[data-scene-recipe]")).toHaveAttribute("data-scene-recipe", `s02-${recipe}`);
+  const date = `2026-09-${String(day).padStart(2, "0")}`;
+  const home = page.locator('[data-scene="S02"]');
+  await expect(home.locator(`time[datetime="${date}"]`).first()).toBeVisible();
+  await expect(home.locator('[data-living-scene="S02"]')).toHaveAttribute("data-scene-date", date);
+  await expect(home.locator('[data-living-scene="S02"]')).toHaveAttribute("data-scene-recipe", `s02-${recipe}`);
 }
 
 async function visibility(page: Page, state: "hidden" | "visible") {
@@ -101,8 +104,9 @@ test("Seoul midnight advances HTML, S02 and bounds together without a Sunday rew
     const samples: string[] = [];
     Object.assign(window, { dateSceneSamples: samples });
     new MutationObserver(() => {
-      const day = document.querySelector(".today-ribbon span")?.textContent;
-      const recipe = document.querySelector("[data-scene-recipe]")?.getAttribute("data-scene-recipe");
+      const scene = document.querySelector('[data-living-scene="S02"]');
+      const day = scene?.getAttribute("data-scene-date");
+      const recipe = scene?.getAttribute("data-scene-recipe");
       if (day && recipe) samples.push(`${day}|${recipe}`);
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
   });
@@ -114,10 +118,10 @@ test("Seoul midnight advances HTML, S02 and bounds together without a Sunday rew
   expect(api.reads.map(read => read.bounds)).toEqual([oldBounds, newBounds]);
   const samples = await page.evaluate(() => (window as unknown as { dateSceneSamples: string[] }).dateSceneSamples);
   expect(samples.length).toBeGreaterThan(0);
-  expect(samples.every(sample => sample.includes("13일") ? sample.endsWith("sunset-overlook") : sample.includes("14일") && sample.endsWith("garden-gate"))).toBe(true);
+  expect(samples.every(sample => sample.startsWith("2026-09-13|") ? sample.endsWith("sunset-overlook") : sample === "2026-09-14|s02-garden-gate")).toBe(true);
   expect(api.writes).toHaveLength(0);
   await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
-  await expect(page.locator(".today-ribbon")).toContainText("혈압 기록 있음");
+  await expect(page.locator('[aria-label="오늘의 별도 기록 상태"]')).toContainText("혈압 관찰1건");
   await page.clock.fastForward(24 * 60 * 60 * 1000);
   await expectHome(page, 15, "herb-garden");
   await expect.poll(() => api.reads.length).toBe(3);

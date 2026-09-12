@@ -7,6 +7,12 @@ import posterR2 from "../../docs/evidence/scene-clay-r2.json" with { type: "json
 import type { Page } from "@playwright/test";
 
 const url = "/?fixture=VP-10&screen=S02";
+function expectRelativeSubjectHeight(subjectHeight: number, stageHeight: number, composition: ReturnType<typeof sceneComposition>) {
+  // The Living Journey frame intentionally scales the registered composition.
+  // Preserve its approved subject-to-stage proportions instead of old absolute pixels.
+  expect(subjectHeight / stageHeight).toBeGreaterThanOrEqual(composition.subjectMinHeight / composition.stageHeight);
+  expect(subjectHeight / stageHeight).toBeLessThanOrEqual(composition.subjectMaxHeight / composition.stageHeight);
+}
 async function completedSceneNetwork(completed: Request[]) {
   // WebGL readiness does not imply completion of the independent CDN poster.
   await expect.poll(() => completed.filter(request => /\/scene-review\/s02\//.test(request.url())).length, { timeout: 15000 }).toBe(1);
@@ -35,8 +41,8 @@ for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]])
     expect(bounds.bottom).toBeGreaterThanOrEqual(-1);
     expect(bounds.top).toBeLessThanOrEqual(1);
     const composition = sceneComposition(findSceneRecipe("S02", "footbridge")!, width);
-    expect(bounds.height).toBeGreaterThanOrEqual(composition.subjectMinHeight);
-    expect(bounds.height).toBeLessThanOrEqual(composition.subjectMaxHeight);
+    const stageHeight = await page.locator(".living-visual-stage").evaluate(element => element.clientHeight);
+    expectRelativeSubjectHeight(bounds.height, stageHeight, composition);
     const network = await completedSceneNetwork(completed);
     expect(network.filter(request => /\.glb(?:\?|$)/.test(request.url))).toHaveLength(1);
     expect(network.some(request => /GLTFLoader/.test(request.url))).toBe(true);
@@ -141,8 +147,8 @@ for (const width of [320, 390, 1366]) test(`each weekday renders its registered 
     const composition = sceneComposition(findSceneRecipe("S02", landmarks[index])!, width);
     expect(bounds.left).toBeGreaterThanOrEqual(-1); expect(bounds.right).toBeLessThanOrEqual(1);
     expect(bounds.bottom).toBeGreaterThanOrEqual(-1); expect(bounds.top).toBeLessThanOrEqual(1);
-    expect(bounds.height).toBeGreaterThanOrEqual(composition.subjectMinHeight);
-    expect(bounds.height).toBeLessThanOrEqual(composition.subjectMaxHeight);
+    const stageHeight = await page.locator(".living-visual-stage").evaluate(element => element.clientHeight);
+    expectRelativeSubjectHeight(bounds.height, stageHeight, composition);
     await page.locator(".living-visual-stage").screenshot({ path: testInfo.outputPath(`${landmarks[index]}-${width}.png`) });
   }
 });
@@ -176,8 +182,7 @@ async function expectPoster(page: Page, landmarkId: string, width: number) {
   expect(box.y + (1 - bottom) / 2 * box.height).toBeLessThanOrEqual(stage.y + stage.height + 2);
   const composition = sceneComposition(findSceneRecipe("S02", landmarkId)!, width);
   const subjectHeight = (top - bottom) / 2 * box.height;
-  expect(subjectHeight).toBeGreaterThanOrEqual(composition.subjectMinHeight);
-  expect(subjectHeight).toBeLessThanOrEqual(composition.subjectMaxHeight);
+  expectRelativeSubjectHeight(subjectHeight, stage.height, composition);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 }
@@ -216,7 +221,7 @@ test("public poster permits browser CORS and returns the registered bytes", asyn
   expect(response).toEqual({ status: 200, mime: "image/webp", cache: "max-age=14400", byteLength: poster.byteLength, sha256: poster.sha256 });
 });
 
-test("poster preserves focal size across responsive breakpoints", async ({ page }) => {
+test("poster preserves relative focal scale across responsive breakpoints", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(url);
   for (const width of [320, 350, 351, 580, 581, 768, 1366]) {

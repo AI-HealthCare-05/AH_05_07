@@ -5,6 +5,12 @@ import posterEvidence from "../../docs/evidence/scene-diorama-posters.json" with
 
 const fixtureUrl = "/?fixture=VP-10&screen=S10";
 const stage = (page: Page) => page.locator('.living-visual-stage[data-living-scene="S10"]');
+function expectRelativeSubjectHeight(subjectHeight: number, stageHeight: number, composition: ReturnType<typeof sceneComposition>) {
+  // The Living Journey frame intentionally scales the registered composition.
+  // Preserve its approved subject-to-stage proportions instead of old absolute pixels.
+  expect(subjectHeight / stageHeight).toBeGreaterThanOrEqual(composition.subjectMinHeight / composition.stageHeight);
+  expect(subjectHeight / stageHeight).toBeLessThanOrEqual(composition.subjectMaxHeight / composition.stageHeight);
+}
 async function mockCalendar(page: Page, state = { variant: 0, fail: false }) {
   const reads: string[] = [];
   await page.route("http://e2e.invalid/**", route => {
@@ -22,13 +28,12 @@ async function mockCalendar(page: Page, state = { variant: 0, fail: false }) {
   });
   return reads;
 }
-async function expectReady(page: Page, landmark: string, width: number) {
+async function expectReady(page: Page, landmark: string, width: number, expectedLandmarks = width > 580 ? 7 : 2) {
   await stage(page).scrollIntoViewIfNeeded();
   await expect(stage(page)).toHaveAttribute("data-scene-recipe", `s10-${landmark}`);
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready", { timeout: 20000 });
   const renderer = page.locator(".living-three-scene");
   await expect(renderer).toHaveAttribute("data-environment-kind", "diorama");
-  const expectedLandmarks = width > 580 ? 7 : 2;
   await expect.poll(async () => JSON.parse((await renderer.getAttribute("data-environment-landmarks"))!).length).toBe(expectedLandmarks);
   const landmarks = JSON.parse((await renderer.getAttribute("data-environment-landmarks"))!);
   expect(landmarks[0]).toBe(landmark);
@@ -37,8 +42,8 @@ async function expectReady(page: Page, landmark: string, width: number) {
   expect(bounds.left).toBeGreaterThanOrEqual(-1); expect(bounds.right).toBeLessThanOrEqual(1);
   expect(bounds.bottom).toBeGreaterThanOrEqual(-1); expect(bounds.top).toBeLessThanOrEqual(1);
   const composition = sceneComposition(findSceneRecipe("S10", landmark)!, width);
-  expect(bounds.height).toBeGreaterThanOrEqual(composition.subjectMinHeight);
-  expect(bounds.height).toBeLessThanOrEqual(composition.subjectMaxHeight);
+  const stageHeight = await stage(page).evaluate(element => element.clientHeight);
+  expectRelativeSubjectHeight(bounds.height, stageHeight, composition);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -57,8 +62,7 @@ async function expectPoster(page: Page, landmark: string, width: number) {
   expect(box.x + (bounds.right + 1) / 2 * box.width).toBeLessThanOrEqual(area.x + area.width + 2);
   const height = (bounds.top - bounds.bottom) / 2 * box.height;
   const composition = sceneComposition(recipe, width);
-  expect(height).toBeGreaterThanOrEqual(composition.subjectMinHeight);
-  expect(height).toBeLessThanOrEqual(composition.subjectMaxHeight);
+  expectRelativeSubjectHeight(height, box.height, composition);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
 }
 
@@ -116,9 +120,11 @@ test("S10 responsive environment rebuild keeps one character load and bounded fr
   const glbs: string[] = [];
   page.on("request", request => { if (/\.glb(?:\?|$)/.test(request.url())) glbs.push(request.url()); });
   await page.goto(fixtureUrl);
-  for (const width of [320, 350, 351, 580, 581, 768, 1366, 390]) {
+  // The approved recap presentation keeps its compact frame through 680px;
+  // crossing 681px changes the rendered stage and rebuilds the wide diorama.
+  for (const width of [320, 350, 351, 580, 680, 681, 768, 1366, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    await expectReady(page, "footbridge", width);
+    await expectReady(page, "footbridge", width, width > 680 ? 7 : 2);
   }
   expect(glbs).toHaveLength(1);
   await page.emulateMedia({ reducedMotion: "reduce" });
