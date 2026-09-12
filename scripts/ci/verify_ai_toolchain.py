@@ -1,4 +1,4 @@
-"""Verify the bounded AI toolchain declaration and its durable authorities."""
+"""Verify the bounded AI toolchain declaration and its contracted files."""
 
 import argparse
 import re
@@ -15,7 +15,7 @@ FORBIDDEN_DIRECT_DEPENDENCIES = {
     "torchaudio",
     "torchvision",
 }
-REQUIRED_AUTHORITIES = {
+REQUIRED_TOOLCHAIN_FILES = {
     "data/manifest/nhanes_2017_2020.json",
     "docs/ai-toolchain-ssot.md",
     "docs/adr/0002-ai-toolchain-and-change-control.md",
@@ -67,9 +67,9 @@ def findings(config: dict[str, Any], raw_pyproject: str, root: Path) -> list[str
     if "pytorch-cpu" in raw_pyproject:
         issues.append("unused pytorch-cpu package source remains configured")
 
-    absent = sorted(path for path in REQUIRED_AUTHORITIES if not (root / path).is_file())
+    absent = sorted(path for path in REQUIRED_TOOLCHAIN_FILES if not (root / path).is_file())
     if absent:
-        issues.append(f"missing AI authority files: {', '.join(absent)}")
+        issues.append(f"missing AI toolchain files: {', '.join(absent)}")
     return issues
 
 
@@ -91,7 +91,7 @@ def self_test() -> None:
     }
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
-        for relative in REQUIRED_AUTHORITIES:
+        for relative in REQUIRED_TOOLCHAIN_FILES:
             path = root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
@@ -111,7 +111,7 @@ def self_test() -> None:
         assert any("forbidden direct dependencies" in item for item in findings(forbidden, "", root))
 
         (root / "docs/model-promotion.md").unlink()
-        assert any("missing AI authority files" in item for item in findings(good, "", root))
+        assert any("missing AI toolchain files" in item for item in findings(good, "", root))
 
 
 def main() -> int:

@@ -1,5 +1,13 @@
 # Model promotion gate
 
+> **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
+> research/planning checkpoint named below. It is not current product, Model V2
+> release, or runtime authority. For current product requirements use
+> [requirements](requirements.md); for frozen Model V2 use the
+> [Model V2 product contract](model-v2-product-contract.md); for runtime/release
+> use the [deployment SSOT](deployment-ssot.md).
+
+
 The logistic-regression baseline remains the default under the comparison policy.
 No selected or serialized release artifact currently exists.
 
@@ -41,4 +49,4 @@ human decisions. Quality thresholds remain undecided without responsible review;
 this design was written after seeing validation results. Final model, preprocessing,
 thresholds, metrics and failure actions must be fixed and separately approved before
 one-time test evaluation. Test is never used for tuning or repeated selection approval.
-The current API continues to return model_not_ready.
+At this recorded checkpoint, the legacy `/api/v1/risk-signal` path remained `model_not_ready`; this does not describe current Model V2 product/release status.
