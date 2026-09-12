@@ -14,6 +14,7 @@ type Action = { key: string; title: string; support: string; action: string; scr
 type JourneyTodayProps = {
   staticLandscape: boolean;
   today: string;
+  cycle?: boolean;
   days: TrailDay[];
   lead: Action;
   secondary: Action[];
@@ -22,7 +23,7 @@ type JourneyTodayProps = {
 };
 
 /** The selection is disposable UI state. Facts and action destinations still belong to App. */
-export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, onNavigate }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, cycle = false, days, lead, secondary, freshness, onNavigate }: JourneyTodayProps) {
   const [selectedDate, setSelectedDate] = useState(today);
   const todayDay = days.find(day => day.date === today);
   const selectedDay = days.find(day => day.date === selectedDate) ?? todayDay ?? days.at(-1);
@@ -69,16 +70,16 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
         </nav>
       </div>
     </div>
-    <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
+    <section className="living-week" data-window-kind={cycle ? "challenge-cycle" : "recent-history"} aria-labelledby="living-week-title">
       <header className="living-week-heading">
-        <div><p className="eyebrow">모아와 걷는 7일</p><h2 id="living-week-title">오늘에서 이어지는 길</h2><p>오늘의 사실을 남기면, 7일의 풍경에 기록이 쌓입니다.</p></div>
+        <div><p className="eyebrow">모아와 걷는 7일</p><h2 id="living-week-title">{cycle ? "이번 7일의 길" : "오늘에서 이어지는 길"}</h2><p>{cycle ? `${days[0]?.date} ~ ${days.at(-1)?.date} · 챌린지 기간` : "오늘의 사실을 남기면, 7일의 풍경에 기록이 쌓입니다."}</p></div>
         <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
       </header>
       <div className="today-trail-instruction"><p>날짜를 눌러, 그날에 잠깐 머물러요.</p>{todayDay && <button type="button" className="text-button" aria-pressed={selectedDay?.date === today} onClick={() => setSelectedDate(today)}>오늘로 돌아오기</button>}</div>
       <SevenDayTrail days={days} today={today} selectedDate={selectedDay?.date ?? null} onSelectDate={setSelectedDate} detailId="today-trail-detail" factsKnown={factsKnown} />
       {retained && <p className="living-week-note">{freshness === 'refreshing' ? '새로고침 중' : '최신 여부 미확인'} · 이 길은 마지막으로 불러온 기록을 보여줘요.</p>}
       {selectedDay && <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />}
-      <details className="living-week-guide"><summary>이 길에 담기는 기록</summary><p>서울 날짜 · {todayDay ? '오늘을 포함한 최근 7일이에요.' : '선택한 7일의 기록이에요.'} 혈압은 관찰 건수, 챌린지는 참여 상태로 각각 남아요. 혼합은 같은 날짜에 기록함과 건너뜀이 함께 있는 경우예요. 이전 방식의 기록은 7일 돌아보기의 목록에서 확인할 수 있어요.</p></details>
+      <details className="living-week-guide"><summary>이 길에 담기는 기록</summary><p>서울 날짜 · {cycle ? '선택한 챌린지의 7일이에요. 챌린지 참여는 이번 여정의 기록만 표시해요.' : todayDay ? '오늘을 포함한 최근 7일이에요.' : '선택한 7일의 기록이에요.'} 혈압은 관찰 건수, 챌린지는 참여 상태로 각각 남아요. 혼합은 같은 날짜에 기록함과 건너뜀이 함께 있는 경우예요. 이전 방식의 기록은 7일 돌아보기의 목록에서 확인할 수 있어요.</p></details>
     </section>
   </div>;
 }

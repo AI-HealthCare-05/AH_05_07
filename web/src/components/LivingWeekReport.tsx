@@ -11,11 +11,12 @@ type LivingWeekReportProps = {
   unconfirmedChanges: boolean;
   freshness: 'ready' | 'refreshing' | 'refresh-error';
   createdAt: Date;
+  completedCycle?: boolean;
   onClose: () => void;
 };
 
 /** A presentation of the loaded calendar facts, with only user-facing record fields. */
-export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, onClose }: LivingWeekReportProps) {
+export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, completedCycle = false, onClose }: LivingWeekReportProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summary = summarizeTrailDays(days);
   const generatedTime = new Intl.DateTimeFormat('ko-KR', {
@@ -40,7 +41,7 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
         <h1 id="living-week-report-title" ref={headingRef} tabIndex={-1}>7일 기록 리포트</h1>
         <p className="week-report-range"><time dateTime={days[0].date}>{formatTrailDate(days[0].date)}</time> ~ <time dateTime={days[6].date}>{formatTrailDate(days[6].date)}</time></p>
         <p className="week-report-generated">리포트 열람 시각 · <time dateTime={createdAt.toISOString()}>{generatedTime}</time> (서울)</p>
-        <p>7일 돌아보기에서 불러온 현재 7일 전체 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.</p>
+        <p>7일 돌아보기에서 불러온 {completedCycle ? '종료된 7일' : '현재 7일'} 전체 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.</p>
       </header>
 
       {(freshness !== 'ready' || unconfirmedChanges) && <p className="week-report-freshness" role="status" data-report-freshness={freshness}>
