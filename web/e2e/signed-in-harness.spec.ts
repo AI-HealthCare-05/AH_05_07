@@ -360,7 +360,7 @@ test("synthetic signed-in session updates only the current owned check-in status
   });
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="challenge-checkin"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "수정" }).click();
   const editor = page.getByRole("status").filter({ hasText: "10분 걷기 상태" });
   await expect(editor).toBeVisible();
@@ -402,7 +402,7 @@ test("synthetic signed-in session requires confirmation before deleting the curr
   });
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="challenge-checkin"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "삭제" }).click();
   const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await expect(confirmation).toBeVisible();
@@ -412,8 +412,8 @@ test("synthetic signed-in session requires confirmation before deleting the curr
 
   await page.getByRole("button", { name: "삭제" }).click();
   await confirmation.getByRole("button", { name: "삭제" }).click();
-  await expect(page.getByRole("status")).toContainText("챌린지 기록을 삭제했습니다.");
-  await expect(page.locator('[data-record-lane="challenge"]')).toContainText("아직 챌린지 참여 기록이 없습니다.");
+  await expect(page.getByRole("status").filter({ hasText: "챌린지 기록을 삭제했습니다." })).toBeVisible();
+  await expect(page.locator(".record-explorer")).toContainText("이 7일에는 기록이 없어요.");
   expect(deleteRequests).toBe(1);
 });
 
@@ -484,7 +484,7 @@ test("synthetic signed-in session keeps current check-in editing recoverable aft
   });
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="challenge-checkin"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "수정" }).click();
   const editor = page.getByRole("status").filter({ hasText: "10분 걷기 상태" });
   await editor.getByRole("button", { name: "건너뜀" }).click();
@@ -523,7 +523,7 @@ test("synthetic signed-in session keeps current check-in deletion recoverable af
   });
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="challenge"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="challenge-checkin"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "삭제" }).click();
   const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await confirmation.getByRole("button", { name: "삭제" }).click();
@@ -687,8 +687,8 @@ test("synthetic signed-in session opens a separated record detail and starts onl
   await routeApiWindow(page, 200, recordBrowseWindow());
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  const bloodPressureLane = page.locator('[data-record-lane="blood-pressure"]');
-  await bloodPressureLane.getByRole("button", { name: "상세 보기" }).click();
+  const bloodPressureRow = page.locator('[data-record-kind="blood-pressure"]');
+  await bloodPressureRow.getByRole("button", { name: "상세 보기" }).click();
 
   const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
   await expect(detail).toContainText("혈압 관찰");
@@ -725,7 +725,7 @@ test("synthetic signed-in prior detail remains read-only without a mutation", as
   await page.goto("/?e2e=signed-in&screen=S10");
   await page.getByRole("button", { name: "이전 7일 보기" }).click();
   await page.getByRole("button", { name: "기록 찾아보기" }).click();
-  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
 
   const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
   await expect(detail).toContainText("이전 7일의 기록은 읽기 전용입니다.");
@@ -757,11 +757,11 @@ test("synthetic signed-in session tells the user when a selected record disappea
   });
 
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "새로고침" }).click();
 
   await expect(page.getByRole("alert")).toContainText("선택한 기록을 찾을 수 없습니다.");
   await page.getByRole("button", { name: "목록으로 돌아가기" }).click();
-  await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText("아직 혈압 관찰 기록이 없습니다.");
+  await expect(page.locator(".record-explorer")).toContainText("이 7일에는 기록이 없어요.");
   expect(windowRequests).toBe(2);
 });

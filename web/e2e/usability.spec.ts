@@ -29,7 +29,7 @@ async function mockWindow(page: Page) {
 
 async function openDetail(page: Page) {
   await page.goto("/?e2e=signed-in&screen=S08");
-  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
 }
 
 test("editing cancellation returns to the same record without writing", async ({ page }) => {
@@ -96,13 +96,13 @@ test("prior records remain read-only and Today returns to the current period", a
   await page.goto("/?e2e=signed-in&screen=S08");
   await page.getByRole("button", { name: "이전 7일 보기" }).click();
   await expect(page.locator('[data-read-only-window]')).toContainText("읽기 전용");
-  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
   await expect(page.getByRole("button", { name: "수정", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "현재 기록으로 돌아가기" }).click();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
   await expect(page.locator('[data-read-only-window]')).toHaveCount(0);
   await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
-  await page.locator('[data-record-lane="legacy"]').getByRole("button", { name: "상세 보기" }).click();
+  await page.locator('[data-record-kind="legacy"]').getByRole("button", { name: "상세 보기" }).click();
   await expect(page.locator('[data-record-detail-kind="legacy"]')).toContainText("날짜가 현재 7일에 포함되어도 수정하거나 삭제할 수 없어요.");
   expect(mutations).toEqual([]);
 });
