@@ -212,9 +212,28 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
       await page.getByLabel(/수축기/).fill("125");
       await page.getByLabel(/이완기/).fill("82");
     } else {
+      await page.getByRole("button", { name: "입력 시작하기" }).click();
       await page.getByLabel("나이").fill("35");
+      await page.getByLabel("성별", { exact: true }).selectOption("1");
       await page.getByLabel(/키/).fill("170");
+      await page.getByLabel(/몸무게/).fill("68");
+      await page.getByRole("button", { name: "다음", exact: true }).click();
+      await page.getByLabel("흡연 상태").selectOption("never_smoked");
+      await page.getByLabel("음주 빈도").selectOption("lt_monthly");
+      await page.getByLabel("한 번 마실 때 음주량").selectOption("1_2_drinks");
+      await page.getByRole("button", { name: "다음", exact: true }).click();
+      await page.getByLabel("최근 7일 걷기 일수").fill("4");
+      await page.locator("#model-walking-hours").fill("0");
+      await page.locator("#model-walking-minutes").fill("40");
+      await page.getByLabel("최근 7일 근력운동").selectOption("2_days");
+      await page.getByRole("button", { name: "다음", exact: true }).click();
+      await page.locator("#model-weekday-bed").fill("23:30");
+      await page.locator("#model-weekday-wake").fill("07:00");
+      await page.locator("#model-weekend-bed").fill("23:30");
+      await page.locator("#model-weekend-wake").fill("08:00");
+      await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
       await page.getByLabel("위 안내를 확인했습니다.").check();
+      await page.getByRole("button", { name: "기본 정보 수정", exact: true }).click();
     }
     const field = draft === "blood-pressure" ? page.getByLabel(/수축기/) : page.getByLabel("나이");
     await field.evaluate(element => element.setAttribute("data-draft-node", "original"));
@@ -232,6 +251,7 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
     } else {
       await expect(field).toHaveValue("35");
       await expect(page.getByLabel(/키/)).toHaveValue("170");
+      await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
       await expect(page.getByLabel("위 안내를 확인했습니다.")).toBeChecked();
     }
     expect(api.writes).toHaveLength(0);
