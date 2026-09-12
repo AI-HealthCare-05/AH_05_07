@@ -869,7 +869,6 @@ function App() {
     ? (windowData?.challenge_checkins.filter((checkin) => checkin.challenge_id === activeChallenge.id) ?? [])
     : [];
   const trailDays = sevenDayFacts(endOn, windowData?.blood_pressure_observations ?? [], windowData?.challenge_checkins ?? []);
-  const todayTrail = trailDays.find(day => day.date === today);
   const todayMeasurement = windowData?.blood_pressure_observations.find((record) => record.observed_on === today);
   const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const readNavigationDisabled = pendingAction !== null || accountDeletionPending;
@@ -910,7 +909,7 @@ function App() {
     ? { key: "blood-pressure", title: "오늘 혈압 기록", support: "오늘 측정한 값을 남겨요.", action: "혈압 기록하기", screen: "S04" }
     : !activeChallenge || activeChallengeEnded
       ? { key: "challenge", title: "7일 챌린지 고르기", support: "이어갈 행동을 선택해요.", action: "챌린지 고르기", screen: "S03" }
-      : { key: "today-detail", title: "오늘 기록 확인", support: "오늘 남긴 기록을 확인해요.", action: "오늘 상세 보기", screen: "S07" };
+      : { key: "today-detail", title: "오늘 기록 확인", support: todayCheckin ? "오늘 남긴 기록을 각각 확인해요." : "혈압 관찰은 남겼어요. 오늘의 챌린지 상태도 확인해요.", action: "오늘 상세 보기", screen: "S07" };
   const homeSecondaryActions = ([
     {
       key: "blood-pressure",
@@ -943,12 +942,12 @@ function App() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="최근 7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>최근 7일 · {isPriorDashboard ? "이전 구간 · 읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
 
-  function renderRecordLane(kind: RecordBrowseItem["kind"], title: string, emptyText: string, journal = false, recordReading = false) {
-    const items = recordBrowseItems.filter((item) => item.kind === kind);
+  function renderRecordLane(kind: RecordBrowseItem["kind"], title: string, emptyText: string, journal = false, recordReading = false, focusedDate: string | null = null) {
+    const items = recordBrowseItems.filter((item) => item.kind === kind && (!focusedDate || item.record.observed_on === focusedDate));
     return (
       <section className="record-lane" data-record-lane={kind === "challenge-checkin" ? "challenge" : kind}>
         {journal ? <>
-          <div className="recap-lane-heading"><h2>{title}</h2><span data-dashboard-lane={kind === "challenge-checkin" ? "challenge" : kind}><strong>{items.length}</strong>개 기록</span></div>
+          <div className="recap-lane-heading"><h3>{title}</h3><span data-dashboard-lane={kind === "challenge-checkin" ? "challenge" : kind}><strong>{items.length}</strong>개 기록</span></div>
           <p className="recap-lane-note">{kind === "blood-pressure" ? "직접 남긴 측정값 · 날짜와 시간대별" : kind === "challenge-checkin" ? "기록함과 건너뜀을 구분해요. 체크인 수는 달성일이 아니에요." : "이전 방식으로 남긴 기록 · 읽기 전용"}</p>
         </> : recordReading ? <>
           <div className="journey-record-lane-heading"><div><p className="eyebrow">{kind === "blood-pressure" ? "측정값" : kind === "challenge-checkin" ? "체크인" : "읽기 전용"}</p><h2>{title}</h2></div><span>{items.length}개</span></div>
@@ -956,7 +955,7 @@ function App() {
         </> : <h2>{title}</h2>}
         <ul className={`record-list${recordReading ? " journey-record-list" : ""}`}>
           {items.length ? items.map((item) => (
-            <li key={item.key}>
+            <li key={item.key} data-record-date={item.record.observed_on}>
               {journal ? <span className="recap-record-facts">
                 <span className="recap-record-date"><strong><time dateTime={item.record.observed_on}>{dateLabel(item.record.observed_on)}</time></strong>{item.kind === "blood-pressure" && <small>{periodLabel(item.record.period)}</small>}</span>
                 {item.kind === "blood-pressure" ? <span className="recap-record-value">{displayMeasurement(item.record)}</span> : <>
@@ -974,7 +973,7 @@ function App() {
               </span>}
               <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item)}>상세 보기</button>
             </li>
-          )) : <li className="empty-record">{emptyText}</li>}
+          )) : <li className="empty-record">{focusedDate ? `${dateLabel(focusedDate)}에 남긴 ${title} 기록이 없어요.` : emptyText}</li>}
         </ul>
       </section>
     );
@@ -1076,7 +1075,7 @@ function App() {
 
     if (activeScreen === "S02") {
       if (presentation.journey) return <Scene id="S02" eyebrow="오늘" title={journeyCopy.S02.title} body="잠깐 머물러, 오늘을 남겨요." className="journey-candidate journey-today home-scene">
-        <JourneyToday staticLandscape={presentation.staticLandscape} today={today} formattedDate={dateLabel(today)} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} measurementLabel={`${todayTrail?.observationCount ?? 0}건`} challengeLabel={todayTrail?.participation ?? "기록 없음"} onNavigate={navigate} />
+        <JourneyToday key={`${today}:${endOn}`} staticLandscape={presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} />
       </Scene>;
       return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
@@ -1204,12 +1203,12 @@ function App() {
 
     if (activeScreen === "S10") {
       if (presentation.journey) return <Scene id="S10" eyebrow="기록의 발자국" title="7일 돌아보기" body="남겨둔 기록을, 천천히 돌아봐요." tone="water" className="journey-recap">
-        <JourneyRecap staticLandscape={presentation.staticLandscape} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} prior={isPriorDashboard} freshness={windowState}
+        <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} prior={isPriorDashboard} freshness={windowState}
           navigation={renderWindowNavigation()}
-          records={<>
-            {renderRecordLane("blood-pressure", "혈압 관찰", "이 구간에 혈압 관찰 기록이 없습니다.", true)}
-            {renderRecordLane("challenge-checkin", "챌린지 체크인", "이 구간에 챌린지 체크인 기록이 없습니다.", true)}
-            {renderRecordLane("legacy", "이전 방식의 기록", "이 구간에 이전 방식의 기록이 없습니다.", true)}
+          records={focusedDate => <>
+            {renderRecordLane("blood-pressure", "혈압 관찰", "이 구간에 혈압 관찰 기록이 없습니다.", true, false, focusedDate)}
+            {renderRecordLane("challenge-checkin", "챌린지 체크인", "이 구간에 챌린지 체크인 기록이 없습니다.", true, false, focusedDate)}
+            {renderRecordLane("legacy", "이전 방식의 기록", "이 구간에 이전 방식의 기록이 없습니다.", true, false, focusedDate)}
           </>}
           challenge={<section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title">
             <p className="eyebrow">현재 챌린지 · 관찰 구간과 별도</p>

@@ -75,6 +75,44 @@ for (const [bp, challenge, lead] of [[false, false, 'blood-pressure'], [true, fa
   });
 }
 
+test('journey day selection exposes separate facts locally and returns to today', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const boundaryRequests: string[] = [];
+  page.on('request', request => {
+    if (/e2e\.invalid|ThreeSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(request.url())) boundaryRequests.push(request.url());
+  });
+  await candidate(page, true);
+  const trail = page.locator('.seven-day-trail');
+  const today = trail.locator('[data-trail-date="2026-09-11"] > button');
+  const earlier = trail.locator('[data-trail-date="2026-09-05"] > button');
+  const detail = page.locator('#today-trail-detail');
+  await expect(trail.locator('li[data-trail-date] > button')).toHaveCount(7);
+  await expect(today).toHaveAttribute('aria-pressed', 'true');
+  await expect(today).toHaveAttribute('aria-current', 'date');
+  await expect(detail).toHaveAttribute('data-selected-date', '2026-09-11');
+  const stage = await page.locator('[data-scene-recipe]').elementHandle();
+  const requestsBeforeSelection = [...boundaryRequests];
+  await earlier.press('Space');
+  await expect(earlier).toBeFocused();
+  await expect(earlier).toHaveAttribute('aria-pressed', 'true');
+  await expect(today).toHaveAttribute('aria-pressed', 'false');
+  await expect(today).toHaveAttribute('aria-current', 'date');
+  await expect(detail).toHaveAttribute('data-selected-date', '2026-09-05');
+  await expect(detail).toContainText('정자');
+  await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
+  await expect(page.locator('.journey-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  await expect(trail.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
+  expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
+  await page.getByRole('button', { name: '오늘로 돌아오기', exact: true }).press('Enter');
+  await expect(today).toHaveAttribute('aria-pressed', 'true');
+  await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(1);
+  await expect(detail).toHaveAttribute('data-selected-date', '2026-09-11');
+  await expect(detail.locator('dl')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
+  expect(boundaryRequests).toEqual(requestsBeforeSelection);
+});
+
 test('journey candidate keeps 200% text and absent media usable at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
