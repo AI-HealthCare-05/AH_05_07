@@ -516,3 +516,71 @@ async def test_create_challenge_checkin_uses_the_active_challenge_and_session_id
         "user_id,challenge_id,observed_on",
         session,
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("first_checkin", [None, "2026-09-05"])
+async def test_living_cycle_closes_only_the_ended_row_then_creates_seven_days(first_checkin: str | None) -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    ended = {"id": "ended", "action_id": "walk-10-minutes", "ends_on": "2026-09-11", "first_checkin_on": first_checkin}
+    operations = []
+
+    async def close(table, record_id, values, owner):
+        operations.append((table, record_id, values, owner))
+        return {**ended, **values}
+
+    async def create(table, values, owner):
+        operations.append((table, values, owner))
+        return {"id": "new", **values}
+
+    with (
+        patch("app.services.observation_store.get_owned_active_challenge", new=AsyncMock(return_value=ended)),
+        patch("app.services.observation_store.update_owned_record", side_effect=close),
+        patch("app.services.observation_store.insert_owned_record", side_effect=create),
+    ):
+        result = await select_owned_active_challenge("sleep-routine", date(2026, 9, 12), session)
+
+    assert operations == [
+        ("active_challenges", "ended", {"status": "closed"}, session),
+        (
+            "active_challenges",
+            {"action_id": "sleep-routine", "starts_on": "2026-09-12", "ends_on": "2026-09-18"},
+            session,
+        ),
+    ]
+    assert result["id"] == "new"
+    assert ended["action_id"] == "walk-10-minutes"
+
+
+@pytest.mark.asyncio
+async def test_living_cycle_last_day_reuses_existing_challenge_without_closing_or_inserting() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    active = {"id": "ended", "action_id": "walk-10-minutes", "ends_on": "2026-09-11", "first_checkin_on": "2026-09-05"}
+    with (
+        patch("app.services.observation_store.get_owned_active_challenge", new=AsyncMock(return_value=active)),
+        patch("app.services.observation_store.update_owned_record", new=AsyncMock()) as update,
+        patch("app.services.observation_store.insert_owned_record", new=AsyncMock()) as insert,
+    ):
+        assert await select_owned_active_challenge("walk-10-minutes", date(2026, 9, 11), session) == active
+    update.assert_not_awaited()
+    insert.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [409, 503])
+async def test_living_cycle_insert_conflict_or_uncertain_response_is_not_retried(status_code: int) -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    ended = {"id": "ended", "action_id": "walk-10-minutes", "ends_on": "2026-09-11", "first_checkin_on": "2026-09-05"}
+    response = httpx.Response(status_code, request=httpx.Request("POST", "https://synthetic.invalid"))
+    error = httpx.HTTPStatusError("synthetic failed response", request=response.request, response=response)
+    with (
+        patch("app.services.observation_store.get_owned_active_challenge", new=AsyncMock(return_value=ended)),
+        patch(
+            "app.services.observation_store.update_owned_record",
+            new=AsyncMock(return_value={**ended, "status": "closed"}),
+        ),
+        patch("app.services.observation_store.insert_owned_record", new=AsyncMock(side_effect=error)) as insert,
+    ):
+        with pytest.raises(httpx.HTTPStatusError):
+            await select_owned_active_challenge("sleep-routine", date(2026, 9, 12), session)
+    insert.assert_awaited_once()
