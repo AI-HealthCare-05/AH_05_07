@@ -1,7 +1,8 @@
 import { StaticJourneyLandscape } from './StaticSceneFallback';
 import { VisualStage } from './VisualStage';
 import type { ScreenId } from '../ui/journey';
-import { shiftDate } from '../lib/seoulDate';
+import { SevenDayTrail } from './SevenDayTrail';
+import type { TrailDay } from '../ui/livingWeek';
 
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
@@ -9,6 +10,7 @@ type JourneyTodayProps = {
   staticLandscape: boolean;
   today: string;
   formattedDate: string;
+  days: TrailDay[];
   lead: Action;
   secondary: Action[];
   measurementLabel: string;
@@ -17,14 +19,14 @@ type JourneyTodayProps = {
 };
 
 /** Presentation only: the App owns action selection; the scenery receives only a date. */
-export function JourneyToday({ staticLandscape, today, formattedDate, lead, secondary, measurementLabel, challengeLabel, onNavigate }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, formattedDate, days, lead, secondary, measurementLabel, challengeLabel, onNavigate }: JourneyTodayProps) {
   return <>
     <div className="journey-view">
       {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={today} /> : <VisualStage screen="S02" calendarDate={today} />}
       <p className="journey-view-caption">모아와 잠깐, 오늘의 풍경</p>
     </div>
     <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
-      <div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{lead.title}</h2><p>{lead.support}</p></div>
+      <div><p className="eyebrow">오늘의 기록</p><h2 id="home-lead-title">{lead.title}</h2><p>{lead.support}</p></div>
       <button type="button" onClick={() => onNavigate(lead.screen)}>{lead.action}<span aria-hidden="true">↗</span></button>
     </section>
     <dl className="today-ribbon journey-facts" aria-label="오늘의 별도 기록 상태">
@@ -37,14 +39,13 @@ export function JourneyToday({ staticLandscape, today, formattedDate, lead, seco
         <span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span>
       </button>)}
     </nav>
-    <section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title">
-      <div><p className="eyebrow">기록의 발자국</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div>
-      <ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">
-        {Array.from({ length: 7 }, (_, index) => {
-          const day = shiftDate(today, index - 6);
-          return <li key={day} className={day === today ? 'is-today' : ''} aria-label={day}>{day === today ? '오늘' : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>;
-        })}
-      </ol>
+    <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
+      <header className="living-week-heading">
+        <div><p className="eyebrow">모아와 걷는 7일</p><h2 id="living-week-title">7일의 길</h2><p>오늘의 사실을 남기면, 7일의 풍경에 기록이 쌓입니다.</p></div>
+        <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
+      </header>
+      <SevenDayTrail days={days} today={today} />
+      <p className="living-week-note">서울 날짜 · 오늘을 포함한 최근 7일이에요. 혈압 관찰과 챌린지 참여는 각각의 사실로 남아요.</p>
     </section>
   </>;
 }

@@ -18,7 +18,7 @@
 .journey-recap .window-nav p strong { color: var(--sk7-ink); font-size: 1.1rem; }
 .journey-recap .window-nav p span, .journey-recap .window-nav p small { font-size: .75rem; }
 .journey-recap button { border-radius: .5rem; }
-.journey-recap .recap-landscape { grid-column: 1; grid-row: 3; min-width: 0; display: grid; gap: 1.75rem; }
+.journey-recap .recap-landscape { grid-column: 1; grid-row: 4; min-width: 0; display: grid; gap: 1.75rem; }
 .journey-recap .recap-view { margin: 0; }
 .journey-recap .living-visual-stage { margin: 0; height: var(--scene-height-desktop); border-radius: 48% 48% .75rem .75rem; background: var(--sk7-cream-100); }
 .journey-recap .recap-view figcaption { display: grid; gap: .3rem; margin-top: .8rem; color: var(--sk7-ink-muted); text-align: center; font-size: .8rem; }
@@ -26,8 +26,8 @@
 .journey-recap .challenge-progress-card { padding: 1rem; gap: .6rem; border: 1px solid var(--sk7-border); border-left: 3px solid var(--sk7-sage-500); background: var(--sk7-sage-50); border-radius: 0 .5rem .5rem 0; }
 .journey-recap .challenge-progress-card h2 { font-size: 1.05rem; line-height: 1.5; }
 .journey-recap .challenge-progress-card p:not(.eyebrow), .journey-recap .challenge-progress-card strong { font-size: .8rem; line-height: 1.6; }
-.journey-recap .recap-current-challenge { grid-column: 1; grid-row: 4; min-width: 0; }
-.journey-recap .recap-journal { grid-column: 2; grid-row: 3 / span 2; min-width: 0; }
+.journey-recap .recap-current-challenge { grid-column: 1; grid-row: 5; min-width: 0; }
+.journey-recap .recap-journal { grid-column: 2; grid-row: 4 / span 2; min-width: 0; }
 .journey-recap .recap-journal-intro { display: grid; gap: .45rem; padding: .2rem 0 1.25rem; }
 .journey-recap .recap-journal-intro > p:last-child { color: var(--sk7-ink-muted); font-size: .875rem; line-height: 1.65; }
 .journey-recap .record-lane { padding-block: 1.15rem 1.5rem; gap: .7rem; }
@@ -56,9 +56,9 @@
   .journey-recap.scene { grid-template-columns: minmax(0, 1fr); }
   .journey-recap .recap-landscape, .journey-recap .recap-journal, .journey-recap .recap-current-challenge { grid-column: 1; grid-row: auto; }
   .journey-recap .recap-landscape { grid-template-columns: minmax(0, 1fr); align-items: center; gap: 1.25rem; }
-  .journey-recap .recap-journal { grid-row: 3; }
-  .journey-recap .recap-landscape { grid-row: 4; }
-  .journey-recap .recap-current-challenge { grid-row: 5; }
+  .journey-recap .recap-journal { grid-row: 4; }
+  .journey-recap .recap-landscape { grid-row: 5; }
+  .journey-recap .recap-current-challenge { grid-row: 6; }
 }
 @media (max-width: 580px) {
   .journey-recap.scene { padding: 1.1rem; border-radius: .75rem; }
@@ -85,8 +85,10 @@
   .journey-recap *, .journey-recap *::before, .journey-recap *::after { animation: none !important; transition: none !important; }
 }
 /* Keep the journal beside a naturally sized scene, with the separate challenge below it. */
-.journey-recap.scene[data-scene="S10"] { grid-template-rows: auto auto auto 1fr; column-gap: 2.5rem; }
+.journey-recap.scene[data-scene="S10"] { grid-template-rows: auto auto auto auto 1fr; column-gap: 2.5rem; }
 .journey-recap .window-nav p span { display: none; } /* Period label above already names current/prior. */
 @media (max-width: 1000px) {
   .journey-recap.scene[data-scene="S10"] { grid-template-rows: none; }
 }
+
+.journey-recap .living-week { grid-column: 1 / -1; grid-row: 3; min-width: 0; padding-block: .4rem 1rem; }

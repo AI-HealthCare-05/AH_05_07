@@ -26,13 +26,7 @@
 .journey-today .home-links { grid-column: 1 / -1; grid-row: 4; border-color: #d8d7c9; }
 .journey-today .home-links button { padding: 1rem .25rem; }
 .journey-today .home-links button + button { padding-left: 2rem; }
-.journey-today .recent-window-summary { grid-column: 1 / -1; grid-row: 5; display: flex; justify-content: space-between; align-items: center; gap: 2rem; border: 0; padding: .4rem 0 0; }
-.journey-today .recent-window-summary > div { padding: 0; gap: .3rem; }
-.journey-today .recent-window-summary h2 { font-size: 1.1rem; }
-.journey-today .recent-window-summary p:not(.eyebrow) { font-size: .8rem; }
-.journey-today .week-path { min-width: min(100%, 24rem); }
-.journey-today .week-path li { box-shadow: none; border-radius: .4rem; background: transparent; }
-.journey-today .week-path .is-today { background: #3f594a; color: white; }
+.journey-today .living-week { grid-column: 1 / -1; grid-row: 5; padding-top: 1.2rem; border-top: 1px solid #d8d7c9; }
 .journey-entry { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); column-gap: 4rem !important; align-content: start; }
 .journey-entry > .scene-copy { grid-column: 1; grid-row: 1; }
 .journey-note { grid-column: 1; grid-row: 2; display: grid; gap: 1rem; color: #62675a; align-self: end; }
@@ -83,7 +77,6 @@
   .journey-today .journey-facts { grid-column: 1; grid-row: 4; gap: .6rem; border-top: 1px solid #d8d7c9; padding-top: 1rem; }
   .journey-today .home-links { grid-column: 1; grid-row: 5; }
   .journey-today .home-links button + button { padding-left: .25rem; }
-  .journey-today .recent-window-summary { grid-column: 1; grid-row: 6; display: grid; gap: 1rem; }
   .journey-entry { grid-template-columns: minmax(0, 1fr); }
   .journey-entry .measurement-panel { grid-column: 1; grid-row: 2; padding: 1.1rem; gap: 1.2rem; }
   .journey-entry .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -210,7 +203,6 @@
   .journey-today .home-lead { grid-column: 1; grid-row: 3; }
   .journey-today .journey-facts { grid-column: 1; grid-row: 4; }
   .journey-today .home-links { grid-column: 1; grid-row: 5; }
-  .journey-today .recent-window-summary { grid-column: 1; grid-row: 6; }
 }
 
 /* Room for outstretched celebrate hands without shrinking the whole character.
@@ -250,4 +242,8 @@
   .journey-login .journey-login-intro { gap: .85rem; }
   .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
   .journey-empty .journey-empty-action { padding: 1rem; gap: .75rem; }
+}
+
+@media (max-width: 1000px) {
+  .journey-today .living-week { grid-column: 1; grid-row: 6; }
 }
