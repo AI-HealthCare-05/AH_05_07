@@ -20,3 +20,4 @@ wheels/
 /web/test-results/living-scene-review/
 
 /web/test-results/ui-release/
+/.wrangler/
