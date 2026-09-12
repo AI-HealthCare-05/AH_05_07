@@ -27,6 +27,7 @@ test('normal artifact excludes test authentication and fixture injection', () =>
 test('normal mocked auth preserves empty S12, selects journey and keeps S11 transient/non-numeric', async ({ page }) => {
   // Browser-owned synthetic storage + intercepted API only; no real auth/DB integration.
   let empty = true;
+  let modelRequests = 0;
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   await page.addInitScript(() => localStorage.setItem('sb-auth-auth-token', JSON.stringify({
     access_token: 'local-mock-auth-token', refresh_token: 'local-mock-refresh-token', token_type: 'bearer', expires_in: 3600, expires_at: 2000000000,
@@ -37,7 +38,10 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
     const url = new URL(route.request().url());
     const headers = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4182', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
-    if (url.pathname.endsWith('/product-score')) return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify({ schema_version: 'model-v2-r1-schema-v1', product_wording: '입력 기반 위험군 선별 신호' }) });
+    if (url.pathname.endsWith('/product-score')) {
+      modelRequests += 1;
+      return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify({ schema_version: 'model-v2-r1-schema-v1', product_wording: '입력 기반 위험군 선별 신호' }) });
+    }
     if (!url.pathname.endsWith('/window')) return route.abort();
     return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify({ start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [], active_challenge: null,
       challenge_events: empty ? [] : [{ id: 'synthetic-existing', observed_on: '2026-09-05', action_id: 'walk-10-minutes', status: 'completed' }] }) });
@@ -51,18 +55,26 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await expect(page.locator('[data-static-landscape="S02"]')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
   await page.getByRole('button', { name: '생활정보 기반 고혈압 선별 참고', exact: true }).click();
-  await page.getByLabel('나이').fill('35'); await page.getByLabel('성별').selectOption('1');
-  await page.getByLabel(/키/).fill('170'); await page.getByLabel(/몸무게/).fill('68');
+  await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+  await page.getByLabel('나이', { exact: true }).fill('35'); await page.getByLabel('성별', { exact: true }).selectOption('1');
+  await page.locator('#model-height').fill('170'); await page.locator('#model-weight').fill('68');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
   await page.getByLabel('흡연 상태').selectOption('never_smoked'); await page.getByLabel('음주 빈도').selectOption('lt_monthly');
-  await page.getByLabel('한 번 마실 때 음주량').selectOption('1_2_drinks'); await page.getByLabel('최근 7일 걷기 일수').fill('4');
-  await page.getByLabel(/걷는 날 하루 평균 시간/).fill('0'); await page.getByLabel(/걷는 날 추가 시간/).fill('40');
+  await page.getByLabel('한 번 마실 때 음주량').selectOption('1_2_drinks');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByLabel('최근 7일 걷기 일수').fill('4');
+  await page.locator('#model-walking-hours').fill('0'); await page.locator('#model-walking-minutes').fill('40');
   await page.getByLabel('최근 7일 근력운동').selectOption('2_days');
-  for (const label of ['평일 취침 시간', '주말 취침 시간']) await page.getByLabel(label).fill('23:30');
-  for (const label of ['평일 기상 시간', '주말 기상 시간']) await page.getByLabel(label).fill('07:00');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.locator('#model-weekday-bed').fill('23:30'); await page.locator('#model-weekday-wake').fill('07:00');
+  await page.locator('#model-weekend-bed').fill('23:30'); await page.locator('#model-weekend-wake').fill('08:00');
+  await page.getByRole('button', { name: '입력 확인하기', exact: true }).click();
+  expect(modelRequests).toBe(0);
   await page.getByLabel('위 안내를 확인했습니다.').check();
-  await page.getByRole('button', { name: '생활정보 분석하기' }).click();
+  await page.getByRole('button', { name: '생활정보 분석하기', exact: true }).click();
   const result = page.locator('[data-model-v2-user-result="processed"]');
   await expect(result).toBeVisible();
+  expect(modelRequests).toBe(1);
   expect(await result.innerText()).not.toMatch(/0\.\d+|\d+%|저위험|중위험|고위험/);
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(storage).not.toContain('never_smoked'); expect(storage).not.toContain('23:30');
