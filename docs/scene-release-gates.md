@@ -2,6 +2,24 @@
 
 Continuation of Issue #390 / PR #391. Implementation authorization is recorded in [architecture](scene-architecture.md); it does not satisfy physical-device measurements. Current results and completed owner visual acceptance are in [implementation status](scene-implementation-status.md). This checklist prepares the remaining production work; no production gate is opened by this document.
 
+## Samsung Internet qualification update — 2026-09-12–13
+
+Samsung Internet fresh-load S05 is now **PASS** after a refresh restored the bear
+and the production bundle was confirmed to contain PR #462's recovery marker. The
+incident was deployment version skew: an old entry bundle requested a removed Vite
+hashed dynamic chunk, and the SPA fallback returned `index.html` as `text/html`, so
+the import failed. GLB fetch, CORS, WebGL2, and the R2/CDN GLB cache rule were
+healthy and are expired cause hypotheses.
+
+PR #462 added a one-shot `vite:preloadError` reload recovery; PR #463 aligned the
+test contract without changing product behavior. S02/S10 fall back after a second
+chunk failure and do not reload indefinitely. An S05 reload does not recreate the
+transient save presentation and returns to S02. Physical proof that a future real
+cross-deployment skew recovers automatically remains **OPEN**. This result does not
+create a new physical Safari pass or close the accessibility, GPU, memory, network,
+or other device gates below; [remaining device checks](scene-remaining-device-checks.md)
+own those evidence details.
+
 ## Review-candidate merge scope — 2026-09-10
 
 After the S05 final visual approval, the user requested merging PR #391. The approved scope is a squash merge of the review candidate after the final commit's required CI and unresolved-review checks pass. The new S02/S10/S05 scenes remain restricted to `VITE_SK7_SCENE_MODE=review`; missing/off/unknown/production modes do not activate them. The shared S04 control-font correction is included. Remaining device measurements below are retained as production-activation conditions. This merge request supersedes the earlier draft/no-merge checkpoint; it does not authorize a deployment-mirror sync, runtime rollout or a scene gate change.

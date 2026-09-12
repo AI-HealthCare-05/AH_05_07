@@ -6,6 +6,22 @@ Issue #390 / PR #391의 후속 검사다. 기존 Android 반복 검사와 이미
 
 **S05 최종 시각 승인 완료:** 사용자는 저장 직후 애니메이션 위치가 살짝 어색하다고 했지만, “이번 PR 이후, 추후에 수정하면 충분할 것 같습니다. 최종 승인합니다.”라고 명시했다. 현재 후보를 승인하고 위치의 미세 조정은 이번 PR 이후 후속 작업으로 남긴다.
 
+## Samsung Internet stale-chunk 후속 — 2026-09-12–13
+
+- Samsung Internet에서 새로고침 후 S05 곰이 다시 표시되어 fresh-load S05는
+  **PASS**다. production live bundle의 PR #462 recovery marker도 확인했다.
+- 원인은 오래된 entry bundle과 새 배포 사이의 version skew다. entry가 이미
+  제거된 Vite hashed dynamic chunk를 요청했고, SPA fallback의 `text/html`
+  응답 때문에 import가 실패했다. GLB fetch·CORS·WebGL2는 정상이었고
+  R2/CDN GLB cache rule도 원인이 아니므로 해당 가설은 만료한다.
+- PR #462는 `vite:preloadError`에서 한 번만 reload하고, PR #463은 그 복구
+  동작에 맞게 test contract만 정리했다. S02/S10은 두 번째 실패에서 fallback
+  하며 무한 reload하지 않는다. S05 reload는 일시적인 저장 presentation을
+  복원하지 않고 S02로 돌아간다.
+- 다음 실제 배포에서 cross-deployment recovery가 자동 수행되는 physical
+  proof는 **OPEN**이다. 이 결과로 실제 iPhone Safari, 접근성, GPU·메모리,
+  실제 망 gate를 새 PASS로 분류하지 않는다.
+
 ## 이번에 확인한 결과
 
 | 순서 | 결과 | 남은 항목 |

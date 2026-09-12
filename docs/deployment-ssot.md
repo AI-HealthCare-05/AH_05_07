@@ -109,14 +109,21 @@ The API account-removal route also requires the server-only `SUPABASE_SECRET_KEY
 
 ## Release classification
 
-Classify the merged change before deploying it. A merged Git commit is not, by itself, a database, API, or web deployment.
+Classify the merged change before deploying it. A merged Git commit is not, by
+itself, a database, API, or web deployment. The primary web question is whether
+the change alters the production-built or deployed artifact. Path examples below
+are guidance, not a complete allowlist.
 
-| Changed path | Required production action | Must happen before |
+`AGENTS.md` owns contribution and verification policy. This document owns only
+runtime deployment classification, topology, operator gates, and release evidence.
+
+| Runtime impact | Typical examples | Required production action |
 | --- | --- | --- |
-| `supabase/migrations/**` | Complete the [Supabase migration gate](#supabase-migration-gate) for each newly required schema change. | Any API or web release that depends on that schema. |
-| `app/**`, `cloudbuild.api.yaml`, or API runtime configuration | Build and deploy a new Cloud Run revision of `bp7-api`. | Browser verification of the changed API flow. |
-| `web/**` or `web/wrangler.jsonc` | Run `Sync deployment branch` in `emotigom/ah-05-07-pages`, then let Cloudflare build and deploy `ah-05-07-pages`. | Browser verification of the changed web flow. |
-| `docs/**`, `README.md`, `AGENTS.md` only | No runtime deployment is required; this does not disable existing scheduled sync or external auto-builds. | N/A |
+| Supabase schema changes required by a release | `supabase/migrations/**` | Complete the [Supabase migration gate](#supabase-migration-gate) before any dependent API or web release. |
+| API production artifact or runtime configuration changes | `app/**`, `cloudbuild.api.yaml`, API runtime configuration | Build and deploy a new Cloud Run revision of `bp7-api` before verifying the changed API flow in the browser. |
+| Web production artifact or configuration changes | `web/src/**`, production-consumed public assets, production build/runtime configuration, `web/wrangler.jsonc`, or dependency/configuration changes that affect the production bundle | Run `Sync deployment branch` in `emotigom/ah-05-07-pages`, then let Cloudflare build and deploy `ah-05-07-pages` before verifying the changed web flow. |
+| Web test/dev-only changes with no production artifact effect | `web/e2e/**`, Playwright-only configuration, test fixtures or assertions | No runtime deployment. |
+| Repository guidance only | `docs/**`, `README.md`, `AGENTS.md` | No runtime deployment; this does not disable existing scheduled sync or external auto-builds. |
 
 ## Deployment flow
 
