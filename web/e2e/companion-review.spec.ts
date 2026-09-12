@@ -104,7 +104,7 @@ test("bear-lite idle can be grabbed and springs back without product-state chang
   const canvas = page.locator("[data-companion-canvas]");
   await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   await expect(runtime).toHaveAttribute("data-companion-interaction", "idle");
-  await expect(runtime).toHaveAttribute("data-companion-proxy", "slot");
+  await expect(runtime).toHaveAttribute("data-companion-proxy", "head-body-feet");
   await expect(page.locator(".companion-runtime-slot")).toHaveAttribute("data-companion-interactive", "true");
   expect(await page.locator(".companion-runtime-slot").evaluate((slot) => getComputedStyle(slot).pointerEvents)).toBe("auto");
   expect(await runtime.evaluate((host) => getComputedStyle(host).pointerEvents)).toBe("auto");
@@ -129,6 +129,75 @@ test("bear-lite idle can be grabbed and springs back without product-state chang
   expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-x")))).toBeLessThan(0.01);
   expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-y")))).toBeLessThan(0.01);
   await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
+});
+
+test("head body and feet use distinct tactile reaction profiles", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+
+  const cases = [
+    { zone: "head", ratio: 0.18 },
+    { zone: "body", ratio: 0.52 },
+    { zone: "feet", ratio: 0.86 },
+  ] as const;
+
+  for (const { zone, ratio } of cases) {
+    const y = box!.y + box!.height * ratio;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await expect(runtime).toHaveAttribute("data-companion-interaction", "dragging");
+    await expect(runtime).toHaveAttribute("data-companion-grab-zone", zone);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-profile", zone);
+    await page.mouse.move(x + 44, y - 28, { steps: 4 });
+    await expect.poll(async () => Math.abs(Number(await runtime.getAttribute("data-companion-offset-x"))))
+      .toBeGreaterThan(0.015);
+    await page.mouse.up();
+    await expect.poll(async () => runtime.getAttribute("data-companion-interaction"), { timeout: 4_000 })
+      .toBe("idle");
+    await expect(runtime).toHaveAttribute("data-companion-grab-zone", "none");
+  }
+});
+
+test("feet remain more anchored than body under the same large vertical drag", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+
+  const dragAndSample = async (zone: "body" | "feet", ratio: number) => {
+    const y = box!.y + box!.height * ratio;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await expect(runtime).toHaveAttribute("data-companion-grab-zone", zone);
+    await page.mouse.move(x + 12, y - 180, { steps: 6 });
+    await expect.poll(async () => Math.abs(Number(await runtime.getAttribute("data-companion-offset-y"))))
+      .toBeGreaterThan(0.05);
+    await page.waitForTimeout(260);
+    const offset = Math.abs(Number(await runtime.getAttribute("data-companion-offset-y")));
+    const tilt = Math.abs(Number(await runtime.getAttribute("data-companion-tilt-z")));
+    await page.mouse.up();
+    await expect.poll(async () => runtime.getAttribute("data-companion-interaction"), { timeout: 4_000 })
+      .toBe("idle");
+    return { offset, tilt };
+  };
+
+  const body = await dragAndSample("body", 0.52);
+  const feet = await dragAndSample("feet", 0.86);
+
+  expect(body.offset).toBeGreaterThan(feet.offset + 0.08);
+  expect(await runtime.getAttribute("data-companion-reaction-profile")).toBe("none");
 });
 
 test("tactile interaction stays bounded to review bear-lite idle", async ({ page }) => {
