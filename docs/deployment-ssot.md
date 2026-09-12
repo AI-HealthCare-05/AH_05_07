@@ -40,12 +40,12 @@ The production web topology is intentionally singular:
 | `https://ah-05-07-pages.ahnsangkyoon.workers.dev` | Fallback URL for the same application Worker. |
 | `https://www.hyeol.app/*` | Zone-level `301` to `https://hyeol.app/*`, preserving path and query. |
 | `ah-05-07-pages-web...workers.dev/*` | Redirect-only `308` to `https://hyeol.app/*`, preserving path and query. |
-| `ah-05-07-web-pages...workers.dev/*` | Redirect-only `308` to `https://hyeol.app/*`, preserving path and query. |
 
-Only `ah-05-07-pages` may be connected to the deployment mirror. Both legacy
-Workers must remain Git-disconnected, have no custom application domain, and
-must never receive an application build. Their only supported source is the
-explicit redirect-only Worker under `ops/legacy-pages-web-redirect/`.
+Only `ah-05-07-pages` may be connected to the deployment mirror. The retained
+legacy Worker `ah-05-07-pages-web` must remain Git-disconnected, have no custom
+application domain, and must never receive an application build. Its only
+supported source is the explicit redirect-only Worker under
+`ops/legacy-pages-web-redirect/`.
 
 ## Mirror ownership and synchronization
 
