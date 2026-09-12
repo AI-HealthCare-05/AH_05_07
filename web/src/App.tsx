@@ -14,6 +14,8 @@ import { VisualStage } from "./components/VisualStage";
 import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { RecordExplorer } from "./components/RecordExplorer";
+import { BloodPressureDraftNote } from "./components/BloodPressureDraftNote";
+import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDraft } from "./components/useNewBloodPressureDraft";
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
@@ -69,7 +71,6 @@ type Notice = {
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior";
-type BloodPressureDraft = { observedOn: string; period: "morning" | "evening"; systolic: string; diastolic: string };
 type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail";
 type HomeAction = {
   key: HomeDestinationKey;
@@ -104,10 +105,6 @@ function dashboardWindowBounds(today: string, window: DashboardWindow): Pick<Obs
 function dateLabel(value: string): string {
   return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" })
     .format(new Date(`${value}T12:00:00+09:00`));
-}
-
-function emptyBloodPressureDraft(observedOn: string): BloodPressureDraft {
-  return { observedOn, period: "morning", systolic: "", diastolic: "" };
 }
 
 function periodLabel(period: "morning" | "evening"): string {
@@ -245,12 +242,13 @@ function App() {
   const [reportCreatedAt, setReportCreatedAt] = useState<Date | null>(null);
   const reportTriggerRef = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [newBloodPressureRecovery, setNewBloodPressureRecovery] = useState<Notice | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [confirmedSave, setConfirmedSave] = useState(
     () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
   const savedScene = useSavedSceneEvent();
-  const [bloodPressureDraft, setBloodPressureDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
+  const [bloodPressureEditDraft, setBloodPressureEditDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
   const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
   const [pendingBloodPressureDeletion, setPendingBloodPressureDeletion] = useState<BloodPressureObservation | null>(null);
@@ -267,6 +265,9 @@ function App() {
   const editOriginKey = useRef<string | null>(null);
   const sessionRef = useRef<Session | null>(e2eSession);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
+  const newBloodPressure = useNewBloodPressureDraft(sessionIdentityRef.current.generation, today, requestedScreen === "S04" && !editingBloodPressureId);
+  const bloodPressureDraft = editingBloodPressureId ? bloodPressureEditDraft : newBloodPressure.draft;
+  const setBloodPressureDraft = editingBloodPressureId ? setBloodPressureEditDraft : newBloodPressure.setDraft;
   const recordExplorer = useRecordExplorerMemory(`${sessionIdentityRef.current.generation}:${startOn}:${endOn}`, requestedScreen);
   const sessionUpdateVersionRef = useRef(0);
   const accountDeletionStartedRef = useRef(false);
@@ -312,10 +313,11 @@ function App() {
     setWindowData(null);
     setWindowState("loading");
     setNotice(null);
+    setNewBloodPressureRecovery(null);
     setPendingAction(null);
     setConfirmedSave(false);
     savedScene.clear();
-    setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
+    setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
     setBloodPressureError("");
     setEditingBloodPressureId(null);
     setPendingBloodPressureDeletion(null);
@@ -437,7 +439,9 @@ function App() {
         setPendingAction(null);
         setConfirmedSave(false);
         savedScene.clear();
-        setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
+        newBloodPressure.reset(presentationRef.current.today);
+        setNewBloodPressureRecovery(null);
+        setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
         setBloodPressureError("");
         setEditingBloodPressureId(null);
         setPendingBloodPressureDeletion(null);
@@ -516,7 +520,9 @@ function App() {
       : context === "delete"
         ? "삭제 여부를 확인하지 못했습니다. 목록을 다시 불러와 확인해 주세요."
         : "저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.";
-    setNotice(makeNotice("warning", message, { origin: "request-error", reload: context !== "export" }));
+    const recovery = makeNotice("warning", message, { origin: "request-error", reload: context !== "export" });
+    setNotice(recovery);
+    return recovery;
   }
 
   async function refreshWindow(allowTokenRefreshRetry = true) {
@@ -704,13 +710,22 @@ function App() {
       if (!isCurrentRequestContext(requestContext)) return;
       if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
       else setNotice(null);
-      setBloodPressureDraft(emptyBloodPressureDraft(presentationRef.current.today));
+      if (editingBloodPressureId) setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
+      else {
+        newBloodPressure.reset(presentationRef.current.today);
+        setNewBloodPressureRecovery(null);
+      }
       setEditingBloodPressureId(null);
       savedScene.present(saveVisual);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
-      if (isCurrentRequestContext(requestContext)) presentRequestError(error, "save", requestContext);
+      if (isCurrentRequestContext(requestContext)) {
+        const recovery = presentRequestError(error, "save", requestContext);
+        // Keep the original uncertainty and fresh-read action with the parked
+        // new entry, even if an unrelated edit later replaces the global notice.
+        if (!editingBloodPressureId && isCurrentRequestContext(requestContext)) setNewBloodPressureRecovery(recovery?.reload ? recovery : null);
+      }
     } finally {
       if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
@@ -720,7 +735,8 @@ function App() {
     editOriginKey.current = selectedRecordKey;
     setEditingBloodPressureId(record.id);
     setPendingBloodPressureDeletion(null);
-    setBloodPressureDraft({ observedOn: record.observed_on, period: record.period, systolic: String(record.systolic), diastolic: String(record.diastolic) });
+    setBloodPressureEditDraft({ observedOn: record.observed_on, period: record.period, systolic: String(record.systolic), diastolic: String(record.diastolic) });
+    setBloodPressureError("");
     setNotice(makeNotice("warning", `${dateLabel(record.observed_on)} ${periodLabel(record.period)} 기록을 수정할 수 있습니다.`, { origin: "edit" }));
     navigate("S04");
   }
@@ -728,7 +744,7 @@ function App() {
   function cancelBloodPressureEdit() {
     setEditingBloodPressureId(null);
     setBloodPressureError("");
-    setBloodPressureDraft(emptyBloodPressureDraft(today));
+    setBloodPressureEditDraft(emptyBloodPressureDraft(today));
     setNotice(null);
     navigate(editOriginKey.current ? "S09" : "S08", editOriginKey.current);
   }
@@ -1129,7 +1145,7 @@ function App() {
     }
 
     if (activeScreen === "S04") {
-      return <Scene id="S04" eyebrow={journeyCopy.S04.eyebrow} title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title} body={journeyCopy.S04.body} tone="water" className={presentation.journey ? "journey-candidate journey-entry" : ""}>{presentation.journey && <JourneyNote />}<form className="measurement-panel" onSubmit={submitBloodPressure} noValidate><details className="measurement-guide"><summary>측정 전 확인하기</summary><ul><li>조용히 앉아 몸과 호흡을 편하게 해요.</li><li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li><li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li></ul></details><div className="field-grid"><label htmlFor="observed-on">날짜<input id="observed-on" style={measurementControlStyle} type="date" value={bloodPressureDraft.observedOn} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))} required disabled={controlsDisabled} /></label><label htmlFor="period">시간대<select id="period" style={measurementControlStyle} value={bloodPressureDraft.period} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))} disabled={controlsDisabled}><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label><label htmlFor="systolic">수축기 <span className="unit">mmHg</span><input ref={systolicRef} id="systolic" style={measurementControlStyle} type="number" min="60" max="260" inputMode="numeric" value={bloodPressureDraft.systolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label><label htmlFor="diastolic">이완기 <span className="unit">mmHg</span><input ref={diastolicRef} id="diastolic" style={measurementControlStyle} type="number" min="30" max="160" inputMode="numeric" value={bloodPressureDraft.diastolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label></div>{bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}<div className="form-actions"><button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>{editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div></form>{presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘의 기록으로 돌아가기</button>}</Scene>;
+      return <Scene id="S04" eyebrow={journeyCopy.S04.eyebrow} title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title} body={journeyCopy.S04.body} tone="water" className={presentation.journey ? "journey-candidate journey-entry" : ""}>{presentation.journey && <JourneyNote />}<form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>{!editingBloodPressureId && <BloodPressureDraftNote restored={newBloodPressure.restored} observedOn={bloodPressureDraft.observedOn} today={today} />}<details className="measurement-guide"><summary>측정 전 확인하기</summary><ul><li>조용히 앉아 몸과 호흡을 편하게 해요.</li><li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li><li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li></ul></details><div className="field-grid"><label htmlFor="observed-on">날짜<input id="observed-on" style={measurementControlStyle} type="date" aria-describedby={!editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today ? "bp-draft-date-help" : undefined} value={bloodPressureDraft.observedOn} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))} required disabled={controlsDisabled} /></label><label htmlFor="period">시간대<select id="period" style={measurementControlStyle} value={bloodPressureDraft.period} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))} disabled={controlsDisabled}><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label><label htmlFor="systolic">수축기 <span className="unit">mmHg</span><input ref={systolicRef} id="systolic" style={measurementControlStyle} type="number" min="60" max="260" inputMode="numeric" value={bloodPressureDraft.systolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label><label htmlFor="diastolic">이완기 <span className="unit">mmHg</span><input ref={diastolicRef} id="diastolic" style={measurementControlStyle} type="number" min="30" max="160" inputMode="numeric" value={bloodPressureDraft.diastolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label></div>{bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}<div className="form-actions"><button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>{editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div>{!editingBloodPressureId && newBloodPressure.meaningful && <details className="bp-draft-reset"><summary>새로 입력하기</summary><p>입력한 날짜·시간대·혈압 값을 지우고 오늘 날짜로 시작해요. 저장된 기록에는 영향을 주지 않아요.</p><button className="secondary" type="button" disabled={controlsDisabled} onClick={(event) => { const dateField = event.currentTarget.form?.elements.namedItem("observed-on"); newBloodPressure.reset(today); setBloodPressureError(""); if (dateField instanceof HTMLInputElement) dateField.focus(); }}>초안 지우기</button></details>}</form>{presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘의 기록으로 돌아가기</button>}</Scene>;
     }
 
     if (activeScreen === "S05") {
@@ -1326,11 +1342,13 @@ function App() {
       return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
+  const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;
+
   return (
     <>
     <div data-living-week-app hidden={reportVisible}>
     <SceneShell staticJourneyUi={presentation.staticLandscape} activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection} savedSceneEvent={confirmedSave ? savedScene.event : null}>
-      {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
+      {visibleNotice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${visibleNotice.kind}`} role="status"><div>{visibleNotice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{visibleNotice.message}</span>{visibleNotice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>이전 7일 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}
       {pendingBloodPressureDeletion && <DeleteConfirmation title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingBloodPressureDeletion(null)} onConfirm={() => void confirmBloodPressureDeletion()} />}
