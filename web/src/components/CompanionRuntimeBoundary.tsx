@@ -54,12 +54,27 @@ class RendererErrorBoundary extends Component<{ children: ReactNode }, { failed:
 export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = false, framing = "default" }: CompanionRuntimeBoundaryProps) {
   const config = resolveCompanionRuntimeConfig(mode, { reducedMotion });
   if (!config.enabled || !selection) return null;
+  const interactive = config.mode === "review"
+    && selection.species === "bear"
+    && selection.variant === "lite"
+    && selection.clip === "idle"
+    && !config.reducedMotion;
 
   return (
-    <div className="companion-runtime-slot" aria-hidden="true">
+    <div
+      className="companion-runtime-slot"
+      aria-hidden="true"
+      data-companion-interactive={interactive ? "true" : "false"}
+      style={interactive ? { pointerEvents: "auto" } : undefined}
+    >
       <RendererErrorBoundary>
         <Suspense fallback={null}>
-          <CompanionReviewRenderer selection={selection} reducedMotion={config.reducedMotion} framing={framing} />
+          <CompanionReviewRenderer
+            selection={selection}
+            reducedMotion={config.reducedMotion}
+            framing={framing}
+            interactive={interactive}
+          />
         </Suspense>
       </RendererErrorBoundary>
     </div>
