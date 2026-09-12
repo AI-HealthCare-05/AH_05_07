@@ -126,7 +126,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await page.locator('[data-trail-date="2026-09-04"] > button').click();
-  await page.getByRole('button', { name: '현재 7일 보기', exact: true }).click();
+  await page.locator('[data-dashboard-window]').getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'current');
   await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -175,7 +175,7 @@ test('recap refresh error preserves records, stale warning and scene identity', 
   const row = await page.locator('[data-record-lane="blood-pressure"] li').first().elementHandle();
   const stage = await page.locator('[data-scene-recipe]').elementHandle();
   await page.getByRole('button', { name: '새로고침', exact: true }).click();
-  await expect(page.getByText('최신 여부를 확인하지 못했어요', { exact: true })).toBeVisible();
+  await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
   await expect(page.locator('.recap-journal-intro')).toContainText('최신 여부 미확인');
   await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText('120/80 mmHg');
   expect(await row!.evaluate(node => node.isConnected)).toBe(true);
@@ -475,7 +475,7 @@ test('living week report preserves the prior boundary and the existing full-wind
   await expect(reportAction(page)).toBeDisabled();
   await expect(page.getByRole('button', { name: '이전 7일 내보내기', exact: true })).toBeDisabled();
   await expect(report(page)).toHaveCount(0);
-  await page.getByRole('button', { name: '현재 7일 보기', exact: true }).click();
+  await page.locator('[data-dashboard-window]').getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await page.locator('[data-trail-date="2026-09-09"] > button').click();
   await reportAction(page).click();
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);

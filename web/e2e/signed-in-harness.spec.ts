@@ -319,7 +319,7 @@ test("synthetic signed-in session reopens the selected prior window without a mu
   await page.reload();
   await expect(page).toHaveURL(/dashboard_window=prior/);
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
-  await page.getByRole("button", { name: "현재 7일 보기" }).click();
+  await page.locator('[data-dashboard-window]').getByRole("button", { name: "현재 7일 보기" }).click();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
 
   expect(requests).toEqual([

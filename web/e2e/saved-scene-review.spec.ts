@@ -197,10 +197,10 @@ test("8-second API timeout, late success and refresh cannot create confirmation 
 test("confirmed save remains truthful when its refresh fails; recovery does not replay", async ({ page }) => {
   const state = await setup(page); state.refreshError = true;
   await openForm(page); await submit(page); await ready(page); await expectStarts(page, 1);
-  await expect(page.getByText("최신 여부를 확인하지 못했어요", { exact: true })).toBeVisible();
+  await expect(page.getByText("최신 여부 미확인", { exact: true })).toBeVisible();
   state.refreshError = false;
   await page.getByRole("button", { name: "다시 불러오기", exact: true }).click();
-  await expect(page.getByText("최신 여부를 확인하지 못했어요", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("최신 여부 미확인", { exact: true })).toHaveCount(0);
   await expectStarts(page, 1);
   expect(glbs(state.urls)).toEqual([assetUrl]);
 });

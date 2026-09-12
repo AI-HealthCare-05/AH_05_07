@@ -98,7 +98,7 @@ test("prior records remain read-only and Today returns to the current period", a
   await expect(page.locator('[data-read-only-window]')).toContainText("읽기 전용");
   await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
   await expect(page.getByRole("button", { name: "수정", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "현재 기록으로 돌아가기" }).click();
+  await page.locator('[data-read-only-window]').getByRole("button", { name: "현재 7일 보기" }).click();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
   await expect(page.locator('[data-read-only-window]')).toHaveCount(0);
   await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();

@@ -56,7 +56,7 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
         </section>
         <div className="today-keepsake">
           <div className="today-keepsake-heading"><span>오늘 남긴 사실</span><time dateTime={today}>{Number(today.slice(5, 7))}월 {Number(today.slice(8))}일</time></div>
-          {retained && <p className="today-freshness">{freshness === 'refreshing' ? '새로고침 중' : '최신 여부 미확인'} · 마지막으로 불러온 기록이에요.</p>}
+          {retained && <p className="today-freshness">{freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
           <dl className="journey-facts" aria-label="오늘의 별도 기록 상태" aria-live="polite" aria-atomic="true">
             <div><dt>혈압 관찰</dt><dd key={`bp-${todayKnown}-${todayDay?.observationCount}`}>{todayKnown ? <><strong>{todayDay!.observationCount}</strong>건</> : '미확인'}</dd></div>
             <div><dt>챌린지 참여</dt><dd key={`challenge-${todayKnown}-${todayDay?.participation}`}>{todayKnown ? todayDay!.participation : '미확인'}</dd></div>
@@ -77,7 +77,7 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
       </header>
       <div className="today-trail-instruction"><p>날짜를 눌러, 그날에 잠깐 머물러요.</p>{todayDay && <button type="button" className="text-button" aria-pressed={selectedDay?.date === today} onClick={() => setSelectedDate(today)}>오늘로 돌아오기</button>}</div>
       <SevenDayTrail days={days} today={today} selectedDate={selectedDay?.date ?? null} onSelectDate={setSelectedDate} detailId="today-trail-detail" factsKnown={factsKnown} />
-      {retained && <p className="living-week-note">{freshness === 'refreshing' ? '새로고침 중' : '최신 여부 미확인'} · 이 길은 마지막으로 불러온 기록을 보여줘요.</p>}
+      {retained && <p className="living-week-note">{freshness === 'refreshing' ? '새로고침 중 · 이 길은 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 이 길은 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
       {selectedDay && <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />}
       <details className="living-week-guide"><summary>이 길에 담기는 기록</summary><p>서울 날짜 · {cycle ? '선택한 챌린지의 7일이에요. 챌린지 참여는 이번 여정의 기록만 표시해요.' : todayDay ? '오늘을 포함한 최근 7일이에요.' : '선택한 7일의 기록이에요.'} 혈압은 관찰 건수, 챌린지는 참여 상태로 각각 남아요. 혼합은 같은 날짜에 기록함과 건너뜀이 함께 있는 경우예요. 이전 방식의 기록은 7일 돌아보기의 목록에서 확인할 수 있어요.</p></details>
     </section>
