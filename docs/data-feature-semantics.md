@@ -1,5 +1,13 @@
 # NHANES feature semantics — preparation version 2
 
+> **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
+> research/planning checkpoint named below. It is not current product, Model V2
+> release, or runtime authority. For current product requirements use
+> [requirements](requirements.md); for frozen Model V2 use the
+> [Model V2 product contract](model-v2-product-contract.md); for runtime/release
+> use the [deployment SSOT](deployment-ssot.md).
+
+
 Reviewed against CDC/NCHS codebooks on 2026-09-05. The manifest is executable;
 this table explains the source meanings and the input contract required before
 release. Source choices are preserved, not quietly substituted with new questions.

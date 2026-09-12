@@ -1,5 +1,13 @@
 # SK7 모델 카드 초안
 
+> **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
+> research/planning checkpoint named below. It is not current product, Model V2
+> release, or runtime authority. For current product requirements use
+> [requirements](requirements.md); for frozen Model V2 use the
+> [Model V2 product contract](model-v2-product-contract.md); for runtime/release
+> use the [deployment SSOT](deployment-ssot.md).
+
+
 Issue #221의 검토용 계약을 고도화 Issue #230에서 보완한다. 이번 설계 기준은
 PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`이며 아래 실제 실행
 evidence의 원래 commit을 바꾸지 않는다. 출시된 모델 카드나 모델 선택 승인이

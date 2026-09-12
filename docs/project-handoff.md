@@ -31,6 +31,7 @@ authoritative only for their own boundaries.
 | Web runtime source, including copy, CSS, semantic layout and presentation | Affected component and focused tests | Build plus directly affected tests |
 | Scene or companion runtime | Affected component and [scene gates](scene-release-gates.md); read the manifest only when asset mapping changes | Build plus directly affected scene/companion tests; verify the manifest only when it changed, and use a physical spot-check only when the task needs it |
 | Model input/result | [Model product boundary](model-v2-product-contract.md) and affected adapter/inference tests | Focused model/API/UI tests |
+| AI/data toolchain or dependency | [AI toolchain SSOT](ai-toolchain-ssot.md), ADR-0002, and `uv.lock`; these do not own current Model V2 release status | Toolchain verifier plus affected dependency/data/model checks |
 | API, auth, data, retention | Relevant domain contract and [invariants](architecture/ARCHITECTURE_INVARIANTS.md) | Focused tests plus required final CI |
 | Release, mirror, migration, activation | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md), and live control-plane state | Boundary-specific preflight and smoke |
 | Historical investigation | Only the named dated evidence | No unrelated regression rerun |
@@ -74,9 +75,12 @@ requires it, not for every historical status:
    and `docs/architecture/RELEASE_CONTRACT.md`.
 4. Migrations, generated OpenAPI, implementation, and automated tests for
    executable behavior.
-5. `docs/deployment-ssot.md` for release topology and operator gates.
-6. The GitHub Issue when required, plus the pull request and immutable commit.
-7. The Notion 19-day roadmap as the execution mirror and presentation plan.
+5. `docs/ai-toolchain-ssot.md` and `uv.lock` only for AI/data tool roles,
+   dependency boundaries, and exact resolved versions; they do not own current
+   Model V2 product or release status.
+6. `docs/deployment-ssot.md` for release topology and operator gates.
+7. The GitHub Issue when required, plus the pull request and immutable commit.
+8. The Notion 19-day roadmap as the execution mirror and presentation plan.
 
 Notion must reflect repository evidence, but it must not declare code, schema,
 test, or deployment work complete before the repository evidence exists.

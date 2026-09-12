@@ -1,5 +1,13 @@
 # SK7 입력 adapter 계약 초안
 
+> **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
+> research/planning checkpoint named below. It is not current product, Model V2
+> release, or runtime authority. For current product requirements use
+> [requirements](requirements.md); for frozen Model V2 use the
+> [Model V2 product contract](model-v2-product-contract.md); for runtime/release
+> use the [deployment SSOT](deployment-ssot.md).
+
+
 Issue #221의 초안을 고도화 Issue #230에서 구현 인계 조건까지 구체화한 설계 문서다.
 기준은 PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`이며,
 실행 가능한 adapter/DTO/OpenAPI 변경이 아니다.
