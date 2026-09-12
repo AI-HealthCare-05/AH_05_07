@@ -5,11 +5,13 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { companionClips, type CompanionSelection } from "../ui/companion";
 import { getCompanionAsset } from "../ui/companionAssets.generated";
 import type { CompanionFraming } from "./CompanionRuntimeBoundary";
+import { createTactileCompanionInteraction, type TactileCompanionInteraction } from "./companionInteraction";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
   reducedMotion: boolean;
   framing?: CompanionFraming;
+  interactive?: boolean;
 }>;
 type RenderStatus = "loading" | "ready" | "error";
 type AnimationController = {
@@ -38,7 +40,7 @@ function setStatus(host: HTMLDivElement, status: RenderStatus, clipNames = "") {
   host.dataset.companionClipNames = clipNames;
 }
 
-export default function CompanionReviewRenderer({ selection, reducedMotion, framing = "default" }: CompanionReviewRendererProps) {
+export default function CompanionReviewRenderer({ selection, reducedMotion, framing = "default", interactive = false }: CompanionReviewRendererProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<AnimationController | null>(null);
   const latestSelectionRef = useRef(selection);
@@ -54,6 +56,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     let mixer: THREE.AnimationMixer | undefined;
     let model: THREE.Object3D | undefined;
     let resizeObserver: ResizeObserver | undefined;
+    let interaction: TactileCompanionInteraction | undefined;
     const scene = new THREE.Scene();
     // The larger journey S05 slot needs head/foot room throughout celebrate and idle.
     // Keep the original camera for every legacy/review caller.
@@ -62,6 +65,10 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     host.dataset.companionMotion = reducedMotion ? "stopped" : "pending";
     host.dataset.companionPhase = reducedMotion ? "idle" : "pending";
     host.dataset.companionCelebrateCount = "0";
+    host.dataset.companionInteractionEnabled = "false";
+    host.dataset.companionInteraction = interactive ? "loading" : "disabled";
+    host.dataset.companionOffsetX = "0.0000";
+    host.dataset.companionOffsetY = "0.0000";
     setStatusState("loading");
 
     const fail = () => {
@@ -74,6 +81,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     const render = () => {
       if (disposed || !renderer) return;
       mixer?.update(1 / 60);
+      interaction?.step(1 / 60);
       renderer.render(scene, camera);
       frameId = window.requestAnimationFrame(render);
     };
@@ -124,14 +132,16 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
           setStatusState("error");
           return;
         }
-        model = gltf.scene;
-        const bounds = new THREE.Box3().setFromObject(model);
+        const animatedModel = gltf.scene;
+        const bounds = new THREE.Box3().setFromObject(animatedModel);
         const size = bounds.getSize(new THREE.Vector3());
         const center = bounds.getCenter(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
         const scale = 1.7 / maxDimension;
-        model.scale.setScalar(scale);
-        model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+        animatedModel.scale.setScalar(scale);
+        animatedModel.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+        model = new THREE.Group();
+        model.add(animatedModel);
         scene.add(model);
         camera.lookAt(0, framing === "journey-s05" ? 0.85 : 0.8, 0);
         const selectedClip = gltf.animations.find((clip) => clip.name === selection.clip);
@@ -147,7 +157,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
           if (renderer) renderer.domElement.style.visibility = "visible";
           setStatus(host, "ready", clipNames.join(","));
         } else {
-           const animationMixer = new THREE.AnimationMixer(model);
+           const animationMixer = new THREE.AnimationMixer(animatedModel);
            mixer = animationMixer;
            const actions = new Map(companionClips.map((clip) => [clip, animationMixer.clipAction(gltf.animations.find((candidate) => candidate.name === clip)!)] as const));
            let currentAction: THREE.AnimationAction | null = null;
@@ -210,6 +220,14 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            };
            controllerRef.current = controller;
            play(latestSelectionRef.current, reducedMotion);
+           if (interactive && renderer) {
+             interaction = createTactileCompanionInteraction({
+               canvas: renderer.domElement,
+               host,
+               camera,
+               target: model,
+             });
+           }
            // Prime the selected clip before the first visible model paint. This
            // avoids briefly exposing the bind/neutral pose immediately after a
            // confirmed save before celebrate takes over.
@@ -231,11 +249,13 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
       resizeObserver?.disconnect();
       controllerRef.current?.dispose();
       controllerRef.current = null;
+      interaction?.dispose();
+      interaction = undefined;
       if (model) disposeObject(model);
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [framing, reducedMotion, selection.species, selection.variant]);
+  }, [framing, interactive, reducedMotion, selection.species, selection.variant]);
 
   useEffect(() => {
     controllerRef.current?.play(selection, reducedMotion);

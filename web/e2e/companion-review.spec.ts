@@ -94,6 +94,48 @@ test("valid review selection requests exactly one approved GLB", async ({ page }
   expect(companionRequests(requests)).toHaveLength(1);
   expect(companionRequests(requests)[0]).toBe(companionAssetManifest.bear.lite.url);
   expect(await page.locator("[data-companion-canvas]").getAttribute("tabindex")).toBeNull();
+  expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("auto");
+  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-interaction-enabled", "true");
+});
+
+test("bear-lite idle can be grabbed and springs back without product-state changes", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute("data-companion-interaction", "idle");
+  await expect(runtime).toHaveAttribute("data-companion-proxy", "slot");
+  await expect(page.locator(".companion-runtime-slot")).toHaveAttribute("data-companion-interactive", "true");
+  expect(await page.locator(".companion-runtime-slot").evaluate((slot) => getComputedStyle(slot).pointerEvents)).toBe("auto");
+  expect(await runtime.evaluate((host) => getComputedStyle(host).pointerEvents)).toBe("auto");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+  expect(box!.y).toBeGreaterThanOrEqual(0);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height + 1);
+
+  const centerX = box!.x + box!.width / 2;
+  const centerY = box!.y + box!.height / 2;
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await expect(runtime).toHaveAttribute("data-companion-interaction", "dragging");
+  expect(await runtime.getAttribute("data-companion-input-route")).toBe("pointer");
+  await page.mouse.move(centerX + Math.min(72, box!.width * 0.22), centerY - Math.min(36, box!.height * 0.16), { steps: 5 });
+  await expect.poll(async () => Math.abs(Number(await runtime.getAttribute("data-companion-offset-x")))).toBeGreaterThan(0.03);
+  await page.mouse.up();
+  await expect.poll(async () => runtime.getAttribute("data-companion-interaction"), { timeout: 4_000 }).toBe("idle");
+  expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-x")))).toBeLessThan(0.01);
+  expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-y")))).toBeLessThan(0.01);
+  await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
+});
+
+test("tactile interaction stays bounded to review bear-lite idle", async ({ page }) => {
+  await page.goto(reviewUrl("S02", "companion_species=rabbit&companion_variant=lite&companion_clip=idle"));
+  const runtime = page.locator("[data-companion-status]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
   expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
 });
 
@@ -153,6 +195,8 @@ test("reduced motion renders a static companion without an animation loop", asyn
   await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   await expect(runtime).toHaveAttribute("data-companion-motion", "stopped");
   await expect(page.locator("[data-companion-canvas]")).toHaveAttribute("aria-hidden", "true");
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
 });
 
 test("404 and abort failures remove only the decorative companion", async ({ browser }) => {
