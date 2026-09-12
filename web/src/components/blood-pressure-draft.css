@@ -1,0 +1,11 @@
+.bp-draft-note, .bp-draft-reset { color: var(--sk7-ink-muted); line-height: 1.55; overflow-wrap: anywhere; }
+.bp-draft-note { display: grid; gap: .3rem; }
+.bp-draft-reset summary { cursor: pointer; min-height: var(--sk7-target-min); color: var(--sk7-focus); }
+.bp-draft-reset p { margin: .5rem 0; }
+
+@media (max-width: 580px) {
+  /* Let enlarged BP values wrap to one column instead of clipping their digits. */
+  [data-scene="S04"].journey-entry .field-grid { display: flex; flex-wrap: wrap; }
+  [data-scene="S04"].journey-entry .field-grid label { flex: 1 1 6.5rem; min-width: 0; }
+  [data-scene="S04"].journey-entry .field-grid label:nth-child(-n+2) { flex-basis: 100%; }
+}
