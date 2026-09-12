@@ -32,7 +32,20 @@ this documentation change. Re-read control-plane state before any future operati
 | API service | Cloud Run service `bp7-api` in `asia-northeast3` | Its primary browser origin is `https://hyeol.app`; explicitly maintained fallback origins may remain allowed during cutover. |
 | Authentication and record ownership | Supabase project configuration and migrations in this repository | Browser clients use only the publishable key; row ownership remains enforced by RLS. |
 
-`ah-05-07-pages-web` is the legacy Worker retained only during cutover verification. It is not a second production target and must not receive a separate application deployment.
+The production web topology is intentionally singular:
+
+| Endpoint / role | Required owner and behavior |
+| --- | --- |
+| `https://hyeol.app` | `ah-05-07-pages`, the sole application Worker. |
+| `https://ah-05-07-pages.ahnsangkyoon.workers.dev` | Fallback URL for the same application Worker. |
+| `https://www.hyeol.app/*` | Zone-level `301` to `https://hyeol.app/*`, preserving path and query. |
+| `ah-05-07-pages-web...workers.dev/*` | Redirect-only `308` to `https://hyeol.app/*`, preserving path and query. |
+| `ah-05-07-web-pages...workers.dev/*` | Redirect-only `308` to `https://hyeol.app/*`, preserving path and query. |
+
+Only `ah-05-07-pages` may be connected to the deployment mirror. Both legacy
+Workers must remain Git-disconnected, have no custom application domain, and
+must never receive an application build. Their only supported source is the
+explicit redirect-only Worker under `ops/legacy-pages-web-redirect/`.
 
 ## Mirror ownership and synchronization
 
@@ -61,6 +74,11 @@ Workflow inspected at mirror control snapshot
   If automatic builds watch mirror main, scheduled snapshots may trigger them;
   this documentation change does not establish or modify that external setting.
 
+Before a manual release or accepting an automatic mirror-triggered build, verify
+that the mirror is connected only to `ah-05-07-pages`. A successful mirror sync
+must not fan out to either legacy Worker. Treat that topology check and the
+browser-origin/public-build-variable invariant as release prerequisites.
+
 Inspect before/after source identity, build mode/public-config fingerprint and
 rollback evidence for a release. Do not sync just to refresh documentation.
 Changing the schedule, control workflow or Cloudflare build behavior requires a
@@ -77,6 +95,15 @@ The Cloudflare build that publishes the production Worker owns the frontend buil
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Variable | Public Supabase publishable key |
 
 Do not create `VITE_*` secrets. Never place a Supabase `service_role` key, SMTP credential, Cloudflare API token, or any server-only secret in the web build.
+
+Workers Builds set `WORKERS_CI=1`. The web prebuild must fail before deployment
+when any required public variable is missing or invalid. The source guard accepts
+only HTTPS origins without credentials/path/query/fragment for the two URL
+variables and accepts only `sb_publishable_...` or a legacy JWT whose payload
+role is `anon` for the Supabase browser key. `sb_secret_...` and `service_role`
+keys are rejected. Validation failures may name the variable and problem but
+must never print the configured value. Outside Workers Builds this guard is a
+no-op so ordinary local builds remain fast.
 
 The API account-removal route also requires the server-only `SUPABASE_SECRET_KEY` runtime secret. Bind it only to the API service after the deployment owner has approved the production secret change; it must never be copied to Cloudflare, `VITE_*`, browser assets, logs, fixtures, or API responses.
 
@@ -96,7 +123,7 @@ Classify the merged change before deploying it. A merged Git commit is not, by i
 1. Merge a verified change into upstream `main`.
 2. Classify the change with the table above. For a release that includes a database migration, complete the migration gate first.
 3. If the API changed, build and deploy the Cloud Run revision that contains the merged commit.
-4. For an approved web release, run the existing mirror `Sync deployment branch` with the exact reviewed `upstream_sha`, after checking the current control workflow and scheduled-sync interaction above. Record the resolved source and mirror snapshot. Independently verify the Cloudflare build, its public configuration and the served Worker version; workflow success alone is not deployment verification.
+4. For an approved web release, confirm that only `ah-05-07-pages` is mirror-connected, then run the existing mirror `Sync deployment branch` with the exact reviewed `upstream_sha`, after checking the current control workflow and scheduled-sync interaction above. Record the resolved source and mirror snapshot. Independently verify the Cloudflare build, its public configuration and the served Worker version; workflow success alone is not deployment verification.
 5. Run the dependency-free deployment smoke verifier against the production web and API origins. It checks the live URL, `/live`, `/ready`, and CORS preflight for the browser methods currently used by the web client without sending authentication or product data.
 6. Verify a signed-in API read and the specific database-backed browser flow only after its migration gate has passed.
 
@@ -113,6 +140,25 @@ python3 scripts/ci/verify_deployment_smoke.py \
 The verifier's local controls run in GitHub Actions with `--self-test`. A successful production result is deployment evidence, not a substitute for the signed-in flow check or rollback rehearsal.
 
 The deployment mirror may preserve its sync workflow, but it must not generate or overwrite `web/wrangler.jsonc`. That file is copied from upstream with the application source.
+
+### Cloudflare recovery record — 2026-09-12
+
+Issue #427 records the completed runtime recovery and the source-control guard
+that prevents recurrence. No additional Cloudflare mutation is required merely
+to merge the guard.
+
+- `hyeol.app` and the canonical `ah-05-07-pages...workers.dev` fallback returned
+  HTTP 200 and served the same browser bundle.
+- The observed browser bundle SHA-256 was
+  `6b96eb534606c34827711828fe2a0eccbdbf5bcec282d4d60cefd2982f592ad7`.
+- Sanitized inspection confirmed the expected public API/Supabase configuration
+  class and no server-secret key pattern in the browser bundle.
+- `www` returned `301`; both legacy Workers returned `308` with path/query
+  preservation.
+- Cloud Run `/live` and `/ready` returned 200 and browser-origin CORS checks for
+  GET/POST/PUT/DELETE passed.
+- The redirect-only `ah-05-07-pages-web` version recorded after recovery was
+  `7709daae-13ed-45a1-b4f4-741615d8a687`.
 
 ## Release evidence ledger
 
