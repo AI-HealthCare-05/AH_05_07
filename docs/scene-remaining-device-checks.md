@@ -2,6 +2,37 @@
 
 Issue #390 / PR #391의 후속 검사다. 기존 Android 반복 검사와 이미 통과한 커밋의 GitHub CI는 다시 실행하지 않았다. S02/S10의 42개 아트 자산과 승인 범위는 유지한다. 아래 Simulator 결과를 실제 iPhone 결과로 합치지 않는다.
 
+## CURRENT QUALIFICATION — Verification Policy v0.2 (2026-09-13)
+
+현재 분류 기준은 upstream `main`
+`6abee8f7842fef9f9d2eea83ce7bbfe4a0ad4d16`이다. 이 SHA는 분류 기준일 뿐,
+아래의 과거 기기 evidence를 현재 SHA에서 재실행했다는 뜻이 아니다. 최종
+production scene activation의 작은 REQUIRED 목록과 운영 절차는
+[release gates](scene-release-gates.md)가
+관리한다.
+
+| 분류 | 현재 처리 |
+| --- | --- |
+| **REQUIRED** | 별도 승인된 activation Issue/PR, 최종 후보 HEAD의 required CI와 변경 경계 검사, confirmed-save S05 1회성·저장/복구·내비게이션·semantic fallback, production 설정/단일 Worker topology, 배포 smoke와 signed-in synthetic affected flow, 현재 known-good 대상의 rollback/restore 능력만 activation gate다. |
+| **CONDITIONAL** | renderer/resource/art, Safari·viewport·input, semantic/focus/motion/reflow, CDN/cache/chunk recovery 중 관련 경계가 바뀌거나 실제 문제가 관찰될 때만 대표 physical device/browser, 관련 AT 조건, GPU/메모리/FPS, 실제 망, broad matrix·30-cycle·poster 재캡처를 요구한다. |
+| **DEFERRED / OBSERVATIONAL** | 현재 증상이 없는 absolute GPU/peak memory와 정확한 presented FPS, 남은 JS heap/long-task 귀속, Wi-Fi와 cellular 각각의 반복, physical iPhone confidence check, 모든 audible/touch/switch 조합, 다음 실제 배포의 stale-chunk 자동 recovery proof, 승인된 S05 위치 polish는 release를 막지 않는다. |
+
+Simulator Safari와 semantic fallback evidence는 physical iPhone PASS로 바꾸지
+않는다. 반대로 3D가 실패해도 핵심 HTML/CSS 기능이 안전하게 유지되는 현재
+경계에서는 physical iPhone 부재나 정량 GPU/FPS 미측정만으로 release를
+무기한 막지 않는다. PR #462의 다음 cross-deployment physical proof는
+opportunistic evidence이며, 재발하거나 recovery/cache 경계가 바뀌면 그때
+CONDITIONAL 검증으로 승격한다. R2/CORS/WebGL 원인 가설은 만료 상태를 유지한다.
+
+Issue #390의 review-candidate qualification 역할은 완료됐다. 이 분류 PR이
+merge된 뒤 Issue #390은 자동으로 닫지 않고 **CLOSE NOW**를 권고하며,
+production activation은 별도의 명시적 승인 record에서 REQUIRED gate만 추적한다.
+
+> **Historical reference notice:** 아래 결과·절차·미측정 표시는 당시 evidence와
+> provenance를 보존하기 위한 reference다. 위 CURRENT QUALIFICATION과 충돌하는
+> 과거의 `남은 항목`, `required`, `gate` 표현은 현재 blocker 목록이 아니다.
+> CONDITIONAL trigger가 없으면 반복 실행하지 않는다.
+
 **사용자 직접 검사 결과:** 스마트폰 HTTPS 검토 주소를 안내한 뒤 사용자가 “모두 정상 작동입니다!”라고 보고했다. [사용자 검사 기록](evidence/scene-phone-user-check.json)에 정상 작동 보고를 반영했다. 기종·OS·브라우저와 실제 확인한 조건은 추가 확인 중이다. 접근성 설정·각 통신망·정량 성능의 개별 통과 여부는 이 보고만으로 확정하지 않는다.
 
 **S05 최종 시각 승인 완료:** 사용자는 저장 직후 애니메이션 위치가 살짝 어색하다고 했지만, “이번 PR 이후, 추후에 수정하면 충분할 것 같습니다. 최종 승인합니다.”라고 명시했다. 현재 후보를 승인하고 위치의 미세 조정은 이번 PR 이후 후속 작업으로 남긴다.
@@ -68,7 +99,7 @@ cloudflared tunnel --no-autoupdate --url http://127.0.0.1:4175
 
 [HTTPS 확인 근거](evidence/scene-phone-review-https-smoke.json)는 데스크톱 Chromium의 모바일 화면 모사다. 실제 기기 통과로 분류하지 않는다. S10의 3D 영역은 화면 아래에 있으므로 스크롤해서 확인한다. 실제 망에서도 터치·음성·화면 반응을 확인할 수 있지만, `no-store` 응답과 GLB 미러의 전송량을 운영 CDN 캐시 성능으로 대체하지 않는다.
 
-## 다음 직접 확인 순서
+## Historical 직접 확인 순서
 
 1. 실제 Android: TalkBack으로 S02 → S04 합성 저장 → S05 → S10의 제목·버튼을 읽고 손가락 탐색한다. 장식 캐릭터에 포커스가 가지 않고 저장 확인이 중복되지 않는지 듣는다.
 2. 실제 iPhone: Safari 버전과 기기를 기록하고 S02/S10 캔버스·S05 1회 재생을 확인한다. 뒤로 가기, 재생 중 앱 전환, 복귀, OS 동작 줄이기와 큰 글씨 조건을 구분한다.

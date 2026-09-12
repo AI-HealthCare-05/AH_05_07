@@ -2,6 +2,95 @@
 
 Continuation of Issue #390 / PR #391. Implementation authorization is recorded in [architecture](scene-architecture.md); it does not satisfy physical-device measurements. Current results and completed owner visual acceptance are in [implementation status](scene-implementation-status.md). This checklist prepares the remaining production work; no production gate is opened by this document.
 
+## CURRENT QUALIFICATION — Verification Policy v0.2 (2026-09-13)
+
+This classification is based on upstream `main`
+`6abee8f7842fef9f9d2eea83ce7bbfe4a0ad4d16` (PR #465). That SHA is the
+classification baseline, not a claim that older device evidence was rerun on it.
+Evidence below remains valid only for its recorded revision, environment and
+scope. A measurable value is not a release gate unless its failure presents a
+realistic risk to user function, correctness, storage meaning, accessibility or
+recovery.
+
+### REQUIRED before production scene activation
+
+1. Use a separately explicit, approved activation Issue and PR. Resolve the
+   current upstream `main`, identify the exact activation candidate and keep
+   `review` out of production. Verify that the intended production-mode mapping
+   activates only S02/S10 and the confirmed-save S05 path, while the independent
+   companion setting and gated-off behavior remain correct.
+2. Pass the repository's required `lint` and `test` CI on the final activation
+   PR HEAD and the existing checks directly affected by the
+   activation/configuration diff. This classification creates no new test
+   requirement and does not require a broad browser matrix by default.
+3. On the final candidate, protect the core scene contract: confirmed persistence
+   can produce S05 once without replay or automatic write retry; save/recovery and
+   navigation remain usable; and GLB, chunk or WebGL failure leaves semantic
+   HTML/CSS content and controls available. Existing evidence may be reused while
+   those boundaries are unchanged; a changed boundary needs a directly affected
+   check.
+4. Follow the [deployment flow](deployment-ssot.md#deployment-flow): confirm the
+   activation build configuration and single-Worker topology, record exact source,
+   mirror and served Worker identities, run public deployment smoke plus the
+   signed-in synthetic affected flow, and capture a distinct current known-good
+   rollback target. Stop or restore on failed core semantics, inaccessible
+   controls or failed fallback, and verify rollback/restore capability.
+
+### CONDITIONAL verification
+
+Require only the item tied to a changed boundary or an observed problem:
+
+- A representative physical-browser/device spot-check when renderer, media,
+  motion, viewport, input or semantic interaction behavior changes, or when a
+  device-specific failure is observed. Physical iPhone Safari is not inferred
+  from Simulator evidence, but lack of a physical iPhone does not indefinitely
+  block an otherwise unchanged candidate with a verified semantic fallback.
+- VoiceOver, TalkBack audible/touch exploration, switch access, OS reduced motion
+  or large text when the activation change directly affects the corresponding
+  semantic, focus, input, motion or reflow boundary, or an accessibility problem
+  is observed. Test the affected representative condition; an exhaustive
+  assistive-technology combination matrix is not routine.
+- Absolute GPU/peak memory, retaining-path or presented-frame measurement when
+  rendering/resource ownership changes, or crashes, context exhaustion,
+  monotonic retained-resource growth, OS termination, visible jank or animation
+  failure are observed. Numeric presented FPS and absolute GPU usage are not goals
+  by themselves.
+- Production-equivalent network/cache checks when chunking, CDN/R2 rules, asset
+  identity, cache behavior or recovery code changes, or a delivery failure is
+  observed. Wi-Fi and cellular are not automatically two separate blockers.
+- Broad browser matrices, 30-cycle probes and poster recaptures only when their
+  renderer/resource/art boundary changes. Reuse the exact unchanged evidence
+  otherwise.
+
+### DEFERRED / OBSERVATIONAL
+
+- Absolute GPU usage and peak-memory headroom, exact presented FPS, attribution
+  of the remaining aggregate JS-heap delta and long-task optimization remain
+  useful research. No current evidence shows a crash, context exhaustion,
+  monotonic retained native-resource growth or user-visible animation failure;
+  the bounded native-resource retention defect was fixed and verified in its
+  recorded scope.
+- Separate Wi-Fi and cellular runs, a physical-iPhone Safari confidence pass, and
+  the full audible/touch/switch accessibility combination remain worthwhile
+  observations when available, not unconditional activation blockers.
+- Physical proof of PR #462's one-shot stale-chunk recovery is opportunistic at a
+  future real cross-deployment. Fresh-load Samsung Internet passed; the former
+  R2/CORS/WebGL hypotheses stay expired. Promote this proof only if recovery code
+  or deployment cache behavior changes, or the incident recurs.
+- Repeating unchanged broad matrices/30-cycle probes or all poster captures, and
+  refining the accepted S05 initial placement, do not block activation.
+
+Issue #390 has completed its review-candidate qualification role. Production
+activation is protected work and needs its own explicit approval record; it must
+not inherit every historical measurement below as a permanent gate. After this
+classification is merged, the recommendation is **CLOSE NOW** for Issue #390 and
+track only the four REQUIRED activation gates in that separate record.
+
+> **Historical reference notice:** The dated measurements and earlier checklist
+> below are retained without upgrading their old `OPEN`, `required` or `blocked`
+> wording into current gates. Where they conflict, CURRENT QUALIFICATION above
+> governs. Do not rerun them unless a CONDITIONAL trigger applies.
+
 ## Samsung Internet qualification update — 2026-09-12–13
 
 Samsung Internet fresh-load S05 is now **PASS** after a refresh restored the bear
@@ -63,7 +152,7 @@ Keep raw traces local if they contain unsanitized browser data. Commit only sani
 
 After the smartphone HTTPS links were provided, the user reported “모두 정상 작동입니다!” on 2026-09-10 and subsequently gave final S05 visual approval. The [manual user report](evidence/scene-phone-user-check.json) records both decisions and the deferred placement polish. Device/browser identification and individual accessibility/network conditions have not been supplied. This report adds manual feedback without converting unmeasured device costs or the preview's no-store/same-origin GLB delivery into production acceptance. No Android repeat or CI check was rerun for this documentation update.
 
-## Controlled web rollout and rollback — blocked by open gates
+## Historical controlled web rollout and rollback checklist
 
 1. Retain the recorded S02/S10 and S05 owner art acceptance and automated S05 parity evidence, then close the physical-device gates on the exact activation candidate revision. The review-only implementation may merge under the separate scope above; a later production-activation PR remains draft while its required release gates are open. Verify CI on each final PR HEAD.
 2. Prepare and review a separately explicit production activation change. `VITE_SK7_SCENE_MODE=production` currently selects no new scene; setting the build variable alone cannot activate this candidate. Do not deploy `review` as a shortcut. Preserve the independent companion production setting.
