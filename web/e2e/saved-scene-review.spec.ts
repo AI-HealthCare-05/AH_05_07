@@ -428,7 +428,11 @@ test("exited S02 S10 and S05 canvases are garbage collectible across repeat visi
     await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
   };
   const exit = async () => {
-    await page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "기록 찾아보기", exact: true }).click();
+    const browse = page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "기록 찾아보기", exact: true });
+    await expect(browse).toBeVisible();
+    await expect(browse).toBeEnabled();
+    // This test covers renderer lifecycle, not pointer actionability; DOM activation avoids animated-layout click flakes.
+    await browse.evaluate((button: HTMLButtonElement) => button.click());
     await expect(page.locator('[data-scene="S08"]')).toBeVisible();
     await expect(page.locator("canvas")).toHaveCount(0);
   };

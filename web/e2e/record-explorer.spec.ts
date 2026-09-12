@@ -257,8 +257,11 @@ test("S08 loading and initial failure do not claim a zero-record window", async 
 
 test("S08 retains the loaded filtered rows after an S09 refresh failure", async ({ page }) => {
   let reads = 0;
+  let writes = 0;
   await page.route("http://e2e.invalid/**", async route => {
-    if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "Access-Control-Allow-Origin": route.request().headers().origin ?? headers["Access-Control-Allow-Origin"] } });
+    const method = route.request().method();
+    if (method === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "Access-Control-Allow-Origin": route.request().headers().origin ?? headers["Access-Control-Allow-Origin"] } });
+    if (method !== "GET") writes += 1;
     reads += 1;
     return reply(route, reads === 1 ? mixedWindow : {}, reads === 1 ? 200 : 503);
   });
@@ -267,12 +270,21 @@ test("S08 retains the loaded filtered rows after an S09 refresh failure", async 
   await dateFilter(page, 10).click();
   await eveningDetail(page).click();
   await page.getByRole("button", { name: "새로고침", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("지금 보이는 기록은 그대로 유지됩니다.");
+  const staleNotice = page.getByRole("status");
+  await expect(staleNotice).toContainText("최신 여부 미확인");
+  await expect(staleNotice).toContainText("마지막으로 불러온 기록을 보여드리고 있어요.");
+  await expect(staleNotice).toContainText("최근 변경이 반영되지 않았을 수 있어요.");
+  await expect(staleNotice.getByRole("button", { name: "다시 불러오기", exact: true })).toBeEnabled();
+  await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+  await expect(page.locator('[data-scene="S13"]')).toHaveCount(0);
   await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
   await expect(rows(page)).toHaveCount(2);
   await expect(page.locator(".record-explorer").getByRole("status")).toHaveText("전체 6개 중 2개 표시");
   await expect(eveningDetail(page)).toBeFocused();
   await expect(page.getByText("선택한 조건에 맞는 기록이 없어요.")).toHaveCount(0);
+  await page.waitForTimeout(200);
+  expect(reads).toBe(2);
+  expect(writes).toBe(0);
 });
 
 for (const width of [320, 360, 390, 430]) {
