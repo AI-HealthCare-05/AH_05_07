@@ -12,13 +12,63 @@ export type TactileCompanionInteraction = Readonly<{
   dispose: () => void;
 }>;
 
-const MAX_DRAG_X = 0.46;
-const MAX_DRAG_Y = 0.32;
-const SPRING_STIFFNESS = 72;
-const SPRING_DAMPING = 14;
+type CompanionGrabZone = "head" | "body" | "feet";
+
+type TactileProfile = Readonly<{
+  maxDragX: number;
+  maxDragY: number;
+  springStiffness: number;
+  springDamping: number;
+  tiltFactor: number;
+  maxTilt: number;
+  pitchFactor: number;
+  maxPitch: number;
+  squashFactor: number;
+  maxSquash: number;
+}>;
+
 const MAX_STEP_SECONDS = 1 / 30;
 const SETTLE_DISTANCE = 0.003;
 const SETTLE_SPEED = 0.02;
+
+const tactileProfiles: Readonly<Record<CompanionGrabZone, TactileProfile>> = {
+  head: {
+    maxDragX: 0.34,
+    maxDragY: 0.26,
+    springStiffness: 84,
+    springDamping: 15,
+    tiltFactor: 0.2,
+    maxTilt: 0.09,
+    pitchFactor: 0.1,
+    maxPitch: 0.055,
+    squashFactor: 0.014,
+    maxSquash: 0.04,
+  },
+  body: {
+    maxDragX: 0.46,
+    maxDragY: 0.32,
+    springStiffness: 72,
+    springDamping: 14,
+    tiltFactor: 0.13,
+    maxTilt: 0.065,
+    pitchFactor: 0.055,
+    maxPitch: 0.035,
+    squashFactor: 0.012,
+    maxSquash: 0.04,
+  },
+  feet: {
+    maxDragX: 0.24,
+    maxDragY: 0.12,
+    springStiffness: 98,
+    springDamping: 18,
+    tiltFactor: 0.075,
+    maxTilt: 0.04,
+    pitchFactor: 0.025,
+    maxPitch: 0.02,
+    squashFactor: 0.018,
+    maxSquash: 0.05,
+  },
+};
 
 function pointerNdc(canvas: HTMLCanvasElement, event: PointerEvent) {
   const bounds = canvas.getBoundingClientRect();
@@ -28,13 +78,25 @@ function pointerNdc(canvas: HTMLCanvasElement, event: PointerEvent) {
   );
 }
 
+function grabZoneForPointer(canvas: HTMLCanvasElement, event: PointerEvent): CompanionGrabZone {
+  const bounds = canvas.getBoundingClientRect();
+  const ratio = THREE.MathUtils.clamp(
+    (event.clientY - bounds.top) / Math.max(bounds.height, 1),
+    0,
+    1,
+  );
+  if (ratio < 0.34) return "head";
+  if (ratio > 0.74) return "feet";
+  return "body";
+}
+
 /**
- * Review-only P0 tactile presentation.
+ * Review-only tactile presentation.
  *
- * The companion slot is already a small, dedicated visual target, so P0 uses
- * the whole slot as a forgiving grab proxy. P1 can split this into authored
- * head/body/feet proxies without changing product state or adding a physics
- * engine.
+ * P1 keeps the P0 slot-level forgiving hit target but divides that target into
+ * stable screen-space head/body/feet zones. The zones intentionally do not
+ * depend on Blender node or bone names, so the interaction primitive can later
+ * expand across companion species without changing the asset contract.
  */
 export function createTactileCompanionInteraction({
   canvas,
@@ -53,18 +115,22 @@ export function createTactileCompanionInteraction({
   const targetPosition = target.position.clone();
   const homePosition = target.position.clone();
   const homeScale = target.scale.clone();
+  const homeRotation = target.rotation.clone();
   const velocity = new THREE.Vector3();
   const displacement = new THREE.Vector3();
   const surface = host.parentElement instanceof HTMLElement ? host.parentElement : host;
 
   let pointerId: number | null = null;
+  let activeZone: CompanionGrabZone | null = null;
   let disposed = false;
   let returning = false;
 
-  const writeOffset = () => {
+  const writePresentationState = () => {
     displacement.copy(target.position).sub(homePosition);
     host.dataset.companionOffsetX = displacement.x.toFixed(4);
     host.dataset.companionOffsetY = displacement.y.toFixed(4);
+    host.dataset.companionTiltZ = (target.rotation.z - homeRotation.z).toFixed(4);
+    host.dataset.companionPitchX = (target.rotation.x - homeRotation.x).toFixed(4);
   };
 
   const setState = (state: "idle" | "dragging" | "returning") => {
@@ -83,6 +149,8 @@ export function createTactileCompanionInteraction({
     const hit = raycaster.ray.intersectPlane(dragPlane, dragHit);
     if (!hit) return;
 
+    activeZone = grabZoneForPointer(canvas, event);
+    const profile = tactileProfiles[activeZone];
     pointerId = event.pointerId;
     returning = false;
     grabOffsetWorld.copy(hit).sub(targetWorld);
@@ -97,17 +165,21 @@ export function createTactileCompanionInteraction({
 
     host.dataset.companionInputRoute = "pointer";
     host.dataset.companionPointerType = event.pointerType || "unknown";
+    host.dataset.companionGrabZone = activeZone;
+    host.dataset.companionReactionProfile = activeZone;
+    host.dataset.companionMaxDragY = profile.maxDragY.toFixed(2);
     setState("dragging");
     event.preventDefault();
   };
 
   const move = (event: PointerEvent) => {
-    if (disposed || event.pointerId !== pointerId) return;
+    if (disposed || event.pointerId !== pointerId || !activeZone) return;
 
     raycaster.setFromCamera(pointerNdc(canvas, event), camera);
     const hit = raycaster.ray.intersectPlane(dragPlane, dragHit);
     if (!hit) return;
 
+    const profile = tactileProfiles[activeZone];
     desiredWorld.copy(hit).sub(grabOffsetWorld);
     desiredLocal.copy(desiredWorld);
     target.parent?.worldToLocal(desiredLocal);
@@ -115,13 +187,13 @@ export function createTactileCompanionInteraction({
     targetPosition.set(
       THREE.MathUtils.clamp(
         desiredLocal.x,
-        homePosition.x - MAX_DRAG_X,
-        homePosition.x + MAX_DRAG_X,
+        homePosition.x - profile.maxDragX,
+        homePosition.x + profile.maxDragX,
       ),
       THREE.MathUtils.clamp(
         desiredLocal.y,
-        homePosition.y - MAX_DRAG_Y,
-        homePosition.y + MAX_DRAG_Y,
+        homePosition.y - profile.maxDragY,
+        homePosition.y + profile.maxDragY,
       ),
       homePosition.z,
     );
@@ -160,9 +232,11 @@ export function createTactileCompanionInteraction({
   host.style.pointerEvents = "auto";
   canvas.style.pointerEvents = "auto";
   host.dataset.companionInteractionEnabled = "true";
-  host.dataset.companionProxy = "slot";
+  host.dataset.companionProxy = "head-body-feet";
+  host.dataset.companionGrabZone = "none";
+  host.dataset.companionReactionProfile = "none";
   setState("idle");
-  writeOffset();
+  writePresentationState();
 
   surface.addEventListener("pointerdown", begin, { capture: true, passive: false });
   surface.addEventListener("pointermove", move, { capture: true, passive: false });
@@ -177,17 +251,18 @@ export function createTactileCompanionInteraction({
       const dt = Math.min(Math.max(deltaSeconds, 0), MAX_STEP_SECONDS);
       if (dt === 0) return;
 
+      const profile = tactileProfiles[activeZone ?? "body"];
       displacement.copy(targetPosition).sub(target.position);
       const acceleration = displacement
-        .multiplyScalar(SPRING_STIFFNESS)
-        .addScaledVector(velocity, -SPRING_DAMPING);
+        .multiplyScalar(profile.springStiffness)
+        .addScaledVector(velocity, -profile.springDamping);
 
       velocity.addScaledVector(acceleration, dt);
       target.position.addScaledVector(velocity, dt);
       target.position.z = homePosition.z;
 
       const speed = Math.min(velocity.length(), 3);
-      const squash = Math.min(speed * 0.012, 0.04);
+      const squash = Math.min(speed * profile.squashFactor, profile.maxSquash);
       target.scale.set(
         homeScale.x * (1 + squash * 0.45),
         homeScale.y * (1 - squash),
@@ -195,18 +270,31 @@ export function createTactileCompanionInteraction({
       );
 
       const xOffset = target.position.x - homePosition.x;
-      target.rotation.z = THREE.MathUtils.clamp(-xOffset * 0.13, -0.065, 0.065);
-      writeOffset();
+      const yOffset = target.position.y - homePosition.y;
+      target.rotation.z = homeRotation.z + THREE.MathUtils.clamp(
+        -xOffset * profile.tiltFactor,
+        -profile.maxTilt,
+        profile.maxTilt,
+      );
+      target.rotation.x = homeRotation.x + THREE.MathUtils.clamp(
+        yOffset * profile.pitchFactor,
+        -profile.maxPitch,
+        profile.maxPitch,
+      );
+      writePresentationState();
 
       if (pointerId === null && returning) {
         const distance = target.position.distanceTo(homePosition);
         if (distance < SETTLE_DISTANCE && velocity.length() < SETTLE_SPEED) {
           target.position.copy(homePosition);
           target.scale.copy(homeScale);
-          target.rotation.z = 0;
+          target.rotation.copy(homeRotation);
           velocity.set(0, 0, 0);
           returning = false;
-          writeOffset();
+          activeZone = null;
+          host.dataset.companionGrabZone = "none";
+          host.dataset.companionReactionProfile = "none";
+          writePresentationState();
           setState("idle");
         }
       }
@@ -225,6 +313,7 @@ export function createTactileCompanionInteraction({
         }
       }
       pointerId = null;
+      activeZone = null;
 
       surface.removeEventListener("pointerdown", begin, true);
       surface.removeEventListener("pointermove", move, true);
@@ -240,9 +329,11 @@ export function createTactileCompanionInteraction({
 
       host.dataset.companionInteractionEnabled = "false";
       host.dataset.companionInteraction = "disabled";
+      host.dataset.companionGrabZone = "none";
+      host.dataset.companionReactionProfile = "none";
       target.position.copy(homePosition);
       target.scale.copy(homeScale);
-      target.rotation.z = 0;
+      target.rotation.copy(homeRotation);
     },
   };
 }
