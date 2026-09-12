@@ -1,5 +1,6 @@
 import { landmarkForCalendarDate, type SceneLandmark } from '../ui/scenePolicy';
 import type { TrailDay } from '../ui/livingWeek';
+import { formatTrailDate } from '../ui/livingWeekPresentation';
 import './seven-day-trail.css';
 
 // Small, date-only silhouettes continue the existing landscape without a runtime scene.
@@ -13,22 +14,52 @@ const landmarkPaths: Record<SceneLandmark['id'], string> = {
   'sunset-overlook': 'M22 29A10 10 0 0 1 42 29M12 33H52M16 41Q32 33 48 41M32 10V6M15 18L11 15M49 18L53 15M22 49H42',
 };
 
-/** Receives only display facts. No requests, scene activation, scores or record actions. */
-export function SevenDayTrail({ days, today }: { days: readonly TrailDay[]; today: string }) {
-  return <ol className="seven-day-trail" aria-label="7일의 길 · 날짜별 혈압 관찰과 챌린지 참여">
+/** One lightweight date-only silhouette, shared by the path and its selected stop. */
+export function TrailLandmark({ date, className }: { date: string; className?: string }) {
+  const landmark = landmarkForCalendarDate(date);
+  return <svg className={className} viewBox="0 0 64 60" aria-hidden="true" data-trail-landmark={landmark?.id}>
+    <ellipse className="trail-ground" cx="32" cy="49" rx="27" ry="7" />
+    <path d={landmark ? landmarkPaths[landmark.id] : ''} />
+  </svg>;
+}
+
+type SevenDayTrailProps = {
+  days: readonly TrailDay[];
+  today: string;
+  selectedDate: string | null;
+  onSelectDate: (date: string) => void;
+  detailId?: string;
+  factsKnown?: boolean;
+};
+
+/** Selection is local presentation state; dates never activate a runtime scene. */
+export function SevenDayTrail({ days, today, selectedDate, onSelectDate, detailId, factsKnown = true }: SevenDayTrailProps) {
+  return <><ol className="seven-day-trail" aria-label="7일의 길 · 날짜별 혈압 관찰과 챌린지 참여">
     {days.map(day => {
       const landmark = landmarkForCalendarDate(day.date);
-      return <li key={day.date} data-trail-date={day.date} aria-current={day.date === today ? 'date' : undefined}>
-        <div className="trail-place">
-          <time dateTime={day.date}>{Number(day.date.slice(5, 7))}/{Number(day.date.slice(8))}{day.date === today && <span>오늘</span>}</time>
-          <svg viewBox="0 0 64 60" aria-hidden="true"><ellipse className="trail-ground" cx="32" cy="49" rx="27" ry="7" /><path d={landmark ? landmarkPaths[landmark.id] : ''} /></svg>
+      const current = day.date === today;
+      const selected = day.date === selectedDate;
+      const temporal = current ? 'today' : day.date < today ? 'past' : 'future';
+      const factsLabel = factsKnown ? `혈압 관찰 ${day.observationCount}건, 챌린지 참여 ${day.participation}` : '기록 확인 전';
+      return <li key={day.date} data-trail-date={day.date} data-selected={selected} data-temporal={temporal} aria-current={current ? 'date' : undefined}>
+        <button className="trail-day-button" type="button" onClick={() => onSelectDate(day.date)}
+          aria-pressed={selected} aria-current={current ? 'date' : undefined} aria-controls={detailId}
+          aria-label={`${formatTrailDate(day.date)}${current ? ', 오늘' : temporal === 'future' ? ', 오늘 이후' : ''} · ${landmark?.label ?? '날짜의 풍경'} · ${factsLabel}`}>
+          <span className="trail-day-state">{current ? '오늘' : selected ? '선택' : temporal === 'future' ? '이후' : '\u00a0'}</span>
+          <time dateTime={day.date}>{Number(day.date.slice(5, 7))}/{Number(day.date.slice(8))}</time>
+          <span className="trail-place"><TrailLandmark date={day.date} /></span>
           <span className="trail-landmark">{landmark?.label}</span>
-        </div>
+        </button>
         <dl className="trail-facts">
-          <div><dt>혈압 관찰</dt><dd>{day.observationCount}건</dd></div>
-          <div><dt>챌린지 참여</dt><dd>{day.participation}</dd></div>
+          <div><dt className="sr-only">혈압 관찰</dt><dd><span className="trail-fact-symbol trail-fact-symbol--observation" aria-hidden="true" /><span className="trail-fact-value">{factsKnown ? `${day.observationCount}건` : '확인 전'}</span></dd></div>
+          <div><dt className="sr-only">챌린지 참여</dt><dd><span className="trail-fact-symbol trail-fact-symbol--participation" aria-hidden="true" /><span className="trail-fact-value">{factsKnown ? day.participation : '확인 전'}</span></dd></div>
         </dl>
       </li>;
     })}
-  </ol>;
+  </ol>
+    <p className="trail-legend" aria-hidden="true">
+      <span><i className="trail-fact-symbol trail-fact-symbol--observation" />혈압 관찰</span>
+      <span><i className="trail-fact-symbol trail-fact-symbol--participation" />챌린지 참여</span>
+    </p>
+  </>;
 }

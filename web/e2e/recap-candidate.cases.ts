@@ -1,6 +1,7 @@
 // Included by the existing required review scene suite; no workflow changes.
 import { expect, test, type Page } from '@playwright/test';
 import { sevenDayFacts } from '../src/ui/livingWeek';
+import { summarizeTrailDays } from '../src/ui/livingWeekPresentation';
 import { readFileSync } from 'node:fs';
 const fixtureScript = readFileSync(new URL('../scripts/journey-review-fixture.mjs', import.meta.url), 'utf8').replace('export function', 'function') + '\njourneyReviewFixture();';
 const screen = (page: Page) => page.locator('.journey-recap');
@@ -50,9 +51,49 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
     await expect(page.getByRole('button', { name: '이전 7일 보기', exact: true })).toBeFocused();
     await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
-    await expect(bp.getByRole('button', { name: '상세 보기' }).first()).toBeFocused();
+    await expect(page.locator('summary').filter({ hasText: '챌린지 날짜별 상태' })).toBeFocused();
+    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toBeFocused();
+    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    await expect(page.locator('[data-trail-date]').first().getByRole('button')).toBeFocused();
   });
 }
+
+test('recap date focus filters existing records and returns to the complete week', async ({ page }) => {
+  await fixture(page);
+  const trail = page.locator('.seven-day-trail');
+  const wholeWeek = page.getByRole('button', { name: '7일 전체 보기', exact: true });
+  const detail = page.locator('.trail-day-detail');
+  const records = (lane: string) => page.locator(`[data-record-lane="${lane}"] .record-action`);
+  await expect(wholeWeek).toHaveAttribute('aria-pressed', 'true');
+  await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(0);
+  await trail.locator('[data-trail-date="2026-09-10"] > button').click();
+  await expect(trail.locator('[data-trail-date="2026-09-10"] > button')).toHaveAttribute('aria-pressed', 'true');
+  await expect(detail).toHaveAttribute('data-selected-date', '2026-09-10');
+  await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여건너뜀');
+  await expect(page.locator('[data-main-section="seven-day-dashboard"]')).toHaveAttribute('data-focused-date', '2026-09-10');
+  await expect(records('blood-pressure')).toHaveCount(0);
+  await expect(records('challenge')).toHaveCount(1);
+  await expect(records('legacy')).toHaveCount(0);
+  await expect(page.locator('[data-checkin-status="skipped"]')).toHaveText('건너뜀');
+  await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('2건');
+  await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 2일');
+  await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('3일');
+  await expect(trail.locator('li[data-trail-date]')).toHaveCount(7);
+  const staticPreview = await page.locator('[data-static-landscape]').count() === 1;
+  await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', staticPreview ? '2026-09-10' : '2026-09-11');
+  await trail.locator('[data-trail-date="2026-09-09"] > button').press('Enter');
+  await expect(records('blood-pressure')).toHaveCount(1);
+  await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText('118/78 mmHg');
+  await expect(records('challenge')).toHaveCount(0);
+  await wholeWeek.press('Enter');
+  await expect(wholeWeek).toHaveAttribute('aria-pressed', 'true');
+  await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(0);
+  await expect(page.locator('[data-main-section="seven-day-dashboard"]')).not.toHaveAttribute('data-focused-date');
+  await expect(records('blood-pressure')).toHaveCount(2);
+  await expect(records('challenge')).toHaveCount(3);
+  await expect(records('legacy')).toHaveCount(1);
+});
 
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
@@ -61,11 +102,14 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
+  await page.locator('[data-trail-date="2026-09-10"] > button').click();
   await page.getByRole('button', { name: '이전 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
   await expect(page.locator('[data-trail-date]').first()).toHaveAttribute('data-trail-date', '2026-08-29');
   await expect(page.locator('[data-trail-date]').last()).toHaveAttribute('data-trail-date', '2026-09-04');
   await expect(page.locator('.seven-day-trail [aria-current]')).toHaveCount(0);
+  await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(exportHint).toHaveText('이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.');
   await expect(page.locator('.window-nav')).toContainText('8월 29일');
   await expect(page.locator('.window-nav')).toContainText('9월 4일');
@@ -81,8 +125,12 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+  await page.locator('[data-trail-date="2026-09-04"] > button').click();
   await page.getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'current');
+  await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(2);
   await expect(exportHint).toHaveText('선택한 7일의 기록을 파일로 보관할 수 있어요.');
   await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
@@ -135,15 +183,21 @@ test('recap refresh error preserves records, stale warning and scene identity', 
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
 });
 
-test('recap synthetic export uses selected dates and clears success on navigation without a save reaction', async ({ page }) => {
+test('recap day focus keeps the full export window and clears success on navigation without a save reaction', async ({ page }) => {
   await fixture(page);
+  await page.locator('[data-trail-date="2026-09-09"] > button').click();
+  await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(1);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: '선택한 7일 내보내기' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('synthetic-sk7-2026-09-05-2026-09-11.json');
   const payload = JSON.parse(readFileSync((await download.path())!, 'utf8'));
   expect(payload.synthetic).toBe(true);
+  expect(payload.start_on).toBe('2026-09-05');
+  expect(payload.end_on).toBe('2026-09-11');
   expect(payload.blood_pressure_observations).toHaveLength(2);
+  expect(payload.challenge_checkins).toHaveLength(3);
+  expect(payload.challenge_events).toHaveLength(1);
   await expect(page.getByText('내보내기 파일을 준비했어요.', { exact: false })).toBeVisible();
   await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
   await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
@@ -255,16 +309,26 @@ test('living week projects seven dates across year and leap-day boundaries with 
     { date: '2026-01-02', observationCount: 0, participation: '기록 없음' },
     { date: '2026-01-03', observationCount: 2, participation: '혼합' },
   ]);
+  expect(summarizeTrailDays(days)).toEqual({
+    observationCount: 3, observationDateCount: 2, participationDateCount: 3,
+    recordedDateCount: 1, skippedDateCount: 1, mixedDateCount: 1,
+  });
   expect(sevenDayFacts('2028-03-01', [], []).map(day => day.date)).toEqual([
     '2028-02-24', '2028-02-25', '2028-02-26', '2028-02-27', '2028-02-28', '2028-02-29', '2028-03-01',
   ]);
 });
 
 test('living week uses Seoul dates and date-only landmarks with mixed facts and legacy kept apart', async ({ page }) => {
+  let dataRequests = 0;
+  const runtimeRequests: string[] = [];
+  page.on('request', request => {
+    if (/ThreeSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(request.url())) runtimeRequests.push(request.url());
+  });
   await page.clock.setFixedTime(new Date('2026-09-10T15:05:00Z'));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route('http://e2e.invalid/**', async route => {
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    dataRequests++;
     const url = new URL(route.request().url());
     if (!url.pathname.endsWith('/window')) return route.abort();
     const body = {
@@ -283,12 +347,25 @@ test('living week uses Seoul dates and date-only landmarks with mixed facts and 
   await expect(trail.locator('.trail-landmark')).toHaveText(['정자', '노을 전망대', '정원 대문', '허브 정원', '나무 그늘과 벤치', '나무다리', '책 읽는 쉼터']);
   await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여혼합');
   await expect(page.locator('[data-trail-date="2026-09-10"] .trail-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
-  const facts = await trail.innerText();
+  const facts = await trail.locator('.trail-facts').allTextContents();
   await page.getByRole('link', { name: '7일 돌아보기' }).press('Enter');
   await expect(page.locator('#S10-title')).toBeFocused();
-  expect(await trail.innerText()).toBe(facts);
+  expect(await trail.locator('.trail-facts').allTextContents()).toEqual(facts);
+  await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('1일');
   await expect(trail).not.toContainText('mmHg');
   const overviewBox = (await trail.boundingBox())!;
   const listBox = (await page.locator('.recap-journal').boundingBox())!;
   expect(overviewBox.y + overviewBox.height).toBeLessThanOrEqual(listBox.y);
+  const stage = await page.locator('[data-scene-recipe]').elementHandle();
+  const staticPreview = await page.locator('[data-static-landscape]').count() === 1;
+  const requestsBeforeSelection = dataRequests;
+  await trail.locator('[data-trail-date="2026-09-10"] > button').press('Enter');
+  await expect(page.locator('.trail-day-detail dl')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
+  await expect(page.locator('[data-record-lane="legacy"] .record-action')).toHaveCount(1);
+  await expect(page.locator('[data-record-lane="challenge"] .record-action')).toHaveCount(0);
+  await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', staticPreview ? '2026-09-10' : '2026-09-11');
+  expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
+  await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
+  expect(dataRequests).toBe(requestsBeforeSelection);
+  expect(runtimeRequests).toEqual([]);
 });

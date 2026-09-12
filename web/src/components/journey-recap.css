@@ -1,43 +1,94 @@
-/* S10 review only. Shared shell/navigation and approved journey screens are untouched. */
+/* S10: one landscape sheet leads into a factual, locally focusable journal. */
 .journey-recap.scene {
   --sk7-focus: #3f594a;
-  background: var(--sk7-cream-50); border: 1px solid var(--sk7-border);
-  border-radius: 1rem; box-shadow: none; animation: none;
-  padding: clamp(1.25rem, 3vw, 2.5rem);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2.5rem; align-items: start;
+  --recap-rule: #dcdccd;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  padding: clamp(1.1rem, 3.2vw, 2.6rem);
+  border: 1px solid #e1dfd3;
+  border-radius: 1.1rem;
+  background: #faf8f1;
+  box-shadow: 0 14px 38px -26px #555d4240;
+  animation: none;
 }
 .journey-recap > .scene-visual-background, .journey-recap > .scene-visual-character, .journey-recap::after { display: none; }
-.journey-recap > .scene-copy { grid-column: 1 / -1; gap: .65rem; }
+.journey-recap > .scene-copy { gap: .55rem; }
 .journey-recap h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); letter-spacing: -.06em; line-height: 1.2; }
 .journey-recap .scene-body { font-size: 1rem; font-weight: 450; color: var(--sk7-ink-muted); }
 .journey-recap .eyebrow { color: #65745e; letter-spacing: .04em; }
-.journey-recap .recap-period { grid-column: 1 / -1; border-block: 1px solid var(--sk7-border); padding-block: 1rem; gap: .6rem; }
-.journey-recap .recap-period-label { color: #3f594a; font-size: .8rem; font-weight: 700; }
-.journey-recap .window-nav { border: 0; padding: 0; gap: 1rem; }
+.journey-recap button { border-radius: .55rem; }
+.journey-recap .recap-period { padding-block: .6rem 1.2rem; gap: .7rem; border-bottom: 1px solid var(--recap-rule); }
+.journey-recap .recap-period-label { color: #52664e; font-size: .75rem; font-weight: 650; letter-spacing: .025em; }
+.journey-recap .window-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; border: 0; padding: 0; gap: 1rem; }
+.journey-recap .window-nav p { align-self: center; gap: .3rem; }
 .journey-recap .window-nav p strong { color: var(--sk7-ink); font-size: 1.1rem; }
-.journey-recap .window-nav p span, .journey-recap .window-nav p small { font-size: .75rem; }
-.journey-recap button { border-radius: .5rem; }
-.journey-recap .recap-landscape { grid-column: 1; grid-row: 4; min-width: 0; display: grid; gap: 1.75rem; }
-.journey-recap .recap-view { margin: 0; }
-.journey-recap .living-visual-stage { margin: 0; height: var(--scene-height-desktop); border-radius: 48% 48% .75rem .75rem; background: var(--sk7-cream-100); }
-.journey-recap .recap-view figcaption { display: grid; gap: .3rem; margin-top: .8rem; color: var(--sk7-ink-muted); text-align: center; font-size: .8rem; }
-.journey-recap .recap-view figcaption small { font-size: .7rem; line-height: 1.6; }
-.journey-recap .challenge-progress-card { padding: 1rem; gap: .6rem; border: 1px solid var(--sk7-border); border-left: 3px solid var(--sk7-sage-500); background: var(--sk7-sage-50); border-radius: 0 .5rem .5rem 0; }
-.journey-recap .challenge-progress-card h2 { font-size: 1.05rem; line-height: 1.5; }
-.journey-recap .challenge-progress-card p:not(.eyebrow), .journey-recap .challenge-progress-card strong { font-size: .8rem; line-height: 1.6; }
-.journey-recap .recap-current-challenge { grid-column: 1; grid-row: 5; min-width: 0; }
-.journey-recap .recap-journal { grid-column: 2; grid-row: 4 / span 2; min-width: 0; }
-.journey-recap .recap-journal-intro { display: grid; gap: .45rem; padding: .2rem 0 1.25rem; }
-.journey-recap .recap-journal-intro > p:last-child { color: var(--sk7-ink-muted); font-size: .875rem; line-height: 1.65; }
-.journey-recap .record-lane { padding-block: 1.15rem 1.5rem; gap: .7rem; }
+.journey-recap .window-nav p span { display: none; }
+.journey-recap .window-nav p small { font-size: .72rem; }
+.journey-recap .window-nav button { min-height: 2.8rem; padding: .65rem .9rem; font-size: .82rem; }
+.journey-recap .window-nav button:disabled { color: #425b47; background: #e8ecdf; border-color: transparent; opacity: 1; }
+.journey-recap .recap-week-sheet {
+  min-width: 0;
+  padding: clamp(1rem, 2.4vw, 2rem);
+  border-radius: .45rem 2.6rem .65rem .65rem;
+  background: radial-gradient(ellipse at 86% 4%, #dce5d199, transparent 48%), linear-gradient(165deg, #f1f1e5, #f7f3e6 60%, #f3f1e6);
+  box-shadow: inset 0 1px 0 #ffffffb3, 0 7px 0 -4px #e4e2d4;
+  animation: recap-window-enter 280ms ease-out both;
+}
+.journey-recap .recap-week-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; gap: 1.5rem 2.5rem; }
+.journey-recap .recap-week-overview { display: grid; gap: 1.3rem; min-width: 0; }
+.journey-recap .living-week-heading { margin: 0; }
+.journey-recap .living-week-heading > div { gap: .5rem; }
+.journey-recap .living-week-heading h2 { font-size: clamp(1.55rem, 2.8vw, 2rem); line-height: 1.25; letter-spacing: -.05em; }
+.journey-recap .living-week-heading p:not(.eyebrow) { max-width: 30em; font-size: .85rem; }
+.journey-recap .recap-summary-label { color: #66705d; font-size: .7rem; font-weight: 650; }
+.journey-recap .recap-week-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: .7rem 0 0; }
+.journey-recap .recap-week-summary > div { min-width: 0; }
+.journey-recap .recap-week-summary > div + div { padding-left: 1.1rem; border-left: 1px solid #d5d9c8; }
+.journey-recap .recap-week-summary dt { font-size: .8rem; color: #52604c; font-weight: 550; }
+.journey-recap .recap-week-summary dd { display: grid; gap: .3rem; margin: .3rem 0 0; }
+.journey-recap .recap-week-summary strong { color: #354c3b; font-size: clamp(2rem, 4vw, 2.65rem); font-weight: 600; line-height: 1.15; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.journey-recap .recap-week-summary strong > span { margin-left: .25rem; font-size: .9rem; font-weight: 500; }
+.journey-recap .recap-week-summary dd > span { font-size: .7rem; color: #656f5c; line-height: 1.5; }
+.journey-recap .recap-summary-explainer { margin-top: .7rem; color: #626d59; font-size: .72rem; line-height: 1.65; }
+.journey-recap .recap-summary-explainer summary { width: fit-content; min-height: 2.75rem; align-content: center; cursor: pointer; text-underline-offset: .22em; }
+.journey-recap .recap-summary-explainer summary:hover { color: #354c3b; text-decoration: underline; }
+.journey-recap .recap-summary-explainer p + p { margin-top: .25rem; }
+.journey-recap .recap-landscape { min-width: 0; align-self: stretch; display: grid; align-content: center; }
+.journey-recap .recap-view { position: relative; margin: 0; }
+.journey-recap .recap-view::before { content: ''; position: absolute; inset: 18% 6% 13%; border-radius: 50%; background: #cfd9bd; filter: blur(1.5rem); opacity: .5; pointer-events: none; }
+.journey-recap .living-visual-stage { margin: 0; height: clamp(12rem, 23vw, 19rem); border-radius: 48% 48% 42% 42%; background: #eae9d9; box-shadow: 0 10px 25px -18px #4d614c80; }
+.journey-recap .recap-view figcaption { position: relative; display: grid; gap: .25rem; margin-top: .7rem; color: #55664e; text-align: center; font-size: .75rem; animation: recap-focus-enter 180ms ease-out both; }
+.journey-recap .recap-view figcaption span { font-weight: 600; }
+.journey-recap .recap-view figcaption small { max-width: 29em; margin-inline: auto; font-size: .65rem; line-height: 1.6; color: #69745f; }
+.journey-recap .recap-freshness { margin-top: 1rem; padding: .65rem .8rem; border-left: 2px solid #a88a59; background: #fff8e4; color: #685638; font-size: .78rem; line-height: 1.6; }
+.journey-recap .recap-trail-heading { display: flex; justify-content: space-between; align-items: center; gap: .6rem 1.5rem; margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid #d5d9c8; }
+.journey-recap .recap-trail-heading > p { font-size: .78rem; color: #65705b; line-height: 1.6; }
+.journey-recap .recap-show-week { flex: 0 0 auto; min-width: 0; max-width: 100%; min-height: 2.75rem; padding: .55rem .85rem; border: 1px solid #9aa78c; background: transparent; color: #3f594a; font-size: .78rem; box-shadow: none; }
+.journey-recap .recap-show-week[aria-pressed="true"] { background: #e2e8d9; border-color: transparent; }
+.journey-recap .recap-show-week:hover { background: #dce4d0; transform: none; }
+.journey-recap .recap-day-focus { min-width: 0; }
+.journey-recap .recap-day-focus[data-day-focused="true"] { margin-top: .8rem; }
+.journey-recap .recap-overview-note { padding-top: .8rem; color: #68725d; font-size: .75rem; line-height: 1.7; }
+.journey-recap .recap-day-record-link { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-width: 0; max-width: 100%; min-height: 2.75rem; padding: .5rem 0; border: 0; background: transparent; color: #3f594a; box-shadow: none; font-size: .8rem; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; }
+.journey-recap .recap-day-record-link:hover { color: #253b2c; background: transparent; transform: none; }
+.journey-recap .recap-journal { min-width: 0; padding-top: .9rem; }
+.journey-recap .recap-journal-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: .65rem 2rem; padding: 0 0 1.1rem; border-bottom: 2px solid #b5bda6; }
+.journey-recap .recap-journal-intro > div { display: grid; gap: .4rem; }
+.journey-recap .recap-journal-intro h2 { font-size: 1.45rem; line-height: 1.4; letter-spacing: -.045em; }
+.journey-recap .recap-journal-intro > p { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; }
+.journey-recap .recap-journal-intro > .recap-journal-freshness { flex-basis: 100%; color: #78613d; }
+.journey-recap .recap-journal[data-focused-date] .recap-journal-intro { border-bottom-color: #637c5c; }
+.journey-recap .recap-record-groups { scroll-margin-top: 6rem; }
+.journey-recap .recap-record-groups:focus-visible { outline: 2px solid #748767; outline-offset: .35rem; text-decoration: none; }
+.journey-recap .record-lane { padding-block: 1.2rem 1.5rem; gap: .7rem; }
+.journey-recap .record-lane:first-child { border-top: 0; }
 .journey-recap .recap-lane-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .35rem 1rem; }
-.journey-recap .recap-lane-heading h2 { font-size: 1.15rem; letter-spacing: -.04em; }
-.journey-recap .recap-lane-heading > span { font-size: .8rem; color: var(--sk7-ink-muted); }
+.journey-recap .recap-lane-heading h3 { font-size: 1.1rem; letter-spacing: -.04em; }
+.journey-recap .recap-lane-heading > span { font-size: .78rem; color: var(--sk7-ink-muted); }
 .journey-recap .recap-lane-heading strong { color: var(--sk7-ink); font-weight: 650; }
 .journey-recap .recap-lane-note { color: var(--sk7-ink-muted); font-size: .75rem; line-height: 1.6; }
 .journey-recap.scene .record-list { gap: 0; }
-.journey-recap.scene .record-list li { padding: .9rem 0; gap: .75rem; border-top-style: dashed; }
+.journey-recap.scene .record-list li { padding: .85rem 0; gap: .75rem; border-top-style: dashed; }
 .journey-recap .recap-record-facts { display: grid; gap: .35rem; }
 .journey-recap .recap-record-date { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: baseline; }
 .journey-recap .recap-record-date strong { font-size: .85rem; font-weight: 600; }
@@ -45,50 +96,70 @@
 .journey-recap .recap-record-value { font-size: 1rem; color: var(--sk7-ink); font-variant-numeric: tabular-nums; }
 .journey-recap .recap-record-status { font-size: .8rem; color: #3f594a; }
 .journey-recap .recap-record-status[data-checkin-status="skipped"] { color: var(--sk7-ink-muted); }
-.journey-recap .record-action { white-space: normal; font-size: .8rem; background: transparent; }
-.journey-recap .record-action:hover:not(:disabled) { background: var(--sk7-sage-50); color: var(--sk7-focus); }
-.journey-recap.scene .empty-record { display: block; padding: 1rem 0; font-size: .875rem; }
-.journey-recap .recap-tools { display: grid; gap: .8rem; padding-top: 1.25rem; border-top: 1px solid var(--sk7-border); }
-.journey-recap .recap-tools > p { font-size: .8rem; color: var(--sk7-ink-muted); line-height: 1.6; }
-.journey-recap .utility-actions { margin: 0; gap: .6rem; }
-.journey-recap .utility-actions button { font-size: .875rem; }
-@media (max-width: 1000px) {
-  .journey-recap.scene { grid-template-columns: minmax(0, 1fr); }
-  .journey-recap .recap-landscape, .journey-recap .recap-journal, .journey-recap .recap-current-challenge { grid-column: 1; grid-row: auto; }
-  .journey-recap .recap-landscape { grid-template-columns: minmax(0, 1fr); align-items: center; gap: 1.25rem; }
-  .journey-recap .recap-journal { grid-row: 4; }
-  .journey-recap .recap-landscape { grid-row: 5; }
-  .journey-recap .recap-current-challenge { grid-row: 6; }
+.journey-recap .record-action { min-height: 2.75rem; white-space: normal; font-size: .8rem; background: transparent; }
+.journey-recap .record-action:hover:not(:disabled) { background: #e9eddf; color: var(--sk7-focus); }
+.journey-recap.scene .empty-record { display: block; padding: .8rem 0; font-size: .82rem; }
+.journey-recap .recap-tools { display: grid; gap: .65rem; padding-top: 1.25rem; border-top: 1px solid var(--recap-rule); }
+.journey-recap .recap-tools > p, .journey-recap .recap-export-scope { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.6; }
+.journey-recap .recap-export-scope { color: #52664e; }
+.journey-recap .utility-actions { margin: .2rem 0 0; gap: .6rem; }
+.journey-recap .utility-actions button { min-height: 2.9rem; font-size: .85rem; }
+.journey-recap .recap-current-challenge { min-width: 0; margin-top: .2rem; }
+.journey-recap .challenge-progress-card { padding: 1.1rem 1.2rem; gap: .5rem; border: 0; border-left: 3px solid #a3b091; border-radius: 0 .55rem .55rem 0; background: #eceee3; }
+.journey-recap .challenge-progress-card h2 { font-size: 1.05rem; line-height: 1.5; }
+.journey-recap .challenge-progress-card p:not(.eyebrow), .journey-recap .challenge-progress-card strong, .journey-recap .challenge-progress-card small { font-size: .78rem; line-height: 1.6; }
+@keyframes recap-window-enter { from { opacity: .65; transform: translateY(.35rem); } to { opacity: 1; transform: translateY(0); } }
+@keyframes recap-focus-enter { from { opacity: .6; transform: translateY(.2rem); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 900px) {
+  .journey-recap .recap-week-intro { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 1.1rem; }
+  .journey-recap .recap-week-overview { gap: 1rem; }
+  .journey-recap .recap-week-summary { gap: .6rem; }
+  .journey-recap .recap-week-summary > div + div { padding-left: .75rem; }
+  .journey-recap .living-visual-stage { height: 13rem; }
+}
+@media (max-width: 680px) {
+  .journey-recap .recap-week-intro { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .journey-recap .recap-week-overview { display: contents; }
+  .journey-recap .living-week-heading { grid-row: 1; }
+  .journey-recap .recap-landscape { grid-row: 2; width: min(100%, 25rem); justify-self: center; }
+  .journey-recap .living-visual-stage { height: 11rem; border-radius: 48% 48% 35% 35%; }
+  .journey-recap .recap-week-totals { grid-row: 3; }
+  .journey-recap .recap-week-summary { gap: 1rem; }
+  .journey-recap .recap-week-summary > div + div { padding-left: 1rem; }
+  .journey-recap .recap-view figcaption { margin-top: .55rem; }
+  .journey-recap .recap-journal-intro { gap: .6rem; align-items: start; }
 }
 @media (max-width: 580px) {
-  .journey-recap.scene { padding: 1.1rem; border-radius: .75rem; }
-  .journey-recap .recap-period { padding-block: .85rem; }
-  .journey-recap .window-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
-  .journey-recap .window-nav p { grid-column: 1 / -1; grid-row: 1; text-align: left; gap: .35rem; }
+  .journey-recap.scene { padding: 12px; border-radius: .75rem; }
+  .journey-recap .recap-period { padding-block: .35rem .9rem; }
+  .journey-recap .window-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .journey-recap .window-nav p { grid-column: 1 / -1; grid-row: 1; text-align: left; gap: .3rem; }
   .journey-recap .window-nav p strong { font-size: 1rem; }
-  .journey-recap .window-nav button { padding: .6rem .35rem; font-size: .8rem; width: 100%; }
-  .journey-recap .recap-landscape { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-  .journey-recap .living-visual-stage { height: var(--scene-height-390); border-radius: 1rem; }
-  .journey-recap .recap-view figcaption { margin-top: .6rem; }
-  .journey-recap .challenge-progress-card { padding: .85rem; }
-  .journey-recap .recap-journal-intro { padding-bottom: 1rem; }
+  .journey-recap .window-nav button { padding: .6rem .35rem; font-size: .78rem; width: 100%; }
+  .journey-recap .recap-week-sheet { padding: 16px 10px; border-radius: .45rem 1.6rem .55rem .55rem; }
+  .journey-recap .living-week-heading p:not(.eyebrow) { font-size: .78rem; }
+  .journey-recap .recap-trail-heading { flex-wrap: wrap; gap: .3rem .6rem; margin-top: .5rem; padding-top: .8rem; }
+  .journey-recap .recap-trail-heading > p { flex: 1 1 8rem; font-size: .72rem; }
+  .journey-recap .recap-show-week { padding: .5rem .6rem; font-size: .72rem; }
+  .journey-recap .recap-journal { padding-top: .6rem; }
+  .journey-recap .recap-journal-intro { display: grid; }
+  .journey-recap .recap-journal-intro h2 { font-size: 1.25rem; }
+  .journey-recap .record-lane { padding-block: 1rem 1.25rem; }
   .journey-recap .utility-actions { align-items: stretch; }
-  .journey-recap .utility-actions button { flex: 1 1 100%; }
+  .journey-recap .utility-actions button { flex: 1 1 8rem; padding-inline: .65rem; font-size: .8rem; }
+  .journey-recap .challenge-progress-card { padding: .9rem; }
 }
 @media (max-width: 350px) {
-  .journey-recap.scene { padding: .85rem; }
+  .journey-recap.scene { padding: 10px; }
   .journey-recap h1 { font-size: 1.8rem; }
-  .journey-recap .living-visual-stage { height: var(--scene-height-320); }
+  .journey-recap .recap-week-sheet { padding-inline: 8px; }
+  .journey-recap .living-visual-stage { height: 9.5rem; }
+  .journey-recap .recap-week-summary { gap: .6rem; }
+  .journey-recap .recap-week-summary > div + div { padding-left: .6rem; }
+  .journey-recap .recap-week-summary dt { font-size: .75rem; }
   .journey-recap.scene .record-list li { grid-template-columns: minmax(0, 1fr); gap: .45rem; }
+  .journey-recap .record-action { justify-self: start; }
 }
 @media (prefers-reduced-motion: reduce) {
   .journey-recap *, .journey-recap *::before, .journey-recap *::after { animation: none !important; transition: none !important; }
 }
-/* Keep the journal beside a naturally sized scene, with the separate challenge below it. */
-.journey-recap.scene[data-scene="S10"] { grid-template-rows: auto auto auto auto 1fr; column-gap: 2.5rem; }
-.journey-recap .window-nav p span { display: none; } /* Period label above already names current/prior. */
-@media (max-width: 1000px) {
-  .journey-recap.scene[data-scene="S10"] { grid-template-rows: none; }
-}
-
-.journey-recap .living-week { grid-column: 1 / -1; grid-row: 3; min-width: 0; padding-block: .4rem 1rem; }

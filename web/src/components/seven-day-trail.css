@@ -1,37 +1,168 @@
-/* A paper path: neutral scenery belongs to the date, never to the record state. */
+/* A connected paper path. Scenery belongs to the date; selection is a UI state. */
 .living-week { min-width: 0; }
-.living-week-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .8rem 1.5rem; margin-bottom: 1.2rem; }
-.living-week-heading > div { display: grid; gap: .35rem; }
+.living-week-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .8rem 1.5rem; margin-bottom: 1.1rem; }
+.living-week-heading > div { display: grid; gap: .35rem; min-width: 0; }
 .living-week-heading h2 { font-size: 1.3rem; letter-spacing: -.04em; }
 .living-week-heading p, .living-week-note { color: var(--sk7-ink-muted); font-size: .8rem; line-height: 1.65; }
 .living-week-heading a { color: #3f594a; font-size: .9rem; font-weight: 650; text-underline-offset: .3em; padding-block: .8rem; }
-.seven-day-trail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0; gap: .55rem; }
-.seven-day-trail > li { position: relative; min-width: 0; padding: .75rem .5rem; border: 1px solid #dedbcf; border-radius: 2.5rem 2.5rem .65rem .65rem; background: #fffdf7; box-shadow: 0 5px 0 -2px #e8e5d9; }
-.seven-day-trail > li::before { content: ''; position: absolute; z-index: 0; top: 5.5rem; left: -.6rem; width: .6rem; border-top: 3px solid #d8d1b6; }
-.seven-day-trail > li:first-child::before { display: none; }
-.seven-day-trail > li[aria-current="date"] { border-color: #65745e; background: #f0f2e7; }
-.trail-place { display: grid; justify-items: center; gap: .2rem; text-align: center; }
-.trail-place time { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem; min-height: 1.6rem; font-size: .8rem; font-weight: 650; color: #414c40; }
-.trail-place time span { border-radius: .3rem; background: #3f594a; color: white; padding: .1rem .3rem; font-size: .65rem; }
-.trail-place svg { width: 4rem; max-width: 100%; height: 3.75rem; fill: none; stroke: #65745e; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.trail-place .trail-ground { fill: #e8e5d4; stroke: none; }
-.trail-landmark { min-height: 2.8em; color: #414c40; font-size: .75rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
-.trail-facts { display: grid; gap: .65rem; margin: .6rem 0 0; padding-top: .65rem; border-top: 1px solid #dedbcf; text-align: center; }
-.trail-facts div { display: grid; gap: .2rem; }
-.trail-facts dt { font-size: .65rem; color: #62675a; }
-.trail-facts dd { margin: 0; font-size: .8rem; font-weight: 600; color: #414c40; }
 .living-week-note { margin-top: 1rem; }
-@media (max-width: 760px) {
-  .seven-day-trail { grid-template-columns: minmax(0, 1fr); gap: .7rem; }
-  .seven-day-trail > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: .8rem; padding: .75rem; border-radius: .65rem; }
-  .seven-day-trail > li::before { top: -.75rem; left: 3rem; height: .7rem; width: 0; border-top: 0; border-left: 3px solid #d8d1b6; }
-  .trail-place { grid-template-columns: 2.5rem minmax(0, 1fr); text-align: left; justify-items: start; gap: .25rem .5rem; }
-  .trail-place time { grid-column: 1 / -1; justify-content: start; }
-  .trail-place svg { width: 2.5rem; height: 2.7rem; }
-  .trail-landmark { min-height: 0; align-self: center; }
-  .trail-facts { margin: 0; padding: 0 0 0 .8rem; border-top: 0; border-left: 1px solid #dedbcf; text-align: left; }
-  .trail-facts div { grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: .4rem; }
+
+.seven-day-trail {
+  --trail-path-y: 6.4rem;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  list-style: none;
+  padding: .35rem 0 .6rem;
+  margin: 0;
+  gap: 0 .3rem;
+}
+.seven-day-trail > li { position: relative; min-width: 0; text-align: center; }
+.seven-day-trail > li::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: var(--trail-path-y);
+  left: calc(-50% - .3rem);
+  width: calc(100% + .3rem);
+  height: .45rem;
+  border-top: 1px solid #c8bb9e;
+  border-bottom: 1px solid #ece2cc;
+  background: #e3d8bd;
+  transform: rotate(-4deg);
+  transform-origin: right center;
+}
+.seven-day-trail > li:nth-child(even)::before { transform: rotate(4deg); }
+.seven-day-trail > li:first-child::before { display: none; }
+.seven-day-trail .trail-day-button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: .12rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: .4rem .2rem .55rem;
+  border: 1px solid transparent;
+  border-radius: .7rem;
+  background: transparent;
+  box-shadow: none;
+  color: #414c40;
+  font-weight: 550;
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.seven-day-trail .trail-day-button:hover:not(:disabled) { transform: none; background: rgb(255 253 247 / .65); box-shadow: inset 0 0 0 1px #dad2bf; }
+.seven-day-trail .trail-day-button:active:not(:disabled) { transform: none; }
+.seven-day-trail .trail-day-button[aria-pressed="true"] { border-color: #65745e; background: #fffdf7; box-shadow: 0 .3rem .8rem -.4rem rgb(71 81 58 / .25); }
+.seven-day-trail .trail-day-button[aria-pressed="true"]::after { content: ''; position: absolute; bottom: -.21rem; left: calc(50% - .2rem); width: .4rem; height: .4rem; border-right: 1px solid #65745e; border-bottom: 1px solid #65745e; background: #fffdf7; transform: rotate(45deg); }
+.seven-day-trail .trail-day-button:focus-visible { z-index: 2; outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
+.trail-day-state { display: block; min-height: 1.1rem; color: #625b4e; font-size: .65rem; line-height: 1.1rem; font-weight: 650; }
+[data-temporal="today"] .trail-day-state { padding-inline: .42rem; border-radius: .25rem; background: #3f594a; color: #fffdf7; }
+.trail-day-button time { min-height: 1.5rem; font-size: .94rem; line-height: 1.5rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.trail-place { position: relative; isolation: isolate; display: grid; place-items: center; width: 4rem; max-width: 100%; height: 3.8rem; }
+.trail-place::before { content: ''; position: absolute; z-index: -1; inset: .45rem .1rem -.08rem; border-radius: 45% 55% 48% 52%; background: rgb(232 227 207 / .45); }
+.seven-day-trail > li:nth-child(3n + 2) .trail-place::before { border-radius: 58% 42% 48% 52%; background: rgb(221 229 211 / .5); }
+.seven-day-trail > li:nth-child(3n) .trail-place::before { border-radius: 46% 54% 62% 38%; background: rgb(232 224 238 / .4); }
+.trail-place svg, .trail-detail-landscape svg { position: relative; display: block; width: 100%; height: 100%; fill: none; stroke: #65745e; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+.trail-place .trail-ground, .trail-detail-landscape .trail-ground { fill: #e2dcc5; stroke: none; }
+.trail-day-button[aria-pressed="true"] .trail-place svg { stroke: #3f594a; }
+.trail-landmark { align-self: start; min-height: 2.8em; max-width: 100%; font-size: .72rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.seven-day-trail > li[data-temporal="future"] .trail-place::before { background: transparent; border: 1px dashed #9b9a89; }
+.trail-facts { display: grid; justify-items: center; gap: .3rem; margin: .55rem 0 0; padding: 0 .12rem; }
+.trail-facts div { min-width: 0; max-width: 100%; }
+.trail-facts dd { display: flex; align-items: center; justify-content: center; gap: .3rem; margin: 0; color: #555b4d; font-size: .72rem; line-height: 1.45; font-weight: 550; }
+.trail-fact-value { min-width: 0; overflow-wrap: anywhere; }
+.trail-fact-symbol { display: inline-block; flex: 0 0 auto; width: .45rem; height: .45rem; color: #6d7164; }
+.trail-fact-symbol--observation { border: 1.5px solid currentColor; border-radius: 50%; }
+.trail-fact-symbol--participation { border: 1.5px solid currentColor; border-radius: 1px; transform: rotate(45deg); width: .38rem; height: .38rem; margin-inline: .035rem; }
+.trail-legend { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem 1rem; margin-top: .7rem; color: var(--sk7-ink-muted); font-size: .7rem; line-height: 1.5; }
+.trail-legend > span { display: inline-flex; align-items: center; gap: .4rem; }
+
+.trail-day-detail {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(5rem, .8fr) minmax(0, 3fr);
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  margin-top: 1.25rem;
+  padding: 1.35rem 1.5rem;
+  border-top: 1px solid #d6cfbb;
+  border-bottom: 1px solid #e2daca;
+  background: linear-gradient(110deg, rgb(231 236 221 / .7), rgb(255 253 247 / .75) 55%, rgb(248 242 230 / .5));
+}
+.trail-detail-landscape { position: relative; isolation: isolate; display: grid; place-items: center; width: 100%; max-width: 9rem; aspect-ratio: 1; justify-self: center; }
+.trail-detail-landscape::before { content: ''; position: absolute; z-index: -1; inset: 5% 1% 0; border-radius: 49% 51% 40% 60%; background: #e4e7d5; box-shadow: inset 0 -.8rem 1.1rem rgb(155 151 107 / .08); }
+.trail-detail-landscape::after { content: ''; position: absolute; z-index: -1; left: -4%; right: -4%; bottom: 12%; height: 18%; border-top: 2px solid rgb(185 171 131 / .45); border-radius: 50%; transform: rotate(-10deg); }
+.trail-detail-orbit { position: absolute; z-index: -1; top: 7%; right: 12%; width: 23%; aspect-ratio: 1; border-radius: 50%; background: #f8f1d4; box-shadow: 0 0 0 .4rem rgb(251 248 241 / .3); }
+.trail-detail-landscape[data-landmark="sunset-overlook"]::before { background: #e9dfcf; }
+.trail-detail-landscape[data-landmark="reading-shelter"]::before { background: #e5e0e7; }
+.trail-detail-landscape[data-landmark="footbridge"]::before { background: #dfe8df; }
+.trail-detail-landscape svg { width: 82%; height: 82%; stroke-width: 1.7; }
+.trail-detail-body { min-width: 0; animation: trail-detail-reveal 220ms ease both; }
+.trail-detail-heading { display: grid; gap: .32rem; }
+.trail-detail-heading .eyebrow { font-size: .68rem; }
+.trail-detail-heading h3 { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .7rem; font-size: 1.12rem; line-height: 1.45; letter-spacing: -.035em; }
+.trail-detail-today { padding: .15rem .4rem; border: 1px solid #8c9980; border-radius: .3rem; color: #3f594a; font-size: .65rem; letter-spacing: 0; font-weight: 650; }
+.trail-detail-place-name { color: #626a54; font-size: .8rem; }
+.trail-detail-facts { display: flex; flex-wrap: wrap; gap: .85rem 1.6rem; margin: 1rem 0 .7rem; }
+.trail-detail-facts > div { display: grid; gap: .32rem; }
+.trail-detail-facts dt { display: flex; align-items: center; gap: .4rem; color: #696b5c; font-size: .72rem; }
+.trail-detail-facts dd { margin: 0; color: #3c493c; font-size: .9rem; font-weight: 650; }
+.trail-detail-facts dd strong { margin-right: .18rem; font-size: 1.2rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.trail-detail-context { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; max-width: 43em; }
+.trail-detail-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+@keyframes trail-detail-reveal { from { opacity: .35; transform: translateY(.25rem); } to { opacity: 1; transform: none; } }
+
+/* Four stops outward, then three returning: DOM/keyboard order follows the path. */
+@media (max-width: 900px) {
+  .seven-day-trail { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 1.3rem .45rem; padding-inline: .1rem; }
+  .seven-day-trail > li:nth-child(5) { grid-column: 4; grid-row: 2; }
+  .seven-day-trail > li:nth-child(6) { grid-column: 3; grid-row: 2; }
+  .seven-day-trail > li:nth-child(7) { grid-column: 2; grid-row: 2; }
+  .seven-day-trail > li::before { left: calc(-50% - .45rem); width: calc(100% + .45rem); }
+  .seven-day-trail > li:nth-child(5)::before {
+    top: auto;
+    bottom: calc(100% - var(--trail-path-y));
+    left: 50%;
+    width: 49%;
+    height: calc(100% + 1.3rem);
+    border: .35rem solid #e3d8bd;
+    border-left: 0;
+    border-radius: 0 2rem 2rem 0;
+    background: transparent;
+    transform: none;
+  }
+  .seven-day-trail > li:nth-child(n + 6)::before { left: 50%; transform: rotate(4deg); transform-origin: left center; }
+  .seven-day-trail > li:nth-child(7)::before { transform: rotate(-4deg); }
+  .trail-landmark { min-height: 1.4em; }
+}
+@media (max-width: 600px) {
+  .seven-day-trail { --trail-path-y: 5.35rem; gap: 1.05rem .3rem; }
+  .seven-day-trail .trail-day-button { padding: .35rem .1rem .4rem; border-radius: .5rem; }
+  .trail-day-state { min-height: 1rem; font-size: .61rem; line-height: 1rem; }
+  [data-temporal="today"] .trail-day-state { padding-inline: 0; }
+  .trail-day-button time { font-size: .88rem; }
+  .trail-place { width: 3rem; height: 2.7rem; }
+  .trail-landmark { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .trail-facts { gap: .28rem; margin-top: .38rem; padding: 0; }
+  .trail-facts dd { gap: .2rem; font-size: .67rem; }
+  .seven-day-trail > li:nth-child(5)::before { height: calc(100% + 1.05rem); }
+  .trail-day-detail { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 1.15rem 1rem; }
+  .trail-detail-landscape { position: absolute; top: .9rem; right: .75rem; width: 3.2rem; }
+  .trail-detail-heading { min-height: 3.8rem; padding-right: 3.3rem; }
+  .trail-detail-heading h3 { font-size: 1rem; }
+  .trail-detail-heading .eyebrow { font-size: .63rem; }
+  .trail-detail-facts { gap: .85rem 1.25rem; margin-top: .85rem; }
+  .trail-detail-context { font-size: .75rem; }
 }
 @media (max-width: 350px) {
-  .trail-facts div { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+  .seven-day-trail { margin-inline: -.2rem; padding-inline: 0; column-gap: .2rem; }
+  .trail-detail-landscape { display: none; }
+  .trail-detail-heading { min-height: 0; padding-right: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seven-day-trail .trail-day-button { transition: none; }
+  .trail-detail-body { animation: none; }
 }
