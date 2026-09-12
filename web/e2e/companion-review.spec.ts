@@ -143,25 +143,35 @@ test("head body and feet use distinct tactile reaction profiles", async ({ page 
   const x = box!.x + box!.width / 2;
 
   const cases = [
-    { zone: "head", ratio: 0.18 },
-    { zone: "body", ratio: 0.52 },
-    { zone: "feet", ratio: 0.86 },
+    { zone: "head", ratio: 0.18, reactionClip: "curious" },
+    { zone: "body", ratio: 0.52, reactionClip: "greet" },
+    { zone: "feet", ratio: 0.86, reactionClip: "rest" },
   ] as const;
 
-  for (const { zone, ratio } of cases) {
+  for (const { zone, ratio, reactionClip } of cases) {
     const y = box!.y + box!.height * ratio;
     await page.mouse.move(x, y);
     await page.mouse.down();
+
     await expect(runtime).toHaveAttribute("data-companion-interaction", "dragging");
     await expect(runtime).toHaveAttribute("data-companion-grab-zone", zone);
     await expect(runtime).toHaveAttribute("data-companion-reaction-profile", zone);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", reactionClip);
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", reactionClip);
+
     await page.mouse.move(x + 44, y - 28, { steps: 4 });
     await expect.poll(async () => Math.abs(Number(await runtime.getAttribute("data-companion-offset-x"))))
       .toBeGreaterThan(0.015);
+
     await page.mouse.up();
     await expect.poll(async () => runtime.getAttribute("data-companion-interaction"), { timeout: 4_000 })
       .toBe("idle");
+
     await expect(runtime).toHaveAttribute("data-companion-grab-zone", "none");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "idle");
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
   }
 });
 
@@ -205,6 +215,7 @@ test("tactile interaction stays bounded to review bear-lite idle", async ({ page
   const runtime = page.locator("[data-companion-status]");
   await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "disabled");
   expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
 });
 
@@ -265,6 +276,7 @@ test("reduced motion renders a static companion without an animation loop", asyn
   await expect(runtime).toHaveAttribute("data-companion-motion", "stopped");
   await expect(page.locator("[data-companion-canvas]")).toHaveAttribute("aria-hidden", "true");
   await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "disabled");
   expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
 });
 
