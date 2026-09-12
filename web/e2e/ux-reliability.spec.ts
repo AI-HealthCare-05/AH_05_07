@@ -37,7 +37,7 @@ test("export success notice clears on primary navigation and browser history", a
   await mockExport(page);
   await page.goto("/?e2e=signed-in&screen=S10");
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "선택한 7일 내보내기" }).click();
+  await page.getByRole("button", { name: "현재 7일 내보내기" }).click();
   await download;
   await expect(page.getByRole("status")).toContainText("내보내기 파일을 준비했어요.");
 
@@ -51,7 +51,7 @@ test("export success notice clears on primary navigation and browser history", a
 test("export error notice survives navigation", async ({ page }) => {
   await mockExport(page, 503);
   await page.goto("/?e2e=signed-in&screen=S10");
-  await page.getByRole("button", { name: "선택한 7일 내보내기" }).click();
+  await page.getByRole("button", { name: "현재 7일 내보내기" }).click();
   await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.");
   await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.");
@@ -64,7 +64,7 @@ test("recent history and challenge progression use separate labels", async ({ pa
   await expect(recentHistory).toContainText("챌린지 7일 진행과는 별도로");
 
   await page.goto("/?fixture=VP-10&screen=S10");
-  await expect(page.locator('[aria-label="최근 7일 기록 구간"]')).toContainText("챌린지 진행률이 아닙니다.");
+  await expect(page.locator('[aria-label="7일 기록 구간"]')).toContainText("챌린지 진행률이 아닙니다.");
   await expect(page.locator("[data-challenge-progress]")).toContainText("7일 챌린지");
   await expect(page.locator("[data-challenge-progress]")).toContainText("체크인 기록 3개");
   await expect(page.locator('[data-dashboard-lane="challenge"]')).toContainText("최근 7일 챌린지 체크인 기록");
