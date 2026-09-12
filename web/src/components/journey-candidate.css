@@ -32,8 +32,9 @@
 .journey-entry .journey-back { grid-column: 1; grid-row: 3; width: fit-content; padding-left: 0; }
 .journey-saved.scene { min-height: 32rem; padding: 1.5rem 0; gap: 1rem; }
 .journey-saved .scene-copy { max-width: 38rem; }
-.journey-saved .save-ripple { width: min(100%, 28rem); height: 14rem; border-radius: 50% 50% 42% 42%; background: #e8e9d7; overflow: hidden; }
-.journey-saved .save-ripple::before { content: ''; position: absolute; width: 120%; height: 6rem; bottom: -1.5rem; border-radius: 50%; background: #c0caaa; }
+.journey-saved .save-ripple { width: min(100%, 28rem); height: 14rem; border-radius: 50% 50% 42% 42%; overflow: visible; }
+.journey-saved .save-ripple-landscape { position: absolute; inset: 0; display: grid; overflow: hidden; place-items: center; border-radius: inherit; background: #e8e9d7; }
+.journey-saved .save-ripple-landscape::before { content: ''; position: absolute; width: 120%; height: 6rem; bottom: -1.5rem; border-radius: 50%; background: #c0caaa; }
 .journey-saved .save-ripple i { display: none; animation: none; }
 .journey-saved .save-ripple span { position: absolute; bottom: 1.2rem; right: 1.6rem; width: 2.4rem; height: 2.4rem; font-size: 1.2rem; box-shadow: none; background: #3f594a; }
 .scene-viewport:has(.journey-saved) > [data-saved-scene-status] { right: calc(50% - 5rem); width: 10rem; height: 12rem; }
