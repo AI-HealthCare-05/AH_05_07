@@ -3,8 +3,9 @@
 ## Fast start
 
 This section is the restart index, not a mandatory reading chain. `AGENTS.md` is
-the single authority for contribution process and risk lanes. Product, model,
-data, and release contracts remain authoritative only for their own boundaries.
+the single authority for contribution policy, risk lanes, verification lifecycle,
+and context lifecycle. Product, model, data, and release contracts remain
+authoritative only for their own boundaries.
 
 ### Start with live state
 
@@ -14,7 +15,8 @@ data, and release contracts remain authoritative only for their own boundaries.
 - The user's scoped request is enough to start routine product work. A separate
   Issue is optional unless `AGENTS.md` classifies the diff as protected-boundary
   work or coordination needs a durable decision record.
-- Architecture audit **R1–R11 COMPLETE; R12 DEFER**. Do not reopen it by default.
+- Completed audits are historical context, not startup work. Open only the named
+  record when the current task depends on it.
 - Issues #390 (scene qualification) and #396 (Model V2 displayability research)
   remain separate scopes. They do not gate unrelated UI, copy, or record-flow work.
 - Old `Next`, `PENDING`, `DISABLED`, and W/M checkpoints below are dated evidence,
@@ -24,8 +26,10 @@ data, and release contracts remain authoritative only for their own boundaries.
 
 | Change | Read before editing | Normal development check |
 | --- | --- | --- |
-| Copy, CSS, semantic layout, presentation | Affected component and focused tests | Build plus the closest focused test |
-| Scene or companion runtime | Affected component/manifest and [scene gates](scene-release-gates.md) | Manifest plus affected scene/companion test |
+| Documentation only | Affected document and its authority link | Diff/static checks; verify only changed relative links |
+| Test-only | Affected test and the contract it exercises | Targeted test only; a build is not required by default |
+| Web runtime source, including copy, CSS, semantic layout and presentation | Affected component and focused tests | Build plus directly affected tests |
+| Scene or companion runtime | Affected component and [scene gates](scene-release-gates.md); read the manifest only when asset mapping changes | Build plus directly affected scene/companion tests; verify the manifest only when it changed, and use a physical spot-check only when the task needs it |
 | Model input/result | [Model product boundary](model-v2-product-contract.md) and affected adapter/inference tests | Focused model/API/UI tests |
 | API, auth, data, retention | Relevant domain contract and [invariants](architecture/ARCHITECTURE_INVARIANTS.md) | Focused tests plus required final CI |
 | Release, mirror, migration, activation | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md), and live control-plane state | Boundary-specific preflight and smoke |
@@ -36,14 +40,20 @@ data, and release contracts remain authoritative only for their own boundaries.
 - Routine work uses a coherent branch/PR without a required preliminary Issue,
   ADR, evidence ledger, screenshot pack, independent review, or full local suite.
 - Run affected checks while iterating. The final PR retains required `lint` and
-  `test`; specialized CI is routed by affected paths. The complete browser/evidence
-  matrix remains a merged-`main` and manually dispatchable confidence pass.
+  `test`; specialized CI is routed by affected paths. Do not duplicate locally a
+  broad suite owned by final-candidate CI. The complete browser/evidence matrix is
+  not a routine PR default; use it for merged-`main`, release, or manual confidence
+  work when its scope requires it.
 - Protected boundaries keep their relevant Issue, contract, test, and operational
   evidence. An ADR is for a durable architecture decision, not every implementation.
 - Reuse unchanged evidence within its exact scope. Do not create a second PR merely
   to turn a status word into `PASS` or duplicate facts already in the task/PR.
 - Source merge, mirror sync, runtime deployment, scene activation, and migration are
   distinct. A docs-only change does not require mirror sync or deployment.
+- Carry durable `INVARIANT` context forward. Drop a `TASK GUARD` when its task ends,
+  retire a falsified `HYPOTHESIS`, and do not generalize `EVIDENCE` beyond its
+  recorded SHA, environment, and scope. An incident is not permanent policy by
+  default.
 - Preserve unrelated local/user changes; do not clean, reset, stash, or rewrite them
   to prepare a task.
 
@@ -87,7 +97,7 @@ test, or deployment work complete before the repository evidence exists.
   and a measured requirement.
 - Use synthetic accounts and synthetic values for tests, captures, and demos.
 
-## Historical checkpoint and retained evidence
+## HISTORICAL REFERENCE — NOT STARTUP POLICY
 
 The fast-start section is the restart index. The material below preserves the
 pre-audit/MVP handoff and its original evidence; it is not a current backlog or

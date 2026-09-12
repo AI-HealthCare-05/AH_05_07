@@ -82,6 +82,8 @@ npm run dev
 
 개발 중에는 변경한 경계에 가장 가까운 검사만 반복합니다. 최종 PR에서는 필수 `lint`와
 `test`를 통과해야 하며, web·scene·model 전용 검사는 변경 경로에 따라 추가됩니다.
+아래 명령은 전체/수동 검증 예시이며, routine 변경에는 [AGENTS.md](AGENTS.md)의
+affected-check 정책이 우선합니다.
 
 ```bash
 # Python 전체 검증
