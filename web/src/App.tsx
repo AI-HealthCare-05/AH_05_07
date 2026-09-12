@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 
 import { sevenDayFacts } from "./ui/livingWeek";
 import { JourneyRecap } from "./components/JourneyRecap";
+import { LivingWeekReport } from "./components/LivingWeekReport";
 
 import { JourneyToday, JourneyNote } from "./components/JourneyToday";
 
@@ -241,6 +242,8 @@ function App() {
   const [session, setSession] = useState<Session | null>(e2eSession);
   const [windowData, setWindowData] = useState<ObservationWindow | null>(fixture?.window ?? null);
   const [windowState, setWindowState] = useState<WindowState>(fixture?.loadError ? "error" : fixture ? "ready" : "loading");
+  const [reportCreatedAt, setReportCreatedAt] = useState<Date | null>(null);
+  const reportTriggerRef = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [confirmedSave, setConfirmedSave] = useState(
@@ -376,6 +379,11 @@ function App() {
 
   const sessionUserId = session?.user.id ?? null;
   const sessionAccessToken = session?.access_token ?? null;
+
+  // Report visibility is disposable and never follows a new account, date or screen.
+  useLayoutEffect(() => {
+    setReportCreatedAt(null);
+  }, [requestedScreen, dashboardWindow, today, sessionUserId]);
 
   useEffect(() => {
     const previous = windowLoadSessionRef.current;
@@ -880,6 +888,9 @@ function App() {
   const selectedRecord = selectedRecordKey ? recordBrowseItems.find((record) => record.key === selectedRecordKey) : null;
   const selectedRecordMissing = Boolean(selectedRecordKey && !selectedRecord);
   const ready = windowState === "ready" || windowState === "refreshing" || windowState === "refresh-error";
+  const reportAvailable = !evidenceMode && Boolean(session) && !isPriorDashboard && ready
+    && windowData?.start_on === startOn && windowData?.end_on === endOn;
+  const reportVisible = reportCreatedAt !== null && reportAvailable && requestedScreen === "S10";
   const automaticallyEmpty =
     ready &&
     requestedScreen === "S02" &&
@@ -939,6 +950,17 @@ function App() {
 
   function renderWindowNavigation() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="최근 7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>최근 7일 · {isPriorDashboard ? "이전 구간 · 읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
+  }
+
+  function renderReportAction() {
+    if (evidenceMode) return null;
+    return <div className="living-week-report-action">
+      <button ref={reportTriggerRef} type="button" className="secondary" disabled={!reportAvailable || controlsDisabled} aria-describedby="living-week-report-scope" onClick={() => setReportCreatedAt(new Date())}>7일 리포트 보기</button>
+      <small id="living-week-report-scope">{isPriorDashboard
+        ? "리포트는 현재 7일에서 볼 수 있어요. 현재 7일 보기로 돌아가 주세요."
+        : !reportAvailable ? "현재 7일의 기록을 불러온 뒤 리포트를 볼 수 있어요."
+        : "펼쳐 본 날짜와 관계없이 현재 7일 전체를 정리해요."}</small>
+    </div>;
   }
 
   function renderRecordLane(kind: RecordBrowseItem["kind"], title: string, emptyText: string, journal = false, recordReading = false, focusedDate: string | null = null) {
@@ -1235,12 +1257,13 @@ function App() {
             </> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>선택한 7일의 관찰 기록과는 별도로 표시해요.</p></>}
           </section>}
           actions={<>
+            {renderReportAction()}
             {!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}
             <button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button>
           </>}
         />
       </Scene>;
-      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
+      return <Scene id="S10" {...journeyCopy.S10} tone="water"><div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{renderReportAction()}{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "선택한 7일 내보내기"}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
     }
 
     if (activeScreen === "S11") {
@@ -1304,6 +1327,8 @@ function App() {
   }
 
   return (
+    <>
+    <div data-living-week-app hidden={reportVisible}>
     <SceneShell staticJourneyUi={presentation.staticLandscape} activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection} savedSceneEvent={confirmedSave ? savedScene.event : null}>
       {notice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${notice.kind}`} role="status"><div>{notice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{notice.message}</span>{notice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{notice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{notice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
@@ -1313,6 +1338,22 @@ function App() {
       {accountDeletionOpen && <AccountDeletionConfirmation pending={accountDeletionPending} recovery={accountDeletionRecovery} onCancel={() => { if (!accountDeletionPending) { setAccountDeletionOpen(false); setAccountDeletionRecovery(null); } }} onConfirm={() => void confirmAccountDeletion()} />}
       {renderScene()}
     </SceneShell>
+    </div>
+    {reportVisible && reportCreatedAt && windowData && ready && <LivingWeekReport
+      days={trailDays}
+      observations={windowData.blood_pressure_observations.map(record => ({
+        date: record.observed_on, period: periodLabel(record.period), measurement: displayMeasurement(record),
+      }))}
+      hasLegacyRecords={windowData.challenge_events.length > 0}
+      unconfirmedChanges={Boolean(notice?.reload)}
+      freshness={windowState}
+      createdAt={reportCreatedAt}
+      onClose={() => {
+        setReportCreatedAt(null);
+        window.requestAnimationFrame(() => reportTriggerRef.current?.focus());
+      }}
+    />}
+    </>
   );
 }
 
