@@ -5,6 +5,8 @@ type TactileCompanionInteractionOptions = Readonly<{
   host: HTMLDivElement;
   camera: THREE.Camera;
   target: THREE.Object3D;
+  onGrabZone?: (zone: CompanionGrabZone) => void;
+  onReleaseZone?: (zone: CompanionGrabZone) => void;
 }>;
 
 export type TactileCompanionInteraction = Readonly<{
@@ -12,7 +14,7 @@ export type TactileCompanionInteraction = Readonly<{
   dispose: () => void;
 }>;
 
-type CompanionGrabZone = "head" | "body" | "feet";
+export type CompanionGrabZone = "head" | "body" | "feet";
 
 type TactileProfile = Readonly<{
   maxDragX: number;
@@ -103,6 +105,8 @@ export function createTactileCompanionInteraction({
   host,
   camera,
   target,
+  onGrabZone,
+  onReleaseZone,
 }: TactileCompanionInteractionOptions): TactileCompanionInteraction {
   const raycaster = new THREE.Raycaster();
   const dragPlane = new THREE.Plane();
@@ -168,6 +172,7 @@ export function createTactileCompanionInteraction({
     host.dataset.companionGrabZone = activeZone;
     host.dataset.companionReactionProfile = activeZone;
     host.dataset.companionMaxDragY = profile.maxDragY.toFixed(2);
+    onGrabZone?.(activeZone);
     setState("dragging");
     event.preventDefault();
   };
@@ -204,6 +209,9 @@ export function createTactileCompanionInteraction({
   const release = (event: PointerEvent) => {
     if (disposed || event.pointerId !== pointerId) return;
 
+    const releasedZone = activeZone;
+    pointerId = null;
+
     try {
       if (surface.hasPointerCapture(event.pointerId)) {
         surface.releasePointerCapture(event.pointerId);
@@ -212,18 +220,20 @@ export function createTactileCompanionInteraction({
       // Ignore capture cleanup failures during DOM teardown.
     }
 
-    pointerId = null;
     targetPosition.copy(homePosition);
     returning = true;
+    if (releasedZone) onReleaseZone?.(releasedZone);
     setState("returning");
     event.preventDefault();
   };
 
   const cancel = (event: PointerEvent) => {
     if (event.pointerId !== pointerId) return;
+    const releasedZone = activeZone;
     pointerId = null;
     targetPosition.copy(homePosition);
     returning = true;
+    if (releasedZone) onReleaseZone?.(releasedZone);
     setState("returning");
   };
 

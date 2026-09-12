@@ -2,10 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { companionClips, type CompanionSelection } from "../ui/companion";
+import {
+  companionClips,
+  getCompanionDecision,
+  type CompanionClip,
+  type CompanionSelection,
+} from "../ui/companion";
 import { getCompanionAsset } from "../ui/companionAssets.generated";
 import type { CompanionFraming } from "./CompanionRuntimeBoundary";
-import { createTactileCompanionInteraction, type TactileCompanionInteraction } from "./companionInteraction";
+import {
+  createTactileCompanionInteraction,
+  type CompanionGrabZone,
+  type TactileCompanionInteraction,
+} from "./companionInteraction";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
@@ -16,8 +25,19 @@ type CompanionReviewRendererProps = Readonly<{
 type RenderStatus = "loading" | "ready" | "error";
 type AnimationController = {
   play: (selection: CompanionSelection, reducedMotion: boolean) => void;
+  react: (zone: CompanionGrabZone) => void;
+  releaseReaction: () => void;
   dispose: () => void;
 };
+
+const tactileReactionClips: Readonly<Record<CompanionGrabZone, CompanionClip>> = {
+  head: "curious",
+  body: "greet",
+  feet: "rest",
+};
+
+const TACTILE_FADE_IN_SECONDS = 0.14;
+const TACTILE_FADE_OUT_SECONDS = 0.18;
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) {
@@ -67,6 +87,9 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     host.dataset.companionCelebrateCount = "0";
     host.dataset.companionInteractionEnabled = "false";
     host.dataset.companionInteraction = interactive ? "loading" : "disabled";
+    host.dataset.companionReactionState = interactive ? "idle" : "disabled";
+    host.dataset.companionReactionClip = selection.clip;
+    host.dataset.companionAnimationClip = selection.clip;
     host.dataset.companionOffsetX = "0.0000";
     host.dataset.companionOffsetY = "0.0000";
     setStatusState("loading");
@@ -159,9 +182,19 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
         } else {
            const animationMixer = new THREE.AnimationMixer(animatedModel);
            mixer = animationMixer;
-           const actions = new Map(companionClips.map((clip) => [clip, animationMixer.clipAction(gltf.animations.find((candidate) => candidate.name === clip)!)] as const));
+           const actions = new Map(companionClips.map((clip) => [
+             clip,
+             animationMixer.clipAction(gltf.animations.find((candidate) => candidate.name === clip)!),
+           ] as const));
            let currentAction: THREE.AnimationAction | null = null;
            let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
+
+           const markAnimation = (clip: CompanionClip, reactionState: "idle" | "active") => {
+             host.dataset.companionAnimationClip = clip;
+             host.dataset.companionReactionClip = clip;
+             host.dataset.companionReactionState = interactive ? reactionState : "disabled";
+           };
+
            const stopCurrent = () => {
              if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
              finishedListener = null;
@@ -169,53 +202,120 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
              currentAction = null;
              animationMixer.stopAllAction();
            };
+
+           const releaseReaction = () => {
+             const idleAction = actions.get("idle");
+             if (!idleAction) {
+               fail();
+               return;
+             }
+             if (currentAction === idleAction) {
+               markAnimation("idle", "idle");
+               return;
+             }
+
+             const previous = currentAction;
+             idleAction.reset().setLoop(THREE.LoopRepeat, Infinity);
+             idleAction.clampWhenFinished = false;
+             idleAction.play();
+             if (previous) {
+               idleAction.crossFadeFrom(previous, TACTILE_FADE_OUT_SECONDS, false);
+             }
+
+             currentAction = idleAction;
+             host.dataset.companionPhase = "idle";
+             host.dataset.companionMotion = "playing";
+             markAnimation("idle", "idle");
+           };
+
+           const react = (zone: CompanionGrabZone) => {
+             const reactionClip = tactileReactionClips[zone];
+             if (getCompanionDecision(latestSelectionRef.current.screen, reactionClip).status === "blocked") {
+               return;
+             }
+
+             const reactionAction = actions.get(reactionClip);
+             if (!reactionAction) {
+               fail();
+               return;
+             }
+
+             const previous = currentAction;
+             reactionAction.reset().setLoop(THREE.LoopOnce, 1);
+             reactionAction.clampWhenFinished = true;
+             reactionAction.play();
+             if (previous && previous !== reactionAction) {
+               reactionAction.crossFadeFrom(previous, TACTILE_FADE_IN_SECONDS, false);
+             }
+
+             currentAction = reactionAction;
+             host.dataset.companionPhase = `tactile-${reactionClip}`;
+             host.dataset.companionMotion = "playing";
+             markAnimation(reactionClip, "active");
+           };
+
            const play = (nextSelection: CompanionSelection, nextReducedMotion: boolean) => {
              stopCurrent();
+
              if (nextReducedMotion) {
                host.dataset.companionMotion = "stopped";
                host.dataset.companionPhase = "idle";
+               markAnimation(nextSelection.clip, "idle");
                renderer?.render(scene, camera);
                return;
              }
+
              const nextAction = actions.get(nextSelection.clip);
              if (!nextAction) {
                fail();
                return;
              }
+
              if (nextSelection.sequence === "celebrate_then_idle") {
                const celebrateAction = nextAction.reset();
                celebrateAction.setLoop(THREE.LoopOnce, 1);
                celebrateAction.clampWhenFinished = true;
+
                const onFinished = (event: { action: THREE.AnimationAction }) => {
                  if (event.action !== celebrateAction || disposed) return;
                  animationMixer.removeEventListener("finished", onFinished);
                  finishedListener = null;
                  celebrateAction.stop();
+
                  const idleAction = actions.get("idle");
                  if (!idleAction) {
                    fail();
                    return;
                  }
+
                  currentAction = idleAction.reset().setLoop(THREE.LoopRepeat, Infinity).play();
                  host.dataset.companionPhase = "idle";
                  host.dataset.companionMotion = "playing";
+                 markAnimation("idle", "idle");
                };
+
                finishedListener = onFinished;
                animationMixer.addEventListener("finished", onFinished);
                currentAction = celebrateAction;
+
                const count = Number(host.dataset.companionCelebrateCount || "0") + 1;
                host.dataset.companionCelebrateCount = String(count);
                host.dataset.companionPhase = "celebrate";
                host.dataset.companionMotion = "playing";
+               markAnimation("celebrate", "idle");
                celebrateAction.play();
              } else {
                currentAction = nextAction.reset().setLoop(THREE.LoopRepeat, Infinity).play();
                host.dataset.companionPhase = nextSelection.clip;
                host.dataset.companionMotion = "playing";
+               markAnimation(nextSelection.clip, "idle");
              }
            };
+
            const controller: AnimationController = {
              play,
+             react,
+             releaseReaction,
              dispose: stopCurrent,
            };
            controllerRef.current = controller;
@@ -226,6 +326,8 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
                host,
                camera,
                target: model,
+               onGrabZone: controller.react,
+               onReleaseZone: () => controller.releaseReaction(),
              });
            }
            // Prime the selected clip before the first visible model paint. This
