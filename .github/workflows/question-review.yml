@@ -5,14 +5,22 @@ on:
     paths:
       - 'tools/question-review/**'
       - 'docs/input-question-review.md'
-      - 'web/**'
+      - 'web/src/components/ModelV2InputFlow.tsx'
+      - 'web/src/ui/modelV2ResultState.ts'
+      - 'web/e2e/model-v2-*.spec.ts'
+      - 'web/package.json'
+      - 'web/package-lock.json'
       - '.github/workflows/question-review.yml'
   push:
     branches: [main]
     paths:
       - 'tools/question-review/**'
       - 'docs/input-question-review.md'
-      - 'web/**'
+      - 'web/src/components/ModelV2InputFlow.tsx'
+      - 'web/src/ui/modelV2ResultState.ts'
+      - 'web/e2e/model-v2-*.spec.ts'
+      - 'web/package.json'
+      - 'web/package-lock.json'
       - '.github/workflows/question-review.yml'
 permissions:
   contents: read

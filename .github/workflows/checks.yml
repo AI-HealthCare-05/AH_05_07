@@ -41,6 +41,9 @@ jobs:
       - name: Verify scene manifest rejection boundaries
         run: npm run test:scene-manifest
 
+      - name: Verify local preview stays out of production imports
+        run: node --test ../tools/character-preview/test_production_isolation.cjs
+
       - name: Check Android scene probes and sanitized heap inspection
         run: |
           node --check scripts/measure-scene-android.mjs

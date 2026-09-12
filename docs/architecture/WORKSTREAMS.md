@@ -3,7 +3,8 @@
 > Restart from [Fast start](../project-handoff.md#fast-start). R1–R11 are complete;
 > the initial work and checkpoint sequence below are historical, not startup gates.
 > W/M identify ownership domains, not a requirement to switch operating systems.
-> The active Issue names the current editor; shared-file and frozen-contract
+> The active task or PR names the current editor; an Issue is required only by
+> the protected-boundary lane in `AGENTS.md`. Shared-file and frozen-contract
 > boundaries below remain binding. Do not create extra handoff files by default.
 
 ## Authority
@@ -44,4 +45,8 @@ This issue creates no handoff files.
 4. **Checkpoint 3:** W names an integration main SHA; M validates browser suite at that SHA.
 5. **Checkpoint 4:** W controls release manifest, candidate verification, activation, and rollback.
 
-Use no two long-lived integration branches. Each substantive change is one Issue, one short `codex/...` branch, one PR, then squash merge. Avoid broad formatters, mass moves, simultaneous `App.tsx` ownership where avoidable, and uncoordinated shared-contract edits.
+Use no two long-lived integration branches. Each coherent change uses one short
+branch and one PR, then preferably a squash merge. Routine product work does not
+need a separate Issue; protected-boundary work follows `AGENTS.md`. Avoid broad
+formatters, mass moves, simultaneous `App.tsx` ownership where avoidable, and
+uncoordinated shared-contract edits.

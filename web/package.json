@@ -20,6 +20,7 @@
     "test:e2e:review": "playwright test --config=playwright.review.config.ts",
     "test:e2e:production:on": "playwright test --config=playwright.production-on.config.ts",
     "preview": "vite preview",
+    "test:e2e:ui:pr": "playwright test --config=playwright.ui-candidate.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.ui-candidate.config.ts && SK7_UI_TEST_COMPANION=off playwright test --config=playwright.ui-candidate.config.ts && playwright test --config=playwright.ui-normal.config.ts && node scripts/verify-ui-build-matrix.mjs"
   },
   "dependencies": {

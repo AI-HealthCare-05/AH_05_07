@@ -1,15 +1,20 @@
-## ✅ PR 요약
-- 작업 요약: 어떤 작업을 했는지 간단하게 적어주세요.
+## Change
 
-## 📄 상세 내용
-- [ ] 주요 변경 사항 1
-- [ ] 주요 변경 사항 2
-- [ ] 주요 변경 사항 3
+- What changed:
+- Why:
 
-## 📸 스크린샷 (선택)
+## Risk lane
 
-## 📝 기타 참고 사항
+- [ ] Routine product change — no protected boundary changed; Issue optional
+- [ ] Protected-boundary change — Issue/link:
 
-## 🧪 PR Checklist
-- [ ] 커밋 메시지 컨벤션에 맞게 작성했습니다.
-- [ ] 변경 사항에 대한 테스트를 했습니다.(버그 수정/기능에 대한 테스트).
+## Verification
+
+- Affected checks run:
+- Not run and why:
+
+## Boundary notes
+
+List any API, DB, auth/RLS, retention, Model V2, dependency, deployment, or
+secret impact. Write `None` when there is none. Add screenshots only when they
+materially help review a visual change.

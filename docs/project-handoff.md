@@ -2,60 +2,50 @@
 
 ## Fast start
 
-Read this section and the active Issue first. The reference sections below are
-not a mandatory reading chain. This is an index to existing authorities, not a
-new product, model, or release contract.
+This section is the restart index, not a mandatory reading chain. `AGENTS.md` is
+the single authority for contribution process and risk lanes. Product, model,
+data, and release contracts remain authoritative only for their own boundaries.
 
-### Source and state
+### Start with live state
 
-- Canonical development/docs repository: `AI-HealthCare-05/AH_05_07`.
-  Verify the actual checkout and canonical remote before resolving `main`;
-  do not treat the mirror's `origin/main` or a dated SHA as canonical current state.
-- Reviewed source snapshot: `f5dccbb901ccb7bbff0727c733a1b1dd932ac0f7`
-  (PR #403 squash, 2026-09-11 KST). This is an as-of reference, not a runtime ID.
-- #393/#397/#399 are merged product fixes. #401 (S02/S04/S05) and #403 (S10)
-  are merged review-only UI increments. Their merge/CI does not prove deployment.
-- Architecture audit **R1–R11 COMPLETE; R12 DEFER**. Do not restart it by default;
-  [technical depth plan](architecture/TECHNICAL_DEPTH_PLAN.md) retains its evidence.
-- [#390](https://github.com/AI-HealthCare-05/AH_05_07/issues/390) owns remaining scene
-  qualification and separately authorized activation. `review` is not production;
-  `VITE_SK7_SCENE_MODE=production` does not activate these merged review scenes.
-  The existing companion production path is independent.
-- [#396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396) owns G10 displayability
-  research. Individual scores/probabilities/percentiles/bands remain undisplayed;
-  research does not gate ordinary record UI work or authorize a release.
-- For the next task, use the user's scoped request and its live Issue/PR. Old
-  `Next`, `PENDING`, `DISABLED`, and W/M checkpoints below are dated snapshots,
-  not a command to reopen work or a replacement for live status.
+- Canonical development/docs repository: `AI-HealthCare-05/AH_05_07`. Resolve
+  current upstream `main`; a dated SHA or the deployment mirror is not current
+  source authority.
+- The user's scoped request is enough to start routine product work. A separate
+  Issue is optional unless `AGENTS.md` classifies the diff as protected-boundary
+  work or coordination needs a durable decision record.
+- Architecture audit **R1–R11 COMPLETE; R12 DEFER**. Do not reopen it by default.
+- Issues #390 (scene qualification) and #396 (Model V2 displayability research)
+  remain separate scopes. They do not gate unrelated UI, copy, or record-flow work.
+- Old `Next`, `PENDING`, `DISABLED`, and W/M checkpoints below are dated evidence,
+  not a live queue or an instruction to resume work.
 
 ### Read only the affected authority
 
-| Task | Additional reading |
-| --- | --- |
-| Presentation/UI | Active Issue, affected components/tests; [scene gates](scene-release-gates.md) only for scene/activation impact |
-| Model input/result | [Model product boundary](model-v2-product-contract.md), frozen contract and affected adapter/inference tests |
-| API/auth/data | Relevant requirements/domain contract and [invariants](architecture/ARCHITECTURE_INVARIANTS.md); affected implementation/tests |
-| Release or mirror | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md), then actual control-plane evidence |
-| Historical investigation | Named dated evidence only; [work-state](work-state.md) / [work-queue](work-queue.md) are not live queues |
+| Change | Read before editing | Normal development check |
+| --- | --- | --- |
+| Copy, CSS, semantic layout, presentation | Affected component and focused tests | Build plus the closest focused test |
+| Scene or companion runtime | Affected component/manifest and [scene gates](scene-release-gates.md) | Manifest plus affected scene/companion test |
+| Model input/result | [Model product boundary](model-v2-product-contract.md) and affected adapter/inference tests | Focused model/API/UI tests |
+| API, auth, data, retention | Relevant domain contract and [invariants](architecture/ARCHITECTURE_INVARIANTS.md) | Focused tests plus required final CI |
+| Release, mirror, migration, activation | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md), and live control-plane state | Boundary-specific preflight and smoke |
+| Historical investigation | Only the named dated evidence | No unrelated regression rerun |
 
-### Preserve boundaries and keep the feedback loop short
+### Keep the feedback loop proportional
 
-- Keep AGENTS privacy/claim rules, topology and frozen Model V2 artifact/schema/
-  11 features/preprocessing. No BP/challenge/model automatic joins, implied
-  health outcomes, numeric-result exposure, or S11 input/result persistence.
-- Preserve existing request/session/uncertain-write guards. Do not substitute
-  mock saves, simulator results, or historical device evidence for runtime PASS.
-- Keep source merge, mirror sync, runtime deployment and scene activation distinct.
-  Runtime/rollback identities are last-recorded evidence until actually re-read;
-  unresolved release identity does not block unrelated local UI work.
-- Keep the original checkout and its untracked `docs/scene-next-task-handoff.md`;
-  do not delete/move/overwrite/clean/reset/stash it. One editor per shared file.
-- During development run affected checks; retain required CI on the final candidate.
-  Reuse unchanged source/dependency/asset/config evidence with its exact scope.
-  Metadata-only status updates belong in the existing Issue/PR; avoid a new
-  evidence commit and full rerun merely to change `PENDING` to `PASS`.
-- Docs-only reconciliation changes no acceptance threshold or required check.
-  Do not sync the mirror or deploy solely to publish documentation changes.
+- Routine work uses a coherent branch/PR without a required preliminary Issue,
+  ADR, evidence ledger, screenshot pack, independent review, or full local suite.
+- Run affected checks while iterating. The final PR retains required `lint` and
+  `test`; specialized CI is routed by affected paths. The complete browser/evidence
+  matrix remains a merged-`main` and manually dispatchable confidence pass.
+- Protected boundaries keep their relevant Issue, contract, test, and operational
+  evidence. An ADR is for a durable architecture decision, not every implementation.
+- Reuse unchanged evidence within its exact scope. Do not create a second PR merely
+  to turn a status word into `PASS` or duplicate facts already in the task/PR.
+- Source merge, mirror sync, runtime deployment, scene activation, and migration are
+  distinct. A docs-only change does not require mirror sync or deployment.
+- Preserve unrelated local/user changes; do not clean, reset, stash, or rewrite them
+  to prepare a task.
 
 **Stop default startup reading here.** Continue below only for a named reference.
 
@@ -64,7 +54,8 @@ new product, model, or release contract.
 Authority is concern-specific. Use this order for contracts; use actual GitHub
 state for source/Issue status and control-plane evidence for runtime status.
 Dated snapshots are not competing current decisions. Record a material unresolved
-conflict in the active Issue; do not open another Issue for every historical status:
+conflict in the active task or PR; use an Issue when the `AGENTS.md` risk lane
+requires it, not for every historical status:
 
 1. `AGENTS.md` for safety, privacy, claim, and contribution boundaries.
 2. `docs/requirements.md` and the domain contracts for accepted product scope.
@@ -74,7 +65,7 @@ conflict in the active Issue; do not open another Issue for every historical sta
 4. Migrations, generated OpenAPI, implementation, and automated tests for
    executable behavior.
 5. `docs/deployment-ssot.md` for release topology and operator gates.
-6. The linked GitHub Issue, pull request, and immutable commit for one change.
+6. The GitHub Issue when required, plus the pull request and immutable commit.
 7. The Notion 19-day roadmap as the execution mirror and presentation plan.
 
 Notion must reflect repository evidence, but it must not declare code, schema,
@@ -241,9 +232,10 @@ after a synthetic signed-in refresh, the operator reviewed the bounded
 production request-metadata list and found no secret, user identifier, request
 body, or health value. No raw log output is retained.
 
-Each item requires its own Issue, short branch, pull request, verification, and
-squash merge. A production action requires the explicit approval and gate named
-in `docs/deployment-ssot.md`.
+These historical items used one Issue per item. Current work follows the
+risk-based policy in `AGENTS.md`; this paragraph does not impose a new Issue on
+routine work. A production action still requires the explicit approval and gate
+named in `docs/deployment-ssot.md`.
 
 ## Local Windows patch workflow
 
@@ -310,11 +302,13 @@ Database changes also require the local pgTAP suites and the separate production
 migration gate. A passing web build never proves that the database migration was
 applied.
 
-## Restart checklist
+## Historical restart checklist (superseded)
 
-At the beginning of a new Work session:
+The checklist below describes the earlier audit phase. For current work, stop at
+[Fast start](#fast-start) and use the `AGENTS.md` risk lane. Do not execute this
+list as a default startup sequence.
 
-1. Read `AGENTS.md`, this file, `docs/requirements.md`,
+1. Earlier sessions read `AGENTS.md`, this file, `docs/requirements.md`,
    `docs/acceptance-test-plan.md`, the canonical architecture contracts
    (`docs/architecture/ARCHITECTURE_INVARIANTS.md`,
    `docs/architecture/TECHNICAL_DEPTH_PLAN.md`,
@@ -323,7 +317,7 @@ At the beginning of a new Work session:
 2. Read the current Notion 19-day roadmap, then treat any mismatch as work to
    reconcile rather than as permission to change code.
 3. Confirm the latest upstream `main` SHA and recent merged PRs.
-4. Confirm one Issue, short branch and PR per substantive workstream. Reconcile
+4. Earlier sessions confirmed one Issue, short branch and PR per workstream. Reconcile
    and preserve each worktree's saved changes, following the user-authorized
    parallel plan in [upgrade execution](upgrade-execution.md).
 5. Inspect the latest relevant deployment run only when the next task concerns
