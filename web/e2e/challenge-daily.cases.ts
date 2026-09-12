@@ -165,7 +165,7 @@ test("prior S03/S07 keep read navigation and its selected range without writes",
   await expect(page).toHaveURL(/dashboard_window=prior/);
   expect(windowRequests).toHaveLength(2);
   expect(windowRequests.every((request) => request.startOn === "2026-08-29" && request.endOn === "2026-09-04")).toBe(true);
-  await page.locator('[data-read-only-window]').getByRole("button", { name: "현재 기록으로 돌아가기", exact: true }).click();
+  await page.locator('[data-read-only-window]').getByRole("button", { name: "현재 7일 보기", exact: true }).click();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
   await expect.poll(() => windowRequests.length).toBe(3);

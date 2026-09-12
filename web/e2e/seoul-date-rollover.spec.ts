@@ -245,7 +245,7 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
     await expect.poll(() => api.reads.length).toBe(2);
     await expect(field).toHaveAttribute("data-draft-node", "original");
     await finishRequest(page, api.reads[1].request, gate.release);
-    await expect(page.getByText("최신 여부를 확인하지 못했어요")).toBeVisible();
+    await expect(page.getByText("최신 여부 미확인", { exact: true })).toBeVisible();
     await expect(field).toHaveAttribute("data-draft-node", "original");
     if (draft === "blood-pressure") {
       await expect(page.getByLabel("날짜", { exact: true })).toHaveValue("2026-09-12");
@@ -323,7 +323,7 @@ test("prior window rollover and back navigation reject a late request for the sa
   await page.clock.runFor(1000);
   await expect.poll(() => api.reads.length).toBe(2);
   expect(api.reads[1].bounds).toEqual({ start_on: "2026-09-01", end_on: "2026-09-07" });
-  await page.getByRole("button", { name: "현재 7일 보기" }).click();
+  await page.locator('[data-dashboard-window]').getByRole("button", { name: "현재 7일 보기" }).click();
   await expect(page.getByText("121/80 mmHg")).toBeVisible();
   await page.goBack();
   await expect(page.locator("[data-dashboard-window]")).toHaveAttribute("data-dashboard-window", "prior");

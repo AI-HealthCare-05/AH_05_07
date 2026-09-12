@@ -33,8 +33,8 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
   const previewDate = staticLandscape && focusedDate ? focusedDate : today;
   const freshnessNote = freshness === 'loading' ? '7일의 기록을 불러오고 있어요.'
     : freshness === 'error' ? '기록을 불러오지 못해 아직 이 7일의 사실을 확인할 수 없어요.'
-    : freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록이에요.'
-    : freshness === 'refresh-error' ? '최신 여부 미확인 · 마지막으로 불러온 기록이에요.'
+    : freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록을 보여드려요.'
+    : freshness === 'refresh-error' ? '최신 여부 미확인 · 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'
     : null;
 
   return <>

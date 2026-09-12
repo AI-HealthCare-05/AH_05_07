@@ -168,7 +168,7 @@ test("S08 range changes reset discovery filters and keep prior and legacy detail
   await expect(page.getByRole("button", { name: "수정", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "삭제", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
-  await page.getByRole("button", { name: "현재 7일 보기", exact: true }).click();
+  await page.locator('[data-dashboard-window]').getByRole("button", { name: "현재 7일 보기", exact: true }).click();
   await page.getByRole("button", { name: "이전 방식 기록 1개", exact: true }).click();
   await expect(rows(page).getByRole("button", { name: /상세 보기/ })).toHaveAccessibleDescription(/건너뜀.*읽기 전용/);
   await rows(page).getByRole("button", { name: /상세 보기/ }).click();

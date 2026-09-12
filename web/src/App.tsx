@@ -1116,7 +1116,7 @@ function App() {
 
   function renderScene() {
     if (windowState === "loading") {
-      return <section className="loading-scene" aria-busy="true" aria-live="polite"><span className="loading-stones" aria-hidden="true"><i /><i /><i /></span><p className="eyebrow">기록을 준비하고 있어요</p><h1>선택한 7일을 불러오는 중이에요</h1><p>불러오기가 끝나면 선택한 기간의 기록을 보여드려요.</p></section>;
+      return <section className="loading-scene" aria-busy="true" aria-live="polite"><span className="loading-stones" aria-hidden="true"><i /><i /><i /></span><p className="eyebrow">불러오는 중</p><h1>선택한 7일을 불러오는 중이에요</h1><p>불러오기가 끝나면 선택한 기간의 기록을 보여드려요.</p></section>;
     }
 
     if (activeScreen === "S13") {
@@ -1136,7 +1136,7 @@ function App() {
       if (presentation.journey) return (
         <Scene id="S12" eyebrow={isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}
           title={isPriorDashboard ? "이 기간에는 기록이 없어요." : "이 기간에는 아직 기록이 없어요."}
-          body={isPriorDashboard ? "선택한 이전 구간에 남긴 기록이 없어요. 새 기록은 현재 7일에서 시작할 수 있어요." : "혈압 기록과 생활 챌린지는 각각 시작할 수 있어요."}
+          body={isPriorDashboard ? "선택한 이전 구간을 확인했어요. 남긴 기록은 없으며, 새 기록은 현재 7일에서 시작할 수 있어요." : "선택한 기간을 확인했어요. 혈압 기록과 생활 챌린지는 각각 시작할 수 있어요."}
           tone="sage" className="journey-empty">
           <p className="journey-empty-period" aria-label="조회 기간"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
           {isPriorDashboard ? (
@@ -1407,8 +1407,8 @@ function App() {
     <div data-living-week-app hidden={reportVisible}>
     <SceneShell staticJourneyUi={presentation.staticLandscape} activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} onSignOut={!evidenceMode ? () => void handleSignOut() : undefined} signOutPending={signOutPending || accountDeletionPending} companionSelection={companionSelection} savedSceneEvent={confirmedSave ? savedScene.event : null}>
       {visibleNotice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${visibleNotice.kind}`} role="status"><div>{visibleNotice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{visibleNotice.message}</span>{visibleNotice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
-      {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부를 확인하지 못했어요</strong><span>새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.</span><p>마지막으로 불러온 내용이며, 최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
-      {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>{dashboardPeriodName} 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 기록으로 돌아가기</button></div>}
+      {windowState === "refresh-error" && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부 미확인</strong><span>마지막으로 불러온 기록을 보여드리고 있어요.</span><p>최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
+      {isPriorDashboard && <div className="notice notice-warning" data-read-only-window><span>{dashboardPeriodName} 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 7일 보기</button></div>}
       {pendingBloodPressureDeletion && <DeleteConfirmation title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingBloodPressureDeletion(null)} onConfirm={() => void confirmBloodPressureDeletion()} />}
       {pendingChallengeCheckinDeletion && <DeleteConfirmation title={`${dateLabel(pendingChallengeCheckinDeletion.observed_on)} 챌린지 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingChallengeCheckinDeletion(null)} onConfirm={() => void confirmChallengeCheckinDeletion()} />}
       {accountDeletionOpen && <AccountDeletionConfirmation pending={accountDeletionPending} recovery={accountDeletionRecovery} onCancel={() => { if (!accountDeletionPending) { setAccountDeletionOpen(false); setAccountDeletionRecovery(null); } }} onConfirm={() => void confirmAccountDeletion()} />}
