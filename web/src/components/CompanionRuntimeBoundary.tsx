@@ -11,7 +11,28 @@ export type CompanionRuntimeBoundaryProps = {
   framing?: CompanionFraming;
 };
 
-const CompanionReviewRenderer = lazy(() => import("./CompanionReviewRenderer"));
+let companionRendererModulePromise: ReturnType<typeof importCompanionRenderer> | null = null;
+
+function importCompanionRenderer() {
+  return import("./CompanionReviewRenderer");
+}
+
+function loadCompanionRenderer() {
+  if (!companionRendererModulePromise) {
+    companionRendererModulePromise = importCompanionRenderer().catch((error) => {
+      companionRendererModulePromise = null;
+      throw error;
+    });
+  }
+  return companionRendererModulePromise;
+}
+
+/** Warm only the renderer module. GLB loading remains lazy and selection-bound. */
+export function warmCompanionRendererModule() {
+  void loadCompanionRenderer().catch(() => undefined);
+}
+
+const CompanionReviewRenderer = lazy(loadCompanionRenderer);
 
 class RendererErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };

@@ -4,10 +4,15 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { SavedSceneBoundary } from "./SavedSceneBoundary";
 import { allowsSavedScene, type SavedSceneEvent } from "../ui/savedScene";
 
-import { CompanionRuntimeBoundary } from "./CompanionRuntimeBoundary";
+import { CompanionRuntimeBoundary, warmCompanionRendererModule } from "./CompanionRuntimeBoundary";
 import { SceneVisualAsset, SceneVisualBackground } from "./SceneVisualAsset";
 import { primaryNavigation, primaryNavigationScreen, type ScreenId } from "../ui/journey";
-import type { CompanionSelection } from "../ui/companion";
+import {
+  resolveCompanionMode,
+  resolveCompanionSelection,
+  resolveProductionCompanion,
+  type CompanionSelection,
+} from "../ui/companion";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 
 const SceneCompanionContext = createContext<ReactNode>(null);
@@ -38,6 +43,21 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    if (activeScreen !== "S04") return;
+
+    const mode = resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE);
+    const futureS05Selection = mode === "production"
+      ? resolveProductionCompanion(mode, "S05", true)
+      : resolveCompanionSelection(
+          "S05",
+          new URLSearchParams(window.location.search),
+          "save_success",
+        );
+
+    if (futureS05Selection) warmCompanionRendererModule();
+  }, [activeScreen]);
 
   const savedSceneAllowed = allowsSavedScene(import.meta.env.VITE_SK7_SCENE_MODE, activeScreen, Boolean(savedSceneEvent));
   const inlineCompanion = staticJourneyUi && activeScreen === "S05" && !savedSceneAllowed;
