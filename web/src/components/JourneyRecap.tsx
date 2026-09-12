@@ -12,7 +12,7 @@ type JourneyRecapProps = {
   today: string;
   days: readonly TrailDay[];
   year: string;
-  prior: boolean;
+  period: 'current' | 'prior' | 'completed-cycle';
   freshness: 'loading' | 'ready' | 'refreshing' | 'error' | 'refresh-error';
   navigation: ReactNode;
   records: (selectedDate: string | null) => ReactNode;
@@ -21,13 +21,15 @@ type JourneyRecapProps = {
 };
 
 /** Disposable day focus only; App retains requests, window dates and action guards. */
-export function JourneyRecap({ staticLandscape, today, days, year, prior, freshness, navigation, records, challenge, actions }: JourneyRecapProps) {
+export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions }: JourneyRecapProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const recordsRef = useRef<HTMLDivElement>(null);
   const selectedDay = days.find(day => day.date === selectedDate);
   const focusedDate = selectedDay?.date ?? null;
   const factsKnown = freshness !== 'loading' && freshness !== 'error';
   const summary = summarizeTrailDays(days);
+  const readOnly = period !== 'current';
+  const periodName = period === 'completed-cycle' ? '종료된 7일' : period === 'prior' ? '이전 7일' : '현재 7일';
   const previewDate = staticLandscape && focusedDate ? focusedDate : today;
   const freshnessNote = freshness === 'loading' ? '7일의 기록을 불러오고 있어요.'
     : freshness === 'error' ? '기록을 불러오지 못해 아직 이 7일의 사실을 확인할 수 없어요.'
@@ -37,23 +39,23 @@ export function JourneyRecap({ staticLandscape, today, days, year, prior, freshn
 
   return <>
     <div className="recap-period">
-      <p className="recap-period-label">{year}년 · {prior ? '이전 7일 · 읽기 전용' : '현재 7일 · 오늘 포함'}</p>
+      <p className="recap-period-label">{year}년 · {periodName} · {readOnly ? '읽기 전용' : '오늘 포함'}</p>
       {navigation}
     </div>
 
-    <section className="living-week recap-week-sheet" aria-labelledby="living-week-title" data-window-kind={prior ? 'prior' : 'current'}>
+    <section className="living-week recap-week-sheet" aria-labelledby="living-week-title" data-window-kind={period}>
       <div className="recap-week-intro">
         <div className="recap-week-overview">
           <header className="living-week-heading">
             <div>
               <p className="eyebrow">모아와 걷는 7일</p>
               <h2 id="living-week-title">7일의 길</h2>
-              <p>{prior ? '지나온 풍경에 남겨둔 사실을 돌아봐요.' : '오늘까지, 풍경마다 남겨둔 사실을 돌아봐요.'}</p>
+              <p>{readOnly ? '지나온 풍경에 남겨둔 사실을 돌아봐요.' : '오늘까지, 풍경마다 남겨둔 사실을 돌아봐요.'}</p>
             </div>
           </header>
           <div className="recap-week-totals">
-            <p className="recap-summary-label">선택한 7일 전체{freshness === 'refreshing' || freshness === 'refresh-error' ? ' · 마지막 확인 기록' : ''}</p>
-            <dl className="recap-week-summary" data-week-summary aria-label="선택한 7일의 사실 요약">
+            <p className="recap-summary-label">{periodName} 전체{freshness === 'refreshing' || freshness === 'refresh-error' ? ' · 마지막 확인 기록' : ''}</p>
+            <dl className="recap-week-summary" data-week-summary aria-label={`${periodName}의 사실 요약`}>
               <div>
                 <dt>혈압 관찰</dt>
                 <dd>
@@ -101,7 +103,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, prior, freshn
             recordsRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
           }}>이 날짜의 기록 목록 <span aria-hidden="true">↓</span></button>
         </TrailDayDetail> : <p className="recap-overview-note">{factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0
-          ? prior ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
+          ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
           : '서울 날짜를 따라 혈압 관찰과 챌린지 참여를 각각 살펴봐요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
       </div>
     </section>
@@ -117,10 +119,10 @@ export function JourneyRecap({ staticLandscape, today, days, year, prior, freshn
       </header>
       <div className="record-groups recap-record-groups" id="recap-journal-records" ref={recordsRef} tabIndex={-1} aria-label={focusedDate ? `${formatTrailDate(focusedDate)} 기록 목록` : '최근 7일 기록 목록'}>{records(focusedDate)}</div>
       <footer className="recap-tools">
-        <p>{prior
-          ? '이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.'
-          : '선택한 7일의 기록을 파일로 보관할 수 있어요.'}</p>
-        {focusedDate && !prior && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
+        <p>{readOnly
+          ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
+          : '현재 7일의 기록을 파일로 보관할 수 있어요.'}</p>
+        {focusedDate && !readOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
         <div className="scene-actions utility-actions">{actions}</div>
       </footer>
     </div>

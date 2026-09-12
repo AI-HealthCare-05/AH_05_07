@@ -98,8 +98,8 @@ test('recap date focus filters existing records and returns to the complete week
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
   const exportHint = page.locator('.recap-tools > p');
-  await expect(exportHint).toHaveText('선택한 7일의 기록을 파일로 보관할 수 있어요.');
-  await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
+  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관할 수 있어요.');
+  await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
   await page.locator('[data-trail-date="2026-09-10"] > button').click();
@@ -117,7 +117,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
   await expect(page.locator('[data-challenge-progress]')).toContainText('2026-09-09 ~ 2026-09-15');
   await expect(page.locator('[data-challenge-progress]')).toContainText('선택한 구간 안의 체크인 기록 0개');
-  await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '이전 7일 내보내기' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();
   await expect(page.getByText('이전 7일의 기록은 읽기 전용입니다.', { exact: true })).toBeVisible();
@@ -131,8 +131,8 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(2);
-  await expect(exportHint).toHaveText('선택한 7일의 기록을 파일로 보관할 수 있어요.');
-  await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
+  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관할 수 있어요.');
+  await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
 });
 
@@ -188,7 +188,7 @@ test('recap day focus keeps the full export window and clears success on navigat
   await page.locator('[data-trail-date="2026-09-09"] > button').click();
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(1);
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: '선택한 7일 내보내기' }).click();
+  await page.getByRole('button', { name: '현재 7일 내보내기' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('synthetic-sk7-2026-09-05-2026-09-11.json');
   const payload = JSON.parse(readFileSync((await download.path())!, 'utf8'));
@@ -206,9 +206,9 @@ test('recap day focus keeps the full export window and clears success on navigat
 
 test('recap export failure preserves records and allows retry', async ({ page }) => {
   await fixture(page, 'export-error');
-  await page.getByRole('button', { name: '선택한 7일 내보내기' }).click();
+  await page.getByRole('button', { name: '현재 7일 내보내기' }).click();
   await expect(page.getByText('파일을 내려받지 못했습니다.', { exact: false })).toBeVisible();
-  await expect(page.getByRole('button', { name: '선택한 7일 내보내기' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.locator('[data-dashboard-lane="blood-pressure"]')).toHaveText('2개 기록');
 });
 
@@ -278,7 +278,7 @@ test('recap refresh and export keep pending disables and ignore a late download 
   heldRefresh.release();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
-  await page.getByRole('button', { name: '선택한 7일 내보내기' }).click();
+  await page.getByRole('button', { name: '현재 7일 내보내기' }).click();
   await expect.poll(() => exports).toBe(1);
   await expect(page.getByRole('button', { name: '내보내는 중' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
@@ -473,7 +473,7 @@ test('living week report preserves the prior boundary and the existing full-wind
   await page.getByRole('button', { name: '이전 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
   await expect(reportAction(page)).toBeDisabled();
-  await expect(page.getByRole('button', { name: '선택한 7일 내보내기', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '이전 7일 내보내기', exact: true })).toBeDisabled();
   await expect(report(page)).toHaveCount(0);
   await page.getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await page.locator('[data-trail-date="2026-09-09"] > button').click();
@@ -482,7 +482,7 @@ test('living week report preserves the prior boundary and the existing full-wind
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(1);
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: '선택한 7일 내보내기', exact: true }).click();
+  await page.getByRole('button', { name: '현재 7일 내보내기', exact: true }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('synthetic-sk7-2026-09-05-2026-09-11.json');
   const payload = JSON.parse(readFileSync((await download.path())!, 'utf8'));

@@ -58,8 +58,13 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await page.goto('/?e2e=signed-in&screen=S02');
   await expect(page.locator('[data-living-cycle="ended"]')).toContainText('이번 7일 여정이 끝났어요');
   await expect(page.getByRole('button', { name: '다음 7일 시작하기', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: '종료된 7일 확인하기', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'cycle:2026-09-11');
+  await expect(page.locator('.recap-period-label')).toContainText('종료된 7일 · 읽기 전용');
+  await expect(page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '종료된 7일 내보내기', exact: true })).toBeDisabled();
   await expect(page.locator('[data-trail-date]')).toHaveCount(7);
   await expect(page.locator('[data-trail-date="2026-09-05"]')).toContainText('기록함');
   await page.getByRole('button', { name: '7일 리포트 보기', exact: true }).click();
@@ -68,6 +73,8 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await expect(page.locator('[data-living-week-report]')).toContainText('종료된 7일');
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기' }).click();
   await expect(page.getByRole('button', { name: '7일 리포트 보기', exact: true })).toBeFocused();
+  await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'cycle:2026-09-11');
+  await expect(page.locator('.recap-period-label')).toContainText('종료된 7일 · 읽기 전용');
   expect(state.writes).toHaveLength(0);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -90,10 +97,32 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   expect(state.writes[0].postDataJSON()).toEqual({ action_id: 'sleep-routine' });
   expect(state.closed).toEqual([{ ...ended, status: 'closed' }]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: '이전 여정 돌아보기' }).click();
+  await page.getByRole('button', { name: '종료된 7일 돌아보기' }).click();
   await page.getByRole('button', { name: '7일 리포트 보기', exact: true }).click();
   await expect(page.locator('[data-living-week-report]')).toContainText('120/80 mmHg');
   expect(state.writes).toHaveLength(1);
+});
+
+test('completed-cycle Record Explorer keeps its exact read-only period through detail history and return focus', async ({ page, context }) => {
+  const state = await api(context);
+  await page.goto('/?e2e=signed-in&screen=S10&dashboard_window=cycle:2026-09-11');
+  await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+  await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'cycle:2026-09-11');
+  await expect(page.locator('[data-read-only-window]')).toContainText('종료된 7일 기록을 읽기 전용으로 보고 있어요.');
+  const oldRecord = page.getByRole('button', { name: /상세 보기 · 혈압 관찰 · 9월 5일/ });
+  await oldRecord.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.record-explorer-detail-period')).toContainText('종료된 7일 · 읽기 전용');
+  await expect(page.locator('.record-explorer-detail-period')).toContainText('9월 5일 (토) ~ 9월 11일 (금)');
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText('종료된 7일의 기록은 읽기 전용입니다.');
+  await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
+  await page.goBack();
+  await expect(oldRecord).toBeFocused();
+  await page.goForward();
+  await expect(page.locator('.record-explorer-detail-period')).toContainText('종료된 7일 · 읽기 전용');
+  await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
+  await expect(oldRecord).toBeFocused();
+  expect(state.writes).toHaveLength(0);
 });
 
 test('Living Cycle guards synchronous double submission and browser Back during delayed creation', async ({ page, context }) => {
@@ -162,7 +191,7 @@ test('Living Cycle ignores an old session creation response', async ({ page, con
   await response;
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   await expect(page.getByText('7일 챌린지를 선택했습니다.', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: '이전 여정 돌아보기' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '종료된 7일 돌아보기' })).toHaveCount(0);
 });
 
 test('Living Cycle ends only after Seoul midnight, including without a first check-in', async ({ page, context }) => {
