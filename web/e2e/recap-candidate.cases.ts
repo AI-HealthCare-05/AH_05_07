@@ -95,6 +95,40 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(records('legacy')).toHaveCount(1);
 });
 
+test('recap rapid touch leaves only the selected date treatment', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 384, height: 718 },
+    deviceScaleFactor: 2.8125,
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  try {
+    await fixture(page);
+    expect(await page.evaluate(() => matchMedia('(hover: none)').matches)).toBe(true);
+    const buttons = page.locator('.seven-day-trail .trail-day-button');
+    const treatment = (index: number) => buttons.nth(index).evaluate(element => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, boxShadow: style.boxShadow, transform: style.transform };
+    });
+    const untouched = await treatment(6);
+    await buttons.nth(0).tap();
+    await buttons.nth(1).tap();
+    await buttons.nth(2).tap();
+    await expect(buttons.filter({ has: page.locator('.trail-day-state', { hasText: '선택' }) })).toHaveCount(1);
+    await expect(buttons.nth(2)).toHaveAttribute('aria-pressed', 'true');
+    await expect(buttons.nth(0)).toHaveAttribute('aria-pressed', 'false');
+    await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'false');
+    expect(await treatment(0)).toEqual(untouched);
+    expect(await treatment(1)).toEqual(untouched);
+    await page.keyboard.press('Tab');
+    await expect(buttons.nth(3)).toBeFocused();
+    await expect(buttons.nth(3)).toHaveCSS('outline-style', 'solid');
+  } finally {
+    await context.close();
+  }
+});
+
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
   const exportHint = page.locator('.recap-tools > p');

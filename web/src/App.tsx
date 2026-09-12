@@ -1205,7 +1205,7 @@ function App() {
     }
 
     if (activeScreen === "S05") {
-      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}><div className="save-ripple" aria-hidden="true"><SceneCompanion /><i /><i /><span>✓</span></div><div className="split-actions"><button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button><button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button></div></Scene>;
+      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}><div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div><div className="split-actions"><button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button><button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button></div></Scene>;
     }
 
     if (activeScreen === "S06") {

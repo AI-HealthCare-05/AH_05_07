@@ -51,13 +51,21 @@
   box-shadow: none;
   color: #414c40;
   font-weight: 550;
-  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition: none;
 }
-.seven-day-trail .trail-day-button:hover:not(:disabled) { transform: none; background: rgb(255 253 247 / .65); box-shadow: inset 0 0 0 1px #dad2bf; }
 .seven-day-trail .trail-day-button:active:not(:disabled) { transform: none; }
 .seven-day-trail .trail-day-button[aria-pressed="true"] { border-color: #65745e; background: #fffdf7; box-shadow: 0 .3rem .8rem -.4rem rgb(71 81 58 / .25); }
 .seven-day-trail .trail-day-button[aria-pressed="true"]::after { content: ''; position: absolute; bottom: -.21rem; left: calc(50% - .2rem); width: .4rem; height: .4rem; border-right: 1px solid #65745e; border-bottom: 1px solid #65745e; background: #fffdf7; transform: rotate(45deg); }
 .seven-day-trail .trail-day-button:focus-visible { z-index: 2; outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .seven-day-trail .trail-day-button { transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  .seven-day-trail .trail-day-button:hover:not(:disabled) { transform: none; background: rgb(255 253 247 / .65); box-shadow: inset 0 0 0 1px #dad2bf; }
+}
+@media (hover: none), (pointer: coarse) {
+  .seven-day-trail .trail-day-button:hover:not(:disabled) { transform: none; background: transparent; box-shadow: none; color: #414c40; }
+  .seven-day-trail .trail-day-button[aria-pressed="true"],
+  .seven-day-trail .trail-day-button[aria-pressed="true"]:hover:not(:disabled) { border-color: #65745e; background: #fffdf7; box-shadow: 0 .3rem .8rem -.4rem rgb(71 81 58 / .25); }
+}
 .trail-day-state { display: block; min-height: 1.1rem; color: #625b4e; font-size: .65rem; line-height: 1.1rem; font-weight: 650; }
 [data-temporal="today"] .trail-day-state { padding-inline: .42rem; border-radius: .25rem; background: #3f594a; color: #fffdf7; }
 .trail-day-button time { min-height: 1.5rem; font-size: .94rem; line-height: 1.5rem; font-weight: 750; font-variant-numeric: tabular-nums; }

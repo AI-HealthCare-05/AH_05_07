@@ -128,6 +128,8 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journ
     await expect(runtime).toHaveAttribute('data-companion-framing', 'journey-s05');
     await expect(runtime).toHaveAttribute('data-companion-celebrate-count', motion === 'reduce' ? '0' : '1');
     await expect(runtime.locator('[data-companion-canvas]')).toHaveCSS('visibility', 'visible');
+    await expect(page.locator('.journey-saved .save-ripple')).toHaveCSS('overflow', 'visible');
+    await expect(page.locator('.journey-saved .save-ripple-landscape')).toHaveCSS('overflow', 'hidden');
     if (motion === 'reduce') {
       const bounds = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.sample());
       expect(bounds.phase).toBe('idle');
@@ -157,6 +159,62 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journ
   }
   await info.attach(`S05-framing-${width}.json`, { body: JSON.stringify(reports), contentType: 'application/json' });
 });
+
+test('journey S05 Android profile keeps the canvas outside the rounded landscape clip', async ({ browser }) => {
+  test.skip(companionOff, 'No canvas when the independent companion gate is off');
+  const context = await browser.newContext({
+    viewport: { width: 384, height: 718 },
+    deviceScaleFactor: 2.8125,
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  try {
+    await setup(page);
+    await page.addInitScript(installCompanionFramingProbe);
+    type Bounds = { phase: string; width: number; height: number; left: number; right: number; top: number; bottom: number; paintedHeight: number; cssClippedPixels: number };
+    type Probe = { report: () => { samples: Bounds[]; counts: Record<string, number>; paused: boolean }; pauseAfter: (phase: string, frames: number) => void };
+    await page.goto('/?e2e=signed-in&screen=S04');
+    await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.pauseAfter('idle', 61));
+    await save(page);
+    const runtime = page.locator('[data-companion-status]');
+    await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+    await page.waitForFunction(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report().paused, undefined, { timeout: 20000 });
+    const report = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report());
+    expect(report.counts.celebrate).toBeGreaterThanOrEqual(235);
+    expect(report.counts.idle).toBe(61);
+    for (const bounds of report.samples) {
+      for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(5);
+      expect(bounds.paintedHeight).toBeGreaterThan(bounds.height * .8);
+      expect(bounds.cssClippedPixels).toBe(0);
+    }
+    const geometry = await page.evaluate(() => {
+      const canvas = document.querySelector('[data-companion-canvas]') as HTMLCanvasElement;
+      const ripple = document.querySelector('.journey-saved .save-ripple') as HTMLElement;
+      const landscape = document.querySelector('.journey-saved .save-ripple-landscape') as HTMLElement;
+      const canvasBox = canvas.getBoundingClientRect(), rippleBox = ripple.getBoundingClientRect();
+      return {
+        devicePixelRatio,
+        drawingBuffer: { width: canvas.width, height: canvas.height },
+        canvas: { left: canvasBox.left, right: canvasBox.right, top: canvasBox.top, bottom: canvasBox.bottom },
+        ripple: { left: rippleBox.left, right: rippleBox.right, top: rippleBox.top, bottom: rippleBox.bottom },
+        rippleOverflow: getComputedStyle(ripple).overflow,
+        landscapeOverflow: getComputedStyle(landscape).overflow,
+      };
+    });
+    expect(geometry.devicePixelRatio).toBe(2.8125);
+    expect(geometry.drawingBuffer).toEqual({ width: 384, height: 336 });
+    expect(geometry.rippleOverflow).toBe('visible');
+    expect(geometry.landscapeOverflow).toBe('hidden');
+    expect(geometry.canvas.left).toBeGreaterThan(geometry.ripple.left);
+    expect(geometry.canvas.right).toBeLessThan(geometry.ripple.right);
+    expect(geometry.canvas.top).toBeGreaterThan(geometry.ripple.top);
+    expect(geometry.canvas.bottom).toBeLessThan(geometry.ripple.bottom);
+  } finally {
+    await context.close();
+  }
+});
+
 for (const outcome of ['pending', 'failure', 'duplicate', 'unknown']) test(`${outcome} save has no premature success or retry loop`, async ({ page }) => {
   const state = await setup(page, outcome);
   await page.goto('/?e2e=signed-in&screen=S05&companion_context=save_success');
