@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify production web environment guard
+        run: npm run test:production-web-env
+
       - name: Verify scene manifest rejection boundaries
         run: npm run test:scene-manifest
 
