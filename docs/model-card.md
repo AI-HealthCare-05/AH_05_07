@@ -1,4 +1,4 @@
-# SK7 모델 카드 초안
+# HISTORICAL — SK7 모델 카드 초안
 
 > **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
 > research/planning checkpoint named below. It is not current product, Model V2
@@ -6,23 +6,26 @@
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
 > use the [deployment SSOT](deployment-ssot.md).
+>
+> Any `current` / `현재` wording below is relative to this historical checkpoint,
+> not a statement about current canonical `main`.
 
 
 Issue #221의 검토용 계약을 고도화 Issue #230에서 보완한다. 이번 설계 기준은
 PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`이며 아래 실제 실행
 evidence의 원래 commit을 바꾸지 않는다. 출시된 모델 카드나 모델 선택 승인이
-아니다. 현재 상태는 `exploratory_uncertainty_not_promoted`이며 제품은
-`model_not_ready`를 유지한다. [출시 준비 판정표](model-release-readiness.md)의
+아니다. 이 기록 당시 상태는 `exploratory_uncertainty_not_promoted`였으며 당시 제품 경로는
+`model_not_ready`였다. [출시 준비 판정표](model-release-readiness.md)의
 책임자 지정과 승인 기록이 갖춰져야 다음 실행을 별도로 승인할 수 있다.
 
 ## 목적·대상·사용자 표현
 
 [요구사항](requirements.md)의 정확한 표현은 **입력 기반 위험군 선별 신호**이다.
 향후 의미가 검증된 구조화 입력을 받아 버전이 고정된 신호를 제공하는 것이 목적이다.
-현재 한국 사용자에 대한 지원 근거와 지원 대상은 승인되지 않았다. 모델 출력,
+이 기록 당시 한국 사용자에 대한 지원 근거와 지원 대상은 승인되지 않았다. 모델 출력,
 사용자가 기록한 혈압, 7일 챌린지 이행은 별도 사실이다. 어느 하나로 다른 사실을
-대체하거나 인과적 변화로 연결하지 않는다. 현재 앱은 기록·챌린지 기능과
-신호 준비 중 화면을 제공하며, 유효한 모델 입력 설문은 제품에 연결되어 있지 않다.
+대체하거나 인과적 변화로 연결하지 않는다. 이 기록 당시 앱은 기록·챌린지 기능과
+신호 준비 중 화면을 제공했으며, 유효한 모델 입력 설문은 제품에 연결되어 있지 않다.
 
 [목적별 경로와 자료 역할](model-release-readiness.md#목적-선택-현재-계약과-후속-경로)는
 현재 횡단면 선별(A), 새 종단 자료가 필요한 미래 발병 연구(B), 반복 측정과 신호

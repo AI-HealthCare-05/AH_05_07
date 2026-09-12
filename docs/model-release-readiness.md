@@ -1,4 +1,4 @@
-# SK7 모델 출시 준비 판정 계약 초안
+# HISTORICAL — SK7 모델 출시 준비 판정 계약 초안
 
 > **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
 > research/planning checkpoint named below. It is not current product, Model V2
@@ -6,11 +6,14 @@
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
 > use the [deployment SSOT](deployment-ssot.md).
+>
+> Any `current` / `현재` wording below is relative to this historical checkpoint,
+> not a statement about current canonical `main`.
 
 
 Issue #221에서 작성한 출시 준비 초안을 고도화 Issue #230에서 구체화한다.
 이번 설계 기준은 PR #227 병합 `c46c772486a30319e594dbb9cf555263d5fba1a9`이다.
-현재 validation 결과를 **이미 본 뒤** 작성한 계약이며, 기존 결과를 보기 전에
+이 기록 당시 validation 결과를 **이미 본 뒤** 작성한 계약이며, 기존 결과를 보기 전에
 정한 기준이라고 주장하지 않는다. 문서 승인과 모델 선택·test 실행·직렬화·운영
 출시 승인은 각각 별도다. 새 수치 통과선을 만들지 않는다. S4는 closeout-ready이며,
 아래 결정은 모델 검증·출시 승인을 뜻하지 않는다.
