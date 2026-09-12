@@ -1,4 +1,4 @@
-# NHANES feature semantics — preparation version 2
+# HISTORICAL — NHANES feature semantics — preparation version 2
 
 > **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
 > research/planning checkpoint named below. It is not current product, Model V2
@@ -6,13 +6,16 @@
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
 > use the [deployment SSOT](deployment-ssot.md).
+>
+> Any `current` / `현재` wording below is relative to this historical checkpoint,
+> not a statement about current canonical `main`.
 
 
 Reviewed against CDC/NCHS codebooks on 2026-09-05. The manifest is executable;
 this table explains the source meanings and the input contract required before
 release. Source choices are preserved, not quietly substituted with new questions.
 
-| Predictor | Source meaning | Preparation | Required future input / current mismatch |
+| Predictor | Source meaning | Preparation | Required future input / checkpoint mismatch |
 | --- | --- | --- | --- |
 | RIAGENDR | Recorded sex code 1/2 | Categorical, missing=-1 | Versioned 1/2 source mapping; not inferred from identity |
 | RIDAGEYR | Age at screening; 80 means 80+ | Numeric; restrict to adult 18..80 coded values | Adult age; explicitly top-code 80+ before inference |

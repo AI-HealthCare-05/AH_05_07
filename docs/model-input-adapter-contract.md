@@ -1,4 +1,4 @@
-# SK7 입력 adapter 계약 초안
+# HISTORICAL — SK7 입력 adapter 계약 초안
 
 > **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
 > research/planning checkpoint named below. It is not current product, Model V2
@@ -6,6 +6,9 @@
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
 > use the [deployment SSOT](deployment-ssot.md).
+>
+> Any `current` / `현재` wording below is relative to this historical checkpoint,
+> not a statement about current canonical `main`.
 
 
 Issue #221의 초안을 고도화 Issue #230에서 구현 인계 조건까지 구체화한 설계 문서다.
@@ -13,19 +16,19 @@ Issue #221의 초안을 고도화 Issue #230에서 구현 인계 조건까지 �
 실행 가능한 adapter/DTO/OpenAPI 변경이 아니다.
 원문 직접 대조 후 보완한 질문과 별도 발견 사항은
 [입력 질문 검토 패키지](input-question-review.md)에 기록한다. 한국어 번역·지원 대상
-승인은 여전히 대기이며 이 문서의 데이터 계약을 변경한 것은 아니다.
+승인은 이 기록 당시 대기 상태였으며 이 문서의 데이터 계약을 변경한 것은 아니다.
 [semantics version 2](data-feature-semantics.md)와 manifest의 순서는
 `RIAGENDR, RIDAGEYR, BMXBMI, PAQ605, PAQ620, SMQ020, ALQ111, SLD012`이다.
 [legacy DTO](../app/dtos/risk_signal.py)는 sex 1..2, age_years 18..120,
 bmi 10..80, physical_activity_days 0..7, smoking_status 1..3,
 alcohol_frequency 0..7, sleep_hours 0..24를 받지만 실제 의미 동등성을 보장하지
-않는다. [현재 route](../app/apis/v1/risk_signal_routers.py)는 검증된 요청에도
+않는다. [당시 legacy route](../app/apis/v1/risk_signal_routers.py)는 검증된 요청에도
 503 model_not_ready를 반환한다. 잘못된 요청의 422 동작도 유지한다.
-현재 web은 기록/챌린지와 신호 준비 중 화면이며 이 모델 설문에 연결되지 않았다.
+이 기록 당시 web은 기록/챌린지와 신호 준비 중 화면이었으며 이 모델 설문에 연결되지 않았다.
 
-## 원자료 의미와 현재 입력의 대조
+## 원자료 의미와 당시 입력의 대조
 
-아래 범위는 기존 manifest의 분석 계약이다. 모든 대응은 현재 **미지원**이며,
+아래 범위는 기존 manifest의 분석 계약이다. 이 체크포인트에서는 모든 대응을 **미지원**으로 기록했으며,
 후보 대응이 있다는 뜻을 활성화 승인으로 읽지 않는다. 원문 질문의 한국어
 의미 요약은 [기존 semantics와 연결된 CDC codebook](data-feature-semantics.md)에
 근거하며, 아래 질문 초안은 검증된 번역이 아니다.

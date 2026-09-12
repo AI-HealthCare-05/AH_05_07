@@ -1,4 +1,4 @@
-# Model promotion gate
+# HISTORICAL — Model promotion gate
 
 > **Lifecycle: HISTORICAL PRE-MODEL-V2 RECORD.** This file preserves the
 > research/planning checkpoint named below. It is not current product, Model V2
@@ -6,10 +6,13 @@
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
 > use the [deployment SSOT](deployment-ssot.md).
+>
+> Any `current` / `현재` wording below is relative to this historical checkpoint,
+> not a statement about current canonical `main`.
 
 
-The logistic-regression baseline remains the default under the comparison policy.
-No selected or serialized release artifact currently exists.
+At this checkpoint, the logistic-regression baseline was the default under the comparison policy.
+No selected or serialized release artifact existed at this checkpoint.
 
 A histogram-gradient-boosting candidate may replace it only when all conditions hold on the frozen validation split:
 
