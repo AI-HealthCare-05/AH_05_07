@@ -239,6 +239,7 @@ test("synthetic signed-in session blocks a duplicate save and does not claim an 
 
 test("synthetic signed-in refresh failure retains the previously loaded records", async ({ page }) => {
   let windowRequests = 0;
+  let mutations = 0;
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -251,6 +252,7 @@ test("synthetic signed-in refresh failure retains the previously loaded records"
       await route.fulfill({ status: 204, headers });
       return;
     }
+    if (request.method() !== "GET") mutations += 1;
     if (url.pathname === "/api/v1/observations/window") {
       windowRequests += 1;
       const isInitialLoad = windowRequests === 1;
@@ -269,9 +271,17 @@ test("synthetic signed-in refresh failure retains the previously loaded records"
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
   await page.getByRole("button", { name: "새로고침" }).click();
 
-  await expect(page.getByRole("status")).toContainText("새로고침하지 못했어요. 지금 보이는 기록은 그대로 유지됩니다.");
+  const staleNotice = page.getByRole("status");
+  await expect(staleNotice).toContainText("최신 여부 미확인");
+  await expect(staleNotice).toContainText("마지막으로 불러온 기록을 보여드리고 있어요.");
+  await expect(staleNotice).toContainText("최근 변경이 반영되지 않았을 수 있어요.");
+  await expect(staleNotice.getByRole("button", { name: "다시 불러오기", exact: true })).toBeEnabled();
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
+  await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+  await expect(page.locator('[data-scene="S13"]')).toHaveCount(0);
+  await page.waitForTimeout(200);
   expect(windowRequests).toBe(2);
+  expect(mutations).toBe(0);
 });
 
 test("synthetic signed-in session reopens the selected prior window without a mutation", async ({ page }) => {

@@ -256,6 +256,8 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
     await expect(page.getByText('이전 7일 · 읽기 전용', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '혈압 기록하기', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '7일 챌린지 시작하기', exact: true })).toHaveCount(0);
+    await expect(page.locator('[data-read-only-window]')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '현재 7일 보기', exact: true })).toHaveCount(1);
     expect(windows).toEqual(['2026-08-29']);
     await page.getByRole('button', { name: '현재 7일 보기', exact: true }).press('Enter');
     await expect(page.getByRole('heading', { name: '이 기간에는 아직 기록이 없어요.', exact: true })).toBeVisible();
