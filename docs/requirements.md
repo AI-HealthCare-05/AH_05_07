@@ -1,8 +1,8 @@
 # Requirements
 
-SK7 (상균7데이즈) currently provides a seven-day record of home blood-pressure observations and one lifestyle challenge. A versioned **입력 기반 위험군 선별 신호** is a gated target; the current product remains `model_not_ready`. Model output, measured blood pressure, and challenge adherence remain separate facts. The service does not provide diagnosis, treatment, prevention, or causal-improvement claims.
+SK7 (상균7데이즈) currently provides a seven-day record of home blood-pressure observations and one lifestyle challenge. Authenticated Model V2 production paths provide a versioned **입력 기반 위험군 선별 신호** through the frozen product contract: the product response projects only `schema_version` and `product_wording`, while raw Model V2 input and internal numeric inference results remain transient and are not stored or exposed. The legacy `/api/v1/risk-signal` scaffold remains separately `model_not_ready`. Model output, measured blood pressure, and challenge adherence remain separate facts. The service does not provide diagnosis, treatment, prevention, or causal-improvement claims.
 
-[MVP1 closeout](mvp1-closeout.md) maps these internal requirements to the Talos original requirements and evidence. Neither the honest not-ready fallback nor this internal P0 scope establishes client acceptance of missing future-onset prediction and prediction trends. Talos's external API P95 3-second criterion remains unverified; the small UI timing baseline does not satisfy it.
+[MVP1 closeout](mvp1-closeout.md) maps these internal requirements to the Talos original requirements and evidence. The current Model V2 product projection and this internal P0 scope do not establish client acceptance of missing future-onset prediction and prediction trends. Talos's external API P95 3-second criterion remains unverified; the small UI timing baseline does not satisfy it.
 
 ## Status legend
 
@@ -22,15 +22,16 @@ product-requirements authority after review and merge.
 | ID | Priority | Status | Actor | Contract | Exception / acceptance |
 |---|---|---|---|---|---|
 | FR-00 | P0 | Implemented | User | Continue with a Supabase email magic link and restore the browser session after reload. | Expired links and expired sessions must lead to a clear recovery action. |
-| FR-01 | P0 | Planned | User | Submit baseline demographic and lifestyle inputs for a versioned risk assessment. | Reject missing, out-of-range, extra, or unit-ambiguous inputs. The [8-feature adapter draft](model-input-adapter-contract.md) records current unsupported mappings; it is not activated. |
-| FR-02 | P0 | Scaffold | System | Return risk band, probability, model version, and disclaimer only from a verified model artifact. | Return no provisional score when artifact, metadata, or split digest validation fails. [Release readiness](model-release-readiness.md) remains blocked; published validation evidence does not enable this path. |
+| FR-01 | P0 | Implemented | User | Submit validated Model V2 product inputs for a versioned 입력 기반 위험군 선별 신호. | Reject missing, out-of-range, extra, or unit-ambiguous inputs. The authenticated S11 product path is `/api/v1/model-v2/product-score`; raw product input and inference result are not persisted. |
+| FR-02 | P0 | Implemented | System | Return only `schema_version` and `product_wording` from the frozen Model V2 product contract. | Do not expose or persist numeric score, probability, or band. If Model V2 is disabled, unavailable, or cannot use its artifact boundary, return `503 model_not_ready` without numeric output. The legacy `/api/v1/risk-signal` scaffold remains separately unavailable. |
 | FR-03 | P0 | Implemented | User | Record morning/evening systolic and diastolic observations with a measurement checklist. | The web shows a concise pre-measurement guide before the fields; it is not stored, does not block saving, and does not provide diagnosis, treatment, prevention, or emergency guidance. |
 | FR-04 | P0 | Implemented | User | Select one walking, sleep, or low-sodium challenge and check in for seven days. | Exactly one `active` challenge is allowed per user; its action can change only before the first check-in, and every check-in must belong to that user and the seven-day window. |
-| FR-05 | P0 | Partial | System | Show the risk signal, measured blood pressure, and challenge adherence as clearly separated seven-day series. | Issues #184–#188 establish separate fact lanes, current/prior selection, and focused record detail. Issue #190 places those contracts in the S01–S14 Calm Clay Journey flow with separate Today, Records, Seven days, and honest signal-not-ready screens. A verified artifact is still required before any model result appears. The view must not imply that one series caused or improved another. |
+| FR-05 | P0 | Partial | System | Keep the 입력 기반 위험군 선별 신호, measured blood pressure, challenge participation, and legacy records as separate facts across the current, previous, and ended seven-day views. | Living Week trail, day detail/summary, record explorer, and human-readable seven-day report reuse already-read seven-day facts without merging them into a score or causal/improvement conclusion. Model V2 remains separate from BP and challenge history. |
 | FR-06 | P1 | Planned | User | Submit structured result feedback for review. | Review data is never an online-training label. |
-| FR-07 | P0 | Partial | User | Read, edit, delete, and export only unexpired records owned by the signed-in user. | RLS hides an owned record at its 30-day `expires_at`; daily cron removes it later as physical cleanup. Issue #188 adds browse and focused detail states over the existing observation-window read path. Web connects current owned BP read, edit, explicit-confirmation delete, and selected-seven-day JSON export; current active-challenge check-ins support status-only edit and explicit-confirmation delete. Prior windows, legacy events, expired challenge history, and active-challenge selection remain read-only. |
+| FR-07 | P0 | Partial | User | Read, edit, delete, and export only unexpired records owned by the signed-in user. | RLS hides an owned record at its 30-day `expires_at`; daily cron removes it later as physical cleanup. Web connects current owned BP read, edit, explicit-confirmation delete, and selected-seven-day JSON export; current active-challenge check-ins support status-only edit and explicit-confirmation delete. Prior and ended seven-day periods are available for read-only review inside their retained data window. |
 | FR-08 | P0 | Partial | System | Present truthful loading, empty, session-expiry, duplicate, network-failure, and retry states. | Web distinguishes successful save, session recovery, input correction, and unconfirmed persistence. Issue #190 gives confirmed-save, confirmed-empty, initial-load failure, stale refresh, and signal-not-ready their own semantic presentation while retaining the no-automatic-retry boundary. Production visual evidence remains. |
-| FR-09 | P1 | Planned | System | If measurement demonstrates that verified model work cannot finish within the accepted request budget, expose a persisted assessment-job lifecycle separately from observations and challenge adherence. | Requires an ADR, a measured trigger, PostgreSQL-persisted state/result, idempotency, timeout/retry policy, and a sanitized status contract. Until then, no worker or queue is introduced and the risk-signal path remains honestly not ready. |
+| FR-09 | P1 | Planned | System | If measurement demonstrates that a future distinct verified-model workload cannot finish within the accepted request budget, expose a persisted assessment-job lifecycle separately from observations and challenge adherence. | Requires a separate approved product/data contract, an ADR, a measured trigger, PostgreSQL-persisted state/result, idempotency, timeout/retry policy, and a sanitized status contract. Until then, no worker or queue is introduced; this conditional path does not change the frozen Model V2 product contract. |
+| FR-10 | P1 | Implemented | User | After two-step confirmation, delete the signed-in user's Auth account and dependent product records, then return the browser to an anonymous state. | `DELETE /api/v1/account` implementation and production activation are complete. The separately approved signed-in synthetic A/B destructive production gate remains unexercised, so that evidence gap must not be presented as verified. |
 
 ## Non-functional requirements
 
@@ -50,7 +51,7 @@ product-requirements authority after review and merge.
 
 ### P0 — pilot contract
 
-- Verified input-based risk-group screening signal or an honest not-ready state
+- Frozen Model V2 input-based risk-group screening signal with the approved two-field product projection; keep the legacy risk-signal scaffold separate and honestly unavailable
 - One active seven-day challenge and daily check-ins
 - BP observation checklist, create/read/edit/delete/export
 - Separated seven-day view with non-causal trend presentation, empty states, and evidence captures
@@ -59,7 +60,7 @@ product-requirements authority after review and merge.
 
 ### P1 — after P0
 
-- Account closure and data-retention explanation
+- Complete the separately approved production synthetic verification gap for self-service account removal and keep the data-retention explanation current
 - Structured feedback review flow
 - Accessibility and onboarding hardening
 - Conditional asynchronous model-job path only after the ADR and measured requirement
