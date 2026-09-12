@@ -1,0 +1,66 @@
+/* Screen layout reflows as a document; only the print medium has page dimensions. */
+[data-living-week-app][hidden] { display: none; }
+.living-week-report { width: min(100%, 58rem); margin-inline: auto; padding: 1.5rem clamp(.75rem, 3vw, 2rem) 3rem; line-height: 1.65; }
+.week-report-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; margin-bottom: 1.25rem; }
+.week-report-toolbar p { flex-basis: 100%; color: var(--sk7-ink-muted); font-size: .875rem; }
+.week-report-document { border: 1px solid var(--sk7-border); border-radius: 1.25rem; background: var(--sk7-cream-50); padding: clamp(1rem, 4vw, 3rem); box-shadow: var(--sk7-shadow-soft); }
+.week-report-header { display: grid; gap: .8rem; padding-bottom: 1.75rem; border-bottom: 2px solid var(--sk7-focus); }
+.week-report-brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; font-weight: 800; letter-spacing: .08em; color: var(--sk7-focus); }
+.week-report-brand span { font-size: .875rem; letter-spacing: 0; }
+.week-report-header h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); }
+.week-report-range { font-weight: 700; }
+.week-report-generated { color: var(--sk7-ink-muted); font-size: .875rem; }
+.week-report-freshness { margin-top: 1.5rem; border: 1px solid currentColor; border-left-width: 4px; padding: .8rem 1rem; }
+.week-report-summary, .week-report-daily { margin-top: 2rem; }
+.week-report-document h2 { margin-bottom: 1rem; }
+.week-report-summary-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.week-report-summary-columns > section { min-width: 0; border-top: 1px solid var(--sk7-border); padding-top: 1rem; }
+.week-report-document dl { margin: .5rem 0; }
+.week-report-document dl > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem .75rem; }
+.week-report-document dt { color: var(--sk7-ink-muted); }
+.week-report-document dd { margin: 0; font-weight: 700; }
+.week-report-summary-columns p { font-size: .875rem; color: var(--sk7-ink-muted); }
+.week-report-day { padding: 1.15rem 0; border-top: 1px solid var(--sk7-border); }
+.week-report-day > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
+.week-report-day > header p { color: var(--sk7-ink-muted); font-size: .875rem; }
+.week-report-day-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem 1.5rem; margin-top: .5rem; }
+.week-report-day-facts > * { min-width: 0; }
+.week-report-day-facts ul { padding-left: 1.2rem; }
+.week-report-day-facts li + li { margin-top: .25rem; }
+.week-report-day-facts p { color: var(--sk7-ink-muted); }
+.week-report-footer { display: grid; gap: .65rem; border-top: 2px solid var(--sk7-focus); margin-top: 1rem; padding-top: 1rem; font-size: .875rem; }
+.living-week-report-action { display: grid; gap: .5rem; justify-items: start; }
+.living-week-report-action small { max-width: 36rem; color: var(--sk7-ink-muted); }
+
+@media screen and (max-width: 40rem) {
+  .week-report-summary-columns, .week-report-day-facts { grid-template-columns: minmax(0, 1fr); }
+  .week-report-toolbar > button { flex: 1 1 100%; }
+}
+
+@page living-week-report { size: A4; margin: 16mm; }
+@media print {
+  /* Keep the existing app mounted for local date focus, but out of the document. */
+  body:has(.living-week-report) { background: white; min-width: 0; min-height: 0; }
+  html:has(.living-week-report) { background: white; min-width: 0; }
+  body:has(.living-week-report) [data-living-week-app],
+  .living-week-report .week-report-toolbar,
+  .living-week-report button { display: none !important; }
+  .living-week-report { page: living-week-report; width: auto; max-width: none; margin: 0; padding: 0; color: #000; font-size: 10.5pt; line-height: 1.5; }
+  .week-report-document { border: 0; border-radius: 0; padding: 0; box-shadow: none; background: white; }
+  .week-report-document * { color: #000 !important; box-shadow: none !important; text-shadow: none !important; }
+  .week-report-document h1 { font-size: 23pt; }
+  .week-report-document h2 { font-size: 14pt; margin-bottom: 3mm; break-after: avoid; }
+  .week-report-document h3 { font-size: 11.5pt; }
+  .week-report-header { gap: 2mm; padding-bottom: 5mm; border-color: #000; }
+  .week-report-summary, .week-report-daily { margin-top: 6mm; }
+  .week-report-summary-columns, .week-report-day-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5mm; }
+  .week-report-summary-columns > section { padding-top: 2mm; border-color: #777; }
+  .week-report-document dl { margin: 1mm 0; }
+  .week-report-day { padding: 3mm 0; border-color: #777; break-inside: avoid; page-break-inside: avoid; }
+  .week-report-header, .week-report-summary, .week-report-footer, .week-report-freshness { break-inside: avoid; }
+  .week-report-day-facts { margin-top: 2mm; }
+  .week-report-document p, .week-report-document li { orphans: 2; widows: 2; }
+  .week-report-footer { margin-top: 3mm; padding-top: 3mm; border-color: #000; }
+  .week-report-generated, .week-report-brand span, .week-report-summary-columns p,
+  .week-report-day > header p, .week-report-footer { font-size: 9pt; }
+}
