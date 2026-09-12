@@ -175,10 +175,11 @@ test("S10 midnight advances current calendar scenery while the prior record rang
 });
 
 for (const screen of ["S02", "S10"]) for (const failure of ["chunk", "GLB"]) test(`${screen} ${failure} failure has one fallback and motion changes do not retry failed 3D`, async ({ page }) => {
-  let failedRequests = 0;
+  let failedRequests = 0, navigations = 0;
+  page.on("request", request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations++; });
   await page.route(failure === "chunk" ? "**/assets/ThreeSceneRenderer-*.js" : "**/*.glb", route => { failedRequests++; return route.abort(); });
   await page.goto(`/?fixture=VP-10&screen=${screen}`);
-  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await page.locator(".living-visual-stage").evaluate(element => element.scrollIntoView());
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
   await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(1);
@@ -187,7 +188,8 @@ for (const screen of ["S02", "S10"]) for (const failure of ["chunk", "GLB"]) tes
     await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
     await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
   }
-  expect(failedRequests).toBe(1);
+  expect(failedRequests).toBe(failure === "chunk" ? 2 : 1);
+  expect(navigations).toBe(failure === "chunk" ? 2 : 1);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   await page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "기록 찾아보기", exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();

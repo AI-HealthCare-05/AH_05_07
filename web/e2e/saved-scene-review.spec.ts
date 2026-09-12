@@ -34,7 +34,7 @@ test.beforeAll(async ({ request }) => {
 async function setup(page: Page) {
   await page.route(assetUrl, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body: assetBody }));
   const state = {
-    posts: 0, windows: 0, urls: [] as string[], errors: [] as string[],
+    posts: 0, windows: 0, navigations: 0, urls: [] as string[], errors: [] as string[],
     outcome: "ok" as "ok" | "unknown" | "conflict" | "invalid-json",
     saveGate: null as ReturnType<typeof deferred> | null,
     refreshGate: null as ReturnType<typeof deferred> | null,
@@ -56,7 +56,10 @@ async function setup(page: Page) {
     }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-saved-scene-celebrate-count"] });
     Object.defineProperty(window, "__savedSceneEvidence", { value: () => ({ starts, rafs, mediaChanges }) });
   });
-  page.on("request", request => state.urls.push(request.url()));
+  page.on("request", request => {
+    state.urls.push(request.url());
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) state.navigations++;
+  });
   page.on("pageerror", error => state.errors.push(error.message));
   await page.route("http://e2e.invalid/**", async route => {
     const req = route.request();
@@ -267,13 +270,12 @@ for (const when of ["before-save", "loading", "playing", "refresh-pending"] as c
   });
 }
 
-for (const failure of ["glb", "chunk", "corrupt", "webgl", "context", "load-timeout"] as const) {
+for (const failure of ["glb", "corrupt", "webgl", "context", "load-timeout"] as const) {
   test(`${failure} stays at CSS across motion changes and return; semantic controls survive`, async ({ page }) => {
     const state = await setup(page);
     const gate = deferred();
     if (failure === "glb") await page.route(assetUrl, route => route.abort());
     if (failure === "corrupt") await page.route(assetUrl, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body: "invalid" }));
-    if (failure === "chunk") await page.route("**/SavedSceneRenderer-*.js", route => route.abort());
     if (failure === "load-timeout") await page.route(assetUrl, async route => { await gate.promise; await route.fallback(); });
     if (failure === "webgl") await page.addInitScript(() => {
       const original = HTMLCanvasElement.prototype.getContext;
@@ -304,6 +306,25 @@ for (const failure of ["glb", "chunk", "corrupt", "webgl", "context", "load-time
     expect(state.posts).toBe(1);
   });
 }
+
+test("saved-scene chunk failure reloads once without restoring the confirmed-save presentation", async ({ page }) => {
+  const state = await setup(page);
+  let chunkRequests = 0;
+  await page.route("**/SavedSceneRenderer-*.js", route => { chunkRequests++; return route.abort(); });
+  await openForm(page); await submit(page);
+
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
+  await expect(runtime(page)).toHaveCount(0);
+  await expectStarts(page, 0);
+  expect(state.posts).toBe(1);
+  expect(state.urls.filter(url => url === assetUrl)).toEqual([]);
+
+  await page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "기록 찾아보기", exact: true }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+  expect(chunkRequests).toBe(1);
+  expect(state.navigations).toBe(2);
+});
 
 for (const label of ["기록함", "건너뜀"]) test(`confirmed ${label} uses the same one-shot presentation`, async ({ page }) => {
   const state = await setup(page);
