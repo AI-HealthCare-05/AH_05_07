@@ -66,6 +66,9 @@ test("production S05 loads bear-lite once after confirmed save and transitions c
 
   await page.goto("/?e2e=signed-in&screen=S04&companion_species=cat&companion_variant=standard&companion_clip=greet");
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await expect.poll(() => requests.filter((url) => /CompanionReviewRenderer/i.test(url)).length).toBe(1);
+  expect(companionRequests(requests)).toEqual([]);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
   const assetResponsePromise = page.waitForResponse((response) => response.url() === productionAssetUrl);
   await saveFromS04(page);
   const assetResponse = await assetResponsePromise;
