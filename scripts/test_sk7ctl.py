@@ -87,6 +87,64 @@ class Sk7ctlTests(unittest.TestCase):
         plan = sk7ctl.verification_plan(["api/routes.py"], lane)
         self.assertTrue(any("cannot establish PASS" in item["scope"] for item in plan))
 
+    def test_docs_only_uses_diff_check_without_build(self) -> None:
+        plan = sk7ctl.verification_plan(["AGENTS.md", "docs/note.md"], "routine")
+        self.assertIn("git diff --check -- <task paths>", self._displays(plan))
+        self.assertNotIn("cd web && npm run build", self._displays(plan))
+        self.assertTrue(any(item["display"] == "web build" and item["cost"] == "SKIP" for item in plan))
+
+    def test_saved_scene_e2e_only_selects_targeted_suite_without_build(self) -> None:
+        plan = sk7ctl.verification_plan(["web/e2e/saved-scene-review.spec.ts"], "routine")
+        self.assertIn("cd web && npm run test:e2e:saved-scene", self._displays(plan))
+        self.assertNotIn("cd web && npm run build", self._displays(plan))
+        targeted = next(item for item in plan if item["display"].endswith("test:e2e:saved-scene"))
+        self.assertEqual(targeted["cost"], "EXPENSIVE")
+        self.assertFalse(targeted["run"])
+
+    def test_multiple_e2e_specs_select_and_dedupe_targeted_suites(self) -> None:
+        plan = sk7ctl.verification_plan(
+            [
+                "web/e2e/diorama-scene-review.spec.ts",
+                "web/e2e/living-scene-review.spec.ts",
+                "web/e2e/saved-scene-review.spec.ts",
+            ],
+            "routine",
+        )
+        displays = self._displays(plan)
+        self.assertEqual(displays.count("cd web && npm run test:e2e:scene"), 1)
+        self.assertEqual(displays.count("cd web && npm run test:e2e:saved-scene"), 1)
+
+    def test_web_runtime_source_includes_build(self) -> None:
+        plan = sk7ctl.verification_plan(["web/src/App.tsx"], "routine")
+        self.assertIn("cd web && npm run build", self._displays(plan))
+
+    def test_scene_named_e2e_spec_does_not_add_manifest_check(self) -> None:
+        plan = sk7ctl.verification_plan(["web/e2e/diorama-scene-review.spec.ts"], "routine")
+        self.assertNotIn("cd web && npm run verify:scene-manifest", self._displays(plan))
+
+    def test_unknown_e2e_spec_requires_manual_target_selection(self) -> None:
+        plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine")
+        requirement = next(item for item in plan if item["display"] == "targeted Playwright selection required")
+        self.assertEqual(requirement["cost"], "EXPENSIVE")
+        self.assertFalse(requirement["run"])
+        self.assertIn("new-flow.spec.ts", requirement["scope"])
+
+    def test_scene_runtime_selects_manifest_build_browser_and_manual_device_checks(self) -> None:
+        plan = sk7ctl.verification_plan(["web/src/components/scene/ThreeSceneRenderer.tsx"], "routine")
+        displays = self._displays(plan)
+        self.assertIn("cd web && npm run verify:scene-manifest", displays)
+        self.assertIn("cd web && npm run build", displays)
+        self.assertIn("cd web && npm run test:e2e:scene", displays)
+        device = next(item for item in plan if item["display"].startswith("representative Android/iOS"))
+        self.assertFalse(device["run"])
+
+    def test_routine_plan_skips_full_browser_matrix(self) -> None:
+        plan = sk7ctl.verification_plan(["web/src/App.tsx"], "routine")
+        full_matrix = [item for item in plan if item["display"] == "full Browser E2E matrix"]
+        self.assertEqual(len(full_matrix), 1)
+        self.assertEqual(full_matrix[0]["cost"], "SKIP")
+        self.assertFalse(full_matrix[0]["run"])
+
     def test_preexisting_protected_dirty_is_excluded_from_routine_task_lane(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repo = self._repo(Path(temporary))
@@ -140,6 +198,26 @@ class Sk7ctlTests(unittest.TestCase):
             self.assertEqual(task["task_paths"], ["scripts/sk7ctl.py", "scripts/test_sk7ctl.py"])
             self.assertEqual(task["preexisting_dirty_paths"], ["infra/legacy-web-redirect/worker.ts"])
 
+    def test_superseded_guard_and_expired_hypothesis_do_not_enter_new_active_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = self._repo(Path(temporary))
+            state = sk7ctl.empty_state()
+            old_task = self._task()
+            old_task["guards"] = ["temporary incident guard"]
+            old_task["status"] = "superseded"
+            new_task = self._task()
+            new_task.update({"id": "task-2", "title": "new task", "guards": []})
+            state["tasks"] = [old_task, new_task]
+            state["active_task"] = "task-2"
+            state["expired_hypotheses"] = ["temporary threshold 0.7"]
+
+            handoff = sk7ctl.render_handoff(repo, state)
+            active = handoff.split("## ACTIVE", 1)[1].split("## VERIFIED", 1)[0]
+            expired = handoff.split("## EXPIRED / DO NOT CARRY FORWARD", 1)[1].split("## NEXT", 1)[0]
+            self.assertNotIn("temporary incident guard", active)
+            self.assertNotIn("temporary threshold 0.7", active)
+            self.assertIn("temporary threshold 0.7", expired)
+
     def test_protected_path_in_task_scope_infers_protected(self) -> None:
         task = self._task()
         task["task_paths"] = ["infra/legacy-web-redirect"]
@@ -188,6 +266,10 @@ class Sk7ctlTests(unittest.TestCase):
             path.write_text(json.dumps({**sk7ctl.empty_state(), "schema_version": 999}), encoding="utf-8")
             with self.assertRaises(sk7ctl.Sk7Error):
                 sk7ctl.StateStore(path).load()
+
+    @staticmethod
+    def _displays(plan: list[dict[str, object]]) -> list[object]:
+        return [item["display"] for item in plan]
 
     @staticmethod
     def _task() -> dict[str, object]:

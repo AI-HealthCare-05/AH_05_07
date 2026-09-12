@@ -53,6 +53,26 @@ or a new dependency/topology:
   durable decision with meaningful alternatives.
 - Record deployment/rollback evidence only when runtime state actually changes.
 
+### Verification lifecycle
+
+- PR/local verification selects the smallest affected checks: docs-only uses
+  diff/static checks, test-only uses its targeted test, web runtime source uses
+  a build plus directly related tests, and scene/companion runtime uses its
+  directly related scene test plus a physical spot-check only when needed. The
+  full browser matrix is skipped by default.
+- On `main`, required CI owns broad regression when configured; do not duplicate
+  the same full suite locally. Classify a red CI run as product regression,
+  test-contract mismatch, or transient rather than ignoring it.
+- Release verification may use the full browser matrix and required physical
+  device gates. Do not require release evidence for a routine PR.
+- `INVARIANT` is a durable product/security/health contract. `TASK GUARD` is
+  current-task-only and must not carry forward. `HYPOTHESIS` is experimental and
+  expires when falsified. `EVIDENCE` is valid only for its recorded SHA,
+  environment, and scope.
+- An incident becomes a durable rule only with reusable value, a clear scope,
+  and human review. Completed audits, expired hypotheses, and old thresholds are
+  not startup requirements for a new task.
+
 ## Shared defaults
 
 - Keep `main` runnable and merge through a PR with passing required `lint` and

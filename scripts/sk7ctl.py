@@ -40,6 +40,17 @@ TASK_KEYS = {
 ATTEMPT_KEYS = {"approach", "hypothesis"}
 VERIFICATION_KEYS = {"lane", "files", "out_of_scope_files", "results"}
 RESULT_KEYS = {"command", "result", "scope"}
+E2E_SUITE_BY_SPEC = {
+    "saved-scene-review.spec.ts": "npm run test:e2e:saved-scene",
+    "diorama-scene-review.spec.ts": "npm run test:e2e:scene",
+    "living-scene-review.spec.ts": "npm run test:e2e:scene",
+    "companion-review.spec.ts": "npm run test:e2e:review",
+}
+BROWSER_SUITE_COMMANDS = (
+    "npm run test:e2e:saved-scene",
+    "npm run test:e2e:scene",
+    "npm run test:e2e:review",
+)
 
 
 class Sk7Error(RuntimeError):
@@ -477,8 +488,89 @@ def cmd_plan(args: argparse.Namespace, root: Path, store: StateStore) -> int:  #
     return 0
 
 
+def _mapped_e2e_suites(paths: Sequence[str]) -> tuple[set[str], list[str]]:
+    selected = {E2E_SUITE_BY_SPEC[Path(path).name] for path in paths if Path(path).name in E2E_SUITE_BY_SPEC}
+    unknown = [path for path in paths if Path(path).name not in E2E_SUITE_BY_SPEC]
+    return selected, unknown
+
+
+def _scene_runtime_suites(paths: Sequence[str]) -> set[str]:
+    selected: set[str] = set()
+    for path in paths:
+        lowered = path.lower()
+        if any(marker in lowered for marker in ("savedscene", "saved-scene", "saved_scene")):
+            selected.add("npm run test:e2e:saved-scene")
+        elif "scene" in lowered or "manifest" in lowered:
+            selected.add("npm run test:e2e:scene")
+        if "companion" in lowered:
+            selected.add("npm run test:e2e:review")
+    return selected
+
+
+def _browser_suite_plan(commands: set[str]) -> list[dict[str, Any]]:
+    return [
+        {
+            "cost": "EXPENSIVE",
+            "display": f"cd web && {command}",
+            "cwd": "web",
+            "argv": command.split(),
+            "run": False,
+            "scope": "directly affected browser behavior",
+        }
+        for command in BROWSER_SUITE_COMMANDS
+        if command in commands
+    ]
+
+
+def _skip_plan(docs_only: bool, e2e_only: bool, scene_runtime: bool) -> list[dict[str, Any]]:
+    plan: list[dict[str, Any]] = []
+    build_reason = "docs-only change" if docs_only else "test-only change" if e2e_only else None
+    if build_reason:
+        plan.append(
+            {
+                "cost": "SKIP",
+                "display": "web build",
+                "cwd": "web",
+                "argv": [],
+                "run": False,
+                "scope": build_reason,
+            }
+        )
+    plan.append(
+        {
+            "cost": "SKIP",
+            "display": "full Browser E2E matrix",
+            "cwd": "web",
+            "argv": [],
+            "run": False,
+            "scope": "PR policy; release/main gate only",
+        }
+    )
+    if not scene_runtime:
+        plan.append(
+            {
+                "cost": "SKIP",
+                "display": "physical-device matrix",
+                "cwd": ".",
+                "argv": [],
+                "run": False,
+                "scope": "no task-specific manual gate",
+            }
+        )
+    return plan
+
+
 def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
     plan: list[dict[str, Any]] = []
+    docs_only = bool(paths) and all(path.startswith("docs/") or path in {"README.md", "AGENTS.md"} for path in paths)
+    e2e_paths = [path for path in paths if path.startswith("web/e2e/")]
+    e2e_only = bool(paths) and len(e2e_paths) == len(paths)
+    web_runtime_paths = [
+        path for path in paths if path.startswith("web/src/") and path.endswith((".ts", ".tsx", ".css"))
+    ]
+    scene_runtime = any(
+        any(word in path.lower() for word in ("scene", "companion", "manifest")) for path in web_runtime_paths
+    )
     if paths:
         plan.append(
             {
@@ -515,12 +607,7 @@ def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
                 },
             ]
         )
-    web_product = any(path.startswith("web/") and path.endswith((".ts", ".tsx", ".css")) for path in paths)
-    scene_related = any(
-        path.startswith("web/") and any(word in path.lower() for word in ("scene", "companion", "manifest"))
-        for path in paths
-    )
-    if scene_related:
+    if scene_runtime:
         plan.append(
             {
                 "cost": "MODERATE",
@@ -531,7 +618,7 @@ def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
                 "scope": "scene manifest consistency",
             }
         )
-    if web_product:
+    if web_runtime_paths:
         plan.append(
             {
                 "cost": "MODERATE",
@@ -542,17 +629,34 @@ def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
                 "scope": "web TypeScript/CSS build",
             }
         )
-    if any(path.startswith("web/e2e/") for path in paths):
+
+    selected_suites, unknown_e2e = _mapped_e2e_suites(e2e_paths)
+    selected_suites.update(_scene_runtime_suites(web_runtime_paths))
+    plan.extend(_browser_suite_plan(selected_suites))
+    if unknown_e2e:
         plan.append(
             {
                 "cost": "EXPENSIVE",
-                "display": "targeted Playwright case selection required",
+                "display": "targeted Playwright selection required",
                 "cwd": "web",
                 "argv": [],
                 "run": False,
-                "scope": "directly affected browser behavior",
+                "scope": f"no deterministic suite mapping for {', '.join(unknown_e2e)}",
             }
         )
+
+    if scene_runtime:
+        plan.append(
+            {
+                "cost": "EXPENSIVE",
+                "display": "representative Android/iOS spot-check when required",
+                "cwd": ".",
+                "argv": [],
+                "run": False,
+                "scope": "manual gate for affected visual/device behavior; never automatic PASS",
+            }
+        )
+
     if lane == "protected":
         plan.append(
             {
@@ -564,6 +668,7 @@ def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
                 "scope": "protected boundary; routine checks cannot establish PASS",
             }
         )
+    plan.extend(_skip_plan(docs_only, e2e_only, scene_runtime))
     return plan
 
 
@@ -578,7 +683,7 @@ def cmd_verify(args: argparse.Namespace, root: Path, store: StateStore) -> int:
     print(f"LANE: {lane}")
     print("VERIFICATION PLAN:")
     for item in plan:
-        suffix = " [manual]" if not item["run"] else ""
+        suffix = " [manual]" if not item["run"] and item["cost"] != "SKIP" else ""
         print(f"- {item['cost']}: {item['display']} — {item['scope']}{suffix}")
     if not args.run:
         print("PLAN ONLY: no commands executed (use --run for CHEAP/MODERATE commands).")
@@ -674,7 +779,7 @@ def cmd_handoff(_args: argparse.Namespace, root: Path, store: StateStore) -> int
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sk7ctl", description="Deterministic SK7 workflow kernel v0.1")
+    parser = argparse.ArgumentParser(prog="sk7ctl", description="Deterministic SK7 workflow kernel v0.2")
     commands = parser.add_subparsers(dest="command", required=True)
     status = commands.add_parser("status", help="show repository and loop status without network access")
     status.add_argument("--refresh", action="store_true", help="fetch origin main before reporting")
