@@ -1,8 +1,25 @@
-# Living Journey Hybrid implementation checkpoint — 2026-09-10
+# HISTORICAL — Living Journey Hybrid implementation checkpoint — 2026-09-10
 
-Current checkout: `/Users/gom/Projects/AH_05_07`, branch `codex/living-journey-hybrid`, [Issue #390](https://github.com/AI-HealthCare-05/AH_05_07/issues/390), [draft PR #391](https://github.com/AI-HealthCare-05/AH_05_07/pull/391). Continue these existing artifacts. The restored checkpoint has already been applied and pushed; do not reapply its ZIP or create a duplicate Issue/PR.
+> **Lifecycle: HISTORICAL SCENE CHECKPOINT.** This file preserves the
+> 2026-09-10 implementation/evidence state for its recorded revisions. It is not
+> the current development branch, live queue, production-activation authority,
+> or instruction to resume PR #391. Start new work from current canonical `main`,
+> [project handoff fast-start](project-handoff.md#fast-start), and the current
+> [scene release gates](scene-release-gates.md).
+>
+> Any `current`, `next`, `open`, or similar status wording below is relative to
+> this historical checkpoint unless a newer authority is explicitly linked.
 
-This current status supersedes the original local-only/GitHub-403/browser-blocked notes. Historical details remain in Git and `scene-local-resume.md`. The user's original local `scene-next-task-handoff.md` is preserved separately as an untracked historical handoff.
+Historical checkout at this checkpoint: `/Users/gom/Projects/AH_05_07`, branch
+`codex/living-journey-hybrid`, [Issue #390](https://github.com/AI-HealthCare-05/AH_05_07/issues/390),
+[draft PR #391](https://github.com/AI-HealthCare-05/AH_05_07/pull/391). Those
+artifacts belong to the recorded 2026-09-10 work and must not be treated as the
+current branch/PR to continue.
+
+This checkpoint superseded the original local-only/GitHub-403/browser-blocked
+notes for that historical scope. Historical details remain in Git and
+`scene-local-resume.md`. A local `scene-next-task-handoff.md` may be retained as
+working history, but it is not repository SSOT or current startup authority.
 
 ## Completed review implementation
 
