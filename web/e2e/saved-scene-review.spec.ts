@@ -148,6 +148,10 @@ test("persistence and refresh pending keep S04; one confirmed event settles to i
   const state = await setup(page);
   state.saveGate = deferred(); state.refreshGate = deferred();
   await openForm(page);
+  await expect.poll(
+    () => state.urls.filter(url => /CompanionReviewRenderer/.test(url)).length,
+  ).toBe(1);
+  expect(glbs(state.urls)).toEqual([]);
   await submit(page);
   await expect.poll(() => state.posts).toBe(1);
   await expect(runtime(page)).toHaveCount(0);
@@ -165,7 +169,7 @@ test("persistence and refresh pending keep S04; one confirmed event settles to i
   await page.waitForTimeout(250);
   expect((await evidence(page)).rafs).toBe(before.rafs);
   expect(glbs(state.urls)).toEqual([assetUrl]);
-  expect(state.urls.filter(url => /CompanionReviewRenderer/.test(url))).toEqual([]);
+  expect(state.urls.filter(url => /CompanionReviewRenderer/.test(url))).toHaveLength(1);
   expect(state.errors).toEqual([]);
 });
 
