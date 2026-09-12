@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
+import { sevenDayFacts } from "./ui/livingWeek";
 import { JourneyRecap } from "./components/JourneyRecap";
 
 import { JourneyToday, JourneyNote } from "./components/JourneyToday";
@@ -867,6 +868,8 @@ function App() {
   const activeChallengeCheckins = activeChallenge
     ? (windowData?.challenge_checkins.filter((checkin) => checkin.challenge_id === activeChallenge.id) ?? [])
     : [];
+  const trailDays = sevenDayFacts(endOn, windowData?.blood_pressure_observations ?? [], windowData?.challenge_checkins ?? []);
+  const todayTrail = trailDays.find(day => day.date === today);
   const todayMeasurement = windowData?.blood_pressure_observations.find((record) => record.observed_on === today);
   const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const readNavigationDisabled = pendingAction !== null || accountDeletionPending;
@@ -1073,7 +1076,7 @@ function App() {
 
     if (activeScreen === "S02") {
       if (presentation.journey) return <Scene id="S02" eyebrow="오늘" title={journeyCopy.S02.title} body="잠깐 머물러, 오늘을 남겨요." className="journey-candidate journey-today home-scene">
-        <JourneyToday staticLandscape={presentation.staticLandscape} today={today} formattedDate={dateLabel(today)} lead={homeLead} secondary={homeSecondaryActions} measurementLabel={todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"} challengeLabel={activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"} onNavigate={navigate} />
+        <JourneyToday staticLandscape={presentation.staticLandscape} today={today} formattedDate={dateLabel(today)} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} measurementLabel={`${todayTrail?.observationCount ?? 0}건`} challengeLabel={todayTrail?.participation ?? "기록 없음"} onNavigate={navigate} />
       </Scene>;
       return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene"><div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayMeasurement ? "혈압 기록 있음" : "혈압 기록 전"}</strong><strong>{activeChallenge && !activeChallengeEnded ? challengeLabel(activeChallenge.action_id) : "행동 선택 전"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
@@ -1201,7 +1204,7 @@ function App() {
 
     if (activeScreen === "S10") {
       if (presentation.journey) return <Scene id="S10" eyebrow="기록의 발자국" title="7일 돌아보기" body="남겨둔 기록을, 천천히 돌아봐요." tone="water" className="journey-recap">
-        <JourneyRecap staticLandscape={presentation.staticLandscape} today={today} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} prior={isPriorDashboard} freshness={windowState}
+        <JourneyRecap staticLandscape={presentation.staticLandscape} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} prior={isPriorDashboard} freshness={windowState}
           navigation={renderWindowNavigation()}
           records={<>
             {renderRecordLane("blood-pressure", "혈압 관찰", "이 구간에 혈압 관찰 기록이 없습니다.", true)}

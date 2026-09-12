@@ -1,0 +1,37 @@
+/* A paper path: neutral scenery belongs to the date, never to the record state. */
+.living-week { min-width: 0; }
+.living-week-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .8rem 1.5rem; margin-bottom: 1.2rem; }
+.living-week-heading > div { display: grid; gap: .35rem; }
+.living-week-heading h2 { font-size: 1.3rem; letter-spacing: -.04em; }
+.living-week-heading p, .living-week-note { color: var(--sk7-ink-muted); font-size: .8rem; line-height: 1.65; }
+.living-week-heading a { color: #3f594a; font-size: .9rem; font-weight: 650; text-underline-offset: .3em; padding-block: .8rem; }
+.seven-day-trail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0; gap: .55rem; }
+.seven-day-trail > li { position: relative; min-width: 0; padding: .75rem .5rem; border: 1px solid #dedbcf; border-radius: 2.5rem 2.5rem .65rem .65rem; background: #fffdf7; box-shadow: 0 5px 0 -2px #e8e5d9; }
+.seven-day-trail > li::before { content: ''; position: absolute; z-index: 0; top: 5.5rem; left: -.6rem; width: .6rem; border-top: 3px solid #d8d1b6; }
+.seven-day-trail > li:first-child::before { display: none; }
+.seven-day-trail > li[aria-current="date"] { border-color: #65745e; background: #f0f2e7; }
+.trail-place { display: grid; justify-items: center; gap: .2rem; text-align: center; }
+.trail-place time { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem; min-height: 1.6rem; font-size: .8rem; font-weight: 650; color: #414c40; }
+.trail-place time span { border-radius: .3rem; background: #3f594a; color: white; padding: .1rem .3rem; font-size: .65rem; }
+.trail-place svg { width: 4rem; max-width: 100%; height: 3.75rem; fill: none; stroke: #65745e; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.trail-place .trail-ground { fill: #e8e5d4; stroke: none; }
+.trail-landmark { min-height: 2.8em; color: #414c40; font-size: .75rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.trail-facts { display: grid; gap: .65rem; margin: .6rem 0 0; padding-top: .65rem; border-top: 1px solid #dedbcf; text-align: center; }
+.trail-facts div { display: grid; gap: .2rem; }
+.trail-facts dt { font-size: .65rem; color: #62675a; }
+.trail-facts dd { margin: 0; font-size: .8rem; font-weight: 600; color: #414c40; }
+.living-week-note { margin-top: 1rem; }
+@media (max-width: 760px) {
+  .seven-day-trail { grid-template-columns: minmax(0, 1fr); gap: .7rem; }
+  .seven-day-trail > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: .8rem; padding: .75rem; border-radius: .65rem; }
+  .seven-day-trail > li::before { top: -.75rem; left: 3rem; height: .7rem; width: 0; border-top: 0; border-left: 3px solid #d8d1b6; }
+  .trail-place { grid-template-columns: 2.5rem minmax(0, 1fr); text-align: left; justify-items: start; gap: .25rem .5rem; }
+  .trail-place time { grid-column: 1 / -1; justify-content: start; }
+  .trail-place svg { width: 2.5rem; height: 2.7rem; }
+  .trail-landmark { min-height: 0; align-self: center; }
+  .trail-facts { margin: 0; padding: 0 0 0 .8rem; border-top: 0; border-left: 1px solid #dedbcf; text-align: left; }
+  .trail-facts div { grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: .4rem; }
+}
+@media (max-width: 350px) {
+  .trail-facts div { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+}

@@ -47,6 +47,12 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('.journey-today')).toBeVisible();
+    await expect(page.locator('[data-trail-date]')).toHaveCount(7);
+    await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+    await page.getByRole('link', { name: '7일 돌아보기' }).press('Enter');
+    await expect(page.locator('#S10-title')).toBeFocused();
+    await page.goBack();
+    await expect(page.locator('#S02-title')).toBeFocused();
     // A changed domain fact changes the CTA, never the scenery recipe.
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);

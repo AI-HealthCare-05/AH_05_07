@@ -1,5 +1,6 @@
 // Included by the existing required review scene suite; no workflow changes.
 import { expect, test, type Page } from '@playwright/test';
+import { sevenDayFacts } from '../src/ui/livingWeek';
 import { readFileSync } from 'node:fs';
 const fixtureScript = readFileSync(new URL('../scripts/journey-review-fixture.mjs', import.meta.url), 'utf8').replace('export function', 'function') + '\njourneyReviewFixture();';
 const screen = (page: Page) => page.locator('.journey-recap');
@@ -20,6 +21,11 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
     await expect(page.locator('#S10-title')).toBeFocused();
     await expect(screen(page)).toBeVisible();
+    await expect(page.locator('[data-trail-date]')).toHaveCount(7);
+    await expect(page.locator('[data-trail-date="2026-09-11"]')).toHaveAttribute('aria-current', 'date');
+    await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록함');
+    await expect(page.locator('[data-trail-date="2026-09-10"] .trail-facts')).toHaveText('혈압 관찰0건챌린지 참여건너뜀');
+    await expect(page.locator('[data-trail-date="2026-09-09"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
     await expect(page.locator('[data-dashboard-lane="blood-pressure"]')).toHaveText('2개 기록');
     await expect(page.locator('[data-dashboard-lane="challenge"]')).toHaveText('3개 기록');
     await expect(page.locator('[data-dashboard-lane="legacy"]')).toHaveText('1개 기록');
@@ -57,6 +63,9 @@ test('recap prior window keeps current scenery and challenge context with read-o
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
   await page.getByRole('button', { name: '이전 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
+  await expect(page.locator('[data-trail-date]').first()).toHaveAttribute('data-trail-date', '2026-08-29');
+  await expect(page.locator('[data-trail-date]').last()).toHaveAttribute('data-trail-date', '2026-09-04');
+  await expect(page.locator('.seven-day-trail [aria-current]')).toHaveCount(0);
   await expect(exportHint).toHaveText('이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.');
   await expect(page.locator('.window-nav')).toContainText('8월 29일');
   await expect(page.locator('.window-nav')).toContainText('9월 4일');
@@ -105,10 +114,12 @@ test('recap initial load and failure do not claim empty or zero records', async 
   await fixture(page, 'loading');
   await expect(page.locator('[aria-busy="true"]')).toBeVisible();
   await expect(page.locator('[data-dashboard-lane]')).toHaveCount(0);
+  await expect(page.locator('[data-trail-date]')).toHaveCount(0);
   await page.goto('/?e2e=signed-in&screen=S10&recap_fixture=initial-error');
   await expect(page.locator('[data-scene="S13"]')).toBeVisible();
   await expect(page.getByText('아직 기록이 없다는 뜻은 아니에요.', { exact: false })).toBeVisible();
   await expect(page.locator('[data-dashboard-lane]')).toHaveCount(0);
+  await expect(page.locator('[data-trail-date]')).toHaveCount(0);
 });
 
 test('recap refresh error preserves records, stale warning and scene identity', async ({ page }) => {
@@ -223,4 +234,61 @@ test('recap refresh and export keep pending disables and ignore a late download 
   heldExport.release(); await settled;
   await expect(page.getByText('내보내기 파일을 준비했어요.', { exact: false })).toHaveCount(0);
   expect(downloads).toBe(0);
+});
+
+test('living week projects seven dates across year and leap-day boundaries with separate facts', () => {
+  const days = sevenDayFacts('2026-01-03', [
+    { observed_on: '2025-12-27' }, { observed_on: '2025-12-28' },
+    { observed_on: '2026-01-03' }, { observed_on: '2026-01-03' }, { observed_on: '2026-01-04' },
+  ], [
+    { observed_on: '2025-12-28', status: 'completed' },
+    { observed_on: '2025-12-29', status: 'skipped' },
+    { observed_on: '2026-01-03', status: 'completed' },
+    { observed_on: '2026-01-03', status: 'skipped' },
+  ]);
+  expect(days).toEqual([
+    { date: '2025-12-28', observationCount: 1, participation: '기록함' },
+    { date: '2025-12-29', observationCount: 0, participation: '건너뜀' },
+    { date: '2025-12-30', observationCount: 0, participation: '기록 없음' },
+    { date: '2025-12-31', observationCount: 0, participation: '기록 없음' },
+    { date: '2026-01-01', observationCount: 0, participation: '기록 없음' },
+    { date: '2026-01-02', observationCount: 0, participation: '기록 없음' },
+    { date: '2026-01-03', observationCount: 2, participation: '혼합' },
+  ]);
+  expect(sevenDayFacts('2028-03-01', [], []).map(day => day.date)).toEqual([
+    '2028-02-24', '2028-02-25', '2028-02-26', '2028-02-27', '2028-02-28', '2028-02-29', '2028-03-01',
+  ]);
+});
+
+test('living week uses Seoul dates and date-only landmarks with mixed facts and legacy kept apart', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-10T15:05:00Z'));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('http://e2e.invalid/**', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(route.request().url());
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    const body = {
+      ...responseWindow(url.searchParams.get('start_on')!, url.searchParams.get('end_on')!),
+      challenge_checkins: [
+        { id: 'synthetic-a', challenge_id: 'old', observed_on: '2026-09-11', action_id: 'walk-10-minutes', status: 'completed' },
+        { id: 'synthetic-b', challenge_id: 'new', observed_on: '2026-09-11', action_id: 'sleep-routine', status: 'skipped' },
+      ],
+      challenge_events: [{ id: 'synthetic-legacy', observed_on: '2026-09-10', action_id: 'walk-10-minutes', status: 'completed' }],
+    };
+    return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify(body) });
+  });
+  await page.goto('/?e2e=signed-in&screen=S02');
+  const trail = page.locator('.seven-day-trail');
+  await expect(trail.locator('time')).toHaveCount(7);
+  await expect(trail.locator('.trail-landmark')).toHaveText(['정자', '노을 전망대', '정원 대문', '허브 정원', '나무 그늘과 벤치', '나무다리', '책 읽는 쉼터']);
+  await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여혼합');
+  await expect(page.locator('[data-trail-date="2026-09-10"] .trail-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
+  const facts = await trail.innerText();
+  await page.getByRole('link', { name: '7일 돌아보기' }).press('Enter');
+  await expect(page.locator('#S10-title')).toBeFocused();
+  expect(await trail.innerText()).toBe(facts);
+  await expect(trail).not.toContainText('mmHg');
+  const overviewBox = (await trail.boundingBox())!;
+  const listBox = (await page.locator('.recap-journal').boundingBox())!;
+  expect(overviewBox.y + overviewBox.height).toBeLessThanOrEqual(listBox.y);
 });
