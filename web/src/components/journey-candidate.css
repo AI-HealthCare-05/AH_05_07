@@ -9,24 +9,6 @@
 .journey-candidate .scene-copy { gap: .85rem; }
 .journey-candidate .scene-body { font-weight: 450; font-size: 1rem; color: #696960; }
 .journey-candidate .eyebrow { color: #65745e; letter-spacing: .04em; }
-.journey-today { grid-template-columns: minmax(0, .85fr) minmax(0, 1.35fr); column-gap: 3.5rem !important; align-items: start; }
-.journey-today > .scene-copy { grid-column: 1; grid-row: 1; }
-.journey-today .journey-view { grid-column: 2; grid-row: 1 / span 3; align-self: center; min-width: 0; }
-.journey-today .living-visual-stage { margin: 0; border-radius: 48% 48% 42% 42%; background: #f4eedf; }
-.journey-view-caption { margin: .7rem 0 0; text-align: center; color: #737365; font-size: .75rem; letter-spacing: .08em; }
-.journey-today .home-lead { grid-column: 1; grid-row: 2; display: grid; justify-content: stretch; align-items: stretch; gap: 1.15rem; padding: 1.25rem 0 0; border: 0; border-top: 1px solid #d8d7c9; background: none; }
-.journey-today .home-lead h2 { font-size: 1.55rem; letter-spacing: -.04em; }
-.journey-today .home-lead .eyebrow { font-size: .72rem; }
-.journey-today .home-lead button { display: flex; justify-content: space-between; align-items: center; width: 100%; border-radius: .5rem; padding: .9rem 1.2rem; }
-.journey-today .home-lead button span { font-size: 1.25rem; }
-.journey-today .journey-facts { grid-template-columns: minmax(0, 1fr); border: 0; padding: 0; grid-column: 1; grid-row: 3; display: grid; gap: .55rem; margin: 0; font-size: .8rem; }
-.journey-facts > div { display: flex; justify-content: space-between; gap: 1rem; }
-.journey-facts dt { color: #737365; }
-.journey-facts dd { margin: 0; text-align: right; color: #414c40; }
-.journey-today .home-links { grid-column: 1 / -1; grid-row: 4; border-color: #d8d7c9; }
-.journey-today .home-links button { padding: 1rem .25rem; }
-.journey-today .home-links button + button { padding-left: 2rem; }
-.journey-today .living-week { grid-column: 1 / -1; grid-row: 5; padding-top: 1.2rem; border-top: 1px solid #d8d7c9; }
 .journey-entry { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); column-gap: 4rem !important; align-content: start; }
 .journey-entry > .scene-copy { grid-column: 1; grid-row: 1; }
 .journey-note { grid-column: 1; grid-row: 2; display: grid; gap: 1rem; color: #62675a; align-self: end; }
@@ -58,7 +40,7 @@
 .journey-saved .split-actions { justify-content: center; }
 .journey-saved .split-actions button { min-height: 3rem; border-radius: .5rem; }
 @media (max-width: 800px) {
-  .journey-today, .journey-entry { column-gap: 1.5rem !important; }
+  .journey-entry { column-gap: 1.5rem !important; }
   .journey-entry .measurement-panel { padding: 1.25rem; }
 }
 @media (max-width: 580px) {
@@ -66,17 +48,6 @@
   .journey-candidate.scene { padding-top: 1rem; gap: 1.25rem; }
   .journey-candidate h1 { font-size: 2rem; }
   .journey-candidate .scene-copy { gap: .65rem; }
-  .journey-today { grid-template-columns: minmax(0, 1fr); }
-  .journey-today > .scene-copy { grid-column: 1; grid-row: 1; }
-  .journey-today .journey-view { grid-column: 1; grid-row: 2; }
-  .journey-view-caption { display: none; }
-  .journey-today .home-lead { grid-column: 1; grid-row: 3; padding-top: 0; border: 0; gap: .8rem; }
-  .journey-today .home-lead .eyebrow { display: none; }
-  .journey-today .home-lead h2 { font-size: 1.4rem; }
-  .journey-today .home-lead p:not(.eyebrow) { font-size: .9rem; }
-  .journey-today .journey-facts { grid-column: 1; grid-row: 4; gap: .6rem; border-top: 1px solid #d8d7c9; padding-top: 1rem; }
-  .journey-today .home-links { grid-column: 1; grid-row: 5; }
-  .journey-today .home-links button + button { padding-left: .25rem; }
   .journey-entry { grid-template-columns: minmax(0, 1fr); }
   .journey-entry .measurement-panel { grid-column: 1; grid-row: 2; padding: 1.1rem; gap: 1.2rem; }
   .journey-entry .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -95,11 +66,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .journey-candidate *, .journey-candidate *::before, .journey-candidate *::after { animation: none !important; transition: none !important; }
-}
-@media (max-width: 350px) {
-  .journey-today.scene { padding-top: .5rem; gap: .5rem; }
-  .journey-today .scene-body { display: none; }
-  .journey-today .home-lead { gap: .6rem; }
 }
 .journey-entry .journey-back { border: 0; background: transparent; }
 
@@ -196,15 +162,6 @@
   .journey-record-detail .danger { margin-left: 0; }
 }
 
-/* A desktop poster needs its full focal width; tablets keep a full-width scene. */
-@media (min-width: 581px) and (max-width: 1000px) {
-  .journey-today { grid-template-columns: minmax(0, 1fr); }
-  .journey-today .journey-view { grid-column: 1; grid-row: 2; }
-  .journey-today .home-lead { grid-column: 1; grid-row: 3; }
-  .journey-today .journey-facts { grid-column: 1; grid-row: 4; }
-  .journey-today .home-links { grid-column: 1; grid-row: 5; }
-}
-
 /* Room for outstretched celebrate hands without shrinking the whole character.
    Only the inline journey S05 canvas changes; landscape and actions keep their size. */
 .app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 6rem); bottom: auto; width: 12rem; height: calc(100% - 1.5rem); }
@@ -242,8 +199,4 @@
   .journey-login .journey-login-intro { gap: .85rem; }
   .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
   .journey-empty .journey-empty-action { padding: 1rem; gap: .75rem; }
-}
-
-@media (max-width: 1000px) {
-  .journey-today .living-week { grid-column: 1; grid-row: 6; }
 }
