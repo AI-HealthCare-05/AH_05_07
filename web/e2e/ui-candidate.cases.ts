@@ -127,12 +127,15 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journ
     await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
     await expect(runtime).toHaveAttribute('data-companion-framing', 'journey-s05');
     await expect(runtime).toHaveAttribute('data-companion-celebrate-count', motion === 'reduce' ? '0' : '1');
+    await expect(runtime.locator('[data-companion-canvas]')).toHaveCSS('visibility', 'visible');
     if (motion === 'reduce') {
       const bounds = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.sample());
+      expect(bounds.phase).toBe('idle');
       margins(bounds); reports.push({ motion, bounds });
     } else {
       await page.waitForFunction(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report().paused, undefined, { timeout: 20000 });
       const report = await page.evaluate(() => (window as unknown as { __companionFramingProbe: Probe }).__companionFramingProbe.report());
+      expect(report.samples[0]?.phase).toBe('celebrate');
       expect(report.counts.celebrate).toBeGreaterThanOrEqual(235);
       expect(report.counts.idle).toBe(241);
       report.samples.forEach(margins); reports.push({ motion, ...report });
@@ -182,7 +185,11 @@ test('200% text, reduced motion and failed media keep completion DOM and no retr
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.locator('.home-lead button').click(); await save(page);
   await expect(page.locator('#S05-title')).toBeFocused();
-  if (!companionOff) await expect(page.locator('[data-companion-status]')).toHaveAttribute('data-companion-status', 'error', { timeout: 30000 });
+  if (!companionOff) {
+    const failedRuntime = page.locator('[data-companion-status]');
+    await expect(failedRuntime).toHaveAttribute('data-companion-status', 'error', { timeout: 30000 });
+    await expect(failedRuntime.locator('[data-companion-canvas]')).toHaveCSS('visibility', 'hidden');
+  }
   const count = state.urls.filter(url => /\.(glb|webp)(\?|$)/.test(url)).length;
   // Observe a stable failed visit; do not reinterpret the legacy renderer's
   // independent motion-setting lifecycle as a new candidate retry contract.

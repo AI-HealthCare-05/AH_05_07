@@ -66,6 +66,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
 
     const fail = () => {
       if (disposed) return;
+      if (renderer) renderer.domElement.style.visibility = "hidden";
       setStatus(host, "error");
       host.dataset.companionMotion = "stopped";
       setStatusState("error");
@@ -93,6 +94,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
       renderer.domElement.setAttribute("aria-hidden", "true");
       renderer.domElement.setAttribute("data-companion-canvas", "true");
       renderer.domElement.style.pointerEvents = "none";
+      renderer.domElement.style.visibility = "hidden";
       host.replaceChildren(renderer.domElement);
       scene.add(new THREE.HemisphereLight(0xfff8ed, 0x66705f, 2.4));
       const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -116,8 +118,8 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
         const clipsMatch = clipNames.length === companionClips.length
           && actual.size === companionClips.length
           && companionClips.every((clip) => actual.has(clip));
-        setStatus(host, clipsMatch ? "ready" : "error", clipNames.join(","));
         if (!clipsMatch) {
+          setStatus(host, "error", clipNames.join(","));
           disposeObject(gltf.scene);
           setStatusState("error");
           return;
@@ -132,7 +134,6 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
         model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
         scene.add(model);
         camera.lookAt(0, framing === "journey-s05" ? 0.85 : 0.8, 0);
-        resize();
         const selectedClip = gltf.animations.find((clip) => clip.name === selection.clip);
         if (!selectedClip) {
           fail();
@@ -140,7 +141,11 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
         }
         if (reducedMotion) {
           host.dataset.companionMotion = "stopped";
-          renderer?.render(scene, camera);
+          // Paint the normalized neutral pose while the loading canvas is hidden,
+          // then reveal that already-stable frame.
+          resize();
+          if (renderer) renderer.domElement.style.visibility = "visible";
+          setStatus(host, "ready", clipNames.join(","));
         } else {
            const animationMixer = new THREE.AnimationMixer(model);
            mixer = animationMixer;
@@ -205,7 +210,14 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            };
            controllerRef.current = controller;
            play(latestSelectionRef.current, reducedMotion);
-           if (!reducedMotion) render();
+           // Prime the selected clip before the first visible model paint. This
+           // avoids briefly exposing the bind/neutral pose immediately after a
+           // confirmed save before celebrate takes over.
+           animationMixer.update(1 / 60);
+           resize();
+           if (renderer) renderer.domElement.style.visibility = "visible";
+           setStatus(host, "ready", clipNames.join(","));
+           frameId = window.requestAnimationFrame(render);
         }
         setStatusState("ready");
       }, undefined, fail);
