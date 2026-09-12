@@ -275,7 +275,7 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   await expect(page.locator('[data-scene="S13"]')).toBeVisible(); await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
 });
 
-test('Journey record browsing keeps separated lanes, exact detail targets, and read-only meaning', async ({ page }, testInfo) => {
+test('Journey record browsing keeps distinct record types, exact detail targets, and read-only meaning', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
@@ -300,10 +300,10 @@ test('Journey record browsing keeps separated lanes, exact detail targets, and r
   await page.goto('/?e2e=signed-in&screen=S08');
   const records = page.locator('.journey-records');
   await expect(records).toBeVisible();
-  await expect(records).toContainText('선택한 7일의 기록을 종류별로 확인해요.');
-  await expect(records.locator('[data-record-lane="blood-pressure"]')).toContainText('118/76 mmHg');
-  await expect(records.locator('[data-record-lane="challenge"]')).toContainText('기록함');
-  await expect(records.locator('[data-record-lane="legacy"]')).toContainText('읽기 전용');
+  await expect(records).toContainText('종류와 날짜로 원하는 기록을 찾아요.');
+  await expect(records.locator('[data-record-kind="blood-pressure"]').first()).toContainText('118/76 mmHg');
+  await expect(records.locator('[data-record-kind="challenge-checkin"]')).toContainText('기록함');
+  await expect(records.locator('[data-record-kind="legacy"]')).toContainText('읽기 전용');
   await page.screenshot({ path: testInfo.outputPath('s08-mobile-360.png'), fullPage: true });
   const eveningDetail = records.getByRole('button', { name: /상세 보기 · 혈압 관찰 · 9월 10일.*저녁/ });
   await expect(eveningDetail).toBeVisible();

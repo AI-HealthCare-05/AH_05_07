@@ -15,6 +15,9 @@ import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
 import { ModelV2InputFlow, type ModelV2RequestContext } from "./components/ModelV2InputFlow";
+import { RecordExplorer } from "./components/RecordExplorer";
+import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
+import type { RecordBrowseItem } from "./ui/recordExplorer";
 import {
   ApiRequestError,
   deleteAccount,
@@ -30,7 +33,6 @@ import {
   type BloodPressureObservation,
   type BloodPressureObservationInput,
   type ChallengeCheckin,
-  type ChallengeEvent,
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
@@ -68,10 +70,6 @@ type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-check
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior";
 type BloodPressureDraft = { observedOn: string; period: "morning" | "evening"; systolic: string; diastolic: string };
-type RecordBrowseItem =
-  | { key: string; kind: "blood-pressure"; record: BloodPressureObservation }
-  | { key: string; kind: "challenge-checkin"; record: ChallengeCheckin }
-  | { key: string; kind: "legacy"; record: ChallengeEvent };
 type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail";
 type HomeAction = {
   key: HomeDestinationKey;
@@ -269,6 +267,7 @@ function App() {
   const editOriginKey = useRef<string | null>(null);
   const sessionRef = useRef<Session | null>(e2eSession);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
+  const explorer = useRecordExplorerMemory(`${sessionIdentityRef.current.generation}:${startOn}:${endOn}`);
   const sessionUpdateVersionRef = useRef(0);
   const accountDeletionStartedRef = useRef(false);
   const [signOutPending, setSignOutPending] = useState(false);
@@ -949,6 +948,17 @@ function App() {
     navigate("S09", item.key);
   }
 
+  function describeExplorerRecord(item: RecordBrowseItem) {
+    const readOnly = evidenceMode || isPriorDashboard || item.kind === "legacy"
+      || (item.kind === "challenge-checkin" && (item.record.challenge_id !== activeChallenge?.id || activeChallengeEnded));
+    return {
+      type: item.kind === "blood-pressure" ? "혈압 관찰" : item.kind === "challenge-checkin" ? "챌린지 참여" : "이전 방식 기록",
+      primary: item.kind === "blood-pressure" ? displayMeasurement(item.record) : challengeLabel(item.record.action_id),
+      secondary: item.kind === "blood-pressure" ? periodLabel(item.record.period) : checkinLabel(item.record.status),
+      availability: readOnly ? "읽기 전용" : item.kind === "blood-pressure" ? "수정 가능" : "상태 수정 가능",
+    };
+  }
+
   function renderWindowNavigation() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="최근 7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>최근 7일 · {isPriorDashboard ? "이전 구간 · 읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
@@ -1167,22 +1177,35 @@ function App() {
     }
 
     if (activeScreen === "S08") {
-      if (presentation.journey) return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body="선택한 7일의 기록을 종류별로 확인해요." tone="lavender" className="journey-candidate journey-records"><div className="scene-toolbar"><span className="utility-label">조회 기간</span><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>{renderWindowNavigation()}<div className="record-groups" aria-label="기록 종류별 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "이 기간에는 혈압 관찰 기록이 없어요.", false, true)}{renderRecordLane("challenge-checkin", "챌린지 참여", "이 기간에는 챌린지 참여 기록이 없어요.", false, true)}{renderRecordLane("legacy", "이전 방식의 기록", "이 기간에는 이전 방식의 기록이 없어요.", false, true)}</div></Scene>;
-      return <Scene id="S08" {...journeyCopy.S08} tone="lavender"><div className="scene-toolbar"><span className="utility-label">기록 구간</span><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>{renderWindowNavigation()}<div className="record-groups" aria-label="기록 종류별 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식으로 남긴 기록이 없습니다.")}</div></Scene>;
+      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body="종류와 날짜로 원하는 기록을 찾아요." tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
+        <nav className="window-nav record-explorer-window" data-dashboard-window={dashboardWindow} aria-label="최근 7일 기록 구간">
+          <button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button>
+          <p><span>{isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong></p>
+          <button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button>
+        </nav>
+        <RecordExplorer items={recordBrowseItems} filter={explorer.filter} date={explorer.date}
+          onFilterChange={explorer.setFilter} onDateChange={explorer.setDate} onReset={explorer.reset}
+          onOpen={item => { explorer.remember(item.key, window.scrollY); openRecord(item); }}
+          describe={describeExplorerRecord} dateLabel={dateLabel} focusKey={explorer.focusKey} scrollY={explorer.scrollY} />
+        <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button>
+      </Scene>;
     }
 
     if (activeScreen === "S09") {
       return (
         <Scene id="S09" {...journeyCopy.S09} tone="lavender" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
+          <div className="scene-toolbar record-detail-context">
+            <button className="secondary" type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
+            <span>{isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일"} · {dateLabel(startOn)} ~ {dateLabel(endOn)}</span>
+          </div>
           {selectedRecordMissing ? (
             <div className="state-card state-error" role="alert">
               <h2>선택한 기록을 찾을 수 없습니다.</h2>
               <p>목록이 바뀌었을 수 있어요. 현재 표시 구간의 기록을 다시 확인해 주세요.</p>
-              <button type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
             </div>
           ) : selectedRecord ? (
             <article className="record-detail" data-record-detail-kind={selectedRecord.kind}>
-              <h2>{selectedRecord.kind === "blood-pressure" ? "혈압 관찰" : selectedRecord.kind === "challenge-checkin" ? "챌린지 참여" : "이전 기록"}</h2>
+              <header className="record-detail-identity"><h2>{describeExplorerRecord(selectedRecord).type}</h2><span>{describeExplorerRecord(selectedRecord).availability}</span></header>
               <dl className="record-detail-facts">
                 <div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div>
                 {selectedRecord.kind === "blood-pressure" ? (
@@ -1212,12 +1235,11 @@ function App() {
                 </div>
               )}
               <div className="inline-actions">
-                <button className="secondary" type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
                 {!evidenceMode && <button className="text-button" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>새로고침</button>}
               </div>
             </article>
           ) : (
-            <div className="state-card"><h2>선택한 기록이 없어요.</h2><button type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button></div>
+            <div className="state-card"><h2>선택한 기록이 없어요.</h2></div>
           )}
         </Scene>
       );

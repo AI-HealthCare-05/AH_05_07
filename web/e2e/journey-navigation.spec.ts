@@ -69,7 +69,7 @@ test("primary journey navigation updates the URL and supports browser history", 
 
 test("a selected fact opens its own URL-addressable detail screen", async ({ page }) => {
   await page.goto("/?fixture=VP-10&screen=S08");
-  await page.locator('[data-record-lane="blood-pressure"]').getByRole("button", { name: "상세 보기" }).first().click();
+  await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: /상세 보기/ }).first().click();
 
   await expect(page).toHaveURL(/screen=S09/);
   await expect(page).toHaveURL(/record=blood-pressure%3Afixture-bp-/);
