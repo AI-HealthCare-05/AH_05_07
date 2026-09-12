@@ -2,7 +2,8 @@
 
 > **개발·문서 원본:** `AI-HealthCare-05/AH_05_07`.
 > `emotigom/ah-05-07-pages`에서 읽고 있다면 이 문서는 동기화된 사본입니다.
-> 수정은 원본에서만 합니다. 시작은 [짧은 인계](docs/project-handoff.md#fast-start),
+> 수정은 원본에서만 합니다. 개발 절차는 [AGENTS.md](AGENTS.md)의 위험 기반 정책,
+> 시작 맥락은 [짧은 인계](docs/project-handoff.md#fast-start),
 > 운영 판단은 [배포 SSOT](docs/deployment-ssot.md)를 사용합니다.
 > main 병합·미러 동기화·운영 배포·scene 활성화는 각각 별개입니다.
 
@@ -10,7 +11,10 @@
 
 # 미리보기
 
-배포 주소 : https://ah-05-07-pages.ahnsangkyoon.workers.dev/
+주 배포 주소: https://hyeol.app/
+
+진단용 fallback: https://ah-05-07-pages.ahnsangkyoon.workers.dev/
+
 이메일로 매직링크를 보내고, 최소 며칠간 접속이 유지됩니다.
 
 테크스택 : vite, google cloud run, cloudflare R2/CDN, supabase, 서브도메인사용 - gomdory.com/gkrry.com
@@ -47,6 +51,9 @@
 - [ADR-0001](docs/adr/0001-modular-monolith.md)
 
 ## Verification
+
+개발 중에는 변경한 경계의 가장 가까운 검사만 반복하고, 최종 PR에서 필수
+`lint`와 `test`를 통과시킵니다. 아래는 Python 전체 검증이 필요한 변경의 명령입니다.
 
 ```bash
 uv sync --group app --frozen

@@ -1,6 +1,7 @@
 name: Browser E2E
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -50,25 +51,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run browser evidence fixtures
+      - name: Run focused browser regression for pull requests
+        if: github.event_name == 'pull_request'
         run: npm run test:e2e
 
-      - name: Verify companion runtime transport
+      - name: Run focused Journey regression for pull requests
+        if: github.event_name == 'pull_request'
+        run: npm run test:e2e:ui:pr
+
+      - name: Run complete browser evidence fixtures
+        if: github.event_name != 'pull_request'
+        run: npm run test:e2e
+
+      - name: Verify companion runtime transport on main or manual runs
+        if: github.event_name != 'pull_request'
         run: node scripts/diagnose-companion-r2.mjs
 
-      - name: Run review-only companion runtime verification
+      - name: Run review-only companion runtime verification on main or manual runs
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e:review
 
-      - name: Run S3E production-on companion verification
+      - name: Run S3E production-on companion verification on main or manual runs
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e:production:on
 
-      - name: Run S05 review migration parity
+      - name: Run S05 review migration parity on main or manual runs
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e:saved-scene
 
-      - name: Run S02 and S10 review scene verification
+      - name: Run S02 and S10 review scene verification on main or manual runs
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e:scene
 
-      - name: Verify separate journey UI and normal auth boundaries
+      - name: Verify the complete Journey matrix on main or manual runs
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e:ui
 
       - name: Check local submission capture script syntax

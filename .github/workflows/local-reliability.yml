@@ -3,8 +3,26 @@ name: Local reliability controls
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'tools/local-reliability/**'
+      - 'scripts/ops/measure_api_p95.py'
+      - 'scripts/ci/verify_api_p95_evidence.py'
+      - 'docs/evidence/local-reliability.json'
+      - 'docs/api-p95-verification-preflight.md'
+      - 'docs/upgrade-local-reliability.md'
+      - '.python-version'
+      - '.github/workflows/local-reliability.yml'
   push:
     branches: [main]
+    paths:
+      - 'tools/local-reliability/**'
+      - 'scripts/ops/measure_api_p95.py'
+      - 'scripts/ci/verify_api_p95_evidence.py'
+      - 'docs/evidence/local-reliability.json'
+      - 'docs/api-p95-verification-preflight.md'
+      - 'docs/upgrade-local-reliability.md'
+      - '.python-version'
+      - '.github/workflows/local-reliability.yml'
 
 permissions:
   contents: read
