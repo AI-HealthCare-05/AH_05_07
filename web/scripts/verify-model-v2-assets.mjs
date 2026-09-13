@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const repo = fileURLToPath(new URL("../../", import.meta.url));
 export const sealPath = "web/tests/model-v2/parity-seal.json";
 export const modelDirectory = "web/src/lib/model-v2";
+const ancestorDirectories = ["web/src", "web/src/lib", "web/src/components", "web/scripts", "web/tests", "web/tests/model-v2"];
 export const modelModules = ["adapter.ts", "runtime.ts", "errors.ts", "manifest.json"];
 export const guardedSources = [
   "app/services/model_v2_input_adapter.py", "app/services/model_v2_inference.py",
@@ -35,6 +36,12 @@ function regularFile(root, path) {
   return readFileSync(resolve(root, path));
 }
 export function assertScope(root) {
+  // Vite/esbuild searches ancestors for the nearest tsconfig; a new parent
+  // config/package must not change transforms without expiring evidence.
+  for (const directory of ancestorDirectories) {
+    assert.deepEqual(readdirSync(resolve(root, directory)).filter(name =>
+      /^(?:package\.json|[tj]sconfig(?:\..*)?\.json)$/i.test(name)), [], "unexpected ancestor resolution configuration");
+  }
   // Closed inventory, not an extension denylist: covers .mjs/.js/.mts/.ts/
   // .jsx/.tsx/.json, arbitrary future extensions, package/index directories,
   // symlinks and case variants. Even unused additions require boundary review.
@@ -52,7 +59,7 @@ export function captureSnapshot(root = repo) {
     const stat = lstatSync(resolve(root, path), { bigint: true });
     versions[path] = [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs, stat.mode].join(":");
   }
-  for (const path of [modelDirectory, "web/src/components", "web"]) {
+  for (const path of [modelDirectory, ...ancestorDirectories, "web"]) {
     const stat = lstatSync(resolve(root, path), { bigint: true });
     versions[`${path}/`] = [stat.dev, stat.ino, stat.mtimeNs, stat.ctimeNs, stat.mode].join(":");
   }

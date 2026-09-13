@@ -103,8 +103,8 @@ inputs, not attested binaries.
 
 The production Model V2 directory has a closed regular-file inventory, rejecting
 all unexpected extensions, nested package/index directories, case variants and
-symlinks. Draft-module and root resolution-configuration competitors are also
-rejected. The shared Vite plugin requires all four expected production modules
+symlinks. Draft-module, root and ancestor resolution-configuration competitors are also
+rejected, including nearer TypeScript configurations. The shared Vite plugin requires all four expected production modules
 to be resolved and rejects runtime imports outside that closed graph. Regression
 tests build a real Vite alias replacement outside the directory as well as
 creating temporary shadow candidates. No scene policy or application resolution

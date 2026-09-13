@@ -30,7 +30,7 @@ function fixture(run) {
     const snapshot = captureSnapshot(root);
     const source = sourceIdentity(root, snapshot);
     writeEvidence(root, snapshot, source, summary);
-    return run({ root, snapshot, source });
+    return run({ root, snapshot: captureSnapshot(root), source });
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
@@ -82,7 +82,7 @@ test("all unexpected resolution candidates, directories and symlinks are rejecte
     symlinkSync(original, adapter);
     assert.throws(() => verifyAssets(root), /nonregular source/);
   });
-  for (const candidate of ["web/vite.config.js", "web/tsconfig.build.json", "web/src/components/modelV2Draft.js"]) {
+  for (const candidate of ["web/vite.config.js", "web/tsconfig.build.json", "web/src/components/modelV2Draft.js", "web/src/tsconfig.json", "web/src/lib/package.json", "web/tests/tsconfig.json"]) {
     fixture(({ root }) => {
       writeFileSync(resolve(root, candidate), "{}");
       assert.throws(() => verifyAssets(root), /unexpected .*resolution/);
