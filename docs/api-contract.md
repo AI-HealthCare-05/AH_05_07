@@ -103,8 +103,29 @@ Request validation errors use a normalized response that never returns the submi
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
 | Model artifact not ready | `503` | No provisional signal. |
 | Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
-| Browser request exceeds 8 seconds | Browser-normalized error | One 8-second total deadline covers the full response lifecycle, including response headers and JSON/blob body consumption. Timeout is normalized to status `0`, code `request_timeout`, and message `요청 응답 시간을 초과했습니다.` The web keeps the active draft or confirmation where applicable, may offer a fresh read, and never automatically retries or claims uncertain persistence succeeded. |
+| Browser request exceeds 8 seconds | Browser-normalized error | One 8-second total deadline covers the full response lifecycle, including response headers and JSON/blob body consumption. Timeout is normalized to status `0`, code `request_timeout`, and message `요청 응답 시간을 초과했습니다.` The web keeps the active draft or confirmation where applicable, may offer a fresh read, and never automatically retries uncertain persistence or claims it succeeded. |
 | Unexpected failure | `500` | No secret, token, request body, or health value in the response. |
+
+### Initial browser observation-window recovery
+
+On session entry, only the initial `GET /api/v1/observations/window` before any
+window data has loaded may automatically retry a fetch network rejection (browser status `0`,
+code `network_error`), `request_timeout`, or HTTP `502`/`503`/`504` once. Fetch
+rejection is classified separately from JSON/body decoding failures. This shares
+one retry allowance with the existing stale-token `401` retry when a newer token
+exists for the same session generation: at most two GET attempts total.
+
+Each attempt retains its own 8-second full-response deadline. Session generation
+and window request invalidation must pass before retrying or committing either
+attempt, and the retry uses the latest session token. A second failure reaches
+the existing S13 recovery UI (or existing session-expiry handling for a current
+invalid session). Ordinary `4xx`, other HTTP errors and malformed successful
+responses receive no transient retry. A timeout preserves an already received
+HTTP status as `responseStatus` so a stalled error body cannot make an ordinary
+HTTP failure retryable. Manual recovery and subsequent window
+loads receive no new transient retries. Writes, deletes, challenge mutations,
+account deletion, export and Model V2 receive no automatic retries from this
+policy. Source/test coverage does not establish the production failure class.
 
 ## Documentation endpoints
 

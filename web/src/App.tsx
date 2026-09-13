@@ -429,7 +429,8 @@ function App() {
       && presentationRef.current.windowData === null
     ) return;
 
-    void refreshWindow();
+    // Opt in only on session entry, not date/window changes that also clear data.
+    void refreshWindow({ initialLoad: previous.userId !== sessionUserId });
   }, [
     endOn,
     evidenceMode,
@@ -546,7 +547,7 @@ function App() {
     return recovery;
   }
 
-  async function refreshWindow(allowTokenRefreshRetry = true) {
+  async function refreshWindow({ allowRetry = true, initialLoad = false } = {}) {
     // A pre-midnight mutation may call this old function after the date changes.
     // Read committed presentation bounds and the latest session at invocation.
     const activeSession = sessionRef.current;
@@ -563,8 +564,19 @@ function App() {
       setChallengeNeedsReload(false);
     } catch (error) {
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
-      if (allowTokenRefreshRetry && isSessionError(error) && hasNewerToken(requestContext)) {
-        await refreshWindow(false);
+      // One shared retry budget: a transient bootstrap failure and a stale
+      // token must never combine into a third GET. Manual/subsequent loads
+      // retain only the existing newer-token 401 behavior from #399.
+      const transientInitialRead = initialLoad && snapshot.windowData === null
+        && error instanceof ApiRequestError
+        // A stalled error body must not turn a known ordinary HTTP failure
+        // (such as 403/429/500) into a retryable status-0 timeout.
+        && (error.responseStatus === undefined || error.responseStatus < 400
+          || [502, 503, 504].includes(error.responseStatus))
+        && ((error.status === 0 && (error.code === "network_error" || error.code === "request_timeout"))
+          || error.status === 502 || error.status === 503 || error.status === 504);
+      if (allowRetry && (transientInitialRead || (isSessionError(error) && hasNewerToken(requestContext)))) {
+        await refreshWindow({ allowRetry: false });
         return;
       }
       presentRequestError(error, "load", requestContext);
