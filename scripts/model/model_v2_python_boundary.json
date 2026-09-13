@@ -1,0 +1,27 @@
+{
+  "modules": {
+    "app.services.model_v2_input_adapter": "app/services/model_v2_input_adapter.py",
+    "app.services.model_v2_inference": "app/services/model_v2_inference.py",
+    "app.apis.v1.model_v2_routers": "app/apis/v1/model_v2_routers.py",
+    "app.dependencies.supabase_auth": "app/dependencies/supabase_auth.py",
+    "app.core.config": "app/core/config.py",
+    "app.core.logger": "app/core/logger.py"
+  },
+  "packages": {
+    "app": "app/__init__.py",
+    "app.services": "app/services/__init__.py",
+    "app.apis": "app/apis/__init__.py",
+    "app.apis.v1": "app/apis/v1/__init__.py",
+    "app.dependencies": "app/dependencies/__init__.py",
+    "app.core": "app/core/__init__.py",
+    "scripts": null,
+    "scripts.model": null,
+    "tests": "tests/__init__.py",
+    "tests.model": null
+  },
+  "entries": [
+    "scripts/model/export_model_v2_browser.py",
+    "tests/model/browser_fixtures.py",
+    "tests/model/browser_oracle.py"
+  ]
+}

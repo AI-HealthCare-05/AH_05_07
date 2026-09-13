@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
 
 const emptyWindow = {
   start_on: "2026-09-02",
@@ -9,27 +10,6 @@ const emptyWindow = {
   challenge_checkins: [],
 };
 const modelPath = "/api/v1/model-v2/product-score";
-const validPayload = {
-  age_years: 35,
-  sex_knhanes: 1,
-  height_cm: 170,
-  weight_kg: 68,
-  cigarette_smoking_state: "never_smoked",
-  alcohol_frequency: "lt_monthly",
-  alcohol_amount_category: "1_2_drinks",
-  walking_days_7d: 4,
-  walking_active_day_hours: 0,
-  walking_active_day_minutes: 40,
-  strength_days_7d: "2_days",
-  weekday_bed_hour: 23,
-  weekday_bed_minute: 30,
-  weekday_wake_hour: 7,
-  weekday_wake_minute: 0,
-  weekend_bed_hour: 23,
-  weekend_bed_minute: 30,
-  weekend_wake_hour: 8,
-  weekend_wake_minute: 0,
-};
 const timeInputs = [
   ["model-weekday-bed", "23:30"],
   ["model-weekday-wake", "07:00"],
@@ -43,7 +23,7 @@ const stepTitles = {
 };
 
 async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?: boolean } = {}) {
-  const requests: { body: unknown; authorization: string | null }[] = [];
+  const requests: { method: string; body: string | null }[] = [];
   let settled = 0;
   let releaseFirst!: () => void;
   const firstPending = new Promise<void>((resolve) => { releaseFirst = resolve; });
@@ -54,42 +34,29 @@ async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?
     const headers = {
       "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
       "Access-Control-Allow-Headers": "authorization,content-type",
-      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
     };
-    if (request.method() === "OPTIONS") {
-      await route.fulfill({ status: 204, headers });
-      return;
-    }
+    if (request.method() === "OPTIONS") { await route.fulfill({ status: 204, headers }); return; }
+    // Any feature-bearing server inference is a regression, including fallback.
+    expect(url.pathname).not.toBe(modelPath);
     if (url.pathname === "/api/v1/observations/window") {
-      await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(emptyWindow) });
-      return;
-    }
-    if (url.pathname === modelPath) {
-      expect(request.method()).toBe("POST");
-      const index = requests.length;
-      requests.push({ body: request.postDataJSON(), authorization: await request.headerValue("authorization") });
-      const status = statuses[Math.min(index, statuses.length - 1)];
-      if (options.holdFirst && index === 0) await firstPending;
-      const body = status === 200
-        ? { schema_version: "model-v2-r1-schema-v1", product_wording: "입력 기반 위험군 선별 신호" }
-        : status === 422
-          ? { detail: {
-              code: "model_v2_input_invalid",
-              message: "Rejected height_cm=170, never_smoked at /secret/model.joblib",
-              loc: ["body", "height_cm"],
-              input: { height_cm: 170, cigarette_smoking_state: "never_smoked" },
-            } }
-          : status === 401
-            ? { detail: { code: "supabase_session_invalid" } }
-            : { detail: { code: "model_not_ready", message: "Model V2 scoring is not available." } };
-      try {
-        await route.fulfill({ contentType: "application/json", status, headers, body: JSON.stringify(body) });
-      } finally {
-        settled += 1;
-      }
+      await route.fulfill({ contentType: "application/json", headers, body: JSON.stringify(emptyWindow) });
       return;
     }
     await route.abort();
+  });
+  await page.route("**/models/model-v2.json", async (route) => {
+    const request = route.request();
+    const index = requests.length;
+    requests.push({ method: request.method(), body: request.postData() });
+    expect(request.method()).toBe("GET");
+    expect(request.postData()).toBeNull();
+    expect(await request.headerValue("authorization")).toBeNull();
+    if (options.holdFirst && index === 0) await firstPending;
+    try {
+      const status = statuses[Math.min(index, statuses.length - 1)];
+      if (status === 200) await route.fulfill({ response: await route.fetch() });
+      else await route.fulfill({ status, body: "unavailable" });
+    } finally { settled += 1; }
   });
   return { requests, releaseFirst, settled: () => settled };
 }
@@ -198,7 +165,7 @@ async function assertFitsViewport(page: Page) {
   }
 }
 
-test("S11 requires explicit review submission and preserves the exact 19-field transient contract", async ({ page }) => {
+test("S11 requires explicit review submission and completes locally without sending transient inputs", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   const storageBefore = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
@@ -216,7 +183,7 @@ test("S11 requires explicit review submission and preserves the exact 19-field t
   await expect(review).not.toContainText(/BMI|체질량지수|저위험|중위험|고위험/);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests).toEqual([{ body: validPayload, authorization: "Bearer e2e-synthetic-access-token" }]);
+  expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   await expect(result(page)).toContainText("생활정보 분석이 완료되었습니다.");
   await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험/);
   await expect(submit(page)).toHaveCount(0);
@@ -296,7 +263,7 @@ test("S11 review edits return directly to review and submit only the corrected v
   await page.getByLabel("위 안내를 확인했습니다.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests[0].body).toEqual({ ...validPayload, weight_kg: 69, cigarette_smoking_state: "former_currently_not_smoking", walking_active_day_minutes: 45, weekend_wake_minute: 15 });
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 native keyboard navigation focuses each new heading and Enter in a field never advances", async ({ page }) => {
@@ -367,7 +334,7 @@ test("S11 retains the age-80 applicability notice through review without blockin
   await expect(page.locator('[data-scene="S11"]')).toContainText("적용 근거가 상대적으로 약합니다");
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests[0].body).toEqual({ ...validPayload, age_years: 80 });
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 preserves existing fractional and positive input semantics without new HTML eligibility restrictions", async ({ page }) => {
@@ -381,7 +348,7 @@ test("S11 preserves existing fractional and positive input semantics without new
   await expectStep(page, "review");
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests[0].body).toEqual({ ...validPayload, age_years: 35.5, height_cm: 0.5, weight_kg: 0.5 });
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 makes all four time fields explicit and focuses every incomplete clock value locally", async ({ page }) => {
@@ -419,7 +386,7 @@ test("S11 preserves browser midnight in all four clocks without research-clock r
   await page.getByLabel("위 안내를 확인했습니다.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests[0].body).toEqual({ ...validPayload, weekday_bed_hour: 0, weekday_bed_minute: 0, weekday_wake_hour: 0, weekend_bed_hour: 0, weekend_bed_minute: 0, weekend_wake_hour: 0 });
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 links missing review acknowledgement to the focused checkbox and clears the error on correction", async ({ page }) => {
@@ -456,10 +423,13 @@ test("S11 refuses an incomplete review edit and leaves the relevant field reacha
   await expect(step(page, "review")).toContainText("171");
 });
 
-test("S11 keeps generic 422 on review with focused safe copy, editable groups and a deliberate corrected retry", async ({ page }) => {
-  const routed = await routeModel(page, { statuses: [422, 200] });
+test("S11 keeps invalid combinations on review with focused safe copy, editable groups and a deliberate corrected retry", async ({ page }) => {
+  const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
+  await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await page.locator("#model-walking-days").fill("0");
+  await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
   await submit(page).click();
   const error = page.locator("#model-v2-input-error");
   await expect(error).toContainText("입력 조합을 확인해 주세요");
@@ -469,18 +439,18 @@ test("S11 keeps generic 422 on review with focused safe copy, editable groups an
   await expect(page.locator('form.measurement-panel [aria-invalid="true"]')).toHaveCount(0);
   for (const title of ["기본 정보", "생활 습관", "활동", "수면"]) await expect(page.getByRole("button", { name: `${title} 수정`, exact: true })).toBeEnabled();
   await expect(page.locator("form.measurement-panel")).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
-  expect(routed.requests).toHaveLength(1);
-  await page.getByRole("button", { name: "기본 정보 수정", exact: true }).click();
-  await expect(page.locator("#model-height")).toHaveValue("170");
-  await expect(page.locator("#model-height")).not.toHaveAttribute("aria-invalid");
-  await page.locator("#model-height").fill("171");
+  expect(routed.requests).toHaveLength(0);
+  await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await expect(page.locator("#model-walking-days")).toHaveValue("0");
+  await expect(page.locator("#model-walking-days")).not.toHaveAttribute("aria-invalid");
+  await page.locator("#model-walking-days").fill("4");
   await expectErrorCleanup(page);
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
   await page.getByLabel("위 안내를 확인했습니다.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  expect(routed.requests).toHaveLength(2);
-  expect(routed.requests[1].body).toEqual({ ...validPayload, height_cm: 171 });
+  expect(routed.requests).toHaveLength(1);
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 keeps 503 unavailable recoverable with retained review values and no automatic retry", async ({ page }) => {
@@ -497,7 +467,7 @@ test("S11 keeps 503 unavailable recoverable with retained review values and no a
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toHaveLength(2);
-  expect(routed.requests[1].body).toEqual(validPayload);
+  expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
 test("S11 timeout never turns late success into completion and permits only an explicit retry", async ({ page }) => {
@@ -518,46 +488,40 @@ test("S11 timeout never turns late success into completion and permits only an e
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     expect(routed.requests).toHaveLength(2);
-    expect(routed.requests[1].body).toEqual(validPayload);
+    expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
   } finally {
     routed.releaseFirst();
   }
 });
 
-test("S11 maps 401 to the existing signed-out recovery path", async ({ page }) => {
-  const routed = await routeModel(page, { statuses: [401] });
-  await page.goto("/?e2e=signed-in&screen=S11");
-  await toReview(page);
-  await submit(page).click();
-  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
-  expect(routed.requests).toHaveLength(1);
-});
-
-test("S11 ignores stale 401 after a same-user token refresh and retains a usable review", async ({ page }) => {
-  const routed = await routeModel(page, { statuses: [401, 200], holdFirst: true });
+test("S11 sign-out discards pending local inference and returns to signed-out recovery", async ({ page }) => {
+  const routed = await routeModel(page, { holdFirst: true });
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
     await submit(page).click();
-    await expect(page.getByRole("button", { name: "생활정보 분석 중", exact: true })).toBeDisabled();
     await expect.poll(() => routed.requests.length).toBe(1);
-    expect(routed.requests[0].authorization).toBe("Bearer e2e-synthetic-access-token");
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
+    await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+    routed.releaseFirst();
+    await expect.poll(routed.settled).toBe(1);
+    await expect(result(page)).toHaveCount(0);
+  } finally { routed.releaseFirst(); }
+});
+
+test("S11 same-user token refresh preserves pending local completion", async ({ page }) => {
+  const routed = await routeModel(page, { holdFirst: true });
+  try {
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toReview(page);
+    await submit(page).click();
+    await expect.poll(() => routed.requests.length).toBe(1);
     await changeSession(page);
     routed.releaseFirst();
-    await expect(submit(page)).toBeEnabled();
-    await expect(step(page, "review")).toBeVisible();
-    await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "로그아웃", exact: true })).toBeEnabled();
-    await expect(page.locator("form.measurement-panel :disabled")).toHaveCount(0);
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    expect(routed.requests).toHaveLength(1);
-    await submit(page).click();
     await expect(result(page)).toBeVisible();
-    expect(routed.requests).toHaveLength(2);
-    expect(routed.requests[1]).toEqual({ body: validPayload, authorization: "Bearer e2e-refreshed-session-token" });
-  } finally {
-    routed.releaseFirst();
-  }
+    await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
+    expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+  } finally { routed.releaseFirst(); }
 });
 
 test("S11 reload discards a reviewed draft and acknowledgement", async ({ page }) => {
@@ -666,3 +630,85 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
+
+// Observe the actual built S11 flow; no test-only inference facade is installed.
+test("S11 directly proves no inference egress or model persistence and hashes before parsing", async ({ page }) => {
+  await observeModelPrivacy(page);
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await expect(step(page, "intro")).toBeVisible();
+  const before = await startModelPrivacy(page);
+  await toReview(page);
+  const requests: { url: string; method: string; body: string | null }[] = [];
+  page.on("request", request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  expect(requests).toEqual([{ url: "http://127.0.0.1:4173/models/model-v2.json", method: "GET", body: null }]);
+  await assertModelPrivacy(page, before, true);
+  // Positive controls prove the same observers detect a synthetic leak.
+  await page.route("**/synthetic-egress-canary", route => route.fulfill({ body: "ok" }));
+  await page.evaluate(async () => {
+    localStorage.setItem("synthetic-canary", "fixture");
+    document.cookie = "synthetic_canary=fixture";
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("synthetic-canary", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("values");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    db.transaction("values", "readwrite").objectStore("values").put("fixture", "canary");
+    db.close();
+    if (globalThis.caches) await (await caches.open("synthetic-canary")).put("/canary", new Response("fixture"));
+    await fetch("/synthetic-egress-canary", { method: "POST", body: "synthetic-fixture" });
+  });
+  const probe = await page.evaluate(() => (window as unknown as { modelPrivacy: Record<string, number> }).modelPrivacy);
+  expect([probe.storage, probe.idb, probe.cache, probe.cookie].every(count => count > 0)).toBe(true);
+  expect(requests.at(-1)?.method).toBe("POST");
+});
+
+for (const failure of ["missing", "hash_mismatch", "malformed", "oversized", "oversized_stream", "crypto_unavailable", "stalled_body", "stalled_digest", "arithmetic"] as const) {
+  test(`S11 ${failure} fails closed without persistence, disclosure or server fallback`, async ({ page }) => {
+    await observeModelPrivacy(page);
+    const routed = await routeModel(page);
+    if (failure === "crypto_unavailable") await page.addInitScript(() => Object.defineProperty(crypto, "subtle", { value: undefined }));
+    if (failure === "stalled_digest") await page.addInitScript(() => { crypto.subtle.digest = () => new Promise(() => {}); });
+    if (failure === "stalled_body" || failure === "oversized_stream") await page.addInitScript((mode) => {
+      const fetchOriginal = window.fetch;
+      window.fetch = async (...args) => {
+        if (!String(args[0]).endsWith("/models/model-v2.json")) return fetchOriginal(...args);
+        await fetchOriginal(...args);
+        return new Response(new ReadableStream({ start(controller) {
+          controller.enqueue(new Uint8Array(mode === "oversized_stream" ? 32769 : 1));
+          // Intentionally never close and ignore abort: the application deadline must still settle.
+        } }));
+      };
+    }, failure);
+    if (["missing", "hash_mismatch", "malformed", "oversized"].includes(failure)) await page.route("**/models/model-v2.json", async route => {
+      const response = await route.fetch();
+      const bytes = await response.text();
+      await route.fulfill({ status: failure === "missing" ? 404 : 200, contentType: "application/json",
+        body: failure === "oversized" ? "x".repeat(32769) : failure === "malformed" ? "{" : bytes + " " });
+    });
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await expect(step(page, "intro")).toBeVisible();
+    const before = await startModelPrivacy(page);
+    await toReview(page);
+    if (failure === "arithmetic") {
+      await page.getByRole("button", { name: "기본 정보 수정", exact: true }).click();
+      await page.locator("#model-height").fill("1e-200");
+      await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
+    }
+    const requests: string[] = [];
+    page.on("request", request => { requests.push(new URL(request.url()).pathname); expect(request.method()).toBe("GET"); expect(request.postData()).toBeNull(); });
+    await submit(page).click();
+    await expect(page.locator("#model-v2-unavailable")).toBeVisible({ timeout: 11_000 });
+    await expect(result(page)).toHaveCount(0);
+    await expect(submit(page)).toBeEnabled();
+    await expect(page.locator("#model-v2-unavailable")).not.toContainText(/height_cm|1e-200|SHA-256|model-v2.json/);
+    expect(requests).toEqual(["crypto_unavailable", "arithmetic"].includes(failure) ? [] : ["/models/model-v2.json"]);
+    await assertModelPrivacy(page, before, false);
+    const count = routed.requests.length;
+    await page.waitForTimeout(100);
+    expect(routed.requests.length).toBe(count);
+  });
+}

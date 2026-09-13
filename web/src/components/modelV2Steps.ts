@@ -26,7 +26,7 @@ type Field = {
 };
 
 // Labels and option values are shared by the controls and transient review.
-// The browser-to-API mapping remains in buildPayload, separate from presentation.
+// The transient product mapping remains in buildPayload, separate from presentation.
 export const FIELDS: Record<keyof Draft, Field> = {
   age: { id: "model-age", label: "나이", type: "number", min: "19", step: "1", inputMode: "numeric" },
   sex: { id: "model-sex", label: "성별", options: [["1", "남성"], ["2", "여성"]] },
@@ -63,7 +63,7 @@ export type StepProblem = { step: InputStep; fields: (keyof Draft)[]; message: s
 
 export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
   // Preserve the existing explicit client checks. Native min/step attributes
-  // are hints, not new eligibility rules; the API owns combination validation.
+  // are hints, not new eligibility rules; the canonical adapter owns combination validation.
   const missing = STEPS[step].fields.filter((key) => {
     if (FIELDS[key].type === "time") return clockParts(draft[key]) === null;
     if (FIELDS[key].type === "number") return finiteNumber(draft[key]) === null;

@@ -24,3 +24,47 @@
 /web/src/ui/sceneRecipes.ts text eol=lf
 /web/src/ui/scenePolicy.ts text eol=lf
 /web/src/styles.css text eol=lf
+
+# Frozen browser asset and canonical parity evidence use exact checkout bytes.
+/app/services/model_v2_input_adapter.py text eol=lf
+/app/services/model_v2_inference.py text eol=lf
+/app/apis/v1/model_v2_routers.py text eol=lf
+/scripts/model/export_model_v2_browser.py text eol=lf
+/tests/model/browser_fixtures.py text eol=lf
+/tests/model/browser_oracle.py text eol=lf
+/tests/fixtures/model_v2_t2_source_answer_parity.json text eol=lf
+/web/src/components/modelV2Draft.ts text eol=lf
+/web/src/lib/model-v2/adapter.ts text eol=lf
+/web/src/lib/model-v2/runtime.ts text eol=lf
+/web/src/lib/model-v2/errors.ts text eol=lf
+/web/src/lib/model-v2/manifest.json text eol=lf
+/web/tests/model-v2/verification.ts text eol=lf
+/web/tests/model-v2/index.html text eol=lf
+/web/scripts/verify-model-v2-parity.mjs text eol=lf
+/web/scripts/verify-model-v2-assets.mjs text eol=lf
+/web/public/models/model-v2.json text eol=lf
+/web/tests/model-v2/parity-seal.json text eol=lf
+/web/scripts/verify-model-v2-assets.test.mjs text eol=lf
+/web/scripts/model-v2-boundary.mjs text eol=lf
+/web/vite.config.ts text eol=lf
+/web/tsconfig.json text eol=lf
+/web/package.json text eol=lf
+/web/package-lock.json text eol=lf
+/pyproject.toml text eol=lf
+/.python-version text eol=lf
+/.gitattributes text eol=lf
+/.github/workflows/checks.yml text eol=lf
+
+# Scoped Python import graph and probe share the same byte identity on Windows.
+/app/dependencies/supabase_auth.py text eol=lf
+/app/core/config.py text eol=lf
+/app/core/logger.py text eol=lf
+/app/__init__.py text eol=lf
+/app/services/__init__.py text eol=lf
+/app/apis/__init__.py text eol=lf
+/app/apis/v1/__init__.py text eol=lf
+/app/dependencies/__init__.py text eol=lf
+/app/core/__init__.py text eol=lf
+/tests/__init__.py text eol=lf
+/scripts/model/model_v2_python_boundary.json text eol=lf
+/scripts/model/verify_model_v2_python_boundary.py text eol=lf
