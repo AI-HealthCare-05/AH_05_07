@@ -75,22 +75,83 @@ test("production S05 loads bear-lite once after confirmed save and transitions c
   expect(assetResponse.status()).toBe(200);
   expect(assetResponse.headers()["content-type"]).toBe("model/gltf-binary");
   expect(assetResponse.headers()["cf-mitigated"]).toBeUndefined();
-  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  const slot = page.locator(".companion-runtime-slot");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-interaction-activation", "after-idle");
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-interaction", "waiting");
+  expect(await canvas.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
   const inlineJourney = await page.locator('.journey-saved .save-ripple > .companion-runtime-slot').count();
   await expect(page.locator('[data-companion-framing]')).toHaveAttribute('data-companion-framing', inlineJourney ? 'journey-s05' : 'default');
   expect(companionRequests(requests)).toEqual([productionAssetUrl]);
   expect(requests.filter((url) => /CompanionReviewRenderer/i.test(url))).toHaveLength(1);
   expect(requests.filter((url) => /SavedSceneRenderer/i.test(url))).toEqual([]);
   await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
-  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-phase", "celebrate");
-  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-celebrate-count", "1");
-  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-phase", "idle", { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute("data-companion-phase", "celebrate");
+  await expect(runtime).toHaveAttribute("data-companion-celebrate-count", "1");
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-phase", "idle", { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "true");
+  await expect(runtime).toHaveAttribute("data-companion-interaction", "idle");
+  expect(await canvas.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("auto");
   await page.waitForTimeout(150);
   expect(companionRequests(requests)).toHaveLength(1);
-  expect(await page.locator("[data-companion-status]").getAttribute("data-companion-celebrate-count")).toBe("1");
-  expect(await page.locator("[data-companion-canvas]").getAttribute("aria-hidden")).toBe("true");
-  expect(await page.locator("[data-companion-canvas]").getAttribute("tabindex")).toBeNull();
-  expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
+  expect(await runtime.getAttribute("data-companion-celebrate-count")).toBe("1");
+  expect(await canvas.getAttribute("aria-hidden")).toBe("true");
+  expect(await canvas.getAttribute("tabindex")).toBeNull();
+  expect(await canvas.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("auto");
+});
+
+test("production S05 enables touch reactions only after celebrate settles idle", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+
+  try {
+    await installSyntheticApi(page);
+    const url = new URL(
+      "/?e2e=signed-in&screen=S04",
+      baseURL ?? "http://127.0.0.1:4173",
+    ).toString();
+    await page.goto(url);
+    await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+    await saveFromS04(page);
+
+    const runtime = page.locator("[data-companion-status]");
+    const canvas = page.locator("[data-companion-canvas]");
+
+    await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    await expect(runtime).toHaveAttribute("data-companion-celebrate-count", "1");
+    await expect(runtime).toHaveAttribute("data-companion-phase", "idle", { timeout: 30_000 });
+    await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "true");
+
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height * 0.18;
+    await page.touchscreen.tap(x, y);
+
+    await expect(runtime).toHaveAttribute("data-companion-pointer-type", "touch");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "curious");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+    expect(await runtime.getAttribute("data-companion-celebrate-count")).toBe("1");
+
+    await expect.poll(
+      async () => runtime.getAttribute("data-companion-reaction-state"),
+      { timeout: 1_500 },
+    ).toBe("idle");
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+    expect(await runtime.getAttribute("data-companion-celebrate-count")).toBe("1");
+  } finally {
+    await context.close();
+  }
 });
 
 test("production excludes every non-S05 screen and ignores query overrides", async ({ page }) => {
@@ -125,6 +186,9 @@ test("production reduced motion keeps a neutral static companion without an RAF 
   await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   await expect(runtime).toHaveAttribute("data-companion-motion", "stopped");
   await expect(runtime).toHaveAttribute("data-companion-phase", "idle");
+  await expect(runtime).toHaveAttribute("data-companion-interaction-enabled", "false");
+  await expect(page.locator(".companion-runtime-slot")).toHaveAttribute("data-companion-interaction-activation", "disabled");
+  expect(await page.locator("[data-companion-canvas]").evaluate((canvas) => getComputedStyle(canvas).pointerEvents)).toBe("none");
   expect(await runtime.getAttribute("data-companion-celebrate-count")).toBe("0");
   const before = await page.evaluate(() => (window as unknown as { __companionRafCalls: () => number }).__companionRafCalls());
   await page.waitForTimeout(250);
