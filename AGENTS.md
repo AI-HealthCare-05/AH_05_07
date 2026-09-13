@@ -81,3 +81,12 @@ or a new dependency/topology:
   rewrite files merely to prepare a task.
 - Reuse still-valid evidence within its exact scope. Never relabel historical,
   mock, simulator, or source-only evidence as current production proof.
+
+- When Codex materially contributes to a commit, create that commit with
+  `scripts/git/codex-commit` instead of invoking `git commit` directly.
+  The resulting commit message must contain exactly one
+  `Co-authored-by: Codex <noreply@openai.com>` trailer.
+- Do not rewrite already-published history solely to add Codex attribution.
+- When a Codex-authored branch is squash-merged, preserve
+  `Co-authored-by: Codex <noreply@openai.com>` in the final squash commit
+  message so attribution survives on `main`.
