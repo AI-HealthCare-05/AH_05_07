@@ -1,19 +1,32 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 
 const fixtureScript = readFileSync(
   new URL("../scripts/journey-review-fixture.mjs", import.meta.url),
   "utf8",
 ).replace("export function", "function") + "\njourneyReviewFixture();";
 
+// Reuse the saved-scene fixture pattern: verify the reviewed GLB once before
+// behavior tests start. Live transport has its own companion CI coverage.
+const asset = companionAssetManifest.bear.lite;
+let assetBody: Buffer;
+test.beforeAll(async ({ request }) => {
+  const response = await request.get(asset.url);
+  expect(response.status()).toBe(200);
+  assetBody = await response.body();
+  expect(assetBody.length).toBe(asset.bytes);
+  expect(createHash("sha256").update(assetBody).digest("hex")).toBe(asset.sha256);
+  await response.dispose();
+});
+
 async function installReviewMedia(page: Page) {
-  await page.route("**/review-media/**", async (route) => {
-    const pathname = new URL(route.request().url()).pathname.replace("/review-media", "");
-    const response = await route.fetch({
-      url: `https://sk7-companion.gkrry.com${pathname}`,
-    });
-    await route.fulfill({ response });
-  });
+  await page.route(`**/review-media${new URL(asset.url).pathname}`, (route) => route.fulfill({
+    status: 200,
+    contentType: "model/gltf-binary",
+    body: assetBody,
+  }));
 }
 
 async function openLivingReplay(page: Page) {
@@ -137,7 +150,7 @@ test("S10 day focus attention remains presentation-only under touch input", asyn
 
   try {
     await installReviewMedia(page);
-    await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
+    await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
     await page.addInitScript({ content: fixtureScript });
     const url = new URL(
       "/?e2e=signed-in&screen=S10&recap_fixture=mixed"
@@ -151,18 +164,28 @@ test("S10 day focus attention remains presentation-only under touch input", asyn
 
     await expect(buttons).toHaveCount(7);
     await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    await page.clock.pauseAt(new Date("2026-09-11T04:00:00Z"));
 
     await buttons.nth(3).tap();
     await expect(buttons.nth(3)).toHaveAttribute("aria-pressed", "true");
     await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
     await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "1");
+    await page.clock.runFor(100);
     await expect(runtime).toHaveAttribute("data-companion-look-state", "replay-cue");
     await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
     await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
     await expectSpinePostureActive(runtime);
 
-    await expect(runtime).toHaveAttribute("data-companion-replay-cue", "none", { timeout: 2_500 });
-    await expect(runtime).toHaveAttribute("data-companion-look-state", "centered", { timeout: 4_000 });
+    // Expiry and settling run in RAF steps, not independent wall-clock timers.
+    // Check the 900ms cue boundary, then advance the real renderer's callbacks
+    // through expiry and settling without depending on CI's software WebGL FPS.
+    await page.clock.runFor(799);
+    await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
+    await page.clock.runFor(17);
+    await expect(runtime).toHaveAttribute("data-companion-replay-cue", "none");
+    await page.clock.runFor(600);
+    await expect(runtime).toHaveAttribute("data-companion-look-state", "centered");
+    await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "1");
     await expect(runtime).toHaveAttribute("data-companion-look-head-yaw", "0.0000");
     await expect(runtime).toHaveAttribute("data-companion-look-spine-yaw", "0.0000");
     await expect(runtime).toHaveAttribute("data-companion-look-head-pitch", "0.0000");
