@@ -87,6 +87,9 @@ or a new dependency/topology:
   The resulting commit message must contain exactly one
   `Co-authored-by: Codex <noreply@openai.com>` trailer.
 - Do not rewrite already-published history solely to add Codex attribution.
-- When a Codex-authored branch is squash-merged, preserve
-  `Co-authored-by: Codex <noreply@openai.com>` in the final squash commit
-  message so attribution survives on `main`.
+- When a Codex-authored branch is squash-merged, GitHub may copy each
+  constituent commit's `Co-authored-by: Codex <noreply@openai.com>` trailer
+  into the generated squash body. Remove those repeated constituent trailers
+  before merging, then keep exactly one final
+  `Co-authored-by: Codex <noreply@openai.com>` trailer at the end of the squash
+  commit message so attribution survives on `main`.
