@@ -408,7 +408,7 @@ test('Journey record browsing keeps distinct facts, exact detail targets, and re
   await page.screenshot({ path: testInfo.outputPath('s08-desktop-1440.png'), fullPage: true });
 });
 
-test('Journey S13 distinguishes an unavailable window and retries with the existing read request', async ({ page }, testInfo) => {
+test('Journey S13 follows the bounded bootstrap retry and keeps manual read recovery', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 360, height: 800 });
   let loads = 0; const methods: string[] = [];
   await page.route('http://e2e.invalid/**', async route => {
@@ -417,7 +417,7 @@ test('Journey S13 distinguishes an unavailable window and retries with the exist
     methods.push(request.method());
     if (!url.pathname.endsWith('/window')) return route.abort();
     loads++;
-    return route.fulfill({ status: loads === 1 ? 503 : 200, headers, contentType: 'application/json', body: JSON.stringify(loads === 1 ? {} : {
+    return route.fulfill({ status: loads <= 2 ? 503 : 200, headers, contentType: 'application/json', body: JSON.stringify(loads <= 2 ? {} : {
       start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [], challenge_events: [], active_challenge: null,
     }) });
   });
@@ -428,6 +428,7 @@ test('Journey S13 distinguishes an unavailable window and retries with the exist
   await expect(error).toContainText('아직 기록이 없다는 뜻은 아니에요.');
   await expect(error).toContainText('연결을 확인한 뒤 다시 불러와 주세요.');
   await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+  expect(loads).toBe(2);
   await page.screenshot({ path: testInfo.outputPath('s13-mobile-360.png'), fullPage: true });
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.getByRole('button', { name: '다시 불러오기', exact: true }).focus();
@@ -435,7 +436,7 @@ test('Journey S13 distinguishes an unavailable window and retries with the exist
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole('button', { name: '다시 불러오기', exact: true }).click();
   await expect(page.locator('.journey-settings')).toBeVisible();
-  expect(methods).toEqual(['GET', 'GET']);
+  expect(methods).toEqual(['GET', 'GET', 'GET']);
 });
 
 test('Journey S14 groups guidance without writes and keeps account deletion behind its confirmation', async ({ page }, testInfo) => {
