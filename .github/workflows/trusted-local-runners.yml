@@ -28,7 +28,9 @@ jobs:
     timeout-minutes: 45
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
-      options: --user 1001
+      # The persistent WSL runner service owns _work as uid 1000.
+      # Match that uid so container actions can write GitHub file-command temp files.
+      options: --user 1000
     defaults:
       run:
         working-directory: web
