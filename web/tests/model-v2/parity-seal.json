@@ -2,8 +2,8 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "0840468b4af742df455d986df04451a52830db24",
-    "tree": "8b0d310ca9939c6685d4f56f852805914de85ad3"
+    "commit": "b93d2050d32ea86eb14277a764d8ef75671480d2",
+    "tree": "b627725ab75f37f76d4d8b5aa0918ac4bec14764"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
@@ -32,11 +32,11 @@
     "tests/model/browser_oracle.py": "cf251e8baddff3e6e7475bf0c8ec23ab3fea238fb445e926dfeecf8e2260036d",
     "uv.lock": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
     "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
-    "web/package.json": "8cde763fb19a5881afa3679827428f2859817de72e3120b7d1c751751709ea36",
+    "web/package.json": "5e97916655cba0c76c51ad3db49e5aa40f03e00308556907ab8cd341a92d5f9f",
     "web/public/models/model-v2.json": "67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c",
     "web/scripts/model-v2-boundary.mjs": "6cb90b5dd1745ff9bf142d031c00a8afe3860675b521237640637363e22fee55",
-    "web/scripts/verify-model-v2-assets.mjs": "ba49d513e2d6051384c835192b2dae88bb1c3b57bf88de3c4e6d43b24ce00099",
-    "web/scripts/verify-model-v2-assets.test.mjs": "dcc05a6be1e431551868b57c92e36b4124ef861bf097d9314912e233f5c0f343",
+    "web/scripts/verify-model-v2-assets.mjs": "0998be31ec7dc4dabce3d3b4c25f72a0fe9457ff2debc35b21c937227f4d764f",
+    "web/scripts/verify-model-v2-assets.test.mjs": "a47f716aceea04e0aa52e4dc7d9fb7e9af4777ec59d444217dc6b8470af22348",
     "web/scripts/verify-model-v2-parity.mjs": "a66b62fd8e367bdda5702a0f190164fab5b5af51c335a4079fd038be309cca0d",
     "web/src/components/modelV2Draft.ts": "64637c0739d64246d6b0907b16e6b08354dc5b4abad8c8d916f5290649ffc02c",
     "web/src/lib/model-v2/adapter.ts": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
@@ -62,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 5,
+        "coldLoadMs": 14.399999998509884,
         "warm": {
           "n": 30,
           "medianMs": 0.004,
           "p95Ms": 0.005,
           "minMs": 0.0036999999955296516,
-          "maxMs": 0.0055
+          "maxMs": 0.005599999994039535
         }
       },
       {
@@ -79,13 +79,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 19,
+        "coldLoadMs": 18,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
-          "p95Ms": 0.008,
+          "p95Ms": 0.009,
           "minMs": 0.005,
-          "maxMs": 0.009
+          "maxMs": 0.01
         }
       },
       {
@@ -96,7 +96,7 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 8,
+        "coldLoadMs": 19,
         "warm": {
           "n": 30,
           "medianMs": 0.004,

@@ -134,8 +134,16 @@ are outside this bounded oracle graph, not implicitly covered by the seal.
 
 After all three engines pass, `--seal` records the immutable source commit/tree,
 canonical artifact digest, original source hashes and aggregate results. A
-separate evidence commit follows the tested source commit. Prebuild verifies
-current scope, hashes, pinned asset and evidence schema. The additional executed `web` CI
+separate evidence commit follows the tested source commit. Canonical verification
+checks the complete guarded scope, hashes, pinned asset and evidence schema.
+Prebuild explicitly uses `--deployment-snapshot`: it checks the same seal schema
+and complete recorded hash-map scope, but compares current files only for the
+deployment subset (all guarded sources except `.github/workflows/**`, which the
+mirror intentionally omits). No other missing file is tolerated. Python/browser
+resolution protection and pinned-asset checks remain active. This mode cannot be
+combined with `--history` or `--fetch-source`, and does not establish canonical
+Git source identity or authenticate the mirror's source/sync workflow. Default
+canonical mode still requires the workflow files. The additional executed `web` CI
 job (not a repository-required status check) additionally reads the recorded commit's Git objects and compares its tree
 and guarded blobs. Repository-required merge checks are `lint` and `test`;
 `web` and routed S11/browser jobs are additional applicable protected-boundary
