@@ -2,30 +2,42 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "9753212847309dfeec2a3e116dc5dff1b99aa7b8",
-    "tree": "a712bddb03cbd922eb3453c5fcc2ee82cac09e32"
+    "commit": "87543172d0385277f619761a78ec4321a5737647",
+    "tree": "936abefbba0c80e7117b225253bc7d3825bca566"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
     ".gitattributes": "2179d7e5b6ecb0c9c8ddbfd85c60ffaa56c8f864dd9ced517bd8960419c5482e",
     ".github/workflows/checks.yml": "842728b8925e249db0c9548e1c062b744f052bac94727c384f22c15b55f91525",
     ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/apis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/apis/v1/__init__.py": "45009051c9ea46794b6545096396ae3ecb2192f623d61097aed4193fb3edf597",
     "app/apis/v1/model_v2_routers.py": "d21999597993b44f3d10120522ba64d6f4185373d150a586801f251c38780433",
+    "app/core/__init__.py": "1b68b17b8982fb53c031036d8126419a05ada8a425cbe4b3198137130b1a7088",
+    "app/core/config.py": "3b71ebb8e175c6483a5e267859cdb7e124aa17b21a9e84c1d0d368610bb566fa",
+    "app/core/logger.py": "57d137540492a1866061e4af9be8b80c4f206340159cde3c0915d1fcbd65a4d4",
+    "app/dependencies/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/dependencies/supabase_auth.py": "fc7d6570769bb9dc4c9283d8bc5a45cada79c98e4c42b6a617749fdf6bdc7c24",
+    "app/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "app/services/model_v2_inference.py": "ec7dfafb6d29554d613048c16ec9b99c07722f532550862e6391df2c1fc13581",
     "app/services/model_v2_input_adapter.py": "b1902e6eef13556b09668d6cff6a688d4a6dfdf5652504268cdffbbb856b2b8c",
     "pyproject.toml": "8de2f83ca1c62616bd4a0690884dce742ba7b6c29511acd5b1500de4dc66af63",
     "scripts/model/export_model_v2_browser.py": "7402536b173ff769f9d7d4369fafbc8db4124151e361ac5410e0cf9039e09024",
+    "scripts/model/model_v2_python_boundary.json": "79375206ce7e1c771efd94a05a758d53185d4672d45fb78a3ce7b6fdf9980c44",
+    "scripts/model/verify_model_v2_python_boundary.py": "1466048339ff4125cdca915cf63baaa2a73fab726ec9a25bbd2596d83814dc31",
+    "tests/__init__.py": "21a93cb4ba1e3849799915c84bd63aeebd126a33ab6deab8856e83733337f13a",
     "tests/fixtures/model_v2_t2_source_answer_parity.json": "9b30f6ab0d917be46e40df55d3cfa3f30c1630761062bf067317936f92ef2aa2",
     "tests/model/browser_fixtures.py": "74290b80dd28cf3f7359bfab8f84cf9015011ab8d84d643e7a5791461d00766a",
-    "tests/model/browser_oracle.py": "752ef8f9c52675d065bd4ecfb5d49f7b96613bbbb15dcab9a7c27af188e37d67",
+    "tests/model/browser_oracle.py": "cf251e8baddff3e6e7475bf0c8ec23ab3fea238fb445e926dfeecf8e2260036d",
     "uv.lock": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
     "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
     "web/package.json": "8cde763fb19a5881afa3679827428f2859817de72e3120b7d1c751751709ea36",
     "web/public/models/model-v2.json": "67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c",
     "web/scripts/model-v2-boundary.mjs": "6cb90b5dd1745ff9bf142d031c00a8afe3860675b521237640637363e22fee55",
-    "web/scripts/verify-model-v2-assets.mjs": "524c1b6f91884690f034e7653dc2bb37bd87eed01217195b290f1c14b5761bbc",
-    "web/scripts/verify-model-v2-assets.test.mjs": "a6cfa3d42767f3d7e51273463af38115e93cdd43fb2f683b9ec83715b0ee7891",
-    "web/scripts/verify-model-v2-parity.mjs": "48c2220d6b8bb54fb016120e5b0390745beb795db841bd8e02cf020ea6961d19",
+    "web/scripts/verify-model-v2-assets.mjs": "ba49d513e2d6051384c835192b2dae88bb1c3b57bf88de3c4e6d43b24ce00099",
+    "web/scripts/verify-model-v2-assets.test.mjs": "b5e51c9d388cf683a7a3e7ba94560f491a587206c16d62228106cc7c63fece9d",
+    "web/scripts/verify-model-v2-parity.mjs": "a66b62fd8e367bdda5702a0f190164fab5b5af51c335a4079fd038be309cca0d",
     "web/src/components/modelV2Draft.ts": "64637c0739d64246d6b0907b16e6b08354dc5b4abad8c8d916f5290649ffc02c",
     "web/src/lib/model-v2/adapter.ts": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
     "web/src/lib/model-v2/errors.ts": "1d97b55d64156e2d9aaa9f0a6bc31700aaf1b0dac5a3f4ce245a3b8d2681cca9",
@@ -50,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 4.699999999254942,
+        "coldLoadMs": 18.69999999552965,
         "warm": {
           "n": 30,
           "medianMs": 0.004,
-          "p95Ms": 0.005199999999254942,
-          "minMs": 0.003699999999254942,
-          "maxMs": 0.005400000002235174
+          "p95Ms": 0.005099999994039536,
+          "minMs": 0.003700000002980232,
+          "maxMs": 0.006
         }
       },
       {
@@ -67,13 +79,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 20,
+        "coldLoadMs": 21,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
-          "p95Ms": 0.007,
+          "p95Ms": 0.009,
           "minMs": 0.005,
-          "maxMs": 0.008
+          "maxMs": 0.01
         }
       },
       {
@@ -84,13 +96,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 5,
+        "coldLoadMs": 18,
         "warm": {
           "n": 30,
-          "medianMs": 0.004,
+          "medianMs": 0.005,
           "p95Ms": 0.005,
           "minMs": 0.004,
-          "maxMs": 0.005
+          "maxMs": 0.007
         }
       }
     ]
