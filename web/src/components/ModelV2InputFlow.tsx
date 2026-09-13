@@ -2,7 +2,8 @@ import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
-import { ApiRequestError, scoreModelV2ProductInput } from "../lib/api";
+import { scoreModelV2Locally } from "../lib/model-v2/runtime";
+import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { Scene } from "./SceneShell";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
@@ -11,7 +12,7 @@ import "./ModelV2InputFlow.css";
 type Props = {
   session: Session;
   captureRequestContext: (activeSession: Session | null) => ModelV2RequestContext | null;
-  onSessionExpired: (requestContext: ModelV2RequestContext) => void;
+  isCurrentRequestContext: (requestContext: ModelV2RequestContext) => boolean;
   onReturnToToday: () => void;
 };
 
@@ -25,7 +26,7 @@ type ResultState = "idle" | "input_invalid" | "temporarily_unavailable" | "proce
 const INPUT_ERROR_ID = "model-v2-input-error";
 const STEP_TITLE_ID = "model-v2-step-title";
 
-export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpired, onReturnToToday }: Props) {
+export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequestContext, onReturnToToday }: Props) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [step, setStep] = useState<Step>("intro");
   const [completed, setCompleted] = useState<InputStep[]>([]);
@@ -140,20 +141,13 @@ export function ModelV2InputFlow({ session, captureRequestContext, onSessionExpi
     setFocusRequest({ id: "model-v2-pending" });
 
     try {
-      await scoreModelV2ProductInput(session, payload);
-      if (!mounted.current) return;
+      await scoreModelV2Locally(payload);
+      if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
       setResultState("processed");
       setFocusRequest({ id: "model-v2-result-title" });
     } catch (error) {
-      if (!mounted.current) return;
-      if (error instanceof ApiRequestError && error.status === 401) {
-        onSessionExpired(requestContext);
-        // A stale 401 may be ignored by the existing session guard. Restore
-        // review focus in that case so the newer session can submit deliberately.
-        setFocusRequest({ id: STEP_TITLE_ID });
-        return;
-      }
-      if (error instanceof ApiRequestError && error.status === 422) {
+      if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
+      if (error instanceof ModelV2LocalError && error.code === "input_invalid") {
         setResultState("input_invalid");
         setMessage("입력 조합을 확인해 주세요. 수정한 뒤 다시 시도할 수 있습니다.");
         setFocusRequest({ id: INPUT_ERROR_ID });

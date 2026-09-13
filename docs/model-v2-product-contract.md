@@ -1,5 +1,21 @@
 # Model V2 Product Contract
 
+## Approved browser integration decision — 2026-09-13
+
+[ADR-0008](adr/0008-s11-verifiable-local-inference.md) records the human-approved
+browser disclosure tradeoff and S11 source integration in Issue #490. The S11
+submission path validates its unchanged transient 19-field input, runs the frozen
+11-feature computation locally, and returns only the canonical two nonnumeric
+fields. It sends no feature-bearing inference request and has no server fallback.
+Build-pinned SHA-256 verification precedes artifact parsing/use; failures close
+without persisting inputs or results. The authenticated server endpoint remains.
+
+Browser owners can reconstruct internal continuous outputs from disclosed fitted
+parameters. This is explicitly accepted; it is **not G10 displayability PASS**,
+permission for application score/probability/percentile/band display, a frozen
+model/semantic change, real-user expansion or production deployment approval.
+All product, privacy and independent-fact invariants below remain binding.
+
 ## Lifecycle reading note — 2026-09-11
 
 The product boundary remains binding; the T1 planning statuses below are not a

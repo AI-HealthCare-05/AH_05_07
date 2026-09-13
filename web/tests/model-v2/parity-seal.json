@@ -1,0 +1,21 @@
+{
+  "description": "Canonical parity passed for these exact sources; rerun with actual artifact after changes.",
+  "sha256": {
+    "app/services/model_v2_input_adapter.py": "b1902e6eef13556b09668d6cff6a688d4a6dfdf5652504268cdffbbb856b2b8c",
+    "app/services/model_v2_inference.py": "ec7dfafb6d29554d613048c16ec9b99c07722f532550862e6391df2c1fc13581",
+    "app/apis/v1/model_v2_routers.py": "d21999597993b44f3d10120522ba64d6f4185373d150a586801f251c38780433",
+    "scripts/model/export_model_v2_browser.py": "7402536b173ff769f9d7d4369fafbc8db4124151e361ac5410e0cf9039e09024",
+    "tests/model/browser_fixtures.py": "7439e0e44a56da45957ec96e079d10dca50c782286614cd66fd106f6b43779ad",
+    "tests/model/browser_oracle.py": "752ef8f9c52675d065bd4ecfb5d49f7b96613bbbb15dcab9a7c27af188e37d67",
+    "tests/fixtures/model_v2_t2_source_answer_parity.json": "9b30f6ab0d917be46e40df55d3cfa3f30c1630761062bf067317936f92ef2aa2",
+    "web/src/components/modelV2Draft.ts": "64637c0739d64246d6b0907b16e6b08354dc5b4abad8c8d916f5290649ffc02c",
+    "web/src/lib/model-v2/adapter.ts": "c95f81d4ad1a0c77d0f3cf5206365a9bcb74c23cffbaf6c7d7fa649f1c388cd8",
+    "web/src/lib/model-v2/runtime.ts": "b8dd30868df0c4ad8fe17834dce2b57caf2f7e68bd5fb593a90b042f2c752781",
+    "web/src/lib/model-v2/errors.ts": "1d97b55d64156e2d9aaa9f0a6bc31700aaf1b0dac5a3f4ce245a3b8d2681cca9",
+    "web/src/lib/model-v2/manifest.json": "889a2173fe852dda6e2eff3d7e5c803885105330b5fa5835e94880ffd9bea53b",
+    "web/tests/model-v2/verification.ts": "102a8b4f9afe5a155d63fb6f7d9d9a74e840db12e9be4a1b200261fd58711ad4",
+    "web/tests/model-v2/index.html": "e2f72cb1d9e89c482441fb45253a0beead763a0588ab30d32b816a7a66bbbf34",
+    "web/scripts/verify-model-v2-parity.mjs": "63b9ca1d891a04aef173134f099553fc562f50e4d9456c5adce221e8c7482f6b",
+    "web/scripts/verify-model-v2-assets.mjs": "5f3a3af9b0714b7d086554bdca6f159de63deec33d933d178f2d935b8deb397a"
+  }
+}

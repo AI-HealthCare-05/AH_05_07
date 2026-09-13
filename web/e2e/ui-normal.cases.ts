@@ -28,6 +28,14 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   // Browser-owned synthetic storage + intercepted API only; no real auth/DB integration.
   let empty = true;
   let modelRequests = 0;
+  let modelAssets = 0;
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/models/model-v2.json') {
+      modelAssets++;
+      expect(request.method()).toBe('GET');
+      expect(request.postData()).toBeNull();
+    }
+  });
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   await page.addInitScript(() => localStorage.setItem('sb-auth-auth-token', JSON.stringify({
     access_token: 'local-mock-auth-token', refresh_token: 'local-mock-refresh-token', token_type: 'bearer', expires_in: 3600, expires_at: 2000000000,
@@ -74,7 +82,8 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await page.getByRole('button', { name: '생활정보 분석하기', exact: true }).click();
   const result = page.locator('[data-model-v2-user-result="processed"]');
   await expect(result).toBeVisible();
-  expect(modelRequests).toBe(1);
+  expect(modelRequests).toBe(0);
+  expect(modelAssets).toBe(1);
   expect(await result.innerText()).not.toMatch(/0\.\d+|\d+%|저위험|중위험|고위험/);
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(storage).not.toContain('never_smoked'); expect(storage).not.toContain('23:30');

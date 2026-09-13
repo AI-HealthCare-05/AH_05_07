@@ -1350,11 +1350,7 @@ function App() {
           session={session}
           captureRequestContext={captureRequestContext}
           onReturnToToday={() => navigate("S02")}
-          onSessionExpired={(requestContext) => {
-            if (!isCurrentRequestContext(requestContext) || hasNewerToken(requestContext)) return;
-            void supabase?.auth.signOut({ scope: "local" });
-            applySession(null);
-          }}
+          isCurrentRequestContext={isCurrentRequestContext}
         />
       );
     }
