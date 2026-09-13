@@ -15,7 +15,8 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   `bear` primary, `lite` candidate, S05 `save_success` only로 범위를 좁힌다.
 - S3E production rollout: **COMPLETE**. exact `production` mode는 고정된 S05
   `bear`/`lite` profile만 만들고, confirmed save 이후 같은 GLB의 mixer에서
-  `celebrate` one-shot 뒤 `idle`로 전환한다.
+  `celebrate` one-shot 뒤 `idle`로 전환한다. 현재 tactile production v1은
+  그 `idle` 전환이 끝난 뒤에만 head/body/feet pointer interaction을 연다.
 - live production state: **ACTIVE**. Phase B activation, public smoke, rollback
   rehearsal, and final restore are verified in
   [S3E production rollout evidence](s3e-companion-production-rollout.md).
@@ -87,8 +88,11 @@ URL/version/file name은 사용하지 않는다.
 Production sequence는 confirmed successful save가 확인된 S05에서만
 `celebrate`를 `LoopOnce`/1회로 재생하고 mixer `finished` event 뒤 `idle` loop로
 전환한다. sequence 중 selection을 바꾸지 않으므로 approved bear-lite GLB는
-정확히 한 번만 요청된다. `prefers-reduced-motion: reduce`에서는 action과 RAF를
-시작하지 않고 neutral static model만 표시한다.
+정확히 한 번만 요청된다. tactile production v1은 celebration 동안
+`pointer-events: none`/interaction disabled를 유지하고 `idle` 진입 뒤에만 기존
+head/body/feet tactile controller를 생성한다. interaction은 저장 결과·혈압 값·
+모델 결과를 입력으로 받지 않는다. `prefers-reduced-motion: reduce`에서는 action,
+RAF, tactile interaction을 모두 시작하지 않고 neutral static model만 표시한다.
 
 정책 함수는 화면·clip·비의미적 UI context만 받는다. 혈압 수치/변화, 위험 점수·
 위험군, 모델 결과·준비 상태, 챌린지 성공률, 건강 개선 여부는 입력 타입이나
@@ -98,11 +102,13 @@ Production sequence는 confirmed successful save가 확인된 S05에서만
 ## 접근성 및 실패 격리
 
 기존 화면은 companion 없이도 정보·폼·탐색을 제공한다. canvas와 bounded slot은
-`aria-hidden`, `pointer-events: none`이며 tab index·accessible name이 없다.
-renderer 오류는 error boundary와 loader failure path에서 장식만 제거하고 본문·버튼·
-폼·탐색에 전파하지 않는다. `prefers-reduced-motion: reduce`는 host가 읽은
-presentation boolean으로 전달하며, reduced motion에서는 animation mixer/지속 RAF를
-시작하지 않는다.
+계속 `aria-hidden`이며 tab index·accessible name이 없다. pointer input은 기본적으로
+차단되고, review의 승인된 tactile candidate 또는 production S05의 one-shot
+`celebrate → idle` 완료 뒤에만 bounded decorative target으로 열린다. renderer 오류는
+error boundary와 loader failure path에서 장식만 제거하고 본문·버튼·폼·탐색에
+전파하지 않는다. `prefers-reduced-motion: reduce`는 host가 읽은 presentation
+boolean으로 전달하며, reduced motion에서는 animation mixer/지속 RAF/tactile
+interaction을 시작하지 않는다.
 
 ## 자산 및 운영 경계
 
@@ -120,9 +126,11 @@ GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 7 clip runtime name set, 허용/조건부/차단 policy, 제외 화면 network=0, reduced motion,
 404/abort 실패 격리, 1366/390/320 responsive 경계를 실제 브라우저에서 검증한다.
 `npm run test:e2e:production:on`은 실제 runtime delivery의 S05 production-on
-경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`, 제외
-화면, query 무시, reduced motion, failure isolation, 1366/390/320 non-overlap을
-검증한다. 이 테스트의 production variable은 local test web server에만 주입한다.
+경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`,
+celebration 중 tactile 차단, idle 이후 mouse/touch tactile 활성화와 celebrate
+non-replay, 제외 화면, query 무시, reduced motion, failure isolation,
+1366/390/320 non-overlap을 검증한다. 이 테스트의 production variable은 local test
+web server에만 주입한다.
 
 S3C CORS 계약은 그대로 유지한다. 최종 origin은
 `https://ah-05-07-pages.ahnsangkyoon.workers.dev`와 `http://127.0.0.1:4173` 두 개이며,

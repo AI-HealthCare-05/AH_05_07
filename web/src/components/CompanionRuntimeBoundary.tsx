@@ -3,6 +3,7 @@ import { lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react
 import { resolveCompanionRuntimeConfig, type CompanionSelection } from "../ui/companion";
 
 export type CompanionFraming = "default" | "journey-s05";
+export type CompanionInteractionActivation = "disabled" | "immediate" | "after-idle";
 
 export type CompanionRuntimeBoundaryProps = {
   mode: unknown;
@@ -54,18 +55,31 @@ class RendererErrorBoundary extends Component<{ children: ReactNode }, { failed:
 export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = false, framing = "default" }: CompanionRuntimeBoundaryProps) {
   const config = resolveCompanionRuntimeConfig(mode, { reducedMotion });
   if (!config.enabled || !selection) return null;
-  const interactive = config.mode === "review"
-    && selection.species === "bear"
-    && selection.variant === "lite"
-    && selection.clip === "idle"
-    && !config.reducedMotion;
+  const interactionActivation: CompanionInteractionActivation = config.reducedMotion
+    ? "disabled"
+    : config.mode === "review"
+      && selection.species === "bear"
+      && selection.variant === "lite"
+      && selection.clip === "idle"
+      ? "immediate"
+      : config.mode === "production"
+        && selection.screen === "S05"
+        && selection.species === "bear"
+        && selection.variant === "lite"
+        && selection.clip === "celebrate"
+        && selection.sequence === "celebrate_then_idle"
+        ? "after-idle"
+        : "disabled";
+
+  const tactileEligible = interactionActivation !== "disabled";
 
   return (
     <div
       className="companion-runtime-slot"
       aria-hidden="true"
-      data-companion-interactive={interactive ? "true" : "false"}
-      style={interactive ? { pointerEvents: "auto" } : undefined}
+      data-companion-interactive={tactileEligible ? "true" : "false"}
+      data-companion-interaction-activation={interactionActivation}
+      style={interactionActivation === "immediate" ? { pointerEvents: "auto" } : undefined}
     >
       <RendererErrorBoundary>
         <Suspense fallback={null}>
@@ -73,7 +87,7 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
             selection={selection}
             reducedMotion={config.reducedMotion}
             framing={framing}
-            interactive={interactive}
+            interactionActivation={interactionActivation}
           />
         </Suspense>
       </RendererErrorBoundary>

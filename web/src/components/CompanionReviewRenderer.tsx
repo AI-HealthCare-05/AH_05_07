@@ -9,7 +9,10 @@ import {
   type CompanionSelection,
 } from "../ui/companion";
 import { getCompanionAsset } from "../ui/companionAssets.generated";
-import type { CompanionFraming } from "./CompanionRuntimeBoundary";
+import type {
+  CompanionFraming,
+  CompanionInteractionActivation,
+} from "./CompanionRuntimeBoundary";
 import {
   createTactileCompanionInteraction,
   type CompanionGrabZone,
@@ -20,7 +23,7 @@ type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
   reducedMotion: boolean;
   framing?: CompanionFraming;
-  interactive?: boolean;
+  interactionActivation?: CompanionInteractionActivation;
 }>;
 type RenderStatus = "loading" | "ready" | "error";
 type AnimationController = {
@@ -61,7 +64,12 @@ function setStatus(host: HTMLDivElement, status: RenderStatus, clipNames = "") {
   host.dataset.companionClipNames = clipNames;
 }
 
-export default function CompanionReviewRenderer({ selection, reducedMotion, framing = "default", interactive = false }: CompanionReviewRendererProps) {
+export default function CompanionReviewRenderer({
+  selection,
+  reducedMotion,
+  framing = "default",
+  interactionActivation = "disabled",
+}: CompanionReviewRendererProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<AnimationController | null>(null);
   const latestSelectionRef = useRef(selection);
@@ -82,16 +90,21 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     // The larger journey S05 slot needs head/foot room throughout celebrate and idle.
     // Keep the original camera for every legacy/review caller.
     const camera = new THREE.PerspectiveCamera(framing === "journey-s05" ? 34 : 28, 1, 0.01, 100);
+    const tactileEligible = interactionActivation !== "disabled";
     setStatus(host, "loading");
     host.dataset.companionMotion = reducedMotion ? "stopped" : "pending";
     host.dataset.companionPhase = reducedMotion ? "idle" : "pending";
     host.dataset.companionCelebrateCount = "0";
     host.dataset.companionInteractionEnabled = "false";
-    host.dataset.companionInteraction = interactive ? "loading" : "disabled";
-    host.dataset.companionReactionState = interactive ? "idle" : "disabled";
+    host.dataset.companionInteraction = interactionActivation === "immediate"
+      ? "loading"
+      : interactionActivation === "after-idle"
+        ? "waiting"
+        : "disabled";
+    host.dataset.companionReactionState = tactileEligible ? "idle" : "disabled";
     host.dataset.companionReactionClip = selection.clip;
     host.dataset.companionAnimationClip = selection.clip;
-    host.dataset.companionMinReactionMs = interactive ? String(TACTILE_MIN_REACTION_VISIBLE_MS) : "0";
+    host.dataset.companionMinReactionMs = tactileEligible ? String(TACTILE_MIN_REACTION_VISIBLE_MS) : "0";
     host.dataset.companionOffsetX = "0.0000";
     host.dataset.companionOffsetY = "0.0000";
     setStatusState("loading");
@@ -192,6 +205,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
            let reactionReleaseTimer: number | undefined;
            let reactionStartedAt = 0;
+           let enableInteraction: (() => void) | undefined;
 
            const clearReactionReleaseTimer = () => {
              if (reactionReleaseTimer !== undefined) {
@@ -203,7 +217,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            const markAnimation = (clip: CompanionClip, reactionState: "idle" | "active") => {
              host.dataset.companionAnimationClip = clip;
              host.dataset.companionReactionClip = clip;
-             host.dataset.companionReactionState = interactive ? reactionState : "disabled";
+             host.dataset.companionReactionState = tactileEligible ? reactionState : "disabled";
            };
 
            const stopCurrent = () => {
@@ -327,6 +341,9 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
                  host.dataset.companionPhase = "idle";
                  host.dataset.companionMotion = "playing";
                  markAnimation("idle", "idle");
+                 if (interactionActivation === "after-idle") {
+                   enableInteraction?.();
+                 }
                };
 
                finishedListener = onFinished;
@@ -353,17 +370,27 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
              releaseReaction,
              dispose: stopCurrent,
            };
-           controllerRef.current = controller;
-           play(latestSelectionRef.current, reducedMotion);
-           if (interactive && renderer) {
+
+           enableInteraction = () => {
+             if (interaction || interactionActivation === "disabled" || !renderer) return;
+             const interactionTarget = model;
+             if (!interactionTarget) return;
+
              interaction = createTactileCompanionInteraction({
                canvas: renderer.domElement,
                host,
                camera,
-               target: model,
+               target: interactionTarget,
                onGrabZone: controller.react,
                onReleaseZone: () => controller.releaseReaction(),
              });
+           };
+
+           controllerRef.current = controller;
+           play(latestSelectionRef.current, reducedMotion);
+
+           if (interactionActivation === "immediate") {
+             enableInteraction();
            }
            // Prime the selected clip before the first visible model paint. This
            // avoids briefly exposing the bind/neutral pose immediately after a
@@ -392,7 +419,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [framing, interactive, reducedMotion, selection.species, selection.variant]);
+  }, [framing, interactionActivation, reducedMotion, selection.species, selection.variant]);
 
   useEffect(() => {
     controllerRef.current?.play(selection, reducedMotion);
