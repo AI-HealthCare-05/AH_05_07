@@ -5,11 +5,9 @@ on:
     paths:
       - 'tools/character-preview/**'
       - 'docs/adr/0006-local-character-preview.md'
-      - 'docs/character-preview-verification.md'
       - 'web/src/components/CompanionReviewRenderer.tsx'
       - 'web/src/components/CompanionRuntimeBoundary.tsx'
       - 'web/src/ui/companion.ts'
-      - 'web/src/ui/companionAssets.generated.ts'
       - 'web/package.json'
       - 'web/package-lock.json'
       - '.github/workflows/character-preview.yml'
@@ -18,11 +16,9 @@ on:
     paths:
       - 'tools/character-preview/**'
       - 'docs/adr/0006-local-character-preview.md'
-      - 'docs/character-preview-verification.md'
       - 'web/src/components/CompanionReviewRenderer.tsx'
       - 'web/src/components/CompanionRuntimeBoundary.tsx'
       - 'web/src/ui/companion.ts'
-      - 'web/src/ui/companionAssets.generated.ts'
       - 'web/package.json'
       - 'web/package-lock.json'
       - '.github/workflows/character-preview.yml'

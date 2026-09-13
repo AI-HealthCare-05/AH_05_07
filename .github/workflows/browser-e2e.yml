@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "!web/src/ui/companionAssets.generated.ts"
       - "tools/mvp1-capture.cjs"
       - "tools/submission-*"
       - "docs/mvp1-*.md"
@@ -15,6 +16,7 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "!web/src/ui/companionAssets.generated.ts"
       - "tools/mvp1-capture.cjs"
       - "tools/submission-*"
       - "docs/mvp1-*.md"
