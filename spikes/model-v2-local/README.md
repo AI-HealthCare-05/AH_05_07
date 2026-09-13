@@ -5,6 +5,9 @@ Issue [#488](https://github.com/AI-HealthCare-05/AH_05_07/issues/488),
 Baseline: `6fee72f9d011e458cbf771a107b62ffc9dd754db` from live canonical main.
 P0 tactile and P1 Living Replay are completed baseline features, not candidates.
 
+Verdict: **GO_STRONG_DIFFERENTIATOR**, for the isolated feasibility boundary
+proved below. This is not approval to integrate or release it.
+
 The frozen Model V2 can be evaluated locally, with its mixed input semantics,
 Python numerical parity, browser request/storage behavior and artifact identity
 checked together. This directory has no import, route, dependency or configuration
@@ -100,9 +103,67 @@ companion look/tactile behavior would repeat existing work.
 
 ## Measurements
 
-Final source-identified measurements are recorded below after verification of
-the committed candidate. They are synthetic, local desktop evidence, not current
-production or physical-device evidence.
+EVIDENCE: clean implementation commit
+`cb9486ad6cbdeee9b1c54c231ef23af26eb69e68`, 2026-09-13 10:09–10:11 UTC.
+Subsequent report edits do not change the measured implementation. macOS/Darwin
+25.6.0 arm64, Node 26.8.1, Playwright 1.62.1; Python 3.13.14, NumPy 2.4.1,
+pandas 3.0.5, scikit-learn 1.8.0, joblib 1.5.3. Synthetic headless desktop only.
+The generated aggregate summary also records individual source-file hashes.
+Existing production-boundary checks below were run earlier against identical
+production files and reused only for that unchanged scope.
+
+| Proof | Measured result |
+| --- | --- |
+| Canonical artifact/export | Verified 6,923-byte source; two byte-identical 2,279-byte exports |
+| Export SHA-256 | `67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c` |
+| Python/browser parity | 445 cases in each of Chromium 151.0.7922.34, Firefox 153.0, WebKit 26.5; 285 success, 158 invalid-input and 2 arithmetic failures matched |
+| Maximum numeric error | `2.220446049250313e-16` score; `1.7763568394002505e-15` preprocessed value; all below declared tolerances |
+| Non-vacuous proof | Changed coefficient, constant score and truncated results rejected; poisoned computation prevents public success in all three engines |
+| Inference network/storage | 0 requests after readiness, 0 observed persistence operations; empty state; offline warm inference in all three engines |
+| Failure/observer tests | Chromium PASS: SHA mismatch, absent/malformed/oversized model, over-limit stream cancellation, missing WebCrypto, eight-second stalled-body abort, synthetic POST/storage positive controls |
+| Exporter tests | 9 passed, with the actual canonical artifact supplied |
+| Existing boundary tests | 186 passed: input adapter, inference boundary, API no-store |
+| Existing S11 browser test | 1 passed: explicit review submission preserves the exact 19-field transient request |
+| Static/build | strict TypeScript, targeted Ruff check/format, isolated build and normal web build passed |
+
+| Delivery cost | Raw bytes | gzip level 9 bytes |
+| --- | ---: | ---: |
+| Exported fitted model | 2,279 | 1,183 |
+| Shared browser runtime + adapter JS | 7,163 | 2,850 |
+| Demo entry JS | 1,188 | 752 |
+| WASM comparison runtime only | 14,034,739 | 3,594,551 |
+| WASM comparison linear-core ONNX | 568 | 522 |
+
+The model and shared runtime together are 9,442 raw / 4,033 gzip bytes. Gzip
+figures are separately compressed file measurements, not internet transfer
+measurements. Production dependencies added: **0**. Production output delta:
+**0 bytes**, verified separately against the baseline build (54 files,
+2,105,619 bytes; every file's SHA-256 unchanged).
+
+| Engine | Cold model load median / observed max | Warm complete product call median / batch p95 |
+| --- | ---: | ---: |
+| Chromium | 2.7 / 2.8 ms | 0.0034 / 0.0044 ms |
+| Firefox | 5 / 18 ms | 0.005 / 0.007 ms |
+| WebKit | 4 / 9 ms | 0.003 / 0.004 ms |
+
+Cold means model fetch + hash + parse in five fresh browser contexts per engine,
+over loopback; it excludes browser launch, application navigation and JS import.
+Warm results are 30 windows of 1,000 complete adapter + inference calls,
+reported as per-call window means. These are not production P95 measurements.
+
+WASM baseline at the same implementation commit: five fresh Chromium processes,
+285 canonical-preprocessed cases per process, maximum error `2.22e-16`, zero
+mismatches. Session initialization 136.0–140.2 ms; import through first inference
+148.4–152.8 ms; first inference 5.4–5.5 ms. Median amortized warm core execution
+0.014–0.016 ms/call across the five runs (ten windows of 100 calls each). All
+warm comparisons ran offline. Different timing boundaries prevent a general
+speedup claim. This measured overhead gives no reason to retain WASM/WebGPU in
+the chosen runtime.
+
+Network comparison: the existing synthetic S11 test observed one 19-field
+`POST /api/v1/model-v2/product-score`. The isolated demo observed zero
+inference requests, plus one initial `GET /model.json`. This comparison does not
+change the production endpoint or claim that the entire app is offline.
 
 ## Limits and next decision
 
