@@ -2,12 +2,12 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "87543172d0385277f619761a78ec4321a5737647",
-    "tree": "936abefbba0c80e7117b225253bc7d3825bca566"
+    "commit": "0840468b4af742df455d986df04451a52830db24",
+    "tree": "8b0d310ca9939c6685d4f56f852805914de85ad3"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
-    ".gitattributes": "2179d7e5b6ecb0c9c8ddbfd85c60ffaa56c8f864dd9ced517bd8960419c5482e",
+    ".gitattributes": "a4799901d8bd2797b0ea643eea06b92b3ca2fbf909de3071ce56794592c94bdc",
     ".github/workflows/checks.yml": "842728b8925e249db0c9548e1c062b744f052bac94727c384f22c15b55f91525",
     ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
     "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -36,7 +36,7 @@
     "web/public/models/model-v2.json": "67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c",
     "web/scripts/model-v2-boundary.mjs": "6cb90b5dd1745ff9bf142d031c00a8afe3860675b521237640637363e22fee55",
     "web/scripts/verify-model-v2-assets.mjs": "ba49d513e2d6051384c835192b2dae88bb1c3b57bf88de3c4e6d43b24ce00099",
-    "web/scripts/verify-model-v2-assets.test.mjs": "b5e51c9d388cf683a7a3e7ba94560f491a587206c16d62228106cc7c63fece9d",
+    "web/scripts/verify-model-v2-assets.test.mjs": "dcc05a6be1e431551868b57c92e36b4124ef861bf097d9314912e233f5c0f343",
     "web/scripts/verify-model-v2-parity.mjs": "a66b62fd8e367bdda5702a0f190164fab5b5af51c335a4079fd038be309cca0d",
     "web/src/components/modelV2Draft.ts": "64637c0739d64246d6b0907b16e6b08354dc5b4abad8c8d916f5290649ffc02c",
     "web/src/lib/model-v2/adapter.ts": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
@@ -62,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 18.69999999552965,
+        "coldLoadMs": 5,
         "warm": {
           "n": 30,
           "medianMs": 0.004,
-          "p95Ms": 0.005099999994039536,
-          "minMs": 0.003700000002980232,
-          "maxMs": 0.006
+          "p95Ms": 0.005,
+          "minMs": 0.0036999999955296516,
+          "maxMs": 0.0055
         }
       },
       {
@@ -79,13 +79,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 21,
+        "coldLoadMs": 19,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
-          "p95Ms": 0.009,
+          "p95Ms": 0.008,
           "minMs": 0.005,
-          "maxMs": 0.01
+          "maxMs": 0.009
         }
       },
       {
@@ -96,13 +96,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 18,
+        "coldLoadMs": 8,
         "warm": {
           "n": 30,
-          "medianMs": 0.005,
+          "medianMs": 0.004,
           "p95Ms": 0.005,
           "minMs": 0.004,
-          "maxMs": 0.007
+          "maxMs": 0.006
         }
       }
     ]
