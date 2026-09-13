@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import sys
 from copy import deepcopy
@@ -135,6 +136,28 @@ def fixtures() -> list[dict[str, Any]]:  # noqa: C901 - explicit synthetic cover
         ]
     ):
         add(f"product-edge-{index}", "product", {**PRODUCT_BASE, **update})
+
+    # Independent oracle inputs: the reported pow-vs-multiply overflow and
+    # adjacent representable operands, plus divisor and quotient boundaries.
+    height = 6.621714930447641e-86
+    weight = 7.882364614993977e133
+    for hi, h in enumerate([math.nextafter(height, 0), height, math.nextafter(height, math.inf)]):
+        for wi, w in enumerate([math.nextafter(weight, 0), weight, math.nextafter(weight, math.inf)]):
+            add(f"bmi-overflow-neighbour-{hi}-{wi}", "product", {**PRODUCT_BASE, "height_cm": h, "weight_kg": w})
+    for index, (h, w) in enumerate(
+        [
+            (100, math.ulp(0.0)),  # positive subnormal quotient
+            (200, math.ulp(0.0)),  # quotient rounds to zero
+            (100, math.nextafter(sys.float_info.max, 0)),
+            (math.ulp(0.0), 1),  # conversion/divisor underflow
+            (1e-160, math.ulp(0.0)),  # divisor underflow
+            (1e-159, math.ulp(0.0)),  # nonzero subnormal divisor
+            (1e156, 1),  # divisor overflow
+            (1e155, 1),  # finite large divisor, subnormal quotient
+            (1e155, math.ulp(0.0)),  # quotient underflow
+        ]
+    ):
+        add(f"bmi-range-boundary-{index}", "product", {**PRODUCT_BASE, "height_cm": h, "weight_kg": w})
 
     rng = random.Random(20260913)
     for index in range(192):

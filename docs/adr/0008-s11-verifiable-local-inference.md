@@ -56,13 +56,83 @@ corpus. Coefficient, preprocessing, constant-output and truncated-result mutants
 must fail; a poisoned calculation must block the public projection. S11 draft-to-DTO
 checks cover the exact 19 fields and review edits.
 
-After all three browser engines pass against the actual frozen artifact, `--seal`
-records hashes of the exact canonical and browser sources. Prebuild/CI rejects
-changed bytes, changed scope or a changed model digest. LF attributes keep those
-hashes portable. CI validates this evidence's source scope and failure controls;
-it does not claim to rerun the real-artifact numeric oracle when the private
-canonical artifact is unavailable. A source change requires the canonical parity
-runner and review again, never a manually relabeled PASS or manually edited seal.
+### Numerical boundary correction
+
+Python's canonical BMI formula remains `weight / ((height / 100) ** 2)`.
+Browser exponentiation is replaced by binary64 multiplication for the square.
+The reported overflow case and adjacent height/weight operands are independent
+oracle inputs. Normal product inputs retain the same formula and tolerance;
+there are no new height/weight or health eligibility bounds.
+
+Platform `pow` and multiplication can round the square differently. Exact
+classification parity at every arbitrary IEEE-754 extreme is **not** claimed.
+The browser examines the immediately adjacent representable divisors around its
+rounded square. Only when that interval touches zero/infinity does it return the
+existing `inference_unavailable` arithmetic failure. Only when division by an
+interval endpoint rounds to zero/infinity does it return `input_invalid`, as
+canonical semantic validation does for a nonpositive/nonfinite derived BMI.
+These are narrowly defined numerical ambiguity regions around the existing
+failure boundaries, not a new population eligibility policy. Python is unchanged.
+A canonical input inside such a region may be conservatively rejected by the
+browser; this is explicitly not exact success-class equivalence there. For
+example, a maximum-finite BMI at height 100 is an intentional fail-closed control,
+reported separately from exact differential parity. The adjacent-value interval
+is not a proof of an error bound for every platform's `pow` implementation.
+Divisor underflow/overflow and quotient underflow/overflow have separate tests.
+
+### Evidence identity, resolution and trust
+
+The evidence runner first captures the closed source scope, SHA-256 hashes and
+local file versions (inode/ctime/mtime/size/mode), then checks those hashes against
+a committed source identity. It verifies a separate Git archive of that commit,
+using the same Vite configuration and Model V2 build plugin as production. Live
+working-tree edits cannot change the tested archive. Immediately before atomic
+evidence publication, both the archive and live scope must still match their
+initial hashes and file versions. Even editing and restoring a guarded file
+expires that run. Evidence always uses the **initial** hashes. No source or scope
+change discovered during verification is accepted into a refreshed seal.
+
+`guardedSources` in `verify-model-v2-assets.mjs` is the executable scope: canonical
+adapter/inference/API projection, exporter/oracle/corpus, browser adapter/runtime/
+errors/manifest/draft adapter, public model asset, verification entry and tooling,
+Vite/TypeScript configuration, package and Python locks, LF rules and CI routing.
+The full verification commit/tree identifies the archived source snapshot; the
+hash map identifies the subset which must remain unchanged for evidence reuse.
+Installed dependencies and Python/browser binaries remain trusted toolchain
+inputs, not attested binaries.
+
+The production Model V2 directory has a closed regular-file inventory, rejecting
+all unexpected extensions, nested package/index directories, case variants and
+symlinks. Draft-module and root resolution-configuration competitors are also
+rejected. The shared Vite plugin requires all four expected production modules
+to be resolved and rejects runtime imports outside that closed graph. Regression
+tests build a real Vite alias replacement outside the directory as well as
+creating temporary shadow candidates. No scene policy or application resolution
+default outside this boundary changes.
+
+After all three engines pass, `--seal` records the immutable source commit/tree,
+canonical artifact digest, original source hashes and aggregate results. A
+separate evidence commit follows the tested source commit. Prebuild verifies
+current scope, hashes, pinned asset and evidence schema. The required `web` CI
+job additionally reads the recorded commit's Git objects and compares its tree
+and guarded blobs. Merely editing both a source hash and the seal while retaining
+the verification commit fails that check. Full-history checkout supplies those
+objects for this PR; if later history rewriting removes them, they must remain
+fetchable by their immutable SHA (CI fetches the recorded SHA if absent) or a new
+canonical run is required. Missing history fails closed. Ancestry is not required, so squash merge does not itself
+invalidate an otherwise available verification source object.
+
+**This proves source identity and consistency with a reviewed local-run report;
+it does not independently authenticate successful execution.** A repository
+writer can still fabricate a new source commit and aggregate report or alter the
+verifier. A regression test explicitly demonstrates that limit. Git hashes are
+not signatures from an independent runner, and ordinary CI without the private
+artifact does not rerun canonical parity. Review of the artifact-present run
+remains the trust anchor. No secret, self-signed seal, private artifact or
+individual prediction is committed. Enforced independent execution attestation
+would require a separately trusted artifact-present verifier, which this public
+repository currently lacks. The seal's machine-readable claim states this limit;
+manually relabeled PASS is not an authorized evidence-refresh procedure.
 
 ## Verification and rollback
 
@@ -70,7 +140,11 @@ Run from the repository root with the existing locked Python AI/app environment
 and installed Playwright Chromium, Firefox and WebKit:
 
 ```sh
+# Commit all guarded changes first; the runner rejects uncommitted source.
 node web/scripts/verify-model-v2-parity.mjs /absolute/model-v2-r1-a.joblib --seal
+node --test web/scripts/verify-model-v2-assets.test.mjs
+node web/scripts/verify-model-v2-assets.mjs --history
+# Commit the generated parity-seal.json separately after these pass.
 SK7_CANONICAL_ARTIFACT_PATH=/absolute/model-v2-r1-a.joblib .venv/bin/python -m pytest tests/model/test_model_v2_browser_export.py -q
 npm --prefix web run test:e2e:model-v2
 npm --prefix web run build

@@ -1,30 +1,40 @@
 // Actual canonical Python diagnostics stay in pipes, never in traces/results files.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
 import { build, preview } from "vite";
 import { chromium, firefox, webkit } from "playwright";
-import { guardedSources } from "./verify-model-v2-assets.mjs";
+import { assertUnchanged, captureSnapshot, materializeSnapshot, sourceIdentity, writeEvidence } from "./verify-model-v2-assets.mjs";
 const repo = fileURLToPath(new URL("../../", import.meta.url));
 const artifact = process.argv[2];
 if (!artifact) throw new Error("Pass the actual frozen model-v2-r1-a.joblib path");
+// Capture identity before exporter/oracle/build work. Require committed source;
+// execute a separate Git archive so even an edit-and-restore cannot affect the
+// tested bytes. The final live-tree assertion still rejects intervening drift.
+const snapshot = captureSnapshot(repo);
+const source = sourceIdentity(repo, snapshot);
 const output = mkdtempSync(resolve(tmpdir(), "sk7-s11-parity-"));
+const verifiedRoot = materializeSnapshot(repo, snapshot, source, output);
+// Installed locked dependencies are trusted toolchain inputs, not attested
+// binaries. No private model or individual inference output enters the archive.
+symlinkSync(resolve(repo, "web/node_modules"), resolve(verifiedRoot, "web/node_modules"), "dir");
+const verifiedSnapshot = captureSnapshot(verifiedRoot);
 const python = process.env.SK7_PYTHON || resolve(repo, ".venv/bin/python");
 function run(args, input) {
-  const result = spawnSync(python, args, { cwd: repo, input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+  const result = spawnSync(python, args, { cwd: verifiedRoot, input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
   if (result.status !== 0) throw new Error("Canonical subprocess failed; raw output suppressed");
   return result.stdout;
 }
-run(["scripts/model/export_model_v2_browser.py", "--artifact", artifact, "--output", output]);
-assert.ok(readFileSync(resolve(output, "model.json")).equals(readFileSync(resolve(repo, "web/public/models/model-v2.json"))), "production asset differs from canonical export");
+run(["scripts/model/export_model_v2_browser.py", "--artifact", artifact, "--output", resolve(output, "export")]);
+assert.ok(readFileSync(resolve(output, "export/model.json")).equals(readFileSync(resolve(verifiedRoot, "web/public/models/model-v2.json"))), "production asset differs from canonical export");
 const cases = JSON.parse(run(["tests/model/browser_fixtures.py"]));
 const oracle = JSON.parse(run(["tests/model/browser_oracle.py", "--artifact", artifact], JSON.stringify(cases)));
 const config = {
-  configFile: false, root: resolve(repo, "web/tests/model-v2"), publicDir: resolve(repo, "web/public"),
+  configFile: resolve(verifiedRoot, "web/vite.config.ts"), mode: "production",
+  root: resolve(verifiedRoot, "web/tests/model-v2"), publicDir: resolve(verifiedRoot, "web/public"),
   build: { target: "es2022", outDir: resolve(output, "build"), emptyOutDir: true }, logLevel: "error",
 };
 await build(config);
@@ -98,16 +108,24 @@ try {
         }).map(([key, value]) => [key, String(value)]));
         assert.ok(JSON.stringify(await page.evaluate(d => window.verification.draftPayload(d), draft)) === JSON.stringify(input), "S11 transient DTO drift");
       }
+      // Explicit conservative exception: the maximum finite derived BMI is
+      // indistinguishable from canonical pow overflow at one-ULP precision.
+      // This endpoint is NOT counted as an exact differential parity case.
+      const endpoint = await page.evaluate(p => window.verification.run([
+        { kind: "product", input: { ...p, height_cm: 100, weight_kg: Number.MAX_VALUE } },
+      ]), product);
+      assert.deepEqual(endpoint, [{ ok: false, error: "input_invalid" }]);
       const warm = await page.evaluate(p => window.verification.benchmark(p), product);
       summary.browsers.push({ name, version: browser.version(), ...parity,
-        mutationsRejected: 4, publicExecutionGuard: true,
+        mutationsRejected: 4, publicExecutionGuard: true, bmiEndpointFailClosed: true,
         coldLoadMs: await page.evaluate(() => window.verification.coldLoadMs), warm: distribution(warm) });
     } finally { await browser.close(); }
   }
-  if (process.argv.includes("--seal")) {
-    const seal = { description: "Canonical parity passed for these exact sources; rerun with actual artifact after changes.",
-      sha256: Object.fromEntries(guardedSources.map(path => [path, createHash("sha256").update(readFileSync(resolve(repo, path))).digest("hex")])) };
-    writeFileSync(resolve(repo, "web/tests/model-v2/parity-seal.json"), JSON.stringify(seal, null, 2) + "\n");
-  }
+  assertUnchanged(verifiedRoot, verifiedSnapshot);
+  assertUnchanged(repo, snapshot);
+  if (process.argv.includes("--seal")) writeEvidence(repo, snapshot, source, summary);
   console.log(JSON.stringify(summary, null, 2));
-} finally { await new Promise(done => server.httpServer.close(done)); }
+} finally {
+  await new Promise(done => server.httpServer.close(done));
+  rmSync(output, { recursive: true, force: true });
+}

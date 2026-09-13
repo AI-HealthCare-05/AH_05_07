@@ -44,3 +44,13 @@
 /web/scripts/verify-model-v2-assets.mjs text eol=lf
 /web/public/models/model-v2.json text eol=lf
 /web/tests/model-v2/parity-seal.json text eol=lf
+/web/scripts/verify-model-v2-assets.test.mjs text eol=lf
+/web/scripts/model-v2-boundary.mjs text eol=lf
+/web/vite.config.ts text eol=lf
+/web/tsconfig.json text eol=lf
+/web/package.json text eol=lf
+/web/package-lock.json text eol=lf
+/pyproject.toml text eol=lf
+/.python-version text eol=lf
+/.gitattributes text eol=lf
+/.github/workflows/checks.yml text eol=lf

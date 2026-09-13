@@ -152,6 +152,15 @@ function sleepMinutes(input: Record<string, unknown>, prefix: "weekday" | "weeke
   return duration;
 }
 
+// Adjacent binary64 values define a numerical ambiguity interval, not a
+// product eligibility range. The divisor is positive and finite here.
+function adjacent(value: number, direction: -1n | 1n): number {
+  const bits = new DataView(new ArrayBuffer(8));
+  bits.setFloat64(0, value);
+  bits.setBigUint64(0, bits.getBigUint64(0) + direction);
+  return bits.getFloat64(0);
+}
+
 export function adaptProductInput(payload: unknown): SemanticInput {
   const input = exactRecord(payload, INPUT_FIELDS);
   const age = number(input.age_years, { minimum: 19 });
@@ -168,17 +177,32 @@ export function adaptProductInput(payload: unknown): SemanticInput {
   const minutes = number(input.walking_active_day_minutes, { minimum: 0, maximum: 59, whole: true });
   if (days === 0 && (hours !== 0 || minutes !== 0)) invalid();
   const strength = category(input.strength_days_7d, STRENGTH);
-  const bmiDenominator = (height / 100) ** 2;
+  const heightMetres = height / 100;
+  // Multiplication has IEEE-754 rounding; exponentiation is implementation-
+  // approximated and differs between browser engines / Python's platform pow.
+  const bmiDenominator = heightMetres * heightMetres;
   // Python raises arithmetic errors when finite inputs underflow the divisor
   // to zero or overflow its square. Preserve failure rather than adding bounds.
   if (bmiDenominator === 0 || !Number.isFinite(bmiDenominator)) {
     throw new ModelV2LocalError("inference_unavailable");
   }
 
+  const bmi = weight / bmiDenominator;
+  // Python's platform pow can differ from the rounded product by one ULP.
+  // Fail closed only where adjacent divisors cross an arithmetic/semantic
+  // failure boundary. Ordinary inputs keep their computed BMI unchanged.
+  // This intentionally does not claim exact parity at every libm extreme.
+  const lower = adjacent(bmiDenominator, -1n);
+  const upper = adjacent(bmiDenominator, 1n);
+  if (lower === 0 || !Number.isFinite(upper)) {
+    throw new ModelV2LocalError("inference_unavailable");
+  }
+  if (!Number.isFinite(weight / lower) || weight / upper === 0) invalid();
+
   return validateSemanticInput({
     age_years: age,
     sex_knhanes: sexCategory,
-    bmi_from_height_weight: weight / bmiDenominator,
+    bmi_from_height_weight: bmi,
     cigarette_smoking_state: smoking,
     alcohol_frequency: frequency,
     alcohol_amount_category: amount,
