@@ -19,6 +19,7 @@
     "test:e2e:saved-scene": "playwright test --config=playwright.saved-scene.config.ts",
     "test:e2e:scene": "playwright test --config=playwright.scene.config.ts",
     "test:e2e:review": "playwright test --config=playwright.review.config.ts",
+    "test:e2e:companion-asset": "playwright test --config=playwright.companion-asset.config.ts",
     "test:e2e:production:on": "playwright test --config=playwright.production-on.config.ts",
     "preview": "vite preview",
     "test:e2e:ui:pr": "playwright test --config=playwright.ui-candidate.config.ts",

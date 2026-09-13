@@ -4,11 +4,25 @@ on:
   pull_request:
     paths:
       - 'tools/companions/**'
+      - 'docs/asset-register.md'
+      - 'docs/character-preview-verification.md'
+      - 'docs/evidence/companion-r2-v1.json'
+      - 'web/scripts/generate-companion-manifest.mjs'
+      - 'web/scripts/verify-companion-manifest.mjs'
+      - 'web/src/ui/companionAssets.generated.ts'
+      - 'web/playwright.companion-asset.config.ts'
       - '.github/workflows/companion-assets.yml'
   push:
     branches: [main]
     paths:
       - 'tools/companions/**'
+      - 'docs/asset-register.md'
+      - 'docs/character-preview-verification.md'
+      - 'docs/evidence/companion-r2-v1.json'
+      - 'web/scripts/generate-companion-manifest.mjs'
+      - 'web/scripts/verify-companion-manifest.mjs'
+      - 'web/src/ui/companionAssets.generated.ts'
+      - 'web/playwright.companion-asset.config.ts'
       - '.github/workflows/companion-assets.yml'
 
 permissions:
@@ -27,3 +41,26 @@ jobs:
           python-version-file: .python-version
       - name: Reject corrupted synthetic graphics and preserve provenance
         run: python -m unittest discover -s tools/companions -p 'test_*.py' -v
+
+  runtime-contract:
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install web dependencies
+        run: npm ci
+      - name: Verify generated companion contracts
+        run: |
+          npm run verify:companion-manifest
+          npm run verify:scene-manifest
+      - name: Verify all published companion variants in the review runtime
+        run: npm run test:e2e:companion-asset
