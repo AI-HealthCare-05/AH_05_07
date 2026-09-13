@@ -2,8 +2,8 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "0b375b5f4fc681cf4370b4bfd30350fccab2e49d",
-    "tree": "065884d36162bb501c7082fd48ab8fae1bd04887"
+    "commit": "9753212847309dfeec2a3e116dc5dff1b99aa7b8",
+    "tree": "a712bddb03cbd922eb3453c5fcc2ee82cac09e32"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
@@ -22,7 +22,7 @@
     "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
     "web/package.json": "8cde763fb19a5881afa3679827428f2859817de72e3120b7d1c751751709ea36",
     "web/public/models/model-v2.json": "67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c",
-    "web/scripts/model-v2-boundary.mjs": "bc7fdb5822656b2764f4fe99dc69fad81ffad6f8119fd415b6d88bfd5bbf9f1f",
+    "web/scripts/model-v2-boundary.mjs": "6cb90b5dd1745ff9bf142d031c00a8afe3860675b521237640637363e22fee55",
     "web/scripts/verify-model-v2-assets.mjs": "524c1b6f91884690f034e7653dc2bb37bd87eed01217195b290f1c14b5761bbc",
     "web/scripts/verify-model-v2-assets.test.mjs": "a6cfa3d42767f3d7e51273463af38115e93cdd43fb2f683b9ec83715b0ee7891",
     "web/scripts/verify-model-v2-parity.mjs": "48c2220d6b8bb54fb016120e5b0390745beb795db841bd8e02cf020ea6961d19",
@@ -53,10 +53,10 @@
         "coldLoadMs": 4.699999999254942,
         "warm": {
           "n": 30,
-          "medianMs": 0.003900000002235174,
-          "p95Ms": 0.005,
-          "minMs": 0.0035,
-          "maxMs": 0.005399999998509884
+          "medianMs": 0.004,
+          "p95Ms": 0.005199999999254942,
+          "minMs": 0.003699999999254942,
+          "maxMs": 0.005400000002235174
         }
       },
       {
@@ -67,11 +67,11 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 18,
+        "coldLoadMs": 20,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
-          "p95Ms": 0.008,
+          "p95Ms": 0.007,
           "minMs": 0.005,
           "maxMs": 0.008
         }
@@ -89,8 +89,8 @@
           "n": 30,
           "medianMs": 0.004,
           "p95Ms": 0.005,
-          "minMs": 0.003,
-          "maxMs": 0.006
+          "minMs": 0.004,
+          "maxMs": 0.005
         }
       }
     ]
