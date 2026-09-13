@@ -18,12 +18,17 @@ import {
   type CompanionGrabZone,
   type TactileCompanionInteraction,
 } from "./companionInteraction";
+import {
+  createCompanionLookController,
+  type CompanionLookController,
+} from "./companionLook";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
   reducedMotion: boolean;
   framing?: CompanionFraming;
   interactionActivation?: CompanionInteractionActivation;
+  attentionLook?: boolean;
 }>;
 type RenderStatus = "loading" | "ready" | "error";
 type AnimationController = {
@@ -69,6 +74,7 @@ export default function CompanionReviewRenderer({
   reducedMotion,
   framing = "default",
   interactionActivation = "disabled",
+  attentionLook = false,
 }: CompanionReviewRendererProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<AnimationController | null>(null);
@@ -86,6 +92,7 @@ export default function CompanionReviewRenderer({
     let model: THREE.Object3D | undefined;
     let resizeObserver: ResizeObserver | undefined;
     let interaction: TactileCompanionInteraction | undefined;
+    let lookController: CompanionLookController | undefined;
     const scene = new THREE.Scene();
     // The larger journey S05 slot needs head/foot room throughout celebrate and idle.
     // Keep the original camera for every legacy/review caller.
@@ -107,6 +114,10 @@ export default function CompanionReviewRenderer({
     host.dataset.companionMinReactionMs = tactileEligible ? String(TACTILE_MIN_REACTION_VISIBLE_MS) : "0";
     host.dataset.companionOffsetX = "0.0000";
     host.dataset.companionOffsetY = "0.0000";
+    host.dataset.companionLookEnabled = attentionLook ? "loading" : "false";
+    host.dataset.companionLookState = attentionLook ? "loading" : "disabled";
+    host.dataset.companionLookYaw = "0.0000";
+    host.dataset.companionLookPitch = "0.0000";
     setStatusState("loading");
 
     const fail = () => {
@@ -118,8 +129,10 @@ export default function CompanionReviewRenderer({
     };
     const render = () => {
       if (disposed || !renderer) return;
+      lookController?.beforeAnimationStep();
       mixer?.update(1 / 60);
       interaction?.step(1 / 60);
+      lookController?.step(1 / 60);
       renderer.render(scene, camera);
       frameId = window.requestAnimationFrame(render);
     };
@@ -182,6 +195,21 @@ export default function CompanionReviewRenderer({
         model.add(animatedModel);
         scene.add(model);
         camera.lookAt(0, framing === "journey-s05" ? 0.85 : 0.8, 0);
+
+        if (attentionLook) {
+          const head = animatedModel.getObjectByName("head");
+          if (head instanceof THREE.Bone) {
+            lookController = createCompanionLookController({
+              host,
+              head,
+              isSuspended: () => host.dataset.companionInteraction === "dragging",
+            });
+          } else {
+            host.dataset.companionLookEnabled = "false";
+            host.dataset.companionLookState = "unavailable";
+          }
+        }
+
         const selectedClip = gltf.animations.find((clip) => clip.name === selection.clip);
         if (!selectedClip) {
           fail();
@@ -415,11 +443,13 @@ export default function CompanionReviewRenderer({
       controllerRef.current = null;
       interaction?.dispose();
       interaction = undefined;
+      lookController?.dispose();
+      lookController = undefined;
       if (model) disposeObject(model);
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [framing, interactionActivation, reducedMotion, selection.species, selection.variant]);
+  }, [attentionLook, framing, interactionActivation, reducedMotion, selection.species, selection.variant]);
 
   useEffect(() => {
     controllerRef.current?.play(selection, reducedMotion);
