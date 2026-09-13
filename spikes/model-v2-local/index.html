@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>SK7 · 로컬 실행 검증</title>
+    <style>
+      body { max-width: 42rem; margin: 3rem auto; padding: 0 1.2rem; font: 1rem/1.7 system-ui; color: #18322e; background: #f7f7ef; }
+      h1 { font-size: 1.7rem; } button, textarea { font: inherit; } textarea { box-sizing: border-box; width: 100%; min-height: 22rem; padding: 1rem; font-size: .85rem; }
+      button { padding: .7rem 1.2rem; margin-top: 1rem; } output { display: block; padding: 1rem 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>SK7 · 로컬 실행 검증</h1>
+    <p>합성 입력 전용 feasibility spike입니다. 현재 제품과 연결되지 않습니다.</p>
+    <p>같은 frozen Model V2를 브라우저에서 계산하고, 제품에 허용된 두 필드만 표시합니다.</p>
+    <form>
+      <label for="input">합성 입력 JSON</label>
+      <textarea id="input" spellcheck="false"></textarea>
+      <button type="submit" disabled>브라우저에서 실행</button>
+    </form>
+    <output aria-live="polite">모델 무결성 확인 중</output>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
