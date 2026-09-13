@@ -1,21 +1,98 @@
 {
-  "description": "Canonical parity passed for these exact sources; rerun with actual artifact after changes.",
+  "format": "sk7-parity-evidence-v2",
+  "claim": "reviewed-local-run; not independent execution attestation",
+  "source": {
+    "commit": "0b375b5f4fc681cf4370b4bfd30350fccab2e49d",
+    "tree": "065884d36162bb501c7082fd48ab8fae1bd04887"
+  },
+  "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
-    "app/services/model_v2_input_adapter.py": "b1902e6eef13556b09668d6cff6a688d4a6dfdf5652504268cdffbbb856b2b8c",
-    "app/services/model_v2_inference.py": "ec7dfafb6d29554d613048c16ec9b99c07722f532550862e6391df2c1fc13581",
+    ".gitattributes": "2179d7e5b6ecb0c9c8ddbfd85c60ffaa56c8f864dd9ced517bd8960419c5482e",
+    ".github/workflows/checks.yml": "842728b8925e249db0c9548e1c062b744f052bac94727c384f22c15b55f91525",
+    ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
     "app/apis/v1/model_v2_routers.py": "d21999597993b44f3d10120522ba64d6f4185373d150a586801f251c38780433",
+    "app/services/model_v2_inference.py": "ec7dfafb6d29554d613048c16ec9b99c07722f532550862e6391df2c1fc13581",
+    "app/services/model_v2_input_adapter.py": "b1902e6eef13556b09668d6cff6a688d4a6dfdf5652504268cdffbbb856b2b8c",
+    "pyproject.toml": "8de2f83ca1c62616bd4a0690884dce742ba7b6c29511acd5b1500de4dc66af63",
     "scripts/model/export_model_v2_browser.py": "7402536b173ff769f9d7d4369fafbc8db4124151e361ac5410e0cf9039e09024",
-    "tests/model/browser_fixtures.py": "7439e0e44a56da45957ec96e079d10dca50c782286614cd66fd106f6b43779ad",
-    "tests/model/browser_oracle.py": "752ef8f9c52675d065bd4ecfb5d49f7b96613bbbb15dcab9a7c27af188e37d67",
     "tests/fixtures/model_v2_t2_source_answer_parity.json": "9b30f6ab0d917be46e40df55d3cfa3f30c1630761062bf067317936f92ef2aa2",
+    "tests/model/browser_fixtures.py": "74290b80dd28cf3f7359bfab8f84cf9015011ab8d84d643e7a5791461d00766a",
+    "tests/model/browser_oracle.py": "752ef8f9c52675d065bd4ecfb5d49f7b96613bbbb15dcab9a7c27af188e37d67",
+    "uv.lock": "df3346e481200f56eaf19c142aff4d5d2853c20d2ca6cfbf32fabb7782b41912",
+    "web/package-lock.json": "05a53b055db49b1033e19db92b9c85755ffc8d6fa8a15fd6c235770d778e24ed",
+    "web/package.json": "8cde763fb19a5881afa3679827428f2859817de72e3120b7d1c751751709ea36",
+    "web/public/models/model-v2.json": "67c6a2d24ab6f4f54d6199bc3fd4cb4215c571dba80e71dbe08b32a7c979ac0c",
+    "web/scripts/model-v2-boundary.mjs": "bc7fdb5822656b2764f4fe99dc69fad81ffad6f8119fd415b6d88bfd5bbf9f1f",
+    "web/scripts/verify-model-v2-assets.mjs": "524c1b6f91884690f034e7653dc2bb37bd87eed01217195b290f1c14b5761bbc",
+    "web/scripts/verify-model-v2-assets.test.mjs": "a6cfa3d42767f3d7e51273463af38115e93cdd43fb2f683b9ec83715b0ee7891",
+    "web/scripts/verify-model-v2-parity.mjs": "48c2220d6b8bb54fb016120e5b0390745beb795db841bd8e02cf020ea6961d19",
     "web/src/components/modelV2Draft.ts": "64637c0739d64246d6b0907b16e6b08354dc5b4abad8c8d916f5290649ffc02c",
-    "web/src/lib/model-v2/adapter.ts": "c95f81d4ad1a0c77d0f3cf5206365a9bcb74c23cffbaf6c7d7fa649f1c388cd8",
-    "web/src/lib/model-v2/runtime.ts": "b8dd30868df0c4ad8fe17834dce2b57caf2f7e68bd5fb593a90b042f2c752781",
+    "web/src/lib/model-v2/adapter.ts": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
     "web/src/lib/model-v2/errors.ts": "1d97b55d64156e2d9aaa9f0a6bc31700aaf1b0dac5a3f4ce245a3b8d2681cca9",
     "web/src/lib/model-v2/manifest.json": "889a2173fe852dda6e2eff3d7e5c803885105330b5fa5835e94880ffd9bea53b",
-    "web/tests/model-v2/verification.ts": "102a8b4f9afe5a155d63fb6f7d9d9a74e840db12e9be4a1b200261fd58711ad4",
+    "web/src/lib/model-v2/runtime.ts": "b8dd30868df0c4ad8fe17834dce2b57caf2f7e68bd5fb593a90b042f2c752781",
     "web/tests/model-v2/index.html": "e2f72cb1d9e89c482441fb45253a0beead763a0588ab30d32b816a7a66bbbf34",
-    "web/scripts/verify-model-v2-parity.mjs": "63b9ca1d891a04aef173134f099553fc562f50e4d9456c5adce221e8c7482f6b",
-    "web/scripts/verify-model-v2-assets.mjs": "5f3a3af9b0714b7d086554bdca6f159de63deec33d933d178f2d935b8deb397a"
+    "web/tests/model-v2/verification.ts": "102a8b4f9afe5a155d63fb6f7d9d9a74e840db12e9be4a1b200261fd58711ad4",
+    "web/tsconfig.json": "a7266d1c85fa6947c70073256d9a73e4c459e97b0b4ef24b5c48dcab498ef4c5",
+    "web/vite.config.ts": "96a9a545debcb60c2711b666c431e157b3ff8d03bca0f391c2e059b31958e312"
+  },
+  "summary": {
+    "cases": 463,
+    "success": 294,
+    "inputInvalid": 165,
+    "arithmeticFailure": 4,
+    "browsers": [
+      {
+        "name": "chromium",
+        "version": "151.0.7922.34",
+        "maxScoreError": 2.220446049250313e-16,
+        "maxPreprocessError": 1.7763568394002505e-15,
+        "mutationsRejected": 4,
+        "publicExecutionGuard": true,
+        "bmiEndpointFailClosed": true,
+        "coldLoadMs": 4.699999999254942,
+        "warm": {
+          "n": 30,
+          "medianMs": 0.003900000002235174,
+          "p95Ms": 0.005,
+          "minMs": 0.0035,
+          "maxMs": 0.005399999998509884
+        }
+      },
+      {
+        "name": "firefox",
+        "version": "153.0",
+        "maxScoreError": 2.220446049250313e-16,
+        "maxPreprocessError": 1.7763568394002505e-15,
+        "mutationsRejected": 4,
+        "publicExecutionGuard": true,
+        "bmiEndpointFailClosed": true,
+        "coldLoadMs": 18,
+        "warm": {
+          "n": 30,
+          "medianMs": 0.006,
+          "p95Ms": 0.008,
+          "minMs": 0.005,
+          "maxMs": 0.008
+        }
+      },
+      {
+        "name": "webkit",
+        "version": "26.5",
+        "maxScoreError": 2.220446049250313e-16,
+        "maxPreprocessError": 1.7763568394002505e-15,
+        "mutationsRejected": 4,
+        "publicExecutionGuard": true,
+        "bmiEndpointFailClosed": true,
+        "coldLoadMs": 5,
+        "warm": {
+          "n": 30,
+          "medianMs": 0.004,
+          "p95Ms": 0.005,
+          "minMs": 0.003,
+          "maxMs": 0.006
+        }
+      }
+    ]
   }
 }
