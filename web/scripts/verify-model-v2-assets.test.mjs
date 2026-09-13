@@ -16,9 +16,16 @@ function commit(root) {
   git(root, "add", ".");
   git(root, "-c", "user.name=Evidence test", "-c", "user.email=evidence@example.invalid", "-c", "commit.gpgsign=false", "commit", "-qm", "Synthetic harness source");
 }
-function fixture(run) {
+function fixture(run, fullSource = false) {
   const root = realpathSync(mkdtempSync(resolve(tmpdir(), "s11-guard-")));
   try {
+    if (fullSource) {
+      const archive = resolve(root, "upstream.tar");
+      git(repo, "archive", "HEAD", "--output", archive);
+      const result = spawnSync("tar", ["-xf", archive, "-C", root], { encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+      rmSync(archive);
+    }
     for (const path of guardedSources) {
       mkdirSync(dirname(resolve(root, path)), { recursive: true });
       copyFileSync(resolve(repo, path), resolve(root, path));
@@ -37,6 +44,106 @@ function fixture(run) {
 test("unchanged committed snapshot seals and verifies including Git source identity", () => fixture(({ root, snapshot }) => {
   assert.deepEqual(verifyAssets(root, true).sha256, snapshot.sha256);
 }));
+
+test("current canonical repository matches its reviewed seal", () => {
+  verifyAssets(repo);
+});
+
+test("canonical evidence still requires unchanged CI workflows", () => {
+  for (const remove of [false, true]) fixture(({ root }) => {
+    const path = resolve(root, ".github/workflows/checks.yml");
+    if (remove) rmSync(path); else appendFileSync(path, "\n# changed CI\n");
+    assert.throws(() => verifyAssets(root, true), /ENOENT|evidence expired/);
+  });
+});
+
+test("canonical history rejects missing source objects and incorrect tree identity", () => {
+  for (const field of ["commit", "tree"]) fixture(({ root }) => {
+    const seal = JSON.parse(readFileSync(resolve(root, sealPath)));
+    seal.source[field] = "0".repeat(40);
+    writeFileSync(resolve(root, sealPath), JSON.stringify(seal));
+    assert.throws(() => verifyAssets(root, true), /Command failed|tree identity mismatch/);
+  });
+});
+
+test("mirror-shaped source verifies explicitly and rejects runtime/evidence drift", () => fixture(({ root }) => {
+  const verify = () => verifyAssets(root, false, { deploymentSnapshot: true });
+  const workflows = resolve(root, ".github/workflows");
+  rmSync(workflows, { recursive: true });
+  rmSync(resolve(root, ".git"), { recursive: true }); // No canonical Git history in a snapshot.
+  verify(); // All canonical workflows, including checks.yml, are intentionally absent.
+  mkdirSync(workflows, { recursive: true });
+  writeFileSync(resolve(workflows, "sync-upstream.yml"), "# synthetic mirror-owned control\n");
+  verify();
+  assert.throws(() => verifyAssets(root), /ENOENT/);
+  assert.throws(() => verifyAssets(root, true, { deploymentSnapshot: true }), /cannot verify canonical history/);
+
+  // Absence is allowed only for canonical workflows, never other guarded inputs.
+  for (const path of [...guardedSources.filter(path => !path.startsWith(".github/workflows/")), sealPath]) {
+    const target = resolve(root, path), original = readFileSync(target);
+    rmSync(target);
+    assert.throws(verify, /ENOENT|unexpected/, `missing ${path}`);
+    writeFileSync(target, original);
+  }
+  for (const path of ["web/src/lib/model-v2/adapter.ts", "web/src/lib/model-v2/runtime.ts",
+    "app/services/model_v2_input_adapter.py", "tests/model/browser_oracle.py",
+    "web/public/models/model-v2.json", "web/vite.config.ts"]) {
+    const target = resolve(root, path), original = readFileSync(target);
+    appendFileSync(target, "\n");
+    assert.throws(verify, /digest mismatch|evidence expired/, `modified ${path}`);
+    writeFileSync(target, original);
+  }
+  const manifestPath = resolve(root, "web/src/lib/model-v2/manifest.json");
+  const manifestBytes = readFileSync(manifestPath);
+  const manifest = JSON.parse(manifestBytes);
+  manifest.sha256 = "0".repeat(64);
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  assert.throws(verify, /digest mismatch/);
+  writeFileSync(manifestPath, manifestBytes);
+
+  const evidencePath = resolve(root, sealPath), evidenceBytes = readFileSync(evidencePath);
+  const seal = JSON.parse(evidenceBytes);
+  delete seal.sha256[".github/workflows/checks.yml"];
+  writeFileSync(evidencePath, JSON.stringify(seal));
+  assert.throws(verify, /seal scope mismatch/); // The full canonical seal is still required.
+  writeFileSync(evidencePath, evidenceBytes);
+
+  for (const path of ["web/src/lib/model-v2/adapter.js", "web/src/lib/model-v2/package.json",
+    "web/src/components/modelV2Draft.js", "web/src/tsconfig.json",
+    "app/services/model_v2_input_adapter.pyc", "scripts/model/__init__.py"]) {
+    const candidate = resolve(root, path);
+    writeFileSync(candidate, "# unexpected resolution candidate\n");
+    assert.throws(verify, /unexpected/);
+    rmSync(candidate);
+  }
+  const shadow = addPythonShadow(root);
+  assert.throws(verify, /unexpected Python resolution/);
+  assert.notEqual(probe(root).status, 0);
+  rmSync(shadow, { recursive: true });
+  const initializer = resolve(root, "app/services/__init__.py"), original = readFileSync(initializer);
+  appendFileSync(initializer, "\n# changed initializer\n");
+  assert.throws(verify, /evidence expired/);
+  writeFileSync(initializer, original);
+  const adapter = resolve(root, "web/src/lib/model-v2/adapter.ts"), adapterBytes = readFileSync(adapter);
+  const saved = resolve(root, "saved-adapter.ts");
+  writeFileSync(saved, adapterBytes);
+  rmSync(adapter);
+  symlinkSync(saved, adapter);
+  assert.throws(verify, /nonregular/);
+  rmSync(adapter);
+  writeFileSync(adapter, adapterBytes);
+  verify();
+
+  const cli = args => spawnSync(process.execPath, [resolve(root, "web/scripts/verify-model-v2-assets.mjs"), ...args],
+    { encoding: "utf8", env: { ...process.env, WORKERS_CI: "1" } });
+  assert.equal(cli(["--deployment-snapshot"]).status, 0);
+  assert.notEqual(cli([]).status, 0); // WORKERS_CI never selects the weaker scope.
+  for (const args of [["--deployment-snapshot", "--history"], ["--deployment-snapshot", "--fetch-source"], ["--unknown"]]) {
+    const result = cli(args);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /cannot verify canonical history|unknown verification option/);
+  }
+}, true));
 
 test("stale asset, Python and browser bytes are rejected", () => {
   for (const path of ["web/public/models/model-v2.json", "app/services/model_v2_input_adapter.py", "web/src/lib/model-v2/adapter.ts"]) {

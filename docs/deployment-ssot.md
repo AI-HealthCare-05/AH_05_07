@@ -86,6 +86,17 @@ separate scoped operations decision; this reconciliation changes none of them.
 
 ## Build configuration
 
+Model V2 prebuild explicitly runs `verify-model-v2-assets.mjs --deployment-snapshot`.
+It requires the pinned model asset, manifest, complete canonical seal schema and
+all guarded source hashes outside `.github/workflows/**`. Only that intentionally
+omitted workflow class is excluded from current-file comparison; missing runtime,
+Python or evidence files and resolution competitors still fail closed. The
+mirror-owned sync workflow is outside this parity boundary. Canonical CI/review
+continues using `--history --fetch-source` with the full guarded scope, including
+canonical CI files and recorded Git commit/tree identity. Both modes retain the
+reviewed-local-run trust limit in [ADR-0008](adr/0008-s11-verifiable-local-inference.md);
+neither is independent execution attestation or proof of a deployed Worker.
+
 The Cloudflare build that publishes the production Worker owns the frontend build variables. Vite substitutes every `VITE_*` value into the generated browser assets, so none of them are runtime secrets.
 
 | Variable | Cloudflare type | Value class |

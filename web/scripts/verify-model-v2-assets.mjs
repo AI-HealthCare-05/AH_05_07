@@ -27,6 +27,9 @@ export const guardedSources = [
   "web/vite.config.ts", "web/tsconfig.json", "web/package.json", "web/package-lock.json",
   "pyproject.toml", "uv.lock", ".python-version", ".gitattributes", ".github/workflows/checks.yml",
 ].sort();
+// The mirror omits canonical workflows as a class and owns its sync workflow.
+// All other evidence sources remain mandatory; this is never missing-file tolerance.
+const deploymentSources = guardedSources.filter(path => !path.startsWith(".github/workflows/"));
 export const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 export function git(root, ...args) {
   return execFileSync("git", ["-C", root, ...args], { maxBuffer: 16 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
@@ -80,9 +83,12 @@ export function assertScope(root) {
     ["package-lock.json", "package.json", "tsconfig.json", "vite.config.ts"], "unexpected resolution configuration");
 }
 export function captureSnapshot(root = repo) {
+  return captureSources(root, guardedSources);
+}
+function captureSources(root, sources) {
   assertScope(root);
   const sha256 = {}, versions = {};
-  for (const path of guardedSources) {
+  for (const path of sources) {
     sha256[path] = digest(regularFile(root, path));
     const stat = lstatSync(resolve(root, path), { bigint: true });
     versions[path] = [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs, stat.mode].join(":");
@@ -146,9 +152,11 @@ export function verifyHistory(root, seal) {
   // CI fetches full history while this PR is open; after a squash the immutable
   // source object must remain fetchable (or be refreshed by a canonical run).
 }
-export function verifyAssets(root = repo, history = false) {
+export function verifyAssets(root = repo, history = false, { deploymentSnapshot = false } = {}) {
+  assert.ok(!(deploymentSnapshot && history), "deployment snapshot mode cannot verify canonical history");
   const manifest = verifyPinnedAsset(root);
-  const snapshot = captureSnapshot(root);
+  const sources = deploymentSnapshot ? deploymentSources : guardedSources;
+  const snapshot = captureSources(root, sources);
   const seal = JSON.parse(readFileSync(resolve(root, sealPath)));
   assert.equal(seal.format, "sk7-parity-evidence-v2");
   assert.equal(seal.claim, "reviewed-local-run; not independent execution attestation");
@@ -156,7 +164,8 @@ export function verifyAssets(root = repo, history = false) {
   assert.match(seal.source.commit, /^[a-f0-9]{40}$/);
   assert.match(seal.source.tree, /^[a-f0-9]{40}$/);
   assert.deepEqual(Object.keys(seal.sha256).sort(), guardedSources, "parity seal scope mismatch");
-  assert.deepEqual(snapshot.sha256, seal.sha256, "canonical parity evidence expired; rerun with frozen artifact and --seal");
+  const expected = Object.fromEntries(sources.map(path => [path, seal.sha256[path]]));
+  assert.deepEqual(snapshot.sha256, expected, "canonical parity evidence expired; rerun with frozen artifact and --seal");
   assert.equal(seal.summary.cases, seal.summary.success + seal.summary.inputInvalid + seal.summary.arithmeticFailure);
   assert.ok(seal.summary.success > 0 && seal.summary.inputInvalid > 0 && seal.summary.arithmeticFailure > 0);
   assert.deepEqual(seal.summary.browsers.map(row => row.name), ["chromium", "firefox", "webkit"]);
@@ -184,12 +193,17 @@ export function writeEvidence(root, snapshot, source, summary) {
   renameSync(`${destination}.tmp`, destination);
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  if (process.argv.includes("--fetch-source")) {
+  const args = process.argv.slice(2);
+  assert.ok(args.every(arg => ["--history", "--fetch-source", "--deployment-snapshot"].includes(arg)), "unknown verification option");
+  const deploymentSnapshot = args.includes("--deployment-snapshot");
+  assert.ok(!(deploymentSnapshot && (args.includes("--history") || args.includes("--fetch-source"))),
+    "deployment snapshot mode cannot verify canonical history or fetch source");
+  if (args.includes("--fetch-source")) {
     const { source } = JSON.parse(readFileSync(resolve(repo, sealPath)));
     assert.match(source.commit, /^[a-f0-9]{40}$/);
     try { git(repo, "cat-file", "-e", `${source.commit}^{commit}`); }
     catch { git(repo, "fetch", "--no-tags", "--depth=1", "origin", source.commit); }
   }
-  verifyAssets(repo, process.argv.includes("--history"));
-  console.log("Model V2 asset/source identity passed (reviewed evidence, not execution attestation)");
+  verifyAssets(repo, args.includes("--history"), { deploymentSnapshot });
+  console.log(`Model V2 ${deploymentSnapshot ? "deployment snapshot" : "canonical"} asset/source identity passed (reviewed evidence, not execution attestation)`);
 }
