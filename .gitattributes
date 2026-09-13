@@ -54,3 +54,17 @@
 /.python-version text eol=lf
 /.gitattributes text eol=lf
 /.github/workflows/checks.yml text eol=lf
+
+# Scoped Python import graph and probe share the same byte identity on Windows.
+/app/dependencies/supabase_auth.py text eol=lf
+/app/core/config.py text eol=lf
+/app/core/logger.py text eol=lf
+/app/__init__.py text eol=lf
+/app/services/__init__.py text eol=lf
+/app/apis/__init__.py text eol=lf
+/app/apis/v1/__init__.py text eol=lf
+/app/dependencies/__init__.py text eol=lf
+/app/core/__init__.py text eol=lf
+/tests/__init__.py text eol=lf
+/scripts/model/model_v2_python_boundary.json text eol=lf
+/scripts/model/verify_model_v2_python_boundary.py text eol=lf

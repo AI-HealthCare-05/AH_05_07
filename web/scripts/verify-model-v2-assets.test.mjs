@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, renameSync, copyFileSync, appendFileSync, readFileSync, realpathSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertUnchanged, pythonRules, captureSnapshot, digest, git, guardedSources, materializeSnapshot, sealPath, sourceIdentity, verifyAssets, writeEvidence } from "./verify-model-v2-assets.mjs";
 
@@ -236,7 +236,7 @@ test("every scoped Python module rejects package, extension, bytecode and case c
         rmSync(candidate, { recursive: true });
       }
       // Different extension keeps this distinct even on case-insensitive macOS.
-      const candidate = resolve(dirname(base), base.split("/").at(-1).toUpperCase() + ".pyd");
+      const candidate = resolve(dirname(base), basename(base).toUpperCase() + ".pyd");
       writeFileSync(candidate, "competing case variant");
       assert.throws(() => captureSnapshot(root), /unexpected Python resolution/);
       rmSync(candidate);
@@ -329,4 +329,16 @@ test("parent package symlink replacement cannot preserve the resolution boundary
   assert.throws(() => captureSnapshot(root), /symlink/);
   assert.notEqual(probe(root).status, 0);
   rejectsPublication(root, snapshot, source);
+}));
+
+
+test("autocrlf checkout preserves every guarded byte including Python import scope", () => fixture(({ root, snapshot }) => {
+  commit(root); // Include the synthetic harness seal in the clone, never real evidence.
+  const output = mkdtempSync(resolve(tmpdir(), "s11-crlf-checkout-"));
+  try {
+    const destination = resolve(output, "checkout");
+    const result = spawnSync("git", ["-c", "core.autocrlf=true", "clone", "--no-local", root, destination], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(verifyAssets(destination, true).sha256, snapshot.sha256);
+  } finally { rmSync(output, { recursive: true, force: true }); }
 }));
