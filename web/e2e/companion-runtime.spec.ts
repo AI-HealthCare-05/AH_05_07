@@ -47,10 +47,23 @@ test("screen and animation policy never uses health or model facts", () => {
   expect(getCompanionDecision("S11", "idle").status).toBe("blocked");
 });
 
-test("production resolver exposes only the fixed S05 bear-lite save profile", () => {
+test("production resolver exposes only fixed S05 save and S10 replay profiles", () => {
   expect(resolveProductionCompanion("review", "S05", true)).toBeNull();
+  expect(resolveProductionCompanion("review", "S10", false)).toBeNull();
   expect(resolveProductionCompanion("production", "S04", true)).toBeNull();
   expect(resolveProductionCompanion("production", "S05", false)).toBeNull();
+  expect(resolveProductionCompanion("production", "S10", false)).toEqual({
+    screen: "S10",
+    species: "bear",
+    variant: "lite",
+    clip: "idle",
+  });
+  expect(resolveProductionCompanion("production", "S10", true)).toEqual({
+    screen: "S10",
+    species: "bear",
+    variant: "lite",
+    clip: "idle",
+  });
   expect(resolveProductionCompanion("production", "S05", true)).toEqual({
     screen: "S05",
     species: "bear",

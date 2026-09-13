@@ -73,7 +73,7 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
 
   const tactileEligible = interactionActivation !== "disabled";
   const attentionLook = !config.reducedMotion
-    && config.mode === "review"
+    && (config.mode === "review" || config.mode === "production")
     && selection.screen === "S10"
     && selection.species === "bear"
     && selection.variant === "lite"

@@ -86,14 +86,23 @@ export function resolveCompanionRuntimeConfig(
 
 /**
  * Production is intentionally narrower than review. This resolver has no query input:
- * the S3D-approved profile is the only production selection that can be constructed.
+ * only explicitly approved fixed profiles can be constructed.
  */
 export function resolveProductionCompanion(
   mode: CompanionMode,
   screen: ScreenId,
   confirmedSave: boolean,
 ): CompanionSelection | null {
-  if (mode !== "production" || screen !== "S05" || !confirmedSave) return null;
+  if (mode !== "production") return null;
+  if (screen === "S10") {
+    return {
+      screen: "S10",
+      species: "bear",
+      variant: "lite",
+      clip: "idle",
+    };
+  }
+  if (screen !== "S05" || !confirmedSave) return null;
   return {
     screen: "S05",
     species: "bear",
