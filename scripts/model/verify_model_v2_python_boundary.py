@@ -63,7 +63,7 @@ def probe() -> None:
         check_spec(name, spec, source, False)
 
 
-def check_loaded() -> None:
+def check_loaded(entry: str) -> None:
     # Check actual imported objects as well as pre-execution resolution. Fail if
     # a future oracle change accidentally reintroduces unrelated app imports.
     expected = {**RULES["packages"], **RULES["modules"]}
@@ -71,10 +71,12 @@ def check_loaded() -> None:
     for name, module in tuple(sys.modules.items()):
         path = getattr(module, "__file__", None)
         local = path is not None and Path(path).resolve().is_relative_to(ROOT)
-        # multiprocessing retains the launcher under this standard alias when
-        # sklearn imports it; accept only the identical launcher object.
-        launcher = name == "__main__" or (name == "__mp_main__" and module is sys.modules["__main__"])
-        if launcher or not (local or name == "app" or name.startswith("app.")):
+        # multiprocessing retains runpy's temporary entry module under this
+        # standard alias. It must still identify the exact executed entry.
+        if name == "__mp_main__":
+            require(path == str(ROOT / entry) and module.__spec__ is None and module.__name__ == "__main__", name)
+            continue
+        if name == "__main__" or not (local or name == "app" or name.startswith("app.")):
             continue
         require(name in expected, name)
         source = expected[name]
@@ -96,7 +98,7 @@ def main() -> None:
         require(entry in RULES["entries"], "canonical entry")
         sys.argv = sys.argv[1:]
         runpy.run_path(str(ROOT / entry), run_name="__main__")
-        check_loaded()
+        check_loaded(entry)
         probe()
 
 
