@@ -10,7 +10,7 @@ export const STEPS = {
   habits: { label: "생활 습관", description: "현재 흡연 상태와 평소 음주 습관을 선택해 주세요.", fields: ["smoking", "alcoholFrequency", "alcoholAmount"] },
   activity: { label: "활동", description: "최근 7일 동안의 걷기와 근력운동을 떠올려 주세요.", fields: ["walkingDays", "walkingHours", "walkingMinutes", "strengthDays"] },
   sleep: { label: "수면", description: "평일과 주말에 잠들고 일어나는 시간을 각각 선택해 주세요.", fields: ["weekdayBed", "weekdayWake", "weekendBed", "weekendWake"] },
-  review: { label: "입력 확인", description: "보내려던 내용이 맞는지 확인해 주세요. 각 항목에서 다시 수정할 수 있어요." },
+  review: { label: "입력 확인", description: "분석 전에 입력한 내용이 맞는지 확인해 주세요. 각 항목에서 다시 수정할 수 있어요." },
 } as const;
 
 type Field = {
