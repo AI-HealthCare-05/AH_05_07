@@ -198,11 +198,14 @@ export default function CompanionReviewRenderer({
 
         if (attentionLook) {
           const head = animatedModel.getObjectByName("head");
+          const spine = animatedModel.getObjectByName("spine");
           if (head instanceof THREE.Bone) {
             lookController = createCompanionLookController({
               host,
               head,
-              isSuspended: () => host.dataset.companionInteraction === "dragging",
+              spine: spine instanceof THREE.Bone ? spine : undefined,
+              isSuspended: () => host.dataset.companionInteraction === "dragging"
+                || host.dataset.companionPhase === "celebrate",
             });
           } else {
             host.dataset.companionLookEnabled = "false";
