@@ -27,7 +27,7 @@ type SevenDayTrailProps = {
   days: readonly TrailDay[];
   today: string;
   selectedDate: string | null;
-  onSelectDate: (date: string) => void;
+  onSelectDate: (date: string, trigger?: HTMLButtonElement) => void;
   detailId?: string;
   factsKnown?: boolean;
 };
@@ -42,7 +42,7 @@ export function SevenDayTrail({ days, today, selectedDate, onSelectDate, detailI
       const temporal = current ? 'today' : day.date < today ? 'past' : 'future';
       const factsLabel = factsKnown ? `혈압 관찰 ${day.observationCount}건, 챌린지 참여 ${day.participation}` : '기록 확인 전';
       return <li key={day.date} data-trail-date={day.date} data-selected={selected} data-temporal={temporal} aria-current={current ? 'date' : undefined}>
-        <button className="trail-day-button" type="button" onClick={() => onSelectDate(day.date)}
+        <button className="trail-day-button" type="button" onClick={(event) => onSelectDate(day.date, event.currentTarget)}
           aria-pressed={selected} aria-current={current ? 'date' : undefined} aria-controls={detailId}
           aria-label={`${formatTrailDate(day.date)}${current ? ', 오늘' : temporal === 'future' ? ', 오늘 이후' : ''} · ${landmark?.label ?? '날짜의 풍경'} · ${factsLabel}`}>
           <span className="trail-day-state">{current ? '오늘' : selected ? '선택' : temporal === 'future' ? '이후' : '\u00a0'}</span>

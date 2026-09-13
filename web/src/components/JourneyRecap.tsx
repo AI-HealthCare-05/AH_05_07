@@ -5,6 +5,7 @@ import { SevenDayTrail } from './SevenDayTrail';
 import { TrailDayDetail } from './TrailDayDetail';
 import type { TrailDay } from '../ui/livingWeek';
 import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
+import { dispatchLivingReplayDayFocus } from '../ui/livingReplayAttention';
 import './journey-recap.css';
 
 type JourneyRecapProps = {
@@ -36,6 +37,11 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
     : freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록을 보여드려요.'
     : freshness === 'refresh-error' ? '최신 여부 미확인 · 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'
     : null;
+
+  const focusReplayDay = (date: string, trigger?: HTMLButtonElement) => {
+    setSelectedDate(date);
+    if (trigger) dispatchLivingReplayDayFocus(trigger);
+  };
 
   return <>
     <div className="recap-period">
@@ -95,7 +101,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <p>날짜를 눌러, 그날에 머물러 보세요.</p>
         <button type="button" className="recap-show-week" aria-pressed={!focusedDate} aria-controls="recap-day-context recap-journal-records" onClick={() => setSelectedDate(null)}>7일 전체 보기</button>
       </div>
-      <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={setSelectedDate} detailId="recap-day-context" factsKnown={factsKnown} />
+      <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context" factsKnown={factsKnown} />
       <div className="recap-day-focus" id="recap-day-context" data-day-focused={Boolean(selectedDay)}>
         {selectedDay ? <TrailDayDetail key={selectedDay.date} day={selectedDay} today={today} factsKnown={factsKnown}>
           <button type="button" className="recap-day-record-link" onClick={() => {

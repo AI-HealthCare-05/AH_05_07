@@ -1,5 +1,10 @@
 import * as THREE from "three";
 
+import {
+  livingReplayAttentionEventName,
+  type LivingReplayAttentionDetail,
+} from "../ui/livingReplayAttention";
+
 type CompanionLookOptions = Readonly<{
   host: HTMLDivElement;
   head: THREE.Bone;
@@ -17,17 +22,22 @@ const MAX_PITCH = 0.075;
 const RESPONSE_PER_SECOND = 9;
 const MAX_STEP_SECONDS = 1 / 30;
 const TOUCH_GLANCE_MS = 700;
+const REPLAY_FOCUS_GLANCE_MS = 900;
 const SETTLE_EPSILON = 0.0015;
 
-function pointerTarget(event: PointerEvent) {
+function pointTarget(clientX: number, clientY: number) {
   const width = Math.max(window.innerWidth, 1);
   const height = Math.max(window.innerHeight, 1);
-  const normalizedX = THREE.MathUtils.clamp((event.clientX / width) * 2 - 1, -1, 1);
-  const normalizedY = THREE.MathUtils.clamp(1 - (event.clientY / height) * 2, -1, 1);
+  const normalizedX = THREE.MathUtils.clamp((clientX / width) * 2 - 1, -1, 1);
+  const normalizedY = THREE.MathUtils.clamp(1 - (clientY / height) * 2, -1, 1);
   return {
     yaw: normalizedX * MAX_YAW,
     pitch: normalizedY * MAX_PITCH,
   };
+}
+
+function pointerTarget(event: PointerEvent) {
+  return pointTarget(event.clientX, event.clientY);
 }
 
 /**
@@ -56,12 +66,21 @@ export function createCompanionLookController({
   let pointerActive = false;
   let lastPointerType = "none";
   let touchGlanceUntil = 0;
+  let replayYaw = 0;
+  let replayPitch = 0;
+  let replayCueUntil = 0;
+  let replayCueCount = 0;
 
-  const writeState = (state: "centered" | "tracking" | "suspended") => {
+  const writeState = (state: "centered" | "tracking" | "replay-cue" | "suspended") => {
     host.dataset.companionLookState = state;
     host.dataset.companionLookYaw = currentYaw.toFixed(4);
     host.dataset.companionLookPitch = currentPitch.toFixed(4);
     host.dataset.companionLookPointerType = lastPointerType;
+    host.dataset.companionLookSource = state === "replay-cue"
+      ? "replay"
+      : pointerActive
+        ? "pointer"
+        : "none";
   };
 
   const centerTarget = () => {
@@ -89,6 +108,20 @@ export function createCompanionLookController({
     touchGlanceUntil = performance.now() + TOUCH_GLANCE_MS;
   };
 
+  const followReplayFocus = (event: Event) => {
+    if (disposed) return;
+    const detail = (event as CustomEvent<LivingReplayAttentionDetail>).detail;
+    if (!detail || detail.kind !== "day-focus") return;
+
+    const target = pointTarget(detail.clientX, detail.clientY);
+    replayYaw = target.yaw;
+    replayPitch = target.pitch;
+    replayCueUntil = performance.now() + REPLAY_FOCUS_GLANCE_MS;
+    replayCueCount += 1;
+    host.dataset.companionReplayCue = "day-focus";
+    host.dataset.companionReplayCueCount = String(replayCueCount);
+  };
+
   const pointerLeavesWindow = (event: PointerEvent) => {
     if (event.relatedTarget === null && event.pointerType !== "touch") centerTarget();
   };
@@ -100,6 +133,7 @@ export function createCompanionLookController({
 
   window.addEventListener("pointermove", followPointer, { passive: true });
   window.addEventListener("pointerdown", glanceAtTouch, { passive: true });
+  window.addEventListener(livingReplayAttentionEventName, followReplayFocus as EventListener);
   document.addEventListener("pointerout", pointerLeavesWindow, { passive: true });
   window.addEventListener("blur", blur);
   document.addEventListener("visibilitychange", visibility);
@@ -108,6 +142,8 @@ export function createCompanionLookController({
   host.dataset.companionLookBone = head.name;
   host.dataset.companionLookMaxYaw = MAX_YAW.toFixed(3);
   host.dataset.companionLookMaxPitch = MAX_PITCH.toFixed(3);
+  host.dataset.companionReplayCue = "none";
+  host.dataset.companionReplayCueCount = "0";
   writeState("centered");
 
   return {
@@ -121,14 +157,21 @@ export function createCompanionLookController({
     step(deltaSeconds) {
       if (disposed) return;
 
-      if (lastPointerType === "touch" && touchGlanceUntil > 0 && performance.now() >= touchGlanceUntil) {
+      const now = performance.now();
+      if (lastPointerType === "touch" && touchGlanceUntil > 0 && now >= touchGlanceUntil) {
         touchGlanceUntil = 0;
         centerTarget();
       }
 
+      const replayActive = replayCueUntil > now;
+      if (!replayActive && replayCueUntil > 0) {
+        replayCueUntil = 0;
+        host.dataset.companionReplayCue = "none";
+      }
+
       const suspended = isSuspended?.() === true;
-      const desiredYaw = suspended ? 0 : targetYaw;
-      const desiredPitch = suspended ? 0 : targetPitch;
+      const desiredYaw = suspended ? 0 : replayActive ? replayYaw : targetYaw;
+      const desiredPitch = suspended ? 0 : replayActive ? replayPitch : targetPitch;
       const dt = Math.min(Math.max(deltaSeconds, 0), MAX_STEP_SECONDS);
       const alpha = 1 - Math.exp(-RESPONSE_PER_SECOND * dt);
 
@@ -144,7 +187,15 @@ export function createCompanionLookController({
       appliedOffset.copy(nextOffset);
 
       const centered = currentYaw === 0 && currentPitch === 0;
-      writeState(suspended ? "suspended" : centered ? "centered" : "tracking");
+      writeState(
+        suspended
+          ? "suspended"
+          : replayActive
+            ? "replay-cue"
+            : centered
+              ? "centered"
+              : "tracking",
+      );
     },
 
     dispose() {
@@ -157,6 +208,7 @@ export function createCompanionLookController({
 
       window.removeEventListener("pointermove", followPointer);
       window.removeEventListener("pointerdown", glanceAtTouch);
+      window.removeEventListener(livingReplayAttentionEventName, followReplayFocus as EventListener);
       document.removeEventListener("pointerout", pointerLeavesWindow);
       window.removeEventListener("blur", blur);
       document.removeEventListener("visibilitychange", visibility);
@@ -165,6 +217,8 @@ export function createCompanionLookController({
       host.dataset.companionLookState = "disabled";
       host.dataset.companionLookYaw = "0.0000";
       host.dataset.companionLookPitch = "0.0000";
+      host.dataset.companionLookSource = "none";
+      host.dataset.companionReplayCue = "none";
     },
   };
 }
