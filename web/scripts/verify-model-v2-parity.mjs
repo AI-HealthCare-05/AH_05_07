@@ -24,10 +24,12 @@ symlinkSync(resolve(repo, "web/node_modules"), resolve(verifiedRoot, "web/node_m
 const verifiedSnapshot = captureSnapshot(verifiedRoot);
 const python = process.env.SK7_PYTHON || resolve(repo, ".venv/bin/python");
 function run(args, input) {
-  const result = spawnSync(python, args, { cwd: verifiedRoot, input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+  const result = spawnSync(python, ["-I", "-B", "-X", `pycache_prefix=${resolve(output, "unused-bytecode")}`,
+    "scripts/model/verify_model_v2_python_boundary.py", ...args], { cwd: verifiedRoot, input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
   if (result.status !== 0) throw new Error("Canonical subprocess failed; raw output suppressed");
   return result.stdout;
 }
+run([]); // Independent resolution probe before any canonical execution.
 run(["scripts/model/export_model_v2_browser.py", "--artifact", artifact, "--output", resolve(output, "export")]);
 assert.ok(readFileSync(resolve(output, "export/model.json")).equals(readFileSync(resolve(verifiedRoot, "web/public/models/model-v2.json"))), "production asset differs from canonical export");
 const cases = JSON.parse(run(["tests/model/browser_fixtures.py"]));

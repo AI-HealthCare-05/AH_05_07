@@ -110,12 +110,36 @@ tests build a real Vite alias replacement outside the directory as well as
 creating temporary shadow candidates. No scene policy or application resolution
 default outside this boundary changes.
 
+Python import scope is separately declared in
+`scripts/model/model_v2_python_boundary.json`: adapter, inference, Model V2
+router, and its auth/config/logger dependencies. Existing initializers for
+`app`, `app.services`, `app.apis`, `app.apis.v1`, `app.dependencies`, `app.core`
+and `tests` are hashed; absent `scripts`, `scripts.model` and `tests.model`
+initializers remain explicitly absent. Only these basenames are closed against
+package, extension/bytecode, case-variant and symlink competitors. Their parent
+directories (including the repository root) carry file-version monitoring, so
+transient package additions and initializer edit-and-restore expire a running
+verification. Committed resolution shape is checked alongside Git blob hashes.
+
+The stdlib-only Python probe uses the normal filesystem resolver on the captured
+archive, checking exact spec origin, source loader, module/package shape and
+package search locations. Each canonical entry runs through the probe with
+isolated startup, disabled bytecode writes and an empty external bytecode prefix;
+actual imported objects are checked afterwards as well. The oracle loads the real
+Model V2 router by exact file path to avoid executing the unrelated v1 router
+registry. Its normal named resolution and parent initializer identities remain
+checked; its actual helper and ordinary auth/config/logger imports execute. No
+application packaging or production import behavior changes. Unrelated routers
+are outside this bounded oracle graph, not implicitly covered by the seal.
+
 After all three engines pass, `--seal` records the immutable source commit/tree,
 canonical artifact digest, original source hashes and aggregate results. A
 separate evidence commit follows the tested source commit. Prebuild verifies
-current scope, hashes, pinned asset and evidence schema. The required `web` CI
-job additionally reads the recorded commit's Git objects and compares its tree
-and guarded blobs. Merely editing both a source hash and the seal while retaining
+current scope, hashes, pinned asset and evidence schema. The additional executed `web` CI
+job (not a repository-required status check) additionally reads the recorded commit's Git objects and compares its tree
+and guarded blobs. Repository-required merge checks are `lint` and `test`;
+`web` and routed S11/browser jobs are additional applicable protected-boundary
+checks. All applicable executed checks must be green for this PR. Merely editing both a source hash and the seal while retaining
 the verification commit fails that check. Full-history checkout supplies those
 objects for this PR; if later history rewriting removes them, they must remain
 fetchable by their immutable SHA (CI fetches the recorded SHA if absent) or a new

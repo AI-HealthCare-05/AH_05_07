@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -12,7 +13,15 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from app.apis.v1 import model_v2_routers  # noqa: E402
+# Load the real projection helper without executing the unrelated v1 router
+# registry. Its source is guarded and its normal named resolution is probed.
+_ROUTER_SPEC = importlib.util.spec_from_file_location(
+    "_sk7_model_v2_router", Path(__file__).resolve().parents[2] / "app/apis/v1/model_v2_routers.py"
+)
+assert _ROUTER_SPEC is not None and _ROUTER_SPEC.loader is not None
+model_v2_routers = importlib.util.module_from_spec(_ROUTER_SPEC)
+sys.modules[_ROUTER_SPEC.name] = model_v2_routers
+_ROUTER_SPEC.loader.exec_module(model_v2_routers)
 from app.services.model_v2_inference import (  # noqa: E402
     ModelV2BoundaryError,
     ModelV2InferenceBoundary,

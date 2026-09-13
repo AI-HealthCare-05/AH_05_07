@@ -8,11 +8,14 @@ import { fileURLToPath } from "node:url";
 const repo = fileURLToPath(new URL("../../", import.meta.url));
 export const sealPath = "web/tests/model-v2/parity-seal.json";
 export const modelDirectory = "web/src/lib/model-v2";
+const pythonRulesPath = "scripts/model/model_v2_python_boundary.json";
+export const pythonRules = JSON.parse(readFileSync(new URL("../../scripts/model/model_v2_python_boundary.json", import.meta.url)));
+export const pythonDirectories = [...new Set([".", ...Object.keys(pythonRules.packages).map(name => name.replaceAll(".", "/"))])];
 const ancestorDirectories = ["web/src", "web/src/lib", "web/src/components", "web/scripts", "web/tests", "web/tests/model-v2"];
 export const modelModules = ["adapter.ts", "runtime.ts", "errors.ts", "manifest.json"];
 export const guardedSources = [
-  "app/services/model_v2_input_adapter.py", "app/services/model_v2_inference.py",
-  "app/apis/v1/model_v2_routers.py",
+  ...Object.values(pythonRules.modules), ...Object.values(pythonRules.packages).filter(Boolean),
+  pythonRulesPath, "scripts/model/verify_model_v2_python_boundary.py",
   "scripts/model/export_model_v2_browser.py", "tests/model/browser_fixtures.py",
   "tests/model/browser_oracle.py", "tests/fixtures/model_v2_t2_source_answer_parity.json",
   "web/src/components/modelV2Draft.ts",
@@ -35,7 +38,32 @@ function regularFile(root, path) {
   assert.ok(lstatSync(resolve(root, path)).isFile(), `${path}: unexpected nonregular source`);
   return readFileSync(resolve(root, path));
 }
+function pythonCandidate(root, directory, basename, expected) {
+  const candidates = readdirSync(resolve(root, directory)).filter(name => {
+    const lower = name.toLowerCase();
+    return lower === basename.toLowerCase() || lower.startsWith(`${basename.toLowerCase()}.`);
+  }).sort();
+  assert.deepEqual(candidates, expected ? [expected] : [], `unexpected Python resolution candidate: ${directory}/${basename}`);
+  if (expected) {
+    const stat = lstatSync(resolve(root, directory, expected));
+    assert.ok(!stat.isSymbolicLink(), `unexpected Python symlink: ${directory}/${expected}`);
+  }
+}
+export function assertPythonScope(root) {
+  for (const [name, path] of Object.entries(pythonRules.modules)) {
+    pythonCandidate(root, dirname(path), name.split(".").at(-1), path.split("/").at(-1));
+    regularFile(root, path);
+  }
+  for (const [name, initializer] of Object.entries(pythonRules.packages)) {
+    const path = name.replaceAll(".", "/");
+    pythonCandidate(root, dirname(path), name.split(".").at(-1), name.split(".").at(-1));
+    assert.ok(lstatSync(resolve(root, path)).isDirectory(), `unexpected Python package: ${path}`);
+    pythonCandidate(root, path, "__init__", initializer ? "__init__.py" : null);
+    if (initializer) regularFile(root, initializer);
+  }
+}
 export function assertScope(root) {
+  assertPythonScope(root);
   // Vite/esbuild searches ancestors for the nearest tsconfig; a new parent
   // config/package must not change transforms without expiring evidence.
   for (const directory of ancestorDirectories) {
@@ -59,7 +87,7 @@ export function captureSnapshot(root = repo) {
     const stat = lstatSync(resolve(root, path), { bigint: true });
     versions[path] = [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs, stat.mode].join(":");
   }
-  for (const path of [modelDirectory, ...ancestorDirectories, "web"]) {
+  for (const path of [modelDirectory, ...ancestorDirectories, "web", ...pythonDirectories]) {
     const stat = lstatSync(resolve(root, path), { bigint: true });
     versions[`${path}/`] = [stat.dev, stat.ino, stat.mtimeNs, stat.ctimeNs, stat.mode].join(":");
   }
@@ -79,6 +107,24 @@ export function sourceIdentity(root, snapshot, commit = git(root, "rev-parse", "
   assert.match(commit, /^[a-f0-9]{40}$/, "invalid verification commit identity");
   for (const path of guardedSources) {
     assert.equal(digest(git(root, "show", `${commit}:${path}`)), snapshot.sha256[path], `${path}: source must match verification commit`);
+  }
+  // Bind absence and competing candidates in the committed tree too; hashes
+  // alone cannot prove the resolution shape of a previously reviewed snapshot.
+  const paths = git(root, "ls-tree", "-r", "--name-only", commit).toString().trim().split("\n");
+  for (const [name, initializer] of Object.entries(pythonRules.packages)) {
+    const directory = name.replaceAll(".", "/");
+    const initCandidates = paths.filter(path => path.startsWith(`${directory}/`) &&
+      /^__init__(?:\.|$)/i.test(path.slice(directory.length + 1).split("/")[0]));
+    assert.deepEqual(initCandidates, initializer ? [initializer] : [], "unexpected committed Python initializer");
+  }
+  for (const [name, expected] of [...Object.entries(pythonRules.modules),
+    ...Object.keys(pythonRules.packages).map(name => [name, name.replaceAll(".", "/")])]) {
+    const directory = dirname(expected);
+    const prefix = directory === "." ? "" : `${directory}/`;
+    const basename = name.split(".").at(-1).toLowerCase();
+    const candidates = [...new Set(paths.filter(path => path.startsWith(prefix)).map(path => path.slice(prefix.length).split("/")[0])
+      .filter(part => part.toLowerCase() === basename || part.toLowerCase().startsWith(`${basename}.`)))].sort();
+    assert.deepEqual(candidates, [expected.split("/").at(-1)], "unexpected committed Python resolution candidate");
   }
   const tree = git(root, "rev-parse", `${commit}^{tree}`).toString().trim();
   return { commit, tree };
