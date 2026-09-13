@@ -63,4 +63,4 @@ jobs:
           npm run verify:companion-manifest
           npm run verify:scene-manifest
       - name: Verify all published companion variants in the review runtime
-        run: npm run test:e2e:companion-asset
+        run: npx playwright test --config=playwright.companion-asset.config.ts
