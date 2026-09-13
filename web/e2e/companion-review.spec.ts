@@ -98,6 +98,82 @@ test("valid review selection requests exactly one approved GLB", async ({ page }
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-interaction-enabled", "true");
 });
 
+test("S10 living replay adds bounded head look and suspends it during tactile drag", async ({ page }) => {
+  await page.goto(reviewUrl("S10"));
+  const runtime = page.locator("[data-companion-status]");
+  const slot = page.locator(".companion-runtime-slot");
+  const canvas = page.locator("[data-companion-canvas]");
+
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-attention-look", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-bone", "head");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "centered");
+
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+
+  await page.mouse.move(viewport!.width * 0.86, viewport!.height * 0.24);
+  await expect.poll(
+    async () => Math.abs(Number(await runtime.getAttribute("data-companion-look-yaw"))),
+    { timeout: 2_000 },
+  ).toBeGreaterThan(0.035);
+  await expect.poll(
+    async () => Math.abs(Number(await runtime.getAttribute("data-companion-look-pitch"))),
+    { timeout: 2_000 },
+  ).toBeGreaterThan(0.015);
+
+  const maxYaw = Number(await runtime.getAttribute("data-companion-look-max-yaw"));
+  const maxPitch = Number(await runtime.getAttribute("data-companion-look-max-pitch"));
+  expect(Math.abs(Number(await runtime.getAttribute("data-companion-look-yaw")))).toBeLessThanOrEqual(maxYaw + 0.005);
+  expect(Math.abs(Number(await runtime.getAttribute("data-companion-look-pitch")))).toBeLessThanOrEqual(maxPitch + 0.005);
+
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const centerX = box!.x + box!.width / 2;
+  const centerY = box!.y + box!.height / 2;
+
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await expect(runtime).toHaveAttribute("data-companion-interaction", "dragging");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "suspended");
+  await page.mouse.up();
+  await expect.poll(
+    async () => runtime.getAttribute("data-companion-interaction"),
+    { timeout: 4_000 },
+  ).toBe("idle");
+
+  await page.mouse.move(viewport!.width / 2, viewport!.height / 2);
+  await expect.poll(
+    async () => Math.abs(Number(await runtime.getAttribute("data-companion-look-yaw"))),
+    { timeout: 2_000 },
+  ).toBeLessThan(0.02);
+  await expect.poll(
+    async () => Math.abs(Number(await runtime.getAttribute("data-companion-look-pitch"))),
+    { timeout: 2_000 },
+  ).toBeLessThan(0.02);
+});
+
+test("attention look stays fail-closed outside S10 and under reduced motion", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  let runtime = page.locator("[data-companion-status]");
+  let slot = page.locator(".companion-runtime-slot");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-attention-look", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "disabled");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(reviewUrl("S10"));
+  runtime = page.locator("[data-companion-status]");
+  slot = page.locator(".companion-runtime-slot");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-attention-look", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "disabled");
+});
+
 test("bear-lite idle can be grabbed and springs back without product-state changes", async ({ page }) => {
   await page.goto(reviewUrl("S02"));
   const runtime = page.locator("[data-companion-status]");

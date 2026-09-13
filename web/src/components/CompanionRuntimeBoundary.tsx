@@ -72,6 +72,12 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
         : "disabled";
 
   const tactileEligible = interactionActivation !== "disabled";
+  const attentionLook = !config.reducedMotion
+    && config.mode === "review"
+    && selection.screen === "S10"
+    && selection.species === "bear"
+    && selection.variant === "lite"
+    && selection.clip === "idle";
 
   return (
     <div
@@ -79,6 +85,7 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
       aria-hidden="true"
       data-companion-interactive={tactileEligible ? "true" : "false"}
       data-companion-interaction-activation={interactionActivation}
+      data-companion-attention-look={attentionLook ? "true" : "false"}
       style={interactionActivation === "immediate" ? { pointerEvents: "auto" } : undefined}
     >
       <RendererErrorBoundary>
@@ -88,6 +95,7 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
             reducedMotion={config.reducedMotion}
             framing={framing}
             interactionActivation={interactionActivation}
+            attentionLook={attentionLook}
           />
         </Suspense>
       </RendererErrorBoundary>
