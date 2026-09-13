@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { decodeApiError, requestTimeoutError } from "./api-contract";
+import { decodeApiError, requestNetworkError, requestTimeoutError } from "./api-contract";
 import type {
   ActiveChallenge,
   BloodPressureObservation,
@@ -55,7 +55,12 @@ async function boundedFetch<T>(
     controller.abort();
   }, apiRequestTimeoutMs);
   try {
-    const response = await fetch(input, { ...init, signal: controller.signal });
+    const response = await fetch(input, { ...init, signal: controller.signal }).catch((error: unknown) => {
+      // Classify fetch rejection only, never JSON/body decoding errors. This
+      // transport helper remains single-attempt for reads and mutations alike.
+      if (error instanceof TypeError) throw requestNetworkError();
+      throw error;
+    });
     return await consume(response, controller.signal);
   } catch (error) {
     if (timedOut) {

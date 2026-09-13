@@ -56,6 +56,10 @@ export function requestTimeoutError(): ApiRequestError {
   );
 }
 
+export function requestNetworkError(): ApiRequestError {
+  return new ApiRequestError(0, "network_error", "연결을 확인한 뒤 다시 시도해 주세요.");
+}
+
 export type BloodPressureObservation = {
   id: string;
   observed_on: string;
