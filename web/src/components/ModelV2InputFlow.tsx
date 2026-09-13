@@ -231,7 +231,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
           ) : (
             <>
               <header className="model-v2-step-heading">
-                <p className="model-v2-kicker">{step === "intro" ? "입력 전에 잠깐" : step === "review" ? "보내기 전 마지막 확인" : `${progressIndex + 1}번째 이야기`}</p>
+                <p className="model-v2-kicker">{step === "intro" ? "입력 전에 잠깐" : step === "review" ? "분석 전 마지막 확인" : `${progressIndex + 1}번째 이야기`}</p>
                 <h2 id={STEP_TITLE_ID} tabIndex={-1}>{step === "intro" ? "내 생활정보를 하나씩 살펴봐요" : STEPS[step].label}</h2>
                 {step !== "intro" && <p>{STEPS[step].description}</p>}
               </header>
@@ -244,7 +244,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
                 <div className="model-v2-intro-mark" aria-hidden="true" />
                 <p>나이, 체격, 생활 습관, 활동, 수면 정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
                 <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
-                <p>입력과 결과는 저장하지 않아요. 마지막 확인 단계에서 직접 분석을 요청할 수 있어요.</p>
+                <p>입력과 결과는 저장하지 않아요. 마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
                 <details className="model-v2-notice-details">
                   <summary>입력 정보 이용 안내</summary>
                   <p>학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>

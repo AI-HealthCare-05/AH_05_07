@@ -171,9 +171,12 @@ test("S11 requires explicit review submission and completes locally without send
   const storageBefore = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
+  await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
   await expect(page.locator("#model-age")).toHaveCount(0);
   await expect(submit(page)).toHaveCount(0);
   await toReview(page);
+  await expect(step(page, "review")).toContainText("분석 전 마지막 확인");
+  await expect(step(page, "review")).toContainText("분석 전에 입력한 내용이 맞는지 확인해 주세요.");
   expect(routed.requests).toHaveLength(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(4);
   const review = step(page, "review");
