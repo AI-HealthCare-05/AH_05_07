@@ -56,7 +56,7 @@ Three.js companion은 표현 계층일 뿐, 기록·인증·모델 의미를 바
 | Web | React, TypeScript, Vite, semantic HTML, 선택적 Three.js를 Cloudflare Worker `ah-05-07-pages`에서 제공합니다. |
 | API | FastAPI를 서울 리전의 Google Cloud Run 서비스 `bp7-api`에서 실행합니다. |
 | Auth · Data | Supabase Auth 이메일 링크와 Supabase PostgreSQL RLS가 세션·행 소유권 경계를 담당합니다. |
-| Model V2 | 동결된 scikit-learn 아티팩트를 API에서 일시적으로 실행하고 승인된 비수치 응답만 투영합니다. |
+| Model V2 | 동결된 11개 의미 특성 계산을 검증된 browser-local 자산으로 실행하고 승인된 비수치 응답만 투영합니다. 정상 S11 제출은 feature-bearing inference POST를 보내지 않으며, 인증된 서버 endpoint는 구조적으로 유지됩니다. |
 | Visual assets | 승인된 공개 companion·poster 자산만 Cloudflare R2에서 불변 manifest와 함께 제공합니다. 앱 배포 경계와는 분리됩니다. |
 
 자세한 구성과 ERD는 [Architecture](docs/architecture.md), 실제 운영 토폴로지와 최신 기록은
