@@ -71,7 +71,10 @@ def check_loaded() -> None:
     for name, module in tuple(sys.modules.items()):
         path = getattr(module, "__file__", None)
         local = path is not None and Path(path).resolve().is_relative_to(ROOT)
-        if name == "__main__" or not (local or name == "app" or name.startswith("app.")):
+        # multiprocessing retains the launcher under this standard alias when
+        # sklearn imports it; accept only the identical launcher object.
+        launcher = name == "__main__" or (name == "__mp_main__" and module is sys.modules["__main__"])
+        if launcher or not (local or name == "app" or name.startswith("app.")):
             continue
         require(name in expected, name)
         source = expected[name]

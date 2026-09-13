@@ -305,6 +305,7 @@ test("Git identity rejects a committed shadow or added namespace initializer hid
 
 test("probe checks actual imported file, shape and search path after canonical entry", () => fixture(({ root }) => {
   const entry = "tests/model/browser_fixtures.py";
+  appendFileSync(resolve(root, entry), "\nimport multiprocessing\n");
   const baseline = probe(root, [entry]);
   assert.equal(baseline.status, 0, baseline.stderr);
   const original = readFileSync(resolve(root, entry), "utf8");
