@@ -41,7 +41,7 @@ export function assertScope(root) {
   assert.deepEqual(readdirSync(resolve(root, modelDirectory)).sort(), [...modelModules].sort(), "unexpected Model V2 module/scope");
   assert.deepEqual(readdirSync(resolve(root, "web/src/components")).filter(name => /^modelV2Draft(?:\.|$)/i.test(name)).sort(),
     ["modelV2Draft.ts"], "unexpected draft resolution candidate");
-  assert.deepEqual(readdirSync(resolve(root, "web")).filter(name => /^(?:vite\.config(?:\.|$)|tsconfig(?:\.|$)|package(?:-lock)?\.json$)/i.test(name)).sort(),
+  assert.deepEqual(readdirSync(resolve(root, "web")).filter(name => /^(?:vite\.config(?:\.|$)|tsconfig(?:\.|$)|package(?:-lock)?\.json$)/i.test(name) && !name.endsWith(".tsbuildinfo")).sort(),
     ["package-lock.json", "package.json", "tsconfig.json", "vite.config.ts"], "unexpected resolution configuration");
 }
 export function captureSnapshot(root = repo) {

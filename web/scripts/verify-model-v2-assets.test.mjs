@@ -23,6 +23,8 @@ function fixture(run) {
       mkdirSync(dirname(resolve(root, path)), { recursive: true });
       copyFileSync(resolve(repo, path), resolve(root, path));
     }
+    // TypeScript build output is not a competing resolution configuration.
+    writeFileSync(resolve(root, "web/tsconfig.tsbuildinfo"), "{}");
     git(root, "init", "-q");
     commit(root);
     const snapshot = captureSnapshot(root);
