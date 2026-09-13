@@ -12,6 +12,7 @@ export class ApiRequestError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly responseStatus?: number,
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -48,11 +49,12 @@ export function decodeApiError(payload: unknown, status: number): ApiRequestErro
   );
 }
 
-export function requestTimeoutError(): ApiRequestError {
+export function requestTimeoutError(responseStatus?: number): ApiRequestError {
   return new ApiRequestError(
     0,
     "request_timeout",
     "요청 응답 시간을 초과했습니다.",
+    responseStatus,
   );
 }
 

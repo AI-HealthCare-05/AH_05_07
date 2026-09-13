@@ -120,7 +120,9 @@ and window request invalidation must pass before retrying or committing either
 attempt, and the retry uses the latest session token. A second failure reaches
 the existing S13 recovery UI (or existing session-expiry handling for a current
 invalid session). Ordinary `4xx`, other HTTP errors and malformed successful
-responses receive no transient retry. Manual recovery and subsequent window
+responses receive no transient retry. A timeout preserves an already received
+HTTP status as `responseStatus` so a stalled error body cannot make an ordinary
+HTTP failure retryable. Manual recovery and subsequent window
 loads receive no new transient retries. Writes, deletes, challenge mutations,
 account deletion, export and Model V2 receive no automatic retries from this
 policy. Source/test coverage does not establish the production failure class.

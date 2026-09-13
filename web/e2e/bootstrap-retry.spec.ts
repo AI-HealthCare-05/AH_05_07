@@ -4,14 +4,20 @@ import { e2eSessionEventName } from "../src/lib/e2eHarness";
 // Synthetic fetch boundary; real decoder, 8-second deadline, session effects,
 // request invalidation and recovery UI run in the browser.
 type Failure = "network" | "timeout" | "body-timeout" | "invalid-json" | "body-type-error" | number;
-type Step = { failure?: Failure; hold?: boolean; measurement?: number };
+type Step = { responseStatus?: number; failure?: Failure; hold?: boolean; measurement?: number };
 type Call = { method: string; path: string; token: string; endOn: string | null };
-type Harness = { calls: Call[]; aborted: number[]; release: (index: number) => void };
+type Harness = { sessionReady: boolean; calls: Call[]; aborted: number[]; release: (index: number) => void };
 async function mockTransport(page: Page, steps: Step[], otherFailure: Failure = 503) {
-  await page.addInitScript(({ steps, otherFailure }) => {
+  await page.addInitScript(({ steps, otherFailure, sessionEvent }) => {
     const nativeFetch = window.fetch.bind(window);
     const calls: Call[] = [], aborted: number[] = [], releases: (() => void)[] = [];
-    Object.assign(window, { bootstrapHarness: { calls, aborted, release: (index: number) => releases[index]() } });
+    const harness = { calls, aborted, sessionReady: false, release: (index: number) => releases[index]() };
+    Object.assign(window, { bootstrapHarness: harness });
+    const nativeAddEventListener = window.addEventListener.bind(window);
+    window.addEventListener = (...args: Parameters<typeof window.addEventListener>) => {
+      nativeAddEventListener(...args);
+      if (args[0] === sessionEvent) harness.sessionReady = true;
+    };
     let reads = 0;
     window.fetch = async (input, init) => {
       const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, location.href);
@@ -32,7 +38,7 @@ async function mockTransport(page: Page, steps: Step[], otherFailure: Failure = 
         const abort = () => controller.error(signal?.reason ?? new DOMException("Aborted", "AbortError"));
         if (signal?.aborted) abort();
         else signal?.addEventListener("abort", abort, { once: true });
-      } }));
+      } }), { status: step.responseStatus ?? 200 });
       if (step.failure === "body-type-error") return new Response(new ReadableStream({ start(controller) { controller.error(new TypeError("Synthetic body failure")); } }));
       // Gateways need not return the API's JSON envelope.
       if (typeof step.failure === "number") return new Response("<html>unavailable</html>", { status: step.failure });
@@ -43,7 +49,7 @@ async function mockTransport(page: Page, steps: Step[], otherFailure: Failure = 
         active_challenge: null, challenge_checkins: [], challenge_events: [],
       });
     };
-  }, { steps, otherFailure });
+  }, { steps, otherFailure, sessionEvent: e2eSessionEventName });
 }
 const calls = (page: Page) => page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.calls);
 async function release(page: Page, index: number) {
@@ -51,6 +57,8 @@ async function release(page: Page, index: number) {
   await page.clock.runFor(50);
 }
 async function changeSession(page: Page, userId: string | null, token = "synthetic-refreshed") {
+  // A document load is not evidence that React's auth effect has subscribed.
+  await expect.poll(() => page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.sessionReady)).toBe(true);
   await page.evaluate(({ event, userId, token }) => window.dispatchEvent(new CustomEvent(event, { detail: userId ? {
     access_token: token, refresh_token: "synthetic-refresh", expires_in: 3600, token_type: "bearer",
     user: { id: userId, app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-09-01T00:00:00Z" },
@@ -256,3 +264,21 @@ for (const operation of ["export", "challenge", "delete-record"] as const) {
         ? ["POST", "/api/v1/observations/challenges/active"] : ["DELETE", "/api/v1/observations/blood-pressure/synthetic-bp"]);
   });
 }
+
+for (const responseStatus of [400, 401, 403, 404, 409, 422, 429, 500]) {
+  test(`${responseStatus}: a stalled error body does not turn an ordinary HTTP failure into a retriable timeout`, async ({ page }) => {
+    await mockTransport(page, [{ failure: "body-timeout", responseStatus }, {}]);
+    await page.goto("/?e2e=signed-in");
+    await finishTimeout(page, 0);
+    await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+    await page.clock.runFor(20_000);
+    await expectCount(page, 1);
+  });
+}
+test("503 with a stalled error body retains its bounded transient recovery", async ({ page }) => {
+  await mockTransport(page, [{ failure: "body-timeout", responseStatus: 503 }, {}]);
+  await page.goto("/?e2e=signed-in");
+  await finishTimeout(page, 0);
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await expectCount(page, 2);
+});

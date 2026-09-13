@@ -50,6 +50,7 @@ async function boundedFetch<T>(
 ): Promise<T> {
   const controller = new AbortController();
   let timedOut = false;
+  let responseStatus: number | undefined;
   const timeout = setTimeout(() => {
     timedOut = true;
     controller.abort();
@@ -61,10 +62,11 @@ async function boundedFetch<T>(
       if (error instanceof TypeError) throw requestNetworkError();
       throw error;
     });
+    responseStatus = response.status;
     return await consume(response, controller.signal);
   } catch (error) {
     if (timedOut) {
-      throw requestTimeoutError();
+      throw requestTimeoutError(responseStatus);
     }
     throw error;
   } finally {

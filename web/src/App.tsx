@@ -569,6 +569,10 @@ function App() {
       // retain only the existing newer-token 401 behavior from #399.
       const transientInitialRead = initialLoad && snapshot.windowData === null
         && error instanceof ApiRequestError
+        // A stalled error body must not turn a known ordinary HTTP failure
+        // (such as 403/429/500) into a retryable status-0 timeout.
+        && (error.responseStatus === undefined || error.responseStatus < 400
+          || [502, 503, 504].includes(error.responseStatus))
         && ((error.status === 0 && (error.code === "network_error" || error.code === "request_timeout"))
           || error.status === 502 || error.status === 503 || error.status === 504);
       if (allowRetry && (transientInitialRead || (isSessionError(error) && hasNewerToken(requestContext)))) {
