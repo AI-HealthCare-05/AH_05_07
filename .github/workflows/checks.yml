@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   web:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: web
@@ -65,7 +65,7 @@ jobs:
           python3 ../scripts/ci/verify_secret_boundary.py --web-dist dist
 
   deployment-smoke:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
         run: python3 scripts/ci/verify_deployment_smoke.py --self-test
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
         run: uv run ruff format . --check
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     services:
       mysql:
         image: mysql:8.0
