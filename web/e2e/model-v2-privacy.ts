@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 export async function observeModelPrivacy(page: Page) {
   await page.addInitScript(() => {
-    const probe = { active: false, storage: 0, idb: 0, cache: 0, cookie: 0, events: [] as string[] };
+    const probe = { active: false, storage: 0, idb: 0, cache: 0, cookie: 0, beacon: 0, sockets: 0, eventSources: 0, workers: 0, events: [] as string[] };
     Object.assign(window, { modelPrivacy: probe });
     for (const method of ["setItem", "removeItem", "clear"] as const) {
       const original = Storage.prototype[method];
@@ -37,6 +37,26 @@ export async function observeModelPrivacy(page: Page) {
       if (probe.active) probe.cookie++;
       cookie.set!.call(this, value);
     } });
+    const beacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = (...args) => {
+      if (probe.active) probe.beacon++;
+      return beacon(...args);
+    };
+    window.WebSocket = new Proxy(window.WebSocket, { construct(target, args) {
+      if (probe.active) probe.sockets++;
+      return Reflect.construct(target, args);
+    } });
+    window.EventSource = new Proxy(window.EventSource, { construct(target, args) {
+      if (probe.active) probe.eventSources++;
+      return Reflect.construct(target, args);
+    } });
+    if (navigator.serviceWorker) {
+      const register = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+      navigator.serviceWorker.register = (...args) => {
+        if (probe.active) probe.workers++;
+        return register(...args);
+      };
+    }
     if (crypto.subtle) {
       const digest = crypto.subtle.digest.bind(crypto.subtle);
       crypto.subtle.digest = async (...args) => {
@@ -75,9 +95,10 @@ export async function startModelPrivacy(page: Page) {
 export async function assertModelPrivacy(page: Page, before: Awaited<ReturnType<typeof persistenceSnapshot>>, success: boolean) {
   expect(await persistenceSnapshot(page)).toEqual(before);
   const probe = await page.evaluate(() => (window as unknown as {
-    modelPrivacy: { storage: number; idb: number; cache: number; cookie: number; events: string[] }
+    modelPrivacy: { storage: number; idb: number; cache: number; cookie: number; beacon: number; sockets: number; eventSources: number; workers: number; events: string[] }
   }).modelPrivacy);
   expect([probe.storage, probe.idb, probe.cache, probe.cookie]).toEqual([0, 0, 0, 0]);
+  expect([probe.beacon, probe.sockets, probe.eventSources, probe.workers]).toEqual([0, 0, 0, 0]);
   if (success) expect(probe.events).toEqual(["hashed", "parsed"]);
   else expect(probe.events).not.toContain("parsed");
 }
