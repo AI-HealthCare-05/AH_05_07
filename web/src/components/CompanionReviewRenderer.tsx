@@ -38,6 +38,7 @@ const tactileReactionClips: Readonly<Record<CompanionGrabZone, CompanionClip>> =
 
 const TACTILE_FADE_IN_SECONDS = 0.14;
 const TACTILE_FADE_OUT_SECONDS = 0.18;
+const TACTILE_MIN_REACTION_VISIBLE_MS = 300;
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) {
@@ -90,6 +91,7 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
     host.dataset.companionReactionState = interactive ? "idle" : "disabled";
     host.dataset.companionReactionClip = selection.clip;
     host.dataset.companionAnimationClip = selection.clip;
+    host.dataset.companionMinReactionMs = interactive ? String(TACTILE_MIN_REACTION_VISIBLE_MS) : "0";
     host.dataset.companionOffsetX = "0.0000";
     host.dataset.companionOffsetY = "0.0000";
     setStatusState("loading");
@@ -188,6 +190,15 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            ] as const));
            let currentAction: THREE.AnimationAction | null = null;
            let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
+           let reactionReleaseTimer: number | undefined;
+           let reactionStartedAt = 0;
+
+           const clearReactionReleaseTimer = () => {
+             if (reactionReleaseTimer !== undefined) {
+               window.clearTimeout(reactionReleaseTimer);
+               reactionReleaseTimer = undefined;
+             }
+           };
 
            const markAnimation = (clip: CompanionClip, reactionState: "idle" | "active") => {
              host.dataset.companionAnimationClip = clip;
@@ -196,6 +207,8 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
            };
 
            const stopCurrent = () => {
+             clearReactionReleaseTimer();
+             reactionStartedAt = 0;
              if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
              finishedListener = null;
              currentAction?.stop();
@@ -203,7 +216,10 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
              animationMixer.stopAllAction();
            };
 
-           const releaseReaction = () => {
+           const settleReactionToIdle = () => {
+             reactionReleaseTimer = undefined;
+             reactionStartedAt = 0;
+
              const idleAction = actions.get("idle");
              if (!idleAction) {
                fail();
@@ -228,11 +244,30 @@ export default function CompanionReviewRenderer({ selection, reducedMotion, fram
              markAnimation("idle", "idle");
            };
 
+           const releaseReaction = () => {
+             clearReactionReleaseTimer();
+
+             const elapsed = reactionStartedAt > 0
+               ? performance.now() - reactionStartedAt
+               : TACTILE_MIN_REACTION_VISIBLE_MS;
+             const remaining = Math.max(0, TACTILE_MIN_REACTION_VISIBLE_MS - elapsed);
+
+             if (remaining === 0) {
+               settleReactionToIdle();
+               return;
+             }
+
+             reactionReleaseTimer = window.setTimeout(settleReactionToIdle, remaining);
+           };
+
            const react = (zone: CompanionGrabZone) => {
              const reactionClip = tactileReactionClips[zone];
              if (getCompanionDecision(latestSelectionRef.current.screen, reactionClip).status === "blocked") {
                return;
              }
+
+             clearReactionReleaseTimer();
+             reactionStartedAt = performance.now();
 
              const reactionAction = actions.get(reactionClip);
              if (!reactionAction) {

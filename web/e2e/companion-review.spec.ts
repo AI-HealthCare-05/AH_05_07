@@ -175,6 +175,52 @@ test("head body and feet use distinct tactile reaction profiles", async ({ page 
   }
 });
 
+test("touch tap keeps a visible head reaction before returning to idle", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+
+  try {
+    const url = new URL(reviewUrl("S02"), baseURL ?? "http://127.0.0.1:4173").toString();
+    await page.goto(url);
+
+    const runtime = page.locator("[data-companion-status]");
+    const canvas = page.locator("[data-companion-canvas]");
+    const slot = page.locator(".companion-runtime-slot");
+
+    await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    await expect(runtime).toHaveAttribute("data-companion-min-reaction-ms", "300");
+    expect(await slot.evaluate((element) => getComputedStyle(element).touchAction)).toBe("none");
+
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height * 0.18;
+
+    await page.touchscreen.tap(x, y);
+
+    await expect(runtime).toHaveAttribute("data-companion-pointer-type", "touch");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "curious");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+
+    await page.waitForTimeout(120);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+
+    await expect.poll(
+      async () => runtime.getAttribute("data-companion-reaction-state"),
+      { timeout: 1_500 },
+    ).toBe("idle");
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+  } finally {
+    await context.close();
+  }
+});
+
 test("feet remain more anchored than body under the same large vertical drag", async ({ page }) => {
   await page.goto(reviewUrl("S02"));
   const runtime = page.locator("[data-companion-status]");
