@@ -1,6 +1,30 @@
 # Deployment SSOT
 
-## Recorded Model V2 S11 production evidence
+## Current web production record — 2026-09-14
+
+**OPERATOR-VERIFIED WEB ROLLOUT.** Canonical `main` is
+`37fc06d02b78d35a064c8d2f0c74575d4011f96d`; its final change is repository
+guidance only. The last runtime-affecting source is
+`2626d6ea1804b5faf13098572f3302d14b23db5c` (#498, including #496).
+
+The deployment mirror snapshot is
+`1790f5aaf35d3741ea812dca8bc499eab0bc8e46`
+(`sync: 37fc06d02b78d35a064c8d2f0c74575d4011f96d`).
+Cloudflare Workers Build
+`af914237-0723-4491-92c9-341a814aa96f` completed successfully and produced
+Worker Version `77fa263d-890a-46b8-a71b-70bb2c23f9f8`.
+
+Operator Safari smoke passed on `https://hyeol.app` and its same-Worker
+fallback. The first authenticated observation bootstrap did not reproduce the
+previous S13 load failure; S11 walking/alcohol step validation and browser-local
+Model V2 completion also passed. This records symptom non-reproduction on this
+release, not proof of the historical production failure's exact root cause.
+
+No Cloud Run deployment or Supabase migration was required for this web-only
+rollout. Normal S11 Model V2 success performs no feature-bearing inference POST
+and has no server fallback; the authenticated server endpoint remains.
+
+## Historical server-inference S11 production evidence
 
 This is the last retained rollout record, not a live inventory. Current API
 revision/image/traffic and Worker version/build/source binding must be read from
@@ -56,22 +80,20 @@ copies or send them back upstream. `web/wrangler.jsonc` also stays upstream-owne
 The sole intentional mirror-owned control file is `.github/workflows/sync-upstream.yml`;
 its implementation belongs to that repository, not a second copy in canonical.
 
-Workflow inspected at mirror control snapshot
-`91484a3657f8df86657cab12e937631f2f11361a` (2026-09-11 KST):
+Workflow re-inspected at deployment mirror snapshot
+`1790f5aaf35d3741ea812dca8bc499eab0bc8e46` (2026-09-14 KST):
 
 - Manual `workflow_dispatch` requires full 40-hex `upstream_sha` and verifies the
   resolved checkout matches. Use a reviewed source reachable from canonical main;
   do not weaken repository-main release policy merely because the input accepts a SHA.
-- Scheduled `17 * * * *` resolves upstream `main` when it runs; this can advance
-  the mirror after a manually pinned snapshot. It is not a release approval gate.
 - The workflow snapshots upstream except `.git` and `.github/workflows`, keeps
   its own control workflow, creates a parentless `sync: <source SHA>` commit and
   force-pushes mirror main. Mirror SHA is therefore not the upstream source SHA.
-- Re-read the control workflow at release time. Do not assume a manual source pin
-  persists through a later schedule or that a no-content-change sync creates no commit.
+- The current workflow has no scheduled trigger. Re-read the control workflow at
+  release time; do not infer future automatic synchronization from older records.
 - A successful sync proves neither Cloudflare build success nor served Worker
   identity. Record control/source/snapshot/run separately and verify runtime.
-  If automatic builds watch mirror main, scheduled snapshots may trigger them;
+  Cloudflare automatic builds may still watch mirror main after a manual sync;
   this documentation change does not establish or modify that external setting.
 
 Before a manual release or accepting an automatic mirror-triggered build, verify
@@ -141,7 +163,7 @@ runtime deployment classification, topology, operator gates, and release evidenc
 1. Merge a verified change into upstream `main`.
 2. Classify the change with the table above. For a release that includes a database migration, complete the migration gate first.
 3. If the API changed, build and deploy the Cloud Run revision that contains the merged commit.
-4. For an approved web release, confirm that only `ah-05-07-pages` is mirror-connected, then run the existing mirror `Sync deployment branch` with the exact reviewed `upstream_sha`, after checking the current control workflow and scheduled-sync interaction above. Record the resolved source and mirror snapshot. Independently verify the Cloudflare build, its public configuration and the served Worker version; workflow success alone is not deployment verification.
+4. For an approved web release, confirm that only `ah-05-07-pages` is mirror-connected, then run the existing mirror `Sync deployment branch` with the exact reviewed `upstream_sha`, after checking the current control workflow above. Record the resolved source and mirror snapshot. Independently verify the Cloudflare build, its public configuration and the served Worker version; workflow success alone is not deployment verification.
 5. Run the dependency-free deployment smoke verifier against the production web and API origins. It checks the live URL, `/live`, `/ready`, and CORS preflight for the browser methods currently used by the web client without sending authentication or product data.
 6. Verify a signed-in API read and the specific database-backed browser flow only after its migration gate has passed.
 
