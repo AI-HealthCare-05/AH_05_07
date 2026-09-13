@@ -62,8 +62,8 @@ export const FIELDS: Record<keyof Draft, Field> = {
 export type StepProblem = { step: InputStep; fields: (keyof Draft)[]; message: string };
 
 export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
-  // Preserve the existing explicit client checks. Native min/step attributes
-  // are hints, not new eligibility rules; the canonical adapter owns combination validation.
+  // Native min/step attributes are hints, not generic eligibility rules.
+  // Mirror only these explicit adapter checks; final semantic validation stays in the adapter.
   const missing = STEPS[step].fields.filter((key) => {
     if (FIELDS[key].type === "time") return clockParts(draft[key]) === null;
     if (FIELDS[key].type === "number") return finiteNumber(draft[key]) === null;
@@ -76,6 +76,30 @@ export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
   if (step === "basics" && finiteNumber(draft.age)! < 19) return {
     step, fields: ["age"], message: "이 기능은 만 19세 이상에서만 사용할 수 있습니다.",
   };
+  if (step === "activity") {
+    for (const [key, maximum, message] of [
+      ["walkingDays", 7, "최근 7일 걷기 일수는 0~7일 사이의 정수로 입력해 주세요."],
+      ["walkingHours", 24, "걷는 날 하루 평균 시간은 0~24시간 사이의 정수로 입력해 주세요."],
+      ["walkingMinutes", 59, "걷는 날 추가 시간은 0~59분 사이의 정수로 입력해 주세요."],
+    ] as const) {
+      const value = finiteNumber(draft[key])!;
+      if (!Number.isInteger(value) || value < 0 || value > maximum) return {
+        step, fields: [key], message,
+      };
+    }
+  }
+  if (step === "habits") {
+    const nonDrinking = draft.alcoholFrequency === "none_past_year"
+      || draft.alcoholFrequency === "lifetime_nonapplicable";
+    if (nonDrinking && draft.alcoholAmount !== "none") return {
+      step, fields: ["alcoholAmount"],
+      message: "최근 1년간 또는 평생 마시지 않았다면 음주량은 ‘해당 없음’을 선택해 주세요.",
+    };
+    if (!nonDrinking && draft.alcoholAmount === "none") return {
+      step, fields: ["alcoholAmount"],
+      message: "음주량의 ‘해당 없음’은 최근 1년간 또는 평생 마시지 않은 경우에만 선택할 수 있어요. 한 번 마실 때 음주량을 선택해 주세요.",
+    };
+  }
   return null;
 }
 
