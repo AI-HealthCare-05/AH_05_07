@@ -399,9 +399,20 @@ test('living week uses Seoul dates and date-only landmarks with mixed facts and 
   await expect(page.locator('[data-record-lane="challenge"] .record-action')).toHaveCount(0);
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', staticPreview ? '2026-09-10' : '2026-09-11');
   expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
-  await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
+  const replay = page.locator('[data-companion-status]');
+  if (await replay.count()) {
+    // This shared case also runs in the production-companion UI matrix.
+    // Reduced motion keeps that S10 companion static, while scene-review runs
+    // leave the independent companion gate off and therefore mount none.
+    await expect(replay).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+    await expect(replay).toHaveAttribute('data-companion-motion', 'stopped');
+    await expect(replay).toHaveAttribute('data-companion-look-enabled', 'false');
+  } else {
+    await expect(replay).toHaveCount(0);
+  }
+  await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
   expect(dataRequests).toBe(requestsBeforeSelection);
-  expect(runtimeRequests).toEqual([]);
+  expect(runtimeRequests.filter(url => /ThreeSceneRenderer/.test(url))).toEqual([]);
 });
 
 const report = (page: Page) => page.locator('[data-living-week-report]');

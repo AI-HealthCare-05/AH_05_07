@@ -179,7 +179,7 @@ for (const screen of ["S02", "S10"]) for (const failure of ["chunk", "GLB"]) tes
   page.on("request", request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations++; });
   await page.route(failure === "chunk" ? "**/assets/ThreeSceneRenderer-*.js" : "**/*.glb", route => { failedRequests++; return route.abort(); });
   await page.goto(`/?fixture=VP-10&screen=${screen}`);
-  await page.locator(".living-visual-stage").evaluate(element => element.scrollIntoView());
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
   await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(1);
