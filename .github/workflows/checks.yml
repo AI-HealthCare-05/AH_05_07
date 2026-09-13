@@ -3,18 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'docs/asset-register.md'
-      - 'docs/character-preview-verification.md'
-      - 'docs/evidence/companion-r2-v1.json'
-      - 'web/src/ui/companionAssets.generated.ts'
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'docs/asset-register.md'
-      - 'docs/character-preview-verification.md'
-      - 'docs/evidence/companion-r2-v1.json'
-      - 'web/src/ui/companionAssets.generated.ts'
 
 permissions:
   contents: read
