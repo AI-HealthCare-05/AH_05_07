@@ -17,6 +17,10 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   `bear`/`lite` profile만 만들고, confirmed save 이후 같은 GLB의 mixer에서
   `celebrate` one-shot 뒤 `idle`로 전환한다. 현재 tactile production v1은
   그 `idle` 전환이 끝난 뒤에만 head/body/feet pointer interaction을 연다.
+- P1 Living Replay production extension은 S10에서만 고정 `bear`/`lite`/`idle`
+  profile과 presentation-only day-focus head+spine attention을 추가한다. S10 tactile은
+  열지 않고 reduced motion에서는 neutral static을 유지한다. S10 realtime scene gate는
+  이 확장과 별개이며 계속 활성화하지 않는다.
 - live production state: **ACTIVE**. Phase B activation, public smoke, rollback
   rehearsal, and final restore are verified in
   [S3E production rollout evidence](s3e-companion-production-rollout.md).
@@ -94,6 +98,12 @@ head/body/feet tactile controller를 생성한다. interaction은 저장 결과�
 모델 결과를 입력으로 받지 않는다. `prefers-reduced-motion: reduce`에서는 action,
 RAF, tactile interaction을 모두 시작하지 않고 neutral static model만 표시한다.
 
+S10 production selection은 save 상태와 무관한 고정 `bear`/`lite`/`idle` profile이다.
+7일 기록의 선택·혈압·챌린지·Model V2 사실은 selection이나 pose를 고르지 않는다.
+day-focus는 활성화한 semantic control의 화면 위치만 presentation cue로 전달하며,
+head+spine bounded attention은 기존 envelope 안에서만 동작한다. S10 tactile은
+disabled이고 `prefers-reduced-motion: reduce`에서는 attention loop를 시작하지 않는다.
+
 정책 함수는 화면·clip·비의미적 UI context만 받는다. 혈압 수치/변화, 위험 점수·
 위험군, 모델 결과·준비 상태, 챌린지 성공률, 건강 개선 여부는 입력 타입이나
 분기 조건에 존재하지 않는다. `celebrate`가 정상 혈압·위험 감소·건강 개선을
@@ -128,9 +138,11 @@ GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 `npm run test:e2e:production:on`은 실제 runtime delivery의 S05 production-on
 경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`,
 celebration 중 tactile 차단, idle 이후 mouse/touch tactile 활성화와 celebrate
-non-replay, 제외 화면, query 무시, reduced motion, failure isolation,
-1366/390/320 non-overlap을 검증한다. 이 테스트의 production variable은 local test
-web server에만 주입한다.
+non-replay를 검증한다. 같은 suite는 S10의 fixed bear-lite idle, query 무시,
+presentation-only day-focus attention, tactile disabled, reduced motion static을
+검증하고 다른 화면은 계속 제외한다. failure isolation과 1366/390/320 non-overlap도
+기존 S05 경계에서 유지한다. 이 테스트의 production variable은 local test web server에만
+주입한다.
 
 S3C CORS 계약은 그대로 유지한다. 최종 origin은
 `https://ah-05-07-pages.ahnsangkyoon.workers.dev`와 `http://127.0.0.1:4173` 두 개이며,
@@ -150,8 +162,10 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
 ## S3E rollout and rollback contract
 
 - Production selection source: `resolveProductionCompanion`의 고정 계약. 입력은
-  mode, S05 screen, `confirmedSave` boolean뿐이며 BP value, 입력 기반 위험군
-  선별 신호, model output, challenge adherence/result를 받지 않는다.
+  mode, screen, `confirmedSave` boolean뿐이다. S05는 confirmed save일 때만
+  `celebrate → idle`, S10은 save 상태와 무관하게 고정 `idle` profile을 만든다.
+  BP value, 입력 기반 위험군 선별 신호, model output, challenge adherence/result는
+  입력으로 받지 않는다.
 - S05 trigger: 실제 save request가 성공으로 resolve된 뒤에만 `confirmedSave=true`;
   요청 시작, optimistic UI, timeout/unknown, 4xx/5xx, 저장 확인 전에는 false다.
 - Production-off rollback: `VITE_SK7_COMPANION_MODE=off` 또는 variable 제거 후
@@ -159,3 +173,6 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
 - Phase B production evidence confirms the live final state is `production` with
   S05-only bear-lite behavior, confirmed-save gating, one-shot `celebrate` to
   `idle`, a verified rollback path, and preserved core UI when off or failed.
+- 위 Phase B 기록은 S05 rollout의 역사적 live evidence다. P1 S10 source activation
+  merge만으로 현재 served production을 증명하지 않으며, mirror/build-variable/deploy/public
+  smoke/rollback 확인은 별도 deployment 단계에서 기록한다.

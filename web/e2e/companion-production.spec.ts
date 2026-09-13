@@ -154,11 +154,71 @@ test("production S05 enables touch reactions only after celebrate settles idle",
   }
 });
 
-test("production excludes every non-S05 screen and ignores query overrides", async ({ page }) => {
+test("production S10 uses fixed bear-lite idle and keeps day focus presentation-only", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
+  await installSyntheticApi(page);
+  await page.goto(
+    "/?e2e=signed-in&screen=S10"
+      + "&companion_species=rabbit&companion_variant=standard&companion_clip=greet&companion_context=save_success",
+  );
+
+  const runtime = page.locator("[data-companion-status]");
+  const slot = page.locator(".companion-runtime-slot");
+  const buttons = page.locator(".seven-day-trail .trail-day-button");
+
+  await expect(page.locator(".journey-recap")).toBeVisible();
+  await expect(buttons).toHaveCount(7);
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-interaction-activation", "disabled");
+  await expect(slot).toHaveAttribute("data-companion-attention-look", "true");
+  await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "disabled");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-posture", "head-spine");
+  await expect(runtime).toHaveAttribute("data-companion-look-head-yaw-share", "0.78");
+  await expect(runtime).toHaveAttribute("data-companion-look-spine-yaw-share", "0.22");
+  await expect(runtime).toHaveAttribute("data-companion-look-head-pitch-share", "0.82");
+  await expect(runtime).toHaveAttribute("data-companion-look-spine-pitch-share", "0.18");
+
+  await buttons.nth(2).click();
+  await expect(buttons.nth(2)).toHaveAttribute("aria-pressed", "true");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "replay-cue");
+  await expect(runtime).toHaveAttribute("data-companion-look-source", "replay");
+  await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "disabled");
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S10");
+});
+
+test("production S10 reduced motion stays static with attention disabled", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installSyntheticApi(page);
+  await page.goto("/?e2e=signed-in&screen=S10");
+
+  const runtime = page.locator("[data-companion-status]");
+  const slot = page.locator(".companion-runtime-slot");
+  const button = page.locator(".seven-day-trail .trail-day-button").nth(4);
+
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(slot).toHaveAttribute("data-companion-interaction-activation", "disabled");
+  await expect(slot).toHaveAttribute("data-companion-attention-look", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "disabled");
+  await expect(runtime).toHaveAttribute("data-companion-motion", "stopped");
+  await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+
+  await button.click();
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "false");
+  await expect(runtime).toHaveAttribute("data-companion-motion", "stopped");
+});
+
+test("production excludes every non-S05/S10 screen and ignores query overrides", async ({ page }) => {
   await installSyntheticApi(page);
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
-  for (const screen of ["S02", "S03", "S04", "S06", "S07", "S08", "S09", "S10", "S11", "S12", "S13", "S14"] as const) {
+  for (const screen of ["S02", "S03", "S04", "S06", "S07", "S08", "S09", "S11", "S12", "S13", "S14"] as const) {
     requests.length = 0;
     await page.goto(`/?e2e=signed-in&screen=${screen}&companion_species=rabbit&companion_variant=standard&companion_clip=greet&companion_context=save_success`);
     await expect(page.locator(".app-shell")).not.toHaveAttribute("data-screen", "S05");

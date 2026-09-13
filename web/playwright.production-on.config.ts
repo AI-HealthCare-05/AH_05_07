@@ -17,6 +17,7 @@ export default defineConfig({
     env: {
       VITE_API_BASE_URL: "http://e2e.invalid",
       VITE_SK7_E2E_MODE: "1",
+      VITE_SK7_UI_MODE: "journey",
       VITE_SK7_COMPANION_MODE: "production",
     },
     port: 4173,
