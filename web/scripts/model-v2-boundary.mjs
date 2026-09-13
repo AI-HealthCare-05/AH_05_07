@@ -1,3 +1,4 @@
+import { normalizePath } from "vite";
 import { realpathSync } from "node:fs";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
@@ -12,7 +13,7 @@ export function modelV2Boundary() {
     enforce: "pre",
     configResolved(config) {
       root = realpathSync(resolve(config.configFile, "../../"));
-      allowed = modelModules.map(name => resolve(root, modelDirectory, name));
+      allowed = modelModules.map(name => normalizePath(resolve(root, modelDirectory, name)));
     },
     buildStart() { assertScope(root); },
     moduleParsed(module) {
