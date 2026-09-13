@@ -56,8 +56,19 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
   await expect(page.locator('[data-static-landscape="S10"]')).toBeVisible();
   await page.getByRole('button', { name: '이전 7일 보기', exact: true }).press('Enter');
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
-  expect(await probe(page)).toEqual({ attempts: 0, frames: 0, canvases: 0 });
-  expect(state.urls.filter(url => /\.glb(?:\?|$)|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer/.test(url))).toEqual([]);
+  if (companionOff) {
+    expect(await probe(page)).toEqual({ attempts: 0, frames: 0, canvases: 0 });
+    expect(state.urls.filter(url => /\.glb(?:\?|$)|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer/.test(url))).toEqual([]);
+  } else {
+    const replay = page.locator('[data-companion-status]');
+    await expect(replay).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+    await expect(replay).toHaveAttribute('data-companion-animation-clip', 'idle');
+    await expect(page.locator('[data-living-scene], [data-saved-scene-status]')).toHaveCount(0);
+    expect(state.urls.filter(url => /ThreeSceneRenderer|SavedSceneRenderer/.test(url))).toEqual([]);
+    const currentProbe = await probe(page);
+    expect(currentProbe.attempts).toBe(1);
+    expect(currentProbe.canvases).toBe(1);
+  }
   await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
   await page.locator('.home-lead button').press('Enter');
   await expect(page.locator('#S04-title')).toBeFocused(); await save(page);
@@ -73,7 +84,10 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
     await expect(runtime).toHaveAttribute('data-companion-framing', 'journey-s05');
     await expect(runtime).toHaveAttribute('data-companion-celebrate-count', '1');
     await expect(runtime).toHaveAttribute('data-companion-phase', 'idle', { timeout: 10000 });
-    expect(state.urls.filter(url => /\.glb(?:\?|$)/.test(url))).toEqual([companionAssetManifest.bear.lite.url]);
+    expect(state.urls.filter(url => /\.glb(?:\?|$)/.test(url))).toEqual([
+      companionAssetManifest.bear.lite.url, // S10 production Living Replay visit
+      companionAssetManifest.bear.lite.url, // S05 confirmed-save companion visit
+    ]);
     const element = await runtime.elementHandle();
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('sk7:e2e-session-change', { detail: {
       access_token: 'synthetic-refreshed-token', refresh_token: 'synthetic-refreshed-refresh', expires_in: 3600, expires_at: 1800000000, token_type: 'bearer',

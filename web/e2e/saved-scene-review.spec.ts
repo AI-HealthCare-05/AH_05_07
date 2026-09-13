@@ -428,7 +428,7 @@ test("offscreen interruption stops rendering and route exit releases every conte
   expect(glbs(state.urls)).toEqual([assetUrl]);
 });
 
-test("exited S02 S10 and S05 canvases are garbage collectible across repeat visits", async ({ page }) => {
+test("exited S02 S10 scene+companion and S05 canvases are garbage collectible across repeat visits", async ({ page }) => {
   const state = await setup(page);
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -475,7 +475,7 @@ test("exited S02 S10 and S05 canvases are garbage collectible across repeat visi
     await expect.poll(async () => {
       await cdp.send("HeapProfiler.collectGarbage");
       return page.evaluate(() => (window as unknown as { sceneCanvasCounts: () => { created: number; retained: number } }).sceneCanvasCounts());
-    }).toEqual({ created: i * 3, retained: 0 });
+    }).toEqual({ created: i * 4, retained: 0 });
   }
   expect(state.errors).toEqual([]);
   await cdp.detach();
