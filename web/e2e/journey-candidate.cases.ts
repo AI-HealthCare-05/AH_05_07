@@ -60,8 +60,12 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
   });
 }
 
-for (const [bp, challenge, lead] of [[false, false, 'blood-pressure'], [true, false, 'challenge'], [true, true, 'today-detail']] as const) {
-  test(`journey candidate preserves separate destinations: ${lead}`, async ({ page }) => {
+for (const [bp, challenge, lead, state] of [
+  [false, false, 'blood-pressure', 'no-bp-no-challenge'],
+  [true, false, 'today-detail', 'bp-no-challenge'],
+  [true, true, 'today-detail', 'bp-with-challenge'],
+] as const) {
+  test(`journey candidate preserves separate destinations: ${state} → ${lead}`, async ({ page }) => {
     await candidate(page, bp, challenge);
     await expect(page.locator('.home-lead')).toHaveAttribute('data-home-concept', lead);
     await expect(page.locator('[data-home-concept]')).toHaveCount(3);
