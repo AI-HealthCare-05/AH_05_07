@@ -62,7 +62,8 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await expect(page.locator('.journey-today')).toBeVisible();
   await expect(page.locator('[data-static-landscape="S02"]')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
-  await page.getByRole('button', { name: '생활정보 기반 고혈압 선별 참고', exact: true }).click();
+  await page.getByRole('button', { name: '설정과 도움말', exact: true }).click();
+  await page.getByRole('button', { name: '선별 신호 도구 열기', exact: true }).click();
   await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
   await page.getByLabel('나이', { exact: true }).fill('35'); await page.getByLabel('성별', { exact: true }).selectOption('1');
   await page.locator('#model-height').fill('170'); await page.locator('#model-weight').fill('68');

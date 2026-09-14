@@ -13,7 +13,6 @@ type Action = { key: string; title: string; support: string; action: string; scr
 type JourneyTodayProps = {
   staticLandscape: boolean;
   today: string;
-  cycle?: boolean;
   days: TrailDay[];
   lead: Action;
   secondary: Action[];
@@ -23,7 +22,7 @@ type JourneyTodayProps = {
 };
 
 /** The selection is disposable UI state. Facts and action destinations still belong to App. */
-export function JourneyToday({ staticLandscape, today, cycle = false, days, lead, secondary, freshness, children, onNavigate }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate }: JourneyTodayProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -45,7 +44,6 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
   const landmark = landmarkForCalendarDate(landscapeDate);
   const summary = summarizeTrailDays(days);
   const maxObservations = Math.max(1, ...days.map(day => day.observationCount));
-  const cycleDay = cycle ? days.findIndex(day => day.date === today) + 1 : 0;
 
   return <section className="scene journey-candidate journey-today home-scene" data-scene="S02" aria-labelledby="S02-title">
     {/* Remove the existing poster’s near-white paper in presentation, retaining its source and date mapping. */}
@@ -75,10 +73,9 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
           <figcaption className="journey-view-caption"><span className="today-companion-dot" aria-hidden="true" /><span>모아와 잠깐</span><strong>{landmark?.label}</strong><span>{previewing ? '선택한 날짜에 머물러요' : '오늘의 길은 여기에서'}</span></figcaption>
         </figure>
       </div>
-      <section className="living-week" data-window-kind={cycle ? "challenge-cycle" : "recent-history"} aria-labelledby="living-week-title">
+      <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
         <header className="living-week-heading">
-          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">My Living Journey</h2><p>{cycle ? `선택한 챌린지 기간 · ${days[0]?.date} ~ ${days.at(-1)?.date} · 혈압 관찰과 챌린지 참여를 따로 확인해요` : todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
-          {cycleDay > 0 && <div className="today-cycle-progress"><span>챌린지 여정 <strong>{cycleDay}<small> / 7일째</small></strong><small>날짜 기준</small></span><meter min={0} max={days.length} value={cycleDay} aria-label="챌린지 기간의 오늘 위치">{cycleDay} / {days.length}</meter></div>}
+          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">My Living Journey</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
         <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="home-calendar" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "날짜별 기록 접기" : "날짜별 기록 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>

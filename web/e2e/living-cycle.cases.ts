@@ -56,8 +56,8 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await page.setViewportSize({ width, height: 844 });
   const state = await api(context);
   await page.goto('/?e2e=signed-in&screen=S02');
-  await expect(page.locator('[data-living-cycle="ended"]')).toContainText('이번 7일 여정이 끝났어요');
-  await expect(page.getByRole('button', { name: '다음 7일 시작하기', exact: true })).toHaveCount(1);
+  await expect(page.locator('[data-living-cycle="ended"]')).toContainText('이번 챌린지가 끝났어요');
+  await expect(page.getByRole('button', { name: '다음 챌린지 고르기', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '종료된 7일 확인하기', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true }).click();
@@ -78,17 +78,17 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   expect(state.writes).toHaveLength(0);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: '다음 7일 시작하기', exact: true }).focus();
+  await page.getByRole('button', { name: '다음 챌린지 고르기', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#S03-title')).toBeFocused();
   await expect(page).not.toHaveURL(/dashboard_window/);
-  await expect(page.getByRole('heading', { name: '다음 7일의 행동을 골라요' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '다음 챌린지의 행동을 골라요' })).toBeVisible();
   expect(state.writes).toHaveLength(0);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: /수면 시간 지키기/ }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('[data-window-kind="challenge-cycle"]')).toContainText('2026-09-12 ~ 2026-09-18');
+  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
   await expect(page.locator('[data-trail-date]')).toHaveCount(7);
   await expect(page.locator('[data-trail-date="2026-09-05"]')).toHaveCount(0);
   await expect(page.locator('[data-trail-date="2026-09-12"]')).toContainText('1건');
@@ -129,7 +129,7 @@ test('Living Cycle guards synchronous double submission and browser Back during 
   const delay = deferred();
   const state = await api(context, { write: async () => { await delay.promise; } });
   await page.goto('/?e2e=signed-in&screen=S10');
-  await page.getByRole('button', { name: '다음 7일 시작하기', exact: true }).click();
+  await page.getByRole('button', { name: '다음 챌린지 고르기', exact: true }).click();
   await page.getByRole('button', { name: /수면 시간 지키기/ }).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
   await expect.poll(() => state.writes.length).toBe(1);
   await expect(page.getByRole('button', { name: /10분 걷기/ })).toBeDisabled();
@@ -152,7 +152,7 @@ test('Living Cycle uncertain creation requires a read and never automatically re
   await expect(page.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
   expect(state.writes).toHaveLength(1);
   await page.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true }).click();
-  await expect(page.locator('[data-window-kind="challenge-cycle"]')).toContainText('2026-09-18');
+  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
 });
 
 test('Living Cycle two tabs reconcile a losing creation response through a read', async ({ page, context }) => {
@@ -166,7 +166,7 @@ test('Living Cycle two tabs reconcile a losing creation response through a read'
   await other.getByRole('button', { name: /수면 시간 지키기/ }).click();
   await expect.poll(() => state.writes.length).toBe(2);
   delay.release();
-  await expect(page.locator('[data-window-kind="challenge-cycle"]')).toContainText('2026-09-18');
+  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
   await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toBeDisabled();
   await other.getByRole('button', { name: '선택 상태 다시 확인하기', exact: true }).click();
   await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
@@ -199,9 +199,9 @@ test('Living Cycle ends only after Seoul midnight, including without a first che
   await page.clock.pauseAt(new Date('2026-09-11T14:59:59Z'));
   const state = await api(context, { active: { ...ended, first_checkin_on: null } });
   await page.goto('/?e2e=signed-in&screen=S02');
-  await expect(page.getByRole('button', { name: '다음 7일 시작하기', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '다음 챌린지 고르기', exact: true })).toHaveCount(0);
   await page.clock.runFor(1000);
-  await expect(page.getByRole('button', { name: '다음 7일 시작하기', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '다음 챌린지 고르기', exact: true })).toBeEnabled();
   await page.goto('/?e2e=signed-in&screen=S06');
   await expect(page.getByRole('heading', { name: '종료된 챌린지를 확인해요' })).toBeVisible();
   await expect(page.getByRole('button', { name: '오늘 상태 확인·기록하기' })).toHaveCount(0);
@@ -215,7 +215,7 @@ test('Living Cycle review survives reload and leaving selection does not create 
   await page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true }).click();
   await page.reload();
   await expect(page.locator('[data-trail-date="2026-09-05"]')).toContainText('기록함');
-  await page.getByRole('button', { name: '다음 7일 시작하기', exact: true }).click();
+  await page.getByRole('button', { name: '다음 챌린지 고르기', exact: true }).click();
   await expect(page.locator('[data-scene="S03"]')).toBeVisible();
   await page.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true }).click();
   await expect(page.locator('[data-living-cycle="ended"]')).toBeVisible();

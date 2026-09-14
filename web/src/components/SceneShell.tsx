@@ -88,7 +88,7 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
         </SceneCompanionContext.Provider>
       </div>
 
-      <nav className="primary-nav" aria-label="주요 화면">
+      <nav className="primary-nav" aria-label="주요 화면" style={{ gridTemplateColumns: `repeat(${primaryNavigation.length}, minmax(0, 1fr))` }}>
         {primaryNavigation.map((item) => (
           <button
             className={item.screen === activeNavigationScreen ? "is-active" : ""}

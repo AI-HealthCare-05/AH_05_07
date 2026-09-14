@@ -23,15 +23,13 @@ export const primaryNavigation: ReadonlyArray<{ screen: ScreenId; label: string;
   { screen: "S02", label: "오늘의 기록", shortLabel: "오늘" },
   { screen: "S08", label: "기록 찾아보기", shortLabel: "기록" },
   { screen: "S10", label: "7일 돌아보기", shortLabel: "7일" },
-  { screen: "S11", label: "생활정보 기반 고혈압 선별 참고", shortLabel: "분석" },
   { screen: "S14", label: "설정과 도움말", shortLabel: "설정" },
 ];
 
 export function primaryNavigationScreen(screen: ScreenId): ScreenId {
   if (screen === "S08" || screen === "S09") return "S08";
   if (screen === "S10") return "S10";
-  if (screen === "S11") return "S11";
-  if (screen === "S14") return "S14";
+  if (screen === "S11" || screen === "S14") return "S14";
   return "S02";
 }
 
@@ -48,7 +46,7 @@ export const journeyCopy = {
   S02: {
     eyebrow: "오늘",
     title: "오늘의 기록",
-    body: "혈압과 챌린지 기록을 남기고, 최근 7일을 확인해요.",
+    body: "혈압 기록을 남기고 최근 7일을 확인해요. 챌린지는 별도로 선택할 수 있어요.",
   },
   S03: {
     eyebrow: "7일 챌린지",

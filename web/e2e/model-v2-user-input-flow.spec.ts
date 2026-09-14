@@ -663,14 +663,16 @@ test("leaving S11 discards the transient draft and the completed result on retur
       await expect(result(page)).toBeVisible();
     }
     await page.getByRole("button", { name: completed ? "오늘의 기록으로 돌아가기" : "오늘의 기록", exact: true }).click();
-    await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고", exact: true }).click();
+    await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
+    await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
     await expect(result(page)).toHaveCount(0);
     if (!completed) {
       await begin(page);
       await expect(page.locator("#model-age")).toHaveValue("");
       await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
-      await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고", exact: true }).click();
+      await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
+      await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
     }
   }
   expect(routed.requests).toHaveLength(1);
@@ -687,7 +689,8 @@ test("account switch discards the previous account draft and ignores its pending
     await expect(page.locator('[data-scene="S12"]')).toBeVisible();
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
-    await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고", exact: true }).click();
+    await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
+    await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
     await begin(page);
     await expect(page.locator("#model-age")).toHaveValue("");
