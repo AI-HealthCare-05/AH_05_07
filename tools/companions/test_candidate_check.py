@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from candidate_check import VARIANTS, run_candidate_check
-from glb_audit import AuditError, CLIPS
+from glb_audit import CLIPS, AuditError
 
 
 class CandidateCheckTests(unittest.TestCase):

@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from glb_audit import AuditError, CLIPS, audit_asset, load_json, require
+from glb_audit import CLIPS, AuditError, audit_asset, load_json, require
 
 VARIANTS = ("standard", "light")
 INPUT_FILES = ("standard.glb", "light.glb", "asset-manifest.json", "generator.py")
@@ -77,7 +77,10 @@ def run_candidate_check(asset_dir, output, repository=None, auditor=audit_asset)
 
     require(asset_dir.is_dir(), "candidate_asset_directory_required")
     require(output.parent.is_dir() and not output.exists(), "new_candidate_output_directory_required")
-    require(not output.is_relative_to(repository) and not repository.is_relative_to(output), "candidate_output_outside_repository")
+    require(
+        not output.is_relative_to(repository) and not repository.is_relative_to(output),
+        "candidate_output_outside_repository",
+    )
     require(
         not output.is_relative_to(asset_dir) and not asset_dir.is_relative_to(output),
         "candidate_output_must_not_overlap_inputs",
@@ -121,9 +124,7 @@ def run_candidate_check(asset_dir, output, repository=None, auditor=audit_asset)
             "clip_duration_seconds": manifest.get("clip_duration_seconds"),
             "inputs": before,
             "variants": {
-                variant: variant_summary(
-                    reports[variant], f"{variant}-binary-audit.json", report_hashes[variant]
-                )
+                variant: variant_summary(reports[variant], f"{variant}-binary-audit.json", report_hashes[variant])
                 for variant in VARIANTS
             },
             "limitations": [
