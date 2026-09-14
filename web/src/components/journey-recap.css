@@ -53,6 +53,8 @@
 .journey-recap .recap-summary-explainer summary { width: fit-content; min-height: 2.75rem; align-content: center; cursor: pointer; text-underline-offset: .22em; }
 .journey-recap .recap-summary-explainer summary:hover { color: #354c3b; text-decoration: underline; }
 .journey-recap .recap-summary-explainer p + p { margin-top: .25rem; }
+.journey-recap .recap-records-jump { display: inline-flex; align-items: center; justify-content: space-between; gap: 1rem; width: fit-content; min-width: 12rem; min-height: 2.75rem; margin-top: .8rem; padding: .55rem .75rem; border: 1px solid #9aa78c; background: #f8faf3; color: #354c3b; box-shadow: none; font-size: .78rem; font-weight: 650; }
+.journey-recap .recap-records-jump:hover { background: #e8eddf; transform: none; }
 .journey-recap .recap-landscape { min-width: 0; align-self: stretch; display: grid; align-content: center; }
 .journey-recap .recap-view { position: relative; margin: 0; }
 .journey-recap .recap-view::before { content: ''; position: absolute; inset: 18% 6% 13%; border-radius: 50%; background: #cfd9bd; filter: blur(1.5rem); opacity: .5; pointer-events: none; }
@@ -71,8 +73,8 @@
 .journey-recap .recap-overview-note { padding-top: .8rem; color: #68725d; font-size: .75rem; line-height: 1.7; }
 .journey-recap .recap-day-record-link { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-width: 0; max-width: 100%; min-height: 2.75rem; padding: .5rem 0; border: 0; background: transparent; color: #3f594a; box-shadow: none; font-size: .8rem; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; }
 .journey-recap .recap-day-record-link:hover { color: #253b2c; background: transparent; transform: none; }
-.journey-recap .recap-journal { min-width: 0; padding-top: .9rem; }
-.journey-recap .recap-journal-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: .65rem 2rem; padding: 0 0 1.1rem; border-bottom: 2px solid #b5bda6; }
+.journey-recap .recap-journal { min-width: 0; margin-top: .25rem; padding: 1rem clamp(.8rem, 2vw, 1.25rem) 0; border: 1px solid #e0e4d7; border-radius: .75rem; background: #fffef9; box-shadow: 0 10px 28px -24px #3d4e3f66; }
+.journey-recap .recap-journal-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: .65rem 2rem; padding: 0 0 1.1rem; border-bottom: 2px solid #879878; }
 .journey-recap .recap-journal-intro > div { display: grid; gap: .4rem; }
 .journey-recap .recap-journal-intro h2 { font-size: 1.45rem; line-height: 1.4; letter-spacing: -.045em; }
 .journey-recap .recap-journal-intro > p { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; }
@@ -82,6 +84,8 @@
 .journey-recap .recap-record-groups:focus-visible { outline: 2px solid #748767; outline-offset: .35rem; text-decoration: none; }
 .journey-recap .record-lane { padding-block: 1.2rem 1.5rem; gap: .7rem; }
 .journey-recap .record-lane:first-child { border-top: 0; }
+.journey-recap .record-lane[data-record-lane="blood-pressure"] { padding: 1.15rem 1rem 1.35rem; border: 1px solid #dbe4d7; border-radius: .65rem; background: #fbfdf8; }
+.journey-recap .record-lane[data-record-lane="challenge"] { margin-top: .7rem; }
 .journey-recap .recap-lane-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .35rem 1rem; }
 .journey-recap .recap-lane-heading h3 { font-size: 1.1rem; letter-spacing: -.04em; }
 .journey-recap .recap-lane-heading > span { font-size: .78rem; color: var(--sk7-ink-muted); }
@@ -94,6 +98,7 @@
 .journey-recap .recap-record-date strong { font-size: .85rem; font-weight: 600; }
 .journey-recap .recap-record-date small { color: var(--sk7-ink-muted); font-size: .75rem; }
 .journey-recap .recap-record-value { font-size: 1rem; color: var(--sk7-ink); font-variant-numeric: tabular-nums; }
+.journey-recap [data-record-lane="blood-pressure"] .recap-record-value { font-size: 1.12rem; font-weight: 650; letter-spacing: -.02em; }
 .journey-recap .recap-record-status { font-size: .8rem; color: #3f594a; }
 .journey-recap .recap-record-status[data-checkin-status="skipped"] { color: var(--sk7-ink-muted); }
 .journey-recap .record-action { min-height: 2.75rem; white-space: normal; font-size: .8rem; background: transparent; }
