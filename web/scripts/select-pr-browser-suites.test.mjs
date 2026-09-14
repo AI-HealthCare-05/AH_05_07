@@ -63,6 +63,21 @@ test('shared journey CSS is treated as a shared scene runtime boundary', () => {
   ]);
 });
 
+test('shared scene disposal changes run both engine suites', () => {
+  assert.deepEqual(names(['web/src/components/scene/disposeScene.ts']), [
+    ...fullGate,
+    'saved-scene migration parity',
+    'S02 and S10 review scenes',
+  ]);
+});
+
+test('Seoul date runtime changes add the review-scene suite', () => {
+  assert.deepEqual(names(['web/src/lib/useSeoulDate.ts']), [
+    ...fullGate,
+    'S02 and S10 review scenes',
+  ]);
+});
+
 test('saved-scene test-only changes run only saved-scene parity', () => {
   assert.deepEqual(names(['web/e2e/saved-scene-review.spec.ts']), [
     'saved-scene migration parity',

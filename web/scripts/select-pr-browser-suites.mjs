@@ -27,8 +27,9 @@ const reviewSceneRuntimeFiles = new Set([
   'web/src/components/VisualStage.tsx',
   'web/src/components/scene/ThreeSceneRenderer.tsx',
   'web/src/components/scene/diorama.ts',
-  'web/src/components/scene/disposeScene.ts',
   'web/src/components/scene/environment.ts',
+  'web/src/lib/seoulDate.ts',
+  'web/src/lib/useSeoulDate.ts',
   'web/src/ui/sceneManifest.generated.ts',
   'web/src/ui/scenePolicy.ts',
   'web/src/ui/sceneRecipes.ts',
@@ -39,6 +40,7 @@ const sharedSceneRuntimeFiles = new Set([
   'web/src/main.tsx',
   'web/src/components/SceneShell.tsx',
   'web/src/components/journey-candidate.css',
+  'web/src/components/scene/disposeScene.ts',
 ]);
 
 const savedSceneTestFiles = new Set([
