@@ -74,6 +74,11 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(hierarchy.heroBottom).toBeLessThanOrEqual(hierarchy.journeyTop);
   expect(hierarchy.journeyBottom).toBeLessThanOrEqual(hierarchy.recordsTop);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const leadCopy = home.locator('.home-lead-copy');
+  await expect(leadCopy).toBeVisible();
+  await expect(leadCopy.getByRole('heading', { level: 2 })).toContainText('오늘 혈압 기록');
+  await expect(leadCopy.locator('#home-lead-support')).toBeVisible();
+  await expect(home.getByRole('heading', { level: 2, name: '최근 7일 기록', exact: true })).toBeVisible();
   const primary = home.locator('.home-lead button');
   await expect(primary).toBeInViewport({ ratio: 1 });
   expect(await primary.evaluate(element => {
