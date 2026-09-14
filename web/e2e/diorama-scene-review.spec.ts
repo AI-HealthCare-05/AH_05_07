@@ -179,7 +179,23 @@ for (const screen of ["S02", "S10"]) for (const failure of ["chunk", "GLB"]) tes
   page.on("request", request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations++; });
   await page.route(failure === "chunk" ? "**/assets/ThreeSceneRenderer-*.js" : "**/*.glb", route => { failedRequests++; return route.abort(); });
   await page.goto(`/?fixture=VP-10&screen=${screen}`);
-  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  const visualStage = page.locator(".living-visual-stage");
+  if (failure === "chunk") {
+    // A failed Vite preload intentionally reloads once. The first activation may therefore
+    // detach the stage while Playwright is scrolling it; that interruption is the recovery
+    // contract, not a scene failure. Wait for that one reload, then activate the stable visit.
+    try {
+      await visualStage.scrollIntoViewIfNeeded();
+    } catch (error) {
+      const message = String(error);
+      if (!/Element is not attached|Execution context was destroyed|navigation/i.test(message)) throw error;
+    }
+    await expect.poll(() => navigations).toBe(2);
+    await page.waitForLoadState("domcontentloaded");
+    await visualStage.scrollIntoViewIfNeeded();
+  } else {
+    await visualStage.scrollIntoViewIfNeeded();
+  }
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
   await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(1);
