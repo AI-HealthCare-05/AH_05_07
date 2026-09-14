@@ -55,8 +55,8 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
         <div className="today-desk">
           <div className="scene-copy">
             <p className="eyebrow"><span className="today-sun" aria-hidden="true">☀</span><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
-            <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘도,<br />좋은 하루예요.<span className="today-wave" aria-hidden="true">☀</span></h1>
-            <p className="scene-body">작은 기록이 모여, 나만의 일상이 되도록.<br />오늘도 모아와 함께해요.</p>
+            <h1 ref={headingRef} tabIndex={-1} id="S02-title">한 번의 숫자보다,<br />이어지는 기록을 봐요.<span className="today-wave" aria-hidden="true">☀</span></h1>
+            <p className="scene-body">한 번의 측정만으로 일상의 흐름을 보기 어려워요.<br />7일의 기록을 모아, 무엇이 반복되고 달라지는지 함께 살펴봐요.</p>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div><h2 id="home-lead-title">{lead.title}</h2><p id="home-lead-support">{lead.support}</p></div>
@@ -77,7 +77,7 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
       </div>
       <section className="living-week" data-window-kind={cycle ? "challenge-cycle" : "recent-history"} aria-labelledby="living-week-title">
         <header className="living-week-heading">
-          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">My Living Journey</h2><p>{cycle ? `이번 7일의 길 · ${days[0]?.date} ~ ${days.at(-1)?.date}` : todayDay ? '오늘을 포함한 최근 7일 · 하루씩 이어지는 기록' : '선택한 7일의 길 · 날짜별 기록을 확인해요'}</p></div></div>
+          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">My Living Journey</h2><p>{cycle ? `이번 7일 · ${days[0]?.date} ~ ${days.at(-1)?.date} · 하루씩 모아 흐름을 확인해요` : todayDay ? '오늘을 포함한 최근 7일 · 한 번의 값보다 이어진 기록을 봐요' : '선택한 7일 · 날짜별 기록을 이어서 확인해요'}</p></div></div>
           {cycleDay > 0 && <div className="today-cycle-progress"><span>챌린지 여정 <strong>{cycleDay}<small> / 7일째</small></strong><small>날짜 기준</small></span><meter min={0} max={days.length} value={cycleDay} aria-label="챌린지 기간의 오늘 위치">{cycleDay} / {days.length}</meter></div>}
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
@@ -91,7 +91,7 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
           <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />
         </details>}
         {todayDay && <button type="button" className="text-button today-return" aria-pressed={selectedDay?.date === today} onClick={() => selectDay(today)}>오늘로 돌아오기</button>}
-        <details className="living-week-guide"><summary>이 길에 담기는 기록</summary><p>서울 날짜 · {cycle ? '선택한 챌린지의 7일이에요. 챌린지 참여는 이번 여정의 기록만 표시해요.' : todayDay ? '오늘을 포함한 최근 7일이에요.' : '선택한 7일의 기록이에요.'} 혈압은 관찰 건수, 챌린지는 참여 상태로 각각 남아요. 혼합은 같은 날짜에 기록함과 건너뜀이 함께 있는 경우예요. 이전 방식의 기록은 7일 돌아보기의 목록에서 확인할 수 있어요.</p></details>
+        <details className="living-week-guide"><summary>왜 7일을 기록하나요?</summary><p>한 번의 값만으로 결론내리지 않고, 날짜별 기록을 이어서 흐름을 살펴보기 위해서예요. {cycle ? '선택한 챌린지의 7일을 따라가요.' : todayDay ? '오늘을 포함한 최근 7일을 살펴봐요.' : '선택한 7일의 기록을 살펴봐요.'} 혈압 관찰과 챌린지 참여는 서로 다른 사실로 남겨요. 필요할 때 지난 기록을 다시 확인하거나 의료진과 함께 볼 수 있도록 정리합니다.</p></details>
         </div>
         </div>
       </section>
@@ -110,14 +110,14 @@ export function JourneyToday({ staticLandscape, today, cycle = false, days, lead
             </div>
             <p>{factsKnown ? `관찰 기록을 남긴 날 ${summary.observationDateCount}일` : '기록을 불러오면 표시돼요.'}</p>
           </section>
-          <aside className="today-summary-card today-word-card"><h3>모아의 한마디 <span aria-hidden="true">❧</span></h3><span className="today-quote-mark" aria-hidden="true">“</span><p>서두르지 않아도 괜찮아요.<br />오늘의 기록부터, 하나씩.</p></aside>
+          <aside className="today-summary-card today-word-card"><h3>모아의 한마디 <span aria-hidden="true">❧</span></h3><span className="today-quote-mark" aria-hidden="true">“</span><p>한 번의 숫자에<br />혼자 답을 내리지 않아도 돼요.</p></aside>
         </div>
         <p className="today-records-note">혈압 관찰과 챌린지 참여는 서로 다른 사실로 남아요.</p>
         <nav className="home-links" aria-label="오늘 기록 바로가기">
           {secondary.map(item => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => onNavigate(item.screen)}>
             <span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">↗</span>
           </button>)}
-          <div className="today-small-note"><span aria-hidden="true">❧</span><p>작은 기록으로 이어가는<br /><strong>나만의 7일.</strong></p></div>
+          <div className="today-small-note"><span aria-hidden="true">❧</span><p>하루의 숫자보다<br /><strong>이어지는 7일.</strong></p></div>
         </nav>
         {children && <div className="today-cycle-actions">{children}</div>}
       </section>
