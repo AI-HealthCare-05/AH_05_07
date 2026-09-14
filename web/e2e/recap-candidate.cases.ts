@@ -132,7 +132,7 @@ test('recap rapid touch leaves only the selected date treatment', async ({ brows
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
   const exportHint = page.locator('.recap-tools > p');
-  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관할 수 있어요.');
+  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.');
   await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
@@ -165,7 +165,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(2);
-  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관할 수 있어요.');
+  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.');
   await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
 });

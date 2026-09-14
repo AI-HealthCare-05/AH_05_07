@@ -54,9 +54,9 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <div className="recap-week-overview">
           <header className="living-week-heading">
             <div>
-              <p className="eyebrow">모아와 걷는 7일</p>
-              <h2 id="living-week-title">7일의 길</h2>
-              <p>{readOnly ? '지나온 풍경에 남겨둔 사실을 돌아봐요.' : '오늘까지, 풍경마다 남겨둔 사실을 돌아봐요.'}</p>
+              <p className="eyebrow">최근 기록 다시 보기</p>
+              <h2 id="living-week-title">이 기간의 혈압 기록을 날짜별로 확인해요</h2>
+              <p>{readOnly ? '지난 기간에 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.' : '오늘까지 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.'}</p>
             </div>
           </header>
           <div className="recap-week-totals">
@@ -110,7 +110,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           }}>이 날짜의 기록 목록 <span aria-hidden="true">↓</span></button>
         </TrailDayDetail> : <p className="recap-overview-note">{factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0
           ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
-          : '서울 날짜를 따라 혈압 관찰과 챌린지 참여를 각각 살펴봐요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
+          : '혈압 관찰과 챌린지 참여를 날짜 순서로 따로 확인해요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
       </div>
     </section>
 
@@ -127,7 +127,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <footer className="recap-tools">
         <p>{readOnly
           ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
-          : '현재 7일의 기록을 파일로 보관할 수 있어요.'}</p>
+          : '현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.'}</p>
         {focusedDate && !readOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
         <div className="scene-actions utility-actions">{actions}</div>
       </footer>
