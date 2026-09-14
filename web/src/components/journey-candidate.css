@@ -90,6 +90,15 @@
   .journey-saved.scene { min-height: 32rem; gap: 1rem; padding-top: 1.5rem; }
   .journey-saved .save-ripple { height: 12rem; }
   .journey-saved .save-next-step { width: 100%; }
+  /* S05 migration runtime: keep the decorative boundary above the fixed mobile nav.
+     The boundary is vertically centered by inline style; clamp that center against
+     the viewport-safe bottom without shrinking the character. */
+  .scene-viewport:has(.journey-saved) > [data-saved-scene-status] {
+    top: min(
+      50%,
+      calc(100dvh - var(--sk7-mobile-nav-height) - env(safe-area-inset-bottom) - 7rem)
+    ) !important;
+  }
   .journey-saved .split-actions { width: 100%; grid-template-columns: minmax(0, 1fr); }
   .journey-saved .split-actions button,
   .journey-saved .split-actions > button.secondary { width: 100%; min-width: 0; }
