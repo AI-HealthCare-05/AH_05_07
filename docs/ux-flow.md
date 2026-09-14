@@ -5,58 +5,69 @@
 ```mermaid
 flowchart TD
     A["S01 Email link"] --> B["S02 Today"]
-    B --> C["S03–S07 Record"]
-    B --> D["S08–S10 Review"]
-    B --> E["S11 Signal status"]
-    D --> F["S14 Settings"]
+    B --> C["S04–S05 BP record"]
+    B --> D["S07 Today detail"]
+    B --> E["S08–S09 Records"]
+    B --> F["S10 Seven days"]
+    B --> G["S03/S06 Optional challenge"]
+    B --> H["S14 Settings"]
+    H --> I["S11 Optional signal tool"]
 ```
 
-Issue #190 introduces the Calm Clay Journey application shell and semantic
+Issue #190 introduced the Calm Clay Journey application shell and semantic
 screens S01–S14. The current web supports authentication, a concise
 pre-measurement checklist, BP creation, edit, explicit-confirmation delete,
-bounded seven-day JSON export, one active challenge selection, daily check-ins,
-status-only check-in edit, explicit-confirmation check-in delete, and separated
-review screens. The first check-in locks the chosen action. The risk-signal
-screen remains an explicit not-ready state; structured feedback and a verified
-model result are not product-connected.
+bounded seven-day JSON export, one optional active challenge selection, daily
+check-ins, status-only check-in edit, explicit-confirmation check-in delete, and
+separated review screens. The first challenge check-in locks the chosen action.
 
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
-five primary destinations are Today, Records, Seven days, Signal, and Settings;
-focused work screens remain reachable from those destinations. Browser
-back/forward restores the selected screen, record key, and current/prior range
+four primary destinations are Today, Records, Seven days, and Settings. S11 is a
+secondary tool reached from Settings; direct S11 URLs, authentication boundaries,
+and browser back/forward remain valid. Focused work screens remain reachable
 without introducing a router dependency.
 
 | Screen | Purpose |
 |---|---|
 | S01 | Signed-out email-link gate |
-| S02 | Today home and separate fact summary |
-| S03–S06 | Challenge choice, BP entry, confirmed-save, and locked state |
-| S07 | Today detail with three separate fact lanes |
+| S02 | Today home; BP state determines the lead action |
+| S03 | Optional challenge choice |
+| S04–S05 | BP entry and confirmed-save |
+| S06 | Optional challenge state |
+| S07 | Today detail with separate BP/challenge/legacy fact lanes |
 | S08–S09 | Record browse and one selected record |
-| S10 | Current/prior seven-day recap and export |
-| S11 | Honest risk-signal not-ready state |
+| S10 | Current/prior seven-day recap, report, and export |
+| S11 | Optional input-based risk-signal reference tool |
 | S12–S13 | Confirmed empty and initial-load failure |
-| S14 | Account, locale, export, and recovery help |
+| S14 | Account, retention/help, and entry to optional tools |
 
 ## Accepted P0 flow
 
 ```mermaid
 flowchart TD
-    A["Email magic link"] --> B["Baseline input"]
-    B --> C["Versioned risk signal"]
-    C --> D["Choose one 7-day challenge"]
-    D --> E["BP observation and daily check-in"]
-    E --> F["Separated 7-day view"]
-    F --> G["Edit, delete, or export own records"]
+    A["Email magic link"] --> B["Today"]
+    B --> C["Record or review today's BP"]
+    B --> D["Review recent seven days"]
+    B --> E["Find a past record"]
+    B --> F["Optional 7-day challenge"]
+    B --> G["Settings"]
+    G --> H["Optional input-based risk signal"]
 ```
 
-The core path preserves three separate facts:
+The core path is BP-first, but the product still preserves three separate facts:
 
-1. The model produces an **입력 기반 위험군 선별 신호** from baseline input.
-2. The user records measured blood-pressure observations.
-3. The user records adherence to one selected challenge.
+1. The user records measured blood-pressure observations.
+2. The user may separately record adherence to one selected challenge.
+3. The optional model tool processes an **입력 기반 위험군 선별 신호** without
+   becoming a prerequisite for BP recording, challenge use, record browsing, or export.
 
-The dashboard never merges them into a diagnosis, treatment effect, prevention claim, or single improvement score.
+The Today BP window is always today plus the previous six calendar dates. An
+active challenge has its own start/end dates and never changes the Home BP
+window or the Home lead action. Morning/evening are displayed as recorded
+periods; the UI does not turn two measurements per day into a completion rule.
+
+The dashboard never merges model output, BP, and challenge participation into a
+diagnosis, treatment effect, prevention claim, or single improvement score.
 
 ## Signature presentation contract
 

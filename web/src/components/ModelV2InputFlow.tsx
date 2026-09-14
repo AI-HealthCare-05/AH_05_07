@@ -242,6 +242,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
 
               {step === "intro" && <section className="model-v2-intro" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
+                <p><strong>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않으며, 이번 입력과 결과도 저장하지 않습니다.</strong></p>
                 <p>나이, 체격, 생활 습관, 활동, 수면 정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
                 <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
                 <p>입력과 결과는 저장하지 않아요. 마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>

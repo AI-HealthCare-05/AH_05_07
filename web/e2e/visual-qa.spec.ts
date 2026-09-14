@@ -41,7 +41,8 @@ test("reduced motion keeps the main scenes understandable", async ({ page }) => 
   await page.goto("/?fixture=VP-10");
   await page.getByRole("button", { name: "기록 찾아보기" }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
-  await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" }).click();
+  await page.getByRole("button", { name: "설정과 도움말" }).click();
+  await page.getByRole("button", { name: "선별 신호 도구 열기" }).click();
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
 });
 
@@ -61,7 +62,7 @@ test("mobile navigation stays reachable and never covers scene content", async (
       expect(navGeometry.bottom).toBeGreaterThanOrEqual(viewport.height - 1);
       expect(navGeometry.height).toBeGreaterThanOrEqual(72);
       expect(navGeometry.declaredHeight).toBe("4.75rem");
-      await expect(nav.locator(".nav-label-short")).toHaveCount(5);
+      await expect(nav.locator(".nav-label-short")).toHaveCount(4);
       await expect(nav.locator(".is-active")).toBeVisible();
 
       await page.evaluate(() => document.scrollingElement?.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
@@ -91,7 +92,7 @@ test("200% layout proxy keeps compact navigation labels readable", async ({ page
   await page.goto("/?fixture=VP-10&screen=S11");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const labels = page.locator(".primary-nav .nav-label-short");
-  await expect(labels).toHaveCount(5);
+  await expect(labels).toHaveCount(4);
   for (let index = 0; index < await labels.count(); index += 1) {
     const box = await labels.nth(index).boundingBox();
     expect(box?.width ?? 0).toBeGreaterThan(0);

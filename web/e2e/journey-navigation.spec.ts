@@ -29,9 +29,9 @@ const matrixStates = [
       ...emptyWindow,
       blood_pressure_observations: [{ id: "matrix-bp", observed_on: "2026-09-08", period: "morning", systolic: 120, diastolic: 80 }],
     },
-    lead: "challenge",
-    secondary: ["blood-pressure", "today-detail"],
-    destinations: { "blood-pressure": "S04", "today-detail": "S07" },
+    lead: "today-detail",
+    secondary: ["blood-pressure", "challenge"],
+    destinations: { "blood-pressure": "S04", challenge: "S03" },
   },
   {
     name: "BP 있음 / active challenge 있음",
@@ -42,7 +42,17 @@ const matrixStates = [
     },
     lead: "today-detail",
     secondary: ["blood-pressure", "challenge"],
-    destinations: { "blood-pressure": "S04", challenge: "S03" },
+    destinations: { "blood-pressure": "S04", challenge: "S06" },
+  },
+  {
+    name: "BP 없음 / 새 active challenge 있음",
+    window: {
+      ...emptyWindow,
+      active_challenge: { id: "matrix-challenge-new", action_id: "sleep-routine", starts_on: "2026-09-08", ends_on: "2026-09-14", first_checkin_on: null, status: "active" as const },
+    },
+    lead: "blood-pressure",
+    secondary: ["challenge", "today-detail"],
+    destinations: { challenge: "S06", "today-detail": "S07" },
   },
 ] as const;
 
@@ -61,10 +71,13 @@ test("primary journey navigation updates the URL and supports browser history", 
   await page.goForward();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
 
-  await page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" }).click();
-  await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
+  await expect(page.locator(".primary-nav button")).toHaveCount(4);
+  await expect(page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })).toHaveCount(0);
   await page.getByRole("button", { name: "설정과 도움말" }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
+  await page.getByRole("button", { name: "선별 신호 도구 열기" }).click();
+  await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
+  await expect(page.getByRole("button", { name: "설정과 도움말" })).toHaveAttribute("aria-current", "page");
 });
 
 test("a selected fact opens its own URL-addressable detail screen", async ({ page }) => {
