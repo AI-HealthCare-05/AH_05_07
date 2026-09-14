@@ -49,8 +49,33 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     contactShadow.rotation.x = -Math.PI / 2;
     scene.add(contactShadow);
     let ready = false;
-    let warmupFrame: number | undefined;
-    const fail = () => { if (!disposed) callbacks.current.onFailure(); };
+    let failed = false;
+    let compiled = false;
+    let compiling = false;
+    let gpuContext: WebGL2RenderingContext | undefined;
+    let gpuSync: WebGLSync | null = null;
+    let gpuPollFrame: number | undefined;
+    let revealFrame: number | undefined;
+    const deleteGpuSync = () => {
+      if (gpuContext && gpuSync) {
+        try { gpuContext.deleteSync(gpuSync); } catch { /* Context loss already invalidated it. */ }
+      }
+      gpuSync = null;
+      gpuContext = undefined;
+    };
+    const cancelWarmup = () => {
+      if (gpuPollFrame !== undefined) window.cancelAnimationFrame(gpuPollFrame);
+      if (revealFrame !== undefined) window.cancelAnimationFrame(revealFrame);
+      gpuPollFrame = undefined;
+      revealFrame = undefined;
+      deleteGpuSync();
+    };
+    const fail = () => {
+      if (disposed || failed) return;
+      failed = true;
+      cancelWarmup();
+      callbacks.current.onFailure();
+    };
     const draw = () => {
       if (disposed || !renderer || !visibleRef.current || !loaded) return;
       try {
@@ -71,19 +96,60 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
         return true;
       } catch { fail(); return false; }
     };
-    const render = () => {
-      if (!draw() || ready || warmupFrame !== undefined) return;
-      // Keep the poster visible for the upload/shader frame, then expose only a
-      // second browser-frame render. This remains a one-shot warm-up, not a loop.
-      warmupFrame = window.requestAnimationFrame(() => {
-        warmupFrame = undefined;
-        if (!draw()) return;
-        ready = true;
-        callbacks.current.onReady();
-      });
+    const waitForGpu = () => {
+      if (!renderer || disposed || failed || ready) return;
+      const context = renderer.getContext();
+      if (!(context instanceof WebGL2RenderingContext)) { fail(); return; }
+      gpuContext = context;
+      try {
+        gpuSync = context.fenceSync(context.SYNC_GPU_COMMANDS_COMPLETE, 0);
+        if (!gpuSync) { fail(); return; }
+        context.flush();
+      } catch { fail(); return; }
+      const poll = () => {
+        gpuPollFrame = undefined;
+        if (disposed || failed || ready || !gpuSync) return;
+        let status: GLenum;
+        try { status = context.clientWaitSync(gpuSync, 0, 0); }
+        catch { fail(); return; }
+        if (status === context.TIMEOUT_EXPIRED) {
+          gpuPollFrame = window.requestAnimationFrame(poll);
+          return;
+        }
+        if (status !== context.ALREADY_SIGNALED && status !== context.CONDITION_SATISFIED) {
+          fail();
+          return;
+        }
+        deleteGpuSync();
+        // React exposes the canvas and removes the poster on a browser frame
+        // after the hidden render's submitted GPU work has completed.
+        revealFrame = window.requestAnimationFrame(() => {
+          revealFrame = undefined;
+          if (disposed || failed || ready) return;
+          ready = true;
+          callbacks.current.onReady();
+        });
+      };
+      gpuPollFrame = window.requestAnimationFrame(poll);
+    };
+    const render = async () => {
+      if (disposed || failed || !renderer || !visibleRef.current || !loaded) return;
+      if (ready) { draw(); return; }
+      if (compiling || gpuSync || gpuPollFrame !== undefined || revealFrame !== undefined) return;
+      if (!compiled) {
+        compiling = true;
+        try {
+          await renderer.compileAsync(scene, camera);
+          compiled = true;
+        } catch { fail(); return; }
+        finally { compiling = false; }
+      }
+      if (!draw()) return;
+      waitForGpu();
     };
     const resize = () => {
       if (!renderer || disposed) return;
+      if (!ready && (gpuSync || gpuPollFrame !== undefined || revealFrame !== undefined)) cancelWarmup();
       const width = Math.max(1, element.clientWidth);
       const height = Math.max(1, element.clientHeight);
       const nextProfile = sceneProfile(window.innerWidth);
@@ -113,7 +179,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       contactShadow.position.y -= 0.005;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height, false);
-      render();
+      void render();
     };
     try {
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
@@ -156,7 +222,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     return () => {
       disposed = true;
       invalidate.current = null;
-      if (warmupFrame !== undefined) window.cancelAnimationFrame(warmupFrame);
+      cancelWarmup();
       observer?.disconnect();
       if (renderer) {
         renderer.domElement.removeEventListener("webglcontextlost", fail);
