@@ -69,7 +69,7 @@ async function expectFresh(page: Page, date = today) {
 }
 async function leaveAndReturn(page: Page) {
   await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
-  await page.locator('[data-scene="S02"], [data-scene="S12"]').getByRole("button", { name: /혈압 기록하기|혈압 관찰/ }).first().click();
+  await page.locator('[data-scene="S02"], [data-scene="S12"]').getByRole("button", { name: /혈압 기록하기|혈압 추가 기록|혈압 관찰/ }).first().click();
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
 }
 async function openEdit(page: Page) {

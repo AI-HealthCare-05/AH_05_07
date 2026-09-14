@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("empty fixture opens the dedicated empty state without inventing facts", async ({ page }) => {
   await page.goto("/?fixture=VP-04");
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "아직 기록이 없어도 괜찮아요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "측정한 혈압부터 기록해요" })).toBeVisible();
   await expect(page.getByRole("button", { name: "혈압 기록하기" })).toBeVisible();
   await expect(page.getByRole("button", { name: "7일 챌린지 시작하기" })).toBeVisible();
 });
