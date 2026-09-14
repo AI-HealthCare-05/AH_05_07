@@ -107,6 +107,9 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   const home = page.locator('.journey-today');
   const facts = home.locator('.journey-facts');
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('혈압 추가 기록');
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('오늘 측정한 값을 바로 기록해요.');
   const recentWindow = home.locator('[data-window-kind="recent-history"]');
   await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
   await expect(home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' })).toHaveCount(0);
@@ -404,9 +407,11 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
     await route.fulfill({ status: fail ? 400 : 200, headers, contentType: 'application/json', body: fail ? JSON.stringify({ msg: 'synthetic-private-error' }) : '{}' });
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '오늘을 남기고, 7일을 돌아봐요.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
+  await expect(page.locator('.journey-login-intro')).toContainText('7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.');
   const email = page.getByRole('textbox', { name: '이메일', exact: true });
-  await expect(email).toHaveAccessibleDescription('이메일로 받은 링크를 열면 로그인할 수 있어요.');
+  await expect(email).toHaveAccessibleDescription(/이메일로 받은 링크를 열면 로그인할 수 있어요\. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요\./);
+  await expect(page.getByText('같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.')).toBeVisible();
   expect(await email.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
   await email.fill(`synthetic-${Date.now()}@example.invalid`);
   await page.getByRole('button', { name: '로그인 링크 받기', exact: true }).press('Enter');
@@ -446,7 +451,7 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   await page.goto(`/?e2e=signed-in${prior ? '&dashboard_window=prior' : ''}`);
   await expect(page.getByRole('heading', { name: '선택한 7일을 불러오는 중이에요' })).toBeVisible();
   await expect(page.locator('[data-scene="S12"]')).toHaveCount(0); held.release();
-  await expect(page.getByRole('heading', { name: prior ? '이 기간에는 기록이 없어요.' : '이 기간에는 아직 기록이 없어요.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: prior ? '이 기간에는 기록이 없어요.' : '측정한 혈압부터 기록해요', exact: true })).toBeFocused();
   await expect(page.locator('.journey-empty-period time').first()).toHaveAttribute('datetime', prior ? '2026-08-29' : '2026-09-05');
   await expect(page.locator('.journey-empty-period time').last()).toHaveAttribute('datetime', prior ? '2026-09-04' : '2026-09-11');
   if (prior) {
@@ -457,12 +462,13 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
     await expect(page.getByRole('button', { name: '현재 7일 보기', exact: true })).toHaveCount(1);
     expect(windows).toEqual(['2026-08-29']);
     await page.getByRole('button', { name: '현재 7일 보기', exact: true }).press('Enter');
-    await expect(page.getByRole('heading', { name: '이 기간에는 아직 기록이 없어요.', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '측정한 혈압부터 기록해요', exact: true })).toBeVisible();
     expect(windows).toEqual(['2026-08-29', '2026-09-05']); await expect(page).not.toHaveURL(/dashboard_window/);
   }
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.locator('#S12-title').focus(); await page.keyboard.press('Tab');
   const bp = page.getByRole('button', { name: '혈압 기록하기', exact: true });
+  await expect(page.locator('#empty-bp-help')).toContainText('측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.');
   await expect(bp).toBeFocused(); await expect(bp).toBeInViewport({ ratio: 1 });
   expect(await bp.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); })).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);

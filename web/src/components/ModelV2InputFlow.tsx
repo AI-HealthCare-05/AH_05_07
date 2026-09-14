@@ -193,7 +193,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
   }
 
   return (
-    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="생활정보를 차근차근 입력해요" tone="lavender" className="signal-scene model-v2-flow">
+    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="이번 이용에만 생활정보를 살펴봐요" tone="lavender" className="signal-scene model-v2-flow">
       <div className="model-v2-layout">
         <aside className="model-v2-progress" aria-label="입력 진행 단계">
           <p className="model-v2-progress-caption">{processed ? "입력 과정 완료" : step === "intro" ? "시작 전 · 5단계" : `${progressIndex + 1} / 5 단계`}</p>
@@ -207,7 +207,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
               </li>;
             })}
           </ol>
-          <p className="model-v2-privacy-note">입력은 이 화면에만 머물러요.<br />화면을 나가거나 새로고침하면 사라져요.</p>
+          <p className="model-v2-privacy-note">선택 도구 · 이번 이용에만 사용<br />입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p>
         </aside>
 
         <form ref={formRef} className="measurement-panel model-v2-panel" data-model-v2-step={step}
@@ -224,7 +224,8 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
                 <h2 id="model-v2-result-title" tabIndex={-1}>생활정보 분석이 완료되었습니다.</h2>
                 <p>입력 처리가 완료되었다는 뜻이며, 건강 상태를 판단하는 결과는 아닙니다.</p>
                 <p>현재는 개인별 모델 점수·백분율·등급을 제공하지 않습니다. 특정 생활습관이 결과의 원인이라는 뜻도 아닙니다.</p>
-                <p>이번 입력과 결과는 저장되지 않습니다. 혈압 기록과 7일 생활 챌린지는 별도로 이용할 수 있어요.</p>
+                <p>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+                <p>혈압 기록과 7일 생활 챌린지는 별도로 이용할 수 있어요.</p>
               </div>
               <div className="model-v2-actions"><button type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button></div>
             </>
@@ -242,10 +243,13 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
 
               {step === "intro" && <section className="model-v2-intro" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
-                <p><strong>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않으며, 이번 입력과 결과도 저장하지 않습니다.</strong></p>
+                <p><strong>선택 도구 · 이번 이용에만 사용</strong></p>
+                <p><strong>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</strong></p>
+                <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
+                <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
                 <p>나이, 체격, 생활 습관, 활동, 수면 정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
                 <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
-                <p>입력과 결과는 저장하지 않아요. 마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
+                <p>마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
                 <details className="model-v2-notice-details">
                   <summary>입력 정보 이용 안내</summary>
                   <p>학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>
@@ -283,7 +287,8 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
                   </section>)}
                 </div>
                 <div className="model-v2-review-notice">
-                  <p>이번 입력과 결과는 저장하지 않으며 학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다. 혈압 관찰, 챌린지 기록, 이전 결과, 다른 사용자의 정보와 자동으로 결합하지 않습니다.</p>
+                  <p>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+                  <p>혈압 기록과 7일 생활 챌린지는 별도로 이용할 수 있어요.</p>
                   <label className="signal-consent" htmlFor="model-notice-accepted">
                     <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted}
                       onChange={(event) => { setNoticeAccepted(event.target.checked); clearFeedback(); }} disabled={pending}
