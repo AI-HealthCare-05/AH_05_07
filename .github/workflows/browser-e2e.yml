@@ -31,11 +31,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  browser-e2e:
-    name: browser-e2e
+  browser-e2e-classify:
+    name: browser-e2e classify
     if: github.event_name == 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify browser suite selector
+        run: node --test web/scripts/select-pr-browser-suites.test.mjs
+
+      - name: Select affected browser suites
+        id: select
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+  browser-e2e-pr:
+    name: browser-e2e-pr (${{ matrix.suite.name }})
+    if: github.event_name == 'pull_request'
+    needs: browser-e2e-classify
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: ${{ fromJSON(needs.browser-e2e-classify.outputs.matrix) }}
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
       options: --user 1001
@@ -54,23 +86,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run focused browser regression for pull requests
-        if: github.event_name == 'pull_request'
-        run: npm run test:e2e
+      - name: Run ${{ matrix.suite.name }}
+        run: ${{ matrix.suite.command }}
 
-      - name: Verify S11 local inference in Firefox and WebKit
-        run: npm run test:e2e:model-v2 -- --project=firefox --project=webkit
-
-      - name: Run focused Journey regression for pull requests
-        if: github.event_name == 'pull_request'
-        run: npm run test:e2e:ui:pr
-
-      - name: Check local submission capture script syntax
+  browser-e2e:
+    name: browser-e2e
+    if: always() && github.event_name == 'pull_request'
+    needs: [browser-e2e-classify, browser-e2e-pr]
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - name: Verify PR browser suites
+        env:
+          CLASSIFY_RESULT: ${{ needs.browser-e2e-classify.result }}
+          PR_BROWSER_RESULT: ${{ needs.browser-e2e-pr.result }}
         run: |
-          node --check ../tools/mvp1-capture.cjs
-          node --check ../tools/submission-record.cjs
-          node --check ../tools/submission-video-check.cjs
-          node --check ../tools/submission-slides.mjs
+          test "$CLASSIFY_RESULT" = "success"
+          test "$PR_BROWSER_RESULT" = "success"
 
   browser-e2e-main:
     name: browser-e2e (${{ matrix.suite.name }})
@@ -93,8 +125,14 @@ jobs:
             command: npm run test:e2e:saved-scene
           - name: S02 and S10 review scenes
             command: npm run test:e2e:scene
-          - name: journey UI and normal auth boundaries
-            command: npm run test:e2e:ui
+          - name: journey UI production
+            command: npm run test:e2e:ui:pr
+          - name: journey UI companion off
+            command: SK7_UI_TEST_COMPANION=off npm run test:e2e:ui:pr
+          - name: normal auth boundaries
+            command: npx playwright test --config=playwright.ui-normal.config.ts
+          - name: UI build matrix
+            command: node scripts/verify-ui-build-matrix.mjs
           - name: submission capture script syntax
             command: >-
               node --check ../tools/mvp1-capture.cjs &&
