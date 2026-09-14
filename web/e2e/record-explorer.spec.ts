@@ -84,10 +84,13 @@ test("S08 chronologically groups separate facts and combines local type and date
   await expect(pressure).toBeFocused();
   await expect(rows(page)).toHaveCount(3);
   await expect(explorer.getByRole("status")).toHaveText("전체 6개 중 3개 표시");
+  await expect(explorer.locator(".record-explorer-scope")).toHaveText("혈압 관찰 · 모든 날짜");
+  await expect(explorer.getByRole("button", { name: "필터 초기화", exact: true })).toBeVisible();
   await dateFilter(page, 10).click();
   await expect(dateFilter(page, 10)).toHaveAttribute("aria-pressed", "true");
   await expect(rows(page)).toHaveCount(2);
   await expect(explorer.getByRole("status")).toHaveText("전체 6개 중 2개 표시");
+  await expect(explorer.locator(".record-explorer-scope")).toHaveText("혈압 관찰 · 9월 10일 (목)");
   await explorer.getByRole("button", { name: "챌린지 2개", exact: true }).click();
   await expect(rows(page)).toHaveCount(1);
   await expect(rows(page)).toHaveAttribute("data-record-kind", "challenge-checkin");
@@ -102,6 +105,8 @@ test("S08 chronologically groups separate facts and combines local type and date
   await explorer.getByRole("button", { name: "전체 기록 보기", exact: true }).click();
   await expect(rows(page)).toHaveCount(6);
   await expect(explorer.getByRole("button", { name: "전체 6개", exact: true })).toBeFocused();
+  await expect(explorer.locator(".record-explorer-scope")).toHaveText("모든 기록 · 모든 날짜");
+  await expect(explorer.getByRole("button", { name: "필터 초기화", exact: true })).toHaveCount(0);
   await expect(explorer.getByRole("button", { name: "전체 6개", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(explorer.getByRole("button", { name: "모든 날짜", exact: true })).toHaveAttribute("aria-pressed", "true");
   expect(page.url()).toBe(url);
@@ -150,6 +155,23 @@ test("S08 to S09 restores local filters and the opened row on explicit return an
   await page.goBack();
   await expect(eveningDetail(page)).toBeFocused();
   expect(requests).toEqual(["GET /api/v1/observations/window"]);
+});
+
+test("S09 keeps a blood-pressure record readable and actionable on a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await mockWindow(page);
+  await openExplorer(page);
+  await page.getByRole("button", { name: "혈압 3개", exact: true }).click();
+  await dateFilter(page, 10).click();
+  await eveningDetail(page).click();
+  const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
+  await expect(detail).toBeVisible();
+  await expect(detail).toContainText("121/79 mmHg");
+  await expect(detail).toContainText("저녁");
+  await expect(page.getByRole("button", { name: "수정", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "삭제", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "목록으로 돌아가기", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 
 test("S08 range changes reset discovery filters and keep prior and legacy details read-only", async ({ page }) => {

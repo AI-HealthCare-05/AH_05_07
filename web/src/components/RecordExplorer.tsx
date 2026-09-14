@@ -30,6 +30,13 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
   const allFilter = useRef<HTMLButtonElement>(null);
   const descriptionId = useId();
   const { counts, dates, groups, visibleCount } = exploreRecords(items, selection);
+  const selectionType = selection.filter === "all" ? "모든 기록" : detailTypes[selection.filter];
+  const selectionDate = selection.date ? dateLabel(selection.date) : "모든 날짜";
+  const hasActiveFilter = selection.filter !== "all" || selection.date !== null;
+  const resetSelection = () => {
+    onSelect({ filter: "all", date: null });
+    requestAnimationFrame(() => allFilter.current?.focus());
+  };
 
   useEffect(() => {
     if (!returnPoint) return;
@@ -67,7 +74,16 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
         </div>
       </fieldset>}
     </div>
-    <p className="record-explorer-summary"><span role="status">전체 {counts.all}개 중 {visibleCount}개 표시</span><span>최신 날짜순</span></p>
+    <div className="record-explorer-summary">
+      <div>
+        <span role="status">전체 {counts.all}개 중 {visibleCount}개 표시</span>
+        <span className="record-explorer-scope" data-record-filter-active={hasActiveFilter || undefined}>{selectionType} · {selectionDate}</span>
+      </div>
+      <div className="record-explorer-summary-actions">
+        <span>최신 날짜순</span>
+        {hasActiveFilter && <button type="button" className="text-button record-explorer-reset" onClick={resetSelection}>필터 초기화</button>}
+      </div>
+    </div>
     {groups.length > 0 ? <div className="record-explorer-groups">
       {groups.map(([date, records]) => <section className="record-explorer-day" key={date} aria-labelledby={`records-${date}`}>
         <h2 id={`records-${date}`}><time dateTime={date}>{dateLabel(date)}</time><span>{records.length}개</span></h2>
@@ -93,7 +109,7 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
       <h2>{counts.all === 0 ? "이 7일에는 기록이 없어요." : "선택한 조건에 맞는 기록이 없어요."}</h2>
       {selection.date && !dates.includes(selection.date) && <p>선택한 날짜: {dateLabel(selection.date)}</p>}
       <p>{counts.all === 0 ? "다른 7일 구간을 선택하거나 오늘의 기록으로 돌아가 기록을 남겨 보세요." : "이 기간에는 기록이 있지만 선택한 종류나 날짜의 기록은 없어요."}</p>
-      {counts.all > 0 && <button type="button" className="secondary" onClick={() => { onSelect({ filter: "all", date: null }); allFilter.current?.focus(); }}>전체 기록 보기</button>}
+      {counts.all > 0 && <button type="button" className="secondary" onClick={resetSelection}>전체 기록 보기</button>}
     </div>}
   </section>;
 }
