@@ -36,6 +36,13 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(tools.getByRole('button')).toHaveCount(3);
     await expect(page.locator('.recap-optional-intro')).toContainText('선택 기능');
     await expect(page.locator('.recap-optional-intro')).toContainText('혈압 기록과 따로 확인');
+    if (width <= 680) {
+      const totalsBox = await page.locator('.recap-week-totals').boundingBox();
+      const landscapeBox = await page.locator('.recap-landscape').boundingBox();
+      expect(totalsBox).not.toBeNull();
+      expect(landscapeBox).not.toBeNull();
+      expect(totalsBox!.y).toBeLessThan(landscapeBox!.y);
+    }
     await expect(page.locator('[data-trail-date]')).toHaveCount(7);
     await expect(page.locator('[data-trail-date="2026-09-11"]')).toHaveAttribute('aria-current', 'date');
     await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록함');
@@ -88,6 +95,8 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(detail).toHaveAttribute('data-selected-date', '2026-09-10');
   await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여건너뜀');
   await expect(page.locator('[data-main-section="seven-day-dashboard"]')).toHaveAttribute('data-focused-date', '2026-09-10');
+  await expect(page.locator('[data-record-scope="day"]')).toContainText('9월 10일');
+  await expect(page.getByRole('button', { name: '7일 전체 기록 보기', exact: true })).toBeVisible();
   await expect(records('blood-pressure')).toHaveCount(0);
   await expect(records('challenge')).toHaveCount(1);
   await expect(records('legacy')).toHaveCount(0);
@@ -102,10 +111,12 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(records('blood-pressure')).toHaveCount(1);
   await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText('118/78 mmHg');
   await expect(records('challenge')).toHaveCount(0);
-  await wholeWeek.press('Enter');
+  await page.getByRole('button', { name: '7일 전체 기록 보기', exact: true }).press('Enter');
   await expect(wholeWeek).toHaveAttribute('aria-pressed', 'true');
   await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.locator('[data-main-section="seven-day-dashboard"]')).not.toHaveAttribute('data-focused-date');
+  await expect(page.locator('[data-record-scope="week"]')).toBeVisible();
+  await expect(page.getByRole('button', { name: '7일 전체 기록 보기', exact: true })).toHaveCount(0);
   await expect(records('blood-pressure')).toHaveCount(2);
   await expect(records('challenge')).toHaveCount(3);
   await expect(records('legacy')).toHaveCount(1);

@@ -124,7 +124,10 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           <p className="eyebrow">{focusedDate ? '선택한 날짜의 혈압 기록' : '혈압 기록 먼저 보기'}</p>
           <h2>{focusedDate ? <><time dateTime={focusedDate}>{Number(focusedDate.slice(5, 7))}월 {Number(focusedDate.slice(8))}일</time>의 기록</> : '7일의 기록'}</h2>
         </div>
-        <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.` : '7일의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.'}</p>
+        <div className="recap-journal-scope" data-record-scope={focusedDate ? 'day' : 'week'}>
+          <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.` : '7일의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.'}</p>
+          {focusedDate && <button type="button" className="recap-clear-day" onClick={() => setSelectedDate(null)}>7일 전체 기록 보기</button>}
+        </div>
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
       </header>
       <div className="record-groups recap-record-groups" id="recap-journal-records" ref={recordsRef} tabIndex={-1} aria-label={focusedDate ? `${formatTrailDate(focusedDate)} 기록 목록` : '최근 7일 기록 목록'}>{records(focusedDate)}</div>

@@ -77,7 +77,10 @@
 .journey-recap .recap-journal-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: .65rem 2rem; padding: 0 0 1.1rem; border-bottom: 2px solid #879878; }
 .journey-recap .recap-journal-intro > div { display: grid; gap: .4rem; }
 .journey-recap .recap-journal-intro h2 { font-size: 1.45rem; line-height: 1.4; letter-spacing: -.045em; }
-.journey-recap .recap-journal-intro > p { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; }
+.journey-recap .recap-journal-scope { justify-items: end; max-width: 32rem; }
+.journey-recap .recap-journal-scope > p { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; text-align: right; }
+.journey-recap .recap-clear-day { min-height: 2.75rem; padding: .45rem .15rem; border: 0; background: transparent; color: #3f594a; box-shadow: none; font-size: .76rem; font-weight: 650; text-decoration: underline; text-underline-offset: .25em; }
+.journey-recap .recap-clear-day:hover { background: transparent; color: #253b2c; transform: none; }
 .journey-recap .recap-journal-intro > .recap-journal-freshness { flex-basis: 100%; color: #78613d; }
 .journey-recap .recap-journal[data-focused-date] .recap-journal-intro { border-bottom-color: #637c5c; }
 .journey-recap .recap-record-groups { scroll-margin-top: 6rem; }
@@ -137,15 +140,16 @@
   .journey-recap .living-visual-stage { height: 13rem; }
 }
 @media (max-width: 680px) {
-  .journey-recap .recap-week-intro { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .journey-recap .recap-week-intro { grid-template-columns: minmax(0, 1fr); gap: .85rem; }
   .journey-recap .recap-week-overview { display: contents; }
   .journey-recap .living-week-heading { grid-row: 1; }
-  .journey-recap .recap-landscape { grid-row: 2; width: min(100%, 25rem); justify-self: center; }
-  .journey-recap .living-visual-stage { height: 11rem; border-radius: 48% 48% 35% 35%; }
-  .journey-recap .recap-week-totals { grid-row: 3; }
+  .journey-recap .recap-week-totals { grid-row: 2; }
+  .journey-recap .recap-landscape { grid-row: 3; width: min(100%, 23rem); justify-self: center; margin-top: .2rem; }
+  .journey-recap .living-visual-stage { height: 8.5rem; border-radius: 48% 48% 35% 35%; }
   .journey-recap .recap-week-summary { gap: 1rem; }
   .journey-recap .recap-week-summary > div + div { padding-left: 1rem; }
-  .journey-recap .recap-view figcaption { margin-top: .55rem; }
+  .journey-recap .recap-view figcaption { margin-top: .45rem; }
+  .journey-recap .recap-view figcaption small { font-size: .62rem; }
   .journey-recap .recap-journal-intro { gap: .6rem; align-items: start; }
 }
 @media (max-width: 580px) {
@@ -163,6 +167,9 @@
   .journey-recap .recap-journal { padding-top: .6rem; }
   .journey-recap .recap-journal-intro { display: grid; }
   .journey-recap .recap-journal-intro h2 { font-size: 1.25rem; }
+  .journey-recap .recap-journal-scope { justify-items: start; max-width: none; }
+  .journey-recap .recap-journal-scope > p { text-align: left; }
+  .journey-recap .recap-clear-day { justify-self: start; }
   .journey-recap .record-lane { padding-block: 1rem 1.25rem; }
   .journey-recap .utility-actions { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   .journey-recap .utility-actions > .living-week-report-action { grid-column: 1; padding: .65rem; }
@@ -173,7 +180,7 @@
   .journey-recap.scene { padding: 10px; }
   .journey-recap h1 { font-size: 1.8rem; }
   .journey-recap .recap-week-sheet { padding-inline: 8px; }
-  .journey-recap .living-visual-stage { height: 9.5rem; }
+  .journey-recap .living-visual-stage { height: 7.75rem; }
   .journey-recap .recap-week-summary { gap: .6rem; }
   .journey-recap .recap-week-summary > div + div { padding-left: .6rem; }
   .journey-recap .recap-week-summary dt { font-size: .75rem; }
