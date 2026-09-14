@@ -29,6 +29,13 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.locator('#recap-journal-records')).toBeFocused();
     await expect(page.locator('.recap-journal-intro')).toContainText('혈압 기록 먼저 보기');
     await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록으로 구분돼요.');
+    await expect(page.locator('.recap-trail-heading')).toContainText('그날의 기록만 아래에서 확인');
+    const tools = page.locator('[data-recap-tools]');
+    await expect(page.locator('.recap-tools-intro')).toContainText('7일 기록을 정리하거나 보관해요');
+    await expect(tools.locator('.living-week-report-action')).toBeVisible();
+    await expect(tools.getByRole('button')).toHaveCount(3);
+    await expect(page.locator('.recap-optional-intro')).toContainText('선택 기능');
+    await expect(page.locator('.recap-optional-intro')).toContainText('혈압 기록과 따로 확인');
     await expect(page.locator('[data-trail-date]')).toHaveCount(7);
     await expect(page.locator('[data-trail-date="2026-09-11"]')).toHaveAttribute('aria-current', 'date');
     await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록함');

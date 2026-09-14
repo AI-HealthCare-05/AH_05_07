@@ -105,7 +105,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
 
       {freshnessNote && <p className="recap-freshness" role="status" data-freshness={freshness}>{freshnessNote}</p>}
       <div className="recap-trail-heading">
-        <p>날짜를 눌러, 그날에 머물러 보세요.</p>
+        <p>날짜를 선택하면 그날의 기록만 아래에서 확인할 수 있어요.</p>
         <button type="button" className="recap-show-week" aria-pressed={!focusedDate} aria-controls="recap-day-context recap-journal-records" onClick={() => setSelectedDate(null)}>7일 전체 보기</button>
       </div>
       <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context" factsKnown={factsKnown} />
@@ -129,13 +129,25 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       </header>
       <div className="record-groups recap-record-groups" id="recap-journal-records" ref={recordsRef} tabIndex={-1} aria-label={focusedDate ? `${formatTrailDate(focusedDate)} 기록 목록` : '최근 7일 기록 목록'}>{records(focusedDate)}</div>
       <footer className="recap-tools">
-        <p>{readOnly
+        <div className="recap-tools-intro">
+          <p className="eyebrow">기록 활용</p>
+          <h3>7일 기록을 정리하거나 보관해요</h3>
+          <p>리포트는 읽기 좋게 정리하고, 내보내기는 파일로 보관해요. 새로고침은 최신 기록을 다시 확인할 때 사용해요.</p>
+        </div>
+        <p className="recap-tools-state">{readOnly
           ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
           : '현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.'}</p>
         {focusedDate && !readOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
-        <div className="scene-actions utility-actions">{actions}</div>
+        <div className="scene-actions utility-actions" data-recap-tools>{actions}</div>
       </footer>
     </div>
-    <div className="recap-current-challenge">{challenge}</div>
+    <div className="recap-current-challenge">
+      <div className="recap-optional-intro">
+        <p className="eyebrow">선택 기능</p>
+        <strong>생활 챌린지는 혈압 기록과 따로 확인해요</strong>
+        <p>7일 혈압 기록과 하나의 점수나 완료 상태로 합치지 않아요.</p>
+      </div>
+      {challenge}
+    </div>
   </>;
 }
