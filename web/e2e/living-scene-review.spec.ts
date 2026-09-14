@@ -86,52 +86,158 @@ test("ready WebGL does not wait for a pending poster transfer", async ({ page })
   }
 });
 
-test("poster remains visible until the settled WebGL warm-up frame", async ({ page }) => {
+test("poster remains visible until the GPU-settled frame is handed off", async ({ page }) => {
   await page.addInitScript(() => {
     const state = window as Window & {
-      pendingSceneWarmupFrames?: number;
-      releaseSceneWarmupFrame?: () => boolean;
+      pendingSceneGpuFences?: number;
+      sceneGpuFencePolls?: number;
+      deletedSceneGpuFences?: number;
+      pendingSceneRevealFrames?: number;
+      signalSceneGpuFence?: () => void;
+      releaseSceneRevealFrame?: () => boolean;
     };
+    const originalFenceSync = WebGL2RenderingContext.prototype.fenceSync;
+    const originalClientWaitSync = WebGL2RenderingContext.prototype.clientWaitSync;
+    const originalDeleteSync = WebGL2RenderingContext.prototype.deleteSync;
     const originalRequest = window.requestAnimationFrame.bind(window);
     const originalCancel = window.cancelAnimationFrame.bind(window);
-    const pending = new Map<number, FrameRequestCallback>();
+    const fences = new Set<WebGLSync>();
+    const pendingReveal = new Map<number, FrameRequestCallback>();
     let nextFrame = -1;
-    let released = false;
-    state.pendingSceneWarmupFrames = 0;
+    let fenceSignaled = false;
+    let holdRevealFrame = false;
+    state.pendingSceneGpuFences = 0;
+    state.sceneGpuFencePolls = 0;
+    state.deletedSceneGpuFences = 0;
+    state.pendingSceneRevealFrames = 0;
+    WebGL2RenderingContext.prototype.fenceSync = function (condition, flags) {
+      const sync = originalFenceSync.call(this, condition, flags);
+      if (sync) {
+        fences.add(sync);
+        state.pendingSceneGpuFences = fences.size;
+      }
+      return sync;
+    };
+    WebGL2RenderingContext.prototype.clientWaitSync = function (sync, flags, timeout) {
+      if (!fences.has(sync)) return originalClientWaitSync.call(this, sync, flags, timeout);
+      state.sceneGpuFencePolls = (state.sceneGpuFencePolls ?? 0) + 1;
+      if (!fenceSignaled) return this.TIMEOUT_EXPIRED;
+      holdRevealFrame = true;
+      return this.CONDITION_SATISFIED;
+    };
+    WebGL2RenderingContext.prototype.deleteSync = function (sync) {
+      if (fences.delete(sync)) {
+        state.pendingSceneGpuFences = fences.size;
+        state.deletedSceneGpuFences = (state.deletedSceneGpuFences ?? 0) + 1;
+      }
+      originalDeleteSync.call(this, sync);
+    };
     window.requestAnimationFrame = callback => {
-      if (!released && document.querySelector(".living-three-scene")?.hasAttribute("data-subject-bounds")) {
+      if (holdRevealFrame) {
+        holdRevealFrame = false;
         const frame = nextFrame--;
-        pending.set(frame, callback);
-        state.pendingSceneWarmupFrames = pending.size;
+        pendingReveal.set(frame, callback);
+        state.pendingSceneRevealFrames = pendingReveal.size;
         return frame;
       }
       return originalRequest(callback);
     };
     window.cancelAnimationFrame = frame => {
-      if (pending.delete(frame)) state.pendingSceneWarmupFrames = pending.size;
+      if (pendingReveal.delete(frame)) state.pendingSceneRevealFrames = pendingReveal.size;
       else originalCancel(frame);
     };
-    state.releaseSceneWarmupFrame = () => {
-      released = true;
-      const first = pending.entries().next().value;
+    state.signalSceneGpuFence = () => { fenceSignaled = true; };
+    state.releaseSceneRevealFrame = () => {
+      const first = pendingReveal.entries().next().value;
       if (!first) return false;
       const [frame, callback] = first;
-      pending.delete(frame);
-      state.pendingSceneWarmupFrames = pending.size;
+      pendingReveal.delete(frame);
+      state.pendingSceneRevealFrames = pendingReveal.size;
       originalRequest(callback);
       return true;
     };
   });
   await page.goto(url);
   await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
-  await expect.poll(() => page.evaluate(() => (window as Window & { pendingSceneWarmupFrames?: number }).pendingSceneWarmupFrames)).toBe(1);
+  await expect.poll(() => page.evaluate(() => (window as Window & { pendingSceneGpuFences?: number }).pendingSceneGpuFences)).toBe(1);
+  await expect.poll(() => page.evaluate(() => (window as Window & { sceneGpuFencePolls?: number }).sceneGpuFencePolls)).toBeGreaterThan(0);
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "poster");
   await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
   await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "0");
-  expect(await page.evaluate(() => (window as Window & { releaseSceneWarmupFrame?: () => boolean }).releaseSceneWarmupFrame?.())).toBe(true);
+  await page.evaluate(() => (window as Window & { signalSceneGpuFence?: () => void }).signalSceneGpuFence?.());
+  await expect.poll(() => page.evaluate(() => (window as Window & { pendingSceneRevealFrames?: number }).pendingSceneRevealFrames)).toBe(1);
+  expect(await page.evaluate(() => (window as Window & { pendingSceneGpuFences?: number }).pendingSceneGpuFences)).toBe(0);
+  expect(await page.evaluate(() => (window as Window & { deletedSceneGpuFences?: number }).deletedSceneGpuFences)).toBe(1);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "poster");
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "0");
+  expect(await page.evaluate(() => (window as Window & { releaseSceneRevealFrame?: () => boolean }).releaseSceneRevealFrame?.())).toBe(true);
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready");
   await expect(page.locator(".living-scene-fallback")).toHaveCount(0);
   await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "1");
+});
+
+test("an unavailable GPU fence fails safely to the poster", async ({ page }) => {
+  await page.addInitScript(() => {
+    WebGL2RenderingContext.prototype.fenceSync = () => null;
+  });
+  await page.goto(url);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+});
+
+test("leaving during GPU warm-up cancels polling and deletes the fence", async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window as Window & {
+      pendingSceneGpuPollFrames?: number;
+      canceledSceneGpuPollFrames?: number;
+      deletedSceneGpuFences?: number;
+    };
+    const originalDeleteSync = WebGL2RenderingContext.prototype.deleteSync;
+    const originalRequest = window.requestAnimationFrame.bind(window);
+    const originalCancel = window.cancelAnimationFrame.bind(window);
+    const pendingPoll = new Map<number, FrameRequestCallback>();
+    let nextFrame = -1000;
+    let holdNextPoll = false;
+    state.pendingSceneGpuPollFrames = 0;
+    state.canceledSceneGpuPollFrames = 0;
+    state.deletedSceneGpuFences = 0;
+    WebGL2RenderingContext.prototype.clientWaitSync = function () {
+      holdNextPoll = true;
+      return this.TIMEOUT_EXPIRED;
+    };
+    WebGL2RenderingContext.prototype.deleteSync = function (sync) {
+      state.deletedSceneGpuFences = (state.deletedSceneGpuFences ?? 0) + 1;
+      originalDeleteSync.call(this, sync);
+    };
+    window.requestAnimationFrame = callback => {
+      if (holdNextPoll) {
+        holdNextPoll = false;
+        const frame = nextFrame--;
+        pendingPoll.set(frame, callback);
+        state.pendingSceneGpuPollFrames = pendingPoll.size;
+        return frame;
+      }
+      return originalRequest(callback);
+    };
+    window.cancelAnimationFrame = frame => {
+      if (pendingPoll.delete(frame)) {
+        state.pendingSceneGpuPollFrames = pendingPoll.size;
+        state.canceledSceneGpuPollFrames = (state.canceledSceneGpuPollFrames ?? 0) + 1;
+      } else originalCancel(frame);
+    };
+  });
+  await page.goto(url);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect.poll(() => page.evaluate(() => (window as Window & { pendingSceneGpuPollFrames?: number }).pendingSceneGpuPollFrames)).toBe(1);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "poster");
+  await page.locator(".home-lead button").click();
+  await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as Window & { pendingSceneGpuPollFrames?: number }).pendingSceneGpuPollFrames)).toBe(0);
+  expect(await page.evaluate(() => (window as Window & { canceledSceneGpuPollFrames?: number }).canceledSceneGpuPollFrames)).toBe(1);
+  expect(await page.evaluate(() => (window as Window & { deletedSceneGpuFences?: number }).deletedSceneGpuFences)).toBe(1);
 });
 
 test("GLB and poster failures preserve the task controls", async ({ page }) => {
