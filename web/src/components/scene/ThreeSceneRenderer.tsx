@@ -36,18 +36,6 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     let profile = sceneProfile(window.innerWidth);
     let environment = recipe.environment === "diorama" ? createDiorama(landmark, profile) : createLandmark(landmark);
     scene.add(environment);
-    // A tiny authored alpha mask grounds the neutral pose without a shadow map.
-    const shadowPixels = new Uint8Array(64 * 64 * 4);
-    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
-      const offset = (y * 64 + x) * 4;
-      shadowPixels.set([85, 68, 52, Math.round(Math.max(0, Math.exp(-(((x - 31.5) / 21) ** 2 + ((y - 31.5) / 21) ** 2) * 2) - 0.01) * 70)], offset);
-    }
-    const shadowTexture = new THREE.DataTexture(shadowPixels, 64, 64);
-    shadowTexture.needsUpdate = true;
-    const contactShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 0.9),
-      new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
-    contactShadow.rotation.x = -Math.PI / 2;
-    scene.add(contactShadow);
     let ready = false;
     let failed = false;
     let compiled = false;
@@ -175,8 +163,6 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       environment.position.fromArray(cameraRecipe.environmentAnchor);
       environment.scale.setScalar(cameraRecipe.environmentScale);
       if (model) model.position.fromArray(cameraRecipe.characterAnchor);
-      contactShadow.position.fromArray(cameraRecipe.characterAnchor);
-      contactShadow.position.y -= 0.005;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height, false);
       void render();
@@ -187,7 +173,6 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
       renderer.shadowMap.enabled = false;
-      renderer.initTexture(shadowTexture);
       renderer.domElement.setAttribute("aria-hidden", "true");
       renderer.domElement.addEventListener("webglcontextlost", fail);
       element.append(renderer.domElement);
