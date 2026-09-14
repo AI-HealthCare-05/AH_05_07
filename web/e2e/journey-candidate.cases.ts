@@ -82,7 +82,9 @@ test('journey day selection exposes separate facts locally and returns to today'
     if (/e2e\.invalid|ThreeSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(request.url())) boundaryRequests.push(request.url());
   });
   await candidate(page, true);
-  const trail = page.locator('.seven-day-trail');
+  const calendarToggle = page.getByRole('button', { name: '날짜별 기록 보기', exact: true });
+  if (await calendarToggle.isVisible()) await calendarToggle.click();
+  const trail = page.locator('.home-trail-dates');
   const today = trail.locator('[data-trail-date="2026-09-11"] > button');
   const earlier = trail.locator('[data-trail-date="2026-09-05"] > button');
   const detail = page.locator('#today-trail-detail');
