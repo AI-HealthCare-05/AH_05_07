@@ -161,6 +161,113 @@
   .journey-settings-facts { gap: .55rem; }
 }
 
+/* S03: make challenge participation clearly optional and explain the lock boundary. */
+.journey-challenge-choice.scene {
+  max-width: 58rem;
+  margin-inline: auto;
+  align-content: start;
+}
+
+.journey-challenge-choice .challenge-choice-context {
+  display: grid;
+  gap: .3rem;
+  max-width: 42rem;
+  border-left: 3px solid #9aaa88;
+  padding: .15rem 0 .15rem .85rem;
+}
+
+.journey-challenge-choice .challenge-choice-context .eyebrow {
+  margin: 0;
+  font-size: .7rem;
+}
+
+.journey-challenge-choice .challenge-choice-context strong {
+  color: #3d503f;
+  font-size: .98rem;
+  line-height: 1.5;
+}
+
+.journey-challenge-choice .challenge-choice-context > p:not(.eyebrow) {
+  color: #6a6d63;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.journey-challenge-choice .challenge-choice-context[data-challenge-choice-state="locked"] {
+  border-left-color: #b08c69;
+}
+
+.journey-challenge-choice .choice-grid {
+  margin-top: .2rem;
+}
+
+@media (max-width: 580px) {
+  .journey-challenge-choice .challenge-choice-context {
+    max-width: none;
+    padding-left: .7rem;
+  }
+}
+
+/* S06: explain challenge check-in states without competing with blood pressure. */
+.journey-challenge-summary.scene {
+  max-width: 54rem;
+  margin-inline: auto;
+  align-content: start;
+}
+
+.journey-challenge-summary .journey-challenge-summary-card {
+  display: grid;
+  gap: .5rem;
+  border: 1px solid #dedfd5;
+  border-radius: .65rem;
+  background: #fffdf7;
+  padding: 1rem 1.1rem;
+}
+
+.journey-challenge-summary .journey-challenge-checkin-card {
+  border-top: 4px solid #91a083;
+}
+
+.journey-challenge-summary .journey-challenge-checkin-card[data-challenge-checkin-state="completed"],
+.journey-challenge-summary .journey-challenge-checkin-card[data-challenge-checkin-state="skipped"] {
+  background: #fbfdf8;
+}
+
+.journey-challenge-summary .journey-challenge-checkin-card h2 {
+  color: #3a4d3d;
+}
+
+.journey-challenge-summary .journey-challenge-checkin-card > p:not(.eyebrow) {
+  color: #646a60;
+  line-height: 1.6;
+}
+
+.journey-challenge-summary .journey-challenge-checkin-note {
+  margin-top: .15rem;
+  border-top: 1px solid #e3e4da;
+  padding-top: .7rem;
+  font-size: .8rem;
+}
+
+.journey-challenge-summary .journey-challenge-next-actions {
+  align-items: stretch;
+}
+
+@media (max-width: 580px) {
+  .journey-challenge-summary .journey-challenge-summary-card {
+    padding: .9rem;
+  }
+
+  .journey-challenge-summary .journey-challenge-next-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journey-challenge-summary .journey-challenge-next-actions > button {
+    width: 100%;
+  }
+}
+
 /* S07: keep today's blood-pressure record visually primary. */
 .journey-today-review.scene {
   max-width: 58rem;
@@ -248,6 +355,39 @@
 
   .journey-today-review .fact-lanes > .fact-lead {
     padding: .95rem 1rem 1.05rem;
+  }
+}
+
+/* S07: keep the optional challenge lane secondary to the BP record. */
+.journey-today-review .journey-today-challenge {
+  border-top-color: #c8cec1;
+  padding-inline: .2rem;
+}
+
+.journey-today-review .journey-today-challenge .eyebrow {
+  color: #788170;
+}
+
+.journey-today-review .journey-today-challenge-note {
+  min-height: 0 !important;
+  margin-top: .15rem;
+  border-top: 1px solid #e1e3da;
+  padding-top: .55rem;
+  color: #74786f !important;
+  font-size: .76rem !important;
+  line-height: 1.55 !important;
+}
+
+.journey-today-review .journey-today-challenge > button {
+  border-color: #d7d9cf;
+  background: transparent;
+  color: #536653;
+  box-shadow: none;
+}
+
+@media (max-width: 820px) {
+  .journey-today-review .journey-today-challenge {
+    padding-inline: 0;
   }
 }
 
