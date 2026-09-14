@@ -376,14 +376,26 @@ test('living week uses Seoul dates and date-only landmarks with mixed facts and 
     return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify(body) });
   });
   await page.goto('/?e2e=signed-in&screen=S02');
-  const trail = page.locator('.seven-day-trail');
-  await expect(trail.locator('time')).toHaveCount(7);
-  await expect(trail.locator('.trail-landmark')).toHaveText(['정자', '노을 전망대', '정원 대문', '허브 정원', '나무 그늘과 벤치', '나무다리', '책 읽는 쉼터']);
+  const homeTrail = page.locator('.home-journey-trail');
+  await expect(homeTrail.locator('time')).toHaveCount(7);
+  expect(await homeTrail.locator('time').evaluateAll(times => times.map(time => time.dateTime))).toEqual([
+    '2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11',
+  ]);
+  const dateButtons = homeTrail.locator('[data-trail-date] > button');
+  await expect(dateButtons).toHaveCount(7);
+  await expect(dateButtons.nth(0)).toHaveAccessibleName('2026년 9월 5일 · 정자 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(1)).toHaveAccessibleName('2026년 9월 6일 · 노을 전망대 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(2)).toHaveAccessibleName('2026년 9월 7일 · 정원 대문 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(3)).toHaveAccessibleName('2026년 9월 8일 · 허브 정원 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(4)).toHaveAccessibleName('2026년 9월 9일 · 나무 그늘과 벤치 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(5)).toHaveAccessibleName('2026년 9월 10일 · 나무다리 · 혈압 관찰 0건, 챌린지 참여 기록 없음');
+  await expect(dateButtons.nth(6)).toHaveAccessibleName('2026년 9월 11일, 오늘 · 책 읽는 쉼터 · 혈압 관찰 1건, 챌린지 참여 혼합');
   await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여혼합');
   await expect(page.locator('[data-trail-date="2026-09-10"] .trail-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
-  const facts = await trail.locator('.trail-facts').allTextContents();
+  const facts = await homeTrail.locator('.trail-facts').allTextContents();
   await page.getByRole('link', { name: '7일 돌아보기' }).press('Enter');
   await expect(page.locator('#S10-title')).toBeFocused();
+  const trail = page.locator('.seven-day-trail');
   expect(await trail.locator('.trail-facts').allTextContents()).toEqual(facts);
   await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('1일');
   await expect(trail).not.toContainText('mmHg');
