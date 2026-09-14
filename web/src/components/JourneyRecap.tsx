@@ -42,6 +42,10 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
     setSelectedDate(date);
     if (trigger) dispatchLivingReplayDayFocus(trigger);
   };
+  const focusRecords = () => {
+    recordsRef.current?.focus({ preventScroll: true });
+    recordsRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+  };
 
   return <>
     <div className="recap-period">
@@ -82,6 +86,9 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
               <p>기록함만 {summary.recordedDateCount}일 · 건너뜀만 {summary.skippedDateCount}일 · 혼합 {summary.mixedDateCount}일</p>
               <p>혼합은 같은 날 기록함과 건너뜀이 함께 있는 경우예요.</p>
             </details>}
+            <button type="button" className="recap-records-jump" aria-controls="recap-journal-records" onClick={focusRecords}>
+              혈압 기록 바로 보기 <span aria-hidden="true">↓</span>
+            </button>
           </div>
         </div>
 
@@ -104,23 +111,20 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context" factsKnown={factsKnown} />
       <div className="recap-day-focus" id="recap-day-context" data-day-focused={Boolean(selectedDay)}>
         {selectedDay ? <TrailDayDetail key={selectedDay.date} day={selectedDay} today={today} factsKnown={factsKnown}>
-          <button type="button" className="recap-day-record-link" onClick={() => {
-            recordsRef.current?.focus({ preventScroll: true });
-            recordsRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
-          }}>이 날짜의 기록 목록 <span aria-hidden="true">↓</span></button>
+          <button type="button" className="recap-day-record-link" onClick={focusRecords}>이 날짜의 기록 목록 <span aria-hidden="true">↓</span></button>
         </TrailDayDetail> : <p className="recap-overview-note">{factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0
           ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
           : '혈압 관찰과 챌린지 참여를 날짜 순서로 따로 확인해요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
       </div>
     </section>
 
-    <div className="recap-journal" data-main-section="seven-day-dashboard" data-focused-date={focusedDate ?? undefined}>
+    <div className="recap-journal" data-main-section="seven-day-dashboard" data-record-priority="blood-pressure" data-focused-date={focusedDate ?? undefined}>
       <header className="recap-journal-intro">
         <div>
-          <p className="eyebrow">{focusedDate ? '하루에 머무르기' : '선택한 구간의 기록'}</p>
+          <p className="eyebrow">{focusedDate ? '선택한 날짜의 혈압 기록' : '혈압 기록 먼저 보기'}</p>
           <h2>{focusedDate ? <><time dateTime={focusedDate}>{Number(focusedDate.slice(5, 7))}월 {Number(focusedDate.slice(8))}일</time>의 기록</> : '7일의 기록'}</h2>
         </div>
-        <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 기록만 펼쳐 보고 있어요.` : '7일 전체 기록을 펼쳐 보고 있어요.'}</p>
+        <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.` : '7일의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.'}</p>
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
       </header>
       <div className="record-groups recap-record-groups" id="recap-journal-records" ref={recordsRef} tabIndex={-1} aria-label={focusedDate ? `${formatTrailDate(focusedDate)} 기록 목록` : '최근 7일 기록 목록'}>{records(focusedDate)}</div>

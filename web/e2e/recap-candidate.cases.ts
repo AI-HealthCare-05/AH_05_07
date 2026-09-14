@@ -22,6 +22,13 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
     await expect(page.locator('#S10-title')).toBeFocused();
     await expect(screen(page)).toBeVisible();
+    await expect(page.locator('[data-main-section="seven-day-dashboard"]')).toHaveAttribute('data-record-priority', 'blood-pressure');
+    const recordsJump = page.getByRole('button', { name: '혈압 기록 바로 보기', exact: true });
+    await expect(recordsJump).toBeVisible();
+    await recordsJump.click();
+    await expect(page.locator('#recap-journal-records')).toBeFocused();
+    await expect(page.locator('.recap-journal-intro')).toContainText('혈압 기록 먼저 보기');
+    await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록으로 구분돼요.');
     await expect(page.locator('[data-trail-date]')).toHaveCount(7);
     await expect(page.locator('[data-trail-date="2026-09-11"]')).toHaveAttribute('aria-current', 'date');
     await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록함');
@@ -52,6 +59,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.getByRole('button', { name: '이전 7일 보기', exact: true })).toBeFocused();
     await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
     await expect(page.locator('summary').filter({ hasText: '챌린지 날짜별 상태' })).toBeFocused();
+    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    await expect(recordsJump).toBeFocused();
     await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
     await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toBeFocused();
     await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
