@@ -38,6 +38,7 @@ import {
   type ObservationWindow,
 } from "./lib/api";
 import { getEvidenceFixture } from "./lib/evidenceFixtures";
+import { resolveAuthEmailConfirmIntent, scrubAuthEmailConfirmUrl } from "./lib/authEmailConfirm";
 import { shiftDate } from "./lib/seoulDate";
 import { useSeoulDate } from "./lib/useSeoulDate";
 import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
@@ -232,6 +233,7 @@ function App() {
   );
   const today = useSeoulDate(fixture?.asOf);
   const evidenceMode = Boolean(fixture);
+  const authEmailConfirmIntent = useMemo(() => resolveAuthEmailConfirmIntent(window.location.href), []);
   const modelV2ResultState = useMemo(
     () => resolveModelV2ResultState(initialSearch.get("model_v2_state"), allowsE2eFixture()),
     [initialSearch],
@@ -249,6 +251,9 @@ function App() {
   const isCycleReview = dashboardWindow.startsWith("cycle:");
   const dashboardPeriodName = isCycleReview ? "종료된 7일" : isPriorDashboard ? "이전 7일" : "현재 7일";
   const [session, setSession] = useState<Session | null>(e2eSession);
+  const [authEmailConfirmPending, setAuthEmailConfirmPending] = useState(
+    () => !evidenceMode && authEmailConfirmIntent.kind !== "none",
+  );
   const [windowData, setWindowData] = useState<ObservationWindow | null>(fixture?.window ?? null);
   const [windowState, setWindowState] = useState<WindowState>(fixture?.loadError ? "error" : fixture ? "ready" : "loading");
   const [reportCreatedAt, setReportCreatedAt] = useState<Date | null>(null);
@@ -382,21 +387,79 @@ function App() {
 
   useEffect(() => {
     if (evidenceMode) return;
-    if (allowsE2eFixture()) {
+    const emailConfirmRequested = authEmailConfirmIntent.kind !== "none";
+    if (allowsE2eFixture() && !emailConfirmRequested) {
       const onSyntheticSession = (event: Event) => {
         applySession((event as CustomEvent<Session | null>).detail ?? null);
       };
       window.addEventListener(e2eSessionEventName, onSyntheticSession);
       return () => window.removeEventListener(e2eSessionEventName, onSyntheticSession);
     }
-    if (!supabase) return;
+    if (!supabase) {
+      setAuthEmailConfirmPending(false);
+      return;
+    }
+
+    let cancelled = false;
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!cancelled) applySession(nextSession);
+    });
+    const unsubscribe = () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
+
+    if (emailConfirmRequested) {
+      window.history.replaceState(
+        window.history.state ?? {},
+        "",
+        scrubAuthEmailConfirmUrl(window.location.href),
+      );
+
+      if (authEmailConfirmIntent.kind === "invalid") {
+        setNotice(makeNotice(
+          "warning",
+          "로그인 링크를 확인할 수 없어요. 새 로그인 링크를 요청해 주세요.",
+          { origin: "session" },
+        ));
+        setAuthEmailConfirmPending(false);
+        return unsubscribe;
+      }
+
+      void supabase.auth.verifyOtp({
+        token_hash: authEmailConfirmIntent.tokenHash,
+        type: "email",
+      }).then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data.session) {
+          setNotice(makeNotice(
+            "warning",
+            "로그인 링크를 확인할 수 없어요. 새 로그인 링크를 요청해 주세요.",
+            { origin: "session" },
+          ));
+          setAuthEmailConfirmPending(false);
+          return;
+        }
+        applySession(data.session);
+        setAuthEmailConfirmPending(false);
+      }).catch(() => {
+        if (cancelled) return;
+        setNotice(makeNotice(
+          "warning",
+          "로그인 링크를 확인하지 못했어요. 연결을 확인한 뒤 새 로그인 링크를 요청해 주세요.",
+          { origin: "session" },
+        ));
+        setAuthEmailConfirmPending(false);
+      });
+      return unsubscribe;
+    }
+
     const bootstrapVersion = sessionUpdateVersionRef.current;
     void supabase.auth.getSession().then(({ data }) => {
-      if (sessionUpdateVersionRef.current === bootstrapVersion) applySession(data.session);
+      if (!cancelled && sessionUpdateVersionRef.current === bootstrapVersion) applySession(data.session);
     });
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => applySession(nextSession));
-    return () => subscription.subscription.unsubscribe();
-  }, [evidenceMode, e2eSession]);
+    return unsubscribe;
+  }, [authEmailConfirmIntent, evidenceMode, e2eSession]);
 
   const sessionUserId = session?.user.id ?? null;
   const sessionAccessToken = session?.access_token ?? null;
@@ -925,6 +988,17 @@ function App() {
 
   if (!evidenceMode && !e2eSession && !supabaseConfigured) {
     return <main className="welcome-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
+  }
+  if (!evidenceMode && authEmailConfirmPending) {
+    return (
+      <main className="welcome-shell">
+        <section className="welcome-card" aria-live="polite">
+          <p className="eyebrow">상균7데이즈</p>
+          <h1>로그인 링크를 확인하고 있어요.</h1>
+          <p className="scene-body">잠시만 기다려 주세요.</p>
+        </section>
+      </main>
+    );
   }
   if (!evidenceMode && !session) {
     return <Login journey={presentation.journey} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
