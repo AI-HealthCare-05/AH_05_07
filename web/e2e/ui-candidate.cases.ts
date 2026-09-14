@@ -43,6 +43,119 @@ async function save(page: Page) {
   await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).press('Enter');
 }
 async function probe(page: Page) { return page.evaluate(() => (window as unknown as { __uiProbe: () => { attempts: number; frames: number; canvases: number } }).__uiProbe()); }
+
+for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]) test(`North Star Home keeps its hierarchy and primary action reachable at ${width}x${height}`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  const state = await setup(page);
+  await page.goto('/?e2e=signed-in&screen=S02');
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(home.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.locator('#S02-title')).toBeFocused();
+  await home.locator('[data-poster-asset] img').evaluate((img: HTMLImageElement) => img.decode());
+  const hierarchy = await home.evaluate(element => {
+    const hero = element.querySelector('.today-hero')!;
+    const journey = element.querySelector('.living-week')!;
+    const records = element.querySelector('.today-records')!;
+    return {
+      ordered: Boolean(hero.compareDocumentPosition(journey) & Node.DOCUMENT_POSITION_FOLLOWING)
+        && Boolean(journey.compareDocumentPosition(records) & Node.DOCUMENT_POSITION_FOLLOWING),
+      heroBottom: hero.getBoundingClientRect().bottom,
+      journeyTop: journey.getBoundingClientRect().top,
+      journeyBottom: journey.getBoundingClientRect().bottom,
+      recordsTop: records.getBoundingClientRect().top,
+    };
+  });
+  expect(hierarchy.ordered).toBe(true);
+  expect(hierarchy.heroBottom).toBeLessThanOrEqual(hierarchy.journeyTop);
+  expect(hierarchy.journeyBottom).toBeLessThanOrEqual(hierarchy.recordsTop);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const primary = home.locator('.home-lead button');
+  await expect(primary).toBeInViewport({ ratio: 1 });
+  expect(await primary.evaluate(element => {
+    const bounds = element.getBoundingClientRect();
+    return bounds.width >= 44 && bounds.height >= 44
+      && element.contains(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2));
+  })).toBe(true);
+  if (width <= 580) {
+    const primaryBox = (await primary.boundingBox())!;
+    const navBox = (await page.locator('.primary-nav').boundingBox())!;
+    expect(primaryBox.y + primaryBox.height).toBeLessThanOrEqual(navBox.y);
+  }
+  await expect(home.locator('[data-home-concept]')).toHaveCount(3);
+  await expect(home.locator('canvas')).toHaveCount(0);
+  await primary.press('Enter');
+  await expect(page.locator('#S04-title')).toBeFocused();
+  expect(state.posts()).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test('North Star Home previews a past date visibly on mobile while today facts and calendar position stay separate', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const state = await setup(page);
+  await page.goto('/?fixture=VP-07a&screen=S02');
+  const home = page.locator('.journey-today');
+  const facts = home.locator('.journey-facts');
+  await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  const calendarPosition = home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' });
+  await expect(calendarPosition).toHaveAttribute('value', '3');
+  await expect(calendarPosition).toHaveAttribute('max', '7');
+  await expect(home.locator('.today-cycle-progress')).toContainText('날짜 기준');
+  await expect(home.locator('.today-cycle-progress')).not.toContainText(/%|성공|달성/);
+  const boundaryRequests = () => state.urls.filter(url => /e2e\.invalid|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(url));
+  const beforeSelection = [...boundaryRequests()];
+  await home.locator('[data-trail-date="2026-09-01"] > button').press('Space');
+  await expect(home.locator('#today-trail-detail')).toHaveAttribute('data-selected-date', '2026-09-01');
+  await expect(home.locator('#today-trail-detail dl')).toHaveText('혈압 관찰0건챌린지 참여기록함');
+  const figure = home.locator('.journey-view');
+  await expect(figure).toHaveAttribute('data-previewing', 'true');
+  await expect(figure.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-01');
+  const previewLabel = figure.locator('.journey-view-label');
+  await previewLabel.scrollIntoViewIfNeeded();
+  await expect(previewLabel).toContainText('그날의 풍경');
+  await expect(previewLabel.locator('time')).toHaveAttribute('datetime', '2026-09-01');
+  const labelBox = (await previewLabel.boundingBox())!;
+  expect(labelBox.width).toBeGreaterThan(100);
+  expect(labelBox.height).toBeGreaterThan(12);
+  await expect(previewLabel).toBeInViewport({ ratio: 1 });
+  await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
+  await expect(calendarPosition).toHaveAttribute('value', '3');
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(boundaryRequests()).toEqual(beforeSelection);
+  await home.getByRole('button', { name: '오늘로 돌아오기', exact: true }).press('Enter');
+  await expect(figure).toHaveAttribute('data-previewing', 'false');
+  await expect(figure.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-03');
+});
+
+test('North Star Home identifies a directly opened prior window without claiming it includes today', async ({ page }) => {
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(request.url());
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'),
+      blood_pressure_observations: [{ id: 'synthetic-prior-home-bp', observed_on: '2026-09-04', period: 'morning', systolic: 120, diastolic: 80 }],
+      challenge_events: [], active_challenge: null, challenge_checkins: [],
+    }) });
+  });
+  await page.goto('/?e2e=signed-in&screen=S02&dashboard_window=prior');
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(page.locator('[data-read-only-window]')).toContainText('이전 7일');
+  await expect(home.locator('[data-trail-date]')).toHaveCount(7);
+  await expect(home.locator('[data-trail-date]').first()).toHaveAttribute('data-trail-date', '2026-08-29');
+  await expect(home.locator('[data-trail-date]').last()).toHaveAttribute('data-trail-date', '2026-09-04');
+  await expect(home.locator('.living-week-heading')).toContainText('선택한 7일');
+  await expect(home.locator('.living-week-heading')).not.toContainText('오늘을 포함한');
+  await expect(home.locator('.journey-facts')).toHaveText('혈압 관찰미확인챌린지 참여미확인');
+});
+
 for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirmed S05 at ${width}`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 320 ? 568 : 844 });
   const state = await setup(page);
