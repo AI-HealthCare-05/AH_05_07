@@ -1183,7 +1183,7 @@ function App() {
     const canRecordTodayStatus = !isPriorDashboard && currentChallenge && !todayCheckin;
 
     return (
-      <div className="journey-today-detail" data-today-scope={isPriorDashboard ? "prior" : "current"}>
+      <div className="journey-today-detail" data-today-scope={isPriorDashboard ? "prior" : "current"} data-record-priority="blood-pressure">
         <p className="journey-today-scope">
           {isPriorDashboard
             ? "이전 7일 조회 중이에요. 이 화면에서는 오늘의 실제 기록 상태를 확인하거나 새로 남길 수 없어요."
@@ -1303,7 +1303,18 @@ function App() {
     }
 
     if (activeScreen === "S05") {
-      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}><div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div><div className="split-actions"><button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button><button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button></div></Scene>;
+      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
+        <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
+        {presentation.journey && <div className="save-next-step">
+          <p className="eyebrow">다음 확인</p>
+          <strong>오늘의 기록에서 방금 저장한 혈압을 확인해요</strong>
+          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요.</p>
+        </div>}
+        <div className="split-actions">
+          <button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>
+          <button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button>
+        </div>
+      </Scene>;
     }
 
     if (activeScreen === "S06") {
@@ -1328,8 +1339,8 @@ function App() {
     }
 
     if (activeScreen === "S07") {
-      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 상태" title="오늘의 상태 기록·확인" body={isPriorDashboard ? "선택한 이전 7일의 범위를 보고 있어요." : "혈압과 챌린지 상태, 이전 방식 기록을 따로 확인해요."} tone="cream" className="journey-candidate">
-        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용` : "서로 다른 사실은 합치지 않고 나란히 보여드려요."}</span></div>
+      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard ? "선택한 이전 7일의 범위를 보고 있어요." : "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."} tone="cream" className="journey-candidate journey-today-review">
+        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용` : "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."}</span></div>
         {journeyTodayLanes()}
         <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
       </Scene>;

@@ -56,7 +56,7 @@ export const journeyCopy = {
   S04: {
     eyebrow: "혈압 관찰",
     title: "혈압 기록",
-    body: "측정한 값을 날짜와 시간대에 맞춰 남겨 주세요.",
+    body: "측정한 혈압을 기록해요. 날짜와 시간대를 확인한 뒤 수축기·이완기 값을 입력해 주세요.",
   },
   S05: {
     eyebrow: "저장됨",

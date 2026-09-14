@@ -25,8 +25,19 @@
 .journey-entry .measurement-guide summary { min-height: 2.75rem; display: list-item; align-content: center; }
 .journey-entry .field-grid { gap: 1.25rem 1rem; }
 .journey-entry .field-grid label { font-size: .9rem; gap: .6rem; }
+.journey-entry .field-grid label[for="observed-on"],
+.journey-entry .field-grid label[for="period"] { color: #696960; }
+.journey-entry .field-grid label[for="systolic"],
+.journey-entry .field-grid label[for="diastolic"] {
+  gap: .5rem;
+  border-top: 1px solid #e0e1d7;
+  padding-top: 1rem;
+  color: #35473c;
+  font-weight: 650;
+}
 .journey-entry .field-grid input, .journey-entry .field-grid select { border-radius: .4rem; background: #fff; border-color: #bdbfaf; min-height: 3.1rem; }
-.journey-entry .field-grid input[type=number] { font-size: 1.7rem !important; min-height: 4.2rem; letter-spacing: .03em; }
+.journey-entry .field-grid input[type=number] { font-size: 1.7rem !important; min-height: 4.2rem; letter-spacing: .03em; font-weight: 650; color: #2f4135; border-color: #879878; background: #fbfdf8; }
+.journey-entry .field-grid input[type=number]:focus { border-color: #3f594a; box-shadow: 0 0 0 3px #dfe7dc; }
 .journey-entry .form-actions { align-items: stretch; flex-direction: column; }
 .journey-entry .form-actions button { min-height: 3.2rem; border-radius: .5rem; }
 .journey-entry .journey-back { grid-column: 1; grid-row: 3; width: fit-content; padding-left: 0; }
@@ -38,8 +49,27 @@
 .journey-saved .save-ripple i { display: none; animation: none; }
 .journey-saved .save-ripple span { position: absolute; bottom: 1.2rem; right: 1.6rem; width: 2.4rem; height: 2.4rem; font-size: 1.2rem; box-shadow: none; background: #3f594a; }
 .scene-viewport:has(.journey-saved) > [data-saved-scene-status] { right: calc(50% - 5rem); width: 10rem; height: 12rem; }
-.journey-saved .split-actions { justify-content: center; }
+.journey-saved .save-next-step {
+  display: grid;
+  gap: .3rem;
+  width: min(100%, 32rem);
+  border-top: 1px solid #d8dccf;
+  border-bottom: 1px solid #d8dccf;
+  padding: .9rem 0;
+}
+.journey-saved .save-next-step .eyebrow { margin: 0; font-size: .7rem; }
+.journey-saved .save-next-step strong { color: #35473c; font-size: 1rem; line-height: 1.5; }
+.journey-saved .save-next-step > p:not(.eyebrow) { color: #696960; font-size: .82rem; line-height: 1.6; }
+.journey-saved .split-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: .65rem;
+  width: min(100%, 32rem);
+}
 .journey-saved .split-actions button { min-height: 3rem; border-radius: .5rem; }
+.journey-saved .split-actions > button:first-child { width: 100%; }
+.journey-saved .split-actions > button.secondary { min-width: 8.5rem; background: transparent; color: #48604f; box-shadow: none; }
 @media (max-width: 800px) {
   .journey-entry { column-gap: 1.5rem !important; }
   .journey-entry .measurement-panel { padding: 1.25rem; }
@@ -53,12 +83,16 @@
   .journey-entry .measurement-panel { grid-column: 1; grid-row: 2; padding: 1.1rem; gap: 1.2rem; }
   .journey-entry .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .journey-entry .field-grid label:nth-child(-n+2) { grid-column: 1 / -1; }
+  .journey-entry .field-grid label[for="systolic"],
+  .journey-entry .field-grid label[for="diastolic"] { padding-top: .8rem; }
   .journey-entry .journey-note { display: none; }
   .journey-entry .journey-back { grid-column: 1; grid-row: 3; }
   .journey-saved.scene { min-height: 32rem; gap: 1rem; padding-top: 1.5rem; }
   .journey-saved .save-ripple { height: 12rem; }
-  .journey-saved .split-actions { width: 100%; flex-direction: column; }
-  .journey-saved .split-actions button { width: 100%; }
+  .journey-saved .save-next-step { width: 100%; }
+  .journey-saved .split-actions { width: 100%; grid-template-columns: minmax(0, 1fr); }
+  .journey-saved .split-actions button,
+  .journey-saved .split-actions > button.secondary { width: 100%; min-width: 0; }
 }
 @media (max-width: 350px) {
   .app-shell:has(.journey-candidate) { padding-inline: 1rem; }
@@ -105,6 +139,96 @@
   .journey-settings-section > button { width: 100%; }
   .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: auto; }
   .journey-settings-facts { gap: .55rem; }
+}
+
+/* S07: keep today's blood-pressure record visually primary. */
+.journey-today-review.scene {
+  max-width: 58rem;
+  margin-inline: auto;
+  align-content: start;
+}
+
+.journey-today-review .today-date {
+  align-items: flex-start;
+  gap: .65rem 1.25rem;
+}
+
+.journey-today-review .today-date span {
+  color: #657061;
+  font-size: .82rem;
+  line-height: 1.55;
+  text-align: right;
+}
+
+.journey-today-review .journey-today-detail {
+  display: grid;
+  gap: .9rem;
+}
+
+.journey-today-review .journey-today-scope {
+  margin: 0;
+  color: #697066;
+  font-size: .82rem;
+  line-height: 1.6;
+}
+
+.journey-today-review .fact-lanes {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr) minmax(0, .85fr);
+  gap: 1rem;
+}
+
+.journey-today-review .fact-lanes > section {
+  gap: .55rem;
+  padding: 1rem .2rem;
+}
+
+.journey-today-review .fact-lanes > .fact-lead {
+  padding: 1rem 1.05rem 1.15rem;
+  border: 1px solid #d9e3d6;
+  border-top: 4px solid #637c5c;
+  border-radius: .65rem;
+  background: #fbfdf8;
+}
+
+.journey-today-review .fact-lanes > .fact-lead h2 {
+  color: #304438;
+  font-size: 1.25rem;
+  letter-spacing: -.025em;
+}
+
+.journey-today-review .fact-lanes > .fact-lead > p:not(.eyebrow) {
+  min-height: 0;
+  color: #35473c;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.journey-today-review .fact-lanes > section:not(.fact-lead) h2 {
+  color: #52624f;
+  font-size: 1.05rem;
+}
+
+.journey-today-review .fact-lanes > section:not(.fact-lead) > p:not(.eyebrow) {
+  min-height: 0;
+  font-size: .8rem;
+}
+
+@media (max-width: 820px) {
+  .journey-today-review .today-date {
+    display: grid;
+  }
+
+  .journey-today-review .today-date span {
+    text-align: left;
+  }
+
+  .journey-today-review .fact-lanes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journey-today-review .fact-lanes > .fact-lead {
+    padding: .95rem 1rem 1.05rem;
+  }
 }
 
 /* S08/S09: Journey-only record reading composition. Shared S10 lanes retain
