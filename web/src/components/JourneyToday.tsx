@@ -57,7 +57,11 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
             <p className="scene-body">오늘 남긴 혈압 기록은 최근 7일에서 다시 확인할 수 있어요.<br />기록이 적어도 지금부터 차근차근 볼 수 있어요.</p>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
-            <div><h2 id="home-lead-title">{lead.title}</h2><p id="home-lead-support">{lead.support}</p></div>
+            <div className="home-lead-copy">
+              <p className="home-lead-kicker">오늘 먼저</p>
+              <h2 id="home-lead-title">{lead.title}</h2>
+              <p id="home-lead-support">{lead.support}</p>
+            </div>
             <button type="button" aria-describedby="home-lead-support" onClick={() => onNavigate(lead.screen)}>{lead.action}<span aria-hidden="true">→</span></button>
           </section>
         </div>
@@ -75,7 +79,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
       </div>
       <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
         <header className="living-week-heading">
-          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">My Living Journey</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
+          <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
         <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="home-calendar" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "날짜별 기록 접기" : "날짜별 기록 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
