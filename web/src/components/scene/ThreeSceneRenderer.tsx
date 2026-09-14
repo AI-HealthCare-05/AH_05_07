@@ -48,8 +48,10 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
     contactShadow.rotation.x = -Math.PI / 2;
     scene.add(contactShadow);
+    let ready = false;
+    let warmupFrame: number | undefined;
     const fail = () => { if (!disposed) callbacks.current.onFailure(); };
-    const render = () => {
+    const draw = () => {
       if (disposed || !renderer || !visibleRef.current || !loaded) return;
       try {
         renderer.render(scene, camera);
@@ -66,8 +68,19 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
           const top = Math.max(...corners.map(point => point.y));
           element.dataset.subjectBounds = JSON.stringify({ left, right, bottom, top, height: (top - bottom) * element.clientHeight / 2 });
         }
+        return true;
+      } catch { fail(); return false; }
+    };
+    const render = () => {
+      if (!draw() || ready || warmupFrame !== undefined) return;
+      // Keep the poster visible for the upload/shader frame, then expose only a
+      // second browser-frame render. This remains a one-shot warm-up, not a loop.
+      warmupFrame = window.requestAnimationFrame(() => {
+        warmupFrame = undefined;
+        if (!draw()) return;
+        ready = true;
         callbacks.current.onReady();
-      } catch { fail(); }
+      });
     };
     const resize = () => {
       if (!renderer || disposed) return;
@@ -108,6 +121,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
       renderer.shadowMap.enabled = false;
+      renderer.initTexture(shadowTexture);
       renderer.domElement.setAttribute("aria-hidden", "true");
       renderer.domElement.addEventListener("webglcontextlost", fail);
       element.append(renderer.domElement);
@@ -142,6 +156,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     return () => {
       disposed = true;
       invalidate.current = null;
+      if (warmupFrame !== undefined) window.cancelAnimationFrame(warmupFrame);
       observer?.disconnect();
       if (renderer) {
         renderer.domElement.removeEventListener("webglcontextlost", fail);

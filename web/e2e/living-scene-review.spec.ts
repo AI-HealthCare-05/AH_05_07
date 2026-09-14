@@ -86,6 +86,54 @@ test("ready WebGL does not wait for a pending poster transfer", async ({ page })
   }
 });
 
+test("poster remains visible until the settled WebGL warm-up frame", async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window as Window & {
+      pendingSceneWarmupFrames?: number;
+      releaseSceneWarmupFrame?: () => boolean;
+    };
+    const originalRequest = window.requestAnimationFrame.bind(window);
+    const originalCancel = window.cancelAnimationFrame.bind(window);
+    const pending = new Map<number, FrameRequestCallback>();
+    let nextFrame = -1;
+    let released = false;
+    state.pendingSceneWarmupFrames = 0;
+    window.requestAnimationFrame = callback => {
+      if (!released && document.querySelector(".living-three-scene")?.hasAttribute("data-subject-bounds")) {
+        const frame = nextFrame--;
+        pending.set(frame, callback);
+        state.pendingSceneWarmupFrames = pending.size;
+        return frame;
+      }
+      return originalRequest(callback);
+    };
+    window.cancelAnimationFrame = frame => {
+      if (pending.delete(frame)) state.pendingSceneWarmupFrames = pending.size;
+      else originalCancel(frame);
+    };
+    state.releaseSceneWarmupFrame = () => {
+      released = true;
+      const first = pending.entries().next().value;
+      if (!first) return false;
+      const [frame, callback] = first;
+      pending.delete(frame);
+      state.pendingSceneWarmupFrames = pending.size;
+      originalRequest(callback);
+      return true;
+    };
+  });
+  await page.goto(url);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect.poll(() => page.evaluate(() => (window as Window & { pendingSceneWarmupFrames?: number }).pendingSceneWarmupFrames)).toBe(1);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "poster");
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "0");
+  expect(await page.evaluate(() => (window as Window & { releaseSceneWarmupFrame?: () => boolean }).releaseSceneWarmupFrame?.())).toBe(true);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready");
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(0);
+  await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "1");
+});
+
 test("GLB and poster failures preserve the task controls", async ({ page }) => {
   await page.route("**/*.glb", route => route.abort());
   await page.route(/\.(png|webp|avif)(\?|$)/, route => route.abort());
