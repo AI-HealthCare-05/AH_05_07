@@ -171,6 +171,9 @@ test("S11 requires explicit review submission and completes locally without send
   const storageBefore = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
+  await expect(step(page, "intro")).toContainText("선택 도구 · 이번 이용에만 사용");
+  await expect(step(page, "intro")).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
+  await expect(step(page, "intro")).toContainText("혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.");
   await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
   await expect(page.locator("#model-age")).toHaveCount(0);
   await expect(submit(page)).toHaveCount(0);
@@ -188,6 +191,7 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   await expect(result(page)).toContainText("생활정보 분석이 완료되었습니다.");
+  await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험/);
   await expect(submit(page)).toHaveCount(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(5);
