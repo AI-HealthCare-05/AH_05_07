@@ -16,6 +16,58 @@ const recapFiles = new Set([
 
 const focusedFiles = new Set([...todayFiles, ...recapFiles]);
 
+const savedSceneRuntimeFiles = new Set([
+  'web/src/components/SavedSceneBoundary.tsx',
+  'web/src/components/scene/SavedSceneRenderer.tsx',
+  'web/src/lib/useSavedSceneEvent.ts',
+  'web/src/ui/savedScene.ts',
+]);
+
+const reviewSceneRuntimeFiles = new Set([
+  'web/src/components/VisualStage.tsx',
+  'web/src/components/scene/ThreeSceneRenderer.tsx',
+  'web/src/components/scene/diorama.ts',
+  'web/src/components/scene/environment.ts',
+  'web/src/lib/seoulDate.ts',
+  'web/src/lib/useSeoulDate.ts',
+  'web/src/ui/sceneManifest.generated.ts',
+  'web/src/ui/scenePolicy.ts',
+  'web/src/ui/sceneRecipes.ts',
+]);
+
+const sharedSceneRuntimeFiles = new Set([
+  'web/src/App.tsx',
+  'web/src/main.tsx',
+  'web/src/components/SceneShell.tsx',
+  'web/src/components/journey-candidate.css',
+  'web/src/components/scene/disposeScene.ts',
+]);
+
+const savedSceneTestFiles = new Set([
+  'web/e2e/saved-scene-review.spec.ts',
+]);
+
+const reviewSceneTestFiles = new Set([
+  'web/e2e/diorama-scene-review.spec.ts',
+  'web/e2e/living-scene-review.spec.ts',
+  'web/e2e/seoul-date-rollover.spec.ts',
+]);
+
+const sceneEngineTestFiles = new Set([
+  ...savedSceneTestFiles,
+  ...reviewSceneTestFiles,
+]);
+
+const savedSceneSuite = Object.freeze({
+  name: 'saved-scene migration parity',
+  command: 'npm run test:e2e:saved-scene',
+});
+
+const reviewSceneSuite = Object.freeze({
+  name: 'S02 and S10 review scenes',
+  command: 'npm run test:e2e:scene',
+});
+
 const fullSuites = Object.freeze([
   {
     name: 'browser regression',
@@ -41,11 +93,13 @@ function touches(files, set) {
   return files.some(file => set.has(file));
 }
 
+function cloneSuites(suites) {
+  return suites.map(suite => ({ ...suite }));
+}
+
 export function selectPrBrowserSuites(files) {
   const unique = [...new Set(files.filter(Boolean))];
 
-  // Fast lane is intentionally narrow. Any shared/global/unknown web change
-  // falls back to the complete PR browser gate.
   if (unique.length > 0 && unique.every(file => focusedFiles.has(file))) {
     const suites = [];
     if (touches(unique, todayFiles)) {
@@ -63,7 +117,25 @@ export function selectPrBrowserSuites(files) {
     if (suites.length > 0) return suites;
   }
 
-  return fullSuites.map(suite => ({ ...suite }));
+  if (unique.length > 0 && unique.every(file => sceneEngineTestFiles.has(file))) {
+    const suites = [];
+    if (touches(unique, savedSceneTestFiles)) suites.push(savedSceneSuite);
+    if (touches(unique, reviewSceneTestFiles)) suites.push(reviewSceneSuite);
+    return cloneSuites(suites);
+  }
+
+  const touchesSharedSceneRuntime = touches(unique, sharedSceneRuntimeFiles);
+  const touchesSavedSceneRuntime = touchesSharedSceneRuntime || touches(unique, savedSceneRuntimeFiles);
+  const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(unique, reviewSceneRuntimeFiles);
+
+  if (touchesSavedSceneRuntime || touchesReviewSceneRuntime) {
+    const suites = [...fullSuites];
+    if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
+    if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
+    return cloneSuites(suites);
+  }
+
+  return cloneSuites(fullSuites);
 }
 
 function changedFiles(base, head) {
