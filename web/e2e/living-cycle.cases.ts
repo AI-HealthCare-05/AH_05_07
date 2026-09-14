@@ -82,7 +82,7 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await page.keyboard.press('Enter');
   await expect(page.locator('#S03-title')).toBeFocused();
   await expect(page).not.toHaveURL(/dashboard_window/);
-  await expect(page.getByRole('heading', { name: '다음 챌린지의 행동을 골라요' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '다음 챌린지를 시작할 행동을 골라요' })).toBeVisible();
   expect(state.writes).toHaveLength(0);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

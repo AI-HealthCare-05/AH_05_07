@@ -60,7 +60,10 @@ test("S03 saves an existing action request once without premature selection", as
   });
 
   await page.goto("/?e2e=signed-in&screen=S03");
-  await expect(page.getByRole("heading", { name: "이어갈 행동을 골라요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "원하면 이어갈 행동을 골라요" })).toBeVisible();
+  const choiceContext = page.locator('[data-challenge-choice-state="optional"]');
+  await expect(choiceContext).toContainText("참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요.");
+  await expect(choiceContext).toContainText("원할 때 하나를 골라 오늘부터 시작해요.");
   await page.locator("html").evaluate((html) => { html.style.fontSize = "200%"; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole("button", { name: /10분 걷기/ }).click();
@@ -102,19 +105,29 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
 
   await page.goto("/?e2e=signed-in&screen=S03");
   await expect(page.getByText("선택됨 · 변경 불가", { exact: true })).toBeVisible();
+  const lockedContext = page.locator('[data-challenge-choice-state="locked"]');
+  await expect(lockedContext).toContainText("첫 상태 기록 후에는 행동을 바꿀 수 없어요.");
+  await expect(lockedContext).toContainText("현재 선택을 확인하고 오늘 상태를 별도로 기록해요.");
   await page.getByRole("button", { name: "오늘 상태 확인·기록하기" }).click();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   expect(nonGetRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 
   await page.goto("/?e2e=signed-in&screen=S06");
-  await expect(page.getByRole("heading", { name: "선택한 행동을 확인해요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "선택한 행동과 오늘 상태를 확인해요" })).toBeVisible();
   await expect(page.locator('[data-challenge-period="active"]')).toContainText("2026-09-09");
   await expect(page.locator('[data-challenge-period="active"]')).toContainText("2026-09-15");
+  const pendingCheckin = page.locator('[data-challenge-checkin-state="pending"]');
+  await expect(pendingCheckin).toContainText("'기록함' 또는 '건너뜀'");
+  await expect(pendingCheckin).toContainText("'건너뜀'도 오늘 상태를 남긴 기록");
+  await expect(pendingCheckin).toContainText("혈압 기록과 합쳐서 판단하지 않아요");
   await page.getByRole("button", { name: "오늘 상태 확인·기록하기" }).click();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   expect(nonGetRequests).toEqual([]);
 
+  const pendingChallengeLane = page.locator('[data-today-challenge-state="pending"]');
+  await expect(pendingChallengeLane).toContainText("선택 기능 · 챌린지 참여");
+  await expect(pendingChallengeLane).toContainText("챌린지 상태는 혈압 기록과 별도로 저장해요.");
   await expect(page.getByText("오늘 상태를 저장해요.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "기록함", exact: true }).click();
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
@@ -187,6 +200,11 @@ for (const status of ["completed", "skipped"] as const) test(`S07 keeps today's 
 
   await page.goto("/?e2e=signed-in&screen=S07");
   await expect(page.locator('[data-today-scope="current"]')).toContainText("현재 7일 · 오늘 포함");
+  const challengeLane = page.locator(`[data-today-challenge-state="${status}"]`);
+  await expect(challengeLane).toContainText("선택 기능 · 챌린지 참여");
+  await expect(challengeLane).toContainText(`오늘 상태 · ${status === "completed" ? "기록함" : "건너뜀"}`);
+  if (status === "skipped") await expect(challengeLane).toContainText("'건너뜀'도 오늘 상태로 저장된 기록이에요.");
+  else await expect(challengeLane).toContainText("챌린지 상태는 혈압 기록과 별도로 저장해요.");
   await expect(page.getByText(`오늘 상태 · ${status === "completed" ? "기록함" : "건너뜀"}`, { exact: true })).toBeVisible();
   await expect(page.getByText("오늘 기록 없음", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "기록함", exact: true })).toHaveCount(0);
@@ -205,6 +223,8 @@ test("S06 identifies an ended challenge without offering today's status recordin
   await page.goto("/?e2e=signed-in&screen=S06");
   await expect(page.getByRole("heading", { name: "종료된 챌린지를 확인해요" })).toBeVisible();
   await expect(page.locator('[data-challenge-period="ended"]')).toContainText("종료된 챌린지");
-  await expect(page.getByText("챌린지 종료", { exact: true })).toBeVisible();
+  const endedCheckin = page.locator('[data-challenge-checkin-state="ended"]');
+  await expect(endedCheckin).toContainText("챌린지 종료");
+  await expect(endedCheckin).toContainText("오늘 상태를 새로 기록할 수 없어요");
   await expect(page.getByRole("button", { name: "오늘 상태 확인·기록하기" })).toHaveCount(0);
 });

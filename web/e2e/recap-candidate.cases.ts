@@ -51,7 +51,11 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.locator('[data-dashboard-lane="blood-pressure"]')).toHaveText('2개 기록');
     await expect(page.locator('[data-dashboard-lane="challenge"]')).toHaveText('3개 기록');
     await expect(page.locator('[data-dashboard-lane="legacy"]')).toHaveText('1개 기록');
-    await expect(page.locator('[data-challenge-progress]')).toContainText('선택한 구간 안의 체크인 기록 2개');
+    const challengeProgress = page.locator('[data-challenge-progress]');
+    await expect(challengeProgress).toContainText('선택 기능 · 현재 챌린지');
+    await expect(challengeProgress).toContainText('선택한 구간 안의 체크인 기록 2개');
+    await expect(challengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
+    await expect(challengeProgress).toContainText('혈압 기록과 합치지 않고');
     await expect(page.locator('[data-checkin-status="skipped"]')).toHaveText('건너뜀');
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     const bp = page.locator('[data-record-lane="blood-pressure"]');
@@ -176,8 +180,11 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('.window-nav')).toContainText('9월 4일');
   await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
-  await expect(page.locator('[data-challenge-progress]')).toContainText('2026-09-09 ~ 2026-09-15');
-  await expect(page.locator('[data-challenge-progress]')).toContainText('선택한 구간 안의 체크인 기록 0개');
+  const priorChallengeProgress = page.locator('[data-challenge-progress]');
+  await expect(priorChallengeProgress).toContainText('선택 기능 · 현재 챌린지');
+  await expect(priorChallengeProgress).toContainText('2026-09-09 ~ 2026-09-15');
+  await expect(priorChallengeProgress).toContainText('선택한 구간 안의 체크인 기록 0개');
+  await expect(priorChallengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
   await expect(page.getByRole('button', { name: '이전 7일 내보내기' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();

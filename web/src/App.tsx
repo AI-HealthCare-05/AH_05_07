@@ -1196,10 +1196,14 @@ function App() {
             <p>{isPriorDashboard ? "선택한 이전 구간에서는 오늘 혈압 기록 여부를 확인할 수 없어요." : todayMeasurement ? displayMeasurement(todayMeasurement) : "필요할 때 오늘의 측정값을 기록할 수 있어요."}</p>
             {!isPriorDashboard && !todayMeasurement && <button type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>}
           </section>
-          <section>
-            <p className="eyebrow">챌린지 참여</p>
+          <section className="journey-today-secondary journey-today-challenge"
+            data-today-challenge-state={isPriorDashboard ? "unavailable" : activeChallengeEnded ? "ended" : todayCheckin?.status ?? (currentChallenge ? "pending" : "optional")}>
+            <p className="eyebrow">선택 기능 · 챌린지 참여</p>
             <h2>{isPriorDashboard ? "오늘 상태 미확인" : currentChallenge ? challengeLabel(activeChallenge!.action_id) : activeChallengeEnded ? "종료된 챌린지" : "아직 선택 없음"}</h2>
             <p>{isPriorDashboard ? "선택한 이전 구간에서는 오늘 챌린지 상태를 확인하거나 기록할 수 없어요." : currentChallenge ? todayCheckin ? `오늘 상태 · ${checkinLabel(todayCheckin.status)}` : "오늘 상태를 확인하고 기록할 수 있어요." : activeChallengeEnded ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요." : "행동을 선택하면 오늘 상태를 따로 기록할 수 있어요."}</p>
+            {!isPriorDashboard && <p className="journey-today-challenge-note">{todayCheckin?.status === "skipped"
+              ? "'건너뜀'도 오늘 상태로 저장된 기록이에요. 혈압 기록과는 별도예요."
+              : "챌린지 상태는 혈압 기록과 별도로 저장해요."}</p>}
             {(!activeChallenge || activeChallengeEnded) && !isPriorDashboard ? <button type="button" onClick={() => navigate("S03")} disabled={controlsDisabled}>행동 고르기</button> : canRecordTodayStatus && <div className="journey-checkin-actions"><p>오늘 상태를 저장해요.</p><div className="inline-actions"><button type="button" onClick={() => void submitActiveChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button><button className="secondary" type="button" onClick={() => void submitActiveChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button></div></div>}
           </section>
           <section>
@@ -1272,7 +1276,12 @@ function App() {
 
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
-      if (presentation.journey) return <Scene id="S03" eyebrow="7일 챌린지" title={activeChallengeEnded ? "다음 챌린지의 행동을 골라요" : "이어갈 행동을 골라요"} body={activeChallengeEnded ? "행동을 누르면 오늘부터 새 챌린지가 시작돼요. 이전 기록은 그대로 남아요." : "행동 선택과 오늘 상태 기록은 별도예요. 처음 상태를 기록하기 전에는 행동을 바꿀 수 있어요."} tone="sage" className="journey-candidate journey-challenge-choice">
+      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} body={activeChallengeEnded ? "원할 때만 다시 시작해요. 행동을 누르면 오늘부터 새 챌린지가 시작되고 이전 기록은 그대로 남아요." : "혈압 기록과는 별도예요. 처음 상태를 저장하기 전까지 행동을 바꿀 수 있어요."} tone="sage" className="journey-candidate journey-challenge-choice">
+        <div className="challenge-choice-context" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
+          <p className="eyebrow">선택 기능</p>
+          <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
+          <p>{locked ? "현재 선택을 확인하고 오늘 상태를 별도로 기록해요." : activeChallenge && !activeChallengeEnded ? "첫 상태를 기록하기 전까지 다른 행동으로 바꿀 수 있어요." : "원할 때 하나를 골라 오늘부터 시작해요."}</p>
+        </div>
         <div className="choice-grid" aria-busy={pendingAction === "challenge-selection"}>
           {challengeActions.map((action) => {
             const selected = activeChallenge?.action_id === action.id && !activeChallengeEnded;
@@ -1318,16 +1327,26 @@ function App() {
     }
 
     if (activeScreen === "S06") {
-      if (presentation.journey) return <Scene id="S06" eyebrow="오늘의 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동을 확인해요"} body={activeChallengeEnded ? "챌린지 기간은 끝났어요. 오늘 상태를 새로 기록하지 않아요." : "챌린지 기간과 오늘 상태는 최근 7일 조회와 별도로 확인해요."} tone="sage" className="journey-candidate journey-challenge-summary">
+      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} body={activeChallengeEnded ? "챌린지 기간은 끝났어요. 오늘 상태를 새로 기록하지 않아요." : "혈압과는 별도로, 선택한 행동과 오늘 남길 상태를 확인해요."} tone="sage" className="journey-candidate journey-challenge-summary">
         <section className="locked-challenge journey-challenge-summary-card" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
           <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
           {activeChallenge && <p className="journey-challenge-dates"><span>챌린지 기간</span><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>}
         </section>
-        <section className="locked-challenge journey-challenge-summary-card">
-          <p className="eyebrow">오늘 상태</p>
+        <section className="locked-challenge journey-challenge-summary-card journey-challenge-checkin-card"
+          data-challenge-checkin-state={isPriorDashboard ? "unavailable" : activeChallengeEnded ? "ended" : todayCheckin?.status ?? "pending"}>
+          <p className="eyebrow">오늘 상태 · 별도 기록</p>
           <h2>{isPriorDashboard ? "오늘 상태 미확인" : activeChallengeEnded ? "챌린지 종료" : todayCheckin ? checkinLabel(todayCheckin.status) : "아직 기록하지 않음"}</h2>
-          <p>{isPriorDashboard ? "이전 7일 조회에서는 오늘 상태를 확인할 수 없어요." : activeChallengeEnded ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요." : todayCheckin ? "오늘 남긴 상태를 확인할 수 있어요." : "오늘 상태는 혈압 기록과 별도로 확인하고 기록할 수 있어요."}</p>
+          <p>{isPriorDashboard
+            ? "이전 7일 조회에서는 오늘 상태를 확인할 수 없어요."
+            : activeChallengeEnded
+              ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요."
+              : todayCheckin
+                ? `오늘은 '${checkinLabel(todayCheckin.status)}' 상태로 저장되어 있어요.`
+                : "오늘은 '기록함' 또는 '건너뜀' 중 하나를 상태로 저장할 수 있어요."}</p>
+          {!isPriorDashboard && !activeChallengeEnded && <p className="journey-challenge-checkin-note">
+            '건너뜀'도 오늘 상태를 남긴 기록이에요. 혈압 기록과 합쳐서 판단하지 않아요.
+          </p>}
         </section>
         {renderCycleActions()}
         <div className="inline-actions journey-challenge-next-actions">
@@ -1431,13 +1450,13 @@ function App() {
             {renderRecordLane("legacy", "이전 방식의 기록", "이 구간에 이전 방식의 기록이 없습니다.", true, false, focusedDate)}
           </>}
           challenge={<section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title">
-            <p className="eyebrow">현재 챌린지 · 관찰 구간과 별도</p>
+            <p className="eyebrow">선택 기능 · 현재 챌린지</p>
             {activeChallenge && !activeChallengeEnded ? <>
               <h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2>
               <p>챌린지 기간<br /><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>
               <strong>선택한 구간 안의 체크인 기록 {activeChallengeCheckins.length}개</strong>
-              <small>현재 챌린지에 속한 기록만 표시해요. 전체 챌린지 누적 성과가 아니에요.</small>
-            </> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>{dashboardPeriodName}의 관찰 기록과는 별도로 표시해요.</p></>}
+              <small>'기록함'과 '건너뜀'은 모두 저장된 체크인 기록이에요. 혈압 기록과 합치지 않고, 전체 챌린지 누적 성과로도 해석하지 않아요.</small>
+            </> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>선택 기능이에요. 참여하지 않아도 {dashboardPeriodName}의 혈압 기록을 그대로 확인할 수 있어요.</p></>}
           </section>}
           actions={<>
             {renderReportAction()}
