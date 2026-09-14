@@ -94,7 +94,7 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
-test('North Star Home previews a past date visibly on mobile while today facts and calendar position stay separate', async ({ page }) => {
+test('North Star Home previews a past date visibly on mobile while today facts and recent-window scope stay separate', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const state = await setup(page);
@@ -102,11 +102,10 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   const home = page.locator('.journey-today');
   const facts = home.locator('.journey-facts');
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
-  const calendarPosition = home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' });
-  await expect(calendarPosition).toHaveAttribute('value', '3');
-  await expect(calendarPosition).toHaveAttribute('max', '7');
-  await expect(home.locator('.today-cycle-progress')).toContainText('날짜 기준');
-  await expect(home.locator('.today-cycle-progress')).not.toContainText(/%|성공|달성/);
+  const recentWindow = home.locator('[data-window-kind="recent-history"]');
+  await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
+  await expect(home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' })).toHaveCount(0);
+  await expect(home.locator('.today-cycle-progress')).toHaveCount(0);
   const boundaryRequests = () => state.urls.filter(url => /e2e\.invalid|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(url));
   const beforeSelection = [...boundaryRequests()];
   await home.getByRole('button', { name: '날짜별 기록 보기', exact: true }).click();
@@ -125,7 +124,7 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   expect(labelBox.height).toBeGreaterThan(12);
   await expect(previewLabel).toBeInViewport({ ratio: 1 });
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
-  await expect(calendarPosition).toHaveAttribute('value', '3');
+  await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(boundaryRequests()).toEqual(beforeSelection);
   await home.getByRole('button', { name: '오늘로 돌아오기', exact: true }).press('Enter');

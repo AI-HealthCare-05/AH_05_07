@@ -122,7 +122,7 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   expect(nonGetRequests).toEqual(["POST /api/v1/observations/challenges/active/checkins"]);
 });
 
-test("prior S03/S07 keep read navigation and its selected range without writes", async ({ page }) => {
+test("prior S03/S07 keep read navigation but Home return resets to current without writes", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await setJourneyTime(page);
   const methods: string[] = [];
@@ -156,20 +156,22 @@ test("prior S03/S07 keep read navigation and its selected range without writes",
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   await page.locator('[data-scene="S07"]').getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true }).click();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
-  await expect(page).toHaveURL(/dashboard_window=prior/);
+  await expect(page).not.toHaveURL(/dashboard_window=prior/);
+  await expect.poll(() => windowRequests.length).toBe(2);
+  expect(windowRequests[1]).toEqual({ startOn: "2026-09-05", endOn: "2026-09-11" });
 
   await page.goto("/?e2e=signed-in&screen=S03&dashboard_window=prior");
   await expect(page.getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true }).click();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
-  await expect(page).toHaveURL(/dashboard_window=prior/);
-  expect(windowRequests).toHaveLength(2);
-  expect(windowRequests.every((request) => request.startOn === "2026-08-29" && request.endOn === "2026-09-04")).toBe(true);
-  await page.locator('[data-read-only-window]').getByRole("button", { name: "현재 7일 보기", exact: true }).click();
-  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
-  await expect.poll(() => windowRequests.length).toBe(3);
-  expect(windowRequests[2]).toEqual({ startOn: "2026-09-05", endOn: "2026-09-11" });
+  await expect.poll(() => windowRequests.length).toBe(4);
+  expect(windowRequests).toEqual([
+    { startOn: "2026-08-29", endOn: "2026-09-04" },
+    { startOn: "2026-09-05", endOn: "2026-09-11" },
+    { startOn: "2026-08-29", endOn: "2026-09-04" },
+    { startOn: "2026-09-05", endOn: "2026-09-11" },
+  ]);
   expect(methods.every((method) => method === "GET")).toBe(true);
 });
 
