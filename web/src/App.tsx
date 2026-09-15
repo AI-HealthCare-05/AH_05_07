@@ -843,11 +843,19 @@ function App() {
   }
 
   function cancelBloodPressureEdit() {
+    const originKey = editOriginKey.current;
     setEditingBloodPressureId(null);
     setBloodPressureError("");
     setBloodPressureEditDraft(emptyBloodPressureDraft(today));
     setNotice(null);
-    navigate(editOriginKey.current ? "S09" : "S08", editOriginKey.current);
+    editOriginKey.current = null;
+
+    if (originKey) {
+      window.history.back();
+      return;
+    }
+
+    navigate("S08");
   }
 
   async function confirmBloodPressureDeletion() {

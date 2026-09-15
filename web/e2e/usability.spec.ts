@@ -41,6 +41,14 @@ test("editing cancellation returns to the same record without writing", async ({
   await page.getByRole("button", { name: "수정 취소" }).click();
   await expect(page).toHaveURL(/screen=S09&record=blood-pressure%3Asynthetic-bp/);
   await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("120/80 mmHg");
+
+  await page.goBack();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.goForward();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("120/80 mmHg");
+
   expect(mutations).toEqual([]);
 });
 
