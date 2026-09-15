@@ -76,6 +76,7 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const leadCopy = home.locator('.home-lead-copy');
   await expect(leadCopy).toBeVisible();
+  await expect(leadCopy.locator('.home-lead-kicker')).toHaveText('오늘 먼저');
   await expect(leadCopy.getByRole('heading', { level: 2 })).toContainText('오늘 혈압 기록');
   await expect(leadCopy.locator('#home-lead-support')).toBeVisible();
   await expect(home.getByRole('heading', { level: 2, name: '최근 7일 기록', exact: true })).toBeVisible();
@@ -99,6 +100,181 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
+test('North Star Home recognizes recent history when a returning user has not recorded today', async ({ page }) => {
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(request.url());
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: [{
+          id: 'synthetic-returning-bp',
+          observed_on: '2026-09-10',
+          period: 'morning',
+          systolic: 120,
+          diastolic: 80,
+        }],
+        challenge_checkins: [],
+        active_challenge: null,
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(home.locator('.journey-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
+  await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '최근 7일에 혈압 기록 1건이 있어요. 오늘 측정한 값을 이어서 남겨요.',
+  );
+  await expect(home.locator('.home-lead button')).toHaveAccessibleName('혈압 기록하기');
+  await expect(home.locator('.today-week-card')).toContainText('1건');
+  await expect(home.locator('.today-word-card')).toContainText('최근 기록은 이어져 있어요.');
+  await expect(home.locator('.today-word-card')).toContainText('오늘 혈압 기록은 아직 없어요.');
+
+  const todayState = home.locator('[data-home-concept="today-detail"]');
+  await expect(todayState).toContainText('오늘 상태');
+  await expect(todayState).toContainText('오늘 혈압 기록 여부와 챌린지 상태를 확인해요.');
+  await expect(todayState).toHaveAttribute('data-home-destination', 'S07');
+
+  await todayState.press('Enter');
+
+  const todayReview = page.locator('[data-scene="S07"]');
+  await expect(todayReview).toBeVisible();
+  await expect(todayReview.locator('.scene-body')).toContainText(
+    '오늘은 아직 혈압 기록이 없어요.',
+  );
+  await expect(todayReview.locator('.today-date')).toContainText(
+    '오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요.',
+  );
+  await expect(todayReview.locator('.fact-lead')).toContainText('오늘 기록 없음');
+});
+
+for (const [todayCheckinStatus, expectedTitle, expectedSupport] of [
+  [null, '오늘 챌린지 상태', '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.'],
+  ['completed', '오늘 챌린지 확인', '10분 걷기 · 오늘 상태 기록함'],
+] as const) {
+  test(`North Star Home shows returning challenge state as ${todayCheckinStatus ?? 'pending'}`, async ({ page }) => {
+    await setup(page);
+    await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      const url = new URL(request.url());
+
+      return route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          start_on: url.searchParams.get('start_on'),
+          end_on: url.searchParams.get('end_on'),
+          blood_pressure_observations: [{
+            id: 'synthetic-returning-yesterday-bp',
+            observed_on: '2026-09-10',
+            period: 'morning',
+            systolic: 120,
+            diastolic: 80,
+          }],
+          active_challenge: {
+            id: 'synthetic-returning-challenge',
+            action_id: 'walk-10-minutes',
+            starts_on: '2026-09-05',
+            ends_on: '2026-09-11',
+            first_checkin_on: '2026-09-05',
+            status: 'active',
+          },
+          challenge_checkins: todayCheckinStatus ? [{
+            id: 'synthetic-returning-checkin',
+            challenge_id: 'synthetic-returning-challenge',
+            observed_on: '2026-09-11',
+            action_id: 'walk-10-minutes',
+            status: todayCheckinStatus,
+          }] : [],
+          challenge_events: [],
+        }),
+      });
+    });
+
+    await page.goto('/?e2e=signed-in&screen=S02');
+
+    const home = page.locator('.journey-today');
+    await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
+
+    const challenge = home.locator('[data-home-concept="challenge"]');
+    await expect(challenge.locator('strong')).toHaveText(expectedTitle);
+    await expect(challenge).toContainText(expectedSupport);
+    await expect(challenge).toHaveAttribute('data-home-destination', 'S06');
+  });
+}
+
+test('North Star Home stops offering another BP slot when both daily periods are already recorded', async ({ page }) => {
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(request.url());
+
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: [
+          {
+            id: 'synthetic-today-morning',
+            observed_on: '2026-09-11',
+            period: 'morning',
+            systolic: 120,
+            diastolic: 80,
+          },
+          {
+            id: 'synthetic-today-evening',
+            observed_on: '2026-09-11',
+            period: 'evening',
+            systolic: 122,
+            diastolic: 81,
+          },
+        ],
+        challenge_checkins: [],
+        active_challenge: null,
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '아침·저녁 기록이 있어요. 저장한 내용을 확인해요.',
+  );
+
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
+
+  const recordsAction = home.locator('[data-home-concept="records"]');
+  await expect(recordsAction).toContainText('기록 찾아보기');
+  await expect(recordsAction).toContainText(
+    '오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.',
+  );
+  await expect(recordsAction).toHaveAttribute('data-home-destination', 'S08');
+
+  await recordsAction.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: '기록 찾아보기' })).toBeVisible();
+});
+
 test('North Star Home previews a past date visibly on mobile while today facts and recent-window scope stay separate', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -108,8 +284,14 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   const facts = home.locator('.journey-facts');
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('.home-lead-kicker')).toHaveText('오늘 기록');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '아침 기록이 있어요. 저장한 내용을 확인해요.',
+  );
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('혈압 추가 기록');
-  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('오늘 측정한 값을 바로 기록해요.');
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText(
+    '아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요.',
+  );
   const recentWindow = home.locator('[data-window-kind="recent-history"]');
   await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
   await expect(home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' })).toHaveCount(0);

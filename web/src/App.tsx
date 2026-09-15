@@ -72,7 +72,7 @@ type Notice = {
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior" | `cycle:${string}`;
-type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail";
+type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail" | "records";
 type HomeAction = {
   key: HomeDestinationKey;
   title: string;
@@ -1022,13 +1022,24 @@ function App() {
       : todayMorningMeasurement
         ? "오늘 아침 기록 있음"
         : "오늘 저녁 기록 있음";
+  const recentBloodPressureCount = isPriorDashboard
+    ? 0
+    : windowData?.blood_pressure_observations.length ?? 0;
   const todayBloodPressureSupport = !todayMeasurement
-    ? "오늘 측정한 값을 남겨요."
+    ? recentBloodPressureCount > 0
+      ? `최근 7일에 혈압 기록 ${recentBloodPressureCount}건이 있어요. 오늘 측정한 값을 이어서 남겨요.`
+      : "오늘 측정한 값을 남겨요."
     : todayMorningMeasurement && todayEveningMeasurement
-      ? "아침·저녁 기록을 확인해요."
+      ? "아침·저녁 기록이 있어요. 저장한 내용을 확인해요."
       : todayMorningMeasurement
-        ? "아침 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요."
-        : "저녁 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요.";
+        ? "아침 기록이 있어요. 저장한 내용을 확인해요."
+        : "저녁 기록이 있어요. 저장한 내용을 확인해요.";
+  const additionalBloodPressureSupport =
+    todayMorningMeasurement && !todayEveningMeasurement
+      ? "아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
+      : todayEveningMeasurement && !todayMorningMeasurement
+        ? "저녁 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
+        : "오늘 측정한 값을 바로 기록해요.";
   const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const readNavigationDisabled = pendingAction !== null || accountDeletionPending;
   const displayMeasurement = (record: BloodPressureObservation) => evidenceMode ? "•••/•• mmHg" : `${record.systolic}/${record.diastolic} mmHg`;
@@ -1067,29 +1078,55 @@ function App() {
     ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
     : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
   const challengeDestination: ScreenId = activeChallenge ? "S06" : "S03";
+  const homeChallengeTitle = activeChallengeEnded
+    ? "종료된 챌린지"
+    : activeChallenge
+      ? todayCheckin
+        ? "오늘 챌린지 확인"
+        : "오늘 챌린지 상태"
+      : "7일 챌린지";
+  const homeChallengeSupport = activeChallengeEnded
+    ? "종료된 챌린지 확인하기"
+    : activeChallenge
+      ? todayCheckin
+        ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 ${checkinLabel(todayCheckin.status)}`
+        : `${challengeLabel(activeChallenge.action_id)} · 오늘 상태는 아직 기록하지 않았어요.`
+      : "선택 기능 · 이어갈 행동 고르기";
   const homeLead: HomeAction = !todayMeasurement
     ? { key: "blood-pressure", title: "오늘 혈압 기록", support: todayBloodPressureSupport, action: "혈압 기록하기", screen: "S04" }
     : { key: "today-detail", title: "오늘 혈압 기록 확인", support: todayBloodPressureSupport, action: "오늘 기록 보기", screen: "S07" };
+  const bloodPressureSecondaryAction: HomeAction =
+    todayMorningMeasurement && todayEveningMeasurement
+      ? {
+          key: "records",
+          title: "기록 찾아보기",
+          support: "오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.",
+          action: "기록 찾아보기",
+          screen: "S08",
+        }
+      : {
+          key: "blood-pressure",
+          title: "혈압 추가 기록",
+          support: additionalBloodPressureSupport,
+          action: "혈압 추가 기록하기",
+          screen: "S04",
+        };
   const homeSecondaryActions = ([
-    {
-      key: "blood-pressure",
-      title: "혈압 추가 기록",
-      support: "오늘 측정한 값을 바로 기록해요.",
-      action: "혈압 추가 기록하기",
-      screen: "S04",
-    },
+    bloodPressureSecondaryAction,
     {
       key: "challenge",
-      title: "7일 챌린지",
-      support: activeChallengeEnded ? "종료된 챌린지 확인하기" : activeChallenge ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 확인` : "선택 기능 · 이어갈 행동 고르기",
+      title: homeChallengeTitle,
+      support: homeChallengeSupport,
       action: "챌린지 열기",
       screen: challengeDestination,
     },
     {
       key: "today-detail",
-      title: "오늘 상세",
-      support: "오늘 남긴 기록 확인",
-      action: "오늘 상세 열기",
+      title: todayMeasurement ? "오늘 상세" : "오늘 상태",
+      support: todayMeasurement
+        ? "오늘 남긴 혈압 기록과 챌린지 상태를 확인해요."
+        : "오늘 혈압 기록 여부와 챌린지 상태를 확인해요.",
+      action: todayMeasurement ? "오늘 상세 열기" : "오늘 상태 보기",
       screen: "S07",
     },
   ] as HomeAction[]).filter((item) => item.key !== homeLead.key);
@@ -1369,8 +1406,16 @@ function App() {
     }
 
     if (activeScreen === "S07") {
-      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard ? "선택한 이전 7일의 범위를 보고 있어요." : "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."} tone="cream" className="journey-candidate journey-today-review">
-        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용` : "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."}</span></div>
+      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard
+        ? "선택한 이전 7일의 범위를 보고 있어요."
+        : todayMeasurement
+          ? "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."
+          : "오늘은 아직 혈압 기록이 없어요. 챌린지 참여와 이전 방식 기록은 각각 따로 확인할 수 있어요."} tone="cream" className="journey-candidate journey-today-review">
+        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
+          ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
+          : todayMeasurement
+            ? "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."
+            : "오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요."}</span></div>
         {journeyTodayLanes()}
         <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
       </Scene>;

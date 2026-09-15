@@ -43,6 +43,14 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const previewing = landscapeDate !== today;
   const landmark = landmarkForCalendarDate(landscapeDate);
   const summary = summarizeTrailDays(days);
+  const leadKicker = lead.key === 'today-detail' ? '오늘 기록' : '오늘 먼저';
+  const todayWord: readonly [string, string] = !factsKnown
+    ? ['기록을 불러오면', '오늘 상태를 확인할 수 있어요.']
+    : (todayDay?.observationCount ?? 0) > 0
+      ? ['오늘 남긴 기록부터', '차근차근 확인해요.']
+      : summary.observationCount > 0
+        ? ['최근 기록은 이어져 있어요.', '오늘 혈압 기록은 아직 없어요.']
+        : ['오늘 혈압 기록은 아직 없어요.', '필요할 때 시작해요.'];
   const maxObservations = Math.max(1, ...days.map(day => day.observationCount));
 
   return <section className="scene journey-candidate journey-today home-scene" data-scene="S02" aria-labelledby="S02-title">
@@ -58,7 +66,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div className="home-lead-copy">
-              <p className="home-lead-kicker">오늘 먼저</p>
+              <p className="home-lead-kicker">{leadKicker}</p>
               <h2 id="home-lead-title">{lead.title}</h2>
               <p id="home-lead-support">{lead.support}</p>
             </div>
@@ -111,7 +119,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
             </div>
             <p>{factsKnown ? `관찰 기록을 남긴 날 ${summary.observationDateCount}일` : '기록을 불러오면 표시돼요.'}</p>
           </section>
-          <aside className="today-summary-card today-word-card"><h3>모아의 한마디 <span aria-hidden="true">❧</span></h3><span className="today-quote-mark" aria-hidden="true">“</span><p>오늘 남긴 기록부터<br />차근차근 확인해요.</p></aside>
+          <aside className="today-summary-card today-word-card"><h3>모아의 한마디 <span aria-hidden="true">❧</span></h3><span className="today-quote-mark" aria-hidden="true">“</span><p>{todayWord[0]}<br />{todayWord[1]}</p></aside>
         </div>
         <p className="today-records-note">혈압 관찰과 챌린지 참여는 서로 다른 사실로 남아요.</p>
         <nav className="home-links" aria-label="오늘 기록 바로가기">
