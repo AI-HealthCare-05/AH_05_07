@@ -270,6 +270,7 @@ function App() {
     () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
   const [savedFactKind, setSavedFactKind] = useState<SavedFactKind>("blood-pressure");
+  const [savedFactDate, setSavedFactDate] = useState(today);
   const savedScene = useSavedSceneEvent();
   const [bloodPressureEditDraft, setBloodPressureEditDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
@@ -818,6 +819,7 @@ function App() {
       setEditingBloodPressureId(null);
       savedScene.present(saveVisual);
       setSavedFactKind("blood-pressure");
+      setSavedFactDate(payload.observed_on);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -922,6 +924,7 @@ function App() {
       setNotice(null);
       savedScene.present(saveVisual);
       setSavedFactKind("challenge-checkin");
+      setSavedFactDate(today);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -1414,19 +1417,28 @@ function App() {
     }
 
     if (activeScreen === "S05") {
+      const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
       return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
           <strong>{savedFactKind === "challenge-checkin"
             ? "오늘의 기록에서 방금 저장한 챌린지 상태를 확인해요"
-            : "오늘의 기록에서 방금 저장한 혈압을 확인해요"}</strong>
+            : savedBloodPressureIsToday
+              ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
+              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</strong>
           <p>{savedFactKind === "challenge-checkin"
             ? "저장이 끝났어요. 챌린지 상태는 혈압 기록과 별도로 남고, 오늘의 기록과 최근 7일에서 다시 확인할 수 있어요."
-            : "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."}</p>
+            : savedBloodPressureIsToday
+              ? "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."
+              : "저장이 끝났어요. 기록 찾아보기에서 날짜와 시간대별로 다시 확인할 수 있어요."}</p>
         </div>}
         <div className="split-actions">
-          <button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>
+          <button type="button" onClick={() => {
+            setConfirmedSave(false);
+            savedScene.clear();
+            navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "S08" : "S02");
+          }}>{savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "기록 찾아보기" : "오늘의 기록 보기"}</button>
           <button className="secondary" type="button" onClick={() => {
             setConfirmedSave(false);
             savedScene.clear();

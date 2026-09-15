@@ -835,3 +835,25 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200.png'), fullPage: true });
 });
+
+test('past-dated BP confirmation points to record history instead of today', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+
+  await page.goto('/?e2e=signed-in&screen=S04');
+  await page.locator('#observed-on').fill('2026-09-10');
+  await page.getByLabel(/수축기/).fill('120');
+  await page.getByLabel(/이완기/).fill('80');
+  await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
+
+  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+  await expect(page.locator('.save-next-step')).toContainText('최근 기록에서 방금 저장한 혈압을 확인해요');
+  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜와 시간대별로');
+  const savedScene = page.locator('[data-scene="S05"]');
+  await expect(savedScene.getByRole('button', { name: '기록 찾아보기', exact: true })).toBeVisible();
+  await expect(savedScene.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toHaveCount(0);
+
+  await savedScene.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+});
