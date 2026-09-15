@@ -75,6 +75,9 @@ test("primary journey navigation updates the URL and supports browser history", 
   await expect(page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })).toHaveCount(0);
   await page.getByRole("button", { name: "설정과 도움말" }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S14"]')).toContainText(
+    "활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.",
+  );
   await page.getByRole("button", { name: "선별 신호 도구 열기" }).click();
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
   await expect(page.getByRole("button", { name: "설정과 도움말" })).toHaveAttribute("aria-current", "page");
