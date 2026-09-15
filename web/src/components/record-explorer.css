@@ -315,6 +315,14 @@
   text-align: left;
 }
 
+.record-explorer-detail-selection {
+  margin: 0;
+  color: var(--record-explorer-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .record-explorer-detail-period { color: var(--sk7-ink-muted); font-size: 1rem; line-height: 1.6; }
 
 /* S09 keeps the selected record as the visual priority. */

@@ -1447,6 +1447,10 @@ function App() {
       return (
         <Scene id="S09" {...journeyCopy.S09} tone="lavender" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
           <button className="text-button record-explorer-detail-return" type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
+          {selectedRecord && <p className="record-explorer-detail-selection">
+            선택한 기록 · {dateLabel(selectedRecord.record.observed_on)}
+            {selectedRecord.kind === "blood-pressure" ? ` · ${periodLabel(selectedRecord.record.period)}` : ""}
+          </p>}
           <p className="record-explorer-detail-period">{dashboardPeriodName}{isPriorDashboard ? " · 읽기 전용" : ""} · {dateLabel(startOn)} ~ {dateLabel(endOn)}</p>
           {selectedRecordMissing ? (
             <div className="state-card state-error" role="alert">
