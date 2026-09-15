@@ -335,16 +335,17 @@ for (const outcome of ["cancel", "save"] as const) {
     if (outcome === "cancel") {
       await page.getByRole("button", { name: "수정 취소" }).click();
       await expect(page.locator('[data-scene="S09"]')).toBeVisible();
-      await leaveAndReturn(page);
       expect(api.writes).toHaveLength(0);
     } else {
       await page.getByRole("button", { name: "변경 저장" }).click();
-      await expect(page.locator('[data-scene="S05"]')).toBeVisible();
-      await page.getByRole("button", { name: "계속 기록하기" }).click();
+      await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+      await expect(page.locator(".notice")).toContainText("혈압 기록을 수정했습니다.");
+      await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
       expect(api.writes).toHaveLength(1);
       expect(api.writes[0].method()).toBe("PUT");
       expect(api.writes[0].postDataJSON()).toMatchObject({ observed_on: today, period: "morning", systolic: 123, diastolic: 80 });
     }
+    await leaveAndReturn(page);
     await expectDraft(page);
     await expect(page.getByText(restoredCopy)).toBeVisible();
   });
@@ -358,8 +359,9 @@ test("uncertain new write keeps its recovery action after an unrelated edit succ
   await expect(page.getByText("처리 결과 확인 필요")).toBeVisible();
   await openEdit(page);
   await page.getByRole("button", { name: "변경 저장" }).click();
-  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
-  await page.getByRole("button", { name: "계속 기록하기" }).click();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
+  await leaveAndReturn(page);
   await expectDraft(page);
   await expect(page.getByText("처리 결과 확인 필요")).toBeVisible();
   await page.getByRole("button", { name: "다시 불러오기", exact: true }).click();

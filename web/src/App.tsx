@@ -798,24 +798,32 @@ function App() {
     if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     const payload = validateBloodPressure();
     if (!payload) return;
+    const editingRecordId = editingBloodPressureId;
+    const editReturnKey = editOriginKey.current;
     setPendingAction("blood-pressure");
     try {
-      if (editingBloodPressureId) {
-        await updateBloodPressureObservation(activeSession, editingBloodPressureId, payload);
+      if (editingRecordId) {
+        await updateBloodPressureObservation(activeSession, editingRecordId, payload);
       } else {
         await createBloodPressureObservation(activeSession, payload);
       }
       if (!isCurrentRequestContext(requestContext)) return;
-      const saveVisual = savedScene.confirmPersistence();
+      const saveVisual = editingRecordId ? null : savedScene.confirmPersistence();
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
-      if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
-      else setNotice(null);
-      if (editingBloodPressureId) setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
-      else {
-        newBloodPressure.reset(presentationRef.current.today);
-        setNewBloodPressureRecovery(null);
+      if (editingRecordId) {
+        setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
+        setEditingBloodPressureId(null);
+        editOriginKey.current = null;
+        setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
+        if (editReturnKey) window.history.back();
+        else navigate("S08");
+        return;
       }
+
+      setNotice(null);
+      newBloodPressure.reset(presentationRef.current.today);
+      setNewBloodPressureRecovery(null);
       setEditingBloodPressureId(null);
       savedScene.present(saveVisual);
       setSavedFactKind("blood-pressure");
@@ -827,7 +835,7 @@ function App() {
         const recovery = presentRequestError(error, "save", requestContext);
         // Keep the original uncertainty and fresh-read action with the parked
         // new entry, even if an unrelated edit later replaces the global notice.
-        if (!editingBloodPressureId && isCurrentRequestContext(requestContext)) setNewBloodPressureRecovery(recovery?.reload ? recovery : null);
+        if (!editingRecordId && isCurrentRequestContext(requestContext)) setNewBloodPressureRecovery(recovery?.reload ? recovery : null);
       }
     } finally {
       if (isCurrentRequestContext(requestContext)) setPendingAction(null);
