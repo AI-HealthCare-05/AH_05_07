@@ -1081,14 +1081,24 @@ function App() {
   const homeLead: HomeAction = !todayMeasurement
     ? { key: "blood-pressure", title: "오늘 혈압 기록", support: todayBloodPressureSupport, action: "혈압 기록하기", screen: "S04" }
     : { key: "today-detail", title: "오늘 혈압 기록 확인", support: todayBloodPressureSupport, action: "오늘 기록 보기", screen: "S07" };
+  const bloodPressureSecondaryAction: HomeAction =
+    todayMorningMeasurement && todayEveningMeasurement
+      ? {
+          key: "records",
+          title: "기록 찾아보기",
+          support: "오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.",
+          action: "기록 찾아보기",
+          screen: "S08",
+        }
+      : {
+          key: "blood-pressure",
+          title: "혈압 추가 기록",
+          support: additionalBloodPressureSupport,
+          action: "혈압 추가 기록하기",
+          screen: "S04",
+        };
   const homeSecondaryActions = ([
-    {
-      key: "blood-pressure",
-      title: "혈압 추가 기록",
-      support: additionalBloodPressureSupport,
-      action: "혈압 추가 기록하기",
-      screen: "S04",
-    },
+    bloodPressureSecondaryAction,
     {
       key: "challenge",
       title: "7일 챌린지",

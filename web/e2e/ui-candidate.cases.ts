@@ -139,6 +139,62 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(home.locator('.today-week-card')).toContainText('1건');
 });
 
+test('North Star Home stops offering another BP slot when both daily periods are already recorded', async ({ page }) => {
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(request.url());
+
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: [
+          {
+            id: 'synthetic-today-morning',
+            observed_on: '2026-09-11',
+            period: 'morning',
+            systolic: 120,
+            diastolic: 80,
+          },
+          {
+            id: 'synthetic-today-evening',
+            observed_on: '2026-09-11',
+            period: 'evening',
+            systolic: 122,
+            diastolic: 81,
+          },
+        ],
+        challenge_checkins: [],
+        active_challenge: null,
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
+
+  const recordsAction = home.locator('[data-home-concept="records"]');
+  await expect(recordsAction).toContainText('기록 찾아보기');
+  await expect(recordsAction).toContainText(
+    '오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.',
+  );
+  await expect(recordsAction).toHaveAttribute('data-home-destination', 'S08');
+
+  await recordsAction.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: '기록 찾아보기' })).toBeVisible();
+});
+
 test('North Star Home previews a past date visibly on mobile while today facts and recent-window scope stay separate', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
