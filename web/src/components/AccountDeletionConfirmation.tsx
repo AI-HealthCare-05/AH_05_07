@@ -46,7 +46,7 @@ export function AccountDeletionConfirmation({ pending, recovery, onCancel, onCon
           <ul>
             <li>계정이 삭제됩니다.</li>
             <li>저장된 혈압 관찰과 챌린지 기록이 삭제됩니다.</li>
-            <li>이미 다운로드한 JSON 파일은 기기에 남으므로 직접 삭제해야 합니다.</li>
+            <li>이미 내보낸 JSON, 저장한 PDF, 인쇄물은 계정 삭제로 없어지지 않으므로 직접 관리해야 합니다.</li>
           </ul>
           <div className="form-actions">
             <button className="secondary" type="button" onClick={onCancel}>취소</button>
