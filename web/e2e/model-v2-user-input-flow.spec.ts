@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
+import { chooseMinuteByKeyboard, chooseTime, expectTimeValue } from "./model-v2-time-wheel";
 
 const emptyWindow = {
   start_on: "2026-09-02",
@@ -101,66 +102,6 @@ async function fillActivity(page: Page) {
 
 async function fillSleep(page: Page) {
   for (const [id, value] of timeInputs) await chooseTime(page, id, value);
-}
-
-async function chooseMinuteByKeyboard(page: Page, id: string, minute: number) {
-  const picker = page.locator(`#${id}-picker`);
-  const minuteWheel = picker.locator(".model-v2-wheel-column").nth(1);
-  await minuteWheel.focus();
-  if (minute === 59) {
-    await minuteWheel.press("End");
-  } else {
-    await minuteWheel.press("Home");
-    for (let current = 0; current < minute; current += 1) {
-      await minuteWheel.press("ArrowDown");
-    }
-  }
-  await expect(minuteWheel).toHaveAttribute(
-    "aria-valuetext",
-    `${String(minute).padStart(2, "0")}분`,
-  );
-}
-
-async function chooseTime(page: Page, id: string, value: string) {
-  const [hourText, minuteText] = value.split(":");
-  const hour = Number(hourText);
-  const period = hour < 12 ? "오전" : "오후";
-  const twelveHour = hour % 12 || 12;
-  const trigger = page.locator(`#${id}`);
-
-  if (await trigger.getAttribute("aria-expanded") !== "true") await trigger.click();
-
-  const picker = page.locator(`#${id}-picker`);
-  await expect(picker).toBeVisible();
-
-  // Set numeric wheels first. The product intentionally carries AM/PM when
-  // stepping across 11 <-> 12, so the test must not preselect meridiem and
-  // then accidentally change it while navigating to 12.
-  const hourWheel = picker.getByRole("spinbutton", { name: `${await page.locator(`#${id}-label`).textContent()} 시` });
-  await hourWheel.focus();
-  await hourWheel.press("Home");
-  for (let current = 1; current < twelveHour; current += 1) {
-    await hourWheel.press("ArrowDown");
-  }
-  await expect(hourWheel).toHaveAttribute("aria-valuetext", `${twelveHour}시`);
-
-  await chooseMinuteByKeyboard(page, id, Number(minuteText));
-
-  // Meridiem is the final explicit value, guaranteeing the exact canonical
-  // time requested by the helper regardless of hour-wheel boundary travel.
-  const periodGroup = picker.getByRole("radiogroup", {
-    name: `${await page.locator(`#${id}-label`).textContent()} 오전 또는 오후`,
-  });
-  const periodRadio = periodGroup.getByRole("radio", { name: period, exact: true });
-  await periodRadio.click();
-  await expect(periodRadio).toHaveAttribute("aria-checked", "true");
-}
-
-async function expectTimeValue(page: Page, id: string, value: string) {
-  const hour = Number(value.slice(0, 2));
-  const expected = `${hour < 12 ? "오전" : "오후"} ${hour % 12 || 12}:${value.slice(3)}`;
-  await expect(page.locator(`#${id}`)).toContainText(expected);
-  await expect(page.locator(`#${id}`)).toHaveAttribute("data-time-complete", "true");
 }
 
 async function toSleep(page: Page, age = "35") {
