@@ -67,9 +67,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await bp.getByRole('button', { name: '상세 보기' }).first().press('Enter');
     await expect(page.locator('#S09-title')).toBeFocused();
     await expect(page.getByRole('button', { name: '수정', exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
-    await expect(page.locator('#S08-title')).toBeFocused();
-    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+    await expect(page.locator('#S10-title')).toBeFocused();
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
     await noOverflow(page);
@@ -198,9 +197,9 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();
   await expect(page.getByText('이전 7일의 기록은 읽기 전용입니다.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
+  await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+  await expect(page.locator('#S10-title')).toBeFocused();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
-  await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await page.locator('[data-trail-date="2026-09-04"] > button').click();
   await page.locator('[data-dashboard-window]').getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'current');
