@@ -120,3 +120,17 @@ test("failed auth confirmation returns to a clean login URL without retaining th
   await expect(page.getByRole("status")).toContainText("새 로그인 링크를 요청해 주세요.");
   await expect.poll(async () => (await verifyBodies(page)).length).toBe(1);
 });
+
+test("query-string auth token is exchanged once and scrubbed from browser history", async ({ page }) => {
+  await installAuthConfirmHarness(page);
+
+  await page.goto("/auth/confirm?token_hash=synthetic-query-token&type=email");
+
+  await expect.poll(() => cleanLocation(page)).toBe("/");
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await expect.poll(async () => (await verifyBodies(page)).length).toBe(1);
+  expect((await verifyBodies(page))[0]).toMatchObject({
+    token_hash: "synthetic-query-token",
+    type: "email",
+  });
+});

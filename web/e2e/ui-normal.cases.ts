@@ -1,6 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { chooseTime as chooseTimeWheel } from './model-v2-time-wheel';
+
 
 for (const screen of ['S02', 'S05', 'S10', 'S11']) test(`normal configured build rejects fixture, fake-session URL and harness event at ${screen}`, async ({ page }) => {
   const requests: string[] = [];
@@ -75,8 +77,10 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await page.locator('#model-walking-hours').fill('0'); await page.locator('#model-walking-minutes').fill('40');
   await page.getByLabel('최근 7일 근력운동').selectOption('2_days');
   await page.getByRole('button', { name: '다음', exact: true }).click();
-  await page.locator('#model-weekday-bed').fill('23:30'); await page.locator('#model-weekday-wake').fill('07:00');
-  await page.locator('#model-weekend-bed').fill('23:30'); await page.locator('#model-weekend-wake').fill('08:00');
+  await chooseTimeWheel(page, 'model-weekday-bed', '23:30');
+  await chooseTimeWheel(page, 'model-weekday-wake', '07:00');
+  await chooseTimeWheel(page, 'model-weekend-bed', '23:30');
+  await chooseTimeWheel(page, 'model-weekend-wake', '08:00');
   await page.getByRole('button', { name: '입력 확인하기', exact: true }).click();
   expect(modelRequests).toBe(0);
   await page.getByLabel('위 안내를 확인했습니다.').check();

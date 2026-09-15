@@ -73,6 +73,31 @@ or a new dependency/topology:
   and human review. Completed audits, expired hypotheses, and old thresholds are
   not startup requirements for a new task.
 
+## Autonomous execution lane
+
+Hands-off AI development uses the existing repository controls instead of adding
+a second orchestration stack. Do not add a tunnel, persistent writer daemon, or
+new deployment service for routine autonomous work. See
+[Autopilot Lite](docs/autopilot-lite.md) for the operator workflow.
+
+- Work from current `origin/main` in an isolated Git worktree and a short task
+  branch. Preserve unrelated worktrees and user changes.
+- Before publishing an autonomously prepared change, run
+  `python3 scripts/git/autopilot_guard.py --base origin/main`. The guard is a
+  classification aid; the stricter `--require-routine` mode is required before
+  an agent enables auto-merge.
+- A `routine` result may be published as a PR and may request squash auto-merge
+  only after the existing required checks pass and review threads are resolved.
+- A `protected` result may be implemented, tested, and published as a PR, but an
+  autonomous agent must not enable auto-merge or merge it. Human approval is the
+  final gate.
+- A `deny` result must not be published from the autonomous lane. Governance,
+  workflow, credential, and guard files are intentionally outside hands-off
+  self-modification.
+- GitHub-hosted required CI remains the final broad regression gate. Persistent
+  self-hosted runners remain manual trusted verification only and are not the
+  default autonomous merge path.
+
 ## Shared defaults
 
 - Keep `main` runnable and merge through a PR with passing required `lint` and

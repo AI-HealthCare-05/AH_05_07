@@ -473,6 +473,8 @@ test("Back cannot restore A private detail after switching to B", async ({ page 
 
 test("S01 and S14 explain retention, account, and local export boundaries", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator('[data-scene="S01"]')).toContainText("측정한 혈압을 기록하고");
+  await expect(page.locator('[data-scene="S01"]')).toContainText("같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.");
   await expect(page.locator('[data-scene="S01"]')).toContainText("공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.");
   await routeWindow(page, () => emptyWindow);
   await page.goto("/?e2e=signed-in&screen=S14");
@@ -484,6 +486,8 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("계정 삭제");
   await expect(settings).toContainText("JSON");
   await expect(settings).toContainText("기기");
+  await expect(settings).toContainText("선택 도구 · 이번 이용에만 사용해요.");
+  await expect(settings).toContainText("입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.");
 });
 
 test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {

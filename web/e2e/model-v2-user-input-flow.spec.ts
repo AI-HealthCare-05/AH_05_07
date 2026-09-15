@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
+import { chooseMinuteByKeyboard, chooseTime, expectTimeValue } from "./model-v2-time-wheel";
 
 const emptyWindow = {
   start_on: "2026-09-02",
@@ -100,7 +101,7 @@ async function fillActivity(page: Page) {
 }
 
 async function fillSleep(page: Page) {
-  for (const [id, value] of timeInputs) await page.locator(`#${id}`).fill(value);
+  for (const [id, value] of timeInputs) await chooseTime(page, id, value);
 }
 
 async function toSleep(page: Page, age = "35") {
@@ -171,6 +172,9 @@ test("S11 requires explicit review submission and completes locally without send
   const storageBefore = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
+  await expect(step(page, "intro")).toContainText("선택 도구 · 이번 이용에만 사용");
+  await expect(step(page, "intro")).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
+  await expect(step(page, "intro")).toContainText("혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.");
   await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
   await expect(page.locator("#model-age")).toHaveCount(0);
   await expect(submit(page)).toHaveCount(0);
@@ -180,7 +184,7 @@ test("S11 requires explicit review submission and completes locally without send
   expect(routed.requests).toHaveLength(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(4);
   const review = step(page, "review");
-  for (const text of ["35", "남성", "170", "68", "비흡연", "월 1회 미만", "1~2잔", "40", "23:30", "07:00", "08:00"]) {
+  for (const text of ["35", "남성", "170", "68", "비흡연", "월 1회 미만", "1~2잔", "40", "오후 11:30", "오전 7:00", "오전 8:00"]) {
     await expect(review).toContainText(text);
   }
   await expect(review).not.toContainText(/BMI|체질량지수|저위험|중위험|고위험/);
@@ -188,6 +192,7 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   await expect(result(page)).toContainText("생활정보 분석이 완료되었습니다.");
+  await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험/);
   await expect(submit(page)).toHaveCount(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(5);
@@ -239,7 +244,7 @@ test("S11 previous navigation preserves every completed step without issuing a r
   await next(page).click();
   await next(page).click();
   await expectStep(page, "sleep");
-  for (const [id, value] of timeInputs) await expect(page.locator(`#${id}`)).toHaveValue(value);
+  for (const [id, value] of timeInputs) await expectTimeValue(page, id, value);
   expect(routed.requests).toHaveLength(0);
 });
 
@@ -251,12 +256,13 @@ test("S11 review edits return directly to review and submit only the corrected v
     { step: "basics", title: "기본 정보", id: "model-weight", value: "69", text: "69" },
     { step: "habits", title: "생활 습관", id: "model-smoking", value: "former_currently_not_smoking", text: "과거 흡연, 현재 금연" },
     { step: "activity", title: "활동", id: "model-walking-minutes", value: "45", text: "45" },
-    { step: "sleep", title: "수면", id: "model-weekend-wake", value: "08:15", text: "08:15" },
+    { step: "sleep", title: "수면", id: "model-weekend-wake", value: "08:15", text: "오전 8:15" },
   ] as const;
   for (const edit of edits) {
     await page.getByRole("button", { name: `${edit.title} 수정`, exact: true }).click();
     await expectStep(page, edit.step);
     if (edit.step === "habits") await page.locator(`#${edit.id}`).selectOption(edit.value);
+    else if (edit.step === "sleep") await chooseTime(page, edit.id, edit.value);
     else await page.locator(`#${edit.id}`).fill(edit.value);
     await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
     await expectStep(page, "review");
@@ -354,38 +360,56 @@ test("S11 preserves existing fractional and positive input semantics without new
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
-test("S11 makes all four time fields explicit and focuses every incomplete clock value locally", async ({ page }) => {
+test("S11 time wheels keep a blank draft blank until all three explicit selections are made", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toSleep(page);
-  for (const [id] of timeInputs) await expect(page.locator(`#${id}-status`)).toHaveText("시간 선택 필요");
-  await fillSleep(page);
-  for (const [id, value] of timeInputs) {
-    const field = page.locator(`#${id}`);
-    await expect(page.locator(`#${id}-status`)).toHaveText("선택 완료");
-    await expect(field).toHaveAttribute("data-time-complete", "true");
-    await field.fill("");
-    await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
-    await expect(field).toBeFocused();
-    await expect(field).toHaveAttribute("aria-invalid", "true");
-    await expect(field).toHaveAttribute("aria-describedby", new RegExp(`${id}-status.*model-v2-input-error`));
-    await expect(page.getByRole("alert")).toContainText("시간 항목을 모두 선택해 주세요");
-    await expect(page.locator(`#${id}-status`)).toHaveText("시간 선택 필요");
-    await field.fill(value);
-    await expectErrorCleanup(page);
-  }
+  const id = "model-weekday-bed";
+  await expect(page.locator(`#${id}`)).toContainText("시간 선택");
+  await page.locator(`#${id}`).click();
+  const picker = page.locator(`#${id}-picker`);
+  const periodGroup = picker.getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
+  await expect(periodGroup).toBeVisible();
+  await expect(periodGroup.getByRole("radio", { name: "오전" })).toBeVisible();
+  await expect(periodGroup.getByRole("radio", { name: "오후" })).toBeVisible();
+  await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 시" })).toBeVisible();
+  await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 분" })).toBeVisible();
+  const afternoon = periodGroup.getByRole("radio", { name: "오후" });
+  await afternoon.click();
+  await expect(afternoon).toHaveAttribute("aria-checked", "true");
+
+  const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
+  await hourWheel.getByRole("button", { name: "11시", exact: true }).click();
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "11시");
+
+  await expect(page.locator(`#${id}`)).toContainText("시간 선택");
+
+  await chooseMinuteByKeyboard(page, id, 30);
+  await expectTimeValue(page, id, "23:30");
+  await expect(page.locator(`#${id}-status`)).toHaveText("선택 완료");
   expect(routed.requests).toHaveLength(0);
 });
 
-test("S11 preserves browser midnight in all four clocks without research-clock rewriting", async ({ page }) => {
+test("S11 time wheels support keyboard selection, exact 12-hour conversion, and local-only scoring", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toSleep(page);
-  for (const [id] of timeInputs) {
-    await page.locator(`#${id}`).fill("00:00");
-    await expect(page.locator(`#${id}-status`)).toHaveText("선택 완료");
-  }
+  await page.locator("#model-weekday-bed").click();
+  const periodGroup = page.locator("#model-weekday-bed-picker").getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
+  const morning = periodGroup.getByRole("radio", { name: "오전", exact: true });
+  await morning.focus();
+  await morning.press("Space");
+  await expect(morning).toHaveAttribute("aria-checked", "true");
+  await morning.press("ArrowRight");
+  await expect(periodGroup.getByRole("radio", { name: "오후", exact: true })).toHaveAttribute("aria-checked", "true");
+  await chooseTime(page, "model-weekday-bed", "00:15");
+  await chooseTime(page, "model-weekday-wake", "12:15");
+  await chooseTime(page, "model-weekend-bed", "23:59");
+  await chooseTime(page, "model-weekend-wake", "00:00");
   await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+  await expect(step(page, "review")).toContainText("오전 12:15");
+  await expect(step(page, "review")).toContainText("오후 12:15");
+  await expect(step(page, "review")).toContainText("오후 11:59");
   await page.getByLabel("위 안내를 확인했습니다.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
@@ -740,6 +764,15 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await page.getByRole("button", { name: "수면 수정", exact: true }).focus();
   await page.keyboard.press("Enter");
   await expectStep(page, "sleep");
+  await page.locator("#model-weekday-bed").click();
+  const reducedMotionPicker = page.locator("#model-weekday-bed-picker");
+  await expect(reducedMotionPicker).toBeVisible();
+
+  const reducedHour = reducedMotionPicker.locator(".model-v2-hour-detent button").first();
+  const reducedMinute = reducedMotionPicker.locator(".model-v2-minute-detent button").first();
+  await expect(reducedHour).toHaveCSS("transition-duration", "0s");
+  await expect(reducedMinute).toHaveCSS("transition-duration", "0s");
+
   await assertFitsViewport(page);
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
   await expectStep(page, "review");
@@ -747,6 +780,16 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await expect(result(page)).toBeVisible();
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+});
+
+test("S11 time picker fits at 320px without horizontal overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toSleep(page);
+  await page.locator("#model-weekday-bed").click();
+  await expect(page.locator("#model-weekday-bed-picker")).toBeVisible();
+  await assertFitsViewport(page);
 });
 
 // Observe the actual built S11 flow; no test-only inference facade is installed.
@@ -830,3 +873,146 @@ for (const failure of ["missing", "hash_mismatch", "malformed", "oversized", "ov
     expect(routed.requests.length).toBe(count);
   });
 }
+
+test("S11 hour detent carries AM/PM across the real 11-to-12 boundary", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toSleep(page);
+
+  const id = "model-weekday-bed";
+  await page.locator(`#${id}`).click();
+
+  const picker = page.locator(`#${id}-picker`);
+  const periodGroup = picker.getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
+  const morning = periodGroup.getByRole("radio", { name: "오전", exact: true });
+  const afternoon = periodGroup.getByRole("radio", { name: "오후", exact: true });
+  const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
+
+  await morning.click();
+  await hourWheel.getByRole("button", { name: "11시", exact: true }).click();
+  await expect(morning).toHaveAttribute("aria-checked", "true");
+
+  // 11 AM -> 12 PM crosses the meridiem boundary.
+  await hourWheel.press("ArrowDown");
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "12시");
+  await expect(afternoon).toHaveAttribute("aria-checked", "true");
+
+  // 12 PM -> 1 PM does not cross the meridiem boundary.
+  await hourWheel.press("ArrowDown");
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "1시");
+  await expect(afternoon).toHaveAttribute("aria-checked", "true");
+
+  // Reverse: 1 PM -> 12 PM stays PM, then 12 PM -> 11 AM flips.
+  await hourWheel.press("ArrowUp");
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "12시");
+  await expect(afternoon).toHaveAttribute("aria-checked", "true");
+
+  await hourWheel.press("ArrowUp");
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "11시");
+  await expect(morning).toHaveAttribute("aria-checked", "true");
+});
+
+test("S11 minute detent stays exact, wraps 59-to-00, and supports five-minute keyboard jumps", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toSleep(page);
+
+  const id = "model-weekday-bed";
+  await page.locator(`#${id}`).click();
+
+  const picker = page.locator(`#${id}-picker`);
+  const periodGroup = picker.getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
+  const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
+  const minuteWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 분" });
+
+  await periodGroup.getByRole("radio", { name: "오전", exact: true }).click();
+
+  // The hour detent renders only the five slots around its current value.
+  // Set 7시 through the already-tested keyboard detent path instead of
+  // searching for a non-rendered distant hour button.
+  await hourWheel.focus();
+  await hourWheel.press("Home");
+  for (let current = 1; current < 7; current += 1) {
+    await hourWheel.press("ArrowDown");
+  }
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "7시");
+
+  await minuteWheel.press("Home");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
+  await expectTimeValue(page, id, "07:00");
+
+  await minuteWheel.press("ArrowDown");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "01분");
+  await expectTimeValue(page, id, "07:01");
+
+  await minuteWheel.press("PageDown");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "06분");
+  await expectTimeValue(page, id, "07:06");
+
+  await minuteWheel.press("End");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "59분");
+  await expectTimeValue(page, id, "07:59");
+
+  await minuteWheel.press("ArrowDown");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
+  await expectTimeValue(page, id, "07:00");
+
+  await minuteWheel.getByRole("button", { name: "02분", exact: true }).click();
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "02분");
+  await expectTimeValue(page, id, "07:02");
+});
+
+test("S11 minute detent uses bounded 1-2-3 acceleration and still lands exactly", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toSleep(page);
+
+  const id = "model-weekday-bed";
+  await page.locator(`#${id}`).click();
+
+  const picker = page.locator(`#${id}-picker`);
+  const periodGroup = picker.getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
+  const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
+  const minuteWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 분" });
+
+  await periodGroup.getByRole("radio", { name: "오전", exact: true }).click();
+  await hourWheel.focus();
+  await hourWheel.press("Home");
+  await expect(hourWheel).toHaveAttribute("aria-valuetext", "1시");
+
+  await minuteWheel.focus();
+  await minuteWheel.press("Home");
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
+
+  const wheel = async (deltaY: number) => {
+    await minuteWheel.evaluate((element, delta) => {
+      element.dispatchEvent(new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+        deltaY: delta,
+      }));
+    }, deltaY);
+    await page.waitForTimeout(60);
+  };
+
+  await wheel(40);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "01분");
+
+  await wheel(90);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "03분");
+
+  await wheel(180);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "06분");
+  await expectTimeValue(page, id, "01:06");
+
+  await wheel(-180);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "03분");
+
+  await wheel(-90);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "01분");
+
+  await wheel(-40);
+  await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
+  await expectTimeValue(page, id, "01:00");
+});

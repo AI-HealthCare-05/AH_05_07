@@ -54,7 +54,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <div className="scene-copy">
             <p className="eyebrow"><span className="today-sun" aria-hidden="true">☀</span><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
             <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 혈압 기록을,<br />날짜별로 이어봐요.<span className="today-wave" aria-hidden="true">☀</span></h1>
-            <p className="scene-body">오늘 남긴 혈압 기록은 최근 7일에서 다시 확인할 수 있어요.<br />기록이 적어도 지금부터 차근차근 볼 수 있어요.</p>
+            <p className="scene-body">측정한 혈압을 기록하고, 최근 7일을 날짜·시간대별로 확인해요.<br />7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div className="home-lead-copy">
@@ -92,7 +92,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />
         </details>}
         {todayDay && <button type="button" className="text-button today-return" aria-pressed={selectedDay?.date === today} onClick={() => selectDay(today)}>오늘로 돌아오기</button>}
-        <details className="living-week-guide"><summary>최근 7일을 왜 보여주나요?</summary><p>최근 기록을 날짜 순서로 다시 보기 위한 범위예요. 기록이 적어도 언제든 확인할 수 있어요. 혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시합니다.</p></details>
+        <details className="living-week-guide"><summary>최근 7일을 왜 보여주나요?</summary><p>최근 기록을 날짜·시간대별로 다시 보기 위한 범위예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요. 혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시합니다.</p></details>
         </div>
         </div>
       </section>

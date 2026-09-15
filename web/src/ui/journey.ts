@@ -40,8 +40,8 @@ export function parseScreen(value: string | null): ScreenId {
 export const journeyCopy = {
   S01: {
     eyebrow: "상균7데이즈",
-    title: "오늘 기록을 시작해요",
-    body: "이메일 링크로 내 기록을 이어볼 수 있어요.",
+    title: "측정한 혈압을 기록하고 최근 7일을 확인해요",
+    body: "같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.",
   },
   S02: {
     eyebrow: "오늘",
@@ -76,11 +76,11 @@ export const journeyCopy = {
     title: "최근 7일 기록",
     body: "오늘을 기준으로 기록을 확인해요. 챌린지 진행과는 별도입니다.",
   },
-  S11: { eyebrow: "생활정보 분석", title: "생활정보 기반 고혈압 선별 참고" },
+  S11: { eyebrow: "입력 기반 위험군 선별 신호", title: "이번 이용에만 생활정보를 살펴봐요" },
   S12: {
     eyebrow: "아직 기록 없음",
-    title: "아직 기록이 없어도 괜찮아요",
-    body: "혈압 관찰과 7일 챌린지는 각각 시작할 수 있어요.",
+    title: "측정한 혈압부터 기록해요",
+    body: "혈압 기록은 바로 시작할 수 있고, 7일을 채우지 않아도 남긴 기록부터 확인할 수 있어요. 챌린지는 별도로 선택할 수 있어요.",
   },
   S13: {
     eyebrow: "불러오기 실패",

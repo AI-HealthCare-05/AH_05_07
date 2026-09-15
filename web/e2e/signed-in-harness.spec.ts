@@ -178,7 +178,7 @@ test("synthetic signed-in session returns to login after a 401 window response",
   await routeApiWindow(page, 401, { detail: { code: "supabase_session_invalid" } });
 
   await page.goto("/?e2e=signed-in&screen=S04");
-  await expect(page.getByRole("heading", { name: "오늘 기록을 시작해요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "측정한 혈압을 기록하고 최근 7일을 확인해요" })).toBeVisible();
   await expect(page.getByRole("status")).toContainText("로그인 시간이 만료되었습니다.");
 });
 
