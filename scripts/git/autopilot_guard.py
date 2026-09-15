@@ -11,9 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Iterable
 
 LANE_ORDER = {"none": 0, "routine": 1, "protected": 2, "deny": 3}
 
