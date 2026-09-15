@@ -146,6 +146,63 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(todayState).toHaveAttribute('data-home-destination', 'S07');
 });
 
+for (const [todayCheckinStatus, expectedSupport] of [
+  [null, '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.'],
+  ['completed', '10분 걷기 · 오늘 상태 기록함'],
+] as const) {
+  test(`North Star Home shows returning challenge state as ${todayCheckinStatus ?? 'pending'}`, async ({ page }) => {
+    await setup(page);
+    await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      const url = new URL(request.url());
+
+      return route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          start_on: url.searchParams.get('start_on'),
+          end_on: url.searchParams.get('end_on'),
+          blood_pressure_observations: [{
+            id: 'synthetic-returning-yesterday-bp',
+            observed_on: '2026-09-10',
+            period: 'morning',
+            systolic: 120,
+            diastolic: 80,
+          }],
+          active_challenge: {
+            id: 'synthetic-returning-challenge',
+            action_id: 'walk-10-minutes',
+            starts_on: '2026-09-05',
+            ends_on: '2026-09-11',
+            first_checkin_on: '2026-09-05',
+            status: 'active',
+          },
+          challenge_checkins: todayCheckinStatus ? [{
+            id: 'synthetic-returning-checkin',
+            challenge_id: 'synthetic-returning-challenge',
+            observed_on: '2026-09-11',
+            action_id: 'walk-10-minutes',
+            status: todayCheckinStatus,
+          }] : [],
+          challenge_events: [],
+        }),
+      });
+    });
+
+    await page.goto('/?e2e=signed-in&screen=S02');
+
+    const home = page.locator('.journey-today');
+    await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
+
+    const challenge = home.locator('[data-home-concept="challenge"]');
+    await expect(challenge).toContainText('7일 챌린지');
+    await expect(challenge).toContainText(expectedSupport);
+    await expect(challenge).toHaveAttribute('data-home-destination', 'S06');
+  });
+}
+
 test('North Star Home stops offering another BP slot when both daily periods are already recorded', async ({ page }) => {
   await setup(page);
   await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {

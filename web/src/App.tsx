@@ -1078,6 +1078,13 @@ function App() {
     ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
     : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
   const challengeDestination: ScreenId = activeChallenge ? "S06" : "S03";
+  const homeChallengeSupport = activeChallengeEnded
+    ? "종료된 챌린지 확인하기"
+    : activeChallenge
+      ? todayCheckin
+        ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 ${checkinLabel(todayCheckin.status)}`
+        : `${challengeLabel(activeChallenge.action_id)} · 오늘 상태는 아직 기록하지 않았어요.`
+      : "선택 기능 · 이어갈 행동 고르기";
   const homeLead: HomeAction = !todayMeasurement
     ? { key: "blood-pressure", title: "오늘 혈압 기록", support: todayBloodPressureSupport, action: "혈압 기록하기", screen: "S04" }
     : { key: "today-detail", title: "오늘 혈압 기록 확인", support: todayBloodPressureSupport, action: "오늘 기록 보기", screen: "S07" };
@@ -1102,7 +1109,7 @@ function App() {
     {
       key: "challenge",
       title: "7일 챌린지",
-      support: activeChallengeEnded ? "종료된 챌린지 확인하기" : activeChallenge ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 확인` : "선택 기능 · 이어갈 행동 고르기",
+      support: homeChallengeSupport,
       action: "챌린지 열기",
       screen: challengeDestination,
     },
