@@ -860,7 +860,7 @@ function App() {
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "혈압 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      navigate("S08");
+      returnAfterRecordDeletion();
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
@@ -952,7 +952,7 @@ function App() {
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "챌린지 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      navigate("S08");
+      returnAfterRecordDeletion();
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
@@ -1167,6 +1167,15 @@ function App() {
     navigate("S08");
   }
 
+  function returnAfterRecordDeletion() {
+    const returnScreen = window.history.state?.recordReturnScreen;
+    if (returnScreen === "S08" || returnScreen === "S10") {
+      window.history.back();
+      return;
+    }
+    navigate("S08", null, true);
+  }
+
   function renderWindowNavigation() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>{dashboardPeriodName} · {isPriorDashboard ? "읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
@@ -1211,7 +1220,7 @@ function App() {
                   ? ` · ${periodLabel(item.record.period)} · ${displayMeasurement(item.record)}`
                   : ` · ${challengeLabel(item.record.action_id)} · ${checkinLabel(item.record.status)}${item.kind === "legacy" ? " · 이전 기록" : ""}`}
               </span>}
-              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item, journal ? "S10" : "S08")}>상세 보기</button>
+              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item, activeScreen === "S10" ? "S10" : "S08")}>상세 보기</button>
             </li>
           )) : <li className="empty-record">{focusedDate ? `${dateLabel(focusedDate)}에 남긴 ${title} 기록이 없어요.` : emptyText}</li>}
         </ul>
