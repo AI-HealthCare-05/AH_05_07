@@ -134,8 +134,8 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <footer className="recap-tools">
         <div className="recap-tools-intro">
           <p className="eyebrow">기록 활용</p>
-          <h3>7일 기록을 정리하거나 보관해요</h3>
-          <p>리포트는 읽기 좋게 정리하고, 내보내기는 파일로 보관해요. 새로고침은 최신 기록을 다시 확인할 때 사용해요.</p>
+          <h3>기록한 7일을 한눈에 정리해요</h3>
+          <p>날짜·시간대별 혈압 기록을 읽기 좋은 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요. 내보내기는 파일 보관용이고, 새로고침은 최신 기록을 다시 확인할 때 사용해요.</p>
         </div>
         <p className="recap-tools-state">{readOnly
           ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
