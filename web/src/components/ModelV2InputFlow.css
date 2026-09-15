@@ -240,6 +240,199 @@
   color: var(--sk7-danger);
 }
 
+.model-v2-flow .model-v2-time-field {
+  display: grid;
+  gap: .55rem;
+  min-width: 0;
+}
+
+.model-v2-flow .model-v2-field-label {
+  font-weight: var(--sk7-weight-bold);
+  line-height: 1.6;
+}
+
+
+.model-v2-flow .model-v2-time-field {
+  align-self: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.model-v2-flow .model-v2-time-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3rem;
+  padding: .7rem .85rem;
+  border: 1px solid var(--sk7-stone-300);
+  border-radius: .6rem;
+  background: var(--sk7-white);
+  color: var(--sk7-ink);
+  font: inherit;
+  text-align: left;
+}
+
+.model-v2-flow .model-v2-time-trigger[aria-expanded="true"] {
+  border-color: var(--sk7-focus);
+  background: var(--sk7-white);
+  color: var(--sk7-ink);
+}
+
+.model-v2-flow .model-v2-time-picker {
+  --time-wheel-row: 2.6rem;
+  --time-wheel-height: 12rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(5.4rem, .86fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: .4rem;
+  min-width: 0;
+  padding: .35rem;
+  overflow: hidden;
+  border: 1px solid var(--sk7-border);
+  border-radius: .75rem;
+  background: var(--sk7-white);
+}
+
+.model-v2-flow .model-v2-wheel-band {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  top: 4.55rem;
+  right: .35rem;
+  left: .35rem;
+  height: 2.1rem;
+  pointer-events: none;
+  border-top: 1px solid var(--sk7-lavender-400);
+  border-bottom: 1px solid var(--sk7-lavender-400);
+  background: color-mix(in srgb, var(--sk7-lavender-100) 48%, transparent);
+}
+
+
+.model-v2-flow .model-v2-period-selector {
+  box-sizing: border-box;
+  display: grid;
+  align-content: center;
+  gap: .5rem;
+  height: var(--time-wheel-height);
+  min-width: 0;
+  padding: .7rem .45rem;
+  border-right: 1px solid color-mix(in srgb, var(--sk7-border) 72%, transparent);
+}
+
+.model-v2-flow .model-v2-period-selector button {
+  min-height: 3rem;
+  padding: .55rem .5rem;
+  border: 1px solid transparent;
+  border-radius: .7rem;
+  background: transparent;
+  color: var(--sk7-ink-muted);
+  font: inherit;
+  font-weight: var(--sk7-weight-medium);
+  line-height: 1.4;
+}
+
+.model-v2-flow .model-v2-period-selector button[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--sk7-lavender-400) 82%, var(--sk7-ink) 18%);
+  background: color-mix(in srgb, var(--sk7-lavender-100) 68%, var(--sk7-white) 32%);
+  color: var(--sk7-ink);
+  font-weight: var(--sk7-weight-bold);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .78),
+    0 .18rem .45rem rgb(76 65 91 / .08);
+}
+
+.model-v2-flow .model-v2-period-selector button:focus-visible {
+  outline: 3px solid var(--sk7-focus);
+  outline-offset: 2px;
+}
+
+.model-v2-flow .model-v2-wheel-column {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  align-self: start;
+  outline-offset: -2px;
+}
+
+.model-v2-flow .model-v2-wheel-column::before {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: .15rem;
+  left: .15rem;
+  height: var(--time-wheel-row);
+  pointer-events: none;
+  border-top: 1px solid color-mix(in srgb, var(--sk7-lavender-400) 78%, var(--sk7-ink) 22%);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk7-lavender-400) 78%, var(--sk7-ink) 22%);
+  background: color-mix(in srgb, var(--sk7-lavender-100) 54%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .74),
+    inset 0 -1px 0 rgb(76 65 91 / .08);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.model-v2-flow .model-v2-wheel-column:focus-visible,
+.model-v2-flow .model-v2-time-trigger:focus-visible {
+  outline: 3px solid var(--sk7-focus);
+}
+
+.model-v2-flow .model-v2-wheel-list {
+  box-sizing: border-box;
+  height: var(--time-wheel-height);
+  padding-block: calc((var(--time-wheel-height) - var(--time-wheel-row)) / 2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: thin;
+  perspective: 20rem;
+}
+
+.model-v2-flow .model-v2-wheel-list button {
+  display: block;
+  width: 100%;
+  height: var(--time-wheel-row);
+  scroll-snap-stop: normal;
+  padding: 0 .2rem;
+  scroll-snap-align: center;
+  border: 0;
+  background: transparent;
+  color: var(--sk7-ink-muted);
+  font: inherit;
+  line-height: var(--time-wheel-row);
+  text-align: center;
+  transform: rotateX(42deg) scale(.84);
+  opacity: .38;
+  transition: transform 120ms ease-out, opacity 120ms ease-out, color 120ms ease-out;
+}
+
+
+.model-v2-flow .model-v2-wheel-column[data-wheel-part="hour"] [data-wheel-row] {
+  scroll-snap-stop: always;
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-distance="1"] { transform: rotateX(24deg) scale(.92); opacity: .65; }
+.model-v2-flow .model-v2-wheel-list button[data-selected] { transform: none; color: var(--sk7-ink); font-weight: var(--sk7-weight-bold); opacity: 1; }
+.model-v2-flow .model-v2-wheel-list button:focus { outline: 0; }
+
+.model-v2-flow .model-v2-time-editing {
+  grid-column: 1 / -1;
+  margin: .1rem .2rem .2rem;
+  pointer-events: none;
+  color: var(--sk7-ink-muted);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-v2-flow .model-v2-wheel-list { perspective: none; scroll-behavior: auto; }
+  .model-v2-flow .model-v2-wheel-list button,
+  .model-v2-flow .model-v2-wheel-list button[data-distance="1"],
+  .model-v2-flow .model-v2-wheel-list button[data-selected] { transform: none; transition: none; }
+}
+
 .model-v2-flow .model-v2-review {
   display: grid;
   gap: 1.3rem;
@@ -498,4 +691,308 @@
   .model-v2-flow .model-v2-outcome {
     gap: 1rem;
   }
+}
+
+/* S11 cylindrical time-wheel visual polish.
+   Selection semantics remain in React; these rules are presentation-only. */
+.model-v2-flow .model-v2-time-picker {
+  isolation: isolate;
+  box-shadow:
+    0 .45rem 1.2rem rgb(42 37 31 / .06),
+    inset 0 1px 0 rgb(255 255 255 / .9);
+}
+
+.model-v2-flow .model-v2-wheel-band {
+  border-top-color: color-mix(in srgb, var(--sk7-lavender-400) 78%, var(--sk7-ink) 22%);
+  border-bottom-color: color-mix(in srgb, var(--sk7-lavender-400) 78%, var(--sk7-ink) 22%);
+  background: color-mix(in srgb, var(--sk7-lavender-100) 62%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .72),
+    inset 0 -1px 0 rgb(76 65 91 / .08),
+    0 .15rem .45rem rgb(76 65 91 / .07);
+}
+
+.model-v2-flow .model-v2-wheel-column + .model-v2-wheel-column {
+  border-left: 1px solid color-mix(in srgb, var(--sk7-border) 72%, transparent);
+}
+
+.model-v2-flow .model-v2-wheel-list {
+  scrollbar-width: none;
+  transform-style: preserve-3d;
+  perspective-origin: 50% 50%;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 20%,
+    #000 80%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 20%,
+    #000 80%,
+    transparent 100%
+  );
+}
+
+.model-v2-flow .model-v2-wheel-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.model-v2-flow .model-v2-wheel-list button {
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  opacity: .16;
+  transform: translateZ(-1.35rem) scale(.76);
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-offset="-2"] {
+  opacity: .24;
+  transform: rotateX(52deg) translateZ(-1.05rem) scale(.79);
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-offset="-1"] {
+  opacity: .58;
+  transform: rotateX(27deg) translateZ(-.35rem) scale(.91);
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-offset="0"] {
+  color: var(--sk7-ink);
+  font-size: 1.08em;
+  font-weight: var(--sk7-weight-bold);
+  opacity: 1;
+  text-shadow: 0 .08rem .18rem rgb(42 37 31 / .08);
+  transform: translateZ(1.65rem) scale(1.14);
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-offset="1"] {
+  opacity: .58;
+  transform: rotateX(-27deg) translateZ(-.35rem) scale(.91);
+}
+
+.model-v2-flow .model-v2-wheel-list button[data-offset="2"] {
+  opacity: .24;
+  transform: rotateX(-52deg) translateZ(-1.05rem) scale(.79);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-v2-flow .model-v2-wheel-list {
+    perspective: none;
+  }
+
+  .model-v2-flow .model-v2-wheel-list button,
+  .model-v2-flow .model-v2-wheel-list button[data-offset="-2"],
+  .model-v2-flow .model-v2-wheel-list button[data-offset="-1"],
+  .model-v2-flow .model-v2-wheel-list button[data-offset="0"],
+  .model-v2-flow .model-v2-wheel-list button[data-offset="1"],
+  .model-v2-flow .model-v2-wheel-list button[data-offset="2"] {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Hour wheel uses deterministic mechanical detents instead of free scrolling.
+   Five visible slots are positioned around one exact center line. */
+.model-v2-flow .model-v2-hour-detent {
+  box-sizing: border-box;
+  height: var(--time-wheel-height);
+  overflow: hidden;
+  touch-action: none;
+  perspective: 20rem;
+  transform-style: preserve-3d;
+}
+
+.model-v2-flow .model-v2-hour-detent button {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: .15rem;
+  width: calc(100% - .3rem);
+  height: var(--time-wheel-row);
+  padding: 0 .2rem;
+  border: 0;
+  background: transparent;
+  color: var(--sk7-ink-muted);
+  font: inherit;
+  line-height: var(--time-wheel-row);
+  text-align: center;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition: top 105ms cubic-bezier(.2, .75, .25, 1),
+              transform 105ms cubic-bezier(.2, .75, .25, 1),
+              opacity 105ms ease-out,
+              color 105ms ease-out;
+}
+
+.model-v2-flow .model-v2-hour-detent button[data-offset="-2"] {
+  top: calc(50% - (2 * var(--time-wheel-row)));
+  opacity: .22;
+  transform: translateY(-50%) rotateX(54deg) translateZ(-1.1rem) scale(.78);
+}
+
+.model-v2-flow .model-v2-hour-detent button[data-offset="-1"] {
+  top: calc(50% - var(--time-wheel-row));
+  opacity: .58;
+  transform: translateY(-50%) rotateX(28deg) translateZ(-.35rem) scale(.9);
+}
+
+.model-v2-flow .model-v2-hour-detent button[data-offset="0"] {
+  top: 50%;
+  color: var(--sk7-ink);
+  font-size: 1.1em;
+  font-weight: var(--sk7-weight-bold);
+  opacity: 1;
+  text-shadow: 0 .08rem .18rem rgb(42 37 31 / .08);
+  transform: translateY(-50%) translateZ(1.85rem) scale(1.16);
+}
+
+.model-v2-flow .model-v2-hour-detent button[data-offset="1"] {
+  top: calc(50% + var(--time-wheel-row));
+  opacity: .58;
+  transform: translateY(-50%) rotateX(-28deg) translateZ(-.35rem) scale(.9);
+}
+
+.model-v2-flow .model-v2-hour-detent button[data-offset="2"] {
+  top: calc(50% + (2 * var(--time-wheel-row)));
+  opacity: .22;
+  transform: translateY(-50%) rotateX(-54deg) translateZ(-1.1rem) scale(.78);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-v2-flow .model-v2-hour-detent button,
+  .model-v2-flow .model-v2-hour-detent button[data-offset="-2"],
+  .model-v2-flow .model-v2-hour-detent button[data-offset="-1"],
+  .model-v2-flow .model-v2-hour-detent button[data-offset="0"],
+  .model-v2-flow .model-v2-hour-detent button[data-offset="1"],
+  .model-v2-flow .model-v2-hour-detent button[data-offset="2"] {
+    transition: none;
+    transform: translateY(-50%);
+  }
+}
+
+/* Minutes use the same exact-center detent geometry as hours, with a faster
+   gesture cadence because the domain spans 00-59. */
+.model-v2-flow .model-v2-minute-detent {
+  box-sizing: border-box;
+  height: var(--time-wheel-height);
+  overflow: hidden;
+  touch-action: none;
+  perspective: 20rem;
+  transform-style: preserve-3d;
+}
+
+.model-v2-flow .model-v2-minute-detent button {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: .15rem;
+  width: calc(100% - .3rem);
+  height: var(--time-wheel-row);
+  padding: 0 .2rem;
+  border: 0;
+  background: transparent;
+  color: var(--sk7-ink-muted);
+  font: inherit;
+  line-height: var(--time-wheel-row);
+  text-align: center;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition:
+    top 78ms cubic-bezier(.2, .75, .25, 1),
+    transform 78ms cubic-bezier(.2, .75, .25, 1),
+    opacity 78ms ease-out,
+    color 78ms ease-out;
+}
+
+.model-v2-flow .model-v2-minute-detent button[data-offset="-2"] {
+  top: calc(50% - (2 * var(--time-wheel-row)));
+  opacity: .22;
+  transform: translateY(-50%) rotateX(54deg) translateZ(-1.1rem) scale(.78);
+}
+
+.model-v2-flow .model-v2-minute-detent button[data-offset="-1"] {
+  top: calc(50% - var(--time-wheel-row));
+  opacity: .58;
+  transform: translateY(-50%) rotateX(28deg) translateZ(-.35rem) scale(.9);
+}
+
+.model-v2-flow .model-v2-minute-detent button[data-offset="0"] {
+  top: 50%;
+  color: var(--sk7-ink);
+  font-size: 1.1em;
+  font-weight: var(--sk7-weight-bold);
+  opacity: 1;
+  text-shadow: 0 .08rem .18rem rgb(42 37 31 / .08);
+  transform: translateY(-50%) translateZ(1.85rem) scale(1.16);
+}
+
+.model-v2-flow .model-v2-minute-detent button[data-offset="1"] {
+  top: calc(50% + var(--time-wheel-row));
+  opacity: .58;
+  transform: translateY(-50%) rotateX(-28deg) translateZ(-.35rem) scale(.9);
+}
+
+.model-v2-flow .model-v2-minute-detent button[data-offset="2"] {
+  top: calc(50% + (2 * var(--time-wheel-row)));
+  opacity: .22;
+  transform: translateY(-50%) rotateX(-54deg) translateZ(-1.1rem) scale(.78);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-v2-flow .model-v2-minute-detent button,
+  .model-v2-flow .model-v2-minute-detent button[data-offset="-2"],
+  .model-v2-flow .model-v2-minute-detent button[data-offset="-1"],
+  .model-v2-flow .model-v2-minute-detent button[data-offset="0"],
+  .model-v2-flow .model-v2-minute-detent button[data-offset="1"],
+  .model-v2-flow .model-v2-minute-detent button[data-offset="2"] {
+    transition: none;
+    transform: translateY(-50%);
+  }
+}
+
+/* S11 period-selector hover polish */
+@media (hover: hover) and (pointer: fine) {
+  .model-v2-flow .model-v2-period-selector button:hover:not([aria-checked="true"]) {
+    border-color: color-mix(in srgb, var(--sk7-lavender-400) 38%, transparent);
+    background: color-mix(in srgb, var(--sk7-lavender-100) 34%, transparent);
+    color: var(--sk7-ink);
+    box-shadow: none;
+  }
+
+  .model-v2-flow .model-v2-period-selector button[aria-checked="true"]:hover {
+    border-color: color-mix(in srgb, var(--sk7-lavender-400) 92%, var(--sk7-ink) 8%);
+    background: color-mix(in srgb, var(--sk7-lavender-100) 74%, var(--sk7-white) 26%);
+    color: var(--sk7-ink);
+  }
+}
+
+/* S11 detent-row hover normalization
+   The center band communicates selection; pointer hover must not imitate it. */
+@media (hover: hover) and (pointer: fine) {
+  .model-v2-flow .model-v2-hour-detent button:hover,
+  .model-v2-flow .model-v2-minute-detent button:hover {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* S11 selected detent text clarity */
+.model-v2-flow .model-v2-hour-detent button[data-offset="0"],
+.model-v2-flow .model-v2-minute-detent button[data-offset="0"] {
+  z-index: 4;
+  color: var(--sk7-ink);
+  font-weight: var(--sk7-weight-bold);
+  opacity: 1;
+  text-shadow: none;
+}
+
+/* S11 AM/PM label sizing
+   Slightly larger than body text, still subordinate to the selected hour/minute. */
+.model-v2-flow .model-v2-period-selector button {
+  font-size: 1.05rem;
 }

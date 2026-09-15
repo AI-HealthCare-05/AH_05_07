@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
@@ -6,7 +6,7 @@ import { scoreModelV2Locally } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { Scene } from "./SceneShell";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
-import { FIELDS, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
+import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
 import "./ModelV2InputFlow.css";
 
 type Props = {
@@ -26,6 +26,418 @@ type ResultState = "idle" | "input_invalid" | "temporarily_unavailable" | "proce
 const INPUT_ERROR_ID = "model-v2-input-error";
 const STEP_TITLE_ID = "model-v2-step-title";
 
+type WheelPart = "period" | "hour" | "minute";
+type TimeSelection = { period?: 0 | 1; hour?: number; minute?: number };
+
+const WHEEL_VALUES: Record<WheelPart, readonly number[]> = {
+  period: [0, 1], hour: Array.from({ length: 12 }, (_, index) => index + 1),
+  minute: Array.from({ length: 60 }, (_, index) => index),
+};
+
+function wheelText(part: WheelPart, value: number) {
+  if (part === "period") return value === 0 ? "오전" : "오후";
+  if (part === "hour") return `${value}시`;
+  return `${String(value).padStart(2, "0")}분`;
+}
+
+function selectionFromTime(value: string): TimeSelection {
+  const parts = clockParts(value);
+  if (!parts) return {};
+  const [hour, minute] = parts;
+  return { period: hour < 12 ? 0 : 1, hour: hour % 12 || 12, minute };
+}
+
+function canonicalTime(selection: TimeSelection): string | null {
+  if (selection.period === undefined || selection.hour === undefined || selection.minute === undefined) return null;
+  const hour = (selection.hour % 12) + (selection.period === 1 ? 12 : 0);
+  return `${String(hour).padStart(2, "0")}:${String(selection.minute).padStart(2, "0")}`;
+}
+
+function PeriodSelector({ selected, label, disabled, onSelect }: {
+  selected: 0 | 1 | undefined; label: string; disabled: boolean; onSelect: (value: 0 | 1) => void;
+}) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const values = [0, 1] as const;
+
+  function choose(index: number, moveFocus = false) {
+    const bounded = Math.max(0, Math.min(values.length - 1, index));
+    onSelect(values[bounded]);
+    if (moveFocus) requestAnimationFrame(() => refs.current[bounded]?.focus());
+  }
+
+  return <div className="model-v2-period-selector" role="radiogroup" aria-label={`${label} 오전 또는 오후`}>
+    {values.map((value, index) => {
+      const checked = selected === value;
+      const focusable = checked || (selected === undefined && index === 0);
+      return <button key={value} ref={(node) => { refs.current[index] = node; }} type="button"
+        role="radio" aria-checked={checked} tabIndex={disabled ? -1 : focusable ? 0 : -1}
+        disabled={disabled} data-selected={checked || undefined}
+        onClick={() => choose(index)}
+        onKeyDown={(event) => {
+          if (disabled) return;
+          if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+            event.preventDefault();
+            choose((index + 1) % values.length, true);
+          } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            choose((index - 1 + values.length) % values.length, true);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            choose(0, true);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            choose(values.length - 1, true);
+          }
+        }}>
+        {wheelText("period", value)}
+      </button>;
+    })}
+  </div>;
+}
+
+function HourDetentWheel({ selected, label, disabled, onSelect }: {
+  selected: number | undefined;
+  label: string;
+  disabled: boolean;
+  onSelect: (value: number, crossesPeriodBoundary: boolean) => void;
+}) {
+  const values = WHEEL_VALUES.hour;
+  const initialIndex = selected === undefined ? 0 : Math.max(0, values.indexOf(selected));
+  const [visualIndex, setVisualIndex] = useState(initialIndex);
+  const visualIndexRef = useRef(initialIndex);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const wheelAccumulator = useRef(0);
+  const lastWheelStep = useRef(0);
+  const pointerY = useRef<number | null>(null);
+
+  const wrapIndex = (index: number) => (index + values.length) % values.length;
+
+  function selectIndex(index: number, stepped = false) {
+    const current = visualIndexRef.current;
+    const normalized = wrapIndex(index);
+    const currentValue = values[current];
+    const nextValue = values[normalized];
+    const crossesPeriodBoundary = stepped && (
+      (currentValue === 11 && nextValue === 12) ||
+      (currentValue === 12 && nextValue === 11)
+    );
+
+    visualIndexRef.current = normalized;
+    setVisualIndex(normalized);
+    onSelect(nextValue, crossesPeriodBoundary);
+  }
+
+  useEffect(() => {
+    if (selected === undefined) return;
+    const index = values.indexOf(selected);
+    if (index >= 0 && index !== visualIndexRef.current) {
+      visualIndexRef.current = index;
+      setVisualIndex(index);
+    }
+  }, [selected, values]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (disabled || event.ctrlKey) return;
+      if (event.cancelable) event.preventDefault();
+
+      const line = 40;
+      const normalizedDelta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? event.deltaY * line
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? event.deltaY * 180
+          : event.deltaY;
+
+      wheelAccumulator.current += normalizedDelta;
+      const now = performance.now();
+
+      // Mechanical detent: require a meaningful gesture and permit at most
+      // one hour step per short interval, regardless of trackpad momentum.
+      if (Math.abs(wheelAccumulator.current) < 56 || now - lastWheelStep.current < 110) return;
+
+      const direction = wheelAccumulator.current > 0 ? 1 : -1;
+      wheelAccumulator.current = 0;
+      lastWheelStep.current = now;
+      selectIndex(visualIndexRef.current + direction, true);
+    };
+
+    root.addEventListener("wheel", handleWheel, { passive: false });
+    return () => root.removeEventListener("wheel", handleWheel);
+  }, [disabled]);
+
+  const visible = [-2, -1, 0, 1, 2] as const;
+
+  return <div ref={rootRef}
+    className="model-v2-wheel-column model-v2-hour-detent"
+    data-wheel-part="hour"
+    role="spinbutton"
+    tabIndex={disabled ? -1 : 0}
+    aria-label={label}
+    aria-valuemin={1}
+    aria-valuemax={12}
+    aria-valuenow={selected}
+    aria-valuetext={selected === undefined ? "선택 필요" : `${selected}시`}
+    aria-disabled={disabled || undefined}
+    onKeyDown={(event) => {
+      if (disabled) return;
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current - 1, true);
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current + 1, true);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        selectIndex(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        selectIndex(values.length - 1);
+      }
+    }}
+    onPointerDown={(event) => {
+      if (disabled) return;
+
+      // A direct tap on a visible hour is a button selection, not a drag.
+      // Do not let the parent spinbutton capture that pointer or the
+      // child's click can be swallowed before onClick fires.
+      if (event.target !== event.currentTarget) {
+        pointerY.current = null;
+        return;
+      }
+
+      pointerY.current = event.clientY;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }}
+    onPointerMove={(event) => {
+      if (disabled || pointerY.current === null) return;
+      const delta = event.clientY - pointerY.current;
+      if (Math.abs(delta) < 30) return;
+
+      // Drag upward reveals later hours; drag downward reveals earlier hours.
+      selectIndex(visualIndexRef.current + (delta < 0 ? 1 : -1), true);
+      pointerY.current = event.clientY;
+    }}
+    onPointerUp={() => { pointerY.current = null; }}
+    onPointerCancel={() => { pointerY.current = null; }}>
+    {visible.map((offset) => {
+      const index = wrapIndex(visualIndex + offset);
+      const value = values[index];
+      return <button key={`${value}-${offset}`} type="button" tabIndex={-1} disabled={disabled}
+        data-wheel-row data-wheel-value={value} data-offset={offset}
+        data-selected={selected === value || undefined}
+        onClick={() => selectIndex(index)}>
+        {value}시
+      </button>;
+    })}
+  </div>;
+}
+
+function MinuteDetentWheel({ selected, label, disabled, onSelect }: {
+  selected: number | undefined; label: string; disabled: boolean; onSelect: (value: number) => void;
+}) {
+  const values = WHEEL_VALUES.minute;
+  const initialIndex = selected === undefined ? 0 : Math.max(0, values.indexOf(selected));
+  const [visualIndex, setVisualIndex] = useState(initialIndex);
+  const visualIndexRef = useRef(initialIndex);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const wheelAccumulator = useRef(0);
+  const lastWheelStep = useRef(0);
+  const lastWheelEvent = useRef(0);
+  const pointerY = useRef<number | null>(null);
+
+  const wrapIndex = (index: number) => (index + values.length) % values.length;
+
+  function selectIndex(index: number) {
+    const normalized = wrapIndex(index);
+    visualIndexRef.current = normalized;
+    setVisualIndex(normalized);
+    onSelect(values[normalized]);
+  }
+
+  useEffect(() => {
+    if (selected === undefined) return;
+    const index = values.indexOf(selected);
+    if (index >= 0 && index !== visualIndexRef.current) {
+      visualIndexRef.current = index;
+      setVisualIndex(index);
+    }
+  }, [selected, values]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (disabled || event.ctrlKey) return;
+      if (event.cancelable) event.preventDefault();
+
+      const line = 32;
+      const normalizedDelta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? event.deltaY * line
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? event.deltaY * 150
+          : event.deltaY;
+
+      const now = performance.now();
+
+      // A fresh gesture should not inherit tiny residual deltas from an old one.
+      if (now - lastWheelEvent.current > 180) wheelAccumulator.current = 0;
+      lastWheelEvent.current = now;
+      wheelAccumulator.current += normalizedDelta;
+
+      const magnitude = Math.abs(wheelAccumulator.current);
+
+      // Keep the exact detent model, but accelerate only the number of whole
+      // minute detents crossed by a stronger gesture. The result always lands
+      // on one exact minute and acceleration is intentionally capped at 3.
+      if (magnitude < 30 || now - lastWheelStep.current < 42) return;
+
+      const direction = wheelAccumulator.current > 0 ? 1 : -1;
+      const step = magnitude >= 150 ? 3 : magnitude >= 75 ? 2 : 1;
+
+      wheelAccumulator.current = 0;
+      lastWheelStep.current = now;
+      selectIndex(visualIndexRef.current + (direction * step));
+    };
+
+    root.addEventListener("wheel", handleWheel, { passive: false });
+    return () => root.removeEventListener("wheel", handleWheel);
+  }, [disabled]);
+
+  const visible = [-2, -1, 0, 1, 2] as const;
+
+  return <div ref={rootRef}
+    className="model-v2-wheel-column model-v2-minute-detent"
+    data-wheel-part="minute"
+    role="spinbutton"
+    tabIndex={disabled ? -1 : 0}
+    aria-label={label}
+    aria-valuemin={0}
+    aria-valuemax={59}
+    aria-valuenow={selected}
+    aria-valuetext={selected === undefined ? "선택 필요" : `${String(selected).padStart(2, "0")}분`}
+    aria-disabled={disabled || undefined}
+    onKeyDown={(event) => {
+      if (disabled) return;
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current - 1);
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current + 1);
+      } else if (event.key === "PageUp") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current - 5);
+      } else if (event.key === "PageDown") {
+        event.preventDefault();
+        selectIndex(visualIndexRef.current + 5);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        selectIndex(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        selectIndex(values.length - 1);
+      }
+    }}
+    onPointerDown={(event) => {
+      if (disabled) return;
+
+      // Direct taps belong to the visible minute button. The parent only
+      // captures gestures that begin on its own wheel surface.
+      if (event.target !== event.currentTarget) {
+        pointerY.current = null;
+        return;
+      }
+
+      pointerY.current = event.clientY;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }}
+    onPointerMove={(event) => {
+      if (disabled || pointerY.current === null) return;
+      const delta = event.clientY - pointerY.current;
+      if (Math.abs(delta) < 22) return;
+
+      selectIndex(visualIndexRef.current + (delta < 0 ? 1 : -1));
+      pointerY.current = event.clientY;
+    }}
+    onPointerUp={() => { pointerY.current = null; }}
+    onPointerCancel={() => { pointerY.current = null; }}>
+    {visible.map((offset) => {
+      const index = wrapIndex(visualIndex + offset);
+      const value = values[index];
+      return <button key={`${value}-${offset}`} type="button" tabIndex={-1} disabled={disabled}
+        data-wheel-row data-wheel-value={value} data-offset={offset}
+        data-selected={selected === value || undefined}
+        onClick={() => selectIndex(index)}>
+        {String(value).padStart(2, "0")}분
+      </button>;
+    })}
+  </div>;
+}
+
+function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, open, onOpen, onClose, onChange }: {
+  id: string; label: string; value: string; invalid: boolean; describedBy?: string; disabled: boolean; open: boolean;
+  onOpen: () => void; onClose: () => void; onChange: (value: string) => void;
+}) {
+  const selectionRef = useRef<TimeSelection>(selectionFromTime(value));
+  const [selection, setSelection] = useState<TimeSelection>(() => selectionRef.current);
+
+  useEffect(() => {
+    if (open) return;
+    const restored = selectionFromTime(value);
+    selectionRef.current = restored;
+    setSelection(restored);
+  }, [open, value]);
+
+  const complete = clockParts(value) !== null;
+
+  const choose = (part: WheelPart, next: number) => {
+    const updated = { ...selectionRef.current, [part]: next } as TimeSelection;
+    selectionRef.current = updated;
+    setSelection(updated);
+    const canonical = canonicalTime(updated);
+    if (canonical) onChange(canonical);
+  };
+
+  const chooseHour = (next: number, crossesPeriodBoundary: boolean) => {
+    const current = selectionRef.current;
+    const updated: TimeSelection = { ...current, hour: next };
+
+    // Preserve explicit period selection. Once selected, rotating the hour
+    // wheel across the real 12-hour boundary carries AM/PM with it.
+    if (crossesPeriodBoundary && current.period !== undefined) {
+      updated.period = current.period === 0 ? 1 : 0;
+    }
+
+    selectionRef.current = updated;
+    setSelection(updated);
+    const canonical = canonicalTime(updated);
+    if (canonical) onChange(canonical);
+  };
+  return <div className="model-v2-time-field" data-open={open}>
+    <span id={`${id}-label`} className="model-v2-field-label">{label}</span>
+    <button id={id} type="button" className="model-v2-time-trigger" disabled={disabled} aria-expanded={open}
+      aria-controls={`${id}-picker`} aria-labelledby={`${id}-label ${id}-value`} aria-invalid={invalid || undefined}
+      aria-describedby={describedBy} data-time-complete={String(complete)} onClick={open ? onClose : onOpen}>
+      <span id={`${id}-value`}>{complete ? formatTimeKorean(value) : "시간 선택"}</span><span aria-hidden="true">⌄</span>
+    </button>
+    {open && <div id={`${id}-picker`} className="model-v2-time-picker" role="group" aria-label={`${label} 시간 선택`}>
+      <p className="sr-only">오전 또는 오후, 시, 분을 각각 선택해 주세요. 화살표 위아래 키로 값을 바꿀 수 있습니다.</p>
+      <div className="model-v2-wheel-band" aria-hidden="true" />
+      <PeriodSelector selected={selection.period} label={label} disabled={disabled} onSelect={(next) => choose("period", next)} />
+      <HourDetentWheel selected={selection.hour} label={`${label} 시`} disabled={disabled} onSelect={chooseHour} />
+      <MinuteDetentWheel selected={selection.minute} label={`${label} 분`} disabled={disabled} onSelect={(next) => choose("minute", next)} />
+      {!canonicalTime(selection) && <p className="model-v2-time-editing" role="status">시간을 모두 선택하면 적용됩니다.</p>}
+    </div>}
+    <span id={`${id}-status`} className={`model-v2-time-status${invalid ? " field-error" : ""}`} data-complete={complete}>
+      {complete ? "선택 완료" : open ? "시간 선택 중" : "시간 선택 필요"}
+    </span>
+  </div>;
+}
+
 export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequestContext, onReturnToToday }: Props) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [step, setStep] = useState<Step>("intro");
@@ -38,6 +450,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
   const [invalidFields, setInvalidFields] = useState<(keyof Draft)[]>([]);
   const [consentInvalid, setConsentInvalid] = useState(false);
   const [focusRequest, setFocusRequest] = useState<{ id: string } | null>(null);
+  const [openTimeField, setOpenTimeField] = useState<keyof Draft | null>(null);
   const requestInFlight = useRef(false);
   const mounted = useRef(true);
   const formRef = useRef<HTMLFormElement>(null);
@@ -167,6 +580,9 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
     const isTime = field.type === "time";
     const complete = isTime && clockParts(draft[key]) !== null;
     const describedBy = [isTime ? `${field.id}-status` : null, invalid ? INPUT_ERROR_ID : null].filter(Boolean).join(" ") || undefined;
+    if (isTime) return <TimeWheelPicker key={key} id={field.id} label={field.label} value={draft[key]} invalid={invalid}
+      describedBy={describedBy} disabled={pending} open={openTimeField === key}
+      onOpen={() => setOpenTimeField(key)} onClose={() => setOpenTimeField(null)} onChange={(value) => update(key, value)} />;
     const shared = {
       id: field.id, value: draft[key], disabled: pending, required: true,
       "aria-labelledby": `${field.id}-label`,
@@ -185,9 +601,6 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
           <input {...shared} type={field.type} min={field.min} max={field.max} step={field.step} inputMode={field.inputMode}
             data-time-complete={isTime ? String(complete) : undefined} />
         )}
-        {isTime && <span id={`${field.id}-status`} className={`model-v2-time-status${invalid ? " field-error" : ""}`} data-complete={complete}>
-          {complete ? "선택 완료" : "시간 선택 필요"}
-        </span>}
       </label>
     );
   }
@@ -268,7 +681,7 @@ export function ModelV2InputFlow({ session, captureRequestContext, isCurrentRequ
               </>}
 
               {step === "sleep" && <>
-                <p className="model-v2-sleep-caption">시간 선택 {timeCompleteCount} / 4 · 자정은 00:00으로 선택해 주세요.</p>
+                <p className="model-v2-sleep-caption">시간 선택 {timeCompleteCount} / 4 · 자정은 오전 12:00으로 선택해 주세요.</p>
                 <fieldset className="model-v2-sleep-group">
                   <legend>평일</legend>
                   <div className="field-grid">{renderField("weekdayBed")}{renderField("weekdayWake")}</div>
