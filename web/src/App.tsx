@@ -1158,6 +1158,15 @@ function App() {
     );
   }
 
+  function returnFromRecordDetail() {
+    const returnScreen = window.history.state?.recordReturnScreen;
+    if (returnScreen === "S08" || returnScreen === "S10") {
+      window.history.back();
+      return;
+    }
+    navigate("S08");
+  }
+
   function renderWindowNavigation() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>{dashboardPeriodName} · {isPriorDashboard ? "읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
@@ -1473,7 +1482,7 @@ function App() {
           <button
             className="text-button record-explorer-detail-return"
             type="button"
-            onClick={() => navigate(window.history.state?.recordReturnScreen === "S10" ? "S10" : "S08")}
+            onClick={returnFromRecordDetail}
           >
             {window.history.state?.recordReturnScreen === "S10" ? "7일 돌아보기로 돌아가기" : "목록으로 돌아가기"}
           </button>
