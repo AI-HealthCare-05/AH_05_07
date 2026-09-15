@@ -191,13 +191,33 @@ test("S11 requires explicit review submission and completes locally without send
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
-  await expect(result(page)).toContainText("생활정보 분석이 완료되었습니다.");
+  await expect(result(page)).toContainText("오늘의 시작점을 정리했어요.");
+  for (const text of [
+    "혈압 기록이 아직 없어도",
+    "활동",
+    "4일 · 걷는 날 평균 40분",
+    "근력운동",
+    "2일",
+    "수면",
+    "오후 11:30 → 오전 7:00 · 7시간 30분",
+    "오후 11:30 → 오전 8:00 · 8시간 30분",
+    "생활 습관",
+    "비흡연",
+    "월 1회 미만 · 1~2잔",
+    "Model V2 처리가 완료됐어요.",
+  ]) {
+    await expect(result(page)).toContainText(text);
+  }
   await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
-  await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험/);
+  await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험|정상|비정상/);
+  await expect(page.getByRole("button", { name: "혈압 기록 남기기", exact: true })).toBeVisible();
   await expect(submit(page)).toHaveCount(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(5);
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }))).toEqual(storageBefore);
   expect(new URL(page.url()).searchParams.toString()).toBe("e2e=signed-in&screen=S11");
+
+  await page.getByRole("button", { name: "혈압 기록 남기기", exact: true }).click();
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
 });
 
 test("S11 prevents double submission and freezes review edits while analysis is pending", async ({ page }) => {

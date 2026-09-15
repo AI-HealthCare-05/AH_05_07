@@ -1477,6 +1477,7 @@ function App() {
           key={session.user.id}
           session={session}
           captureRequestContext={captureRequestContext}
+          onStartBloodPressure={() => navigate("S04")}
           onReturnToToday={() => navigate("S02")}
           isCurrentRequestContext={isCurrentRequestContext}
         />
