@@ -472,6 +472,56 @@ const report = (page: Page) => page.locator('[data-living-week-report]');
 const reportAction = (page: Page) => page.getByRole('button', { name: '7일 리포트 보기', exact: true });
 const reportDates = ['2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11'];
 
+test('seven-day report stays readable at 320px and 200% text', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await fixture(page);
+
+  await reportAction(page).click();
+  const document = report(page);
+  await expect(document).toBeVisible();
+  await expect(
+    document.getByRole('heading', { name: '7일 기록 리포트', exact: true }),
+  ).toBeFocused();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  await expect(document.locator('[data-report-summary="blood-pressure"]')).toContainText(
+    '관찰 기록 없음',
+  );
+  await expect(document.locator('[data-report-summary="challenge"]')).toContainText(
+    '기록 없음',
+  );
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+
+  const toolbar = page.locator('.week-report-toolbar');
+  const back = toolbar.getByRole('button', {
+    name: '7일 돌아보기로 돌아가기',
+    exact: true,
+  });
+  const print = toolbar.getByRole('button', {
+    name: '인쇄 / PDF로 저장',
+    exact: true,
+  });
+
+  for (const control of [back, print]) {
+    await expect(control).toBeVisible();
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await back.focus();
+  await expect(back).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(print).toBeFocused();
+});
+
 test('living week report preserves the complete selected week with separate facts and no private metadata', async ({ page }) => {
   let dataRequests = 0;
   let downloads = 0;
