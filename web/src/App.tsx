@@ -1328,7 +1328,7 @@ function App() {
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
           <strong>오늘의 기록에서 방금 저장한 혈압을 확인해요</strong>
-          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요.</p>
+          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요.</p>
         </div>}
         <div className="split-actions">
           <button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>
