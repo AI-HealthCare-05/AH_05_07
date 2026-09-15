@@ -173,6 +173,7 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
   await expect(step(page, "intro")).toContainText("선택 도구 · 이번 이용에만 사용");
+  await expect(step(page, "intro")).toContainText("입력을 마치면 활동·수면·생활습관을 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.");
   await expect(step(page, "intro")).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   await expect(step(page, "intro")).toContainText("혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.");
   await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
