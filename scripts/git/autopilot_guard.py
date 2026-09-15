@@ -24,9 +24,7 @@ DENY_EXACT = {
     "scripts/git/autopilot_guard.py",
     "scripts/git/codex-commit",
 }
-DENY_PREFIXES = (
-    ".github/workflows/",
-)
+DENY_PREFIXES = (".github/workflows/",)
 
 PROTECTED_EXACT = {
     "Dockerfile",
