@@ -1030,10 +1030,10 @@ function App() {
       ? `최근 7일에 혈압 기록 ${recentBloodPressureCount}건이 있어요. 오늘 측정한 값을 이어서 남겨요.`
       : "오늘 측정한 값을 남겨요."
     : todayMorningMeasurement && todayEveningMeasurement
-      ? "아침·저녁 기록을 확인해요."
+      ? "아침·저녁 기록이 있어요. 저장한 내용을 확인해요."
       : todayMorningMeasurement
-        ? "아침 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요."
-        : "저녁 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요.";
+        ? "아침 기록이 있어요. 저장한 내용을 확인해요."
+        : "저녁 기록이 있어요. 저장한 내용을 확인해요.";
   const additionalBloodPressureSupport =
     todayMorningMeasurement && !todayEveningMeasurement
       ? "아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."

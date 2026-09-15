@@ -183,6 +183,9 @@ test('North Star Home stops offering another BP slot when both daily periods are
   const home = page.locator('.journey-today');
   await expect(home).toBeVisible();
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '아침·저녁 기록이 있어요. 저장한 내용을 확인해요.',
+  );
 
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
 
@@ -206,6 +209,9 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   const facts = home.locator('.journey-facts');
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '아침 기록이 있어요. 저장한 내용을 확인해요.',
+  );
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('혈압 추가 기록');
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText(
     '아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요.',
