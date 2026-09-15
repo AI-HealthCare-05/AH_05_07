@@ -475,6 +475,34 @@
 .journey-empty .journey-empty-action { display: grid; grid-template-rows: auto 1fr auto; gap: 1rem; border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-md); background: var(--sk7-surface); padding: 1.25rem; }
 .journey-empty .journey-empty-action h2 { font-size: 1.125rem; }
 .journey-empty .journey-empty-action p { color: var(--sk7-ink-muted); line-height: 1.65; }
+
+.journey-empty .journey-empty-signal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem 1.25rem;
+  border-top: 1px solid var(--sk7-border);
+  padding-top: 1rem;
+}
+
+.journey-empty .journey-empty-signal > div {
+  display: grid;
+  gap: .3rem;
+}
+
+.journey-empty .journey-empty-signal h2 {
+  font-size: 1rem;
+}
+
+.journey-empty .journey-empty-signal p:not(.eyebrow) {
+  color: var(--sk7-ink-muted);
+  font-size: .875rem;
+  line-height: 1.6;
+}
+
+.journey-empty .journey-empty-signal button {
+  white-space: nowrap;
+}
 .journey-empty .empty-garden { justify-self: end; width: 10rem; height: 2.5rem; border-bottom-width: .35rem; }
 .journey-empty .empty-garden i { width: 2rem; height: 1.4rem; }
 .journey-empty .empty-garden i:nth-child(2) { width: 2.2rem; height: 2rem; }
@@ -484,4 +512,12 @@
   .journey-login .journey-login-intro { gap: .75rem; }
   .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
   .journey-empty .journey-empty-action { padding: 1rem; gap: .75rem; }
+  .journey-empty .journey-empty-signal {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .journey-empty .journey-empty-signal button {
+    justify-self: start;
+    white-space: normal;
+  }
 }

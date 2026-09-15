@@ -1247,18 +1247,29 @@ function App() {
               <button type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode}>현재 7일 보기</button>
             </div>
           ) : (
-            <div className="journey-empty-actions">
-              <section className="journey-empty-action">
-                <h2>혈압 기록</h2>
-                <p id="empty-bp-help">측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.</p>
-                <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
-              </section>
-              <section className="journey-empty-action">
-                <h2>7일 챌린지</h2>
-                <p id="empty-challenge-help">선택 기능이에요. 원하면 이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
-                <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
-              </section>
-            </div>
+            <>
+              <div className="journey-empty-actions">
+                <section className="journey-empty-action">
+                  <h2>혈압 기록</h2>
+                  <p id="empty-bp-help">측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.</p>
+                  <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
+                </section>
+                <section className="journey-empty-action">
+                  <h2>7일 챌린지</h2>
+                  <p id="empty-challenge-help">선택 기능이에요. 원하면 이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
+                  <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
+                </section>
+              </div>
+
+              <aside className="journey-empty-signal" aria-labelledby="empty-signal-title">
+                <div>
+                  <p className="eyebrow">선택 도구 · 저장 안 함</p>
+                  <h2 id="empty-signal-title">생활정보를 먼저 정리할 수도 있어요</h2>
+                  <p id="empty-signal-help">활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 혈압 기록과는 별도예요.</p>
+                </div>
+                <button className="text-button" type="button" aria-describedby="empty-signal-help" onClick={() => navigate("S11")}>생활정보 정리하기</button>
+              </aside>
+            </>
           )}
           <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
         </Scene>
