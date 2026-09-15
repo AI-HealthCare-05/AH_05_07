@@ -701,6 +701,14 @@ test('Journey record browsing keeps distinct facts, exact detail targets, and re
   await expect(records).toBeVisible();
   await expect(records.locator('.record-explorer')).toBeVisible();
   await expect(records).toContainText('전체 4개 중 4개 표시');
+
+  const overview = records.getByRole('group', { name: '이 7일 기록 구성' });
+  await expect(overview).toContainText('기록이 있는 날 3일');
+  await expect(overview).toContainText('총 4개');
+  await expect(overview).toContainText('혈압 2개');
+  await expect(overview).toContainText('챌린지 1개');
+  await expect(overview).toContainText('이전 방식 1개');
+
   await expect(records.getByRole('button', { name: /상세 보기 · 혈압 관찰.*아침/ })).toContainText('118/76 mmHg');
   await expect(records.locator('[data-record-kind="challenge-checkin"]')).toContainText('기록함');
   await expect(records.locator('[data-record-kind="legacy"]')).toContainText('읽기 전용');
