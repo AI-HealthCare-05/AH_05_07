@@ -31,7 +31,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록으로 구분돼요.');
     await expect(page.locator('.recap-trail-heading')).toContainText('그날의 기록만 아래에서 확인');
     const tools = page.locator('[data-recap-tools]');
-    await expect(page.locator('.recap-tools-intro')).toContainText('기록한 7일을 한눈에 정리해요');
+    await expect(page.locator('.recap-tools-intro')).toContainText('이 7일의 기록을 한눈에 정리해요');
+    await expect(page.locator('.recap-tools-intro')).toContainText('기록이 한 건만 있어도');
     await expect(page.locator('.recap-tools-intro')).toContainText('인쇄하거나 PDF로 저장할 수 있어요');
     await expect(tools.locator('.living-week-report-action')).toBeVisible();
     await expect(tools.getByRole('button')).toHaveCount(3);
