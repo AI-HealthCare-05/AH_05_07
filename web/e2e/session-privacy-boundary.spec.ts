@@ -482,7 +482,7 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("30일");
   await expect(settings).toContainText("이메일");
   await expect(settings).toContainText("혈압 관찰");
-  await expect(settings).toContainText("챌린지 제품 기록");
+  await expect(settings).toContainText("챌린지 기록");
   await expect(settings).toContainText("계정 삭제");
   await expect(settings).toContainText("JSON");
   await expect(settings).toContainText("기기");
