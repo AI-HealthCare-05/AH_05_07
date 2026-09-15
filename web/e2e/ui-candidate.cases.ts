@@ -144,6 +144,18 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(todayState).toContainText('오늘 상태');
   await expect(todayState).toContainText('오늘 혈압 기록 여부와 챌린지 상태를 확인해요.');
   await expect(todayState).toHaveAttribute('data-home-destination', 'S07');
+
+  await todayState.press('Enter');
+
+  const todayReview = page.locator('[data-scene="S07"]');
+  await expect(todayReview).toBeVisible();
+  await expect(todayReview.locator('.scene-body')).toContainText(
+    '오늘은 아직 혈압 기록이 없어요.',
+  );
+  await expect(todayReview.locator('.today-date')).toContainText(
+    '오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요.',
+  );
+  await expect(todayReview.locator('.fact-lead')).toContainText('오늘 기록 없음');
 });
 
 for (const [todayCheckinStatus, expectedSupport] of [

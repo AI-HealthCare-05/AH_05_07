@@ -1399,8 +1399,16 @@ function App() {
     }
 
     if (activeScreen === "S07") {
-      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard ? "선택한 이전 7일의 범위를 보고 있어요." : "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."} tone="cream" className="journey-candidate journey-today-review">
-        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용` : "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."}</span></div>
+      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard
+        ? "선택한 이전 7일의 범위를 보고 있어요."
+        : todayMeasurement
+          ? "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."
+          : "오늘은 아직 혈압 기록이 없어요. 챌린지 참여와 이전 방식 기록은 각각 따로 확인할 수 있어요."} tone="cream" className="journey-candidate journey-today-review">
+        <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
+          ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
+          : todayMeasurement
+            ? "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."
+            : "오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요."}</span></div>
         {journeyTodayLanes()}
         <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
       </Scene>;
