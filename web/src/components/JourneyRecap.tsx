@@ -29,6 +29,12 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
   const focusedDate = selectedDay?.date ?? null;
   const factsKnown = freshness !== 'loading' && freshness !== 'error';
   const summary = summarizeTrailDays(days);
+  const hasRecordedFacts = summary.observationCount > 0 || summary.participationDateCount > 0;
+  const recordedFactDayCount = days.filter(
+    day => day.observationCount > 0 || day.participation !== '기록 없음',
+  ).length;
+  const missingFactDayCount = days.length - recordedFactDayCount;
+  const hasPartialRecordedFacts = hasRecordedFacts && missingFactDayCount > 0;
   const readOnly = period !== 'current';
   const periodName = period === 'completed-cycle' ? '종료된 7일' : period === 'prior' ? '이전 7일' : '현재 7일';
   const previewDate = staticLandscape && focusedDate ? focusedDate : today;
@@ -81,6 +87,14 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
                 </dd>
               </div>
             </dl>
+            {factsKnown && hasRecordedFacts && <p className="recap-week-payoff" data-recap-payoff>
+              {period === 'prior'
+                ? '이 기간에 남긴 기록은 날짜별로 확인할 수 있어요. 리포트는 현재 7일에서 볼 수 있어요.'
+                : '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.'}
+            </p>}
+            {factsKnown && hasPartialRecordedFacts && <p className="recap-week-coverage" data-recap-coverage>
+              혈압 관찰과 챌린지 참여 기록이 없는 날 {missingFactDayCount}일도 빈 날로 그대로 보여요.
+            </p>}
             {factsKnown && <details className="recap-summary-explainer">
               <summary>챌린지 날짜별 상태</summary>
               <p>기록함만 {summary.recordedDateCount}일 · 건너뜀만 {summary.skippedDateCount}일 · 혼합 {summary.mixedDateCount}일</p>

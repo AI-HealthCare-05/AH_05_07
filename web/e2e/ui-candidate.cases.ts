@@ -701,6 +701,14 @@ test('Journey record browsing keeps distinct facts, exact detail targets, and re
   await expect(records).toBeVisible();
   await expect(records.locator('.record-explorer')).toBeVisible();
   await expect(records).toContainText('전체 4개 중 4개 표시');
+
+  const overview = records.getByRole('group', { name: '이 7일 기록 구성' });
+  await expect(overview).toContainText('기록이 있는 날 3일');
+  await expect(overview).toContainText('총 4개');
+  await expect(overview).toContainText('혈압 2개');
+  await expect(overview).toContainText('챌린지 1개');
+  await expect(overview).toContainText('이전 방식 1개');
+
   await expect(records.getByRole('button', { name: /상세 보기 · 혈압 관찰.*아침/ })).toContainText('118/76 mmHg');
   await expect(records.locator('[data-record-kind="challenge-checkin"]')).toContainText('기록함');
   await expect(records.locator('[data-record-kind="legacy"]')).toContainText('읽기 전용');
@@ -709,11 +717,20 @@ test('Journey record browsing keeps distinct facts, exact detail targets, and re
   await expect(eveningDetail).toBeVisible();
   await eveningDetail.click();
   await expect(page).toHaveURL(/record=blood-pressure%3Ajourney-bp-evening/);
+
+  const detailSelection = page.locator('.record-explorer-detail-selection');
+  await expect(detailSelection).toContainText('선택한 기록');
+  await expect(detailSelection).toContainText('9월 10일');
+  await expect(detailSelection).toContainText('저녁');
+
   await expect(page.locator('.journey-record-detail [data-record-detail-kind="blood-pressure"]')).toContainText('121/79 mmHg');
   await expect(page.getByRole('button', { name: '수정', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '삭제', exact: true })).toBeVisible();
 
   await page.goto('/?e2e=signed-in&screen=S09&record=legacy:journey-legacy');
+  await expect(page.locator('.record-explorer-detail-selection')).toContainText('선택한 기록 · 9월 8일');
+  await expect(page.locator('.record-explorer-detail-selection')).not.toContainText('아침');
+  await expect(page.locator('.record-explorer-detail-selection')).not.toContainText('저녁');
   await expect(page.locator('.journey-record-detail [data-record-detail-kind="legacy"]')).toContainText('이전 방식으로 남긴 기록은 읽기 전용입니다.');
   await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: '삭제', exact: true })).toHaveCount(0);

@@ -67,9 +67,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await bp.getByRole('button', { name: '상세 보기' }).first().press('Enter');
     await expect(page.locator('#S09-title')).toBeFocused();
     await expect(page.getByRole('button', { name: '수정', exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
-    await expect(page.locator('#S08-title')).toBeFocused();
-    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+    await expect(page.locator('#S10-title')).toBeFocused();
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
     await noOverflow(page);
@@ -110,6 +109,12 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('2건');
   await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 2일');
   await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('3일');
+  await expect(page.locator('[data-recap-payoff]')).toHaveText(
+    '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.',
+  );
+  await expect(page.locator('[data-recap-coverage]')).toHaveText(
+    '혈압 관찰과 챌린지 참여 기록이 없는 날 3일도 빈 날로 그대로 보여요.',
+  );
   await expect(trail.locator('li[data-trail-date]')).toHaveCount(7);
   const staticPreview = await page.locator('[data-static-landscape]').count() === 1;
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', staticPreview ? '2026-09-10' : '2026-09-11');
@@ -192,9 +197,9 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();
   await expect(page.getByText('이전 7일의 기록은 읽기 전용입니다.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
+  await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+  await expect(page.locator('#S10-title')).toBeFocused();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'prior');
-  await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await page.locator('[data-trail-date="2026-09-04"] > button').click();
   await page.locator('[data-dashboard-window]').getByRole('button', { name: '현재 7일 보기', exact: true }).click();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'current');
@@ -467,6 +472,56 @@ const report = (page: Page) => page.locator('[data-living-week-report]');
 const reportAction = (page: Page) => page.getByRole('button', { name: '7일 리포트 보기', exact: true });
 const reportDates = ['2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11'];
 
+test('seven-day report stays readable at 320px and 200% text', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await fixture(page);
+
+  await reportAction(page).click();
+  const document = report(page);
+  await expect(document).toBeVisible();
+  await expect(
+    document.getByRole('heading', { name: '7일 기록 리포트', exact: true }),
+  ).toBeFocused();
+
+  await page.locator('html').evaluate(element => {
+    element.style.fontSize = '200%';
+  });
+
+  await expect(document.locator('[data-report-summary="blood-pressure"]')).toContainText(
+    '관찰 기록 없음',
+  );
+  await expect(document.locator('[data-report-summary="challenge"]')).toContainText(
+    '기록 없음',
+  );
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+
+  const toolbar = page.locator('.week-report-toolbar');
+  const back = toolbar.getByRole('button', {
+    name: '7일 돌아보기로 돌아가기',
+    exact: true,
+  });
+  const print = toolbar.getByRole('button', {
+    name: '인쇄 / PDF로 저장',
+    exact: true,
+  });
+
+  for (const control of [back, print]) {
+    await expect(control).toBeVisible();
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await back.focus();
+  await expect(back).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(print).toBeFocused();
+});
+
 test('living week report preserves the complete selected week with separate facts and no private metadata', async ({ page }) => {
   let dataRequests = 0;
   let downloads = 0;
@@ -511,7 +566,8 @@ test('living week report preserves the complete selected week with separate fact
   await expect(report(page).getByRole('heading', { name: '7일 기록 리포트', exact: true })).toBeFocused();
   expect(await report(page).locator('[data-report-date]').evaluateAll(days => days.map(day => day.getAttribute('data-report-date')))).toEqual(reportDates);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/3\s*건/);
-  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/2\s*일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰이 있는 날짜\s*2일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰 기록 없음\s*5일/);
   await expect(report(page).locator('[data-report-summary="challenge"] > div')).toHaveText([
     '체크인이 있는 날짜3일', '기록함1일', '건너뜀1일', '혼합1일', '기록 없음4일',
   ]);

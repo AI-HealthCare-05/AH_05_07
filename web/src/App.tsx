@@ -1149,8 +1149,13 @@ function App() {
     </section>;
   }
 
-  function openRecord(item: RecordBrowseItem) {
+  function openRecord(item: RecordBrowseItem, returnScreen: "S08" | "S10" = "S08") {
     navigate("S09", item.key);
+    window.history.replaceState(
+      { ...(window.history.state ?? {}), recordReturnScreen: returnScreen },
+      "",
+      window.location.href,
+    );
   }
 
   function renderWindowNavigation() {
@@ -1197,7 +1202,7 @@ function App() {
                   ? ` · ${periodLabel(item.record.period)} · ${displayMeasurement(item.record)}`
                   : ` · ${challengeLabel(item.record.action_id)} · ${checkinLabel(item.record.status)}${item.kind === "legacy" ? " · 이전 기록" : ""}`}
               </span>}
-              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item)}>상세 보기</button>
+              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item, journal ? "S10" : "S08")}>상세 보기</button>
             </li>
           )) : <li className="empty-record">{focusedDate ? `${dateLabel(focusedDate)}에 남긴 ${title} 기록이 없어요.` : emptyText}</li>}
         </ul>
@@ -1446,7 +1451,17 @@ function App() {
     if (activeScreen === "S09") {
       return (
         <Scene id="S09" {...journeyCopy.S09} tone="lavender" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
-          <button className="text-button record-explorer-detail-return" type="button" onClick={() => navigate("S08")}>목록으로 돌아가기</button>
+          <button
+            className="text-button record-explorer-detail-return"
+            type="button"
+            onClick={() => navigate(window.history.state?.recordReturnScreen === "S10" ? "S10" : "S08")}
+          >
+            {window.history.state?.recordReturnScreen === "S10" ? "7일 돌아보기로 돌아가기" : "목록으로 돌아가기"}
+          </button>
+          {selectedRecord && <p className="record-explorer-detail-selection">
+            선택한 기록 · {dateLabel(selectedRecord.record.observed_on)}
+            {selectedRecord.kind === "blood-pressure" ? ` · ${periodLabel(selectedRecord.record.period)}` : ""}
+          </p>}
           <p className="record-explorer-detail-period">{dashboardPeriodName}{isPriorDashboard ? " · 읽기 전용" : ""} · {dateLabel(startOn)} ~ {dateLabel(endOn)}</p>
           {selectedRecordMissing ? (
             <div className="state-card state-error" role="alert">

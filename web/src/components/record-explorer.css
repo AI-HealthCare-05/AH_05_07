@@ -71,6 +71,41 @@
   gap: 1.15rem;
 }
 
+.record-explorer-overview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .35rem 1rem;
+  min-width: 0;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid var(--record-explorer-rule);
+  color: var(--record-explorer-muted);
+  line-height: 1.5;
+}
+
+.record-explorer-overview > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .65rem;
+}
+
+.record-explorer-overview strong {
+  color: var(--record-explorer-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.record-explorer-overview span,
+.record-explorer-overview p {
+  font-size: .875rem;
+}
+
+.record-explorer-overview p {
+  margin: 0;
+}
+
 .record-explorer-tools {
   display: grid;
   gap: .95rem;
@@ -278,6 +313,14 @@
   min-height: max(44px, 2.75rem);
   max-width: 100%;
   text-align: left;
+}
+
+.record-explorer-detail-selection {
+  margin: 0;
+  color: var(--record-explorer-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .record-explorer-detail-period { color: var(--sk7-ink-muted); font-size: 1rem; line-height: 1.6; }

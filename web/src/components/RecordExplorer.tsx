@@ -33,6 +33,12 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
   const selectionType = selection.filter === "all" ? "모든 기록" : detailTypes[selection.filter];
   const selectionDate = selection.date ? dateLabel(selection.date) : "모든 날짜";
   const hasActiveFilter = selection.filter !== "all" || selection.date !== null;
+  const recordedDayCount = dates.length;
+  const recordOverview = [
+    `혈압 ${counts["blood-pressure"]}개`,
+    `챌린지 ${counts["challenge-checkin"]}개`,
+    `이전 방식 ${counts.legacy}개`,
+  ].join(" · ");
   const resetSelection = () => {
     onSelect({ filter: "all", date: null });
     requestAnimationFrame(() => allFilter.current?.focus());
@@ -59,6 +65,13 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
   }, [returnPoint, onRestored]);
 
   return <section className="record-explorer" aria-label="기록 탐색">
+    {counts.all > 0 && <div className="record-explorer-overview" role="group" aria-label="이 7일 기록 구성">
+      <div>
+        <strong>기록이 있는 날 {recordedDayCount}일</strong>
+        <span>총 {counts.all}개</span>
+      </div>
+      <p>{recordOverview}</p>
+    </div>}
     <div className="record-explorer-tools">
       <fieldset className="record-explorer-filter">
         <legend>기록 종류</legend>
