@@ -61,6 +61,15 @@ export const FIELDS: Record<keyof Draft, Field> = {
 
 export type StepProblem = { step: InputStep; fields: (keyof Draft)[]; message: string };
 
+export function formatTimeKorean(value: string): string {
+  const parts = clockParts(value);
+  if (!parts) return "선택 필요";
+  const [hour, minute] = parts;
+  const period = hour < 12 ? "오전" : "오후";
+  const twelveHour = hour % 12 || 12;
+  return `${period} ${twelveHour}:${String(minute).padStart(2, "0")}`;
+}
+
 export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
   // Native min/step attributes are hints, not generic eligibility rules.
   // Mirror only these explicit adapter checks; final semantic validation stays in the adapter.
@@ -106,6 +115,7 @@ export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
 export function reviewValue(key: keyof Draft, draft: Draft): string {
   const field = FIELDS[key];
   if (field.options) return field.options.find(([value]) => value === draft[key])?.[1] ?? "선택 필요";
+  if (field.type === "time") return formatTimeKorean(draft[key]);
   const unit = field.unit ?? (key === "age" ? "세" : key === "walkingDays" ? "일" : "");
   return `${draft[key]}${unit ? ` ${unit}` : ""}`;
 }
