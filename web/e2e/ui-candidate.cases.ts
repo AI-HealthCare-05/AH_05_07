@@ -591,6 +591,9 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
   await expect(page.locator('.journey-login-intro')).toContainText('7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.');
+  await expect(page.locator('.journey-login-demo')).toContainText('30일 동안 보관돼요.');
+  await expect(page.locator('.journey-login-demo')).toContainText('보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.');
+  await expect(page.getByText('합성 데이터 체험용입니다.', { exact: false })).toHaveCount(0);
   const email = page.getByRole('textbox', { name: '이메일', exact: true });
   await expect(email).toHaveAccessibleDescription(/이메일로 받은 링크를 열면 로그인할 수 있어요\. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요\./);
   await expect(page.getByText('같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.')).toBeVisible();

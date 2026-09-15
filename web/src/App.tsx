@@ -191,7 +191,7 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
           </form>
           {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
           <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
-          <p className="journey-login-demo">합성 데이터 체험용입니다. 실제 건강정보는 입력하지 마세요.</p>
+          <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
           <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         </section>
       </div>
