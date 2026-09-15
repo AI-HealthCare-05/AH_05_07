@@ -2,6 +2,7 @@ import { expect, test, type Page, type Request } from "@playwright/test";
 
 import type { ObservationWindow } from "../src/lib/api-contract";
 import { e2eSessionEventName } from "../src/lib/e2eHarness";
+import { chooseTime as chooseTimeWheel } from "./model-v2-time-wheel";
 
 const beforeMidnight = new Date("2026-09-13T14:59:59Z"); // Sunday in Seoul, morning in LA.
 const oldBounds = { start_on: "2026-09-07", end_on: "2026-09-13" };
@@ -9,36 +10,6 @@ const newBounds = { start_on: "2026-09-08", end_on: "2026-09-14" };
 type Read = { bounds: typeof oldBounds; token: string; request: Request };
 type Reply = { status?: number; body?: unknown };
 
-
-async function chooseTimeWheel(page: Page, id: string, value: string) {
-  const [hourText, minuteText] = value.split(":");
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  const period = hour < 12 ? "오전" : "오후";
-  const twelveHour = hour % 12 || 12;
-  const trigger = page.locator(`#${id}`);
-
-  if (await trigger.getAttribute("aria-expanded") !== "true") await trigger.click();
-
-  const picker = page.locator(`#${id}-picker`);
-  await expect(picker).toBeVisible();
-  const label = (await page.locator(`#${id}-label`).textContent())?.trim() ?? "";
-
-  const hourWheel = picker.getByRole("spinbutton", { name: `${label} 시` });
-  await hourWheel.focus();
-  await hourWheel.press("Home");
-  for (let current = 1; current < twelveHour; current += 1) await hourWheel.press("ArrowDown");
-
-  const minuteWheel = picker.getByRole("spinbutton", { name: `${label} 분` });
-  await minuteWheel.focus();
-  await minuteWheel.press("Home");
-  for (let current = 0; current < Math.floor(minute / 5); current += 1) await minuteWheel.press("PageDown");
-  for (let current = 0; current < minute % 5; current += 1) await minuteWheel.press("ArrowDown");
-
-  const periodGroup = picker.getByRole("radiogroup", { name: `${label} 오전 또는 오후` });
-  await periodGroup.getByRole("radio", { name: period, exact: true }).click();
-  await expect(trigger).toHaveAttribute("data-time-complete", "true");
-}
 
 function deferred() {
   let release!: () => void;

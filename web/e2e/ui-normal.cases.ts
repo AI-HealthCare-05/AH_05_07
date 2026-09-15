@@ -1,37 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { chooseTime as chooseTimeWheel } from './model-v2-time-wheel';
 
-
-async function chooseTimeWheel(page: Page, id: string, value: string) {
-  const [hourText, minuteText] = value.split(':');
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  const period = hour < 12 ? '오전' : '오후';
-  const twelveHour = hour % 12 || 12;
-  const trigger = page.locator(`#${id}`);
-
-  if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click();
-
-  const picker = page.locator(`#${id}-picker`);
-  await expect(picker).toBeVisible();
-  const label = (await page.locator(`#${id}-label`).textContent())?.trim() ?? '';
-
-  const hourWheel = picker.getByRole('spinbutton', { name: `${label} 시` });
-  await hourWheel.focus();
-  await hourWheel.press('Home');
-  for (let current = 1; current < twelveHour; current += 1) await hourWheel.press('ArrowDown');
-
-  const minuteWheel = picker.getByRole('spinbutton', { name: `${label} 분` });
-  await minuteWheel.focus();
-  await minuteWheel.press('Home');
-  for (let current = 0; current < Math.floor(minute / 5); current += 1) await minuteWheel.press('PageDown');
-  for (let current = 0; current < minute % 5; current += 1) await minuteWheel.press('ArrowDown');
-
-  const periodGroup = picker.getByRole('radiogroup', { name: `${label} 오전 또는 오후` });
-  await periodGroup.getByRole('radio', { name: period, exact: true }).click();
-  await expect(trigger).toHaveAttribute('data-time-complete', 'true');
-}
 
 for (const screen of ['S02', 'S05', 'S10', 'S11']) test(`normal configured build rejects fixture, fake-session URL and harness event at ${screen}`, async ({ page }) => {
   const requests: string[] = [];
