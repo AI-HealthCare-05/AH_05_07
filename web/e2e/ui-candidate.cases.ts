@@ -76,6 +76,7 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const leadCopy = home.locator('.home-lead-copy');
   await expect(leadCopy).toBeVisible();
+  await expect(leadCopy.locator('.home-lead-kicker')).toHaveText('오늘 먼저');
   await expect(leadCopy.getByRole('heading', { level: 2 })).toContainText('오늘 혈압 기록');
   await expect(leadCopy.locator('#home-lead-support')).toBeVisible();
   await expect(home.getByRole('heading', { level: 2, name: '최근 7일 기록', exact: true })).toBeVisible();
@@ -283,6 +284,7 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   const facts = home.locator('.journey-facts');
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
+  await expect(home.locator('.home-lead-kicker')).toHaveText('오늘 기록');
   await expect(home.locator('#home-lead-support')).toHaveText(
     '아침 기록이 있어요. 저장한 내용을 확인해요.',
   );

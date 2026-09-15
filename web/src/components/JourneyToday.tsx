@@ -43,6 +43,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const previewing = landscapeDate !== today;
   const landmark = landmarkForCalendarDate(landscapeDate);
   const summary = summarizeTrailDays(days);
+  const leadKicker = lead.key === 'today-detail' ? '오늘 기록' : '오늘 먼저';
   const todayWord: readonly [string, string] = !factsKnown
     ? ['기록을 불러오면', '오늘 상태를 확인할 수 있어요.']
     : (todayDay?.observationCount ?? 0) > 0
@@ -65,7 +66,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div className="home-lead-copy">
-              <p className="home-lead-kicker">오늘 먼저</p>
+              <p className="home-lead-kicker">{leadKicker}</p>
               <h2 id="home-lead-title">{lead.title}</h2>
               <p id="home-lead-support">{lead.support}</p>
             </div>
