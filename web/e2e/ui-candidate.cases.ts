@@ -264,6 +264,27 @@ test('North Star Home stops offering another BP slot when both daily periods are
 
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
 
+  await home.locator('.home-lead button').press('Enter');
+  await expect(page.locator('#S07-title')).toBeFocused();
+
+  const todayBloodPressure = page.locator('.journey-today-bp-records');
+  await expect(todayBloodPressure).toBeVisible();
+  await expect(todayBloodPressure.locator('[data-today-bp-period="morning"]')).toContainText(
+    '아침',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="morning"]')).toContainText(
+    '120/80 mmHg',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="evening"]')).toContainText(
+    '저녁',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="evening"]')).toContainText(
+    '122/81 mmHg',
+  );
+
+  await page.goBack();
+  await expect(home).toBeVisible();
+
   const recordsAction = home.locator('[data-home-concept="records"]');
   await expect(recordsAction).toContainText('기록 찾아보기');
   await expect(recordsAction).toContainText(

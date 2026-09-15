@@ -1235,7 +1235,26 @@ function App() {
           <section className="fact-lead">
             <p className="eyebrow">혈압 관찰</p>
             <h2>{isPriorDashboard ? "오늘 기록 상태 미확인" : todayMeasurement ? "오늘 기록 있음" : "오늘 기록 없음"}</h2>
-            <p>{isPriorDashboard ? "선택한 이전 구간에서는 오늘 혈압 기록 여부를 확인할 수 없어요." : todayMeasurement ? displayMeasurement(todayMeasurement) : "필요할 때 오늘의 측정값을 기록할 수 있어요."}</p>
+            {isPriorDashboard ? (
+              <p>선택한 이전 구간에서는 오늘 혈압 기록 여부를 확인할 수 없어요.</p>
+            ) : todayMeasurement ? (
+              <dl className="journey-today-bp-records" aria-label="오늘 혈압 기록">
+                {todayMorningMeasurement && (
+                  <div data-today-bp-period="morning">
+                    <dt>아침</dt>
+                    <dd>{displayMeasurement(todayMorningMeasurement)}</dd>
+                  </div>
+                )}
+                {todayEveningMeasurement && (
+                  <div data-today-bp-period="evening">
+                    <dt>저녁</dt>
+                    <dd>{displayMeasurement(todayEveningMeasurement)}</dd>
+                  </div>
+                )}
+              </dl>
+            ) : (
+              <p>필요할 때 오늘의 측정값을 기록할 수 있어요.</p>
+            )}
             {!isPriorDashboard && !todayMeasurement && <button type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>}
           </section>
           <section className="journey-today-secondary journey-today-challenge"
