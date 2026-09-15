@@ -61,6 +61,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     const savedActions = page.locator('.journey-saved .split-actions');
     await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
     await expect(nextStep).toContainText('기록이 반영됐는지 확인');
+    await expect(nextStep).toContainText('한 건부터 최근 7일에 모아볼 수 있어요');
     await expect(savedActions.getByRole('button')).toHaveCount(2);
     const nextStepBox = await nextStep.boundingBox();
     const actionsBox = await savedActions.boundingBox();
@@ -76,6 +77,9 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
     await page.getByRole('link', { name: '7일 돌아보기' }).press('Enter');
     await expect(page.locator('#S10-title')).toBeFocused();
+    await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('1건');
+    await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 1일');
+    await expect(page.locator('.recap-tools-intro')).toContainText('기록이 한 건만 있어도');
     await page.goBack();
     await expect(page.locator('#S02-title')).toBeFocused();
     await expect(page.locator('.home-lead')).toHaveAttribute('data-home-concept', 'today-detail');

@@ -460,10 +460,22 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
     await expect(page.getByRole('button', { name: '7일 챌린지 시작하기', exact: true })).toHaveCount(0);
     await expect(page.locator('[data-read-only-window]')).toHaveCount(0);
     await expect(page.getByRole('button', { name: '현재 7일 보기', exact: true })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: '생활정보 정리하기', exact: true })).toHaveCount(0);
     expect(windows).toEqual(['2026-08-29']);
     await page.getByRole('button', { name: '현재 7일 보기', exact: true }).press('Enter');
     await expect(page.getByRole('heading', { name: '측정한 혈압부터 기록해요', exact: true })).toBeVisible();
     expect(windows).toEqual(['2026-08-29', '2026-09-05']); await expect(page).not.toHaveURL(/dashboard_window/);
+  }
+  if (!prior) {
+    const signal = page.locator('.journey-empty-signal');
+    await expect(signal).toContainText('생활정보를 먼저 정리할 수도 있어요');
+    await expect(signal).toContainText('이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.');
+
+    await page.getByRole('button', { name: '생활정보 정리하기', exact: true }).click();
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+
+    await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+    await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   }
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.locator('#S12-title').focus(); await page.keyboard.press('Tab');

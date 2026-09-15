@@ -746,6 +746,7 @@ export function ModelV2InputFlow({
               {step === "intro" && <section className="model-v2-intro" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
                 <p><strong>선택 도구 · 이번 이용에만 사용</strong></p>
+                <p>입력을 마치면 활동·수면·생활습관을 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.</p>
                 <p><strong>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</strong></p>
                 <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
                 <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>

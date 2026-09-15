@@ -1247,18 +1247,29 @@ function App() {
               <button type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode}>현재 7일 보기</button>
             </div>
           ) : (
-            <div className="journey-empty-actions">
-              <section className="journey-empty-action">
-                <h2>혈압 기록</h2>
-                <p id="empty-bp-help">측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.</p>
-                <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
-              </section>
-              <section className="journey-empty-action">
-                <h2>7일 챌린지</h2>
-                <p id="empty-challenge-help">선택 기능이에요. 원하면 이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
-                <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
-              </section>
-            </div>
+            <>
+              <div className="journey-empty-actions">
+                <section className="journey-empty-action">
+                  <h2>혈압 기록</h2>
+                  <p id="empty-bp-help">측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.</p>
+                  <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
+                </section>
+                <section className="journey-empty-action">
+                  <h2>7일 챌린지</h2>
+                  <p id="empty-challenge-help">선택 기능이에요. 원하면 이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
+                  <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
+                </section>
+              </div>
+
+              <aside className="journey-empty-signal" aria-labelledby="empty-signal-title">
+                <div>
+                  <p className="eyebrow">선택 도구 · 저장 안 함</p>
+                  <h2 id="empty-signal-title">생활정보를 먼저 정리할 수도 있어요</h2>
+                  <p id="empty-signal-help">활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 혈압 기록과는 별도예요.</p>
+                </div>
+                <button className="text-button" type="button" aria-describedby="empty-signal-help" onClick={() => navigate("S11")}>생활정보 정리하기</button>
+              </aside>
+            </>
           )}
           <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
         </Scene>
@@ -1317,7 +1328,7 @@ function App() {
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
           <strong>오늘의 기록에서 방금 저장한 혈압을 확인해요</strong>
-          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요.</p>
+          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요.</p>
         </div>}
         <div className="split-actions">
           <button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>
@@ -1515,7 +1526,7 @@ function App() {
               <div>
                 <p className="eyebrow">추가 도구</p>
                 <h2>입력 기반 위험군 선별 신호</h2>
-                <p>선택 도구 · 이번 이용에만 사용해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p>
+                <p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button>
             </section>
@@ -1530,7 +1541,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>선택 도구 · 이번 이용에만 사용해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;
