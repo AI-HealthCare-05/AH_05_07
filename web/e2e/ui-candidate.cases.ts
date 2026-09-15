@@ -149,7 +149,9 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('혈압 추가 기록');
-  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('오늘 측정한 값을 바로 기록해요.');
+  await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText(
+    '아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요.',
+  );
   const recentWindow = home.locator('[data-window-kind="recent-history"]');
   await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
   await expect(home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' })).toHaveCount(0);

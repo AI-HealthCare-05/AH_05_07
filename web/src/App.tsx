@@ -1034,6 +1034,12 @@ function App() {
       : todayMorningMeasurement
         ? "아침 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요."
         : "저녁 기록이 있어요. 다른 시간대 기록은 필요할 때 추가할 수 있어요.";
+  const additionalBloodPressureSupport =
+    todayMorningMeasurement && !todayEveningMeasurement
+      ? "아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
+      : todayEveningMeasurement && !todayMorningMeasurement
+        ? "저녁 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
+        : "오늘 측정한 값을 바로 기록해요.";
   const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const readNavigationDisabled = pendingAction !== null || accountDeletionPending;
   const displayMeasurement = (record: BloodPressureObservation) => evidenceMode ? "•••/•• mmHg" : `${record.systolic}/${record.diastolic} mmHg`;
@@ -1079,7 +1085,7 @@ function App() {
     {
       key: "blood-pressure",
       title: "혈압 추가 기록",
-      support: "오늘 측정한 값을 바로 기록해요.",
+      support: additionalBloodPressureSupport,
       action: "혈압 추가 기록하기",
       screen: "S04",
     },
