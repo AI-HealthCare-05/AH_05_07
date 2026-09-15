@@ -1022,8 +1022,13 @@ function App() {
       : todayMorningMeasurement
         ? "오늘 아침 기록 있음"
         : "오늘 저녁 기록 있음";
+  const recentBloodPressureCount = isPriorDashboard
+    ? 0
+    : windowData?.blood_pressure_observations.length ?? 0;
   const todayBloodPressureSupport = !todayMeasurement
-    ? "오늘 측정한 값을 남겨요."
+    ? recentBloodPressureCount > 0
+      ? `최근 7일에 혈압 기록 ${recentBloodPressureCount}건이 있어요. 오늘 측정한 값을 이어서 남겨요.`
+      : "오늘 측정한 값을 남겨요."
     : todayMorningMeasurement && todayEveningMeasurement
       ? "아침·저녁 기록을 확인해요."
       : todayMorningMeasurement

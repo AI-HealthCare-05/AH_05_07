@@ -99,6 +99,46 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
+test('North Star Home recognizes recent history when a returning user has not recorded today', async ({ page }) => {
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    const url = new URL(request.url());
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: [{
+          id: 'synthetic-returning-bp',
+          observed_on: '2026-09-10',
+          period: 'morning',
+          systolic: 120,
+          diastolic: 80,
+        }],
+        challenge_checkins: [],
+        active_challenge: null,
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+  await expect(home.locator('.journey-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
+  await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
+  await expect(home.locator('#home-lead-support')).toHaveText(
+    '최근 7일에 혈압 기록 1건이 있어요. 오늘 측정한 값을 이어서 남겨요.',
+  );
+  await expect(home.locator('.home-lead button')).toHaveAccessibleName('혈압 기록하기');
+  await expect(home.locator('.today-week-card')).toContainText('1건');
+});
+
 test('North Star Home previews a past date visibly on mobile while today facts and recent-window scope stay separate', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
