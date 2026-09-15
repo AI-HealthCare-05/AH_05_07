@@ -40,8 +40,8 @@ screens remain reachable without introducing a router dependency.
 | S04–S05 | BP entry and confirmed-save |
 | S06 | Optional challenge state |
 | S07 | Today detail with separate BP/challenge/legacy fact lanes |
-| S08–S09 | Record browse and one selected record |
-| S10 | Current/prior seven-day recap, report, and export |
+| S08–S09 | Record browse, accumulated-record overview, and one selected record with its date/period context |
+| S10 | Current/prior seven-day recap, partial-record coverage, human-readable report/PDF, and export |
 | S11 | Optional input-based risk-signal tool; entered activity/sleep/lifestyle facts are summarized as a transient `오늘의 시작점`, without persisting the input or result |
 | S12–S13 | Confirmed empty and initial-load failure; current S12 keeps BP recording primary while exposing S11 as a lower-priority optional path |
 | S14 | Account, retention/help, and entry to optional tools |
@@ -78,6 +78,26 @@ periods; the UI does not turn two measurements per day into a completion rule.
 
 The dashboard never merges model output, BP, and challenge participation into a
 diagnosis, treatment effect, prevention claim, or single improvement score.
+
+## Record review contract
+
+Record review is a continuation of the BP-first journey rather than a separate
+analytics product.
+
+- S08 summarizes how many records and recorded dates exist in the selected
+  seven-day window, while preserving BP, challenge check-ins, and legacy records
+  as separate record types.
+- S09 identifies the selected record's date and, for BP observations, its
+  morning/evening period. Opening a detail from S10 returns to S10; opening it
+  from S08 returns to S08.
+- S10 shows recorded and unrecorded dates without treating an empty date as a
+  lost record or as proof that no measurement occurred.
+- The seven-day report explicitly shows BP observation count, dates with BP
+  observations, dates without BP observation records, and challenge participation
+  separately.
+- The report remains a human-readable record summary for review, printing, or
+  PDF saving. It does not classify measurements or infer diagnosis, treatment
+  effect, adherence success, or improvement.
 
 ## Signature presentation contract
 
