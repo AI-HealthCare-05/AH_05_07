@@ -204,7 +204,7 @@ test("bear-lite idle can be grabbed and springs back without product-state chang
   await expect.poll(async () => runtime.getAttribute("data-companion-interaction"), { timeout: 4_000 }).toBe("idle");
   expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-x")))).toBeLessThan(0.01);
   expect(Math.abs(Number(await runtime.getAttribute("data-companion-offset-y")))).toBeLessThan(0.01);
-  await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
+  await expect(page.locator('[data-home-concept="today-detail"]').getByRole("button")).toBeVisible();
 });
 
 test("head body and feet use distinct tactile reaction profiles", async ({ page }) => {
@@ -414,7 +414,7 @@ test("404 and abort failures remove only the decorative companion", async ({ bro
     });
     await page.goto(reviewUrl("S02"));
     await expect(page.getByRole("heading", { name: "오늘의 기록" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
+    await expect(page.locator('[data-home-concept="today-detail"]').getByRole("button")).toBeVisible();
     await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "error", { timeout: 30_000 });
     expect(pageErrors).toEqual([]);
     await context.close();
@@ -434,7 +434,7 @@ test("review slot preserves responsive core layout at 1366, 390, and 320", async
     expect(companionBox).not.toBeNull();
     expect(companionBox!.x + companionBox!.width).toBeLessThanOrEqual(sceneBox!.x + sceneBox!.width + 1);
     expect(companionBox!.y + companionBox!.height).toBeLessThanOrEqual(sceneBox!.y + sceneBox!.height + 1);
-    await expect(page.getByRole("button", { name: "혈압 관찰" })).toBeVisible();
+    await expect(page.locator('[data-home-concept="today-detail"]').getByRole("button")).toBeVisible();
   }
 });
 
