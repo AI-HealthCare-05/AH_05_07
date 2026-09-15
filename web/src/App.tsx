@@ -1078,6 +1078,13 @@ function App() {
     ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
     : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
   const challengeDestination: ScreenId = activeChallenge ? "S06" : "S03";
+  const homeChallengeTitle = activeChallengeEnded
+    ? "종료된 챌린지"
+    : activeChallenge
+      ? todayCheckin
+        ? "오늘 챌린지 확인"
+        : "오늘 챌린지 상태"
+      : "7일 챌린지";
   const homeChallengeSupport = activeChallengeEnded
     ? "종료된 챌린지 확인하기"
     : activeChallenge
@@ -1108,7 +1115,7 @@ function App() {
     bloodPressureSecondaryAction,
     {
       key: "challenge",
-      title: "7일 챌린지",
+      title: homeChallengeTitle,
       support: homeChallengeSupport,
       action: "챌린지 열기",
       screen: challengeDestination,

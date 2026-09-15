@@ -158,9 +158,9 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(todayReview.locator('.fact-lead')).toContainText('오늘 기록 없음');
 });
 
-for (const [todayCheckinStatus, expectedSupport] of [
-  [null, '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.'],
-  ['completed', '10분 걷기 · 오늘 상태 기록함'],
+for (const [todayCheckinStatus, expectedTitle, expectedSupport] of [
+  [null, '오늘 챌린지 상태', '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.'],
+  ['completed', '오늘 챌린지 확인', '10분 걷기 · 오늘 상태 기록함'],
 ] as const) {
   test(`North Star Home shows returning challenge state as ${todayCheckinStatus ?? 'pending'}`, async ({ page }) => {
     await setup(page);
@@ -209,7 +209,7 @@ for (const [todayCheckinStatus, expectedSupport] of [
     await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
 
     const challenge = home.locator('[data-home-concept="challenge"]');
-    await expect(challenge).toContainText('7일 챌린지');
+    await expect(challenge.locator('strong')).toHaveText(expectedTitle);
     await expect(challenge).toContainText(expectedSupport);
     await expect(challenge).toHaveAttribute('data-home-destination', 'S06');
   });
