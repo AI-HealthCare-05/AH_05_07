@@ -6,12 +6,11 @@ Observation ownership uses Supabase Auth email Magic Links. The observation data
 
 1. The client requests a Magic Link with an approved `emailRedirectTo` URL.
 2. The hosted Supabase **Confirm signup** and **Magic Link** templates point to
-   `{{ .SiteURL }}/auth/confirm#token_hash={{ .TokenHash }}&type=email` instead
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email` instead
    of exposing the project `*.supabase.co/auth/v1/verify` URL.
-3. The token hash is carried in the URL fragment so it is not part of the HTTP
-   request target sent to Cloudflare. The web client accepts only the
-   `/auth/confirm` + `type=email` flow, removes the token-bearing fragment from
-   browser history, and exchanges the token hash with `supabase.auth.verifyOtp`.
+3. The web client accepts only the `/auth/confirm` + `type=email` flow, removes
+   the token-bearing confirmation URL from browser history, and exchanges the
+   token hash with `supabase.auth.verifyOtp`.
 4. Supabase Auth establishes the session after that one-time exchange.
 5. The client sends the session JWT to protected observation endpoints.
 6. Row-level security permits access only where `user_id = auth.uid()`.
@@ -26,10 +25,10 @@ Observation ownership uses Supabase Auth email Magic Links. The observation data
 
   ```html
   <!-- Confirm signup -->
-  <a href="{{ .SiteURL }}/auth/confirm#token_hash={{ .TokenHash }}&type=email">이메일 주소 확인하기</a>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">이메일 주소 확인하기</a>
 
   <!-- Magic Link -->
-  <a href="{{ .SiteURL }}/auth/confirm#token_hash={{ .TokenHash }}&type=email">로그인 계속하기</a>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">로그인 계속하기</a>
   ```
 
 - Cloudflare's web asset configuration must continue to use SPA fallback so a
