@@ -192,7 +192,7 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
           </form>
           {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
           <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
-          <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
+          <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
           <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         </section>
       </div>
@@ -1619,7 +1619,7 @@ function App() {
               <div>
                 <p className="eyebrow">기록과 파일</p>
                 <h2>기록을 찾아보고 파일을 관리해요</h2>
-                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 제품 기록은 30일 동안 보관돼요.</p>
+                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
               <p className="journey-settings-note">내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.</p>
@@ -1658,7 +1658,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;
