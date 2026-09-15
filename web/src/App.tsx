@@ -72,7 +72,7 @@ type Notice = {
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior" | `cycle:${string}`;
-type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail";
+type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail" | "records";
 type HomeAction = {
   key: HomeDestinationKey;
   title: string;
