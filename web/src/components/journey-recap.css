@@ -51,6 +51,15 @@
 .journey-recap .recap-week-summary dd > span { font-size: .7rem; color: #656f5c; line-height: 1.5; }
 .journey-recap .recap-summary-explainer { margin-top: .7rem; color: #626d59; font-size: .72rem; line-height: 1.65; }
 .journey-recap .recap-summary-explainer summary { width: fit-content; min-height: 2.75rem; align-content: center; cursor: pointer; text-underline-offset: .22em; }
+.journey-recap .recap-week-payoff {
+  margin: .75rem 0 0;
+  max-width: 34rem;
+  color: #435348;
+  font-size: .82rem;
+  font-weight: 550;
+  line-height: 1.6;
+}
+
 .journey-recap .recap-summary-explainer summary:hover { color: #354c3b; text-decoration: underline; }
 .journey-recap .recap-summary-explainer p + p { margin-top: .25rem; }
 .journey-recap .recap-records-jump { display: inline-flex; align-items: center; justify-content: space-between; gap: 1rem; width: fit-content; min-width: 12rem; min-height: 2.75rem; margin-top: .8rem; padding: .55rem .75rem; border: 1px solid #9aa78c; background: #f8faf3; color: #354c3b; box-shadow: none; font-size: .78rem; font-weight: 650; }

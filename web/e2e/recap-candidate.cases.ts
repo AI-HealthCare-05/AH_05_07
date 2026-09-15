@@ -110,6 +110,9 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('2건');
   await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 2일');
   await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('3일');
+  await expect(page.locator('[data-recap-payoff]')).toHaveText(
+    '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.',
+  );
   await expect(trail.locator('li[data-trail-date]')).toHaveCount(7);
   const staticPreview = await page.locator('[data-static-landscape]').count() === 1;
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', staticPreview ? '2026-09-10' : '2026-09-11');
