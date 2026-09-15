@@ -185,3 +185,41 @@ test('journey candidate keeps 200% text and absent media usable at 320px', async
   await page.keyboard.press('Enter');
   await expect(page.locator('.journey-today')).toBeVisible();
 });
+
+test('core record loop reaches detail and seven-day review after one confirmed save', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const posts = await candidate(page);
+
+  await page.locator('.home-lead button').click();
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await page.getByLabel(/수축기/).fill('120');
+  await page.getByLabel(/이완기/).fill('80');
+  await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
+
+  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+  await page.locator('[data-scene="S05"]').getByRole('button', { name: '오늘의 기록 보기', exact: true }).click();
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toContainText('혈압 관찰1건');
+
+  await page.getByRole('button', { name: '기록 찾아보기', exact: true }).first().click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  const pressureRecord = page.locator('[data-record-kind="blood-pressure"]').first();
+  await expect(pressureRecord).toBeVisible();
+  await pressureRecord.getByRole('button', { name: '상세 보기' }).click();
+
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText('120/80 mmHg');
+
+  await page.locator('[data-scene="S09"]').getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('1건');
+  await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 1일');
+
+  expect(posts()).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
