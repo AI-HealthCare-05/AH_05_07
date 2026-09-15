@@ -13,7 +13,7 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from collections.abc import Iterable
 
 LANE_ORDER = {"none": 0, "routine": 1, "protected": 2, "deny": 3}
 
