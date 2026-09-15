@@ -11,7 +11,11 @@ flowchart TD
     B --> F["S10 Seven days"]
     B --> G["S03/S06 Optional challenge"]
     B --> H["S14 Settings"]
-    H --> I["S11 Optional signal tool"]
+    B -. confirmed empty .-> J["S12 Confirmed empty"]
+    J --> C
+    J --> G
+    J --> I["S11 Optional signal tool"]
+    H --> I
 ```
 
 Issue #190 introduced the Calm Clay Journey application shell and semantic
@@ -23,9 +27,10 @@ separated review screens. The first challenge check-in locks the chosen action.
 
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
 four primary destinations are Today, Records, Seven days, and Settings. S11 is a
-secondary tool reached from Settings; direct S11 URLs, authentication boundaries,
-and browser back/forward remain valid. Focused work screens remain reachable
-without introducing a router dependency.
+secondary tool reached from Settings and, when the current window is confirmed
+empty, from S12 as a lower-priority non-persistent option. Direct S11 URLs,
+authentication boundaries, and browser back/forward remain valid. Focused work
+screens remain reachable without introducing a router dependency.
 
 | Screen | Purpose |
 |---|---|
@@ -37,8 +42,8 @@ without introducing a router dependency.
 | S07 | Today detail with separate BP/challenge/legacy fact lanes |
 | S08–S09 | Record browse and one selected record |
 | S10 | Current/prior seven-day recap, report, and export |
-| S11 | Optional input-based risk-signal reference tool |
-| S12–S13 | Confirmed empty and initial-load failure |
+| S11 | Optional input-based risk-signal tool; entered activity/sleep/lifestyle facts are summarized as a transient `오늘의 시작점`, without persisting the input or result |
+| S12–S13 | Confirmed empty and initial-load failure; current S12 keeps BP recording primary while exposing S11 as a lower-priority optional path |
 | S14 | Account, retention/help, and entry to optional tools |
 
 ## Accepted P0 flow
@@ -60,6 +65,11 @@ The core path is BP-first, but the product still preserves three separate facts:
 2. The user may separately record adherence to one selected challenge.
 3. The optional model tool processes an **입력 기반 위험군 선별 신호** without
    becoming a prerequisite for BP recording, challenge use, record browsing, or export.
+
+For a confirmed current empty window, S12 keeps blood-pressure recording as the
+primary action and exposes S11 only as a secondary option. S11 summarizes the
+entered activity, sleep, and lifestyle facts as a transient `오늘의 시작점`;
+the input and result are not persisted.
 
 The Today BP window is always today plus the previous six calendar dates. An
 active challenge has its own start/end dates and never changes the Home BP
