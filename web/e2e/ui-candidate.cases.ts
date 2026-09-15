@@ -139,6 +139,11 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(home.locator('.today-week-card')).toContainText('1건');
   await expect(home.locator('.today-word-card')).toContainText('최근 기록은 이어져 있어요.');
   await expect(home.locator('.today-word-card')).toContainText('오늘 혈압 기록은 아직 없어요.');
+
+  const todayState = home.locator('[data-home-concept="today-detail"]');
+  await expect(todayState).toContainText('오늘 상태');
+  await expect(todayState).toContainText('오늘 혈압 기록 여부와 챌린지 상태를 확인해요.');
+  await expect(todayState).toHaveAttribute('data-home-destination', 'S07');
 });
 
 test('North Star Home stops offering another BP slot when both daily periods are already recorded', async ({ page }) => {

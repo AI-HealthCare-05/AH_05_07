@@ -1108,9 +1108,11 @@ function App() {
     },
     {
       key: "today-detail",
-      title: "오늘 상세",
-      support: "오늘 남긴 기록 확인",
-      action: "오늘 상세 열기",
+      title: todayMeasurement ? "오늘 상세" : "오늘 상태",
+      support: todayMeasurement
+        ? "오늘 남긴 혈압 기록과 챌린지 상태를 확인해요."
+        : "오늘 혈압 기록 여부와 챌린지 상태를 확인해요.",
+      action: todayMeasurement ? "오늘 상세 열기" : "오늘 상태 보기",
       screen: "S07",
     },
   ] as HomeAction[]).filter((item) => item.key !== homeLead.key);
