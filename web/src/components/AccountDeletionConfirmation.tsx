@@ -45,7 +45,7 @@ export function AccountDeletionConfirmation({ pending, recovery, onCancel, onCon
           <p id="account-delete-description">이 작업은 되돌릴 수 없어요.</p>
           <ul>
             <li>계정이 삭제됩니다.</li>
-            <li>저장된 혈압 관찰과 챌린지 제품 기록이 삭제됩니다.</li>
+            <li>저장된 혈압 관찰과 챌린지 기록이 삭제됩니다.</li>
             <li>이미 다운로드한 JSON 파일은 기기에 남으므로 직접 삭제해야 합니다.</li>
           </ul>
           <div className="form-actions">
