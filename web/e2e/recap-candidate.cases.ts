@@ -516,7 +516,8 @@ test('living week report preserves the complete selected week with separate fact
   await expect(report(page).getByRole('heading', { name: '7일 기록 리포트', exact: true })).toBeFocused();
   expect(await report(page).locator('[data-report-date]').evaluateAll(days => days.map(day => day.getAttribute('data-report-date')))).toEqual(reportDates);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/3\s*건/);
-  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/2\s*일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰이 있는 날짜\s*2일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰 기록 없음\s*5일/);
   await expect(report(page).locator('[data-report-summary="challenge"] > div')).toHaveText([
     '체크인이 있는 날짜3일', '기록함1일', '건너뜀1일', '혼합1일', '기록 없음4일',
   ]);

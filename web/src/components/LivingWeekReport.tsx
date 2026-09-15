@@ -58,6 +58,7 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
             <dl data-report-summary="blood-pressure">
               <div><dt>전체 관찰</dt><dd>{summary.observationCount}건</dd></div>
               <div><dt>관찰이 있는 날짜</dt><dd>{summary.observationDateCount}일</dd></div>
+              <div><dt>관찰 기록 없음</dt><dd>{days.length - summary.observationDateCount}일</dd></div>
             </dl>
             <p>사용자가 직접 남긴 측정 기록이에요.</p>
           </section>
