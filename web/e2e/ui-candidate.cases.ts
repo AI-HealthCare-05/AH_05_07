@@ -886,3 +886,33 @@ test('past-dated BP confirmation points to record history instead of today', asy
   await savedScene.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
 });
+
+
+test('S01 offers read-only 둘러보기 and playful login microcopy', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  const apiRequests: string[] = [];
+  page.on('request', request => { if (/\/api\/v1\//.test(request.url())) apiRequests.push(request.url()); });
+
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
+
+  const auth = page.getByRole('button', { name: '로그인 링크 받기', exact: true });
+  await expect(auth).toBeVisible();
+  await expect(page.locator('.entry-discount-note')).toHaveText('가입비 100% 할인');
+  await expect(page.locator('.entry-discount-note')).toHaveAttribute('aria-hidden', 'true');
+
+  const preview = page.getByRole('button', { name: '둘러보기', exact: true });
+  await expect(preview).toBeVisible();
+  await preview.click();
+
+  const demo = page.locator('[data-demo-mode="read-only"]');
+  await expect(demo).toBeVisible();
+  await expect(demo).toContainText('예시 화면 · 저장하지 않아요');
+  await expect(demo.locator('.journey-today')).toBeVisible();
+  await expect(demo.locator('.home-trail-date')).toHaveCount(7);
+  expect(apiRequests).toEqual([]);
+
+  await page.getByRole('button', { name: '로그인 화면으로', exact: true }).click();
+  await expect(page.getByRole('button', { name: '둘러보기', exact: true })).toBeVisible();
+});

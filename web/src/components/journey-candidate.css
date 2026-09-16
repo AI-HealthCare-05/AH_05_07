@@ -850,3 +850,66 @@
 @media (max-width: 580px) {
   .companion-identity-control { min-width: 0; width: 100%; }
 }
+
+
+/* S01 demo-day entry: playful auth microcopy + a read-only product preview. */
+.journey-login-preview-entry { display: grid; grid-template-columns: minmax(8rem, auto) minmax(0, 1fr); align-items: center; gap: .75rem 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--sk7-border); }
+.journey-login-preview-entry p { margin: 0; color: var(--sk7-ink-muted); font-size: .8rem; line-height: 1.55; }
+.entry-preview-button { min-height: 2.75rem; }
+.entry-auth-wrap { position: relative; }
+.entry-auth-wrap .entry-auth-button { width: 100%; }
+.entry-discount-note {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + .5rem);
+  transform: translate(-50%, .35rem) scale(.97);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: .35rem .68rem;
+  border: 1px solid rgba(172, 142, 76, .28);
+  border-radius: 999px;
+  background: rgba(255, 250, 241, .97);
+  box-shadow: 0 .7rem 1.5rem rgba(56, 52, 37, .12);
+  color: #795a22;
+  font-size: .7rem;
+  font-weight: 760;
+  letter-spacing: .01em;
+  transition: opacity .2s ease, transform .28s cubic-bezier(.22, 1, .36, 1);
+  z-index: 4;
+}
+@media (hover:hover) and (pointer:fine) {
+  .entry-auth-wrap:hover .entry-discount-note,
+  .entry-auth-wrap:focus-within .entry-discount-note {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+@media (max-width: 580px), (hover:none), (pointer:coarse) {
+  .entry-discount-note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry-discount-note { transition: none; }
+}
+
+/* S01 200%-text containment for the read-only preview entry. */
+@media (max-width: 580px) {
+  .journey-login-preview-entry {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .journey-login-preview-entry > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .journey-login-preview-entry .entry-preview-button {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+  .journey-login-preview-entry p {
+    overflow-wrap: anywhere;
+  }
+}
