@@ -15,7 +15,7 @@ Authenticated Model V2 production paths now exist. `/api/v1/model-v2/product-sco
 | Public-data model and result quality | Frozen Model V2 S11 product path returns only `schema_version` and `product_wording`; legacy risk-signal remains a `503 model_not_ready` scaffold. | Preserve frozen artifact, exact response projection, and non-diagnostic semantics; no provisional score is permitted. |
 | Chronic-condition tracking dashboard | BP and challenge records are separated, but the evaluator-facing seven-day trend, empty/failure states, and evidence pack remain partial. | Present measurement, challenge adherence, and model signal as separate facts; do not render a causal or improvement conclusion. |
 | Lifestyle challenge | Active seven-day challenge, first-check-in action lock, and status-only check-in changes are implemented. | Finish signed-in browser and mobile evidence before treating the flow as submission-complete. |
-| Feedback and reminders | The first S10 structured-comprehension feedback slice is source-implemented; broader review workflow and reminders are not implemented. | Feedback remains separate from BP, challenge, and Model V2 facts and is never an online-training label. Production migration/release remains a separate gate; reminders are P2. |
+| Feedback and reminders | The first S10 structured-comprehension feedback slice is source-implemented; internal review is defined as a project-owner control-plane aggregate only. Delegated review and reminders are not implemented. | Feedback remains separate from BP, challenge, and Model V2 facts and is never an online-training label. Do not add a reviewer API/RPC/UI until a non-owner delegation need is demonstrated; production migration/release remains a separate gate. |
 | Heavy AI processing | No measured model workload currently justifies a queue or worker. | Use the conditional asynchronous boundary below only after an ADR and measured trigger. Uponati-only OCR, prescription, medical-document, and LLM guidance are outside SK7 scope. |
 
 ```mermaid
@@ -83,7 +83,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Model V2 product API | S11 production path | Authenticated `/api/v1/model-v2/product-score` projects only schema version and approved wording; inference remains transient. |
 | Legacy risk-signal API | Scaffold | Remains unavailable; it is not the Model V2 product surface. |
 | Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
-| Structured feedback | P1 partial; S10 source path plus `POST /api/v1/feedback` | Keep the fixed structured review record separate from product facts and online training; production migration/release and any broader review workflow remain separate. |
+| Structured feedback | P1 partial; S10 source path plus `POST /api/v1/feedback`, with project-owner aggregate review procedure | Keep the fixed review record separate from product facts and online training. The review procedure returns only non-persisted counts for the seven completed Korea dates through the existing Supabase control plane; it adds no product reviewer role, endpoint, RPC, or row-level admin view. |
 
 ## Conditional asynchronous assessment boundary (not implemented)
 
