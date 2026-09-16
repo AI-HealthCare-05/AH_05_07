@@ -30,7 +30,19 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     const primary = page.locator('.home-lead button');
     const buttonBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
-    if (width <= 580) expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y);
+    if (width <= 580) {
+      expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y);
+      const trailTouchBoxes = await page.locator('.home-trail-dates > li > button').evaluateAll(buttons => buttons.map(button => {
+        const box = button.getBoundingClientRect();
+        return { width: box.width, height: box.height };
+      }));
+      expect(trailTouchBoxes.every(box => box.width >= 44 && box.height >= 44)).toBe(true);
+    }
+    if (width === 320 && height === 568) {
+      const legendBox = await page.locator('.home-trail-legend').boundingBox();
+      expect(legendBox).not.toBeNull();
+      expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(navBox.y);
+    }
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     await primary.click();
     await expect(page.locator('#S04-title')).toBeFocused();
@@ -217,6 +229,8 @@ test('journey candidate keeps 200% text and absent media usable at 320px', async
   await candidate(page);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  const legendFontPx = await page.locator('.home-trail-legend').evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+  expect(legendFontPx).toBeGreaterThanOrEqual(16);
   await page.locator('.home-lead button').click();
   await page.getByLabel(/수축기/).fill('120');
   await page.getByLabel(/이완기/).fill('80');
