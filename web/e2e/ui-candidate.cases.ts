@@ -916,3 +916,41 @@ test('S01 offers read-only 둘러보기 and playful login microcopy', async ({ p
   await page.getByRole('button', { name: '로그인 화면으로', exact: true }).click();
   await expect(page.getByRole('button', { name: '둘러보기', exact: true })).toBeVisible();
 });
+
+test('S01 narrator follows companion identity without changing login semantics', async ({ page }) => {
+  test.skip(companionOff, 'Companion gate is intentionally off in this suite.');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem('sk7-companion-species', 'rabbit');
+  });
+  await page.goto('/?companion_species=cat');
+  const narrator = page.locator('[data-login-companion]');
+  await expect(narrator).toBeVisible();
+  await expect(narrator).toHaveAttribute('data-login-companion-species', 'rabbit');
+  await expect(narrator).toContainText('처음이신가요?');
+  await expect(narrator).toContainText('저장 없이 먼저 둘러봐도 돼요.');
+  await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '둘러보기', exact: true })).toBeVisible();
+  const runtime = narrator.locator('[data-companion-status]');
+  await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute('data-companion-animation-clip', 'greet');
+  await expect(narrator.locator('canvas[data-companion-canvas]')).toHaveCount(1);
+  await expect(narrator.locator('.companion-runtime-slot')).toHaveAttribute('data-companion-interaction-activation', 'disabled');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('S01 narrator gate off preserves bubble and core login without renderer network', async ({ page }) => {
+  test.skip(!companionOff, 'Only the explicit companion-off suite proves this rollback path.');
+  const requests: string[] = [];
+  page.on('request', request => requests.push(request.url()));
+  await page.goto('/');
+  const narrator = page.locator('[data-login-companion]');
+  await expect(narrator).toBeVisible();
+  await expect(narrator).toContainText('저장 없이 먼저 둘러봐도 돼요.');
+  await expect(narrator.locator('[data-companion-status], canvas')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '둘러보기', exact: true })).toBeVisible();
+  expect(requests.filter(url => /companion\/v1\/|CompanionReviewRenderer|GLTFLoader/.test(url))).toEqual([]);
+});

@@ -9,6 +9,7 @@ import { StructuredRecapFeedback } from "./components/StructuredRecapFeedback";
 import { LivingWeekReport } from "./components/LivingWeekReport";
 
 import { JourneyToday } from "./components/JourneyToday";
+import { LoginCompanionNarrator } from "./components/LoginCompanionNarrator";
 
 import { VisualStage } from "./components/VisualStage";
 
@@ -45,7 +46,7 @@ import { useSeoulDate } from "./lib/useSeoulDate";
 import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
-import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
+import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionMode, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
 import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
@@ -159,7 +160,21 @@ function isWindowEmpty(windowData: ObservationWindow | null): boolean {
     && windowData?.challenge_events.length === 0;
 }
 
-function Login({ onSession, recoveryMessage, journey, today }: { onSession: (session: Session) => void; recoveryMessage?: string; journey: boolean; today: string }) {
+function Login({
+  onSession,
+  recoveryMessage,
+  journey,
+  today,
+  companionMode,
+  companionSpecies,
+}: {
+  onSession: (session: Session) => void;
+  recoveryMessage?: string;
+  journey: boolean;
+  today: string;
+  companionMode: CompanionMode;
+  companionSpecies: CompanionSpecies;
+}) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -235,6 +250,7 @@ function Login({ onSession, recoveryMessage, journey, today }: { onSession: (ses
           <p className="eyebrow">상균7데이즈</p>
           <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
           <p className="scene-body">측정한 혈압을 날짜·시간대별로 남기고 다시 확인하는 서비스예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
+          <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
         </section>
         <section className="welcome-card" aria-label="이메일 로그인">
           <form onSubmit={submit} aria-busy={pending}>
@@ -1110,7 +1126,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <Login journey={presentation.journey} today={today} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login journey={presentation.journey} today={today} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;

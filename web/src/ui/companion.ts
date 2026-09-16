@@ -25,6 +25,8 @@ export type CompanionClip = (typeof companionClips)[number];
 
 export const companionReviewScreens = ["S02", "S03", "S05", "S10"] as const;
 export type CompanionReviewScreen = (typeof companionReviewScreens)[number];
+export type CompanionRuntimeScreen = CompanionReviewScreen | "S01";
+export type CompanionPolicyScreen = ScreenId | "S01";
 
 export const companionExcludedScreens = ["S04", "S07", "S08", "S09", "S11", "S12", "S13", "S14"] as const;
 
@@ -45,7 +47,7 @@ export type CompanionRuntimeOptions = Readonly<{
 export type CompanionSelectionContext = "save_success" | "non_semantic";
 export type CompanionAnimationSequence = "celebrate_then_idle";
 export type CompanionSelection = Readonly<{
-  screen: CompanionReviewScreen;
+  screen: CompanionRuntimeScreen;
   species: CompanionSpecies;
   variant: CompanionVariant;
   clip: CompanionClip;
@@ -88,6 +90,20 @@ export function resolveCompanionRuntimeConfig(
  * Production is intentionally narrower than review. This resolver has no query input:
  * only explicitly approved fixed profiles can be constructed.
  */
+/**
+ * Dedicated S01 presentation profile.
+ * Species comes only from the non-medical companion identity preference.
+ * Query parameters and health/challenge/model facts never choose this profile.
+ */
+export function resolveLoginCompanion(species: CompanionSpecies): CompanionSelection {
+  return {
+    screen: "S01",
+    species,
+    variant: "lite",
+    clip: "greet",
+  };
+}
+
 export function resolveProductionCompanion(
   mode: CompanionMode,
   screen: ScreenId,
@@ -117,7 +133,10 @@ export function isCompanionReviewCandidate(screen: ScreenId): screen is Companio
   return (companionReviewScreens as readonly string[]).includes(screen);
 }
 
-export function getCompanionScreenDisposition(screen: ScreenId): "review_candidate" | "excluded" {
+export function getCompanionScreenDisposition(
+  screen: CompanionPolicyScreen,
+): "review_candidate" | "login_narrator" | "excluded" {
+  if (screen === "S01") return "login_narrator";
   return isCompanionReviewCandidate(screen) ? "review_candidate" : "excluded";
 }
 
@@ -126,11 +145,17 @@ export function getCompanionScreenDisposition(screen: ScreenId): "review_candida
  * be driven by blood pressure, risk, model, adherence, or improvement facts.
  */
 export function getCompanionDecision(
-  screen: ScreenId,
+  screen: CompanionPolicyScreen,
   clip: CompanionClip,
   context?: CompanionSelectionContext,
 ): CompanionDecision {
-  if (getCompanionScreenDisposition(screen) === "excluded") {
+  const disposition = getCompanionScreenDisposition(screen);
+  if (disposition === "login_narrator") {
+    return clip === "greet"
+      ? { status: "allowed", reason: "login_narrator_greet_only" }
+      : { status: "blocked", reason: "login_narrator_fixed_greet" };
+  }
+  if (disposition === "excluded") {
     return { status: "blocked", reason: "screen_excluded" };
   }
   if (clip === "special") {
