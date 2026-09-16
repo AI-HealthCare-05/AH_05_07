@@ -25,12 +25,6 @@
   max-width: 100%;
 }
 
-.scene.record-explorer-scene[data-scene="S08"] .scene-copy h1:focus-visible {
-  outline: 2px solid #3f624f;
-  outline-offset: 4px;
-  border-radius: .2rem;
-}
-
 .scene.record-explorer-scene .scene-toolbar {
   flex-flow: row wrap;
   gap: .4rem .75rem;
@@ -73,6 +67,13 @@
   font-size: 1rem;
   white-space: normal;
   line-height: 1.4;
+}
+
+.scene.record-explorer-scene .window-nav button:disabled {
+  background: #e9ece6;
+  color: #6e7869;
+  border-color: transparent;
+  opacity: 1;
 }
 
 .record-explorer {
@@ -165,6 +166,10 @@
   white-space: normal;
   box-shadow: none;
   transform: none;
+  transition:
+    background var(--sk7-motion-fast) var(--sk7-ease-standard),
+    border-color var(--sk7-motion-fast) var(--sk7-ease-standard),
+    color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
@@ -237,6 +242,7 @@
   font-weight: 650;
   text-decoration: underline;
   text-underline-offset: .24em;
+  transition: color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-reset:hover:not(:disabled) {
@@ -319,6 +325,9 @@
   font-weight: 450;
   box-shadow: none;
   transform: none;
+  transition:
+    background var(--sk7-motion-fast) var(--sk7-ease-standard),
+    color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-list button.record-explorer-row:hover:not(:disabled) {

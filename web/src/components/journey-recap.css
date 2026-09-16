@@ -19,11 +19,6 @@
   width: fit-content;
   max-width: 100%;
 }
-.journey-recap.scene .scene-copy h1:focus-visible {
-  outline: 2px solid #3f624f;
-  outline-offset: 4px;
-  border-radius: .2rem;
-}
 .journey-recap .scene-body { font-size: 1rem; font-weight: 450; color: var(--sk7-ink-muted); }
 .journey-recap .eyebrow { color: #65745e; letter-spacing: .04em; }
 .journey-recap button { border-radius: .55rem; }
@@ -164,6 +159,7 @@
 .journey-recap .utility-actions > .living-week-report-action small { color: #59695a; font-size: .7rem; line-height: 1.55; }
 .journey-recap .utility-actions > button { min-height: 2.9rem; font-size: .82rem; background: transparent; color: #48604f; box-shadow: none; }
 .journey-recap .utility-actions > button:hover:not(:disabled) { background: #edf1e8; color: #304634; transform: none; }
+.journey-recap .utility-actions > button:disabled { border-color: #cfd7ca; background: #e8ece4; color: #7c887b; opacity: 1; }
 .journey-recap .recap-current-challenge { min-width: 0; display: grid; gap: .45rem; margin-top: .25rem; padding-top: .85rem; border-top: 1px dashed #d7dccf; }
 .journey-recap .recap-optional-intro { display: grid; gap: .2rem; max-width: 42rem; }
 .journey-recap .recap-optional-intro .eyebrow { margin: 0; font-size: .66rem; }

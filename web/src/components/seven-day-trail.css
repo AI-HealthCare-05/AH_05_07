@@ -58,7 +58,7 @@
 .seven-day-trail .trail-day-button[aria-pressed="true"]::after { content: ''; position: absolute; bottom: -.21rem; left: calc(50% - .2rem); width: .4rem; height: .4rem; border-right: 1px solid #65745e; border-bottom: 1px solid #65745e; background: #fffdf7; transform: rotate(45deg); }
 .seven-day-trail .trail-day-button:focus-visible { z-index: 2; outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
 @media (hover: hover) and (pointer: fine) {
-  .seven-day-trail .trail-day-button { transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  .seven-day-trail .trail-day-button { transition: background var(--sk7-motion-fast) var(--sk7-ease-standard), border-color var(--sk7-motion-fast) var(--sk7-ease-standard), box-shadow var(--sk7-motion-fast) var(--sk7-ease-standard); }
   .seven-day-trail .trail-day-button:hover:not(:disabled) { transform: none; background: rgb(255 253 247 / .65); box-shadow: inset 0 0 0 1px #dad2bf; }
 }
 @media (hover: none), (pointer: coarse) {
