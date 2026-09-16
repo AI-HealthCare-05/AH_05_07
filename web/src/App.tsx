@@ -7,7 +7,7 @@ import { sevenDayFacts } from "./ui/livingWeek";
 import { JourneyRecap } from "./components/JourneyRecap";
 import { LivingWeekReport } from "./components/LivingWeekReport";
 
-import { JourneyToday, JourneyNote } from "./components/JourneyToday";
+import { JourneyToday } from "./components/JourneyToday";
 
 import { VisualStage } from "./components/VisualStage";
 
@@ -1421,7 +1421,126 @@ function App() {
     }
 
     if (activeScreen === "S04") {
-      return <Scene id="S04" eyebrow={journeyCopy.S04.eyebrow} title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title} body={journeyCopy.S04.body} tone="water" className={presentation.journey ? "journey-candidate journey-entry" : ""}>{presentation.journey && <JourneyNote />}<form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>{!editingBloodPressureId && <BloodPressureDraftNote restored={newBloodPressure.restored} observedOn={bloodPressureDraft.observedOn} today={today} />}<details className="measurement-guide"><summary>측정 전 확인하기</summary><ul><li>조용히 앉아 몸과 호흡을 편하게 해요.</li><li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li><li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li></ul></details><div className="field-grid"><label htmlFor="observed-on">날짜<input id="observed-on" style={measurementControlStyle} type="date" aria-describedby={!editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today ? "bp-draft-date-help" : undefined} value={bloodPressureDraft.observedOn} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))} required disabled={controlsDisabled} /></label><label htmlFor="period">시간대<select id="period" style={measurementControlStyle} value={bloodPressureDraft.period} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))} disabled={controlsDisabled}><option value="morning">아침 · 기상 후 1시간 이내</option><option value="evening">저녁 · 취침 전</option></select></label><label htmlFor="systolic">수축기 <span className="unit">mmHg</span><input ref={systolicRef} id="systolic" style={measurementControlStyle} type="number" min="60" max="260" inputMode="numeric" value={bloodPressureDraft.systolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label><label htmlFor="diastolic">이완기 <span className="unit">mmHg</span><input ref={diastolicRef} id="diastolic" style={measurementControlStyle} type="number" min="30" max="160" inputMode="numeric" value={bloodPressureDraft.diastolic} onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))} aria-invalid={Boolean(bloodPressureError)} aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined} required disabled={controlsDisabled} /></label></div>{bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}<div className="form-actions"><button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>{editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}</div>{!editingBloodPressureId && newBloodPressure.meaningful && <details className="bp-draft-reset"><summary>새로 입력하기</summary><p>입력한 날짜·시간대·혈압 값을 지우고 오늘 날짜로 시작해요. 저장된 기록에는 영향을 주지 않아요.</p><button className="secondary" type="button" disabled={controlsDisabled} onClick={(event) => { const dateField = event.currentTarget.form?.elements.namedItem("observed-on"); newBloodPressure.reset(today); setBloodPressureError(""); if (dateField instanceof HTMLInputElement) dateField.focus(); }}>초안 지우기</button></details>}</form>{presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘의 기록으로 돌아가기</button>}</Scene>;
+      return (
+        <Scene
+          id="S04"
+          eyebrow={journeyCopy.S04.eyebrow}
+          title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title}
+          body={journeyCopy.S04.body}
+          tone="water"
+          className={presentation.journey ? "journey-candidate journey-entry journey-sheet" : ""}
+        >
+          <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
+            <div className="bp-sheet-fields">
+              <div className="bp-sheet-context">
+                <label htmlFor="observed-on">
+                  <span className="bp-sheet-field-label">날짜</span>
+                  <input
+                    id="observed-on"
+                    style={measurementControlStyle}
+                    type="date"
+                    aria-describedby={!editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today ? "bp-draft-date-help" : undefined}
+                    value={bloodPressureDraft.observedOn}
+                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))}
+                    required
+                    disabled={controlsDisabled}
+                  />
+                </label>
+                <label htmlFor="period">
+                  <span className="bp-sheet-field-label">시간대</span>
+                  <select
+                    id="period"
+                    style={measurementControlStyle}
+                    value={bloodPressureDraft.period}
+                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))}
+                    disabled={controlsDisabled}
+                  >
+                    <option value="morning">아침 · 기상 후 1시간 이내</option>
+                    <option value="evening">저녁 · 취침 전</option>
+                  </select>
+                </label>
+              </div>
+              <div className="bp-measurement-pair">
+                <label htmlFor="systolic" className="bp-measurement bp-measurement-systolic">
+                  <span className="bp-measurement-label">수축기</span>
+                  <input
+                    ref={systolicRef}
+                    id="systolic"
+                    style={measurementControlStyle}
+                    type="number"
+                    min="60"
+                    max="260"
+                    inputMode="numeric"
+                    value={bloodPressureDraft.systolic}
+                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))}
+                    aria-invalid={Boolean(bloodPressureError)}
+                    aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined}
+                    required
+                    disabled={controlsDisabled}
+                  />
+                  <span className="unit">mmHg</span>
+                </label>
+                <span className="bp-measurement-separator" aria-hidden="true">/</span>
+                <label htmlFor="diastolic" className="bp-measurement bp-measurement-diastolic">
+                  <span className="bp-measurement-label">이완기</span>
+                  <input
+                    ref={diastolicRef}
+                    id="diastolic"
+                    style={measurementControlStyle}
+                    type="number"
+                    min="30"
+                    max="160"
+                    inputMode="numeric"
+                    value={bloodPressureDraft.diastolic}
+                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))}
+                    aria-invalid={Boolean(bloodPressureError)}
+                    aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined}
+                    required
+                    disabled={controlsDisabled}
+                  />
+                  <span className="unit">mmHg</span>
+                </label>
+              </div>
+            </div>
+            {bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}
+            <div className="form-actions">
+              <button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>
+              {editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}
+            </div>
+            <div className="bp-sheet-secondary">
+              {!editingBloodPressureId && <BloodPressureDraftNote restored={newBloodPressure.restored} observedOn={bloodPressureDraft.observedOn} today={today} />}
+              <details className="measurement-guide">
+                <summary>측정 전 확인하기</summary>
+                <ul>
+                  <li>조용히 앉아 몸과 호흡을 편하게 해요.</li>
+                  <li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li>
+                  <li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li>
+                </ul>
+              </details>
+              {!editingBloodPressureId && newBloodPressure.meaningful && (
+                <details className="bp-draft-reset">
+                  <summary>새로 입력하기</summary>
+                  <p>입력한 날짜·시간대·혈압 값을 지우고 오늘 날짜로 시작해요. 저장된 기록에는 영향을 주지 않아요.</p>
+                  <button
+                    className="secondary"
+                    type="button"
+                    disabled={controlsDisabled}
+                    onClick={(event) => {
+                      const dateField = event.currentTarget.form?.elements.namedItem("observed-on");
+                      newBloodPressure.reset(today);
+                      setBloodPressureError("");
+                      if (dateField instanceof HTMLInputElement) dateField.focus();
+                    }}
+                  >
+                    초안 지우기
+                  </button>
+                </details>
+              )}
+            </div>
+          </form>
+          {presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘의 기록으로 돌아가기</button>}
+        </Scene>
+      );
     }
 
     if (activeScreen === "S05") {
