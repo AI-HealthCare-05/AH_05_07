@@ -37,8 +37,10 @@ docs that do not alter a protected boundary:
 - An Issue is optional. The user's request and PR body may be the task record.
 - Use one coherent short branch and PR; do not split work by screen or create
   paperwork-only follow-up PRs.
-- During development, run the smallest affected checks. Let final-candidate CI
-  provide the repository-wide `lint` and `test` gate.
+- During development, run the smallest affected checks. Final-candidate CI keeps
+  the required named `lint` and `test` merge gates, but their payload is
+  path-aware: frontend/docs lanes may satisfy them with lightweight routing while
+  backend/protected/unknown changes keep the full Python/AI/MySQL payload.
 - Do not create an ADR, evidence document, deployment record, screenshot set,
   or full-matrix rerun unless it proves behavior changed by this diff.
 
