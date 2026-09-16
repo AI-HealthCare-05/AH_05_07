@@ -113,6 +113,18 @@ export type ObservationExport = {
   filename: string;
 };
 
+export type StructuredFeedbackResponse = "clear" | "unclear" | "hard_to_understand";
+
+export type StructuredFeedbackInput = {
+  surface: "seven_day_recap";
+  response: StructuredFeedbackResponse;
+};
+
+export type StructuredFeedbackReceipt = {
+  status: "saved";
+  submitted_on: string;
+};
+
 export type ModelV2ProductInput = {
   age_years: number;
   sex_knhanes: 1 | 2;
