@@ -20,7 +20,24 @@ async function completedSceneNetwork(completed: Request[]) {
     .map(async request => ({ url: request.url(), ...await request.sizes() })));
 }
 
-for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]]) {
+test("short 320x568 journey yields decorative realtime scene before core UI", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  const requests: string[] = [];
+  page.on("request", request => {
+    if (/ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)/.test(request.url())) requests.push(request.url());
+  });
+  await page.goto(url);
+  await expect(page.locator(".journey-view-frame")).toBeHidden();
+  await expect(page.locator(".journey-view-caption")).toBeHidden();
+  await expect(page.locator(".home-lead button")).toBeVisible();
+  await expect(page.locator(".home-trail-dates")).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  expect(requests).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+for (const [width, height] of [[320, 844], [390, 844], [1366, 768]]) {
   test(`review renders at ${width}x${height}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });
     const errors: string[] = [];

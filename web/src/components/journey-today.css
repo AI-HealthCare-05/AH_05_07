@@ -45,7 +45,8 @@
 .today-leaf { color: #58ae87; display: block; width: 2rem; flex: 0 0 2rem; }
 .journey-today .living-week-heading h2 { color: #142f38; font-size: 1.3rem; line-height: 1.25; letter-spacing: -.035em; }
 .journey-today .living-week-heading p { font-size: .68rem; line-height: 1.5; color: #6b7a82; margin-top: .15rem; }
-.journey-today .living-week-heading a { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .65rem; min-height: 2.75rem; padding: .55rem .8rem; border-radius: 1.5rem; background: #f1f6f7; color: #294750; font-size: .72rem; text-decoration: none; }
+.journey-today .living-week-heading a { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; padding: .55rem .35rem; border-radius: .5rem; background: transparent; color: #294750; font-size: .72rem; text-decoration: none; }
+.journey-today .living-week-heading a:hover { background: #f1f6f3; }
 .today-cycle-progress { flex: 0 0 12rem; display: grid; gap: .35rem; color: #62757c; font-size: .65rem; }
 .today-cycle-progress > span { display: flex; align-items: baseline; gap: .45rem; }
 .today-cycle-progress strong { color: #16333c; font-size: 1.25rem; line-height: 1; margin-left: auto; }
@@ -88,14 +89,14 @@
 .journey-today .journey-facts dd strong { display: inline-block; margin-right: .2rem; font-size: 1.6rem; line-height: 1; font-weight: 700; letter-spacing: -.03em; }
 .today-records-note { color: #73858a; font-size: .6rem; line-height: 1.5; text-align: right; padding-inline: .3rem; }
 .journey-today .home-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: 0; }
-.journey-today .home-links button { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem 1.2rem; min-height: 86px; border: 1px solid #e3eee9; border-radius: .85rem; background: linear-gradient(115deg, #e9f3e9, #f6faf4); text-align: left; }
-.journey-today .home-links button[data-home-concept="challenge"] { background: linear-gradient(115deg, #eef3f7, #f8fafc); border-color: #e4eaee; }
-.journey-today .home-links button[data-home-concept="today-detail"] { background: linear-gradient(115deg, #f2f5f3, #fafbf9); border-color: #e5ebe7; }
+.journey-today .home-links button { display: flex; align-items: center; justify-content: space-between; gap: .65rem; padding: .78rem 1rem; min-height: 72px; border: 1px solid #e3eee9; border-radius: .72rem; background: #eef5ef; text-align: left; }
+.journey-today .home-links button[data-home-concept="challenge"] { background: #f3f6f8; border-color: #e4eaee; }
+.journey-today .home-links button[data-home-concept="today-detail"] { background: #f4f7f4; border-color: #e5ebe7; }
 .journey-today .home-links button > span:first-child { display: grid; gap: .35rem; }
 .journey-today .home-links strong { color: #274a46; font-size: .88rem; }
 .journey-today .home-links small { color: #617a77; font-size: .7rem; line-height: 1.45; }
-.journey-today .home-links button > span:last-child { display: grid; place-items: center; width: 2rem; height: 2rem; flex: 0 0 auto; border-radius: 50%; background: #fff8; color: #3a7061; font-size: 1.1rem; }
-.journey-today .home-links button:hover { background: #e4f1e9; }
+.journey-today .home-links button > span:last-child { display: grid; place-items: center; width: auto; height: auto; flex: 0 0 auto; border-radius: 0; background: transparent; color: #3a7061; font-size: 1rem; }
+.journey-today .home-links button:hover { background: #e8f2eb; }
 .today-small-note { display: flex; align-items: center; justify-content: center; gap: 1.2rem; border-radius: .85rem; background: #f0f5ef; color: #5e786d; }
 .today-small-note > span { font-size: 2.8rem; color: #88b296; }
 .today-small-note p { font-size: .8rem; line-height: 1.7; }
@@ -167,7 +168,7 @@
   .journey-today .journey-facts dd strong { font-size: 1.4rem; }
   .today-records-note { font-size: .55rem; text-align: left; }
   .journey-today .home-links { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-  .journey-today .home-links button { padding: .8rem; min-height: 84px; gap: .3rem; }
+  .journey-today .home-links button { padding: .68rem .72rem; min-height: 68px; gap: .35rem; }
   .journey-today .home-links strong { font-size: .76rem; }
   .journey-today .home-links small { font-size: .6rem; }
   .journey-today .home-links button > span:last-child { width: 1.4rem; height: 1.4rem; font-size: .9rem; }
@@ -210,11 +211,20 @@
   .today-companion-greeting { top: 2.25rem; right: 5%; }
 }
 @media (max-width: 350px) and (max-height: 650px) {
-  .today-journey { gap: .2rem; }
-  .today-hero { min-height: 272px; padding: 1rem 1rem .4rem; }
-  .journey-today .scene-copy { gap: .3rem; }
-  .journey-today .home-lead { padding: .55rem .6rem; gap: .35rem; }
-  .journey-today .living-week { padding: .55rem .5rem 0; }
-  .journey-today .living-week-heading { margin-bottom: .15rem; }
+  .today-journey { gap: .1rem; }
+  .today-hero { min-height: 252px; padding: .85rem 1rem .35rem; }
+  .journey-today .scene-copy { gap: .25rem; }
+  .journey-today .scene-copy h1 { font-size: 1.72rem; line-height: 1.08; }
+  .journey-today .scene-body { max-width: 14.5rem; font-size: .66rem; line-height: 1.4; }
+  .journey-today .journey-view { inset: 7.4rem -.15rem 4.6rem 28%; }
+  .journey-view-frame { width: 110%; left: -5%; bottom: -.25rem; height: 118px; }
+  .today-companion-greeting { display: none; }
+  /* Short 320px viewports yield decorative scene media before core action/trace. */
+  .journey-view-frame, .journey-view-caption { display: none; }
+  .journey-today .home-lead { padding: .45rem .55rem; gap: .25rem; }
+  .journey-today .home-lead h2 { font-size: .72rem; }
+  .journey-today .home-lead p { font-size: .58rem; }
+  .journey-today .living-week { padding: .42rem .5rem 0; }
+  .journey-today .living-week-heading { margin-bottom: 0; }
   .journey-today .journey-facts > div { padding-inline: .55rem; }
 }
