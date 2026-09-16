@@ -165,6 +165,10 @@
   white-space: normal;
   box-shadow: none;
   transform: none;
+  transition:
+    background var(--sk7-motion-fast) var(--sk7-ease-standard),
+    border-color var(--sk7-motion-fast) var(--sk7-ease-standard),
+    color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
@@ -237,6 +241,7 @@
   font-weight: 650;
   text-decoration: underline;
   text-underline-offset: .24em;
+  transition: color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-reset:hover:not(:disabled) {
@@ -319,6 +324,9 @@
   font-weight: 450;
   box-shadow: none;
   transform: none;
+  transition:
+    background var(--sk7-motion-fast) var(--sk7-ease-standard),
+    color var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .record-explorer .record-explorer-list button.record-explorer-row:hover:not(:disabled) {

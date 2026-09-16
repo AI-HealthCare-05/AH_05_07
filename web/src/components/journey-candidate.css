@@ -196,6 +196,9 @@
   border: 1px solid #bdbfaf;
   background: #fff;
   color: #2f4135;
+  transition:
+    border-color var(--sk7-motion-fast) var(--sk7-ease-standard),
+    box-shadow var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .journey-sheet .bp-measurement-pair {
@@ -235,6 +238,9 @@
   letter-spacing: .03em;
   font-variant-numeric: tabular-nums;
   text-align: center;
+  transition:
+    border-color var(--sk7-motion-fast) var(--sk7-ease-standard),
+    box-shadow var(--sk7-motion-fast) var(--sk7-ease-standard);
 }
 
 .journey-sheet .bp-measurement input[type="number"]:focus {
