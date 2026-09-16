@@ -297,6 +297,81 @@ test("touch tap keeps a visible head reaction before returning to idle", async (
   }
 });
 
+test("touch release restarts the minimum visible reaction hold after a long press", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+
+  try {
+    const url = new URL(reviewUrl("S02"), baseURL ?? "http://127.0.0.1:4173").toString();
+    await page.goto(url);
+
+    const runtime = page.locator("[data-companion-status]");
+    const canvas = page.locator("[data-companion-canvas]");
+
+    await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+    await canvas.scrollIntoViewIfNeeded();
+
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height * 0.18;
+    const pointerId = 41;
+
+    await canvas.dispatchEvent("pointerdown", {
+      pointerId,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      buttons: 1,
+      clientX: x,
+      clientY: y,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    await expect(runtime).toHaveAttribute("data-companion-pointer-type", "touch");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "curious");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+
+    // Reproduce the CI race deterministically: the press itself outlives the
+    // configured 300 ms minimum, so the old implementation idled immediately
+    // on pointerup.
+    await page.waitForTimeout(360);
+
+    await canvas.dispatchEvent("pointerup", {
+      pointerId,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      buttons: 0,
+      clientX: x,
+      clientY: y,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "curious");
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+
+    await page.waitForTimeout(120);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+
+    await expect.poll(
+      async () => runtime.getAttribute("data-companion-reaction-state"),
+      { timeout: 1_500 },
+    ).toBe("idle");
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+  } finally {
+    await context.close();
+  }
+});
+
+
 test("feet remain more anchored than body under the same large vertical drag", async ({ page }) => {
   await page.goto(reviewUrl("S02"));
   const runtime = page.locator("[data-companion-status]");
