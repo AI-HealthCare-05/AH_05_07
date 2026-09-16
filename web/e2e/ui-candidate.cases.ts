@@ -899,7 +899,7 @@ test('S01 offers read-only 둘러보기 and playful login microcopy', async ({ p
 
   const auth = page.getByRole('button', { name: '로그인 링크 받기', exact: true });
   await expect(auth).toBeVisible();
-  await expect(page.locator('.entry-discount-note')).toHaveText('가입비 100% 할인');
+  await expect(page.locator('.entry-discount-note')).toHaveText('가입비 100% 할인 · 원래 무료예요');
   await expect(page.locator('.entry-discount-note')).toHaveAttribute('aria-hidden', 'true');
 
   const preview = page.getByRole('button', { name: '둘러보기', exact: true });

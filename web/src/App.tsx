@@ -258,7 +258,7 @@ function Login({
             <input id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
             <div className="entry-auth-wrap">
               <button type="submit" className="entry-auth-button" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
-              <span className="entry-discount-note" aria-hidden="true">가입비 100% 할인</span>
+              <span className="entry-discount-note" aria-hidden="true">가입비 100% 할인 · 원래 무료예요</span>
             </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>

@@ -1009,3 +1009,27 @@
     height: 4.5rem;
   }
 }
+
+/* S01 final hover joke placement: visually attached to the login CTA, not the email field. */
+@media (min-width: 581px) and (hover:hover) and (pointer:fine) {
+  .entry-auth-wrap .entry-discount-note {
+    left: auto;
+    right: .72rem;
+    top: -.72rem;
+    bottom: auto;
+    transform: translateY(.3rem) scale(.96);
+    padding: .34rem .62rem;
+    border-color: rgb(181 157 91 / .42);
+    background: #fff2c7;
+    color: #3f594a;
+    box-shadow: 0 .55rem 1.15rem rgb(61 72 58 / .14);
+    font-size: .68rem;
+    font-weight: 760;
+  }
+
+  .entry-auth-wrap:hover .entry-discount-note,
+  .entry-auth-wrap:focus-within .entry-discount-note {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
