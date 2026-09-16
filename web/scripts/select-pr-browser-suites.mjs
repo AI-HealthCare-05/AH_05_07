@@ -36,6 +36,14 @@ const reviewSceneRuntimeFiles = new Set([
   'web/src/ui/sceneRecipes.ts',
 ]);
 
+const companionReviewRuntimeFiles = new Set([
+  'web/src/components/CompanionReviewRenderer.tsx',
+  'web/src/components/CompanionRuntimeBoundary.tsx',
+  'web/src/components/companionInteraction.ts',
+  'web/src/components/companionLook.ts',
+  'web/src/ui/companion.ts',
+]);
+
 const sharedSceneRuntimeFiles = new Set([
   'web/src/App.tsx',
   'web/src/main.tsx',
@@ -54,6 +62,10 @@ const reviewSceneTestFiles = new Set([
   'web/e2e/seoul-date-rollover.spec.ts',
 ]);
 
+const companionReviewTestFiles = new Set([
+  'web/e2e/companion-review.spec.ts',
+]);
+
 const sceneEngineTestFiles = new Set([
   ...savedSceneTestFiles,
   ...reviewSceneTestFiles,
@@ -67,6 +79,11 @@ const savedSceneSuite = Object.freeze({
 const reviewSceneSuite = Object.freeze({
   name: 'S02 and S10 review scenes',
   command: 'npm run test:e2e:scene',
+});
+
+const companionReviewSuite = Object.freeze({
+  name: 'review companion runtime',
+  command: 'npm run test:e2e:review',
 });
 
 const fullSuites = Object.freeze([
@@ -119,6 +136,10 @@ export function selectPrBrowserSuites(files) {
     if (suites.length > 0) return suites;
   }
 
+  if (unique.length > 0 && unique.every(file => companionReviewTestFiles.has(file))) {
+    return cloneSuites([companionReviewSuite]);
+  }
+
   if (unique.length > 0 && unique.every(file => sceneEngineTestFiles.has(file))) {
     const suites = [];
     if (touches(unique, savedSceneTestFiles)) suites.push(savedSceneSuite);
@@ -129,11 +150,14 @@ export function selectPrBrowserSuites(files) {
   const touchesSharedSceneRuntime = touches(unique, sharedSceneRuntimeFiles);
   const touchesSavedSceneRuntime = touchesSharedSceneRuntime || touches(unique, savedSceneRuntimeFiles);
   const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(unique, reviewSceneRuntimeFiles);
+  const touchesCompanionReviewRuntime = touches(unique, companionReviewRuntimeFiles)
+    || touches(unique, companionReviewTestFiles);
 
-  if (touchesSavedSceneRuntime || touchesReviewSceneRuntime) {
+  if (touchesSavedSceneRuntime || touchesReviewSceneRuntime || touchesCompanionReviewRuntime) {
     const suites = [...fullSuites];
     if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
     if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
+    if (touchesCompanionReviewRuntime) suites.push(companionReviewSuite);
     return cloneSuites(suites);
   }
 
