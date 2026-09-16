@@ -222,7 +222,10 @@ for (const boundary of ["logout", "signed-out", "different-user", "account-delet
     await mockApi(page, async () => ({ status: 204 }));
     await enter(page);
     await fillDraft(page);
-    if (boundary === "logout") await page.getByRole("button", { name: "로그아웃", exact: true }).click();
+    if (boundary === "logout") {
+      await page.getByRole("button", { name: "설정과 도움말" }).click();
+      await page.getByRole("button", { name: "이 기기에서 로그아웃", exact: true }).click();
+    }
     if (boundary === "signed-out") await dispatchSession(page, null);
     if (boundary === "account-deletion") {
       await page.getByRole("button", { name: "설정과 도움말" }).click();

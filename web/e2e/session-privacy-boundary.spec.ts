@@ -479,6 +479,9 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await routeWindow(page, () => emptyWindow);
   await page.goto("/?e2e=signed-in&screen=S14");
   const settings = page.locator('[data-scene="S14"]');
+  await expect(page.locator(".app-header").getByRole("button", { name: "로그아웃", exact: true })).toHaveCount(0);
+  await expect(settings.getByRole("button", { name: "이 기기에서 로그아웃", exact: true })).toBeVisible();
+  await expect(settings).toContainText("개인 기기에서는 로그인 상태를 유지해도 괜찮아요.");
   await expect(settings).toContainText("30일");
   await expect(settings).toContainText("이메일");
   await expect(settings).toContainText("혈압 관찰");
