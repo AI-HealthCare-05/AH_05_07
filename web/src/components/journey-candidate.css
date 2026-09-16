@@ -124,6 +124,283 @@
 }
 .journey-entry .journey-back { border: 0; background: transparent; }
 
+/* S04: Living Measurement Sheet — one calm record sheet. */
+.journey-sheet.scene {
+  position: relative;
+  max-width: 56rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.5rem, 3vw, 2.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  background:
+    radial-gradient(circle at 88% 10%, rgb(220 232 218 / .42), transparent 18rem),
+    #fffdf7;
+  border: 1px solid #e4e0d5;
+  border-radius: 1.1rem;
+  box-shadow: 0 18px 40px -34px rgb(55 69 58 / .35);
+}
+
+.journey-sheet h1:focus-visible {
+  outline: 2px solid #3f594a;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.journey-sheet > .scene-copy {
+  grid-column: 1;
+  grid-row: auto;
+  max-width: 42rem;
+}
+
+.journey-sheet .measurement-panel {
+  grid-column: 1;
+  grid-row: auto;
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 2rem 0 0;
+  border: 0;
+  border-top: 1px solid #e0e1d7;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.journey-sheet .bp-sheet-fields {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.journey-sheet .bp-sheet-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.journey-sheet .bp-sheet-context label {
+  display: grid;
+  gap: .45rem;
+  color: #696960;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.journey-sheet .bp-sheet-field-label {
+  color: #696960;
+}
+
+.journey-sheet .bp-sheet-context input,
+.journey-sheet .bp-sheet-context select {
+  min-height: 3rem;
+  border-radius: .4rem;
+  border: 1px solid #bdbfaf;
+  background: #fff;
+  color: #2f4135;
+}
+
+.journey-sheet .bp-measurement-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #e5e1d7;
+}
+
+.journey-sheet .bp-measurement {
+  flex: 1 1 0;
+  min-width: 0;
+  display: grid;
+  gap: .35rem;
+  text-align: center;
+}
+
+.journey-sheet .bp-measurement-label {
+  color: #35473c;
+  font-size: .95rem;
+  font-weight: 650;
+}
+
+.journey-sheet .bp-measurement input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 5rem;
+  padding: .5rem;
+  border: 1px solid #879878;
+  border-radius: .5rem;
+  background: #fbfdf8;
+  color: #2f4135;
+  font-size: 2.4rem !important;
+  font-weight: 650;
+  letter-spacing: .03em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.journey-sheet .bp-measurement input[type="number"]:focus {
+  border-color: #3f594a;
+  box-shadow: 0 0 0 3px #dfe7dc;
+}
+
+.journey-sheet .bp-measurement .unit {
+  color: #696960;
+  font-size: .85rem;
+}
+
+.journey-sheet .bp-measurement-separator {
+  color: #879878;
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.journey-sheet .form-actions {
+  display: grid;
+  gap: .75rem;
+}
+
+.journey-sheet .form-actions button {
+  min-height: 3.2rem;
+  border-radius: .5rem;
+}
+
+.journey-sheet .form-actions button[type="submit"] {
+  width: 100%;
+}
+
+.journey-sheet .bp-sheet-secondary {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e1d7;
+  color: #696960;
+}
+
+.journey-sheet .bp-sheet-secondary .measurement-guide {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.journey-sheet .bp-sheet-secondary .measurement-guide summary {
+  min-height: 2.75rem;
+  display: list-item;
+  align-content: center;
+}
+
+.journey-sheet .journey-back {
+  grid-column: auto;
+  grid-row: auto;
+  justify-self: start;
+  width: fit-content;
+  padding-left: 0;
+  margin-top: .5rem;
+}
+
+@media (max-width: 580px) {
+  .journey-sheet.scene {
+    padding: 1rem 0 1.5rem;
+    gap: 1rem;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .journey-sheet .measurement-panel {
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+
+  .journey-sheet .bp-sheet-fields {
+    gap: 1rem;
+  }
+
+  .journey-sheet .bp-sheet-context {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem 1rem;
+  }
+
+  .journey-sheet .bp-measurement-pair {
+    padding: 1rem 0;
+    gap: .5rem;
+  }
+
+  .journey-sheet .bp-measurement input[type="number"] {
+    min-height: 4.2rem;
+    font-size: 1.7rem !important;
+  }
+
+  .journey-sheet .bp-measurement-separator {
+    font-size: 1.25rem;
+  }
+
+  .journey-sheet .bp-sheet-secondary {
+    gap: .75rem;
+    padding-top: 1rem;
+  }
+}
+
+@media (max-width: 580px) and (max-height: 650px) {
+  .journey-sheet.scene {
+    gap: .75rem;
+    padding-bottom: 1rem;
+  }
+
+  .journey-sheet .bp-measurement-pair {
+    padding: .5rem 0;
+  }
+
+  .journey-sheet .bp-measurement input[type="number"] {
+    min-height: 3.5rem;
+    font-size: 1.6rem !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .journey-sheet .bp-sheet-context {
+    gap: .5rem .75rem;
+  }
+
+  .journey-sheet .bp-measurement input[type="number"] {
+    padding-inline: .2rem;
+  }
+}
+
+/* S04 short narrow screens: keep the complete BP input pair above the fixed nav. */
+@media (max-width: 350px) and (max-height: 650px) {
+  .journey-sheet.scene {
+    gap: .25rem;
+  }
+
+  .journey-sheet .scene-copy {
+    gap: .35rem;
+  }
+
+  .journey-sheet .measurement-panel {
+    gap: .65rem;
+    padding-top: .25rem;
+  }
+
+  .journey-sheet .bp-sheet-fields {
+    gap: .5rem;
+  }
+
+  .journey-sheet .bp-sheet-context {
+    gap: .4rem 1rem;
+  }
+
+  .journey-sheet .bp-sheet-context input,
+  .journey-sheet .bp-sheet-context select {
+    min-height: 2.75rem;
+  }
+
+  .journey-sheet .bp-measurement-pair {
+    padding: .25rem 0;
+  }
+}
+
 /* S13/S14: Journey-only load recovery and settings composition. */
 .journey-load-error.scene, .journey-settings.scene { --sk7-focus: #3f594a; max-width: 54rem; margin-inline: auto; }
 .journey-load-error > .scene-visual-background, .journey-load-error > .scene-visual-character, .journey-load-error::after,
