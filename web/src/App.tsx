@@ -84,6 +84,11 @@ type HomeAction = {
 };
 type SessionIdentity = { userId: string | null; generation: number };
 type RequestContext = ModelV2RequestContext;
+type BloodPressureErrorField = "observed-on" | "systolic" | "diastolic";
+type BloodPressureValidationError = {
+  field: BloodPressureErrorField;
+  message: string;
+} | null;
 
 function makeNotice(
   kind: Notice["kind"],
@@ -274,12 +279,13 @@ function App() {
   const [savedFactDate, setSavedFactDate] = useState(today);
   const savedScene = useSavedSceneEvent();
   const [bloodPressureEditDraft, setBloodPressureEditDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
-  const [bloodPressureError, setBloodPressureError] = useState("");
+  const [bloodPressureError, setBloodPressureError] = useState<BloodPressureValidationError>(null);
   const [editingBloodPressureId, setEditingBloodPressureId] = useState<string | null>(null);
   const [pendingBloodPressureDeletion, setPendingBloodPressureDeletion] = useState<BloodPressureObservation | null>(null);
   const [editingChallengeCheckin, setEditingChallengeCheckin] = useState<ChallengeCheckin | null>(null);
   const [pendingChallengeCheckinDeletion, setPendingChallengeCheckinDeletion] = useState<ChallengeCheckin | null>(null);
   const [selectedRecordKey, setSelectedRecordKey] = useState<string | null>(() => initialSearch.get("record"));
+  const observedOnRef = useRef<HTMLInputElement>(null);
   const systolicRef = useRef<HTMLInputElement>(null);
   const diastolicRef = useRef<HTMLInputElement>(null);
   const windowRequestId = useRef(0);
@@ -346,7 +352,7 @@ function App() {
     setConfirmedSave(false);
     savedScene.clear();
     setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
-    setBloodPressureError("");
+    setBloodPressureError(null);
     setEditingBloodPressureId(null);
     setPendingBloodPressureDeletion(null);
     setEditingChallengeCheckin(null);
@@ -530,7 +536,7 @@ function App() {
         newBloodPressure.reset(presentationRef.current.today);
         setNewBloodPressureRecovery(null);
         setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
-        setBloodPressureError("");
+        setBloodPressureError(null);
         setEditingBloodPressureId(null);
         setPendingBloodPressureDeletion(null);
         setEditingChallengeCheckin(null);
@@ -578,7 +584,8 @@ function App() {
     window.history[replace ? "replaceState" : "pushState"]({ ...(window.history.state ?? {}), sk7UserId: sessionIdentityRef.current.userId }, "", url);
     setRequestedScreen(screen);
     setSelectedRecordKey(recordKey ?? null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
   }
 
   function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export", requestContext?: RequestContext) {
@@ -779,19 +786,36 @@ function App() {
   function validateBloodPressure(): BloodPressureObservationInput | null {
     const systolic = Number(bloodPressureDraft.systolic);
     const diastolic = Number(bloodPressureDraft.diastolic);
-    setBloodPressureError("");
+    setBloodPressureError(null);
+    if (!bloodPressureDraft.observedOn) {
+      setBloodPressureError({
+        field: "observed-on",
+        message: "날짜를 선택해 주세요.",
+      });
+      observedOnRef.current?.focus();
+      return null;
+    }
     if (!Number.isInteger(systolic) || systolic < 60 || systolic > 260) {
-      setBloodPressureError("수축기 값은 60에서 260 사이의 정수로 입력해 주세요.");
+      setBloodPressureError({
+        field: "systolic",
+        message: "수축기 값은 60에서 260 사이의 정수로 입력해 주세요.",
+      });
       systolicRef.current?.focus();
       return null;
     }
     if (!Number.isInteger(diastolic) || diastolic < 30 || diastolic > 160) {
-      setBloodPressureError("이완기 값은 30에서 160 사이의 정수로 입력해 주세요.");
+      setBloodPressureError({
+        field: "diastolic",
+        message: "이완기 값은 30에서 160 사이의 정수로 입력해 주세요.",
+      });
       diastolicRef.current?.focus();
       return null;
     }
     if (systolic <= diastolic) {
-      setBloodPressureError("수축기 값은 이완기 값보다 크게 입력해 주세요.");
+      setBloodPressureError({
+        field: "systolic",
+        message: "수축기 값은 이완기 값보다 크게 입력해 주세요.",
+      });
       systolicRef.current?.focus();
       return null;
     }
@@ -854,7 +878,7 @@ function App() {
     setEditingBloodPressureId(record.id);
     setPendingBloodPressureDeletion(null);
     setBloodPressureEditDraft({ observedOn: record.observed_on, period: record.period, systolic: String(record.systolic), diastolic: String(record.diastolic) });
-    setBloodPressureError("");
+    setBloodPressureError(null);
     setNotice(makeNotice("warning", `${dateLabel(record.observed_on)} ${periodLabel(record.period)} 기록을 수정할 수 있습니다.`, { origin: "edit" }));
     navigate("S04");
   }
@@ -862,7 +886,7 @@ function App() {
   function cancelBloodPressureEdit() {
     const originKey = editOriginKey.current;
     setEditingBloodPressureId(null);
-    setBloodPressureError("");
+    setBloodPressureError(null);
     setBloodPressureEditDraft(emptyBloodPressureDraft(today));
     setNotice(null);
     editOriginKey.current = null;
@@ -1443,10 +1467,18 @@ function App() {
                 <label htmlFor="observed-on">
                   <span className="bp-sheet-field-label">날짜</span>
                   <input
+                    ref={observedOnRef}
                     id="observed-on"
                     style={measurementControlStyle}
                     type="date"
-                    aria-describedby={!editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today ? "bp-draft-date-help" : undefined}
+                    aria-invalid={bloodPressureError?.field === "observed-on"}
+                    aria-describedby={
+                      bloodPressureError?.field === "observed-on"
+                        ? "blood-pressure-error"
+                        : !editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today
+                          ? "bp-draft-date-help"
+                          : undefined
+                    }
                     value={bloodPressureDraft.observedOn}
                     onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))}
                     required
@@ -1480,8 +1512,8 @@ function App() {
                     inputMode="numeric"
                     value={bloodPressureDraft.systolic}
                     onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))}
-                    aria-invalid={Boolean(bloodPressureError)}
-                    aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined}
+                    aria-invalid={bloodPressureError?.field === "systolic"}
+                    aria-describedby={bloodPressureError?.field === "systolic" ? "blood-pressure-error" : undefined}
                     required
                     disabled={controlsDisabled}
                   />
@@ -1500,8 +1532,8 @@ function App() {
                     inputMode="numeric"
                     value={bloodPressureDraft.diastolic}
                     onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))}
-                    aria-invalid={Boolean(bloodPressureError)}
-                    aria-describedby={bloodPressureError ? "blood-pressure-error" : undefined}
+                    aria-invalid={bloodPressureError?.field === "diastolic"}
+                    aria-describedby={bloodPressureError?.field === "diastolic" ? "blood-pressure-error" : undefined}
                     required
                     disabled={controlsDisabled}
                   />
@@ -1509,7 +1541,7 @@ function App() {
                 </label>
               </div>
             </div>
-            {bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError}</p>}
+            {bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError.message}</p>}
             <div className="form-actions">
               <button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>
               {editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}
@@ -1535,7 +1567,7 @@ function App() {
                     onClick={(event) => {
                       const dateField = event.currentTarget.form?.elements.namedItem("observed-on");
                       newBloodPressure.reset(today);
-                      setBloodPressureError("");
+                      setBloodPressureError(null);
                       if (dateField instanceof HTMLInputElement) dateField.focus();
                     }}
                   >
