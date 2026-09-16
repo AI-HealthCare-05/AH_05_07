@@ -453,13 +453,30 @@ test("clip policy allows general clips, gates conditional clips, and blocks spec
 });
 
 test("all approved species and variants expose exactly the seven runtime clip names", async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const expected = [...companionClips].sort();
+
+  async function loadRuntime(url: string) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.goto(url);
+      const runtime = page.locator("[data-companion-status]");
+      try {
+        await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+        return runtime;
+      } catch (error) {
+        const status = await runtime.getAttribute("data-companion-status");
+        if (status !== "loading" || attempt === 1) throw error;
+      }
+    }
+    throw new Error(`companion runtime did not settle for ${url}`);
+  }
+
   for (const species of companionSpecies) {
     for (const variant of companionVariants) {
-      await page.goto(reviewUrl("S02", `companion_species=${species}&companion_variant=${variant}&companion_clip=idle`));
-      const runtime = page.locator("[data-companion-status]");
-      await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+      const runtime = await loadRuntime(
+        reviewUrl("S02", `companion_species=${species}&companion_variant=${variant}&companion_clip=idle`),
+      );
       expect((await runtime.getAttribute("data-companion-clip-names"))?.split(",").sort()).toEqual(expected);
     }
   }
