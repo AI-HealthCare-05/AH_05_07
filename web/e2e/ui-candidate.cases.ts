@@ -814,7 +814,8 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await page.goto('/?e2e=signed-in&screen=S14');
   const settings = page.locator('.journey-settings');
   await expect(settings).toContainText('최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요.');
-  await expect(settings).toContainText('내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.');
+  await expect(settings).toContainText('내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고');
+  await expect(settings).toContainText('인쇄물도 계정과 별개이므로 직접 관리해요.');
   await expect(settings).toContainText('이메일 링크로 로그인한 계정의 기록을 확인해요.');
   await settings.locator('summary').click();
   await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.');
