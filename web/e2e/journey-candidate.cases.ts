@@ -127,22 +127,27 @@ for (const [bp, challenge, lead, state] of [
 }
 
 test('journey day selection exposes separate facts locally and returns to today', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const boundaryRequests: string[] = [];
   page.on('request', request => {
     if (/e2e\.invalid|ThreeSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(request.url())) boundaryRequests.push(request.url());
   });
   await candidate(page, true);
-  const calendarToggle = page.getByRole('button', { name: '날짜별 기록 보기', exact: true });
-  if (await calendarToggle.isVisible()) await calendarToggle.click();
+  const calendarToggle = page.getByRole('button', { name: /날짜별 기록 자세히/ });
   const trail = page.locator('.home-trail-dates');
   const today = trail.locator('[data-trail-date="2026-09-11"] > button');
   const earlier = trail.locator('[data-trail-date="2026-09-05"] > button');
   const detail = page.locator('#today-trail-detail');
+  await expect(trail).toBeVisible();
   await expect(trail.locator('li[data-trail-date] > button')).toHaveCount(7);
   await expect(today).toHaveAttribute('aria-pressed', 'true');
   await expect(today).toHaveAttribute('aria-current', 'date');
   await expect(detail).toHaveAttribute('data-selected-date', '2026-09-11');
+  // A. Before selecting another date on mobile.
+  await expect(calendarToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(trail).toBeVisible();
+  await expect(detail).not.toBeVisible();
   const stage = await page.locator('[data-scene-recipe]').elementHandle();
   const requestsBeforeSelection = [...boundaryRequests];
   await earlier.press('Space');
@@ -150,6 +155,9 @@ test('journey day selection exposes separate facts locally and returns to today'
   await expect(earlier).toHaveAttribute('aria-pressed', 'true');
   await expect(today).toHaveAttribute('aria-pressed', 'false');
   await expect(today).toHaveAttribute('aria-current', 'date');
+  // B. After selecting the earlier date.
+  await expect(calendarToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(detail).toBeVisible();
   await expect(detail).toHaveAttribute('data-selected-date', '2026-09-05');
   await expect(detail).toContainText('정자');
   await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
@@ -157,10 +165,22 @@ test('journey day selection exposes separate facts locally and returns to today'
   await expect(trail.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
   expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
+  await calendarToggle.click();
+  await expect(calendarToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(trail).toBeVisible();
+  await expect(detail).not.toBeVisible();
+  await calendarToggle.click();
+  await expect(calendarToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(detail).toBeVisible();
+  await expect(detail).toHaveAttribute('data-selected-date', '2026-09-05');
+  await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
   await page.getByRole('button', { name: '오늘로 돌아오기', exact: true }).press('Enter');
+  // C. After "오늘로 돌아오기".
   await expect(today).toHaveAttribute('aria-pressed', 'true');
-  await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(1);
+  await expect(today).toHaveAttribute('aria-current', 'date');
+  await expect(detail).toBeVisible();
   await expect(detail).toHaveAttribute('data-selected-date', '2026-09-11');
+  await expect(trail.locator('button[aria-pressed="true"]')).toHaveCount(1);
   await expect(detail.locator('dl')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
   expect(boundaryRequests).toEqual(requestsBeforeSelection);

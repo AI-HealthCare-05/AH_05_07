@@ -52,10 +52,14 @@ export async function chooseTime(
   });
 
   await hourWheel.focus();
-  await hourWheel.press("Home");
 
-  for (let current = 1; current < twelveHour; current += 1) {
-    await hourWheel.press("ArrowDown");
+  if (twelveHour === 12) {
+    await hourWheel.press("End");
+  } else {
+    await hourWheel.press("Home");
+    for (let current = 1; current < twelveHour; current += 1) {
+      await hourWheel.press("ArrowDown");
+    }
   }
 
   await expect(hourWheel).toHaveAttribute(

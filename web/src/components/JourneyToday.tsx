@@ -30,6 +30,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const [calendarOpen, setCalendarOpen] = useState(false);
   function selectDay(date: string) {
     setSelectedDate(date);
+    setCalendarOpen(true);
     setDetailOpen(true);
   }
   const todayDay = days.find(day => day.date === today);
@@ -44,14 +45,6 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const landmark = landmarkForCalendarDate(landscapeDate);
   const summary = summarizeTrailDays(days);
   const leadKicker = lead.key === 'today-detail' ? '오늘 기록' : '오늘 먼저';
-  const todayWord: readonly [string, string] = !factsKnown
-    ? ['기록을 불러오면', '오늘 상태를 확인할 수 있어요.']
-    : (todayDay?.observationCount ?? 0) > 0
-      ? ['오늘 남긴 기록부터', '차근차근 확인해요.']
-      : summary.observationCount > 0
-        ? ['최근 기록은 이어져 있어요.', '오늘 혈압 기록은 아직 없어요.']
-        : ['오늘 혈압 기록은 아직 없어요.', '필요할 때 시작해요.'];
-  const maxObservations = Math.max(1, ...days.map(day => day.observationCount));
 
   return <section className="scene journey-candidate journey-today home-scene" data-scene="S02" aria-labelledby="S02-title">
     {/* Remove the existing poster’s near-white paper in presentation, retaining its source and date mapping. */}
@@ -90,11 +83,15 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
-        <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="home-calendar" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "날짜별 기록 접기" : "날짜별 기록 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
+        <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="today-journey-details" onClick={() => setCalendarOpen(open => { const next = !open; if (next && selectedDay) setDetailOpen(true); return next; })}>{calendarOpen ? "날짜별 기록 자세히 접기" : "날짜별 기록 자세히 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
         <div id="home-calendar" className="today-calendar" data-open={calendarOpen}>
         <HomeJourneyTrail days={days} today={today} selectedDate={selectedDay?.date ?? null} onSelectDate={selectDay} detailId="today-trail-detail" factsKnown={factsKnown} />
+        <dl className="living-trace-summary" aria-label="최근 7일 혈압 관찰 요약">
+          <div><dt>혈압 관찰이 있는 날</dt><dd>{factsKnown ? `${summary.observationDateCount}일` : '미확인'}</dd></div>
+          <div><dt>혈압 관찰</dt><dd>{factsKnown ? `${summary.observationCount}건` : '미확인'}</dd></div>
+        </dl>
         {retained && <p className="living-week-note">{freshness === 'refreshing' ? '새로고침 중 · 이 길은 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 이 길은 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
-        <div className="today-journey-details">
+        <div id="today-journey-details" className="today-journey-details">
         {selectedDay && <details className="today-trail-disclosure" open={detailOpen} onToggle={event => setDetailOpen(event.currentTarget.open)}>
           <summary><span><time dateTime={selectedDay.date}>{formatTrailDate(selectedDay.date)}</time> 기록 자세히 보기</span><span aria-hidden="true">＋</span></summary>
           <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />
@@ -109,17 +106,9 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
         {retained && <p className="today-freshness">{freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
         <div className="today-records-grid">
           <dl className="journey-facts" aria-label="오늘의 별도 기록 상태" aria-live="polite" aria-atomic="true">
-            <div className="today-summary-card today-observation-card"><dt><span className="today-record-icon today-record-icon--observation" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20 4 12C-2 5 7 0 12 7c5-7 14-2 8 5Z" /></svg></span>혈압 관찰</dt><dd key={`bp-${todayKnown}-${todayDay?.observationCount}`}>{todayKnown ? <><strong>{todayDay!.observationCount}</strong>건</> : '미확인'}</dd></div>
-            <div className="today-summary-card today-participation-card"><dt><span className="today-record-icon today-record-icon--participation" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M4 10h16M8 3v4m8-4v4" /></svg></span>챌린지 참여</dt><dd key={`challenge-${todayKnown}-${todayDay?.participation}`}>{todayKnown ? todayDay!.participation : '미확인'}</dd></div>
+            <div className="today-ledger-fact today-ledger-fact--observation"><dt><span className="today-record-icon today-record-icon--observation" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20 4 12C-2 5 7 0 12 7c5-7 14-2 8 5Z" /></svg></span>혈압 관찰</dt><dd key={`bp-${todayKnown}-${todayDay?.observationCount}`}>{todayKnown ? <><strong>{todayDay!.observationCount}</strong>건</> : '미확인'}</dd></div>
+            <div className="today-ledger-fact today-ledger-fact--participation"><dt><span className="today-record-icon today-record-icon--participation" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M4 10h16M8 3v4m8-4v4" /></svg></span>챌린지 참여</dt><dd key={`challenge-${todayKnown}-${todayDay?.participation}`}>{todayKnown ? todayDay!.participation : '미확인'}</dd></div>
           </dl>
-          <section className="today-summary-card today-week-card" aria-labelledby="today-week-title">
-            <header><h3 id="today-week-title">7일의 혈압 관찰</h3><span>{factsKnown ? `${summary.observationCount}건` : '미확인'}</span></header>
-            <div className="today-observation-chart" role="img" aria-label={factsKnown ? days.map(day => `${formatTrailDate(day.date)} ${day.observationCount}건`).join(', ') : '7일의 혈압 관찰 확인 전'}>
-              {days.map(day => <div key={day.date} data-chart-today={day.date === today}><span className="today-chart-track"><i style={{ height: `${factsKnown ? day.observationCount / maxObservations * 100 : 0}%` }} /></span><small>{Number(day.date.slice(8))}</small></div>)}
-            </div>
-            <p>{factsKnown ? `관찰 기록을 남긴 날 ${summary.observationDateCount}일` : '기록을 불러오면 표시돼요.'}</p>
-          </section>
-          <aside className="today-summary-card today-word-card"><h3>모아의 한마디 <span aria-hidden="true">❧</span></h3><span className="today-quote-mark" aria-hidden="true">“</span><p>{todayWord[0]}<br />{todayWord[1]}</p></aside>
         </div>
         <p className="today-records-note">혈압 관찰과 챌린지 참여는 서로 다른 사실로 남아요.</p>
         <nav className="home-links" aria-label="오늘 기록 바로가기">

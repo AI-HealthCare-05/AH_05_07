@@ -91,6 +91,10 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
     const primaryBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
     expect(primaryBox.y + primaryBox.height).toBeLessThanOrEqual(navBox.y);
+    if (width <= 350) {
+      const trailDatesBox = (await home.locator('.home-trail-dates').boundingBox())!;
+      expect(trailDatesBox.y + trailDatesBox.height).toBeLessThanOrEqual(navBox.y);
+    }
   }
   await expect(home.locator('[data-home-concept]')).toHaveCount(3);
   await expect(home.locator('canvas')).toHaveCount(0);
@@ -137,9 +141,16 @@ test('North Star Home recognizes recent history when a returning user has not re
     '최근 7일에 혈압 기록 1건이 있어요. 오늘 측정한 값을 이어서 남겨요.',
   );
   await expect(home.locator('.home-lead button')).toHaveAccessibleName('혈압 기록하기');
-  await expect(home.locator('.today-week-card')).toContainText('1건');
-  await expect(home.locator('.today-word-card')).toContainText('최근 기록은 이어져 있어요.');
-  await expect(home.locator('.today-word-card')).toContainText('오늘 혈압 기록은 아직 없어요.');
+  const weeklySummary = home.locator('.living-trace-summary');
+  await expect(weeklySummary).toBeVisible();
+  await expect(weeklySummary).toContainText('혈압 관찰이 있는 날');
+  await expect(weeklySummary).toContainText('1일');
+  await expect(weeklySummary).toContainText('혈압 관찰');
+  await expect(weeklySummary).toContainText('1건');
+  await expect(home.locator('.today-week-card')).toHaveCount(0);
+  await expect(home.locator('.today-observation-chart')).toHaveCount(0);
+  await expect(home.locator('.today-word-card')).toHaveCount(0);
+  await expect(home.locator('.today-companion-greeting')).toBeVisible();
 
   const todayState = home.locator('[data-home-concept="today-detail"]');
   await expect(todayState).toContainText('오늘 상태');
