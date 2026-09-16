@@ -75,6 +75,13 @@
   line-height: 1.4;
 }
 
+.scene.record-explorer-scene .window-nav button:disabled {
+  background: #e9ece6;
+  color: #6e7869;
+  border-color: transparent;
+  opacity: 1;
+}
+
 .record-explorer {
   --record-explorer-ink: #35473c;
   --record-explorer-muted: #60655c;

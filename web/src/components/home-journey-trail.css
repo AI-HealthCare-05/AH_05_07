@@ -79,3 +79,9 @@
   .home-trail-date time { font-size: 10px; line-height: 14px; }
   .home-trail-legend { margin-top: 2px; font-size: 9px; line-height: 12px; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .home-trail-dates .home-trail-date,
+  .home-trail-date .home-trail-node {
+    transition: none;
+  }
+}

@@ -274,6 +274,12 @@
   width: 100%;
 }
 
+.journey-sheet .form-actions button[type="submit"]:disabled {
+  background: #c8d0c3;
+  color: #3a4d3a;
+  opacity: 1;
+}
+
 .journey-sheet .bp-sheet-secondary {
   display: grid;
   gap: 1rem;
