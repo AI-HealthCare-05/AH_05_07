@@ -222,7 +222,7 @@
 .journey-today.scene > .today-poster-filter { position: absolute; display: block; pointer-events: none; }
 @media (max-width: 580px) {
  .today-calendar-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 2rem; padding: .35rem 0; border: 0; border-top: 1px solid #edf2f0; border-radius: 0; background: transparent; color: #5c7871; font-size: .63rem; font-weight: 550; box-shadow: none; }
- .today-calendar[data-open="false"] { display: none; }
+ .today-calendar[data-open="false"] .today-journey-details { display: none; }
  .journey-today .living-week-heading { margin-bottom: .4rem; }
  .journey-today .living-week-heading > .living-week-title { gap: .4rem; }
  .journey-today .living-week-heading p { display: none; }

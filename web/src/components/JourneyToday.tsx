@@ -30,6 +30,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const [calendarOpen, setCalendarOpen] = useState(false);
   function selectDay(date: string) {
     setSelectedDate(date);
+    setCalendarOpen(true);
     setDetailOpen(true);
   }
   const todayDay = days.find(day => day.date === today);
@@ -90,11 +91,11 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <div className="living-week-title"><span className="today-leaf" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 29V17C4 18 2 9 3 4c9 0 14 4 13 13C16 6 22 2 30 2c1 11-3 17-14 17" /></svg></span><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
-        <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="home-calendar" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "날짜별 기록 접기" : "날짜별 기록 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
+        <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="today-journey-details" onClick={() => setCalendarOpen(open => { const next = !open; if (next && selectedDay) setDetailOpen(true); return next; })}>{calendarOpen ? "날짜별 기록 자세히 접기" : "날짜별 기록 자세히 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
         <div id="home-calendar" className="today-calendar" data-open={calendarOpen}>
         <HomeJourneyTrail days={days} today={today} selectedDate={selectedDay?.date ?? null} onSelectDate={selectDay} detailId="today-trail-detail" factsKnown={factsKnown} />
         {retained && <p className="living-week-note">{freshness === 'refreshing' ? '새로고침 중 · 이 길은 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 이 길은 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
-        <div className="today-journey-details">
+        <div id="today-journey-details" className="today-journey-details">
         {selectedDay && <details className="today-trail-disclosure" open={detailOpen} onToggle={event => setDetailOpen(event.currentTarget.open)}>
           <summary><span><time dateTime={selectedDay.date}>{formatTrailDate(selectedDay.date)}</time> 기록 자세히 보기</span><span aria-hidden="true">＋</span></summary>
           <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />
