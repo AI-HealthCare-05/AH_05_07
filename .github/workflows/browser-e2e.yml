@@ -2,16 +2,9 @@ name: Browser E2E
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - "!web/src/ui/companionAssets.generated.ts"
-      - "tools/mvp1-capture.cjs"
-      - "tools/submission-*"
-      - "docs/mvp1-*.md"
-      - "docs/evidence/mvp1/**"
-      - ".github/workflows/browser-e2e.yml"
+  schedule:
+    # Full browser confidence pass once per night (03:30 Asia/Seoul).
+    - cron: "30 18 * * *"
   pull_request:
     branches: [main]
     paths:
@@ -19,8 +12,6 @@ on:
       - "!web/src/ui/companionAssets.generated.ts"
       - "tools/mvp1-capture.cjs"
       - "tools/submission-*"
-      - "docs/mvp1-*.md"
-      - "docs/evidence/mvp1/**"
       - ".github/workflows/browser-e2e.yml"
 
 permissions:
@@ -104,8 +95,9 @@ jobs:
           test "$CLASSIFY_RESULT" = "success"
           test "$PR_BROWSER_RESULT" = "success"
 
-  browser-e2e-main:
-    name: browser-e2e (${{ matrix.suite.name }})
+  browser-e2e-full:
+    # Full matrix is confidence/release coverage, not a per-merge gate.
+    name: browser-e2e-full (${{ matrix.suite.name }})
     if: github.event_name != 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20

@@ -44,9 +44,12 @@ const companionReviewRuntimeFiles = new Set([
   'web/src/ui/companion.ts',
 ]);
 
-const sharedSceneRuntimeFiles = new Set([
+const broadBrowserRuntimeFiles = new Set([
   'web/src/App.tsx',
   'web/src/main.tsx',
+]);
+
+const sharedSceneRuntimeFiles = new Set([
   'web/src/components/SceneShell.tsx',
   'web/src/components/journey-candidate.css',
   'web/src/components/scene/disposeScene.ts',
@@ -84,6 +87,11 @@ const reviewSceneSuite = Object.freeze({
 const companionReviewSuite = Object.freeze({
   name: 'review companion runtime',
   command: 'npm run test:e2e:review',
+});
+
+const productionCompanionSuite = Object.freeze({
+  name: 'production-on companion',
+  command: 'npm run test:e2e:production:on',
 });
 
 const fullSuites = Object.freeze([
@@ -147,17 +155,24 @@ export function selectPrBrowserSuites(files) {
     return cloneSuites(suites);
   }
 
+  const touchesBroadBrowserRuntime = touches(unique, broadBrowserRuntimeFiles);
   const touchesSharedSceneRuntime = touches(unique, sharedSceneRuntimeFiles);
   const touchesSavedSceneRuntime = touchesSharedSceneRuntime || touches(unique, savedSceneRuntimeFiles);
   const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(unique, reviewSceneRuntimeFiles);
   const touchesCompanionReviewRuntime = touches(unique, companionReviewRuntimeFiles)
     || touches(unique, companionReviewTestFiles);
 
+  if (touchesBroadBrowserRuntime) {
+    return cloneSuites(fullSuites);
+  }
+
   if (touchesSavedSceneRuntime || touchesReviewSceneRuntime || touchesCompanionReviewRuntime) {
-    const suites = [...fullSuites];
+    const suites = [];
     if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
     if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
-    if (touchesCompanionReviewRuntime) suites.push(companionReviewSuite);
+    if (touchesCompanionReviewRuntime) {
+      suites.push(companionReviewSuite, productionCompanionSuite);
+    }
     return cloneSuites(suites);
   }
 

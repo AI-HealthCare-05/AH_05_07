@@ -38,47 +38,38 @@ test('S02 and S10 presentation changes run both focused lanes in parallel', () =
   ]), ['S02 focused UI', 'S10 focused UI']);
 });
 
-test('shared scene runtime changes add both engine suites to the complete PR gate', () => {
-  assert.deepEqual(names(['web/src/App.tsx']), [
-    ...fullGate,
-    'saved-scene migration parity',
-    'S02 and S10 review scenes',
-  ]);
+test('broad App runtime changes retain the complete PR browser gate', () => {
+  assert.deepEqual(names(['web/src/App.tsx']), fullGate);
 });
 
-test('saved-scene runtime changes add only the saved-scene engine suite', () => {
+test('saved-scene runtime changes run only saved-scene parity', () => {
   assert.deepEqual(names(['web/src/components/SavedSceneBoundary.tsx']), [
-    ...fullGate,
     'saved-scene migration parity',
   ]);
 });
 
-test('review-scene runtime changes add only the S02/S10 scene engine suite', () => {
+test('review-scene runtime changes run only the S02/S10 scene suite', () => {
   assert.deepEqual(names(['web/src/components/VisualStage.tsx']), [
-    ...fullGate,
     'S02 and S10 review scenes',
   ]);
 });
 
-test('shared journey CSS is treated as a shared scene runtime boundary', () => {
+test('shared journey scene CSS runs the two directly related engine suites', () => {
   assert.deepEqual(names(['web/src/components/journey-candidate.css']), [
-    ...fullGate,
     'saved-scene migration parity',
     'S02 and S10 review scenes',
   ]);
 });
 
-test('shared scene disposal changes run both engine suites', () => {
+test('shared scene disposal changes run the two directly related engine suites', () => {
   assert.deepEqual(names(['web/src/components/scene/disposeScene.ts']), [
-    ...fullGate,
     'saved-scene migration parity',
     'S02 and S10 review scenes',
   ]);
 });
 
-test('Seoul date runtime changes add the review-scene suite', () => {
+test('Seoul date runtime changes run only the review-scene suite', () => {
   assert.deepEqual(names(['web/src/lib/useSeoulDate.ts']), [
-    ...fullGate,
     'S02 and S10 review scenes',
   ]);
 });
@@ -101,20 +92,20 @@ test('companion-review test-only changes run only the review companion suite', (
   ]);
 });
 
-test('companion renderer changes add review companion coverage to the complete PR gate', () => {
+test('companion renderer changes run only review and production companion coverage', () => {
   assert.deepEqual(names(['web/src/components/CompanionReviewRenderer.tsx']), [
-    ...fullGate,
     'review companion runtime',
+    'production-on companion',
   ]);
 });
 
-test('companion renderer plus review test still includes the review companion suite', () => {
+test('companion renderer plus review test stays in the companion-only lane', () => {
   assert.deepEqual(names([
     'web/src/components/CompanionReviewRenderer.tsx',
     'web/e2e/companion-review.spec.ts',
   ]), [
-    ...fullGate,
     'review companion runtime',
+    'production-on companion',
   ]);
 });
 
