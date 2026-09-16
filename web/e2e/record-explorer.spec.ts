@@ -69,6 +69,14 @@ test("S08 chronologically groups separate facts and combines local type and date
   expect(await rows(page).evaluateAll(elements => elements.map(element => element.getAttribute("data-record-date"))))
     .toEqual(["2026-09-11", "2026-09-10", "2026-09-10", "2026-09-10", "2026-09-09", "2026-09-08"]);
   await expect(explorer).toContainText("최신 날짜순");
+  for (const day of await explorer.locator(".record-explorer-day").all()) {
+    const heading = await day.locator("h2").boundingBox();
+    const list = await day.locator(".record-explorer-list").boundingBox();
+    expect(heading).not.toBeNull();
+    expect(list).not.toBeNull();
+    expect(heading!.x + heading!.width)
+      .toBeLessThanOrEqual(list!.x + 2);
+  }
   for (const label of ["전체 6개", "혈압 3개", "챌린지 2개", "이전 방식 기록 1개"]) {
     await expect(explorer.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
@@ -327,6 +335,14 @@ for (const width of [320, 360, 390, 430]) {
         expect(button.right, JSON.stringify(button)).toBeLessThanOrEqual(width + 1);
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      for (const day of await page.locator(".record-explorer-day").all()) {
+        const heading = await day.locator("h2").boundingBox();
+        const list = await day.locator(".record-explorer-list").boundingBox();
+        expect(heading).not.toBeNull();
+        expect(list).not.toBeNull();
+        expect(heading!.y + heading!.height)
+          .toBeLessThanOrEqual(list!.y + 2);
+      }
       if (width === 390 && !enlarged) await page.screenshot({ path: testInfo.outputPath("s08-mobile-390.png"), fullPage: true });
       await page.getByRole("heading", { level: 1 }).focus();
       for (let tab = 0; tab < 24; tab += 1) {
