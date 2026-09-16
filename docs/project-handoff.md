@@ -41,8 +41,10 @@ authoritative only for their own boundaries.
 - Routine work uses a coherent branch/PR without a required preliminary Issue,
   ADR, evidence ledger, screenshot pack, independent review, or full local suite.
 - Run affected checks while iterating. The final PR retains required `lint` and
-  `test`; specialized CI is routed by affected paths. Do not duplicate locally a
-  broad suite owned by final-candidate CI. The complete browser/evidence matrix is
+  `test`; specialized CI is routed by affected paths. Frontend/docs-only work may
+  use lightweight required-check payloads, while backend/protected/unknown paths
+  retain the Python/AI/MySQL payload. Do not duplicate locally a broad suite owned
+  by final-candidate CI. The complete browser/evidence matrix is
   not a routine PR or every-merge default; use the scheduled nightly run, an
   explicit release run, or manual confidence work when its scope requires it.
 - Protected boundaries keep their relevant Issue, contract, test, and operational
