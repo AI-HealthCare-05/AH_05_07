@@ -92,6 +92,16 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
     expect(primaryBox.y + primaryBox.height).toBeLessThanOrEqual(navBox.y);
     if (width <= 350) {
+      const touchTargets = home.locator(
+        '.home-trail-date, .living-week-heading a, .today-calendar-toggle',
+      );
+      await expect(touchTargets).toHaveCount(9);
+      for (let index = 0; index < await touchTargets.count(); index += 1) {
+        const box = await touchTargets.nth(index).boundingBox();
+        expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+        expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      }
+
       const trailDatesBox = (await home.locator('.home-trail-dates').boundingBox())!;
       expect(trailDatesBox.y + trailDatesBox.height).toBeLessThanOrEqual(navBox.y);
     }
