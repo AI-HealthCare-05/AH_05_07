@@ -91,6 +91,10 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
     const primaryBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
     expect(primaryBox.y + primaryBox.height).toBeLessThanOrEqual(navBox.y);
+    if (width <= 350) {
+      const trailDatesBox = (await home.locator('.home-trail-dates').boundingBox())!;
+      expect(trailDatesBox.y + trailDatesBox.height).toBeLessThanOrEqual(navBox.y);
+    }
   }
   await expect(home.locator('[data-home-concept]')).toHaveCount(3);
   await expect(home.locator('canvas')).toHaveCount(0);
