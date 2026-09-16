@@ -283,3 +283,29 @@ test('core record loop reaches detail and seven-day review after one confirmed s
   expect(posts()).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
+
+test('review companion identity preference persists without health semantics', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await candidate(page);
+
+  await page.goto('/?e2e=signed-in&screen=S14');
+  const select = page.getByLabel('캐릭터 선택');
+  await expect(select).toBeVisible();
+  await expect(select.locator('option')).toHaveCount(11);
+  await expect(select).toHaveValue('bear');
+  await expect(page.locator('.companion-identity-settings')).toContainText('혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.');
+
+  await select.selectOption('rabbit');
+  await expect(select).toHaveValue('rabbit');
+  expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('rabbit');
+
+  await page.reload();
+  await expect(page.getByLabel('캐릭터 선택')).toHaveValue('rabbit');
+
+  await page.evaluate(() => localStorage.setItem('sk7-companion-species', 'not-a-species'));
+  await page.reload();
+  await expect(page.getByLabel('캐릭터 선택')).toHaveValue('bear');
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});

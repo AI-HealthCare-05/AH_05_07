@@ -839,3 +839,14 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+
+
+/* Review-only companion identity preference. Medical/domain facts never drive this control. */
+.companion-identity-settings { align-items: center; }
+.companion-identity-settings h2 { margin: .15rem 0 .35rem; font-size: 1.1rem; color: var(--sk7-ink, #23363a); }
+.companion-identity-settings p:not(.eyebrow) { max-width: 42rem; color: #66777a; font-size: .78rem; line-height: 1.6; }
+.companion-identity-control { display: grid; gap: .4rem; min-width: 13rem; color: #435b5f; font-size: .72rem; font-weight: 650; }
+.companion-identity-control select { min-height: 2.75rem; padding: .6rem .75rem; border: 1px solid #cfdcda; border-radius: .6rem; background: #fff; color: #16383d; font: inherit; }
+@media (max-width: 580px) {
+  .companion-identity-control { min-width: 0; width: 100%; }
+}

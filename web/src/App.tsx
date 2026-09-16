@@ -45,7 +45,8 @@ import { useSeoulDate } from "./lib/useSeoulDate";
 import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
-import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext } from "./ui/companion";
+import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
+import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
   getModelV2ResultView,
@@ -229,6 +230,7 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
 function App() {
   const initialSearch = useMemo(() => new URLSearchParams(window.location.search), []);
   const companionMode = useMemo(() => resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE), []);
+  const [companionSpeciesPreference, setCompanionSpeciesPreference] = useState<CompanionSpecies>(() => readCompanionIdentity());
   const e2eSession = useMemo(() => getE2eSession(initialSearch.get("e2e")), [initialSearch]);
   const fixture = useMemo(
     () => getEvidenceFixture(
@@ -1796,6 +1798,26 @@ function App() {
       if (presentation.journey) return (
         <Scene id="S14" {...journeyCopy.S14} tone="cream" className="journey-settings">
           <div className="journey-settings-list">
+            {import.meta.env.VITE_SK7_SCENE_MODE === "review" && <section className="journey-settings-section companion-identity-settings">
+              <div>
+                <p className="eyebrow">함께할 캐릭터</p>
+                <h2>내 동반자</h2>
+                <p>화면의 3D 캐릭터만 바뀌어요. 혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.</p>
+              </div>
+              <label className="companion-identity-control" htmlFor="companion-species">
+                <span>캐릭터 선택</span>
+                <select
+                  id="companion-species"
+                  value={companionSpeciesPreference}
+                  onChange={(event) => {
+                    const species = event.target.value as CompanionSpecies;
+                    setCompanionSpeciesPreference(writeCompanionIdentity(species));
+                  }}
+                >
+                  {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+                </select>
+              </label>
+            </section>}
             <section className="journey-settings-section">
               <div>
                 <p className="eyebrow">기록과 파일</p>

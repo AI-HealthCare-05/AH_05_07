@@ -56,7 +56,11 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   await expect(home).toBeVisible();
   await expect(home.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page.locator('#S02-title')).toBeFocused();
-  await home.locator('[data-poster-asset] img').evaluate((img: HTMLImageElement) => img.decode());
+  if (width === 320 && height === 568) {
+    await expect(home.locator('.journey-view-frame')).toBeHidden();
+  } else {
+    await home.locator('[data-poster-asset] img').evaluate((img: HTMLImageElement) => img.decode());
+  }
   const hierarchy = await home.evaluate(element => {
     const hero = element.querySelector('.today-hero')!;
     const journey = element.querySelector('.living-week')!;
@@ -394,7 +398,11 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
   await expect(page.locator('.journey-today')).toBeVisible();
   const poster = page.locator('[data-poster-asset]');
   await expect(poster).toHaveAttribute('data-poster-asset', new RegExp(width === 320 ? 'mobile320$' : width === 390 ? 'mobile390$' : 'desktop$'));
-  await poster.locator('img').evaluate((img: HTMLImageElement) => img.decode());
+  if (width === 320) {
+    await expect(page.locator('.journey-view-frame')).toBeHidden();
+  } else {
+    await poster.locator('img').evaluate((img: HTMLImageElement) => img.decode());
+  }
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await expect(page.locator('[data-static-landscape="S10"]')).toBeVisible();
