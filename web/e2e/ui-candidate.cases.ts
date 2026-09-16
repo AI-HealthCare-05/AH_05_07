@@ -330,7 +330,6 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   await expect(home.locator('.today-cycle-progress')).toHaveCount(0);
   const boundaryRequests = () => state.urls.filter(url => /e2e\.invalid|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(url));
   const beforeSelection = [...boundaryRequests()];
-  await home.getByRole('button', { name: '날짜별 기록 보기', exact: true }).click();
   await home.locator('[data-trail-date="2026-09-01"] > button').press('Space');
   await expect(home.locator('#today-trail-detail')).toHaveAttribute('data-selected-date', '2026-09-01');
   await expect(home.locator('#today-trail-detail dl')).toHaveText('혈압 관찰0건챌린지 참여기록함');
