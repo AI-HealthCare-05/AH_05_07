@@ -19,7 +19,8 @@ target_jobs as (
   from cron.job
   where jobname in (
     'purge-expired-observation-records',
-    'purge-expired-active-challenges'
+    'purge-expired-active-challenges',
+    'purge-expired-structured-feedback'
   )
 ),
 ranked_runs as (
