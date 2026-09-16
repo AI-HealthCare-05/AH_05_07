@@ -219,6 +219,8 @@
   .journey-today .journey-view { inset: 7.4rem -.15rem 4.6rem 28%; }
   .journey-view-frame { width: 110%; left: -5%; bottom: -.25rem; height: 118px; }
   .today-companion-greeting { display: none; }
+  /* Short 320px viewports yield decorative scene media before core action/trace. */
+  .journey-view-frame, .journey-view-caption { display: none; }
   .journey-today .home-lead { padding: .45rem .55rem; gap: .25rem; }
   .journey-today .home-lead h2 { font-size: .72rem; }
   .journey-today .home-lead p { font-size: .58rem; }

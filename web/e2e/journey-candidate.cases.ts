@@ -42,6 +42,8 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
       const legendBox = await page.locator('.home-trail-legend').boundingBox();
       expect(legendBox).not.toBeNull();
       expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(navBox.y);
+      await expect(page.locator('.journey-view-frame')).toBeHidden();
+      await expect(page.locator('.journey-view-caption')).toBeHidden();
     }
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     await primary.click();
