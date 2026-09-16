@@ -4,6 +4,16 @@ export type AuthEmailConfirmIntent =
   | { kind: "verify"; tokenHash: string };
 
 const authEmailConfirmPath = "/auth/confirm";
+export const productionWebOrigin = "https://hyeol.app";
+const productionFallbackHostname = "ah-05-07-pages.ahnsangkyoon.workers.dev";
+
+export function resolveAuthEmailRedirectTo(href: string): string {
+  const url = new URL(href);
+  if (url.hostname === "hyeol.app" || url.hostname === productionFallbackHostname) {
+    return productionWebOrigin;
+  }
+  return url.origin;
+}
 
 function readTokenParams(url: URL): URLSearchParams {
   const fragment = new URLSearchParams(url.hash.startsWith("#") ? url.hash.slice(1) : url.hash);

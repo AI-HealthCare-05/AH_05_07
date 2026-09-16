@@ -19,6 +19,14 @@ Observation ownership uses Supabase Auth email Magic Links. The observation data
 
 - Set the hosted Supabase production Site URL to `https://hyeol.app` and keep
   explicit additional redirect URLs limited to approved application origins.
+- Treat `https://hyeol.app` as the only normal user-facing production origin.
+  Ordinary visits to `ah-05-07-pages.ahnsangkyoon.workers.dev` must redirect to
+  the same path/query/hash on `https://hyeol.app` before React or Supabase Auth
+  boots. `?fallback=1` is an operator-only diagnostic bypass and must not be
+  published as a user entry URL.
+- Production email sign-in requests must resolve their redirect target to
+  `https://hyeol.app`; localhost and non-production preview origins may keep
+  their own origin for development.
 - Keep both production email templates below on the same first-party
   confirmation endpoint; do not use `{{ .ConfirmationURL }}` for these two
   production Auth messages:
