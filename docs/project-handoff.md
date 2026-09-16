@@ -43,8 +43,8 @@ authoritative only for their own boundaries.
 - Run affected checks while iterating. The final PR retains required `lint` and
   `test`; specialized CI is routed by affected paths. Do not duplicate locally a
   broad suite owned by final-candidate CI. The complete browser/evidence matrix is
-  not a routine PR default; use it for merged-`main`, release, or manual confidence
-  work when its scope requires it.
+  not a routine PR or every-merge default; use the scheduled nightly run, an
+  explicit release run, or manual confidence work when its scope requires it.
 - Protected boundaries keep their relevant Issue, contract, test, and operational
   evidence. An ADR is for a durable architecture decision, not every implementation.
 - Reuse unchanged evidence within its exact scope. Do not create a second PR merely

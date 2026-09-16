@@ -60,11 +60,13 @@ or a new dependency/topology:
   a build plus directly related tests, and scene/companion runtime uses its
   directly related scene test plus a physical spot-check only when needed. The
   full browser matrix is skipped by default.
-- On `main`, required CI owns broad regression when configured; do not duplicate
-  the same full suite locally. Classify a red CI run as product regression,
-  test-contract mismatch, or transient rather than ignoring it.
-- Release verification may use the full browser matrix and required physical
-  device gates. Do not require release evidence for a routine PR.
+- Required PR/core CI owns merge-time regression. Do not replay the complete
+  browser matrix after every `main` merge; scheduled nightly or explicit manual
+  Browser E2E owns broad browser confidence. Classify a red scheduled/manual run
+  as product regression, test-contract mismatch, or transient rather than
+  turning every routine change into a release exercise.
+- Release verification may explicitly run the full browser matrix and required
+  physical device gates. Do not require release evidence for a routine PR.
 - `INVARIANT` is a durable product/security/health contract. `TASK GUARD` is
   current-task-only and must not carry forward. `HYPOTHESIS` is experimental and
   expires when falsified. `EVIDENCE` is valid only for its recorded SHA,
@@ -94,9 +96,10 @@ new deployment service for routine autonomous work. See
 - A `deny` result must not be published from the autonomous lane. Governance,
   workflow, credential, and guard files are intentionally outside hands-off
   self-modification.
-- GitHub-hosted required CI remains the final broad regression gate. Persistent
-  self-hosted runners remain manual trusted verification only and are not the
-  default autonomous merge path.
+- GitHub-hosted required PR/core CI remains the merge gate. The scheduled/manual
+  full Browser E2E matrix is broad confidence and release coverage, not a routine
+  merge prerequisite. Persistent self-hosted runners remain manual trusted
+  verification only and are not the default autonomous merge path.
 
 ## Shared defaults
 
