@@ -487,7 +487,7 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("JSON");
   await expect(settings).toContainText("PDF");
   await expect(settings).toContainText("인쇄물");
-  await expect(settings).toContainText("기기");
+  await expect(settings).toContainText("계정과 별개");
   await expect(settings).toContainText("활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.");
   await expect(settings).toContainText("입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.");
 });
