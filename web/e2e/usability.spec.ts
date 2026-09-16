@@ -186,6 +186,128 @@ test("prior records remain read-only and Today returns to the current period", a
   expect(mutations).toEqual([]);
 });
 
+const localBloodPressureValidationCases = [
+  {
+    name: "missing date",
+    observedOn: "",
+    systolic: "120",
+    diastolic: "80",
+    invalid: "#observed-on",
+    valid: ["#systolic", "#diastolic"],
+    message: "날짜를 선택해 주세요.",
+  },
+  {
+    name: "systolic range",
+    observedOn: null,
+    systolic: "261",
+    diastolic: "80",
+    invalid: "#systolic",
+    valid: ["#observed-on", "#diastolic"],
+    message: "수축기 값은 60에서 260 사이의 정수로 입력해 주세요.",
+  },
+  {
+    name: "diastolic range",
+    observedOn: null,
+    systolic: "120",
+    diastolic: "29",
+    invalid: "#diastolic",
+    valid: ["#observed-on", "#systolic"],
+    message: "이완기 값은 30에서 160 사이의 정수로 입력해 주세요.",
+  },
+  {
+    name: "systolic and diastolic relationship",
+    observedOn: null,
+    systolic: "80",
+    diastolic: "90",
+    invalid: "#systolic",
+    valid: ["#observed-on", "#diastolic"],
+    message: "수축기 값은 이완기 값보다 크게 입력해 주세요.",
+  },
+] as const;
+
+for (const scenario of localBloodPressureValidationCases) {
+  test(`S04 local validation targets only the field that needs correction: ${scenario.name}`, async ({ page }) => {
+    const mutations = await mockWindow(page);
+    await page.goto("/?e2e=signed-in&screen=S04");
+
+    if (scenario.observedOn !== null) {
+      await page.locator("#observed-on").fill(scenario.observedOn);
+    }
+    await page.locator("#systolic").fill(scenario.systolic);
+    await page.locator("#diastolic").fill(scenario.diastolic);
+    await page.getByRole("button", { name: "혈압 기록 저장" }).click();
+
+    const invalid = page.locator(scenario.invalid);
+    await expect(invalid).toBeFocused();
+    await expect(invalid).toHaveAttribute("aria-invalid", "true");
+    await expect(invalid).toHaveAttribute("aria-describedby", /\bblood-pressure-error\b/);
+    await expect(page.getByRole("alert")).toHaveText(scenario.message);
+
+    for (const selector of scenario.valid) {
+      const field = page.locator(selector);
+      await expect(field).not.toHaveAttribute("aria-invalid", "true");
+      const describedBy = await field.getAttribute("aria-describedby");
+      expect(describedBy ?? "").not.toMatch(/\bblood-pressure-error\b/);
+    }
+
+    await expect(page.locator("#systolic")).toHaveValue(scenario.systolic);
+    await expect(page.locator("#diastolic")).toHaveValue(scenario.diastolic);
+    expect(mutations).toEqual([]);
+  });
+}
+
+test("S02 mobile date and recap controls keep the 44px preferred target without page overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/?fixture=VP-10");
+
+  const targets = page.locator(
+    ".home-trail-date, .living-week-heading a, .today-calendar-toggle",
+  );
+  await expect(targets).toHaveCount(9);
+
+  for (let index = 0; index < await targets.count(); index += 1) {
+    const box = await targets.nth(index).boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+  ).toBe(true);
+});
+
+test("reduced motion makes first-record navigation scroll immediate", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/?fixture=VP-04");
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+
+  await page.evaluate(() => {
+    const originalScrollTo = window.scrollTo.bind(window);
+    const trackedWindow = window as Window & { __sk7LastScrollBehavior?: ScrollBehavior };
+    window.scrollTo = ((optionsOrX: ScrollToOptions | number, y?: number) => {
+      if (typeof optionsOrX === "object") {
+        trackedWindow.__sk7LastScrollBehavior = optionsOrX.behavior;
+        originalScrollTo(optionsOrX);
+        return;
+      }
+      originalScrollTo(optionsOrX, y ?? 0);
+    }) as typeof window.scrollTo;
+  });
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.getByRole("button", { name: "혈압 기록하기" }).click();
+
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __sk7LastScrollBehavior?: ScrollBehavior }).__sk7LastScrollBehavior,
+    ),
+  ).toBe("auto");
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S04"] h1')).toBeFocused();
+  await expect(page.locator('[data-scene="S04"] h1')).toBeInViewport();
+});
+
 test("422 input rejection is distinguished from an uncertain write", async ({ page }) => {
   let writes = 0;
   await page.route("http://e2e.invalid/**", async (route) => {

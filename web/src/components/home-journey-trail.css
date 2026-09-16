@@ -73,7 +73,12 @@
   .home-trail-date:hover .home-trail-node { border-color: #76b79c; }
 }
 @media (max-width: 580px) {
-  .home-trail-dates .home-trail-date { min-height: 54px; gap: 2px; padding-top: 3px; }
+  .home-trail-dates {
+    left: 50%;
+    width: min(calc(100% + 2rem), calc(100vw - .5rem));
+    transform: translateX(-50%);
+  }
+  .home-trail-dates .home-trail-date { min-width: 44px; min-height: 54px; gap: 2px; padding-top: 3px; }
   .home-trail-node { width: 25px; height: 25px; font-size: 9px; }
   .home-trail-dates > li + li::before { top: 15px; }
   .home-trail-date time { font-size: 10px; line-height: 14px; }
