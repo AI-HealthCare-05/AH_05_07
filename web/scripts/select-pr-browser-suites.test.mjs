@@ -18,12 +18,17 @@ test('S02 presentation-only changes use the focused S02 lane', () => {
   ]), ['S02 focused UI']);
 });
 
-test('S10 presentation-only changes use the focused S10 lane', () => {
+test('S10 presentation-only component and test changes use the focused S10 lane', () => {
   assert.deepEqual(names([
     'web/src/components/JourneyRecap.tsx',
-    'web/src/components/journey-recap.css',
     'web/e2e/recap-candidate.cases.ts',
   ]), ['S10 focused UI']);
+});
+
+test('S10 recap CSS also runs review-scene framing coverage', () => {
+  assert.deepEqual(names([
+    'web/src/components/journey-recap.css',
+  ]), ['S10 focused UI', 'S02 and S10 review scenes']);
 });
 
 test('S02 and S10 presentation changes run both focused lanes in parallel', () => {
