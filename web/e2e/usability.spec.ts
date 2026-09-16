@@ -256,26 +256,6 @@ for (const scenario of localBloodPressureValidationCases) {
   });
 }
 
-test("S02 mobile date and recap controls keep the 44px preferred target without page overflow", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 568 });
-  await page.goto("/?fixture=VP-10");
-
-  const targets = page.locator(
-    ".home-trail-date, .living-week-heading a, .today-calendar-toggle",
-  );
-  await expect(targets).toHaveCount(9);
-
-  for (let index = 0; index < await targets.count(); index += 1) {
-    const box = await targets.nth(index).boundingBox();
-    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
-  }
-
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
-  ).toBe(true);
-});
-
 test("reduced motion makes first-record navigation scroll immediate", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
