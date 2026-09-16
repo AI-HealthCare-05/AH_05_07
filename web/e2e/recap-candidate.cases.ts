@@ -74,16 +74,18 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await noOverflow(page);
     await page.locator('#S10-title').focus();
     // macOS WebKit uses Option-Tab to include buttons; focus expectations are identical.
-    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+    await page.keyboard.press(tab);
     await expect(page.getByRole('button', { name: '이전 7일 보기', exact: true })).toBeFocused();
-    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
-    await expect(page.locator('summary').filter({ hasText: '챌린지 날짜별 상태' })).toBeFocused();
-    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
-    await expect(recordsJump).toBeFocused();
-    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    await page.keyboard.press(tab);
     await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toBeFocused();
-    await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab');
+    await page.keyboard.press(tab);
     await expect(page.locator('[data-trail-date]').first().getByRole('button')).toBeFocused();
+    // advance through the remaining day buttons to the week notes
+    for (let i = 0; i < 7; i++) await page.keyboard.press(tab);
+    await expect(page.locator('summary').filter({ hasText: '챌린지 날짜별 상태' })).toBeFocused();
+    await page.keyboard.press(tab);
+    await expect(recordsJump).toBeFocused();
   });
 }
 
@@ -818,3 +820,52 @@ test('living week report closes at Seoul rollover until the newly current window
   await expect(report(page)).toContainText('133/80 mmHg');
   await expect(report(page)).not.toContainText('120/80 mmHg');
 });
+
+for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
+  test(`recap week reflection map order at ${width}x${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fixture(page);
+    const trail = page.locator('.seven-day-trail');
+    const dayFocus = page.locator('.recap-day-focus');
+    const notes = page.locator('.recap-week-notes');
+    const landscape = page.locator('.recap-landscape');
+    const journal = page.locator('.recap-journal');
+    await expect(trail).toBeVisible();
+    await expect(dayFocus).toBeVisible();
+    await expect(landscape).toBeVisible();
+    await expect(journal).toBeVisible();
+    const trailBox = await trail.boundingBox();
+    const dayFocusBox = await dayFocus.boundingBox();
+    const notesBox = await notes.boundingBox();
+    const landscapeBox = await landscape.boundingBox();
+    const journalBox = await journal.boundingBox();
+    expect(trailBox).not.toBeNull();
+    expect(dayFocusBox).not.toBeNull();
+    expect(landscapeBox).not.toBeNull();
+    expect(journalBox).not.toBeNull();
+    if (width >= 390) expect(trailBox!.y).toBeLessThan(height);
+    const tolerance = 8;
+    expect(trailBox!.y + trailBox!.height).toBeLessThanOrEqual(dayFocusBox!.y + tolerance);
+    expect(dayFocusBox!.y + dayFocusBox!.height).toBeLessThanOrEqual((notesBox ?? dayFocusBox)!.y + tolerance);
+    if (notesBox) {
+      expect(notesBox.y + notesBox.height).toBeLessThanOrEqual(landscapeBox!.y + tolerance);
+    }
+    expect(landscapeBox!.y + landscapeBox!.height).toBeLessThanOrEqual(journalBox!.y + tolerance);
+    await page.locator('[data-trail-date="2026-09-11"] > button').click();
+    const detail = page.locator('.trail-day-detail');
+    await expect(detail).toBeVisible();
+    const detailBox = await detail.boundingBox();
+    const notesBoxAfter = await notes.boundingBox();
+    const landscapeBoxAfter = await landscape.boundingBox();
+    const journalBoxAfter = await journal.boundingBox();
+    expect(detailBox).not.toBeNull();
+    expect(landscapeBoxAfter).not.toBeNull();
+    expect(journalBoxAfter).not.toBeNull();
+    expect(detailBox!.y + detailBox!.height).toBeLessThanOrEqual((notesBoxAfter ?? dayFocusBox)!.y + tolerance);
+    if (notesBoxAfter) {
+      expect(notesBoxAfter.y + notesBoxAfter.height).toBeLessThanOrEqual(landscapeBoxAfter!.y + tolerance);
+    }
+    expect(landscapeBoxAfter!.y + landscapeBoxAfter!.height).toBeLessThanOrEqual(journalBoxAfter!.y + tolerance);
+    await noOverflow(page);
+  });
+}

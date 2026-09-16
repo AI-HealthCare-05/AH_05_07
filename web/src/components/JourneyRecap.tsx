@@ -87,34 +87,8 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
                 </dd>
               </div>
             </dl>
-            {factsKnown && hasRecordedFacts && <p className="recap-week-payoff" data-recap-payoff>
-              {period === 'prior'
-                ? '이 기간에 남긴 기록은 날짜별로 확인할 수 있어요. 리포트는 현재 7일에서 볼 수 있어요.'
-                : '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.'}
-            </p>}
-            {factsKnown && hasPartialRecordedFacts && <p className="recap-week-coverage" data-recap-coverage>
-              혈압 관찰과 챌린지 참여 기록이 없는 날 {missingFactDayCount}일도 빈 날로 그대로 보여요.
-            </p>}
-            {factsKnown && <details className="recap-summary-explainer">
-              <summary>챌린지 날짜별 상태</summary>
-              <p>기록함만 {summary.recordedDateCount}일 · 건너뜀만 {summary.skippedDateCount}일 · 혼합 {summary.mixedDateCount}일</p>
-              <p>혼합은 같은 날 기록함과 건너뜀이 함께 있는 경우예요.</p>
-            </details>}
-            <button type="button" className="recap-records-jump" aria-controls="recap-journal-records" onClick={focusRecords}>
-              혈압 기록 바로 보기 <span aria-hidden="true">↓</span>
-            </button>
           </div>
         </div>
-
-        <aside className="recap-landscape" aria-label={staticLandscape && focusedDate ? '선택한 날짜의 풍경' : '오늘의 풍경'}>
-          <figure className="recap-view">
-            {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} />}
-            <figcaption key={previewDate}>
-              <span>{staticLandscape && focusedDate ? '선택한 날의 풍경' : '모아와 잠깐, 오늘의 풍경'}</span>
-              <small><time dateTime={previewDate}>{formatTrailDate(previewDate)}</time>{staticLandscape && focusedDate ? ' · 날짜에 따라 펼쳐지는 풍경이에요.' : ' · 선택한 기록 기간과는 별개예요.'}</small>
-            </figcaption>
-          </figure>
-        </aside>
       </div>
 
       {freshnessNote && <p className="recap-freshness" role="status" data-freshness={freshness}>{freshnessNote}</p>}
@@ -130,6 +104,33 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
           : '혈압 관찰과 챌린지 참여를 날짜 순서로 따로 확인해요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
       </div>
+      <div className="recap-week-notes">
+        {factsKnown && hasRecordedFacts && <p className="recap-week-payoff" data-recap-payoff>
+          {period === 'prior'
+            ? '이 기간에 남긴 기록은 날짜별로 확인할 수 있어요. 리포트는 현재 7일에서 볼 수 있어요.'
+            : '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.'}
+        </p>}
+        {factsKnown && hasPartialRecordedFacts && <p className="recap-week-coverage" data-recap-coverage>
+          혈압 관찰과 챌린지 참여 기록이 없는 날 {missingFactDayCount}일도 빈 날로 그대로 보여요.
+        </p>}
+        {factsKnown && <details className="recap-summary-explainer">
+          <summary>챌린지 날짜별 상태</summary>
+          <p>기록함만 {summary.recordedDateCount}일 · 건너뜀만 {summary.skippedDateCount}일 · 혼합 {summary.mixedDateCount}일</p>
+          <p>혼합은 같은 날 기록함과 건너뜀이 함께 있는 경우예요.</p>
+        </details>}
+        <button type="button" className="recap-records-jump" aria-controls="recap-journal-records" onClick={focusRecords}>
+          혈압 기록 바로 보기 <span aria-hidden="true">↓</span>
+        </button>
+      </div>
+      <aside className="recap-landscape" aria-label={staticLandscape && focusedDate ? '선택한 날짜의 풍경' : '오늘의 풍경'}>
+        <figure className="recap-view">
+          {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} />}
+          <figcaption key={previewDate}>
+            <span>{staticLandscape && focusedDate ? '선택한 날의 풍경' : '모아와 잠깐, 오늘의 풍경'}</span>
+            <small><time dateTime={previewDate}>{formatTrailDate(previewDate)}</time>{staticLandscape && focusedDate ? ' · 날짜에 따라 펼쳐지는 풍경이에요.' : ' · 선택한 기록 기간과는 별개예요.'}</small>
+          </figcaption>
+        </figure>
+      </aside>
     </section>
 
     <div className="recap-journal" data-main-section="seven-day-dashboard" data-record-priority="blood-pressure" data-focused-date={focusedDate ?? undefined}>
