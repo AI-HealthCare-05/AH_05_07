@@ -95,6 +95,29 @@ test('review-scene test-only changes run only the review-scene suite', () => {
   ]);
 });
 
+test('companion-review test-only changes run only the review companion suite', () => {
+  assert.deepEqual(names(['web/e2e/companion-review.spec.ts']), [
+    'review companion runtime',
+  ]);
+});
+
+test('companion renderer changes add review companion coverage to the complete PR gate', () => {
+  assert.deepEqual(names(['web/src/components/CompanionReviewRenderer.tsx']), [
+    ...fullGate,
+    'review companion runtime',
+  ]);
+});
+
+test('companion renderer plus review test still includes the review companion suite', () => {
+  assert.deepEqual(names([
+    'web/src/components/CompanionReviewRenderer.tsx',
+    'web/e2e/companion-review.spec.ts',
+  ]), [
+    ...fullGate,
+    'review companion runtime',
+  ]);
+});
+
 test('mixed scene engine tests run both targeted engine suites', () => {
   assert.deepEqual(names([
     'web/e2e/saved-scene-review.spec.ts',
