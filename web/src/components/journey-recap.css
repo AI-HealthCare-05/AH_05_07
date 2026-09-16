@@ -93,7 +93,7 @@
 .journey-recap .recap-landscape { min-width: 0; margin-top: .75rem; padding-top: .75rem; border-top: 1px dashed #d4d8cb; }
 .journey-recap .recap-view { position: relative; display: grid; grid-template-columns: minmax(0, 7rem) minmax(0, 1fr); align-items: center; gap: .9rem; margin: 0; }
 .journey-recap .recap-view::before { content: none; }
-.journey-recap .living-visual-stage { margin: 0; height: clamp(5.5rem, 9vw, 7rem); border-radius: 48% 48% 42% 42%; background: #e8e7d9; box-shadow: none; }
+.journey-recap .living-visual-stage { margin: 0; height: clamp(5.5rem, 9vw, 6rem); border-radius: 48% 48% 42% 42%; background: #e8e7d9; box-shadow: none; }
 .journey-recap .recap-view figcaption { position: relative; display: grid; gap: .15rem; color: #55664e; text-align: left; font-size: .74rem; animation: recap-focus-enter 180ms ease-out both; }
 .journey-recap .recap-view figcaption span { font-weight: 600; }
 .journey-recap .recap-view figcaption small { max-width: 34em; font-size: .66rem; line-height: 1.55; color: #69745f; }
@@ -207,7 +207,7 @@
   .journey-recap .recap-day-focus { padding: .6rem; }
   .journey-recap .recap-landscape { margin-top: .55rem; padding-top: .55rem; }
   .journey-recap .recap-view { grid-template-columns: minmax(0, 4.5rem) minmax(0, 1fr); gap: .6rem; }
-  .journey-recap .living-visual-stage { height: clamp(4rem, 13vw, 4.75rem); border-radius: 48% 48% 40% 40%; }
+  .journey-recap .living-visual-stage { height: clamp(4rem, 13vw, 4.5rem); border-radius: 48% 48% 40% 40%; }
   .journey-recap .recap-view figcaption { font-size: .7rem; }
   .journey-recap .recap-view figcaption small { font-size: .62rem; }
   .journey-recap .recap-journal { padding-top: .6rem; border-radius: .55rem; }

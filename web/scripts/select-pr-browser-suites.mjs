@@ -24,6 +24,7 @@ const savedSceneRuntimeFiles = new Set([
 ]);
 
 const reviewSceneRuntimeFiles = new Set([
+  'web/src/components/journey-recap.css',
   'web/src/components/VisualStage.tsx',
   'web/src/components/scene/ThreeSceneRenderer.tsx',
   'web/src/components/scene/diorama.ts',
@@ -113,6 +114,7 @@ export function selectPrBrowserSuites(files) {
         name: 'S10 focused UI',
         command: 'npx playwright test --config=playwright.ui-candidate.config.ts e2e/recap-candidate.cases.ts',
       });
+      if (unique.includes('web/src/components/journey-recap.css')) suites.push(reviewSceneSuite);
     }
     if (suites.length > 0) return suites;
   }

@@ -120,11 +120,12 @@ test("S10 responsive environment rebuild keeps one character load and bounded fr
   const glbs: string[] = [];
   page.on("request", request => { if (/\.glb(?:\?|$)/.test(request.url())) glbs.push(request.url()); });
   await page.goto(fixtureUrl);
-  // The approved recap presentation keeps its compact frame through 680px;
-  // crossing 681px changes the rendered stage and rebuilds the wide diorama.
-  for (const width of [320, 350, 351, 580, 680, 681, 768, 1366, 390]) {
+  // The compact recap stage now has an explicit <=580px presentation profile.
+  // Keep checking the later 680/681 layout transition too, but the diorama
+  // environment follows the established scene profile boundary at 580/581.
+  for (const width of [320, 350, 351, 580, 581, 680, 681, 768, 1366, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    await expectReady(page, "footbridge", width, width > 680 ? 7 : 2);
+    await expectReady(page, "footbridge", width);
   }
   expect(glbs).toHaveLength(1);
   await page.emulateMedia({ reducedMotion: "reduce" });
