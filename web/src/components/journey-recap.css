@@ -19,11 +19,6 @@
   width: fit-content;
   max-width: 100%;
 }
-.journey-recap.scene .scene-copy h1:focus-visible {
-  outline: 2px solid #3f624f;
-  outline-offset: 4px;
-  border-radius: .2rem;
-}
 .journey-recap .scene-body { font-size: 1rem; font-weight: 450; color: var(--sk7-ink-muted); }
 .journey-recap .eyebrow { color: #65745e; letter-spacing: .04em; }
 .journey-recap button { border-radius: .55rem; }

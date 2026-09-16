@@ -17,7 +17,6 @@
 .journey-today .scene-copy .eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; color: #475e61; font-size: .75rem; font-weight: 550; letter-spacing: 0; }
 .today-sun { color: #ad9846; font-size: 1rem; }
 .journey-today .scene-copy h1 { color: #102f38; font-size: clamp(2.5rem, 3.4vw, 2.875rem); font-weight: 750; letter-spacing: -.065em; line-height: 1.16; }
-.journey-today h1:focus-visible { outline: none; text-decoration: none; }
 .today-wave { display: inline-block; margin-left: .4rem; font-size: .55em; color: #c39937; vertical-align: .12em; }
 .journey-today .scene-body { color: #4b6268; font-size: .85rem; line-height: 1.65; font-weight: 450; }
 .journey-today .home-lead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem 1rem; width: min(100%, 31rem); padding: .72rem .78rem .72rem .95rem; border: 1px solid #ffffffa8; border-radius: 1rem; background: #fbfff8df; box-shadow: 0 8px 22px #173e390d; }

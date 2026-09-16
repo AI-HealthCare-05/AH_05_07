@@ -140,12 +140,6 @@
   box-shadow: 0 18px 40px -34px rgb(55 69 58 / .35);
 }
 
-.journey-sheet h1:focus-visible {
-  outline: 2px solid #3f594a;
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-
 .journey-sheet > .scene-copy {
   grid-column: 1;
   grid-row: auto;
