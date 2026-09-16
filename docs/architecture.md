@@ -15,7 +15,7 @@ Authenticated Model V2 production paths now exist. `/api/v1/model-v2/product-sco
 | Public-data model and result quality | Frozen Model V2 S11 product path returns only `schema_version` and `product_wording`; legacy risk-signal remains a `503 model_not_ready` scaffold. | Preserve frozen artifact, exact response projection, and non-diagnostic semantics; no provisional score is permitted. |
 | Chronic-condition tracking dashboard | BP and challenge records are separated, but the evaluator-facing seven-day trend, empty/failure states, and evidence pack remain partial. | Present measurement, challenge adherence, and model signal as separate facts; do not render a causal or improvement conclusion. |
 | Lifestyle challenge | Active seven-day challenge, first-check-in action lock, and status-only check-in changes are implemented. | Finish signed-in browser and mobile evidence before treating the flow as submission-complete. |
-| Feedback and reminders | Structured feedback is planned; reminders are not implemented. | Feedback stays separate from online-training labels. Reminders are P2 only after P0 evidence is complete. |
+| Feedback and reminders | The first S10 structured-comprehension feedback slice is source-implemented; broader review workflow and reminders are not implemented. | Feedback remains separate from BP, challenge, and Model V2 facts and is never an online-training label. Production migration/release remains a separate gate; reminders are P2. |
 | Heavy AI processing | No measured model workload currently justifies a queue or worker. | Use the conditional asynchronous boundary below only after an ADR and measured trigger. Uponati-only OCR, prescription, medical-document, and LLM guidance are outside SK7 scope. |
 
 ```mermaid
@@ -35,9 +35,10 @@ erDiagram
     AUTH_USER ||--o{ CHALLENGE_EVENT : owns
     AUTH_USER ||--o{ ACTIVE_CHALLENGE : owns
     ACTIVE_CHALLENGE ||--o{ CHALLENGE_CHECKIN : has
+    AUTH_USER ||--o{ STRUCTURED_FEEDBACK : submits
 ```
 
-The current migrations create `blood_pressure_observations`, legacy `challenge_events`, `active_challenges`, and `challenge_checkins`. The new challenge tables:
+The current source migrations create `blood_pressure_observations`, legacy `challenge_events`, `active_challenges`, `challenge_checkins`, and `structured_feedback`. The challenge tables:
 
 - reference `auth.users(id)` and carry the same `user_id` into each check-in;
 - enable RLS and require `auth.uid() = user_id` for reads and writes;
@@ -54,6 +55,8 @@ The observation and legacy-event tables:
 - store structured values only.
 
 `challenge_events` remains readable as a legacy daily-event record until its existing 30-day retention period ends. It is not used to establish an active challenge.
+
+`structured_feedback` is a separate P1 review-data table for the S10 comprehension surface. It references `auth.users(id)` with `ON DELETE CASCADE`, accepts only the fixed surface/response enums, derives its Korea submission date and lifecycle fields from the database, permits at most one row per user/surface/date, exposes only an owner's unexpired rows through RLS, and is physically purged after the same 30-day retention window. It stores no free text, BP/challenge fact, record identifier, or Model V2 input/output and is not a training-label table.
 
 ## Historical target domain model — obsolete/non-current planning
 
@@ -80,7 +83,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Model V2 product API | S11 production path | Authenticated `/api/v1/model-v2/product-score` projects only schema version and approved wording; inference remains transient. |
 | Legacy risk-signal API | Scaffold | Remains unavailable; it is not the Model V2 product surface. |
 | Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
-| Structured feedback | P1 planned | Store review input separately; never use it for online retraining. |
+| Structured feedback | P1 partial; S10 source path plus `POST /api/v1/feedback` | Keep the fixed structured review record separate from product facts and online training; production migration/release and any broader review workflow remain separate. |
 
 ## Conditional asynchronous assessment boundary (not implemented)
 
@@ -111,6 +114,7 @@ The ADR must define the measured trigger, state transitions, idempotency key, re
 | Class | Examples | Storage rule |
 |---|---|---|
 | Product record | BP observation, challenge selection, challenge check-in | Supabase structured tables with JWT, RLS, retention, and deletion. |
+| Review data | S10 structured comprehension response | Separate Supabase structured table with JWT, RLS, 30-day retention, account cascade, no free text/health values, and no online-training use. |
 | Model V2 transient fact | Internal inference result and product input | Do not persist or expose raw input, result, probability, score, or band. |
 | Public asset | Tutorial image, synthetic demo video, licensed audio | Cloudflare R2 with provenance and lifecycle metadata. |
 | Forbidden | Name, contact, free-text history, original document, device export, JWT, service-role key | Do not collect or place in product tables, R2, logs, demos, or Git. |

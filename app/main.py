@@ -7,6 +7,7 @@ from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel
 
 from app.apis.v1 import v1_routers
+from app.apis.v1.feedback_routers import feedback_router
 from app.core import config
 from app.core.config import parse_api_cors_origins
 from app.core.db.databases import initialize_tortoise
@@ -121,3 +122,4 @@ if cors_origins:
 initialize_persistence(app)
 
 app.include_router(v1_routers)
+app.include_router(feedback_router, prefix="/api/v1")

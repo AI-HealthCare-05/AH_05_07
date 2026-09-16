@@ -33,6 +33,36 @@ Every storage operation uses the caller's JWT and an RLS-protected Supabase requ
 
 The active-challenge migration keeps legacy `challenge_events` separate from the new `active_challenges` and `challenge_checkins` records. Database constraints, RLS, and triggers enforce one active row per user, a seven-day window, a same-user check-in, and an immutable action after the first check-in. The API, not the browser, sets the Korea-date challenge start. A check-in update accepts only `status`; its date, action, challenge link, and owner remain immutable. The API permits check-in change or delete only while that check-in belongs to the current active, unexpired seven-day challenge.
 
+## Structured feedback surface
+
+Issue #548 defines the first FR-06 slice. It is separate review data, not an observation, challenge fact, Model V2 result, or online-training label.
+
+| Method | Path | Auth | Success | Product status |
+|---|---|---|---:|---|
+| POST | `/api/v1/feedback` | Supabase JWT | `201` | Source-connected to S10; production use requires the matching migration/API/web release |
+
+The request is exactly:
+
+```json
+{
+  "surface": "seven_day_recap",
+  "response": "clear"
+}
+```
+
+`response` is limited to `clear`, `unclear`, or `hard_to_understand`; extra fields and free text are rejected. The caller never supplies `user_id`, `submitted_on`, `created_at`, or `expires_at`. The API derives ownership from the authenticated session and PostgreSQL supplies the Korea submission date and 30-day lifecycle fields.
+
+The success receipt is exactly:
+
+```json
+{
+  "status": "saved",
+  "submitted_on": "2026-09-16"
+}
+```
+
+The database permits at most one row per user, surface, and Korea submission date. A same-day duplicate returns `409 feedback_already_submitted` without creating another row. Storage failure returns `503 feedback_storage_not_ready`; the browser does not present network/timeout/unknown persistence as saved. The table stores no BP value or aggregate, challenge state, record identifier, email/contact field, free-text history, or Model V2 input/output.
+
 ## Model V2 surface
 
 | Method | Path | Auth | Success | Current behavior |
@@ -101,8 +131,10 @@ Request validation errors use a normalized response that never returns the submi
 | Supabase Auth cannot reliably determine session validity | `503` | `auth_unavailable` with a generic message; no upstream body, token, header, URL, key, or exception detail is returned. Timeout, transport failure, `429`, `5xx`, other unclassified responses, and malformed successful responses use this contract. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
+| Same-day S10 feedback duplicate | `409` | Stable `feedback_already_submitted`; no second feedback row is created. |
 | Model artifact not ready | `503` | No provisional signal. |
 | Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
+| Feedback storage unavailable | `503` | Stable `feedback_storage_not_ready`; S10 keeps the feedback write unconfirmed and never claims it was saved. |
 | Browser request exceeds 8 seconds | Browser-normalized error | One 8-second total deadline covers the full response lifecycle, including response headers and JSON/blob body consumption. Timeout is normalized to status `0`, code `request_timeout`, and message `요청 응답 시간을 초과했습니다.` The web keeps the active draft or confirmation where applicable, may offer a fresh read, and never automatically retries uncertain persistence or claims it succeeded. |
 | Unexpected failure | `500` | No secret, token, request body, or health value in the response. |
 

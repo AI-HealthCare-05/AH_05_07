@@ -10,6 +10,9 @@ import type {
   ModelV2ScoreResponse,
   ObservationExport,
   ObservationWindow,
+  StructuredFeedbackInput,
+  StructuredFeedbackReceipt,
+  StructuredFeedbackResponse,
 } from "./api-contract";
 
 export { ApiRequestError } from "./api-contract";
@@ -23,6 +26,9 @@ export type {
   ModelV2ScoreResponse,
   ObservationExport,
   ObservationWindow,
+  StructuredFeedbackInput,
+  StructuredFeedbackReceipt,
+  StructuredFeedbackResponse,
 } from "./api-contract";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
@@ -41,6 +47,16 @@ export function scoreModelV2ProductInput(
 
 export function deleteAccount(session: Session): Promise<void> {
   return apiFetch<void>("/api/v1/account", session, { method: "DELETE" });
+}
+
+export function submitStructuredFeedback(
+  session: Session,
+  payload: StructuredFeedbackInput,
+): Promise<StructuredFeedbackReceipt> {
+  return apiFetch<StructuredFeedbackReceipt>("/api/v1/feedback", session, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 async function boundedFetch<T>(
