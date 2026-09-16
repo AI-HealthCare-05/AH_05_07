@@ -13,6 +13,7 @@ FRESHNESS_WINDOW = timedelta(hours=30)
 EXPECTED_SCHEDULES = {
     "purge-expired-observation-records": "17 0 * * *",
     "purge-expired-active-challenges": "19 0 * * *",
+    "purge-expired-structured-feedback": "23 0 * * *",
 }
 
 
@@ -44,7 +45,7 @@ def verify(evidence: dict[str, Any]) -> list[str]:  # noqa: C901
 
     jobs = evidence["jobs"]
     if not isinstance(jobs, list) or len(jobs) != len(EXPECTED_SCHEDULES):
-        raise ValueError("exactly two expected purge jobs are required")
+        raise ValueError("exactly three expected purge jobs are required")
 
     jobnames = [job.get("jobname") for job in jobs if isinstance(job, dict)]
 
@@ -187,6 +188,29 @@ def _self_test() -> None:
                         "status": "succeeded",
                         "start_time": "2026-09-07T00:17:00+00:00",
                         "end_time": "2026-09-07T00:17:01+00:00",
+                    },
+                ],
+            },
+            {
+                "jobname": "purge-expired-structured-feedback",
+                "schedule": "23 0 * * *",
+                "active": True,
+                "recent_non_succeeded_count_30h": 0,
+                "runs": [
+                    {
+                        "status": "succeeded",
+                        "start_time": "2026-09-09T00:23:00+00:00",
+                        "end_time": "2026-09-09T00:23:01+00:00",
+                    },
+                    {
+                        "status": "succeeded",
+                        "start_time": "2026-09-08T00:23:00+00:00",
+                        "end_time": "2026-09-08T00:23:01+00:00",
+                    },
+                    {
+                        "status": "succeeded",
+                        "start_time": "2026-09-07T00:23:00+00:00",
+                        "end_time": "2026-09-07T00:23:01+00:00",
                     },
                 ],
             },
