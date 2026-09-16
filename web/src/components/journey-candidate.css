@@ -375,7 +375,7 @@
   }
 
   .journey-sheet .scene-copy {
-    gap: .35rem;
+    gap: .25rem;
   }
 
   .journey-sheet .measurement-panel {
@@ -384,7 +384,7 @@
   }
 
   .journey-sheet .bp-sheet-fields {
-    gap: .5rem;
+    gap: .25rem;
   }
 
   .journey-sheet .bp-sheet-context {
@@ -397,7 +397,7 @@
   }
 
   .journey-sheet .bp-measurement-pair {
-    padding: .25rem 0;
+    padding: 0;
   }
 }
 

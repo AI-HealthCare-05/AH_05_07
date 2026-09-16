@@ -223,11 +223,8 @@ for (const viewport of [
     await page.getByRole("button", { name: "수정", exact: true }).click();
     await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(page.locator("summary")).toBeFocused();
-    await page.keyboard.press("Enter");
-    await expect(page.locator("details")).toHaveAttribute("open", "");
+    await expect(page.locator("#observed-on")).toBeFocused();
     for (let index = 0; index < 12; index += 1) {
-      await page.keyboard.press("Tab");
       const visibleFocus = await page.evaluate(() => {
         const focused = document.activeElement as HTMLElement;
         const box = focused.getBoundingClientRect();
@@ -242,6 +239,7 @@ for (const viewport of [
       });
       expect(visibleFocus.visible, JSON.stringify(visibleFocus)).toBe(true);
       if (await page.getByRole("button", { name: "수정 취소" }).evaluate((element) => element === document.activeElement)) break;
+      await page.keyboard.press("Tab");
     }
     for (const screen of ["S02", "S04", "S08", "S10", "S11", "S14"]) {
       await page.goto(`/?fixture=VP-10&screen=${screen}`);
@@ -261,5 +259,5 @@ test("enlarged text retains content and the skip link reaches the scene", async 
   await page.keyboard.press("Enter");
   await expect(page.locator("#scene-content")).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(page.locator("summary")).toBeFocused();
+  await expect(page.locator("#observed-on")).toBeFocused();
 });
