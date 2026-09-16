@@ -235,7 +235,6 @@ export default function CompanionReviewRenderer({
            let currentAction: THREE.AnimationAction | null = null;
            let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
            let reactionReleaseTimer: number | undefined;
-           let reactionStartedAt = 0;
            let enableInteraction: (() => void) | undefined;
 
            const clearReactionReleaseTimer = () => {
@@ -253,7 +252,6 @@ export default function CompanionReviewRenderer({
 
            const stopCurrent = () => {
              clearReactionReleaseTimer();
-             reactionStartedAt = 0;
              if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
              finishedListener = null;
              currentAction?.stop();
@@ -263,7 +261,6 @@ export default function CompanionReviewRenderer({
 
            const settleReactionToIdle = () => {
              reactionReleaseTimer = undefined;
-             reactionStartedAt = 0;
 
              const idleAction = actions.get("idle");
              if (!idleAction) {
@@ -291,18 +288,13 @@ export default function CompanionReviewRenderer({
 
            const releaseReaction = () => {
              clearReactionReleaseTimer();
-
-             const elapsed = reactionStartedAt > 0
-               ? performance.now() - reactionStartedAt
-               : TACTILE_MIN_REACTION_VISIBLE_MS;
-             const remaining = Math.max(0, TACTILE_MIN_REACTION_VISIBLE_MS - elapsed);
-
-             if (remaining === 0) {
-               settleReactionToIdle();
-               return;
-             }
-
-             reactionReleaseTimer = window.setTimeout(settleReactionToIdle, remaining);
+             // Start the minimum visible hold when the pointer is released.
+             // A busy frame between pointerdown and pointerup must not consume
+             // the post-tap reaction before the user can actually see it.
+             reactionReleaseTimer = window.setTimeout(
+               settleReactionToIdle,
+               TACTILE_MIN_REACTION_VISIBLE_MS,
+             );
            };
 
            const react = (zone: CompanionGrabZone) => {
@@ -312,7 +304,6 @@ export default function CompanionReviewRenderer({
              }
 
              clearReactionReleaseTimer();
-             reactionStartedAt = performance.now();
 
              const reactionAction = actions.get(reactionClip);
              if (!reactionAction) {
