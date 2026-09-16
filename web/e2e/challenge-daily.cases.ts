@@ -131,6 +131,20 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   await expect(page.getByText("오늘 상태를 저장해요.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "기록함", exact: true }).click();
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+
+  const savedStep = page.locator(".save-next-step");
+  await expect(savedStep).toContainText("방금 저장한 챌린지 상태");
+  await expect(savedStep).toContainText("혈압 기록과 별도로");
+  await expect(savedStep).not.toContainText("방금 저장한 혈압");
+
+  const challengeStateAction = page.getByRole("button", {
+    name: "챌린지 상태 보기",
+    exact: true,
+  });
+  await expect(challengeStateAction).toBeVisible();
+  await challengeStateAction.click();
+  await expect(page.locator('[data-scene="S06"]')).toBeVisible();
+
   expect(checkinRequests).toBe(1);
   expect(nonGetRequests).toEqual(["POST /api/v1/observations/challenges/active/checkins"]);
 });

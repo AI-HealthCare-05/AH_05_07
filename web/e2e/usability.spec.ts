@@ -41,6 +41,14 @@ test("editing cancellation returns to the same record without writing", async ({
   await page.getByRole("button", { name: "수정 취소" }).click();
   await expect(page).toHaveURL(/screen=S09&record=blood-pressure%3Asynthetic-bp/);
   await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("120/80 mmHg");
+
+  await page.goBack();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.goForward();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("120/80 mmHg");
+
   expect(mutations).toEqual([]);
 });
 
@@ -63,6 +71,77 @@ test("delete confirmation has safe initial focus, modal keyboard boundary and Es
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   expect(mutations).toEqual([]);
+});
+
+test("deleting a record opened from seven-day recap returns to the recap context", async ({ page }) => {
+  let deleted = false;
+  let deleteRequests = 0;
+
+  await page.clock.setFixedTime(new Date("2026-09-06T03:00:00Z"));
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) {
+      await reply(
+        route,
+        deleted
+          ? { ...recordWindow, blood_pressure_observations: [] }
+          : recordWindow,
+      );
+      return;
+    }
+
+    if (
+      request.method() === "DELETE"
+      && url.pathname.endsWith("/blood-pressure/synthetic-bp")
+    ) {
+      deleteRequests += 1;
+      deleted = true;
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+
+    await route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  await page
+    .locator('[data-record-lane="blood-pressure"]')
+    .getByRole("button", { name: /상세 보기/ })
+    .click();
+
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "7일 돌아보기로 돌아가기",
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "삭제", exact: true }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "삭제", exact: true }).click();
+
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page).toHaveURL(/screen=S10/);
+  await expect(page).not.toHaveURL(/record=/);
+
+  const bloodPressureLane = page.locator('[data-record-lane="blood-pressure"]');
+  await expect(bloodPressureLane).toContainText(/혈압 관찰 기록이 없습니다\./);
+  await expect(bloodPressureLane).not.toContainText("120/80 mmHg");
+
+  expect(deleteRequests).toBe(1);
 });
 
 test("a late old-period response cannot replace the newly selected period", async ({ page }) => {

@@ -264,6 +264,27 @@ test('North Star Home stops offering another BP slot when both daily periods are
 
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
 
+  await home.locator('.home-lead button').press('Enter');
+  await expect(page.locator('#S07-title')).toBeFocused();
+
+  const todayBloodPressure = page.locator('.journey-today-bp-records');
+  await expect(todayBloodPressure).toBeVisible();
+  await expect(todayBloodPressure.locator('[data-today-bp-period="morning"]')).toContainText(
+    '아침',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="morning"]')).toContainText(
+    '120/80 mmHg',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="evening"]')).toContainText(
+    '저녁',
+  );
+  await expect(todayBloodPressure.locator('[data-today-bp-period="evening"]')).toContainText(
+    '122/81 mmHg',
+  );
+
+  await page.goBack();
+  await expect(home).toBeVisible();
+
   const recordsAction = home.locator('[data-home-concept="records"]');
   await expect(recordsAction).toContainText('기록 찾아보기');
   await expect(recordsAction).toContainText(
@@ -591,6 +612,9 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
   await expect(page.locator('.journey-login-intro')).toContainText('7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.');
+  await expect(page.locator('.journey-login-demo')).toContainText('30일 동안 보관돼요.');
+  await expect(page.locator('.journey-login-demo')).toContainText('보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.');
+  await expect(page.getByText('합성 데이터 체험용입니다.', { exact: false })).toHaveCount(0);
   const email = page.getByRole('textbox', { name: '이메일', exact: true });
   await expect(email).toHaveAccessibleDescription(/이메일로 받은 링크를 열면 로그인할 수 있어요\. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요\./);
   await expect(page.getByText('같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.')).toBeVisible();
@@ -790,7 +814,8 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await page.goto('/?e2e=signed-in&screen=S14');
   const settings = page.locator('.journey-settings');
   await expect(settings).toContainText('최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요.');
-  await expect(settings).toContainText('내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.');
+  await expect(settings).toContainText('내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고');
+  await expect(settings).toContainText('인쇄물도 계정과 별개이므로 직접 관리해요.');
   await expect(settings).toContainText('이메일 링크로 로그인한 계정의 기록을 확인해요.');
   await settings.locator('summary').click();
   await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.');
@@ -810,4 +835,26 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await expect(deleteControl).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200.png'), fullPage: true });
+});
+
+test('past-dated BP confirmation points to record history instead of today', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+
+  await page.goto('/?e2e=signed-in&screen=S04');
+  await page.locator('#observed-on').fill('2026-09-10');
+  await page.getByLabel(/수축기/).fill('120');
+  await page.getByLabel(/이완기/).fill('80');
+  await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
+
+  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+  await expect(page.locator('.save-next-step')).toContainText('최근 기록에서 방금 저장한 혈압을 확인해요');
+  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜와 시간대별로');
+  const savedScene = page.locator('[data-scene="S05"]');
+  await expect(savedScene.getByRole('button', { name: '기록 찾아보기', exact: true })).toBeVisible();
+  await expect(savedScene.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toHaveCount(0);
+
+  await savedScene.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
 });

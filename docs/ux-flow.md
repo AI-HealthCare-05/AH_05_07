@@ -37,7 +37,7 @@ screens remain reachable without introducing a router dependency.
 | S01 | Signed-out email-link gate |
 | S02 | Today home; BP state determines the lead action |
 | S03 | Optional challenge choice |
-| S04–S05 | BP entry and confirmed-save |
+| S04–S05 | BP entry and confirmed new-save; successful edits return to their record detail |
 | S06 | Optional challenge state |
 | S07 | Today detail with separate BP/challenge/legacy fact lanes |
 | S08–S09 | Record browse, accumulated-record overview, and one selected record with its date/period context |
@@ -98,6 +98,15 @@ analytics product.
 - The report remains a human-readable record summary for review, printing, or
   PDF saving. It does not classify measurements or infer diagnosis, treatment
   effect, adherence success, or improvement.
+- S05 is reserved for confirmed new saves and describes the fact that was
+  actually saved. A past-dated BP save directs the user to record history
+  instead of claiming it is today's record; a challenge check-in is described
+  as a challenge fact rather than a BP save.
+- A successful BP edit returns to S09 after the refreshed read instead of
+  presenting the new-save S05 state. Cancel and successful edit therefore both
+  preserve the record-detail history path without creating a Back loop.
+- JSON exports and any PDF/printed copies created through the browser are
+  user-managed copies outside the account's 30-day server retention.
 
 ## Signature presentation contract
 

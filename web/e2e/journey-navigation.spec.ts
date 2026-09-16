@@ -83,6 +83,32 @@ test("primary journey navigation updates the URL and supports browser history", 
   await expect(page.getByRole("button", { name: "설정과 도움말" })).toHaveAttribute("aria-current", "page");
 });
 
+test("record detail return follows browser history without adding a navigation loop", async ({ page }) => {
+  await page.goto("/?fixture=VP-10");
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+
+  await page.getByRole("button", { name: "기록 찾아보기" }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.locator('[data-record-kind="blood-pressure"]')
+    .getByRole("button", { name: "상세 보기" })
+    .first()
+    .click();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+
+  await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.goBack();
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+
+  await page.goForward();
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+
+  await page.goForward();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+});
+
 test("a selected fact opens its own URL-addressable detail screen", async ({ page }) => {
   await page.goto("/?fixture=VP-10&screen=S08");
   await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).first().click();

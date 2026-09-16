@@ -70,6 +70,7 @@ type Notice = {
   persistence: "until-navigation" | "persistent";
 };
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
+type SavedFactKind = "blood-pressure" | "challenge-checkin";
 type WindowState = "loading" | "ready" | "refreshing" | "error" | "refresh-error";
 type DashboardWindow = "current" | "prior" | `cycle:${string}`;
 type HomeDestinationKey = "blood-pressure" | "challenge" | "today-detail" | "records";
@@ -191,7 +192,7 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
           </form>
           {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
           <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
-          <p className="journey-login-demo">합성 데이터 체험용입니다. 실제 건강정보는 입력하지 마세요.</p>
+          <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
           <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         </section>
       </div>
@@ -268,6 +269,8 @@ function App() {
   const [confirmedSave, setConfirmedSave] = useState(
     () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
+  const [savedFactKind, setSavedFactKind] = useState<SavedFactKind>("blood-pressure");
+  const [savedFactDate, setSavedFactDate] = useState(today);
   const savedScene = useSavedSceneEvent();
   const [bloodPressureEditDraft, setBloodPressureEditDraft] = useState<BloodPressureDraft>(() => emptyBloodPressureDraft(today));
   const [bloodPressureError, setBloodPressureError] = useState("");
@@ -795,26 +798,36 @@ function App() {
     if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
     const payload = validateBloodPressure();
     if (!payload) return;
+    const editingRecordId = editingBloodPressureId;
+    const editReturnKey = editOriginKey.current;
     setPendingAction("blood-pressure");
     try {
-      if (editingBloodPressureId) {
-        await updateBloodPressureObservation(activeSession, editingBloodPressureId, payload);
+      if (editingRecordId) {
+        await updateBloodPressureObservation(activeSession, editingRecordId, payload);
       } else {
         await createBloodPressureObservation(activeSession, payload);
       }
       if (!isCurrentRequestContext(requestContext)) return;
-      const saveVisual = savedScene.confirmPersistence();
+      const saveVisual = editingRecordId ? null : savedScene.confirmPersistence();
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
-      if (editingBloodPressureId) setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
-      else setNotice(null);
-      if (editingBloodPressureId) setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
-      else {
-        newBloodPressure.reset(presentationRef.current.today);
-        setNewBloodPressureRecovery(null);
+      if (editingRecordId) {
+        setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
+        setEditingBloodPressureId(null);
+        editOriginKey.current = null;
+        setNotice(makeNotice("success", "혈압 기록을 수정했습니다.", { origin: "mutation-success" }));
+        if (editReturnKey) window.history.back();
+        else navigate("S08");
+        return;
       }
+
+      setNotice(null);
+      newBloodPressure.reset(presentationRef.current.today);
+      setNewBloodPressureRecovery(null);
       setEditingBloodPressureId(null);
       savedScene.present(saveVisual);
+      setSavedFactKind("blood-pressure");
+      setSavedFactDate(payload.observed_on);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -822,7 +835,7 @@ function App() {
         const recovery = presentRequestError(error, "save", requestContext);
         // Keep the original uncertainty and fresh-read action with the parked
         // new entry, even if an unrelated edit later replaces the global notice.
-        if (!editingBloodPressureId && isCurrentRequestContext(requestContext)) setNewBloodPressureRecovery(recovery?.reload ? recovery : null);
+        if (!editingRecordId && isCurrentRequestContext(requestContext)) setNewBloodPressureRecovery(recovery?.reload ? recovery : null);
       }
     } finally {
       if (isCurrentRequestContext(requestContext)) setPendingAction(null);
@@ -840,11 +853,19 @@ function App() {
   }
 
   function cancelBloodPressureEdit() {
+    const originKey = editOriginKey.current;
     setEditingBloodPressureId(null);
     setBloodPressureError("");
     setBloodPressureEditDraft(emptyBloodPressureDraft(today));
     setNotice(null);
-    navigate(editOriginKey.current ? "S09" : "S08", editOriginKey.current);
+    editOriginKey.current = null;
+
+    if (originKey) {
+      window.history.back();
+      return;
+    }
+
+    navigate("S08");
   }
 
   async function confirmBloodPressureDeletion() {
@@ -860,7 +881,7 @@ function App() {
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "혈압 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      navigate("S08");
+      returnAfterRecordDeletion();
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
@@ -910,6 +931,8 @@ function App() {
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(null);
       savedScene.present(saveVisual);
+      setSavedFactKind("challenge-checkin");
+      setSavedFactDate(today);
       setConfirmedSave(true);
       navigate("S05");
     } catch (error) {
@@ -952,7 +975,7 @@ function App() {
       await refreshWindow();
       if (!isCurrentRequestContext(requestContext)) return;
       setNotice(makeNotice("success", "챌린지 기록을 삭제했습니다.", { origin: "mutation-success" }));
-      navigate("S08");
+      returnAfterRecordDeletion();
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) presentRequestError(error, "delete", requestContext);
     } finally {
@@ -1158,6 +1181,24 @@ function App() {
     );
   }
 
+  function returnFromRecordDetail() {
+    const returnScreen = window.history.state?.recordReturnScreen;
+    if (returnScreen === "S08" || returnScreen === "S10") {
+      window.history.back();
+      return;
+    }
+    navigate("S08");
+  }
+
+  function returnAfterRecordDeletion() {
+    const returnScreen = window.history.state?.recordReturnScreen;
+    if (returnScreen === "S08" || returnScreen === "S10") {
+      window.history.back();
+      return;
+    }
+    navigate("S08", null, true);
+  }
+
   function renderWindowNavigation() {
     return <nav className="window-nav" data-dashboard-window={dashboardWindow} aria-label="7일 기록 구간"><button className="secondary" type="button" onClick={() => selectDashboardWindow("prior")} disabled={evidenceMode || dashboardWindow === "prior"}>이전 7일 보기</button><p><span>{dashboardPeriodName} · {isPriorDashboard ? "읽기 전용" : "오늘 포함"}</span><strong>{dateLabel(startOn)} ~ {dateLabel(endOn)}</strong><small>챌린지 진행률이 아닙니다.</small></p><button className="secondary" type="button" onClick={() => selectDashboardWindow("current")} disabled={evidenceMode || dashboardWindow === "current"}>현재 7일 보기</button></nav>;
   }
@@ -1202,7 +1243,7 @@ function App() {
                   ? ` · ${periodLabel(item.record.period)} · ${displayMeasurement(item.record)}`
                   : ` · ${challengeLabel(item.record.action_id)} · ${checkinLabel(item.record.status)}${item.kind === "legacy" ? " · 이전 기록" : ""}`}
               </span>}
-              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item, journal ? "S10" : "S08")}>상세 보기</button>
+              <button className="secondary record-action" type="button" aria-label={`상세 보기 · ${title} · ${dateLabel(item.record.observed_on)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`} onClick={() => openRecord(item, activeScreen === "S10" ? "S10" : "S08")}>상세 보기</button>
             </li>
           )) : <li className="empty-record">{focusedDate ? `${dateLabel(focusedDate)}에 남긴 ${title} 기록이 없어요.` : emptyText}</li>}
         </ul>
@@ -1235,7 +1276,26 @@ function App() {
           <section className="fact-lead">
             <p className="eyebrow">혈압 관찰</p>
             <h2>{isPriorDashboard ? "오늘 기록 상태 미확인" : todayMeasurement ? "오늘 기록 있음" : "오늘 기록 없음"}</h2>
-            <p>{isPriorDashboard ? "선택한 이전 구간에서는 오늘 혈압 기록 여부를 확인할 수 없어요." : todayMeasurement ? displayMeasurement(todayMeasurement) : "필요할 때 오늘의 측정값을 기록할 수 있어요."}</p>
+            {isPriorDashboard ? (
+              <p>선택한 이전 구간에서는 오늘 혈압 기록 여부를 확인할 수 없어요.</p>
+            ) : todayMeasurement ? (
+              <dl className="journey-today-bp-records" aria-label="오늘 혈압 기록">
+                {todayMorningMeasurement && (
+                  <div data-today-bp-period="morning">
+                    <dt>아침</dt>
+                    <dd>{displayMeasurement(todayMorningMeasurement)}</dd>
+                  </div>
+                )}
+                {todayEveningMeasurement && (
+                  <div data-today-bp-period="evening">
+                    <dt>저녁</dt>
+                    <dd>{displayMeasurement(todayEveningMeasurement)}</dd>
+                  </div>
+                )}
+              </dl>
+            ) : (
+              <p>필요할 때 오늘의 측정값을 기록할 수 있어요.</p>
+            )}
             {!isPriorDashboard && !todayMeasurement && <button type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>}
           </section>
           <section className="journey-today-secondary journey-today-challenge"
@@ -1365,16 +1425,33 @@ function App() {
     }
 
     if (activeScreen === "S05") {
+      const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
       return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
-          <strong>오늘의 기록에서 방금 저장한 혈압을 확인해요</strong>
-          <p>저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요.</p>
+          <strong>{savedFactKind === "challenge-checkin"
+            ? "오늘의 기록에서 방금 저장한 챌린지 상태를 확인해요"
+            : savedBloodPressureIsToday
+              ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
+              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</strong>
+          <p>{savedFactKind === "challenge-checkin"
+            ? "저장이 끝났어요. 챌린지 상태는 혈압 기록과 별도로 남고, 오늘의 기록과 최근 7일에서 다시 확인할 수 있어요."
+            : savedBloodPressureIsToday
+              ? "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."
+              : "저장이 끝났어요. 기록 찾아보기에서 날짜와 시간대별로 다시 확인할 수 있어요."}</p>
         </div>}
         <div className="split-actions">
-          <button type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>
-          <button className="secondary" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S04"); }}>계속 기록하기</button>
+          <button type="button" onClick={() => {
+            setConfirmedSave(false);
+            savedScene.clear();
+            navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "S08" : "S02");
+          }}>{savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "기록 찾아보기" : "오늘의 기록 보기"}</button>
+          <button className="secondary" type="button" onClick={() => {
+            setConfirmedSave(false);
+            savedScene.clear();
+            navigate(savedFactKind === "challenge-checkin" ? "S06" : "S04");
+          }}>{savedFactKind === "challenge-checkin" ? "챌린지 상태 보기" : "계속 기록하기"}</button>
         </div>
       </Scene>;
     }
@@ -1454,7 +1531,7 @@ function App() {
           <button
             className="text-button record-explorer-detail-return"
             type="button"
-            onClick={() => navigate(window.history.state?.recordReturnScreen === "S10" ? "S10" : "S08")}
+            onClick={returnFromRecordDetail}
           >
             {window.history.state?.recordReturnScreen === "S10" ? "7일 돌아보기로 돌아가기" : "목록으로 돌아가기"}
           </button>
@@ -1562,10 +1639,10 @@ function App() {
               <div>
                 <p className="eyebrow">기록과 파일</p>
                 <h2>기록을 찾아보고 파일을 관리해요</h2>
-                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 제품 기록은 30일 동안 보관돼요.</p>
+                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
-              <p className="journey-settings-note">내보낸 JSON은 기기에 남고, 사용자가 직접 관리해요.</p>
+              <p className="journey-settings-note">내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p>
             </section>
             <section className="journey-settings-section">
               <div>
@@ -1594,14 +1671,14 @@ function App() {
               <div>
                 <p className="eyebrow">계정 관리</p>
                 <h2>계정 삭제</h2>
-                <p>계정과 저장된 혈압 관찰·챌린지 제품 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON은 별개로 기기에 남아요.</p>
+                <p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p>
               </div>
               <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button>
             </section>
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>관찰과 챌린지 제품 기록은 30일 보관 계약이 적용됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 수명주기</p><h2>Auth와 이메일은 별도예요</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 제품 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON은 내 기기에 남아요</h2><p>내보낸 JSON은 서버 보관 기간과 별개로 로컬 기기에 남으므로 직접 안전하게 보관하거나 삭제해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section><section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">추가 도구</p><h2>입력 기반 위험군 선별 신호</h2><p>활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p></div><button className="secondary" type="button" onClick={() => navigate("S11")} disabled={controlsDisabled}>선별 신호 도구 열기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;

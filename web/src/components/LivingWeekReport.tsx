@@ -33,7 +33,7 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
     <div className="week-report-toolbar">
       <button className="secondary" type="button" onClick={onClose}>7일 돌아보기로 돌아가기</button>
       <button type="button" onClick={() => window.print()}>인쇄 / PDF로 저장</button>
-      <p>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장할 수 있어요.</p>
+      <p>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장할 수 있어요. 저장한 PDF와 인쇄물은 계정의 30일 보관과 별개로 직접 관리해 주세요.</p>
     </div>
     <article className="week-report-document" data-living-week-report>
       <header className="week-report-header">

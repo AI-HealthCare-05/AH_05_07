@@ -89,7 +89,7 @@ URL/version/file name은 사용하지 않는다.
 - `move`: `non_semantic` 장면 이동에서만 조건부
 - `special`: 별도 검토 전 보류
 
-Production sequence는 confirmed successful save가 확인된 S05에서만
+Production sequence는 신규 저장 성공이 확인된 S05에서만
 `celebrate`를 `LoopOnce`/1회로 재생하고 mixer `finished` event 뒤 `idle` loop로
 전환한다. sequence 중 selection을 바꾸지 않으므로 approved bear-lite GLB는
 정확히 한 번만 요청된다. tactile production v1은 celebration 동안
@@ -166,8 +166,9 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
   `celebrate → idle`, S10은 save 상태와 무관하게 고정 `idle` profile을 만든다.
   BP value, 입력 기반 위험군 선별 신호, model output, challenge adherence/result는
   입력으로 받지 않는다.
-- S05 trigger: 실제 save request가 성공으로 resolve된 뒤에만 `confirmedSave=true`;
+- S05 trigger: 실제 신규 save request가 성공으로 resolve된 뒤에만 `confirmedSave=true`;
   요청 시작, optimistic UI, timeout/unknown, 4xx/5xx, 저장 확인 전에는 false다.
+  기존 혈압 기록의 수정 PUT은 성공 후 S09 상세로 복귀하며 이 S05 trigger에 포함하지 않는다.
 - Production-off rollback: `VITE_SK7_COMPANION_MODE=off` 또는 variable 제거 후
   rebuild/deploy하고, renderer request 0 및 GLB request 0을 확인한다.
 - Phase B production evidence confirms the live final state is `production` with
