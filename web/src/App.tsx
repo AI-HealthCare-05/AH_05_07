@@ -1270,9 +1270,17 @@ function App() {
     : initialSearch.get("companion_context") === "non_semantic"
       ? "non_semantic"
       : undefined;
+  const s02SceneGate = resolveSceneGate(import.meta.env.VITE_SK7_SCENE_MODE);
+  const s02PresentationPolicy = resolvePresentationPolicy(
+    import.meta.env.VITE_SK7_UI_MODE,
+    import.meta.env.VITE_SK7_SCENE_MODE,
+  );
   const s02SceneOwnsDecoration =
     activeScreen === "S02" &&
-    resolveSceneGate(import.meta.env.VITE_SK7_SCENE_MODE) === "review";
+    (
+      s02SceneGate === "review"
+      || (s02SceneGate === "production" && s02PresentationPolicy.journey)
+    );
   const s02CompanionSpecies =
     s02SceneOwnsDecoration && companionMode !== "off"
       ? companionSpeciesPreference
@@ -1567,7 +1575,7 @@ function App() {
     }
 
     if (activeScreen === "S02") {
-      if (presentation.journey) return <JourneyToday key={`${today}:${endOn}`} staticLandscape={presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} companionSpecies={s02CompanionSpecies}>
+      if (presentation.journey) return <JourneyToday key={`${today}:${endOn}`} staticLandscape={s02SceneOwnsDecoration ? false : presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} companionSpecies={s02CompanionSpecies}>
         {renderCycleActions()}
         {previousCycleEnd && !activeChallengeEnded && <button type="button" className="secondary" onClick={() => openCycleReview(previousCycleEnd)}>종료된 7일 돌아보기</button>}
       </JourneyToday>;

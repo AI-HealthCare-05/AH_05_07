@@ -55,21 +55,24 @@ Cloudflare setting is changed. Only `legacy` and `journey` are explicit UI value
 
 | UI mode | Scene mode | UI / S02 and S10 scenery |
 | --- | --- | --- |
-| unset | unset/off/unknown/production | Existing UI and scene gates |
+| unset | unset/off/unknown/production | Existing UI; no journey realtime surface |
 | unset | review | Existing #401/#403 review UI and scene gates |
-| journey | unset/off/unknown/production | Approved UI + explicit static poster candidate |
-| journey | review | Existing review UI and scene gates |
+| journey | unset/off/unknown | Approved UI + explicit static poster candidate |
+| journey | review | Qualified review realtime S02/S10 scenes |
+| journey | production | Qualified realtime S02; current static S10 + production companion |
 | legacy or any invalid explicit value (including empty) | any | New UI closed; independent scene/companion gates preserved |
 
 URL, localStorage, synthetic authentication and NODE_ENV never opt in to the UI.
-`production` still opens no new realtime scene. Posters reuse the existing
-screen / Seoul-today / viewport mapping, even when browsing prior records.
-S05 retains the existing production bear-lite/celebrate-then-idle companion
-when selected; its wrapper anchors it inside the new completion landscape.
-The new SavedScene remains review-only and the reserved 2D S05 asset stays inactive.
-Companion off/failure keeps the completion DOM with no substitute character;
-reduced motion preserves the existing neutral companion behavior. S05 production
-still uses WebGL; only static S02/S10 have no renderer import execution/GLB/canvas/RAF.
+`production` authorizes the already-qualified realtime S02 plan only when the
+journey UI is explicitly selected; this source activation does not change the
+deployed Cloudflare setting. S10 intentionally retains its current static
+journey landscape plus the separately qualified production companion so its
+saved identity and day-focus attention remain intact and a second WebGL
+character renderer is not introduced. S10 full-scene realtime remains review-only.
+S05 accepts the exact `review` or `production` scene gate only after a confirmed
+host save and uses the qualified SavedScene path. Companion off/failure keeps
+semantic content available. The reserved 2D S05 asset stays inactive and
+deployment/rollback remain a separate release step.
 
 Run from `web/` in separate terminals (local output only):
 

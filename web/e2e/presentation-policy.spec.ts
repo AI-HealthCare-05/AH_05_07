@@ -9,11 +9,12 @@ for (const scene of [undefined, '', 'off', 'unknown', 'production', 'review']) {
   for (const ui of [undefined, '', 'legacy', 'journey', 'Journey', 'review', 'true', null]) {
     test(`presentation UI=${String(ui)} scene=${String(scene)}`, () => {
       const journey = ui === 'journey' || (ui === undefined && scene === 'review');
+      const s02SceneActive = scene === 'review' || scene === 'production';
       expect(resolvePresentationPolicy(ui, scene)).toEqual({ journey, staticLandscape: journey && scene !== 'review' });
-      // UI selection does not expand either realtime gate or close the existing companion.
+      // UI selection does not reinterpret the explicit scene or companion gates.
       expect(resolveScenePlan({ screen: 'S02', calendarDate: '2026-09-11', reducedMotion: false,
-        visualDisabled: false, webglAvailable: true, gate: scene })?.tier ?? null).toBe(scene === 'review' ? 2 : null);
-      expect(allowsSavedScene(scene, 'S05', true)).toBe(scene === 'review');
+        visualDisabled: false, webglAvailable: true, gate: scene })?.tier ?? null).toBe(s02SceneActive ? 2 : null);
+      expect(allowsSavedScene(scene, 'S05', true)).toBe(s02SceneActive);
       expect(resolveProductionCompanion('production', 'S05', true)?.species).toBe('bear');
     });
   }

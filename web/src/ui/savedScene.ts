@@ -25,5 +25,5 @@ export function createSavedSceneEvent(): SavedSceneEvent {
 
 /** Separate from the calendar manifest: S05 retains its approved bear and layout. */
 export function allowsSavedScene(gate: unknown, screen: JourneyScreenId, confirmed: boolean): boolean {
-  return gate === "review" && screen === "S05" && confirmed;
+  return (gate === "review" || gate === "production") && screen === "S05" && confirmed;
 }
