@@ -20,7 +20,9 @@ audits, and unrelated evidence are not startup requirements.
 - Preserve authentication, RLS/ownership, retention, account deletion,
   request/session/uncertain-write protections, and secret boundaries.
 - Preserve the frozen Model V2 artifact, schema, 11-feature order,
-  preprocessing, non-numeric output, and target-leakage prohibition.
+  preprocessing, and target-leakage prohibition. User-visible Model V2 output
+  follows `docs/model-v2-product-contract.md`, including its time-boxed
+  research/development preview.
 - Do not add an LLM, OCR, Redis, worker, new server, or deployment topology
   without a measured requirement and an ADR.
 
