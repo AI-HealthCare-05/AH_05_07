@@ -266,6 +266,24 @@ test('scene production activation diff stays on directly affected browser concer
   ]);
 });
 
+test('activation-shaped diff plus protected model path still escalates to full gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/lib/useSavedSceneEvent.ts',
+    'web/src/ui/scenePolicy.ts',
+    'web/e2e/scene-policy.spec.ts',
+    'web/src/ui/model/ModelScore.tsx',
+  ]), fullGate);
+});
+
+test('activation-shaped diff plus unknown web runtime still escalates to full gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/ui/scenePolicy.ts',
+    'web/src/unknown/NewRuntime.tsx',
+  ]), fullGate);
+});
+
 test('unknown or workflow changes fall back to the complete PR browser gate', () => {
   assert.deepEqual(names(['.github/workflows/browser-e2e.yml']), fullGate);
 });
