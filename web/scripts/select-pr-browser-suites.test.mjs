@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { selectPrBrowserSuites } from './select-pr-browser-suites.mjs';
 
-const names = files => selectPrBrowserSuites(files).map(suite => suite.name);
+const suites = files => selectPrBrowserSuites(files);
+const names = files => suites(files).map(suite => suite.name);
 
 const fullGate = [
   'browser regression',
@@ -101,6 +102,24 @@ test('selector implementation/test-only changes use the policy unit-test lane', 
     'web/scripts/select-pr-browser-suites.mjs',
     'web/scripts/select-pr-browser-suites.test.mjs',
   ]), ['selector policy unit test']);
+});
+
+test('selector-only lane uses a web-working-directory-safe command', () => {
+  assert.equal(
+    suites(['web/scripts/select-pr-browser-suites.mjs'])[0].command,
+    'node --test scripts/select-pr-browser-suites.test.mjs',
+  );
+});
+
+test('browser-neutral web README does not widen an App shell diff', () => {
+  assert.deepEqual(names([
+    'web/README.md',
+    'web/src/App.tsx',
+  ]), appShellGate);
+});
+
+test('browser-neutral web README alone uses the tiny selector smoke', () => {
+  assert.deepEqual(names(['web/README.md']), ['selector policy unit test']);
 });
 
 test('saved-scene runtime changes run only saved-scene parity', () => {

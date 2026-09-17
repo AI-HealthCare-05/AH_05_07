@@ -58,6 +58,10 @@ const selectorFiles = new Set([
   'web/scripts/select-pr-browser-suites.test.mjs',
 ]);
 
+const browserScopeIgnoredFiles = new Set([
+  'web/README.md',
+]);
+
 const protectedBrowserFiles = new Set([
   'web/src/lib/api.ts',
   'web/src/lib/api-contract.ts',
@@ -134,7 +138,7 @@ const journeyUISuite = Object.freeze({
 
 const selectorPolicySuite = Object.freeze({
   name: 'selector policy unit test',
-  command: 'node --test web/scripts/select-pr-browser-suites.test.mjs',
+  command: 'node --test scripts/select-pr-browser-suites.test.mjs',
 });
 
 // Current complete PR browser gate; nightly/manual/release still owns the full matrix.
@@ -189,10 +193,14 @@ function isUnknownWebRuntime(file) {
 export function selectPrBrowserSuites(files) {
   const unique = [...new Set(files.filter(Boolean))];
 
-  // Docs do not affect browser suite scope.
-  const relevant = unique.filter(file => !file.startsWith('docs/'));
+  // Documentation and browser-neutral web docs do not widen browser scope.
+  const relevant = unique.filter(
+    file => !file.startsWith('docs/') && !browserScopeIgnoredFiles.has(file),
+  );
   if (relevant.length === 0) {
-    return cloneSuites(completePrBrowserGate);
+    // Keep a tiny valid matrix for web-doc-only PRs; an actually empty diff
+    // remains fail-safe and exercises the complete gate.
+    return cloneSuites(unique.length === 0 ? completePrBrowserGate : [selectorPolicySuite]);
   }
 
   // Selector implementation/test-only changes run a tiny policy unit-test lane.
