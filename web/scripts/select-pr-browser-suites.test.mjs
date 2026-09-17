@@ -240,6 +240,32 @@ test('mixed scene engine tests run both targeted engine suites', () => {
   ]);
 });
 
+test('scene production activation diff stays on directly affected browser concerns', () => {
+  assert.deepEqual(names([
+    'docs/evidence/scene-clay-posters.json',
+    'docs/evidence/scene-diorama-posters.json',
+    'docs/scene-release-gates.md',
+    'web/README.md',
+    'web/e2e/companion-production.spec.ts',
+    'web/e2e/presentation-policy.spec.ts',
+    'web/e2e/saved-scene-review.spec.ts',
+    'web/e2e/scene-policy.spec.ts',
+    'web/scripts/verify-ui-build-matrix.mjs',
+    'web/src/App.tsx',
+    'web/src/lib/useSavedSceneEvent.ts',
+    'web/src/ui/savedScene.ts',
+    'web/src/ui/scenePolicy.ts',
+  ]), [
+    'normal auth boundaries',
+    'journey UI',
+    'saved-scene migration parity',
+    'S02 and S10 review scenes',
+    'production-on companion',
+    'scene policy contracts',
+    'UI build matrix',
+  ]);
+});
+
 test('unknown or workflow changes fall back to the complete PR browser gate', () => {
   assert.deepEqual(names(['.github/workflows/browser-e2e.yml']), fullGate);
 });
