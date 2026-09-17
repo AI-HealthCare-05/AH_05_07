@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { selectPrBrowserSuites } from './select-pr-browser-suites.mjs';
 
-const names = files => selectPrBrowserSuites(files).map(suite => suite.name);
+const suites = files => selectPrBrowserSuites(files);
+const names = files => suites(files).map(suite => suite.name);
 
 const fullGate = [
   'browser regression',
@@ -103,6 +104,24 @@ test('selector implementation/test-only changes use the policy unit-test lane', 
   ]), ['selector policy unit test']);
 });
 
+test('selector-only lane uses a web-working-directory-safe command', () => {
+  assert.equal(
+    suites(['web/scripts/select-pr-browser-suites.mjs'])[0].command,
+    'node --test scripts/select-pr-browser-suites.test.mjs',
+  );
+});
+
+test('browser-neutral web README does not widen an App shell diff', () => {
+  assert.deepEqual(names([
+    'web/README.md',
+    'web/src/App.tsx',
+  ]), appShellGate);
+});
+
+test('browser-neutral web README alone uses the tiny selector smoke', () => {
+  assert.deepEqual(names(['web/README.md']), ['selector policy unit test']);
+});
+
 test('saved-scene runtime changes run only saved-scene parity', () => {
   assert.deepEqual(names(['web/src/components/SavedSceneBoundary.tsx']), [
     'saved-scene migration parity',
@@ -153,6 +172,47 @@ test('companion-review test-only changes run only the review companion suite', (
   ]);
 });
 
+test('production companion test-only changes run only production companion coverage', () => {
+  assert.deepEqual(names(['web/e2e/companion-production.spec.ts']), [
+    'production-on companion',
+  ]);
+});
+
+test('scene policy contract tests run without unrelated browser families', () => {
+  assert.deepEqual(names([
+    'web/e2e/scene-policy.spec.ts',
+    'web/e2e/presentation-policy.spec.ts',
+  ]), ['scene policy contracts']);
+});
+
+test('mixed directly routed tests compose their exact concern suites', () => {
+  assert.deepEqual(names([
+    'web/e2e/saved-scene-review.spec.ts',
+    'web/e2e/companion-production.spec.ts',
+    'web/e2e/scene-policy.spec.ts',
+  ]), [
+    'saved-scene migration parity',
+    'production-on companion',
+    'scene policy contracts',
+  ]);
+});
+
+test('UI build matrix tooling runs only its own matrix lane', () => {
+  assert.deepEqual(names(['web/scripts/verify-ui-build-matrix.mjs']), [
+    'UI build matrix',
+  ]);
+});
+
+test('App shell plus UI build matrix composes both direct concerns', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/scripts/verify-ui-build-matrix.mjs',
+  ]), [
+    ...appShellGate,
+    'UI build matrix',
+  ]);
+});
+
 test('companion renderer changes run only review and production companion coverage', () => {
   assert.deepEqual(names(['web/src/components/CompanionReviewRenderer.tsx']), [
     'review companion runtime',
@@ -178,6 +238,50 @@ test('mixed scene engine tests run both targeted engine suites', () => {
     'saved-scene migration parity',
     'S02 and S10 review scenes',
   ]);
+});
+
+test('scene production activation diff stays on directly affected browser concerns', () => {
+  assert.deepEqual(names([
+    'docs/evidence/scene-clay-posters.json',
+    'docs/evidence/scene-diorama-posters.json',
+    'docs/scene-release-gates.md',
+    'web/README.md',
+    'web/e2e/companion-production.spec.ts',
+    'web/e2e/presentation-policy.spec.ts',
+    'web/e2e/saved-scene-review.spec.ts',
+    'web/e2e/scene-policy.spec.ts',
+    'web/scripts/verify-ui-build-matrix.mjs',
+    'web/src/App.tsx',
+    'web/src/lib/useSavedSceneEvent.ts',
+    'web/src/ui/savedScene.ts',
+    'web/src/ui/scenePolicy.ts',
+  ]), [
+    'normal auth boundaries',
+    'journey UI',
+    'saved-scene migration parity',
+    'S02 and S10 review scenes',
+    'production-on companion',
+    'scene policy contracts',
+    'UI build matrix',
+  ]);
+});
+
+test('activation-shaped diff plus protected model path still escalates to full gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/lib/useSavedSceneEvent.ts',
+    'web/src/ui/scenePolicy.ts',
+    'web/e2e/scene-policy.spec.ts',
+    'web/src/ui/model/ModelScore.tsx',
+  ]), fullGate);
+});
+
+test('activation-shaped diff plus unknown web runtime still escalates to full gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/ui/scenePolicy.ts',
+    'web/src/unknown/NewRuntime.tsx',
+  ]), fullGate);
 });
 
 test('unknown or workflow changes fall back to the complete PR browser gate', () => {
