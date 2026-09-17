@@ -3,26 +3,33 @@
 > **Lifecycle note — 2026-09-18.** S3A–S3E 번호가 붙은 아래 rollout/측정
 > 문단은 해당 단계의 역사적 근거를 보존한다. 현재 실행 계약은
 > [`web/src/ui/companion.ts`](../web/src/ui/companion.ts), 현재 scene/host 코드,
-> 그리고 이 문서의 **Current runtime summary**가 우선한다.
+> 그리고 이 문서의 **Current source runtime summary**가 우선한다.
 
 Issue #244의 S3 기반 단계에서 시작된 기록이다. S2 선정과 S3B 게시 자체는
 runtime activation을 뜻하지 않았으며, 후속 단계에서 별도 검증·활성화가
 진행되었다. S2 당시 결정은 [historical selection record](s2-design-selection.md)로
 보존한다.
 
-## Current runtime summary
+## Current source runtime summary
+
+The bullets below describe current source authorization. They do not prove that
+the corresponding Cloudflare scene/UI variables are deployed; live rollout
+identity remains a separate deployment-SSOT/control-plane question.
 
 - Companion species는 선택된 11종이며 물범은 포함하지 않는다.
 - S01 로그인 narrator는 사용자가 고른 비의료적 `sk7-companion-species`
   preference만 사용해 registered `lite` + `greet` profile을 연다.
-- S02 realtime scene은 같은 saved preference를 identity로 이어받되 registered
+- exact `production` scene gate와 Journey presentation이 함께 선택되면 S02
+  realtime scene은 같은 saved preference를 identity로 이어받되 registered
   `lite` GLB만 사용한다. invalid preference는 bear로 fail-safe 하며 query, BP,
   Model V2, challenge, record facts가 species를 고를 수 없다.
 - S10 production companion은 host가 전달한 같은 비의료적 preference를
   `lite` + `idle` profile에 사용할 수 있고, preference가 없거나 invalid면 bear로
-  fallback한다. 이 identity는 S10의 health/record semantics와 분리된다.
-- S05 production save-success path는 여전히 fixed bear/lite
-  `celebrate → idle`이며 saved species preference로 바뀌지 않는다.
+  fallback한다. S10 full-scene realtime은 계속 review-only라 production에서 두
+  WebGL character owner가 동시에 열리지 않는다.
+- S05는 confirmed host persistence 뒤 exact `review` 또는 `production` scene
+  gate에서 qualified SavedScene을 열며 fixed registered bear-lite
+  `celebrate → idle`을 사용한다. saved species preference를 사용하지 않는다.
 - S01의 `로그인 없이 30초 맛보기`는 selected species를 synthetic/read-only
   Demo S02 presentation에만 전달한다. account/session 또는 API/DB write를 열지
   않고 demo progress를 저장하지 않으며 product action은 login gate로 막는다.
