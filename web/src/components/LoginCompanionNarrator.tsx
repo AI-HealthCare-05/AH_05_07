@@ -41,6 +41,7 @@ export function LoginCompanionNarrator({
           mode={mode}
           selection={selection}
           reducedMotion={reducedMotion}
+          framing="login-narrator"
         />
       </div>
       <p className="login-companion-bubble">

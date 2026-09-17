@@ -968,6 +968,7 @@ test('S01 narrator follows companion identity without changing login semantics',
   await expect(page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true })).toBeVisible();
   const runtime = narrator.locator('[data-companion-status]');
   await expect(runtime).toHaveAttribute('data-companion-status', 'ready', { timeout: 30_000 });
+  await expect(runtime).toHaveAttribute('data-companion-framing', 'login-narrator');
   await expect(runtime).toHaveAttribute('data-companion-animation-clip', 'greet');
   await expect(narrator.locator('canvas[data-companion-canvas]')).toHaveCount(1);
   await expect(narrator.locator('.companion-runtime-slot')).toHaveAttribute('data-companion-interaction-activation', 'disabled');
@@ -1017,6 +1018,7 @@ test('S01 demo-day preview keeps selected companion identity and gates product a
   await expect(demo).toHaveAttribute('data-demo-companion-species', 'fox');
   await expect(demo).toContainText('예시 데이터 · 저장되지 않아요');
   await expect(demo.locator('.journey-today')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
   await demo.locator('.home-lead button').click();
 
@@ -1038,4 +1040,22 @@ test('S01 demo-day preview keeps selected companion identity and gates product a
   await expect(email).toBeFocused();
   expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('fox');
   expect(apiRequests).toEqual([]);
+});
+
+
+test('S01 demo-day preview contains decorative S02 width at desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.goto('/');
+
+  await page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true }).click();
+  const demo = page.locator('[data-demo-mode="read-only"]');
+  await expect(demo).toBeVisible();
+  await expect(demo.locator('.journey-today')).toBeVisible();
+
+  expect(await page.evaluate(() => ({
+    fits: document.documentElement.scrollWidth <= innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth,
+  }))).toEqual({ fits: true, scrollWidth: 1440, innerWidth: 1440 });
 });

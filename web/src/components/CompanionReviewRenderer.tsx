@@ -95,8 +95,12 @@ export default function CompanionReviewRenderer({
     let lookController: CompanionLookController | undefined;
     const scene = new THREE.Scene();
     // The larger journey S05 slot needs head/foot room throughout celebrate and idle.
-    // Keep the original camera for every legacy/review caller.
-    const camera = new THREE.PerspectiveCamera(framing === "journey-s05" ? 34 : 28, 1, 0.01, 100);
+    // The tiny S01 narrator prioritizes a readable body/head silhouette:
+    // height-based fitting prevents long tails or wide bodies from shrinking it away.
+    // Existing default callers keep the original camera and max-dimension fit.
+    const loginNarrator = framing === "login-narrator";
+    const cameraFov = framing === "journey-s05" ? 34 : loginNarrator ? 32 : 28;
+    const camera = new THREE.PerspectiveCamera(cameraFov, 1, 0.01, 100);
     const tactileEligible = interactionActivation !== "disabled";
     setStatus(host, "loading");
     host.dataset.companionMotion = reducedMotion ? "stopped" : "pending";
@@ -159,8 +163,8 @@ export default function CompanionReviewRenderer({
       const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
       keyLight.position.set(2, 4, 3);
       scene.add(keyLight);
-      camera.position.set(0, 1.1, 3.4);
-      camera.lookAt(0, 0.85, 0);
+      camera.position.set(0, loginNarrator ? 0.82 : 1.1, loginNarrator ? 3.1 : 3.4);
+      camera.lookAt(0, loginNarrator ? 0.72 : 0.85, 0);
       resizeObserver = new ResizeObserver(resize);
       resizeObserver.observe(host);
       resize();
@@ -184,17 +188,36 @@ export default function CompanionReviewRenderer({
           return;
         }
         const animatedModel = gltf.scene;
+        animatedModel.updateMatrixWorld(true);
         const bounds = new THREE.Box3().setFromObject(animatedModel);
         const size = bounds.getSize(new THREE.Vector3());
         const center = bounds.getCenter(new THREE.Vector3());
         const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
-        const scale = 1.7 / maxDimension;
+        const fitDimension = loginNarrator ? Math.max(size.y, 0.001) : maxDimension;
+        const targetExtent = loginNarrator ? 1.45 : 1.7;
+        const scale = targetExtent / fitDimension;
+
+        const horizontalAnchor = center.clone();
+        if (loginNarrator) {
+          const bodyAnchor = animatedModel.getObjectByName("spine")
+            ?? animatedModel.getObjectByName("head");
+          bodyAnchor?.getWorldPosition(horizontalAnchor);
+        }
+
         animatedModel.scale.setScalar(scale);
-        animatedModel.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+        animatedModel.position.set(
+          -horizontalAnchor.x * scale,
+          -bounds.min.y * scale,
+          -horizontalAnchor.z * scale,
+        );
         model = new THREE.Group();
         model.add(animatedModel);
         scene.add(model);
-        camera.lookAt(0, framing === "journey-s05" ? 0.85 : 0.8, 0);
+        camera.lookAt(
+          0,
+          framing === "journey-s05" ? 0.85 : loginNarrator ? 0.72 : 0.8,
+          0,
+        );
 
         if (attentionLook) {
           const head = animatedModel.getObjectByName("head");
