@@ -190,6 +190,14 @@
   border-color: var(--sk7-danger);
 }
 
+.model-v2-flow select:disabled {
+  cursor: not-allowed;
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface-muted);
+  color: var(--sk7-ink-muted);
+  opacity: 1;
+}
+
 .model-v2-flow .unit {
   font-size: .8rem;
   font-weight: normal;

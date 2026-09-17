@@ -94,10 +94,10 @@
 .journey-today .home-links button[data-home-concept="today-detail"] { background: #f4f7f4; border-color: #e5ebe7; }
 .journey-today .home-links button > span:first-child { display: grid; gap: .35rem; }
 .journey-today .home-links strong { color: #274a46; font-size: .88rem; }
-.journey-today .home-links small { color: #617a77; font-size: .7rem; line-height: 1.45; }
+.journey-today .home-links small { color: #58716e; font-size: .7rem; line-height: 1.45; }
 .journey-today .home-links button > span:last-child { display: grid; place-items: center; width: auto; height: auto; flex: 0 0 auto; border-radius: 0; background: transparent; color: #3a7061; font-size: 1rem; }
 .journey-today .home-links button:hover { background: #e8f2eb; }
-.today-small-note { display: flex; align-items: center; justify-content: center; gap: 1.2rem; border-radius: .85rem; background: #f0f5ef; color: #5e786d; }
+.today-small-note { display: flex; align-items: center; justify-content: center; gap: 1.2rem; border-radius: .85rem; background: #f0f5ef; color: #557064; }
 .today-small-note > span { font-size: 2.8rem; color: #88b296; }
 .today-small-note p { font-size: .8rem; line-height: 1.7; }
 .today-cycle-actions { display: grid; gap: .75rem; }

@@ -23,13 +23,15 @@ export function HomeJourneyTrail({ days, today, selectedDate, onSelectDate, deta
         const current = day.date === today;
         const selected = day.date === selectedDate;
         const temporal = current ? 'today' : day.date < today ? 'past' : 'future';
+        const dayName = current ? '오늘' : weekdays[new Date(`${day.date}T00:00:00Z`).getUTCDay()];
+        const shortDate = `${Number(day.date.slice(5, 7))}/${Number(day.date.slice(8))}`;
         const factsLabel = factsKnown ? `혈압 관찰 ${day.observationCount}건, 챌린지 참여 ${day.participation}` : '기록 확인 전';
         return <li key={day.date} data-trail-date={day.date} data-selected={selected} data-temporal={temporal} aria-current={current ? 'date' : undefined}>
           <button className="home-trail-date" type="button" onClick={event => onSelectDate(day.date, event.currentTarget)}
             aria-pressed={selected} aria-current={current ? 'date' : undefined} aria-controls={detailId}
-            aria-label={`${formatTrailDate(day.date)}${current ? ', 오늘' : temporal === 'future' ? ', 오늘 이후' : ''} · ${landmark?.label ?? '날짜의 풍경'} · ${factsLabel}`}>
-            <span className="home-trail-node" aria-hidden="true">{current ? '오늘' : weekdays[new Date(`${day.date}T00:00:00Z`).getUTCDay()]}</span>
-            <time dateTime={day.date}>{Number(day.date.slice(5, 7))}/{Number(day.date.slice(8))}</time>
+            aria-label={`${dayName} ${shortDate} · ${formatTrailDate(day.date)}${current ? ', 오늘' : temporal === 'future' ? ', 오늘 이후' : ''} · ${landmark?.label ?? '날짜의 풍경'} · ${factsLabel}`}>
+            <span className="home-trail-node" aria-hidden="true">{dayName}</span>
+            <time dateTime={day.date}>{shortDate}</time>
             <span className="home-trail-presence" aria-hidden="true">
               <i className="home-trail-mark home-trail-mark--observation" data-present={factsKnown && day.observationCount > 0} />
               <i className="home-trail-mark home-trail-mark--participation" data-present={factsKnown && day.participation !== '기록 없음'} />
