@@ -34,7 +34,8 @@
 .today-companion-greeting span { display: block; color: #b58567; }
 .journey-view-frame { position: absolute; width: 135%; left: -15%; bottom: -.6rem; height: 265px; }
 .journey-today .living-visual-stage { margin: 0; height: 100%; border-radius: 0; background: transparent; }
-.journey-today [data-static-landscape] .living-scene-fallback img { left: 0; top: -9%; transform: none; width: 100%; height: 125%; object-fit: cover; }
+/* S02 hero cleanup: remove the poster paper without restoring the old ellipse mask. */
+.journey-today [data-static-landscape] .living-scene-fallback img { left: 0; top: -9%; transform: none; width: 100%; height: 125%; object-fit: cover; filter: url(#home-poster-paper); -webkit-mask-image: none; mask-image: none; box-shadow: none; }
 .journey-view-caption { position: absolute; bottom: -1.3rem; left: 18%; display: flex; align-items: center; gap: .4rem; color: #48625f; font-size: .68rem; line-height: 1.4; }
 .journey-view-caption strong { font-weight: 600; }
 .journey-view-caption > span:last-child { display: none; }
@@ -136,7 +137,7 @@
   .journey-today .home-lead p { font-size: .6rem; line-height: 1.35; }
   .journey-today .home-lead button { width: 100%; min-width: 0; min-height: 2.75rem; padding: .58rem .8rem; font-size: .75rem; }
   .journey-today .journey-view { position: absolute; inset: 8rem .25rem 3.5rem; }
-  .journey-view-frame { width: 110%; left: -5%; bottom: -.75rem; height: 170px; }
+  .journey-view-frame { width: 94%; left: 3%; bottom: -.75rem; height: 145px; }
   .journey-today [data-static-landscape] .living-scene-fallback img { top: -14%; height: 130%; object-fit: cover; }
   .today-companion-greeting { top: 1.1rem; right: 5%; font-size: .74rem; }
   .journey-view-caption { left: auto; right: .65rem; bottom: .1rem; font-size: .56rem; }
@@ -198,7 +199,6 @@
 
 .today-calendar-toggle { display: none; }
 .journey-today [data-static-landscape] { isolation: auto; }
-.journey-today [data-static-landscape] .living-scene-fallback img { filter: url(#home-poster-paper); }
 .journey-today.scene > .today-poster-filter { position: absolute; display: block; pointer-events: none; }
 @media (max-width: 580px) {
  .today-calendar-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 2.75rem; padding: .55rem 0; border: 0; border-top: 1px solid #edf2f0; border-radius: 0; background: transparent; color: #5c7871; font-size: .63rem; font-weight: 550; box-shadow: none; }

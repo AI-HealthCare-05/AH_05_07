@@ -47,9 +47,9 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
   const leadKicker = lead.key === 'today-detail' ? '오늘 기록' : '오늘 먼저';
 
   return <section className="scene journey-candidate journey-today home-scene" data-scene="S02" aria-labelledby="S02-title">
-    {/* Remove the existing poster’s near-white paper in presentation, retaining its source and date mapping. */}
-    <svg className="today-poster-filter" width="0" height="0" aria-hidden="true"><defs><filter id="home-poster-paper" colorInterpolationFilters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -6 -6 -6 0 17" /></filter></defs></svg>
-    <div className="today-journey">
+    {/* Key out the poster paper with a stricter light-tone threshold; no ellipse mask or contact shadow. */}
+    <svg className="today-poster-filter" width="0" height="0" aria-hidden="true"><defs><filter id="home-poster-paper" colorInterpolationFilters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -6 -6 -6 0 15.8" /></filter></defs></svg>
+<div className="today-journey">
       <div className="today-hero">
         <div className="today-desk">
           <div className="scene-copy">
