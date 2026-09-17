@@ -154,9 +154,13 @@ for (const [bp, challenge, lead, state] of [
     await candidate(page, bp, challenge);
     await expect(page.locator('.home-lead')).toHaveAttribute('data-home-concept', lead);
     await expect(page.locator('[data-home-concept]')).toHaveCount(3);
-    const destinations = await page.locator('.home-links button').evaluateAll(buttons => buttons.map(button => button.getAttribute('data-home-destination')));
+    const destinationButtons = page.locator('.home-links button[data-home-destination]');
+    const destinations = await destinationButtons.evaluateAll(buttons =>
+      buttons.map(button => button.getAttribute('data-home-destination')),
+    );
+    expect(destinations.every((destination): destination is string => Boolean(destination))).toBe(true);
     for (let i = 0; i < destinations.length; i++) {
-      await page.locator('.home-links button').nth(i).click();
+      await destinationButtons.nth(i).click();
       await expect(page.locator(`[data-scene="${destinations[i]}"]`)).toBeVisible();
       await page.goBack();
       await expect(page.locator('.journey-today')).toBeVisible();
