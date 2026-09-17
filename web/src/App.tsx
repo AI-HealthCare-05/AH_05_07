@@ -299,7 +299,7 @@ function Login({
         <section className="journey-login-intro" aria-labelledby="login-title">
           <p className="eyebrow">상균7데이즈</p>
           <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
-          <p className="scene-body">측정한 혈압을 기록하고 최근 7일을 다시 보는 서비스예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
+          <p className="scene-body">혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요. 한 건부터 바로 시작할 수 있어요.</p>
           <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
           {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
             <span>함께할 캐릭터</span>
@@ -322,7 +322,6 @@ function Login({
             <input ref={emailRef} id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
             <div className="entry-auth-wrap">
               <button type="submit" className="entry-auth-button" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
-              <span className="entry-discount-note" aria-hidden="true">가입비 100% 할인 · 원래 무료예요</span>
             </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>
