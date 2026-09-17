@@ -4,6 +4,8 @@ import type { Session } from "@supabase/supabase-js";
 
 import { scoreModelV2Locally } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
+import { seoulDate } from "../lib/seoulDate";
+import { useSeoulDate } from "../lib/useSeoulDate";
 import { Scene } from "./SceneShell";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
@@ -52,6 +54,12 @@ function canonicalTime(selection: TimeSelection): string | null {
   if (selection.period === undefined || selection.hour === undefined || selection.minute === undefined) return null;
   const hour = (selection.hour % 12) + (selection.period === 1 ? 12 : 0);
   return `${String(hour).padStart(2, "0")}:${String(selection.minute).padStart(2, "0")}`;
+}
+
+const PREVIEW_START = "2026-09-17";
+const PREVIEW_END = "2026-10-17";
+function isPreviewDate(date: string): boolean {
+  return PREVIEW_START <= date && date <= PREVIEW_END;
 }
 
 function formatDurationMinutes(totalMinutes: number): string {
@@ -484,10 +492,14 @@ export function ModelV2InputFlow({
   const [consentInvalid, setConsentInvalid] = useState(false);
   const [focusRequest, setFocusRequest] = useState<{ id: string } | null>(null);
   const [openTimeField, setOpenTimeField] = useState<keyof Draft | null>(null);
+  const [previewOutput, setPreviewOutput] = useState<number | null>(null);
   const requestInFlight = useRef(false);
   const mounted = useRef(true);
   const formRef = useRef<HTMLFormElement>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
+
+  const today = useSeoulDate();
+  const previewOpen = isPreviewDate(today) && isPreviewDate(seoulDate());
 
   useEffect(() => {
     mounted.current = true;
@@ -498,6 +510,10 @@ export function ModelV2InputFlow({
     if (!focusRequest) return;
     formRef.current?.querySelector<HTMLElement>(`#${focusRequest.id}`)?.focus();
   }, [focusRequest]);
+
+  useEffect(() => {
+    if (!previewOpen) setPreviewOutput(null);
+  }, [previewOpen]);
 
   const age = finiteNumber(draft.age);
   const showOlderApplicabilityNotice = age !== null && age >= 80;
@@ -511,6 +527,7 @@ export function ModelV2InputFlow({
     setMessage("");
     setInvalidFields([]);
     setConsentInvalid(false);
+    setPreviewOutput(null);
   }
 
   function update(key: keyof Draft, value: string) {
@@ -587,8 +604,11 @@ export function ModelV2InputFlow({
     setFocusRequest({ id: "model-v2-pending" });
 
     try {
-      await scoreModelV2Locally(payload);
+      const localResult = await scoreModelV2Locally(payload);
       if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
+      setPreviewOutput(isPreviewDate(seoulDate()) && Number.isFinite(localResult.continuousOutput)
+        ? localResult.continuousOutput
+        : null);
       setResultState("processed");
       setFocusRequest({ id: "model-v2-result-title" });
     } catch (error) {
@@ -716,7 +736,16 @@ export function ModelV2InputFlow({
 
                 <div className="model-v2-result-model-note" aria-label="Model V2 처리 안내">
                   <strong>Model V2 처리가 완료됐어요.</strong>
-                  <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
+                  {previewOpen && previewOutput !== null && Number.isFinite(previewOutput) ? (
+                    <div data-model-v2-preview>
+                      <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
+                      <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
+                      <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+                      <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>
+                    </div>
+                  ) : (
+                    <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
+                  )}
                 </div>
 
                 <p className="model-v2-result-disclaimer">
@@ -749,7 +778,14 @@ export function ModelV2InputFlow({
                 <p>입력을 마치면 활동·수면·생활습관을 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.</p>
                 <p><strong>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</strong></p>
                 <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
-                <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
+                {previewOpen ? (
+                  <>
+                    <p>2026년 10월 17일(KST)까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
+                    <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+                  </>
+                ) : (
+                  <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
+                )}
                 <p>나이, 체격, 생활 습관, 활동, 수면 정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
                 <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
                 <p>마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
