@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const companionOff = process.env.SK7_SCENE_TEST_COMPANION === "off";
+
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./test-results/living-scene-review",
@@ -13,7 +15,7 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort",
-    env: { VITE_API_BASE_URL: "http://e2e.invalid", VITE_SK7_E2E_MODE: "1", VITE_SK7_SCENE_MODE: "review", VITE_SK7_COMPANION_MODE: "review", VITE_SUPABASE_URL: "https://e2e.invalid", VITE_SUPABASE_PUBLISHABLE_KEY: "e2e-test-publishable-key" },
+    env: { VITE_API_BASE_URL: "http://e2e.invalid", VITE_SK7_E2E_MODE: "1", VITE_SK7_SCENE_MODE: "review", VITE_SK7_COMPANION_MODE: companionOff ? "off" : "review", VITE_SUPABASE_URL: "https://e2e.invalid", VITE_SUPABASE_PUBLISHABLE_KEY: "e2e-test-publishable-key" },
     port: 4173,
     reuseExistingServer: false,
   },

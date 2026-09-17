@@ -294,6 +294,96 @@ test("S02 invalid saved identity falls back to bear-lite", async ({ page }) => {
   expect(glbRequests[0]).toBe(companionAssetManifest.bear.lite.url);
 });
 
+
+test("S02 reduced motion keeps the selected identity on the static fallback without loading a GLB", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "fox");
+  });
+
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+
+  await page.goto(`${url}&companion_species=bear`);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]"))
+    .toHaveAttribute("data-living-scene-status", "poster");
+
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+
+  await page.waitForTimeout(300);
+  expect(glbRequests).toEqual([]);
+
+  expect(
+    await page.evaluate(() => localStorage.getItem("sk7-companion-species")),
+  ).toBe("fox");
+});
+
+test("S02 companion identity does not alter the S10 scene character recipe", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "fox");
+  });
+
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+
+  await page.goto("/?fixture=VP-10&screen=S10&companion_species=fox");
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  await expect.poll(() => glbRequests.length).toBe(1);
+
+  const s10Recipe = findSceneRecipe("S10", "footbridge");
+  expect(s10Recipe).not.toBeNull();
+  expect(glbRequests[0]).toBe(s10Recipe!.characterUrl);
+  expect(glbRequests[0]).not.toBe(companionAssetManifest.fox.lite.url);
+
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+});
+
+
+test("S02 companion-off stays poster-only and requests no character GLB", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "fox");
+  });
+
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+
+  await page.goto(`${url}&companion_species=fox`);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]"))
+    .toHaveAttribute("data-living-scene-status", "poster");
+
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+
+  await page.waitForTimeout(300);
+  expect(glbRequests).toEqual([]);
+
+  // Turning presentation off must not erase the user's identity preference.
+  expect(
+    await page.evaluate(() => localStorage.getItem("sk7-companion-species")),
+  ).toBe("fox");
+});
+
 test("ready WebGL does not wait for a pending poster transfer", async ({ page }) => {
   const completed: Request[] = [];
   page.on("requestfinished", request => completed.push(request));
