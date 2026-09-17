@@ -1,0 +1,2 @@
+# Keep the Bash commit wrapper LF on Git for Windows.
+codex-commit text eol=lf

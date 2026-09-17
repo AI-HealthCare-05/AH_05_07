@@ -68,6 +68,3 @@
 /tests/__init__.py text eol=lf
 /scripts/model/model_v2_python_boundary.json text eol=lf
 /scripts/model/verify_model_v2_python_boundary.py text eol=lf
-
-# Git-for-Windows must not rewrite the commit wrapper to CRLF.
-/scripts/git/codex-commit text eol=lf
