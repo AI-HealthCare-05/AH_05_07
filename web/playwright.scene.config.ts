@@ -13,7 +13,7 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort",
-    env: { VITE_API_BASE_URL: "http://e2e.invalid", VITE_SK7_E2E_MODE: "1", VITE_SK7_SCENE_MODE: "review", VITE_SK7_COMPANION_MODE: "review" },
+    env: { VITE_API_BASE_URL: "http://e2e.invalid", VITE_SK7_E2E_MODE: "1", VITE_SK7_SCENE_MODE: "review", VITE_SK7_COMPANION_MODE: "review", VITE_SUPABASE_URL: "https://e2e.invalid", VITE_SUPABASE_PUBLISHABLE_KEY: "e2e-test-publishable-key" },
     port: 4173,
     reuseExistingServer: false,
   },
