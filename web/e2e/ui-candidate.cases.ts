@@ -118,6 +118,35 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
+test('heejoo feedback closeout keeps S02 mobile compact and the starting-point tool reachable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const home = page.locator('.journey-today');
+  await expect(home).toBeVisible();
+
+  const frame = home.locator('.journey-view-frame');
+  const view = home.locator('.journey-view');
+  await expect(frame).toBeVisible();
+
+  const frameBox = await frame.boundingBox();
+  const viewBox = await view.boundingBox();
+  expect(frameBox).not.toBeNull();
+  expect(viewBox).not.toBeNull();
+  expect(frameBox!.height).toBeLessThanOrEqual(146);
+  expect(frameBox!.width).toBeLessThan(viewBox!.width);
+
+  const startingPoint = home.locator('.today-starting-point-entry');
+  await expect(startingPoint).toBeVisible();
+  await expect(startingPoint).toHaveAttribute('aria-describedby', 'today-starting-point-help');
+
+  await startingPoint.click();
+  await expect(page).toHaveURL(/screen=S11/);
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+});
+
 test('North Star Home recognizes recent history when a returning user has not recorded today', async ({ page }) => {
   await setup(page);
   await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {

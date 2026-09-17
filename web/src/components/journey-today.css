@@ -97,9 +97,10 @@
 .journey-today .home-links small { color: #58716e; font-size: .7rem; line-height: 1.45; }
 .journey-today .home-links button > span:last-child { display: grid; place-items: center; width: auto; height: auto; flex: 0 0 auto; border-radius: 0; background: transparent; color: #3a7061; font-size: 1rem; }
 .journey-today .home-links button:hover { background: #e8f2eb; }
-.today-small-note { display: flex; align-items: center; justify-content: center; gap: 1.2rem; border-radius: .85rem; background: #f0f5ef; color: #557064; }
-.today-small-note > span { font-size: 2.8rem; color: #88b296; }
-.today-small-note p { font-size: .8rem; line-height: 1.7; }
+.journey-today .home-links .today-starting-point-entry { background: #f8f6ef; border-color: #ebe6d8; }
+.journey-today .home-links .today-starting-point-entry strong { color: #425952; }
+.journey-today .home-links .today-starting-point-entry small { color: #687973; }
+.journey-today .home-links .today-starting-point-entry:hover { background: #f3f1e8; }
 .today-cycle-actions { display: grid; gap: .75rem; }
 .today-cycle-actions:empty { display: none; }
 @media (min-width: 901px) {
@@ -136,7 +137,7 @@
   .journey-today .home-lead p { font-size: .6rem; line-height: 1.35; }
   .journey-today .home-lead button { width: 100%; min-width: 0; min-height: 2.75rem; padding: .58rem .8rem; font-size: .75rem; }
   .journey-today .journey-view { position: absolute; inset: 8rem .25rem 3.5rem; }
-  .journey-view-frame { width: 110%; left: -5%; bottom: -.75rem; height: 170px; }
+  .journey-view-frame { width: 94%; left: 3%; bottom: -.75rem; height: 145px; }
   .journey-today [data-static-landscape] .living-scene-fallback img { top: -14%; height: 130%; object-fit: cover; }
   .today-companion-greeting { top: 1.1rem; right: 5%; font-size: .74rem; }
   .journey-view-caption { left: auto; right: .65rem; bottom: .1rem; font-size: .56rem; }
@@ -172,7 +173,7 @@
   .journey-today .home-links strong { font-size: .76rem; }
   .journey-today .home-links small { font-size: .6rem; }
   .journey-today .home-links button > span:last-child { width: 1.4rem; height: 1.4rem; font-size: .9rem; }
-  .today-small-note { display: none; }
+  .journey-today .home-links .today-starting-point-entry { grid-column: 1 / -1; min-height: 58px; }
 }
 @media (max-width: 350px) {
   .today-hero { min-height: 325px; padding-inline: 1rem; }
