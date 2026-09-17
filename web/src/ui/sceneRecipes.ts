@@ -44,8 +44,10 @@ export function sceneComposition(recipe: SceneRecipe, viewportWidth: number) {
   return recipe.compositions[sceneProfile(viewportWidth)];
 }
 
-const s02SelectableCharacterMap: Readonly<Record<CompanionSpecies, string>> = (() => {
+const selectableCharacterMap: Readonly<Record<CompanionSpecies, string>> = (() => {
   const map = {} as Record<CompanionSpecies, string>;
+  // The manifest field retains its historical S02 name, but the exact same
+  // registered 11 lite identities can be reused by the S10 review owner.
   const allowlist = (sceneManifest as any).s02SelectableCharacters as string[];
   for (const id of allowlist) {
     const asset = sceneManifest.assets.find(a => a.id === id && a.kind === "character");
@@ -55,10 +57,9 @@ const s02SelectableCharacterMap: Readonly<Record<CompanionSpecies, string>> = ((
   return map;
 })();
 
-// Measured across 320x844, 390x844 and 1366x768.
-// Only species that exceeded the established S02 subject-size envelope receive
-// a small correction; all other selectable identities preserve the base 1.0 scale.
-const s02CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
+// Conservative identity-size corrections established for S02. The S10 review
+// candidate reuses them, then browser bounds checks all species before publication.
+const selectableCharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
   rabbit: 1.03,
   capybara: 0.96,
   hedgehog: 0.95,
@@ -66,19 +67,21 @@ const s02CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
   squirrel: 0.99,
 };
 
-/**
- * Bind a registered S02 base recipe to the user's selected lite identity.
- * Rejects S10, unregistered species, standard variants, and caller-supplied URLs.
- * The recipe id, environment, posters and compositions stay unchanged; only the
- * resolved character URL is replaced for the realtime visit.
- */
-export function resolveS02CharacterRecipe(baseRecipe: SceneRecipe, species: CompanionSpecies): SceneRecipe {
-  if (!baseRecipe.id.startsWith("s02-")) throw new Error("S02 identity binding rejected for non-S02 recipe");
-  const registeredId = s02SelectableCharacterMap[species];
-  if (!registeredId) throw new Error(`unregistered S02 selectable species: ${species}`);
+function resolveSelectableCharacterRecipe(
+  baseRecipe: SceneRecipe,
+  screen: "S02" | "S10",
+  species: CompanionSpecies,
+): SceneRecipe {
+  const prefix = `${screen.toLowerCase()}-`;
+  if (!baseRecipe.id.startsWith(prefix)) {
+    throw new Error(`${screen} identity binding rejected for non-${screen} recipe`);
+  }
+  const registeredId = selectableCharacterMap[species];
+  if (!registeredId) throw new Error(`unregistered selectable species: ${species}`);
   const registered = sceneManifest.assets.find(a => a.id === registeredId && a.kind === "character");
-  if (!registered || !("delivery" in registered)) throw new Error(`missing registered character: ${registeredId}`);
-  const registeredSpecies = (registered as any).companionSpecies as CompanionSpecies;
+  if (!registered || !("delivery" in registered)) {
+    throw new Error(`missing registered character: ${registeredId}`);
+  }
   const companion = getCompanionAsset(species, "lite");
   if (registered.delivery.url !== companion.url || registered.delivery.sha256 !== companion.sha256) {
     throw new Error(`scene registration mismatch for ${species}`);
@@ -86,6 +89,28 @@ export function resolveS02CharacterRecipe(baseRecipe: SceneRecipe, species: Comp
   return {
     ...baseRecipe,
     characterUrl: registered.delivery.url,
-    characterScale: s02CharacterScale[species] ?? 1,
+    characterScale: selectableCharacterScale[species] ?? 1,
   };
+}
+
+/**
+ * Bind a registered S02 recipe to the saved non-medical lite identity.
+ * Recipe/environment/poster/composition ownership remains unchanged.
+ */
+export function resolveS02CharacterRecipe(
+  baseRecipe: SceneRecipe,
+  species: CompanionSpecies,
+): SceneRecipe {
+  return resolveSelectableCharacterRecipe(baseRecipe, "S02", species);
+}
+
+/**
+ * Review-only S10 ownership candidate. Uses exactly the same registered lite
+ * identity set as S02; production authorization remains in scenePolicy.
+ */
+export function resolveS10CharacterRecipe(
+  baseRecipe: SceneRecipe,
+  species: CompanionSpecies,
+): SceneRecipe {
+  return resolveSelectableCharacterRecipe(baseRecipe, "S10", species);
 }
