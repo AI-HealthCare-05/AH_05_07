@@ -1,5 +1,27 @@
 # Model V2 Product Contract
 
+## Current time-boxed research/development preview — 2026-09-17
+
+Human decision in Issue #396 authorizes one narrow exception to the standing
+non-numeric display rule.
+
+- Window: **2026-09-17 through 2026-10-17 KST**.
+- Audience: signed-in S11 users; no extra whitelist is required.
+- S11 may show the already-computed browser-local continuous output as
+  **`연구/개발 미리보기 · 내부 연속 출력`** and as a plain decimal only.
+- It is not a probability, percentage, percentile, diagnosis, normal/abnormal
+  result, low/medium/high band, severity, future hypertension chance, or
+  treatment/prevention effect.
+- No threshold, recalibration, retraining, feature/preprocessing change, API
+  numeric response, DB/Web Storage persistence, telemetry, analytics, logs,
+  S10 history, or PDF persistence is authorized by this preview.
+- After 2026-10-17 KST, S11 must automatically return to the normal non-numeric
+  product behavior unless a new human decision explicitly extends or replaces
+  this window.
+
+This is temporary research/development visibility of an existing computation,
+not permanent result semantics or a G10 threshold decision.
+
 ## Approved browser integration decision — 2026-09-13
 
 [ADR-0008](adr/0008-s11-verifiable-local-inference.md) records the human-approved
@@ -26,9 +48,8 @@ not the frozen feature schema, derivations, model, data-use or output semantics.
   recorded rollout and exact two-field, non-numeric response are linked from
   [deployment SSOT](deployment-ssot.md). Current runtime must be re-verified there;
   merged #393/#397/#399 fixes are not evidence that those fixes are deployed.
-- Individual numeric/probability/percentile/band display is not approved.
-  [G10 / #396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396) owns the
-  prospective displayability decision; no cosmetic substitute may imply a score.
+- Permanent numeric/probability/percentile/band semantics remain unapproved.
+  The only current exception is the time-boxed raw continuous S11 preview above.
 - `PRODUCTION DISABLED`, `KNOWN BLOCKER — T2`, `S11 remains not ready`, future
   task language and unresolved-decision lists in the retained T1 sections are
   historical assessments. Do not restart completed work solely from these labels.
