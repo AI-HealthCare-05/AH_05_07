@@ -181,6 +181,10 @@ test("production S10 follows the saved companion identity and ignores query over
 
   expect(assetResponse.status()).toBe(200);
   await expect(page.locator(".journey-recap")).toBeVisible();
+  await expect(page.locator('[data-static-landscape="S10"]')).toHaveCount(1);
+  await expect(page.locator('[data-living-scene="S10"]')).toHaveCount(0);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-canvas]")).toHaveCount(1);
   await expect(page.locator("[data-companion-status]")).toHaveAttribute(
     "data-companion-status",
     "ready",

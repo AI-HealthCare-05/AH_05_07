@@ -13,20 +13,27 @@ test("fixed Seoul weekday journey crosses UTC midnight without challenge inputs"
   for (const date of ["2026-02-29", "2026-09-31", "invalid", "2026-9-9", "2026-09-09T00:00:00Z"]) expect(landmarkForCalendarDate(date)).toBeNull();
 });
 
-test("new renderer remains review-only and S05 policy is never reinterpreted", () => {
-  for (const gate of [undefined, null, "", "on", "Review", "production"]) expect(resolveScenePlan({ ...presentation, gate })).toBeNull();
+test("production activates qualified S02 while S10 keeps its independent production companion", () => {
+  for (const gate of [undefined, null, "", "on", "Review"]) expect(resolveScenePlan({ ...presentation, gate })).toBeNull();
   expect(resolveSceneGate("production")).toBe("production");
-  for (const screen of allScreenIds) expect(resolveScenePlan({ ...presentation, screen }) !== null).toBe(screen === "S02" || screen === "S10");
+  for (const screen of allScreenIds) {
+    expect(resolveScenePlan({ ...presentation, gate: "review", screen }) !== null).toBe(screen === "S02" || screen === "S10");
+    expect(resolveScenePlan({ ...presentation, gate: "production", screen }) !== null).toBe(screen === "S02");
+  }
   expect(screenVisualModes.S05).toBe("legacy-s05");
   expect(screenVisualModes.S11).toBe("layered");
 });
 
-test("presentation fallbacks retain calendar identity and neutral pose", () => {
-  const baseline = resolveScenePlan(presentation)!;
-  expect(baseline.tier).toBe(2);
-  expect(baseline.pose).toBe("neutral-static");
-  for (const override of [{ reducedMotion: true }, { webglAvailable: false }]) expect(resolveScenePlan({ ...presentation, ...override })).toEqual({ ...baseline, tier: 1 });
-  expect(resolveScenePlan({ ...presentation, visualDisabled: true })).toBeNull();
+test("review and production fallbacks retain calendar identity and neutral pose", () => {
+  for (const gate of ["review", "production"] as const) {
+    const baseline = resolveScenePlan({ ...presentation, gate })!;
+    expect(baseline.tier).toBe(2);
+    expect(baseline.pose).toBe("neutral-static");
+    for (const override of [{ reducedMotion: true }, { webglAvailable: false }]) {
+      expect(resolveScenePlan({ ...presentation, gate, ...override })).toEqual({ ...baseline, tier: 1 });
+    }
+    expect(resolveScenePlan({ ...presentation, gate, visualDisabled: true })).toBeNull();
+  }
 });
 
 test("untrusted extra domain properties cannot affect scene selection", () => {

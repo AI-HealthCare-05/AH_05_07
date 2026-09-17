@@ -8,7 +8,8 @@ export function useSavedSceneEvent() {
   const [event, setEvent] = useState<SavedSceneEvent | null>(null);
 
   useEffect(() => {
-    if (import.meta.env.VITE_SK7_SCENE_MODE !== "review") return;
+    const mode = import.meta.env.VITE_SK7_SCENE_MODE;
+    if (mode !== "review" && mode !== "production") return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const interrupt = () => {
       if (document.visibilityState !== "visible" || media.matches) current.current?.skip();
@@ -32,7 +33,8 @@ export function useSavedSceneEvent() {
   }
 
   function confirmPersistence() {
-    if (import.meta.env.VITE_SK7_SCENE_MODE !== "review") return null;
+    const mode = import.meta.env.VITE_SK7_SCENE_MODE;
+    if (mode !== "review" && mode !== "production") return null;
     current.current?.skip();
     const next = createSavedSceneEvent();
     if (document.visibilityState !== "visible" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) next.skip();

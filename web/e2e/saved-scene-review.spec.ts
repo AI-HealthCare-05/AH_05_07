@@ -121,9 +121,10 @@ async function returnVisit(page: Page) {
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
 }
 
-test("saved scene gate needs exact review, S05 and a host confirmation; event claim cannot repeat", () => {
+test("saved scene gate needs an activated scene mode, S05 and a host confirmation; event claim cannot repeat", () => {
   for (const screen of allScreenIds) for (const gate of [undefined, "off", "production", "Review", "review"]) {
-    expect(allowsSavedScene(gate, screen, true)).toBe(gate === "review" && screen === "S05");
+    const active = gate === "review" || gate === "production";
+    expect(allowsSavedScene(gate, screen, true)).toBe(active && screen === "S05");
     expect(allowsSavedScene(gate, screen, false)).toBe(false);
   }
   const event = createSavedSceneEvent();

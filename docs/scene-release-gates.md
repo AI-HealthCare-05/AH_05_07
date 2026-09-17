@@ -17,8 +17,11 @@ recovery.
 1. Use a separately explicit, approved activation Issue and PR. Resolve the
    current upstream `main`, identify the exact activation candidate and keep
    `review` out of production. Verify that the intended production-mode mapping
-   activates only S02/S10 and the confirmed-save S05 path, while the independent
-   companion setting and gated-off behavior remain correct.
+   activates the qualified S02 realtime scene and confirmed-save S05 path.
+   S10's later production companion/identity/day-focus owner remains authoritative;
+   its full-scene renderer stays review-only until those two renderer ownership
+   models are explicitly consolidated. Never activate both S10 character renderers
+   in the same production surface. Keep independent companion-off behavior correct.
 2. Pass the repository's required `lint` and `test` CI on the final activation
    PR HEAD and the existing checks directly affected by the
    activation/configuration diff. This classification creates no new test

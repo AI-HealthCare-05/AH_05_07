@@ -58,11 +58,13 @@ export type ScenePlan = Readonly<{
 
 /** Presentation-only firewall; never accept a session, API response or domain object. */
 export function resolveScenePlan(input: ScenePresentation): ScenePlan | null {
-  if (resolveSceneGate(input.gate) === "off" || input.visualDisabled) return null;
-  // Production recipes await visual/performance acceptance. Owner authorization
-  // alone must not cause unmeasured prototype assets to reach production.
-  if (resolveSceneGate(input.gate) === "production") return null;
+  const gate = resolveSceneGate(input.gate);
+  if (gate === "off" || input.visualDisabled) return null;
   if (input.screen !== "S02" && input.screen !== "S10") return null;
+  // S10 already has a separately qualified production companion with identity
+  // and day-focus attention. Keep its full-scene renderer review-only so one
+  // production screen never owns two WebGL character renderers at once.
+  if (gate === "production" && input.screen === "S10") return null;
   const landmark = landmarkForCalendarDate(input.calendarDate);
   if (!landmark) return null;
   const recipe = findSceneRecipe(input.screen, landmark.id);

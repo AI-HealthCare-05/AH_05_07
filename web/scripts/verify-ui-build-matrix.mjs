@@ -8,7 +8,7 @@ const browser = await chromium.launch();
 try {
   for (const [ui, scene, journey, staticPoster] of [
     [undefined, 'off', false, false], [undefined, 'review', true, false],
-    ['journey', 'off', true, true], ['journey', 'production', true, true],
+    ['journey', 'off', true, true], ['journey', 'production', true, false],
     ['journey', 'review', true, false], ['legacy', 'review', false, false], ['invalid', 'review', false, false],
   ]) {
     const outDir = 'test-results/ui-release/matrix';
@@ -26,7 +26,7 @@ try {
       await page.locator('[data-scene="S02"]').waitFor();
       assert.equal(await page.locator('.journey-today').count(), Number(journey));
       assert.equal(await page.locator('[data-static-landscape]').count(), Number(staticPoster));
-      assert.equal(await page.locator('[data-living-scene]').count(), Number(scene === 'review'));
+      assert.equal(await page.locator('[data-living-scene]').count(), Number(scene === 'review' || scene === 'production'));
       assert.equal(await page.locator('canvas').count(), 0);
       console.log(`PASS actual build: UI=${ui ?? 'unset'} SCENE=${scene}; URL/storage ignored; companion off; reduced motion`);
     } finally { await page.close(); await new Promise(resolve => server.httpServer.close(resolve)); }
