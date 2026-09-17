@@ -540,7 +540,7 @@ test("a fresh confirmation replaces a failed old S05 visit only after refresh co
   await expect(runtime(page)).toHaveAttribute("data-saved-scene-status", "fallback");
   await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
   await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
-  await page.getByRole("button", { name: /혈압 추가 기록 ·/ }).click();
+  await page.getByRole("button", { name: /혈압 추가 기록/ }).click();
   await page.getByLabel(/수축기/).fill("125"); await page.getByLabel(/이완기/).fill("82");
   state.refreshGate = deferred();
   await submit(page);
