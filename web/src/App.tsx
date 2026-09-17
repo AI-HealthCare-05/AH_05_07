@@ -329,6 +329,13 @@ function App() {
   const isCycleReview = dashboardWindow.startsWith("cycle:");
   const dashboardPeriodName = isCycleReview ? "종료된 7일" : isPriorDashboard ? "이전 7일" : "현재 7일";
   const [session, setSession] = useState<Session | null>(e2eSession);
+  const [authBootstrapPending, setAuthBootstrapPending] = useState(
+    () => !evidenceMode
+      && !e2eSession
+      && !allowsE2eFixture()
+      && supabaseConfigured
+      && authEmailConfirmIntent.kind === "none",
+  );
   const [authEmailConfirmPending, setAuthEmailConfirmPending] = useState(
     () => !evidenceMode && authEmailConfirmIntent.kind !== "none",
   );
@@ -536,9 +543,13 @@ function App() {
     }
 
     const bootstrapVersion = sessionUpdateVersionRef.current;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && sessionUpdateVersionRef.current === bootstrapVersion) applySession(data.session);
-    });
+    void supabase.auth.getSession()
+      .then(({ data }) => {
+        if (!cancelled && sessionUpdateVersionRef.current === bootstrapVersion) applySession(data.session);
+      })
+      .finally(() => {
+        if (!cancelled) setAuthBootstrapPending(false);
+      });
     return unsubscribe;
   }, [authEmailConfirmIntent, evidenceMode, e2eSession]);
 
@@ -1114,12 +1125,12 @@ function App() {
   if (!evidenceMode && !e2eSession && !supabaseConfigured) {
     return <main className="welcome-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   }
-  if (!evidenceMode && authEmailConfirmPending) {
+  if (!evidenceMode && (authEmailConfirmPending || authBootstrapPending)) {
     return (
       <main className="welcome-shell">
         <section className="welcome-card" aria-live="polite">
           <p className="eyebrow">상균7데이즈</p>
-          <h1>로그인 링크를 확인하고 있어요.</h1>
+          <h1>{authEmailConfirmPending ? "로그인 링크를 확인하고 있어요." : "로그인 상태를 확인하고 있어요."}</h1>
           <p className="scene-body">잠시만 기다려 주세요.</p>
         </section>
       </main>

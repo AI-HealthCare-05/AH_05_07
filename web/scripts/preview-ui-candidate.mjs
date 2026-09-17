@@ -1,5 +1,6 @@
-import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+
+import { runNpmSync, spawnNpm } from './npm-command.mjs';
 
 // Normal local build: no harness, evidence fixture, injection or test authentication.
 // Explicit public test config exercises the real login boundary without an account.
@@ -12,10 +13,15 @@ const env = { ...process.env,
   VITE_SUPABASE_URL: 'https://auth.ui-candidate.invalid',
   VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_candidate_not_a_real_key',
 };
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-execFileSync(npm, ['run', 'build', '--', '--outDir', outDir], { cwd: web, env, stdio: 'inherit' });
+const childOptions = { cwd: web, env, stdio: 'inherit' };
+
+runNpmSync(['run', 'build', '--', '--outDir', outDir], childOptions);
+
 if (!process.argv.includes('--build-only')) {
-  const server = spawn(npm, ['run', 'preview', '--', '--outDir', outDir, '--host', '127.0.0.1', '--port', '4182', '--strictPort'], { cwd: web, env, stdio: 'inherit' });
+  const server = spawnNpm(
+    ['run', 'preview', '--', '--outDir', outDir, '--host', '127.0.0.1', '--port', '4182', '--strictPort'],
+    childOptions,
+  );
   for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => server.kill(signal));
   server.on('exit', code => process.exit(code ?? 0));
 }
