@@ -427,8 +427,10 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
   useEffect(() => {
     if (!open) return;
     const closeFromOutsideClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (target instanceof Element && target.closest(".model-v2-time-field")) return;
+      const insideTimeField = event.composedPath().some(
+        (entry) => entry instanceof Element && entry.classList.contains("model-v2-time-field"),
+      );
+      if (insideTimeField) return;
       onClose();
     };
     document.addEventListener("click", closeFromOutsideClick);
