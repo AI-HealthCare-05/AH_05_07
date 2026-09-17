@@ -34,7 +34,7 @@
 .today-companion-greeting span { display: block; color: #b58567; }
 .journey-view-frame { position: absolute; width: 135%; left: -15%; bottom: -.6rem; height: 265px; }
 .journey-today .living-visual-stage { margin: 0; height: 100%; border-radius: 0; background: transparent; }
-.journey-today [data-static-landscape] .living-scene-fallback img { left: 0; top: -9%; transform: none; width: 100%; height: 125%; object-fit: cover; mask-image: radial-gradient(ellipse 51% 49% at 50% 49%, black 58%, transparent 97%); }
+.journey-today [data-static-landscape] .living-scene-fallback img { left: 0; top: -9%; transform: none; width: 100%; height: 125%; object-fit: cover; }
 .journey-view-caption { position: absolute; bottom: -1.3rem; left: 18%; display: flex; align-items: center; gap: .4rem; color: #48625f; font-size: .68rem; line-height: 1.4; }
 .journey-view-caption strong { font-weight: 600; }
 .journey-view-caption > span:last-child { display: none; }
