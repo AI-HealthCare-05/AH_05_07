@@ -215,10 +215,19 @@ test("S11 time picker keeps internal pointer events and closes on outside pointe
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   await expectTimeValue(page, id, "23:30");
 
-  await page.locator(".model-v2-step-heading").click({ position: { x: 8, y: 8 } });
+  const nextId = "model-weekday-wake";
+  const nextTrigger = page.locator(`#${nextId}`);
+  await nextTrigger.click();
 
   await expect(page.locator(`#${id}-picker`)).toHaveCount(0);
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(`#${nextId}-picker`)).toBeVisible();
+  await expect(nextTrigger).toHaveAttribute("aria-expanded", "true");
+
+  await page.locator(".model-v2-step-heading").click({ position: { x: 8, y: 8 } });
+
+  await expect(page.locator(`#${nextId}-picker`)).toHaveCount(0);
+  await expect(nextTrigger).toHaveAttribute("aria-expanded", "false");
   await expectTimeValue(page, id, "23:30");
 });
 
@@ -645,7 +654,7 @@ test("S11 refuses an incomplete review edit and leaves the relevant field reacha
   await expect(step(page, "review")).toContainText("171");
 });
 
-test("S11 catches walking hours and non-drinking amount errors during review edits before completing locally", async ({ page }) => {
+test("S11 catches walking hours and normalizes non-drinking amount during review edits before completing locally", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
@@ -654,6 +663,7 @@ test("S11 catches walking hours and non-drinking amount errors during review edi
     path: new URL(request.url()).pathname, method: request.method(), body: request.postData(),
   }));
   const returnToReview = page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true });
+
   await page.getByRole("button", { name: "활동 수정", exact: true }).click();
   await page.locator("#model-walking-days").fill("5");
   const hours = page.locator("#model-walking-hours");
@@ -665,6 +675,7 @@ test("S11 catches walking hours and non-drinking amount errors during review edi
   await expect(hours).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
   await expect(page.getByRole("alert")).toHaveText("걷는 날 하루 평균 시간은 0~24시간 사이의 정수로 입력해 주세요.");
   expect(requests).toEqual([]);
+
   await hours.fill("0");
   await page.locator("#model-walking-minutes").fill("40");
   await expectErrorCleanup(page);
@@ -675,19 +686,13 @@ test("S11 catches walking hours and non-drinking amount errors during review edi
   await page.getByRole("button", { name: "생활 습관 수정", exact: true }).click();
   await page.locator("#model-alcohol-frequency").selectOption("none_past_year");
   const amount = page.locator("#model-alcohol-amount");
-  await amount.selectOption("1_2_drinks");
-  await returnToReview.click();
-  await expect(step(page, "habits")).toBeVisible();
-  await expect(amount).toBeFocused();
-  await expect(amount).toHaveAttribute("aria-invalid", "true");
-  await expect(amount).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
-  await expect(page.getByRole("alert")).toHaveText("최근 1년간 또는 평생 마시지 않았다면 음주량은 ‘해당 없음’을 선택해 주세요.");
+  await expect(amount).toHaveValue("none");
+  await expect(amount).toBeDisabled();
   expect(requests).toEqual([]);
-  await amount.selectOption("none");
-  await expectErrorCleanup(page);
-  await expect(amount).not.toHaveAttribute("aria-invalid");
   await returnToReview.click();
   await expectStep(page, "review");
+  await expect(step(page, "review")).toContainText("해당 없음");
+
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
@@ -728,7 +733,7 @@ test("S11 activity requires whole numbers in each walking range and accepts both
   expect(routed.requests).toHaveLength(0);
 });
 
-test("S11 habits validates lifetime non-drinking and every drinking frequency before advancing", async ({ page }) => {
+test("S11 habits normalizes lifetime non-drinking and validates every drinking frequency before advancing", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await begin(page);
@@ -736,24 +741,37 @@ test("S11 habits validates lifetime non-drinking and every drinking frequency be
   await next(page).click();
   await fillHabits(page);
   const amount = page.locator("#model-alcohol-amount");
+
   for (const frequency of ["lifetime_nonapplicable", "lt_monthly", "monthly_once", "monthly_2_4", "weekly_2_3", "weekly_4_plus"]) {
     const nonDrinking = frequency === "lifetime_nonapplicable";
     await page.locator("#model-alcohol-frequency").selectOption(frequency);
-    await amount.selectOption(nonDrinking ? "1_2_drinks" : "none");
+
+    if (nonDrinking) {
+      await expect(amount).toHaveValue("none");
+      await expect(amount).toBeDisabled();
+      await next(page).click();
+      await expectStep(page, "activity");
+      await previous(page).click();
+      continue;
+    }
+
+    await expect(amount).toBeEnabled();
+    await amount.selectOption("none");
     await next(page).click();
     await expect(step(page, "habits")).toBeVisible();
     await expect(amount).toBeFocused();
     await expect(amount).toHaveAttribute("aria-invalid", "true");
     await expect(amount).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
-    await expect(page.getByRole("alert")).toHaveText(nonDrinking
-      ? "최근 1년간 또는 평생 마시지 않았다면 음주량은 ‘해당 없음’을 선택해 주세요."
-      : "음주량의 ‘해당 없음’은 최근 1년간 또는 평생 마시지 않은 경우에만 선택할 수 있어요. 한 번 마실 때 음주량을 선택해 주세요.");
-    await amount.selectOption(nonDrinking ? "none" : "1_2_drinks");
+    await expect(page.getByRole("alert")).toHaveText(
+      "음주량의 ‘해당 없음’은 최근 1년간 또는 평생 마시지 않은 경우에만 선택할 수 있어요. 한 번 마실 때 음주량을 선택해 주세요.",
+    );
+    await amount.selectOption("1_2_drinks");
     await expectErrorCleanup(page);
     await next(page).click();
     await expectStep(page, "activity");
     await previous(page).click();
   }
+
   expect(routed.requests).toHaveLength(0);
 });
 

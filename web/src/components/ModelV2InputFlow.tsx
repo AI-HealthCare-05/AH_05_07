@@ -426,7 +426,11 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
 
   useEffect(() => {
     if (!open) return;
-    const closeFromOutsidePointer = () => onClose();
+    const closeFromOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest(".model-v2-time-field")) return;
+      onClose();
+    };
     document.addEventListener("pointerdown", closeFromOutsidePointer);
     return () => document.removeEventListener("pointerdown", closeFromOutsidePointer);
   }, [open, onClose]);
