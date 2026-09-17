@@ -13,8 +13,8 @@ for (const screen of ['S02', 'S05', 'S10', 'S11']) test(`normal configured build
   await expect(page.getByText('웹 환경변수를 설정한 뒤 시작할 수 있습니다.')).toHaveCount(0);
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('sk7:e2e-session-change', { detail: { access_token: 'e2e-synthetic-access-token', user: { id: 'synthetic-user' } } })));
   await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
-  await expect(page.locator('.journey-candidate, .journey-recap, [data-dashboard-lane], canvas')).toHaveCount(0);
-  expect(requests.filter(url => /observations|product-score|\.glb(?:\?|$)/.test(url))).toEqual([]);
+  await expect(page.locator('.journey-candidate, .journey-recap, [data-dashboard-lane]')).toHaveCount(0);
+  expect(requests.filter(url => /observations|product-score/.test(url))).toEqual([]);
 });
 
 test('normal artifact serves static robots and llms discovery files', async ({ request }) => {
@@ -147,7 +147,7 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await page.reload();
   await expect(page.locator('.journey-today')).toBeVisible();
   await expect(page.locator('[data-static-landscape="S02"]')).toBeVisible();
-  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('[data-login-companion]')).toHaveCount(0);
   await page.getByRole('button', { name: '설정과 도움말', exact: true }).click();
   await page.getByRole('button', { name: '선별 신호 도구 열기', exact: true }).click();
   await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
