@@ -2,7 +2,7 @@ import { lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react
 
 import { resolveCompanionRuntimeConfig, type CompanionSelection } from "../ui/companion";
 
-export type CompanionFraming = "default" | "journey-s05";
+export type CompanionFraming = "default" | "journey-s05" | "login-narrator";
 export type CompanionInteractionActivation = "disabled" | "immediate" | "after-idle";
 
 export type CompanionRuntimeBoundaryProps = {

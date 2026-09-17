@@ -1055,6 +1055,7 @@
 }
 .journey-demo-preview-shell {
   min-height: 100svh;
+  overflow-x: clip;
   background: #f8f5ed;
   color: var(--sk7-ink);
 }
