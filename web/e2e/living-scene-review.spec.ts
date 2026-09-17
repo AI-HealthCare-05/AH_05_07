@@ -86,7 +86,10 @@ test("ready WebGL does not wait for a pending poster transfer", async ({ page })
     await route.continue();
   });
   try {
-    await page.setViewportSize({ width: 320, height: 568 });
+    // 320x568 intentionally suppresses decorative scene media so the core UI
+    // clears the fixed navigation. Exercise this WebGL handoff contract at the
+    // narrowest viewport where the scene is intentionally active.
+    await page.setViewportSize({ width: 320, height: 844 });
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
     await expect.poll(() => posterStarted).toBe(true);
