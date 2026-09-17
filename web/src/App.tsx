@@ -167,6 +167,7 @@ function Login({
   today,
   companionMode,
   companionSpecies,
+  onCompanionSpeciesChange,
 }: {
   onSession: (session: Session) => void;
   recoveryMessage?: string;
@@ -174,6 +175,7 @@ function Login({
   today: string;
   companionMode: CompanionMode;
   companionSpecies: CompanionSpecies;
+  onCompanionSpeciesChange: (species: CompanionSpecies) => void;
 }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -251,6 +253,17 @@ function Login({
           <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
           <p className="scene-body">측정한 혈압을 날짜·시간대별로 남기고 다시 확인하는 서비스예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
           <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
+          {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
+            <span>함께할 캐릭터</span>
+            <select
+              id="login-companion-species"
+              value={companionSpecies}
+              onChange={(event) => onCompanionSpeciesChange(event.target.value as CompanionSpecies)}
+            >
+              {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+            </select>
+          </label>}
+
         </section>
         <section className="welcome-card" aria-label="이메일 로그인">
           <form onSubmit={submit} aria-busy={pending}>
@@ -1137,7 +1150,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <Login journey={presentation.journey} today={today} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login journey={presentation.journey} today={today} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;

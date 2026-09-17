@@ -956,6 +956,12 @@ test('S01 narrator follows companion identity without changing login semantics',
   const narrator = page.locator('[data-login-companion]');
   await expect(narrator).toBeVisible();
   await expect(narrator).toHaveAttribute('data-login-companion-species', 'rabbit');
+  const picker = page.locator('#login-companion-species');
+  await expect(picker).toBeVisible();
+  await expect(picker).toHaveValue('rabbit');
+  await picker.selectOption('fox');
+  await expect(narrator).toHaveAttribute('data-login-companion-species', 'fox');
+  expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('fox');
   await expect(narrator).toContainText('처음이신가요?');
   await expect(narrator).toContainText('저장 없이 먼저 둘러봐도 돼요.');
   await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();
@@ -979,6 +985,7 @@ test('S01 narrator gate off preserves bubble and core login without renderer net
   await expect(narrator).toBeVisible();
   await expect(narrator).toContainText('저장 없이 먼저 둘러봐도 돼요.');
   await expect(narrator.locator('[data-companion-status], canvas')).toHaveCount(0);
+  await expect(page.locator('#login-companion-species')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '둘러보기', exact: true })).toBeVisible();
   expect(requests.filter(url => /companion\/v1\/|CompanionReviewRenderer|GLTFLoader/.test(url))).toEqual([]);
