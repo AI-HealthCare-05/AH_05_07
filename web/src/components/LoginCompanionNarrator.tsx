@@ -34,7 +34,7 @@ export function LoginCompanionNarrator({
       className="login-companion-narrator"
       data-login-companion
       data-login-companion-species={species}
-      aria-label="둘러보기 안내"
+      aria-label="맛보기 안내"
     >
       <div className="login-companion-character" aria-hidden="true">
         <CompanionRuntimeBoundary
@@ -45,7 +45,7 @@ export function LoginCompanionNarrator({
       </div>
       <p className="login-companion-bubble">
         <span>처음이신가요?</span>
-        <strong>저장 없이 먼저 둘러봐도 돼요.</strong>
+        <strong>마음에 드는 친구를 고르고, 로그인 없이 먼저 둘러봐요.</strong>
       </p>
     </aside>
   );
