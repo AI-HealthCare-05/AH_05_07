@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery } from "./verify-scene-manifest.mjs";
+import { loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery, S02_RENDERER_LOADER_RESERVE_BYTES } from "./verify-scene-manifest.mjs";
 
 const original = JSON.parse(fs.readFileSync(new URL("../src/ui/scene-manifest.v2.json", import.meta.url), "utf8"));
 const inputs = loadInputs();
@@ -55,7 +55,7 @@ test("source module edits require a new pinned identity", () => {
 test("budget includes the reachable fallback and renderer allowance", () => {
   const manifest = structuredClone(original);
   const posters = structuredClone(inputs.posters), posterBytes = new Map(inputs.posterBytes);
-  const asset = manifest.assets[1], evidence = posters.posters.find(p => p.id === asset.id);
+  const asset = manifest.assets.find(a => a.kind === "poster"), evidence = posters.posters.find(p => p.id === asset.id);
   // A valid RIFF metadata chunk increases transfer without changing dimensions.
   const chunk = Buffer.alloc(500008); chunk.write("JUNK"); chunk.writeUInt32LE(500000, 4);
   const bytes = Buffer.concat([posterBytes.get(asset.id), chunk]); bytes.writeUInt32LE(bytes.length - 8, 4);
@@ -68,9 +68,11 @@ test("budget includes the reachable fallback and renderer allowance", () => {
 
 test("one activation budgets the largest poster variant, not three downloads", () => {
   const budget = verifySceneManifest(original, inputs).find(b => b.recipeId === "s02-garden-gate");
-  const fallback = original.recipes[0];
+  const fallback = original.recipes.find(r => r.id === "s02-garden-gate-poster");
+  const bear = original.assets.find(a => a.id === "moa-bear-lite");
+  const environment = original.assets.find(a => a.id === "procedural-landmarks");
   const largest = Math.max(...fallback.assetIds.map(id => original.assets.find(a => a.id === id).delivery.byteLength));
-  assert.equal(budget.plannedBytes, 250000 + original.assets[0].delivery.byteLength + original.assets[2].sourceModule.byteLength + largest);
+  assert.equal(budget.plannedBytes, S02_RENDERER_LOADER_RESERVE_BYTES + bear.delivery.byteLength + environment.sourceModule.byteLength + largest);
 });
 
 for (const [name, mutate, message] of [
@@ -85,7 +87,7 @@ for (const [name, mutate, message] of [
 });
 
 test("poster binaries are hashed, not trusted from metadata", () => {
-  const posterBytes = new Map(inputs.posterBytes), id = original.assets[1].id;
+  const posterBytes = new Map(inputs.posterBytes), id = original.assets.find(a => a.kind === "poster").id;
   const bytes = Buffer.from(posterBytes.get(id)); bytes[bytes.length - 1] ^= 1; posterBytes.set(id, bytes);
   assert.throws(() => verifySceneManifest(original, { ...inputs, posterBytes }), /binary identity/);
 });
@@ -99,7 +101,8 @@ test("renderer changes require a fresh capture", () => {
 });
 test("matching metadata cannot authorize an arbitrary delivery URL", () => {
   const manifest = structuredClone(original), posters = structuredClone(inputs.posters);
-  manifest.assets[1].delivery.url = posters.posters[0].delivery.url = "https://example.invalid/unreviewed.webp";
+  const posterAsset = manifest.assets.find(a => a.kind === "poster");
+  posterAsset.delivery.url = posters.posters[0].delivery.url = "https://example.invalid/unreviewed.webp";
   assert.throws(() => verifySceneManifest(manifest, { ...inputs, posters }), /local capture URL/);
 });
 for (const [name, mutate, message] of [
@@ -178,7 +181,7 @@ for (const [name, mutate, message] of [
 test("S10 budgets both its composition module and shared landmark geometry", () => {
   const recipe = s10(original), fallback = original.recipes.find(r => r.id === recipe.fallback.tier1RecipeId);
   const byteLength = asset => (asset.delivery ?? asset.sourceModule).byteLength;
-  const expected = 250000 + recipe.assetIds.reduce((sum, id) => sum + byteLength(original.assets.find(a => a.id === id)), 0)
+  const expected = S02_RENDERER_LOADER_RESERVE_BYTES + recipe.assetIds.reduce((sum, id) => sum + byteLength(original.assets.find(a => a.id === id)), 0)
     + Math.max(...fallback.assetIds.map(id => byteLength(original.assets.find(a => a.id === id))));
   assert.equal(verifySceneManifest(original, inputs).find(b => b.recipeId === recipe.id).plannedBytes, expected);
 });
@@ -188,4 +191,64 @@ test("S10 source geometry cannot change without registration", () => {
 for (const source of ["web/src/styles.css", "web/src/components/VisualStage.tsx", "web/src/ui/sceneRecipes.ts", "web/src/components/scene/disposeScene.ts"]) test(`poster capture pins ${source}`, () => {
   const sourceHashes = { ...inputs.sourceHashes, [source]: "a".repeat(64) };
   assert.throws(() => verifySceneManifest(original, { ...inputs, sourceHashes }), /render source hashes/);
+});
+
+test("S02 selectable allowlist covers exactly the 11 approved lite species", () => {
+  assert.equal(original.s02SelectableCharacters.length, 11);
+  const species = new Set(original.assets.filter(a => a.kind === "character").map(a => a.companionSpecies));
+  assert.deepEqual(new Set(["bear", "rabbit", "cat", "dog", "red_panda", "otter", "capybara", "hedgehog", "penguin", "fox", "squirrel"]), species);
+  for (const id of original.s02SelectableCharacters) {
+    const asset = original.assets.find(a => a.id === id);
+    assert.ok(asset && asset.kind === "character");
+    assert.equal(asset.variant ?? "lite", "lite");
+  }
+});
+
+test("S02 per-selection accounting budgets each selected alternative independently", () => {
+  const budgets = verifySceneManifest(original, inputs);
+  for (const recipe of original.recipes.filter(r => r.mode === "realtime" && r.screens[0] === "S02")) {
+    const budget = budgets.find(b => b.recipeId === recipe.id);
+    assert.ok(budget);
+    assert.ok(budget.plannedBytes <= 900000);
+  }
+  // red_panda is the worst-case approved alternative and must still fit.
+  const redPanda = original.assets.find(a => a.companionSpecies === "red_panda" && a.kind === "character");
+  assert.ok(redPanda);
+});
+
+test("rejects S02 allowlist with missing species", () => {
+  const manifest = structuredClone(original);
+  manifest.s02SelectableCharacters = manifest.s02SelectableCharacters.filter(id => {
+    const asset = manifest.assets.find(a => a.id === id);
+    return asset?.companionSpecies !== "red_panda";
+  });
+  assert.throws(() => verifySceneManifest(manifest, inputs), /all 11 approved species/);
+});
+
+test("rejects S02 allowlist with duplicate entry", () => {
+  const manifest = structuredClone(original);
+  manifest.s02SelectableCharacters.push(manifest.s02SelectableCharacters[0]);
+  assert.throws(() => verifySceneManifest(manifest, inputs), /exactly 11 unique/);
+});
+
+test("rejects S02 allowlist pointing at a non-character asset", () => {
+  const manifest = structuredClone(original);
+  manifest.s02SelectableCharacters[0] = manifest.assets.find(a => a.kind === "poster").id;
+  assert.throws(() => verifySceneManifest(manifest, inputs), /not a registered selectable character/);
+});
+
+test("rejects character registered as a non-lite variant", () => {
+  const manifest = structuredClone(original);
+  const rabbit = manifest.assets.find(a => a.companionSpecies === "rabbit" && a.kind === "character");
+  const standard = inputs.companion.objects.find(o => o.species === "rabbit" && o.variant === "standard");
+  rabbit.provenance.sourceAssetId = standard.asset_id;
+  rabbit.delivery = { ...rabbit.delivery, url: `${inputs.companion.runtime_delivery.custom_domain}/${standard.r2_object_key}`, objectKey: standard.r2_object_key, sha256: standard.sha256, byteLength: standard.bytes };
+  assert.throws(() => verifySceneManifest(manifest, inputs), /unregistered character/);
+});
+
+test("rejects character whose scene registration disagrees with generated companion manifest", () => {
+  const manifest = structuredClone(original);
+  const rabbit = manifest.assets.find(a => a.companionSpecies === "rabbit" && a.kind === "character");
+  rabbit.delivery.sha256 = "a".repeat(64);
+  assert.throws(() => verifySceneManifest(manifest, inputs), /evidence mismatch/);
 });
