@@ -96,16 +96,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-garden-gate-mobile320",
-        "sourceHash": "b4f34a96987f9a80a33db9a08401b2d154b9f5445caa5e4b9c72ae05784bc689",
+        "sourceHash": "fe4f6aae595e110ef74f6dc39f321aa9f687950685b618d4ee411b0c454ff771",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-mobile320-b4f34a96987f9a80.webp",
-        "objectKey": "scene-review/s02/v1/garden-gate-mobile320-b4f34a96987f9a80.webp",
-        "sha256": "b4f34a96987f9a80a33db9a08401b2d154b9f5445caa5e4b9c72ae05784bc689",
-        "byteLength": 10266,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-mobile320-fe4f6aae595e110e.webp",
+        "objectKey": "scene-review/s02/v1/garden-gate-mobile320-fe4f6aae595e110e.webp",
+        "sha256": "fe4f6aae595e110ef74f6dc39f321aa9f687950685b618d4ee411b0c454ff771",
+        "byteLength": 10422,
         "mime": "image/webp"
       }
     },
@@ -164,16 +164,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-herb-garden-mobile320",
-        "sourceHash": "256383cacd9d477c168fc07add5d4c28e41865245bdada58276c693d1d018bc2",
+        "sourceHash": "260e8e5ac52837bc6ffc9360fe3144c7270a04ee6cbae6f37b7b784c620763a5",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-mobile320-256383cacd9d477c.webp",
-        "objectKey": "scene-review/s02/v1/herb-garden-mobile320-256383cacd9d477c.webp",
-        "sha256": "256383cacd9d477c168fc07add5d4c28e41865245bdada58276c693d1d018bc2",
-        "byteLength": 9964,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-mobile320-260e8e5ac52837bc.webp",
+        "objectKey": "scene-review/s02/v1/herb-garden-mobile320-260e8e5ac52837bc.webp",
+        "sha256": "260e8e5ac52837bc6ffc9360fe3144c7270a04ee6cbae6f37b7b784c620763a5",
+        "byteLength": 10042,
         "mime": "image/webp"
       }
     },
@@ -199,16 +199,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-shade-tree-mobile320",
-        "sourceHash": "e86bc25e9295c796cecbcfc9bca076f4a708e0539558d2672e1c898721873e81",
+        "sourceHash": "391eaf6cc4f9298dbf517a30601ab2ac15fcbf82ac2d38a5d7f8063cd6a2bb93",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-mobile320-e86bc25e9295c796.webp",
-        "objectKey": "scene-review/s02/v1/shade-tree-mobile320-e86bc25e9295c796.webp",
-        "sha256": "e86bc25e9295c796cecbcfc9bca076f4a708e0539558d2672e1c898721873e81",
-        "byteLength": 10354,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-mobile320-391eaf6cc4f9298d.webp",
+        "objectKey": "scene-review/s02/v1/shade-tree-mobile320-391eaf6cc4f9298d.webp",
+        "sha256": "391eaf6cc4f9298dbf517a30601ab2ac15fcbf82ac2d38a5d7f8063cd6a2bb93",
+        "byteLength": 10444,
         "mime": "image/webp"
       }
     },
@@ -234,16 +234,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-footbridge-mobile320",
-        "sourceHash": "7be34a4a09e04d3f40d2639074607740a351e28ae1e7994811f486c54bce22dd",
+        "sourceHash": "902d1a82f0b57ef076540be3bea4732ae33bf6dbb96a8c0414db9aa5f5a14d63",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-mobile320-7be34a4a09e04d3f.webp",
-        "objectKey": "scene-review/s02/v1/footbridge-mobile320-7be34a4a09e04d3f.webp",
-        "sha256": "7be34a4a09e04d3f40d2639074607740a351e28ae1e7994811f486c54bce22dd",
-        "byteLength": 10248,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-mobile320-902d1a82f0b57ef0.webp",
+        "objectKey": "scene-review/s02/v1/footbridge-mobile320-902d1a82f0b57ef0.webp",
+        "sha256": "902d1a82f0b57ef076540be3bea4732ae33bf6dbb96a8c0414db9aa5f5a14d63",
+        "byteLength": 10334,
         "mime": "image/webp"
       }
     },
@@ -269,16 +269,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-reading-shelter-mobile320",
-        "sourceHash": "c0929ce1ae2b881a70b6907fbc2458d4cb84372536d1a18564882bcda9082649",
+        "sourceHash": "0f30a693a608b2bd90d97e6a28f258493a370b3772e0254ab6e2ab2bb5fda461",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-mobile320-c0929ce1ae2b881a.webp",
-        "objectKey": "scene-review/s02/v1/reading-shelter-mobile320-c0929ce1ae2b881a.webp",
-        "sha256": "c0929ce1ae2b881a70b6907fbc2458d4cb84372536d1a18564882bcda9082649",
-        "byteLength": 12118,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-mobile320-0f30a693a608b2bd.webp",
+        "objectKey": "scene-review/s02/v1/reading-shelter-mobile320-0f30a693a608b2bd.webp",
+        "sha256": "0f30a693a608b2bd90d97e6a28f258493a370b3772e0254ab6e2ab2bb5fda461",
+        "byteLength": 12206,
         "mime": "image/webp"
       }
     },
@@ -304,16 +304,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-pavilion-mobile320",
-        "sourceHash": "10344ad5b636e518a2f94a5ca363080a0714e1c4acdb6f1d9fabf73b59777169",
+        "sourceHash": "d93dc996ce627dce8b9f3f49e5563f97ce50bd5aa942253613f0e32abb6fffa3",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-mobile320-10344ad5b636e518.webp",
-        "objectKey": "scene-review/s02/v1/pavilion-mobile320-10344ad5b636e518.webp",
-        "sha256": "10344ad5b636e518a2f94a5ca363080a0714e1c4acdb6f1d9fabf73b59777169",
-        "byteLength": 12152,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-mobile320-d93dc996ce627dce.webp",
+        "objectKey": "scene-review/s02/v1/pavilion-mobile320-d93dc996ce627dce.webp",
+        "sha256": "d93dc996ce627dce8b9f3f49e5563f97ce50bd5aa942253613f0e32abb6fffa3",
+        "byteLength": 12258,
         "mime": "image/webp"
       }
     },
@@ -339,16 +339,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-sunset-overlook-mobile320",
-        "sourceHash": "ddd405543b97490da383d9d0c2229809faabadd9e9d7425e4030e94c4205f5c8",
+        "sourceHash": "224f3def5b54fab3feeaff79f885c723e4f6b9fc48c68d779601724e8aaca623",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-mobile320-ddd405543b97490d.webp",
-        "objectKey": "scene-review/s02/v1/sunset-overlook-mobile320-ddd405543b97490d.webp",
-        "sha256": "ddd405543b97490da383d9d0c2229809faabadd9e9d7425e4030e94c4205f5c8",
-        "byteLength": 10734,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-mobile320-224f3def5b54fab3.webp",
+        "objectKey": "scene-review/s02/v1/sunset-overlook-mobile320-224f3def5b54fab3.webp",
+        "sha256": "224f3def5b54fab3feeaff79f885c723e4f6b9fc48c68d779601724e8aaca623",
+        "byteLength": 10706,
         "mime": "image/webp"
       }
     },
@@ -374,16 +374,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-garden-gate-mobile390",
-        "sourceHash": "160b4e9e10b1001bd0dd1751a6a23a0e03d0ef53d5239f535ed411e08b60a106",
+        "sourceHash": "849e677cf8f3b2ac0cc2c25cc19c8f705a896c70751b0199e2838c91139f8f5c",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-mobile390-160b4e9e10b1001b.webp",
-        "objectKey": "scene-review/s02/v1/garden-gate-mobile390-160b4e9e10b1001b.webp",
-        "sha256": "160b4e9e10b1001bd0dd1751a6a23a0e03d0ef53d5239f535ed411e08b60a106",
-        "byteLength": 12780,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-mobile390-849e677cf8f3b2ac.webp",
+        "objectKey": "scene-review/s02/v1/garden-gate-mobile390-849e677cf8f3b2ac.webp",
+        "sha256": "849e677cf8f3b2ac0cc2c25cc19c8f705a896c70751b0199e2838c91139f8f5c",
+        "byteLength": 12768,
         "mime": "image/webp"
       }
     },
@@ -409,16 +409,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-herb-garden-mobile390",
-        "sourceHash": "d5454f669dc2d52c7e863d47d22685aaf1b07e6197a3cd89461b3fb45f3c512f",
+        "sourceHash": "68069cc00b6df339e8df177744cfa980dd341f910cd6ad9bbe284a0472b44c71",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-mobile390-d5454f669dc2d52c.webp",
-        "objectKey": "scene-review/s02/v1/herb-garden-mobile390-d5454f669dc2d52c.webp",
-        "sha256": "d5454f669dc2d52c7e863d47d22685aaf1b07e6197a3cd89461b3fb45f3c512f",
-        "byteLength": 12338,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-mobile390-68069cc00b6df339.webp",
+        "objectKey": "scene-review/s02/v1/herb-garden-mobile390-68069cc00b6df339.webp",
+        "sha256": "68069cc00b6df339e8df177744cfa980dd341f910cd6ad9bbe284a0472b44c71",
+        "byteLength": 12356,
         "mime": "image/webp"
       }
     },
@@ -444,16 +444,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-shade-tree-mobile390",
-        "sourceHash": "abc09cf1e98ba4fe62a008efe83350512fc4583613e9855b344be0bef14f43be",
+        "sourceHash": "73bc07331548b09379b8b23569934327840b9da747f9ff58007cdee37cfa2ac1",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-mobile390-abc09cf1e98ba4fe.webp",
-        "objectKey": "scene-review/s02/v1/shade-tree-mobile390-abc09cf1e98ba4fe.webp",
-        "sha256": "abc09cf1e98ba4fe62a008efe83350512fc4583613e9855b344be0bef14f43be",
-        "byteLength": 12776,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-mobile390-73bc07331548b093.webp",
+        "objectKey": "scene-review/s02/v1/shade-tree-mobile390-73bc07331548b093.webp",
+        "sha256": "73bc07331548b09379b8b23569934327840b9da747f9ff58007cdee37cfa2ac1",
+        "byteLength": 12762,
         "mime": "image/webp"
       }
     },
@@ -479,16 +479,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-footbridge-mobile390",
-        "sourceHash": "4cd6ccab4b5c0a0750a413f01c9daa7a9f4f923b6ed8307d3bf1762c061bada3",
+        "sourceHash": "7502d7cdea65c4785afec5227a927014bee3a2dc20a940a88d270d64a1c43998",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
-        "objectKey": "scene-review/s02/v1/footbridge-mobile390-4cd6ccab4b5c0a07.webp",
-        "sha256": "4cd6ccab4b5c0a0750a413f01c9daa7a9f4f923b6ed8307d3bf1762c061bada3",
-        "byteLength": 12776,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-mobile390-7502d7cdea65c478.webp",
+        "objectKey": "scene-review/s02/v1/footbridge-mobile390-7502d7cdea65c478.webp",
+        "sha256": "7502d7cdea65c4785afec5227a927014bee3a2dc20a940a88d270d64a1c43998",
+        "byteLength": 12766,
         "mime": "image/webp"
       }
     },
@@ -514,16 +514,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-reading-shelter-mobile390",
-        "sourceHash": "d13f7eb6a5803418fc3027b04f857b5e60a98ff0cb3af4887a3e3c4defd5a9f6",
+        "sourceHash": "35fed5c812a5b4b0765abc30ac852e62e59f2a6227789e30ce5eb5263aee27b4",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-mobile390-d13f7eb6a5803418.webp",
-        "objectKey": "scene-review/s02/v1/reading-shelter-mobile390-d13f7eb6a5803418.webp",
-        "sha256": "d13f7eb6a5803418fc3027b04f857b5e60a98ff0cb3af4887a3e3c4defd5a9f6",
-        "byteLength": 14912,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-mobile390-35fed5c812a5b4b0.webp",
+        "objectKey": "scene-review/s02/v1/reading-shelter-mobile390-35fed5c812a5b4b0.webp",
+        "sha256": "35fed5c812a5b4b0765abc30ac852e62e59f2a6227789e30ce5eb5263aee27b4",
+        "byteLength": 14884,
         "mime": "image/webp"
       }
     },
@@ -549,16 +549,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-pavilion-mobile390",
-        "sourceHash": "b83dd0c5e55c975903ab73a597e8e1961ef583ff680ea8bb78a76b47e08a5db5",
+        "sourceHash": "a7de91e70dab9faad04ef6e4d5c6312d708b758b230f27f5e4fc14513299ddf1",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-mobile390-b83dd0c5e55c9759.webp",
-        "objectKey": "scene-review/s02/v1/pavilion-mobile390-b83dd0c5e55c9759.webp",
-        "sha256": "b83dd0c5e55c975903ab73a597e8e1961ef583ff680ea8bb78a76b47e08a5db5",
-        "byteLength": 14984,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-mobile390-a7de91e70dab9faa.webp",
+        "objectKey": "scene-review/s02/v1/pavilion-mobile390-a7de91e70dab9faa.webp",
+        "sha256": "a7de91e70dab9faad04ef6e4d5c6312d708b758b230f27f5e4fc14513299ddf1",
+        "byteLength": 15010,
         "mime": "image/webp"
       }
     },
@@ -584,16 +584,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-sunset-overlook-mobile390",
-        "sourceHash": "4b3f03c47ced09848db75fc735db09d13d13030ef0dddf1f4bd1b8593b0838b4",
+        "sourceHash": "f8abe3645b39e8cfce870f3dc9bb502fcb410f99f8c9937b8c7362228e76cd51",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-mobile390-4b3f03c47ced0984.webp",
-        "objectKey": "scene-review/s02/v1/sunset-overlook-mobile390-4b3f03c47ced0984.webp",
-        "sha256": "4b3f03c47ced09848db75fc735db09d13d13030ef0dddf1f4bd1b8593b0838b4",
-        "byteLength": 13348,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-mobile390-f8abe3645b39e8cf.webp",
+        "objectKey": "scene-review/s02/v1/sunset-overlook-mobile390-f8abe3645b39e8cf.webp",
+        "sha256": "f8abe3645b39e8cfce870f3dc9bb502fcb410f99f8c9937b8c7362228e76cd51",
+        "byteLength": 13352,
         "mime": "image/webp"
       }
     },
@@ -619,16 +619,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-garden-gate-desktop",
-        "sourceHash": "d43979ed01ef66af33165dfa9d811e4aadcf0a1d20ba02f00b41bcf3a419b440",
+        "sourceHash": "e085f535283d43c22c6f1925fd60bce702ea723fe2e18618374cb897e0d1b9b9",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-desktop-d43979ed01ef66af.webp",
-        "objectKey": "scene-review/s02/v1/garden-gate-desktop-d43979ed01ef66af.webp",
-        "sha256": "d43979ed01ef66af33165dfa9d811e4aadcf0a1d20ba02f00b41bcf3a419b440",
-        "byteLength": 23440,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/garden-gate-desktop-e085f535283d43c2.webp",
+        "objectKey": "scene-review/s02/v1/garden-gate-desktop-e085f535283d43c2.webp",
+        "sha256": "e085f535283d43c22c6f1925fd60bce702ea723fe2e18618374cb897e0d1b9b9",
+        "byteLength": 23446,
         "mime": "image/webp"
       }
     },
@@ -654,16 +654,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-herb-garden-desktop",
-        "sourceHash": "6943cc7c4e99ab30340f0bf493b0d28866a9f97a9b2b6c6b2bf94d88537eb8ee",
+        "sourceHash": "7956ca7a13df455acce857d21f294cceb082a8b22df4b6380b18fa8c593fdf1b",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-desktop-6943cc7c4e99ab30.webp",
-        "objectKey": "scene-review/s02/v1/herb-garden-desktop-6943cc7c4e99ab30.webp",
-        "sha256": "6943cc7c4e99ab30340f0bf493b0d28866a9f97a9b2b6c6b2bf94d88537eb8ee",
-        "byteLength": 22316,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/herb-garden-desktop-7956ca7a13df455a.webp",
+        "objectKey": "scene-review/s02/v1/herb-garden-desktop-7956ca7a13df455a.webp",
+        "sha256": "7956ca7a13df455acce857d21f294cceb082a8b22df4b6380b18fa8c593fdf1b",
+        "byteLength": 22232,
         "mime": "image/webp"
       }
     },
@@ -689,16 +689,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-shade-tree-desktop",
-        "sourceHash": "39bb4027700f629d9e1b7857a1ed53917d71fcc41f0fd8186e8a45a234959606",
+        "sourceHash": "3998a649ead4cd65d0cd72e49cacb6670328cbfc8408c2fe6a7d68650c66be15",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-desktop-39bb4027700f629d.webp",
-        "objectKey": "scene-review/s02/v1/shade-tree-desktop-39bb4027700f629d.webp",
-        "sha256": "39bb4027700f629d9e1b7857a1ed53917d71fcc41f0fd8186e8a45a234959606",
-        "byteLength": 23358,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/shade-tree-desktop-3998a649ead4cd65.webp",
+        "objectKey": "scene-review/s02/v1/shade-tree-desktop-3998a649ead4cd65.webp",
+        "sha256": "3998a649ead4cd65d0cd72e49cacb6670328cbfc8408c2fe6a7d68650c66be15",
+        "byteLength": 23330,
         "mime": "image/webp"
       }
     },
@@ -724,16 +724,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-footbridge-desktop",
-        "sourceHash": "f163f48ff3ce5340d1ccdc86e8b44f2fd97f8994f723c141947b1b860c1abc05",
+        "sourceHash": "09a7e471e6f893e25a2a3ecc0ce77c6bdaf66b389a761b5c8ef24f8f92203120",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-desktop-f163f48ff3ce5340.webp",
-        "objectKey": "scene-review/s02/v1/footbridge-desktop-f163f48ff3ce5340.webp",
-        "sha256": "f163f48ff3ce5340d1ccdc86e8b44f2fd97f8994f723c141947b1b860c1abc05",
-        "byteLength": 23668,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/footbridge-desktop-09a7e471e6f893e2.webp",
+        "objectKey": "scene-review/s02/v1/footbridge-desktop-09a7e471e6f893e2.webp",
+        "sha256": "09a7e471e6f893e25a2a3ecc0ce77c6bdaf66b389a761b5c8ef24f8f92203120",
+        "byteLength": 23608,
         "mime": "image/webp"
       }
     },
@@ -759,16 +759,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-reading-shelter-desktop",
-        "sourceHash": "7a76a073a9a6f05cbde1a5564a560fda0d56dfa152cf6eabcb17556f7bbf2026",
+        "sourceHash": "454f48ba1a993b580318583c23baf2e14abf58db9a0257344170f920127c0a94",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-desktop-7a76a073a9a6f05c.webp",
-        "objectKey": "scene-review/s02/v1/reading-shelter-desktop-7a76a073a9a6f05c.webp",
-        "sha256": "7a76a073a9a6f05cbde1a5564a560fda0d56dfa152cf6eabcb17556f7bbf2026",
-        "byteLength": 27042,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/reading-shelter-desktop-454f48ba1a993b58.webp",
+        "objectKey": "scene-review/s02/v1/reading-shelter-desktop-454f48ba1a993b58.webp",
+        "sha256": "454f48ba1a993b580318583c23baf2e14abf58db9a0257344170f920127c0a94",
+        "byteLength": 27006,
         "mime": "image/webp"
       }
     },
@@ -794,16 +794,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-pavilion-desktop",
-        "sourceHash": "6a0f698a51b6d969b487d5f400eb092138623d2963fc3a0aa18ba64a10cdb6b4",
+        "sourceHash": "222ddd8f1dd29f71bbac998954d7610d212445367baa99d1f1e4670a86bc4af6",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-desktop-6a0f698a51b6d969.webp",
-        "objectKey": "scene-review/s02/v1/pavilion-desktop-6a0f698a51b6d969.webp",
-        "sha256": "6a0f698a51b6d969b487d5f400eb092138623d2963fc3a0aa18ba64a10cdb6b4",
-        "byteLength": 27328,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/pavilion-desktop-222ddd8f1dd29f71.webp",
+        "objectKey": "scene-review/s02/v1/pavilion-desktop-222ddd8f1dd29f71.webp",
+        "sha256": "222ddd8f1dd29f71bbac998954d7610d212445367baa99d1f1e4670a86bc4af6",
+        "byteLength": 27302,
         "mime": "image/webp"
       }
     },
@@ -829,16 +829,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-sunset-overlook-desktop",
-        "sourceHash": "d7d0b9125c632c493f18ce30193b5d3d13a8398929a448f49e2f31f64c0672c9",
+        "sourceHash": "1a5a0a375b5bdd0390bf6047ba1de5ba899d0d19a60d7547a9d173df66639833",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-desktop-d7d0b9125c632c49.webp",
-        "objectKey": "scene-review/s02/v1/sunset-overlook-desktop-d7d0b9125c632c49.webp",
-        "sha256": "d7d0b9125c632c493f18ce30193b5d3d13a8398929a448f49e2f31f64c0672c9",
-        "byteLength": 24602,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s02/v1/sunset-overlook-desktop-1a5a0a375b5bdd03.webp",
+        "objectKey": "scene-review/s02/v1/sunset-overlook-desktop-1a5a0a375b5bdd03.webp",
+        "sha256": "1a5a0a375b5bdd0390bf6047ba1de5ba899d0d19a60d7547a9d173df66639833",
+        "byteLength": 24574,
         "mime": "image/webp"
       }
     },
@@ -897,16 +897,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-garden-gate-mobile320",
-        "sourceHash": "2b8a3bf0fdc21b88e6ba53fd80fc258115d3cd7f3fac6cb92dcfcd143abc9ff6",
+        "sourceHash": "bb154df075c3cf4ac3db163c99d1e822c480e765f02e5d0ffdb8c94a3c9df8bb",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
-        "objectKey": "scene-review/s10/v1/garden-gate-mobile320-2b8a3bf0fdc21b88.webp",
-        "sha256": "2b8a3bf0fdc21b88e6ba53fd80fc258115d3cd7f3fac6cb92dcfcd143abc9ff6",
-        "byteLength": 11882,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile320-bb154df075c3cf4a.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-mobile320-bb154df075c3cf4a.webp",
+        "sha256": "bb154df075c3cf4ac3db163c99d1e822c480e765f02e5d0ffdb8c94a3c9df8bb",
+        "byteLength": 11868,
         "mime": "image/webp"
       }
     },
@@ -932,16 +932,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-herb-garden-mobile320",
-        "sourceHash": "3bf0cf90abe4ce44204b1b26e55ab91f1c2b1b7f8cf4e4723edb95ecbe1c7192",
+        "sourceHash": "7d66f8dff13319620c9ecd5278fffff832d2613c6f3823ff850fdcb7047b926f",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
-        "objectKey": "scene-review/s10/v1/herb-garden-mobile320-3bf0cf90abe4ce44.webp",
-        "sha256": "3bf0cf90abe4ce44204b1b26e55ab91f1c2b1b7f8cf4e4723edb95ecbe1c7192",
-        "byteLength": 11378,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile320-7d66f8dff1331962.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-mobile320-7d66f8dff1331962.webp",
+        "sha256": "7d66f8dff13319620c9ecd5278fffff832d2613c6f3823ff850fdcb7047b926f",
+        "byteLength": 11356,
         "mime": "image/webp"
       }
     },
@@ -967,16 +967,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-shade-tree-mobile320",
-        "sourceHash": "68aefadd77296c076e47619138933a10f8d0a19cd0fbe6f43606640274e68eb3",
+        "sourceHash": "51528a93f075b4123d0a1b3be592c0a3a541b966543b1a7a62c2d3cafd6a3d71",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
-        "objectKey": "scene-review/s10/v1/shade-tree-mobile320-68aefadd77296c07.webp",
-        "sha256": "68aefadd77296c076e47619138933a10f8d0a19cd0fbe6f43606640274e68eb3",
-        "byteLength": 11894,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile320-51528a93f075b412.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-mobile320-51528a93f075b412.webp",
+        "sha256": "51528a93f075b4123d0a1b3be592c0a3a541b966543b1a7a62c2d3cafd6a3d71",
+        "byteLength": 11864,
         "mime": "image/webp"
       }
     },
@@ -1002,16 +1002,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-footbridge-mobile320",
-        "sourceHash": "877ae27d9fa1cf912704b4f387df193b2e45e7fcea977ff9210039c2cd8deb97",
+        "sourceHash": "8bec6e47b551bb06a75ed0a45a52f7157afb53e42eb018a559a072e2c5b772ed",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
-        "objectKey": "scene-review/s10/v1/footbridge-mobile320-877ae27d9fa1cf91.webp",
-        "sha256": "877ae27d9fa1cf912704b4f387df193b2e45e7fcea977ff9210039c2cd8deb97",
-        "byteLength": 11790,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile320-8bec6e47b551bb06.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-mobile320-8bec6e47b551bb06.webp",
+        "sha256": "8bec6e47b551bb06a75ed0a45a52f7157afb53e42eb018a559a072e2c5b772ed",
+        "byteLength": 11814,
         "mime": "image/webp"
       }
     },
@@ -1037,16 +1037,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-reading-shelter-mobile320",
-        "sourceHash": "7bb3a375c3f5585eb7d148f77d0bf2517e228538bee20ed749013f5a908cadd0",
+        "sourceHash": "c8189f2e132a708730f533ee655ff7e6d0c5660d5aa5ad85b6b7b6f91bd6bec4",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
-        "objectKey": "scene-review/s10/v1/reading-shelter-mobile320-7bb3a375c3f5585e.webp",
-        "sha256": "7bb3a375c3f5585eb7d148f77d0bf2517e228538bee20ed749013f5a908cadd0",
-        "byteLength": 13740,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile320-c8189f2e132a7087.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-mobile320-c8189f2e132a7087.webp",
+        "sha256": "c8189f2e132a708730f533ee655ff7e6d0c5660d5aa5ad85b6b7b6f91bd6bec4",
+        "byteLength": 13734,
         "mime": "image/webp"
       }
     },
@@ -1072,16 +1072,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-pavilion-mobile320",
-        "sourceHash": "367a1b0f27b0ff3075b0875eb40199bfa892a345a659d7d75230901c15b5c506",
+        "sourceHash": "f15464685dffe225ff1d46572343ac6b1fa7e826fe7d8e869549f355142123ef",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
-        "objectKey": "scene-review/s10/v1/pavilion-mobile320-367a1b0f27b0ff30.webp",
-        "sha256": "367a1b0f27b0ff3075b0875eb40199bfa892a345a659d7d75230901c15b5c506",
-        "byteLength": 13898,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile320-f15464685dffe225.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-mobile320-f15464685dffe225.webp",
+        "sha256": "f15464685dffe225ff1d46572343ac6b1fa7e826fe7d8e869549f355142123ef",
+        "byteLength": 13892,
         "mime": "image/webp"
       }
     },
@@ -1107,16 +1107,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-sunset-overlook-mobile320",
-        "sourceHash": "266e55e5ff5af64ac006e35e9e40f69725bebf154632f741304693beeae6a680",
+        "sourceHash": "4e0dd3af82d7b7b2e72fb3a1d5f07f2caa7ab67d5558972040f39eeb049552af",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
-        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile320-266e55e5ff5af64a.webp",
-        "sha256": "266e55e5ff5af64ac006e35e9e40f69725bebf154632f741304693beeae6a680",
-        "byteLength": 12238,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile320-4e0dd3af82d7b7b2.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile320-4e0dd3af82d7b7b2.webp",
+        "sha256": "4e0dd3af82d7b7b2e72fb3a1d5f07f2caa7ab67d5558972040f39eeb049552af",
+        "byteLength": 12210,
         "mime": "image/webp"
       }
     },
@@ -1142,16 +1142,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-garden-gate-mobile390",
-        "sourceHash": "d48b2035bc3c2aa7152754ee8118750f8387b157f1b6bd8a23af1b692c943aa3",
+        "sourceHash": "7628b2cae731bd2288206b56f9e68519bfbb3c5ee767e46e25a918630b9ba8da",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
-        "objectKey": "scene-review/s10/v1/garden-gate-mobile390-d48b2035bc3c2aa7.webp",
-        "sha256": "d48b2035bc3c2aa7152754ee8118750f8387b157f1b6bd8a23af1b692c943aa3",
-        "byteLength": 14416,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-mobile390-7628b2cae731bd22.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-mobile390-7628b2cae731bd22.webp",
+        "sha256": "7628b2cae731bd2288206b56f9e68519bfbb3c5ee767e46e25a918630b9ba8da",
+        "byteLength": 14256,
         "mime": "image/webp"
       }
     },
@@ -1177,16 +1177,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-herb-garden-mobile390",
-        "sourceHash": "fccf71971847f36ca24c6b9c28cac40f3fbd37b5bc1eb8ae0fc6cc888fd2a1eb",
+        "sourceHash": "2473b68536049e552391b14c8361ce55f48fe1f460174cc9d143751178820bc6",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
-        "objectKey": "scene-review/s10/v1/herb-garden-mobile390-fccf71971847f36c.webp",
-        "sha256": "fccf71971847f36ca24c6b9c28cac40f3fbd37b5bc1eb8ae0fc6cc888fd2a1eb",
-        "byteLength": 13870,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-mobile390-2473b68536049e55.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-mobile390-2473b68536049e55.webp",
+        "sha256": "2473b68536049e552391b14c8361ce55f48fe1f460174cc9d143751178820bc6",
+        "byteLength": 13842,
         "mime": "image/webp"
       }
     },
@@ -1212,16 +1212,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-shade-tree-mobile390",
-        "sourceHash": "08d2be3ae19fc48e7022473944a8ccc74f8c8d586d6162627c91d958c4099af5",
+        "sourceHash": "41d42dca9476f325c6275d6c88b00fccce803306085ac9811bf6f44105bb43a8",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
-        "objectKey": "scene-review/s10/v1/shade-tree-mobile390-08d2be3ae19fc48e.webp",
-        "sha256": "08d2be3ae19fc48e7022473944a8ccc74f8c8d586d6162627c91d958c4099af5",
-        "byteLength": 14320,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-mobile390-41d42dca9476f325.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-mobile390-41d42dca9476f325.webp",
+        "sha256": "41d42dca9476f325c6275d6c88b00fccce803306085ac9811bf6f44105bb43a8",
+        "byteLength": 14232,
         "mime": "image/webp"
       }
     },
@@ -1247,16 +1247,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-footbridge-mobile390",
-        "sourceHash": "618bad48a5f46e065236454bf3822e412fba0008dd02642e03ab40745e8b3714",
+        "sourceHash": "b2daf3a049688fa510701a0b48e82be6b8e87de34b4b3461d832977fd86f6d27",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
-        "objectKey": "scene-review/s10/v1/footbridge-mobile390-618bad48a5f46e06.webp",
-        "sha256": "618bad48a5f46e065236454bf3822e412fba0008dd02642e03ab40745e8b3714",
-        "byteLength": 14194,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-mobile390-b2daf3a049688fa5.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-mobile390-b2daf3a049688fa5.webp",
+        "sha256": "b2daf3a049688fa510701a0b48e82be6b8e87de34b4b3461d832977fd86f6d27",
+        "byteLength": 14164,
         "mime": "image/webp"
       }
     },
@@ -1282,16 +1282,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-reading-shelter-mobile390",
-        "sourceHash": "531e285abe20ac581cbf9a47388213c65335ca9635d19bb66545c8021966cca8",
+        "sourceHash": "95cb161d4f7818fb7d15561b85c57b0a57ac95777d0dc025a80dc3c211fd71eb",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
-        "objectKey": "scene-review/s10/v1/reading-shelter-mobile390-531e285abe20ac58.webp",
-        "sha256": "531e285abe20ac581cbf9a47388213c65335ca9635d19bb66545c8021966cca8",
-        "byteLength": 16656,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-mobile390-95cb161d4f7818fb.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-mobile390-95cb161d4f7818fb.webp",
+        "sha256": "95cb161d4f7818fb7d15561b85c57b0a57ac95777d0dc025a80dc3c211fd71eb",
+        "byteLength": 16538,
         "mime": "image/webp"
       }
     },
@@ -1317,16 +1317,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-pavilion-mobile390",
-        "sourceHash": "965a1fe064e99758f7c41b5c5c12c56af449538977978f599401ef1b82ecd1e0",
+        "sourceHash": "da63b180886728cf48f9114655725b32713cbff5eae2a2aa02d953ecd1033eb7",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
-        "objectKey": "scene-review/s10/v1/pavilion-mobile390-965a1fe064e99758.webp",
-        "sha256": "965a1fe064e99758f7c41b5c5c12c56af449538977978f599401ef1b82ecd1e0",
-        "byteLength": 16852,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-mobile390-da63b180886728cf.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-mobile390-da63b180886728cf.webp",
+        "sha256": "da63b180886728cf48f9114655725b32713cbff5eae2a2aa02d953ecd1033eb7",
+        "byteLength": 16756,
         "mime": "image/webp"
       }
     },
@@ -1352,16 +1352,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-sunset-overlook-mobile390",
-        "sourceHash": "22cc098d6706c087abfda82c14a75b5644d0899935b9650d54103c192a372640",
+        "sourceHash": "da98c15ac2f2d3d1a8aa8f01d65bcc5399449fcc81910acd1be1bccccf9ade82",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
-        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile390-22cc098d6706c087.webp",
-        "sha256": "22cc098d6706c087abfda82c14a75b5644d0899935b9650d54103c192a372640",
-        "byteLength": 14976,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-mobile390-da98c15ac2f2d3d1.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-mobile390-da98c15ac2f2d3d1.webp",
+        "sha256": "da98c15ac2f2d3d1a8aa8f01d65bcc5399449fcc81910acd1be1bccccf9ade82",
+        "byteLength": 14868,
         "mime": "image/webp"
       }
     },
@@ -1387,16 +1387,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-garden-gate-desktop",
-        "sourceHash": "f28bd765dd3ec728833ffa741eb43d03f08551a25f8bdacc053db38223d01e29",
+        "sourceHash": "838960a55a32089aab586da4dc29ac32a0f6ad7175790ce127172b3969d52eb5",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
-        "objectKey": "scene-review/s10/v1/garden-gate-desktop-f28bd765dd3ec728.webp",
-        "sha256": "f28bd765dd3ec728833ffa741eb43d03f08551a25f8bdacc053db38223d01e29",
-        "byteLength": 61182,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/garden-gate-desktop-838960a55a32089a.webp",
+        "objectKey": "scene-review/s10/v1/garden-gate-desktop-838960a55a32089a.webp",
+        "sha256": "838960a55a32089aab586da4dc29ac32a0f6ad7175790ce127172b3969d52eb5",
+        "byteLength": 60856,
         "mime": "image/webp"
       }
     },
@@ -1422,16 +1422,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-herb-garden-desktop",
-        "sourceHash": "c233d27b9113b23fa2c9768fbcbbb87f52cff230ea2081829ff0119e22f913fb",
+        "sourceHash": "f3e2f530f745442cd2df46befad5d91ff368688a44af1c7466ed4286b38be690",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
-        "objectKey": "scene-review/s10/v1/herb-garden-desktop-c233d27b9113b23f.webp",
-        "sha256": "c233d27b9113b23fa2c9768fbcbbb87f52cff230ea2081829ff0119e22f913fb",
-        "byteLength": 62874,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/herb-garden-desktop-f3e2f530f745442c.webp",
+        "objectKey": "scene-review/s10/v1/herb-garden-desktop-f3e2f530f745442c.webp",
+        "sha256": "f3e2f530f745442cd2df46befad5d91ff368688a44af1c7466ed4286b38be690",
+        "byteLength": 62178,
         "mime": "image/webp"
       }
     },
@@ -1457,16 +1457,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-shade-tree-desktop",
-        "sourceHash": "95a8e1d6b2873035e3c32d7c4f9f03a4a694d3b5790138c80041b35a073479ab",
+        "sourceHash": "a2a88214f5b3d2bdabc8ed29421f45dbbc589e3af997992229f28559f30fa38c",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
-        "objectKey": "scene-review/s10/v1/shade-tree-desktop-95a8e1d6b2873035.webp",
-        "sha256": "95a8e1d6b2873035e3c32d7c4f9f03a4a694d3b5790138c80041b35a073479ab",
-        "byteLength": 62748,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/shade-tree-desktop-a2a88214f5b3d2bd.webp",
+        "objectKey": "scene-review/s10/v1/shade-tree-desktop-a2a88214f5b3d2bd.webp",
+        "sha256": "a2a88214f5b3d2bdabc8ed29421f45dbbc589e3af997992229f28559f30fa38c",
+        "byteLength": 62348,
         "mime": "image/webp"
       }
     },
@@ -1492,16 +1492,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-footbridge-desktop",
-        "sourceHash": "8dbd22f9f13d8bf4500ce952d7a991767a06100e6cc31e04c5c62042887c6635",
+        "sourceHash": "243f59e2e2e2fa414123c52116cbf102222c1762cf486c3ba6177bb8ebc01a0a",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
-        "objectKey": "scene-review/s10/v1/footbridge-desktop-8dbd22f9f13d8bf4.webp",
-        "sha256": "8dbd22f9f13d8bf4500ce952d7a991767a06100e6cc31e04c5c62042887c6635",
-        "byteLength": 64278,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/footbridge-desktop-243f59e2e2e2fa41.webp",
+        "objectKey": "scene-review/s10/v1/footbridge-desktop-243f59e2e2e2fa41.webp",
+        "sha256": "243f59e2e2e2fa414123c52116cbf102222c1762cf486c3ba6177bb8ebc01a0a",
+        "byteLength": 64256,
         "mime": "image/webp"
       }
     },
@@ -1527,16 +1527,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-reading-shelter-desktop",
-        "sourceHash": "ef8cad2ae557982c83d0821cd8d9eedbdd9d40dc556c6daa5d4cee005e58791b",
+        "sourceHash": "5b5b3f2b0d30c1e05f3931c386fc155bf9cfce6dfead3fe229279ab802e6e96b",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
-        "objectKey": "scene-review/s10/v1/reading-shelter-desktop-ef8cad2ae557982c.webp",
-        "sha256": "ef8cad2ae557982c83d0821cd8d9eedbdd9d40dc556c6daa5d4cee005e58791b",
-        "byteLength": 63216,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/reading-shelter-desktop-5b5b3f2b0d30c1e0.webp",
+        "objectKey": "scene-review/s10/v1/reading-shelter-desktop-5b5b3f2b0d30c1e0.webp",
+        "sha256": "5b5b3f2b0d30c1e05f3931c386fc155bf9cfce6dfead3fe229279ab802e6e96b",
+        "byteLength": 63150,
         "mime": "image/webp"
       }
     },
@@ -1562,16 +1562,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-pavilion-desktop",
-        "sourceHash": "1e0b44bc3ccd5d4bca2e8b294f8a76c78c425a5d140c21caaca6fa265ad21321",
+        "sourceHash": "b274eee6cf5b7072805c6e44f804eaace770337a3b49e3e8879dbacec96d7ba0",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
-        "objectKey": "scene-review/s10/v1/pavilion-desktop-1e0b44bc3ccd5d4b.webp",
-        "sha256": "1e0b44bc3ccd5d4bca2e8b294f8a76c78c425a5d140c21caaca6fa265ad21321",
-        "byteLength": 63396,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/pavilion-desktop-b274eee6cf5b7072.webp",
+        "objectKey": "scene-review/s10/v1/pavilion-desktop-b274eee6cf5b7072.webp",
+        "sha256": "b274eee6cf5b7072805c6e44f804eaace770337a3b49e3e8879dbacec96d7ba0",
+        "byteLength": 63064,
         "mime": "image/webp"
       }
     },
@@ -1597,16 +1597,16 @@
       "status": "review",
       "provenance": {
         "sourceAssetId": "render:poster-s10-sunset-overlook-desktop",
-        "sourceHash": "33283033e1f4241882f34e9767c42c99a96254a2f078e0369e87e14eb0602f28",
+        "sourceHash": "b40ac8654478cd2619c92124965ee70a579df5a53faa11e1ea0afc0f809702db",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored scene render with registered bear-lite; character rights retained",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "delivery": {
-        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
-        "objectKey": "scene-review/s10/v1/sunset-overlook-desktop-33283033e1f42418.webp",
-        "sha256": "33283033e1f4241882f34e9767c42c99a96254a2f078e0369e87e14eb0602f28",
-        "byteLength": 64300,
+        "url": "https://sk7-companion.gkrry.com/scene-review/s10/v1/sunset-overlook-desktop-b40ac8654478cd26.webp",
+        "objectKey": "scene-review/s10/v1/sunset-overlook-desktop-b40ac8654478cd26.webp",
+        "sha256": "b40ac8654478cd2619c92124965ee70a579df5a53faa11e1ea0afc0f809702db",
+        "byteLength": 63596,
         "mime": "image/webp"
       }
     }
