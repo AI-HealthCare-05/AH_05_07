@@ -21,7 +21,7 @@ const temporary = await fs.mkdtemp(path.join(os.tmpdir(), "sk7-poster-preview-")
 let server, browser;
 try {
   await build({ root: web, build: { outDir: temporary, emptyOutDir: true },
-    define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify("http://e2e.invalid"), "import.meta.env.VITE_SK7_E2E_MODE": '"1"', "import.meta.env.VITE_SK7_SCENE_MODE": '"review"' },
+    define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify("http://e2e.invalid"), "import.meta.env.VITE_SK7_E2E_MODE": '"1"', "import.meta.env.VITE_SK7_SCENE_MODE": '"review"', "import.meta.env.VITE_SK7_UI_MODE": '"legacy"' },
     plugins: [{ name: "authored-scene-capture", enforce: "pre", load(id) {
       if (id === path.join(web, "src/ui/sceneManifest.generated.ts")) return `export const sceneManifest = ${JSON.stringify(manifest)} as const;`;
     } }],
