@@ -26,21 +26,36 @@ preference falls back to the approved bear profile. Query parameters, BP,
 Model V2 input/output, challenge facts, record coverage, or health semantics
 must never choose the production species.
 
-S05 remains a separate confirmed-save exception: production S05 uses its fixed
-approved bear/lite profile, not the saved species preference. The anonymous
-Demo S02 path may reuse the same decorative preference but remains
+S05 remains a separate confirmed-save exception: its qualified SavedScene uses
+the fixed registered bear/lite asset, not the saved species preference. The
+anonymous Demo S02 path may reuse the same decorative preference but remains
 synthetic/read-only and must not create product data.
+
+## Current scene activation
+
+At the current source baseline, exact `review` keeps the qualified S02/S10
+realtime review paths available. Exact `production` authorizes the qualified
+S02 realtime scene only when the Journey presentation is selected. S10
+full-scene realtime stays review-only; production S10 keeps the static Journey
+landscape plus its independently qualified production companion.
+
+This describes source capability, not proof of the deployed Cloudflare
+scene/UI variables. Runtime deployment identity and control-plane verification
+remain owned by [deployment SSOT](deployment-ssot.md).
 
 ## S05 exception
 
 The production `resolveProductionCompanion(mode, screen, confirmedSave, species)`
-and boundary remain independent. The [S05 review migration](scene-s05-migration.md)
-uses a separate boundary only for an App-issued persistence event and
-`VITE_SK7_SCENE_MODE=review`.
+and the SavedScene boundary remain independent. The
+[historical S05 review migration](scene-s05-migration.md) introduced a separate
+boundary for an App-issued confirmed persistence event; after PR #584 the exact
+scene gate may be `review` or `production`. Default/off/unknown values stay
+closed.
 
-Only confirmed persistence can produce celebrate exactly once then idle;
-failed/optimistic/unknown/conflict events cannot. Reduced motion skips action.
-No health meaning. The review migration implements per-confirmed-event
+Only confirmed persistence can produce the fixed registered bear-lite
+`celebrate` exactly once then idle; failed/optimistic/unknown/conflict events
+cannot. S05 does not consume the saved species preference. Reduced motion skips
+action. No health meaning. The SavedScene path implements per-confirmed-event
 deduplication across rerender/remount/back/forward/retry/tier changes. Do not
 replay missed celebration after visibility or motion preference changes. The
 recovery matrix supplements the existing production normal-lifecycle tests;
