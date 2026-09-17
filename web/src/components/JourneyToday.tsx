@@ -115,7 +115,18 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           {secondary.map(item => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} onClick={() => onNavigate(item.screen)}>
             <span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">↗</span>
           </button>)}
-          <div className="today-small-note"><span aria-hidden="true">❧</span><p>날짜별로 모아<br /><strong>다시 보는 기록.</strong></p></div>
+          <button
+            type="button"
+            className="today-starting-point-entry"
+            aria-describedby="today-starting-point-help"
+            onClick={() => onNavigate('S11')}
+          >
+            <span>
+              <strong>생활정보로 오늘의 시작점 보기</strong>
+              <small id="today-starting-point-help">활동·수면·생활습관 · 이번 이용에만 표시하고 저장하지 않아요.</small>
+            </span>
+            <span aria-hidden="true">↗</span>
+          </button>
         </nav>
         {children && <div className="today-cycle-actions">{children}</div>}
       </section>
