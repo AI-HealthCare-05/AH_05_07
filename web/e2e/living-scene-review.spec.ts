@@ -1,6 +1,8 @@
 import "./recap-candidate.cases";
 import type { Request } from "@playwright/test";
 import { findSceneRecipe, sceneComposition } from "../src/ui/sceneRecipes";
+import { companionAssetManifest } from "../src/ui/companionAssets.generated";
+import { companionSpecies } from "../src/ui/companion";
 import { expect, test } from "@playwright/test";
 import posterEvidence from "../../docs/evidence/scene-clay-posters.json" with { type: "json" };
 import posterR2 from "../../docs/evidence/scene-clay-r2.json" with { type: "json" };
@@ -73,6 +75,112 @@ for (const [width, height] of [[320, 844], [390, 844], [1366, 768]]) {
     await page.screenshot({ path: testInfo.outputPath("scene.png"), fullPage: true });
   });
 }
+
+
+for (const species of companionSpecies) {
+  test(`S02 renders saved ${species} identity across supported viewports`, async ({ page }) => {
+    await page.addInitScript((savedSpecies: string) => {
+      localStorage.setItem("sk7-companion-species", savedSpecies);
+    }, species);
+
+    const glbRequests: string[] = [];
+    page.on("request", request => {
+      if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+    });
+
+    // A conflicting query must never choose the S02 identity or variant.
+    const querySpecies = species === "bear" ? "fox" : "bear";
+    await page.goto(
+      `${url}&companion_species=${querySpecies}&companion_variant=standard&companion_clip=special`,
+    );
+    await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+    await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+      "data-living-scene-status",
+      "ready",
+      { timeout: 20_000 },
+    );
+
+    await expect.poll(() => glbRequests.length).toBe(1);
+    expect(glbRequests[0]).toBe(companionAssetManifest[species].lite.url);
+
+    // S02 scene remains the only visual owner.
+    await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+    await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+
+    for (const [width, height] of [
+      [320, 844],
+      [390, 844],
+      [1366, 768],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+
+      // Wait until Three.js has processed this ResizeObserver turn.
+      // canvas intrinsic dimensions are updated by renderer.setSize() in the
+      // same resize pass that redraws and refreshes data-subject-bounds.
+      await expect.poll(async () => {
+        return page.locator(".living-three-scene canvas").evaluate((canvas: HTMLCanvasElement) => {
+          const host = canvas.parentElement;
+          if (!host) return false;
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+          const expectedWidth = Math.floor(host.clientWidth * dpr);
+          const expectedHeight = Math.floor(host.clientHeight * dpr);
+          return Math.abs(canvas.width - expectedWidth) <= 1
+            && Math.abs(canvas.height - expectedHeight) <= 1;
+        });
+      }).toBe(true);
+
+      await page.evaluate(() => new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }));
+
+      await expect.poll(async () => {
+        const raw = await page.locator("[data-subject-bounds]").getAttribute("data-subject-bounds");
+        if (!raw) return false;
+        const bounds = JSON.parse(raw);
+        return bounds.left >= -1
+          && bounds.right <= 1
+          && bounds.bottom >= -1
+          && bounds.top <= 1;
+      }).toBe(true);
+
+      const bounds = JSON.parse(
+        (await page.locator("[data-subject-bounds]").getAttribute("data-subject-bounds"))!,
+      );
+      const composition = sceneComposition(findSceneRecipe("S02", "footbridge")!, width);
+      const stageHeight = await page.locator(".living-visual-stage").evaluate(
+        element => element.clientHeight,
+      );
+
+      expectRelativeSubjectHeight(bounds.height, stageHeight, composition);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+      await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+    }
+  });
+}
+
+test("S02 invalid saved identity falls back to bear-lite", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "seal");
+  });
+
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+
+  await page.goto(`${url}&companion_species=fox&companion_variant=standard`);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  await expect.poll(() => glbRequests.length).toBe(1);
+  expect(glbRequests[0]).toBe(companionAssetManifest.bear.lite.url);
+});
 
 test("ready WebGL does not wait for a pending poster transfer", async ({ page }) => {
   const completed: Request[] = [];
