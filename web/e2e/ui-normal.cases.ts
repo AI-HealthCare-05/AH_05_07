@@ -17,6 +17,90 @@ for (const screen of ['S02', 'S05', 'S10', 'S11']) test(`normal configured build
   expect(requests.filter(url => /observations|product-score|\.glb(?:\?|$)/.test(url))).toEqual([]);
 });
 
+test('normal artifact serves static robots and llms discovery files', async ({ request }) => {
+  const llms = await request.get('/llms.txt');
+  expect(llms.ok()).toBe(true);
+  const llmsText = await llms.text();
+  expect(llmsText).toMatch(/^# 상균7데이즈 \(SK7\)/);
+  expect(llmsText).toContain('https://hyeol.app/');
+  expect(llmsText).toContain('https://github.com/AI-HealthCare-05/AH_05_07');
+  expect(llmsText).not.toContain('<!doctype');
+
+  const robots = await request.get('/robots.txt');
+  expect(robots.ok()).toBe(true);
+  const robotsText = await robots.text();
+  expect(robotsText).toContain('User-agent: *');
+  expect(robotsText).toContain('Allow: /');
+  expect(robotsText).not.toContain('<!doctype');
+});
+
+test('normal signed-in bootstrap never mounts the login companion before S02', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.addInitScript(() => {
+    localStorage.setItem('sb-auth-auth-token', JSON.stringify({
+      access_token: 'local-mock-auth-token',
+      refresh_token: 'local-mock-refresh-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      expires_at: 2000000000,
+      user: {
+        id: 'local-mock-user',
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: '2026-09-01T00:00:00Z',
+      },
+    }));
+
+    Object.assign(window, { __sawLoginCompanionDuringBootstrap: false });
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[data-login-companion]')) {
+        Object.assign(window, { __sawLoginCompanionDuringBootstrap: true });
+      }
+    });
+    observer.observe(document, { childList: true, subtree: true });
+  });
+
+  await page.route('https://auth.ui-candidate.invalid/**', route => route.abort());
+  await page.route('http://api.ui-candidate.invalid/**', async route => {
+    const url = new URL(route.request().url());
+    const headers = {
+      'Access-Control-Allow-Origin': 'http://127.0.0.1:4182',
+      'Access-Control-Allow-Headers': 'authorization,content-type',
+      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    };
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (!url.pathname.endsWith('/window')) return route.abort();
+    return route.fulfill({
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: [{
+          id: 'synthetic-existing-bp',
+          observed_on: '2026-09-10',
+          period: 'morning',
+          systolic: 120,
+          diastolic: 80,
+        }],
+        challenge_checkins: [],
+        active_challenge: null,
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?screen=S02');
+  await expect(page.locator('.journey-today')).toBeVisible();
+
+  const sawLoginCompanion = await page.evaluate(
+    () => Boolean((window as typeof window & { __sawLoginCompanionDuringBootstrap?: boolean })
+      .__sawLoginCompanionDuringBootstrap),
+  );
+  expect(sawLoginCompanion).toBe(false);
+});
+
 test('normal artifact excludes test authentication and fixture injection', () => {
   const dist = path.resolve('test-results/ui-release/normal');
   const scripts = readdirSync(path.join(dist, 'assets')).filter(file => file.endsWith('.js'));
