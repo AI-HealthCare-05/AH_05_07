@@ -10,6 +10,11 @@ const fullGate = [
   'journey UI',
 ];
 
+const appShellGate = [
+  'normal auth boundaries',
+  'journey UI',
+];
+
 test('S02 presentation-only changes use the focused S02 lane', () => {
   assert.deepEqual(names([
     'web/src/components/JourneyToday.tsx',
@@ -38,8 +43,64 @@ test('S02 and S10 presentation changes run both focused lanes in parallel', () =
   ]), ['S02 focused UI', 'S10 focused UI']);
 });
 
-test('broad App runtime changes retain the complete PR browser gate', () => {
-  assert.deepEqual(names(['web/src/App.tsx']), fullGate);
+test('App shell wiring alone selects normal auth and journey UI', () => {
+  assert.deepEqual(names(['web/src/App.tsx']), appShellGate);
+});
+
+test('main shell wiring alone selects normal auth and journey UI', () => {
+  assert.deepEqual(names(['web/src/main.tsx']), appShellGate);
+});
+
+test('App shell plus review-scene runtime adds the scene suite', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/components/VisualStage.tsx',
+  ]), [...appShellGate, 'S02 and S10 review scenes']);
+});
+
+test('App shell plus companion renderer adds companion review suites', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/components/CompanionReviewRenderer.tsx',
+  ]), [
+    ...appShellGate,
+    'review companion runtime',
+    'production-on companion',
+  ]);
+});
+
+test('App shell plus a Model V2 path falls back to the complete PR gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/ui/model/ModelScore.tsx',
+  ]), fullGate);
+});
+
+test('App shell plus an auth path falls back to the complete PR gate', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/lib/authEmailConfirm.ts',
+  ]), fullGate);
+});
+
+test('scene manifest tooling alone selects the review-scene suite', () => {
+  assert.deepEqual(names(['web/scripts/verify-scene-manifest.mjs']), [
+    'S02 and S10 review scenes',
+  ]);
+});
+
+test('docs do not widen a targeted scene manifest diff', () => {
+  assert.deepEqual(names([
+    'docs/project-handoff.md',
+    'web/src/ui/scene-manifest.v2.json',
+  ]), ['S02 and S10 review scenes']);
+});
+
+test('selector implementation/test-only changes use the policy unit-test lane', () => {
+  assert.deepEqual(names([
+    'web/scripts/select-pr-browser-suites.mjs',
+    'web/scripts/select-pr-browser-suites.test.mjs',
+  ]), ['selector policy unit test']);
 });
 
 test('saved-scene runtime changes run only saved-scene parity', () => {

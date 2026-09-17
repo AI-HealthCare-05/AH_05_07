@@ -17,10 +17,14 @@ FRONTEND_TOOL_FILES = {
     "tools/submission-slides.mjs",
 }
 
-# Browser-side paths that cross protected auth/API/model/deployment boundaries.
-PROTECTED_WEB_FILES = {
+# Presentation shell wiring. By itself this is frontend work; mixed changes fail closed.
+FRONTEND_SHELL_FILES = {
     "web/src/App.tsx",
     "web/src/main.tsx",
+}
+
+# Browser-side paths that cross protected auth/API/model/deployment boundaries.
+PROTECTED_WEB_FILES = {
     "web/src/lib/api.ts",
     "web/src/lib/api-contract.ts",
     "web/src/lib/authEmailConfirm.ts",
@@ -138,6 +142,10 @@ def is_web(path: str) -> bool:
     return path.startswith("web/") or is_frontend_tool(path)
 
 
+def is_frontend_shell(path: str) -> bool:
+    return path in FRONTEND_SHELL_FILES
+
+
 def is_protected_web(path: str) -> bool:
     return path in PROTECTED_WEB_FILES or path.startswith(PROTECTED_WEB_PREFIXES)
 
@@ -217,6 +225,22 @@ def self_test() -> None:
         ),
         (
             ["web/src/App.tsx"],
+            Result("frontend", True, False, False, False, False),
+        ),
+        (
+            ["web/src/main.tsx"],
+            Result("frontend", True, False, False, False, False),
+        ),
+        (
+            ["web/src/App.tsx", "web/src/lib/authEmailConfirm.ts"],
+            Result("full", True, False, False, False, True),
+        ),
+        (
+            ["web/src/App.tsx", "web/src/ui/model/ModelScore.tsx"],
+            Result("full", True, False, True, False, True),
+        ),
+        (
+            ["web/src/App.tsx", "web/package.json"],
             Result("full", True, False, False, False, True),
         ),
         (

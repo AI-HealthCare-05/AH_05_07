@@ -64,6 +64,13 @@ or a new dependency/topology:
   a build plus directly related tests, and scene/companion runtime uses its
   directly related scene test plus a physical spot-check only when needed. The
   full browser matrix is skipped by default.
+- Routine App shell / presentation wiring does not by itself imply backend
+  Python/AI/MySQL verification; protected auth/API/data/model/dependency/deployment
+  paths still escalate to the full lane. Browser CI is concern-routed; Model V2
+  cross-browser coverage is not a generic UI tax.
+- For AI-assisted local verification, redirect verbose passing test/build logs to
+  `/tmp` and surface only result summaries or focused failure excerpts. Do not feed
+  line-by-line passing Playwright output into model context.
 - Required PR/core CI owns merge-time regression. Do not replay the complete
   browser matrix after every `main` merge; scheduled nightly or explicit manual
   Browser E2E owns broad browser confidence. Classify a red scheduled/manual run
