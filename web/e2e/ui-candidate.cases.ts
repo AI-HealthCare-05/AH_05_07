@@ -668,7 +668,8 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
-  await expect(page.locator('.journey-login-intro')).toContainText('7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.');
+  await expect(page.locator('.journey-login-intro')).toContainText('혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요.');
+  await expect(page.locator('.journey-login-intro')).toContainText('한 건부터 바로 시작할 수 있어요.');
   await expect(page.locator('.journey-login-demo')).toContainText('30일 동안 보관돼요.');
   await expect(page.locator('.journey-login-demo')).toContainText('보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.');
   await expect(page.getByText('합성 데이터 체험용입니다.', { exact: false })).toHaveCount(0);
@@ -928,8 +929,7 @@ test('S01 offers a read-only 30-second preview and playful login microcopy', asy
 
   const auth = page.getByRole('button', { name: '로그인 링크 받기', exact: true });
   await expect(auth).toBeVisible();
-  await expect(page.locator('.entry-discount-note')).toHaveText('가입비 100% 할인 · 원래 무료예요');
-  await expect(page.locator('.entry-discount-note')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('.entry-discount-note')).toHaveCount(0);
 
   const preview = page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true });
   await expect(preview).toBeVisible();
@@ -963,7 +963,7 @@ test('S01 narrator follows companion identity without changing login semantics',
   await expect(narrator).toHaveAttribute('data-login-companion-species', 'fox');
   expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('fox');
   await expect(narrator).toContainText('처음이신가요?');
-  await expect(narrator).toContainText('마음에 드는 친구를 고르고, 로그인 없이 먼저 둘러봐요.');
+  await expect(narrator).toContainText('마음에 드는 친구를 고르고, 로그인 없이 30초만 먼저 둘러봐요.');
   await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true })).toBeVisible();
   const runtime = narrator.locator('[data-companion-status]');
@@ -984,7 +984,7 @@ test('S01 narrator gate off preserves bubble and core login without renderer net
   await page.goto('/');
   const narrator = page.locator('[data-login-companion]');
   await expect(narrator).toBeVisible();
-  await expect(narrator).toContainText('마음에 드는 친구를 고르고, 로그인 없이 먼저 둘러봐요.');
+  await expect(narrator).toContainText('마음에 드는 친구를 고르고, 로그인 없이 30초만 먼저 둘러봐요.');
   await expect(narrator.locator('[data-companion-status], canvas')).toHaveCount(0);
   await expect(page.locator('#login-companion-species')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeVisible();

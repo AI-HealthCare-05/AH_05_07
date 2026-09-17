@@ -46,7 +46,7 @@ export function LoginCompanionNarrator({
       </div>
       <p className="login-companion-bubble">
         <span>처음이신가요?</span>
-        <strong>마음에 드는 친구를 고르고, 로그인 없이 먼저 둘러봐요.</strong>
+        <strong>마음에 드는 친구를 고르고, 로그인 없이 30초만 먼저 둘러봐요.</strong>
       </p>
     </aside>
   );
