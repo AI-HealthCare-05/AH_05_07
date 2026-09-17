@@ -2,7 +2,8 @@ import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, ty
 
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
-import { sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
+import { resolveS02CharacterRecipe, sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
+import type { CompanionSpecies } from "../ui/companion";
 
 
 const ThreeSceneRenderer = lazy(() => import("./scene/ThreeSceneRenderer"));
@@ -81,8 +82,15 @@ function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
   return <SceneTierBoundary key={plan.tier} plan={plan} failed={failed} onFailure={onFailure} />;
 }
 
+type VisualStageProps = {
+  screen: JourneyScreenId;
+  calendarDate: string;
+  /** S02-only selectable identity. `undefined` keeps default S10 behavior. `null` forces tier-1 poster-only (companion off). */
+  companionSpecies?: CompanionSpecies | null;
+};
+
 /** Separate review boundary. Existing S05 and all semantic children stay outside. */
-export function VisualStage({ screen, calendarDate }: { screen: JourneyScreenId; calendarDate: string }) {
+export function VisualStage({ screen, calendarDate, companionSpecies }: VisualStageProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -90,14 +98,21 @@ export function VisualStage({ screen, calendarDate }: { screen: JourneyScreenId;
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const plan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
+  const basePlan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
     webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE });
-  if (!plan) return null;
-  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={plan.recipe.id} data-scene-date={calendarDate} aria-hidden="true" style={{
+  if (!basePlan) return null;
+  const isS02 = screen === "S02";
+  const s02Bound = isS02 && companionSpecies !== undefined
+    ? resolveS02CharacterRecipe(basePlan.recipe, companionSpecies ?? "bear")
+    : basePlan.recipe;
+  const plan: ScenePlan = isS02 && companionSpecies === null
+    ? { ...basePlan, recipe: s02Bound, tier: 1 }
+    : { ...basePlan, recipe: s02Bound };
+  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={basePlan.recipe.id} data-scene-date={calendarDate} aria-hidden="true" style={{
     "--scene-height-320": `${plan.recipe.compositions.mobile320.stageHeight}px`,
     "--scene-height-390": `${plan.recipe.compositions.mobile390.stageHeight}px`,
     "--scene-height-desktop": `${plan.recipe.compositions.desktop.stageHeight}px`,
   } as CSSProperties}>
-    <SceneRuntimeBoundary key={plan.recipe.id} plan={plan} />
+    <SceneRuntimeBoundary key={`${plan.recipe.id}:${plan.recipe.characterUrl}`} plan={plan} />
   </div>;
 }

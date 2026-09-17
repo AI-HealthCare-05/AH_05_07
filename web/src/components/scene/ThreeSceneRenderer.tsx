@@ -194,7 +194,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
         const bounds = new THREE.Box3().setFromObject(model);
         const size = bounds.getSize(new THREE.Vector3());
         const center = bounds.getCenter(new THREE.Vector3());
-        const scale = 1.65 / Math.max(size.y, 0.001);
+        const scale = (1.65 / Math.max(size.y, 0.001)) * recipe.characterScale;
         normalized.scale.setScalar(scale);
         normalized.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
         // Keep normalization separate from the responsive world-space anchor.
