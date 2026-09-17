@@ -2,13 +2,13 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "b93d2050d32ea86eb14277a764d8ef75671480d2",
-    "tree": "b627725ab75f37f76d4d8b5aa0918ac4bec14764"
+    "commit": "d510899b42a04f6171b7630b05e30c4f557b05dd",
+    "tree": "a06d038a18bb28bccc7e8cf65e4a1fe67b21aac6"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
     ".gitattributes": "a4799901d8bd2797b0ea643eea06b92b3ca2fbf909de3071ce56794592c94bdc",
-    ".github/workflows/checks.yml": "842728b8925e249db0c9548e1c062b744f052bac94727c384f22c15b55f91525",
+    ".github/workflows/checks.yml": "91db34c8ae410c6d380e37e406e29b5319e83931b4bd942a85c6dc111445e519",
     ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
     "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "app/apis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -42,9 +42,9 @@
     "web/src/lib/model-v2/adapter.ts": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
     "web/src/lib/model-v2/errors.ts": "1d97b55d64156e2d9aaa9f0a6bc31700aaf1b0dac5a3f4ce245a3b8d2681cca9",
     "web/src/lib/model-v2/manifest.json": "889a2173fe852dda6e2eff3d7e5c803885105330b5fa5835e94880ffd9bea53b",
-    "web/src/lib/model-v2/runtime.ts": "b8dd30868df0c4ad8fe17834dce2b57caf2f7e68bd5fb593a90b042f2c752781",
+    "web/src/lib/model-v2/runtime.ts": "70caf54e23330479592ef784fcf1d53907431726cc04afa2d43aeb9f641b21c8",
     "web/tests/model-v2/index.html": "e2f72cb1d9e89c482441fb45253a0beead763a0588ab30d32b816a7a66bbbf34",
-    "web/tests/model-v2/verification.ts": "102a8b4f9afe5a155d63fb6f7d9d9a74e840db12e9be4a1b200261fd58711ad4",
+    "web/tests/model-v2/verification.ts": "bf219e2d8dc108208e5ff5cc44464f6efba0398633ab672b2f80dd34b6f879dd",
     "web/tsconfig.json": "a7266d1c85fa6947c70073256d9a73e4c459e97b0b4ef24b5c48dcab498ef4c5",
     "web/vite.config.ts": "96a9a545debcb60c2711b666c431e157b3ff8d03bca0f391c2e059b31958e312"
   },
@@ -62,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 14.399999998509884,
+        "coldLoadMs": 17.699999999254942,
         "warm": {
           "n": 30,
-          "medianMs": 0.004,
-          "p95Ms": 0.005,
-          "minMs": 0.0036999999955296516,
-          "maxMs": 0.005599999994039535
+          "medianMs": 0.003900000000372529,
+          "p95Ms": 0.004700000001117587,
+          "minMs": 0.003599999999627471,
+          "maxMs": 0.005299999998882413
         }
       },
       {
@@ -79,13 +79,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 18,
+        "coldLoadMs": 20,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
           "p95Ms": 0.009,
-          "minMs": 0.005,
-          "maxMs": 0.01
+          "minMs": 0.004,
+          "maxMs": 0.011
         }
       },
       {

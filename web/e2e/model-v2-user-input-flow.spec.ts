@@ -23,7 +23,8 @@ const stepTitles = {
   basics: "기본 정보", habits: "생활 습관", activity: "활동", sleep: "수면", review: "입력 확인",
 };
 
-async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?: boolean } = {}) {
+async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?: boolean; skipClock?: boolean } = {}) {
+  if (!options.skipClock) await page.clock.setFixedTime("2026-09-17T12:00:00+09:00");
   const requests: { method: string; body: string | null }[] = [];
   let settled = 0;
   let releaseFirst!: () => void;
@@ -152,6 +153,17 @@ async function changeSession(page: Page, differentUser = false) {
   }, differentUser);
 }
 
+async function dispatchVisibilityChange(page: Page, state: "hidden" | "visible") {
+  await page.evaluate((value) => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, state);
+}
+
+async function dispatchPageshow(page: Page) {
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+}
+
 async function assertFitsViewport(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   const controls = step(page, await page.locator("[data-model-v2-step]").getAttribute("data-model-v2-step") as Step)
@@ -210,7 +222,17 @@ test("S11 requires explicit review submission and completes locally without send
     await expect(result(page)).toContainText(text);
   }
   await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
-  await expect(result(page)).not.toContainText(/\b0\.\d+\b|\b\d{1,3}%\b|저위험|중위험|고위험|정상|비정상/);
+  const preview = result(page).locator("[data-model-v2-preview]");
+  await expect(preview).toBeVisible();
+  await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
+  const previewValue = preview.locator("[data-model-v2-preview-value]");
+  await expect(previewValue).toHaveCount(1);
+  await expect(previewValue).toHaveText(/^\d\.\d{3}$/);
+  await expect(preview).toContainText("이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.");
+  await expect(preview).toContainText("소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.");
+  await expect(preview).not.toContainText("%");
+  await expect(preview.locator("[data-model-v2-preview-band], .model-v2-preview-band")).toHaveCount(0);
+  await expect(preview).not.toContainText(/저위험|중위험|고위험/);
   await expect(page.getByRole("button", { name: "혈압 기록 남기기", exact: true })).toBeVisible();
   await expect(submit(page)).toHaveCount(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(5);
@@ -219,6 +241,114 @@ test("S11 requires explicit review submission and completes locally without send
 
   await page.getByRole("button", { name: "혈압 기록 남기기", exact: true }).click();
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+});
+
+test.describe("S11 preview window", () => {
+  test.use({ timezoneId: "America/Los_Angeles" });
+
+  for (const { name, time, expectPreview } of [
+    { name: "start minus 1 ms", time: "2026-09-16T23:59:59.999+09:00", expectPreview: false },
+    { name: "exact start", time: "2026-09-17T00:00:00+09:00", expectPreview: true },
+    { name: "end minus 1 ms", time: "2026-10-17T23:59:59.999+09:00", expectPreview: true },
+    { name: "exclusive end", time: "2026-10-18T00:00:00+09:00", expectPreview: false },
+    { name: "later date", time: "2026-10-18T12:00:00+09:00", expectPreview: false },
+  ] as const) {
+    test(`S11 preview obeys the inclusive KST calendar window at ${name}`, async ({ page }) => {
+      await page.clock.setFixedTime(time);
+      const routed = await routeModel(page, { skipClock: true });
+      await page.goto("/?e2e=signed-in&screen=S11");
+      await toReview(page);
+      await submit(page).click();
+      await expect(result(page)).toBeVisible();
+      expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+      const preview = result(page).locator("[data-model-v2-preview]");
+      const note = result(page).locator(".model-v2-result-model-note");
+      if (expectPreview) {
+        await expect(preview).toBeVisible();
+        await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
+        await expect(preview.locator("[data-model-v2-preview-value]")).toHaveText(/^\d\.\d{3}$/);
+      } else {
+        await expect(preview).toHaveCount(0);
+        await expect(note).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+      }
+    });
+  }
+});
+
+test("S11 preview expires while a completed result remains open", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-10-17T23:58:00+09:00") });
+  const routed = await routeModel(page, { skipClock: true });
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  const preview = result(page).locator("[data-model-v2-preview]");
+  await expect(preview).toBeVisible();
+  expect(routed.requests).toHaveLength(1);
+
+  await page.clock.pauseAt(new Date("2026-10-17T23:59:59+09:00"));
+  await dispatchPageshow(page);
+  await page.clock.runFor(999);
+  await expect(preview).toBeVisible();
+
+  await page.clock.runFor(1);
+  await expect(preview).toHaveCount(0);
+  await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+  expect(routed.requests).toHaveLength(1);
+});
+
+for (const event of ["visibilitychange", "pageshow"] as const) {
+  test(`S11 preview expires on ${event} after jumping past the window boundary`, async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-10-17T23:58:00+09:00") });
+    const routed = await routeModel(page, { skipClock: true });
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+
+    await page.clock.setSystemTime(new Date("2026-10-18T00:00:01+09:00"));
+    if (event === "visibilitychange") {
+      await dispatchVisibilityChange(page, "hidden");
+      await dispatchVisibilityChange(page, "visible");
+    } else {
+      await dispatchPageshow(page);
+    }
+    await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
+    await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+    expect(routed.requests).toHaveLength(1);
+  });
+}
+
+test("S11 pending completion after preview expiry stays non-numeric", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-10-17T23:59:55+09:00") });
+  const routed = await routeModel(page, { holdFirst: true, skipClock: true });
+  try {
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toReview(page);
+    await page.evaluate(() => {
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
+              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
+            }
+          }
+        }
+      }).observe(document.body, { subtree: true, childList: true });
+    });
+    await submit(page).click();
+    await expect.poll(() => routed.requests.length).toBe(1);
+    await page.clock.setSystemTime(new Date("2026-10-18T00:00:05+09:00"));
+    routed.releaseFirst();
+    await expect.poll(routed.settled).toBe(1);
+    await expect(result(page)).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
+    await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
+    await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+  } finally {
+    routed.releaseFirst();
+  }
 });
 
 test("S11 prevents double submission and freezes review edits while analysis is pending", async ({ page }) => {
@@ -659,6 +789,17 @@ test("S11 sign-out discards pending local inference and returns to signed-out re
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
+    await page.evaluate(() => {
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
+              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
+            }
+          }
+        }
+      }).observe(document.body, { subtree: true, childList: true });
+    });
     await submit(page).click();
     await expect.poll(() => routed.requests.length).toBe(1);
     await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
@@ -666,6 +807,7 @@ test("S11 sign-out discards pending local inference and returns to signed-out re
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
     await expect(result(page)).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
   } finally { routed.releaseFirst(); }
 });
 
@@ -679,6 +821,7 @@ test("S11 same-user token refresh preserves pending local completion", async ({ 
     await changeSession(page);
     routed.releaseFirst();
     await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
     expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   } finally { routed.releaseFirst(); }
@@ -728,12 +871,24 @@ test("account switch discards the previous account draft and ignores its pending
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
+    await page.evaluate(() => {
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
+              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
+            }
+          }
+        }
+      }).observe(document.body, { subtree: true, childList: true });
+    });
     await submit(page).click();
     await expect(page.getByRole("button", { name: "생활정보 분석 중", exact: true })).toBeDisabled();
     await changeSession(page, true);
     await expect(page.locator('[data-scene="S12"]')).toBeVisible();
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
+    expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
     await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
     await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
@@ -744,6 +899,41 @@ test("account switch discards the previous account draft and ignores its pending
   } finally {
     routed.releaseFirst();
   }
+});
+
+test("S11 sign-out discards a completed visible preview and blank draft", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
+  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await expect(step(page, "intro")).toBeVisible();
+  await expect(result(page)).toHaveCount(0);
+  await begin(page);
+  await expect(page.locator("#model-age")).toHaveValue("");
+  expect(routed.requests).toHaveLength(1);
+});
+
+test("S11 account switch discards a completed visible preview and blank draft", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+  await changeSession(page, true);
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
+  await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+  await expect(step(page, "intro")).toBeVisible();
+  await expect(result(page)).toHaveCount(0);
+  await begin(page);
+  await expect(page.locator("#model-age")).toHaveValue("");
+  expect(routed.requests).toHaveLength(1);
 });
 
 for (const width of [320, 390, 430]) {
@@ -769,6 +959,7 @@ for (const width of [320, 390, 430]) {
     await page.getByLabel("위 안내를 확인했습니다.").check();
     await submit(page).click();
     await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   });
 }
@@ -799,6 +990,7 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await expectStep(page, "review");
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
@@ -816,17 +1008,26 @@ test("S11 time picker fits at 320px without horizontal overflow", async ({ page 
 // Observe the actual built S11 flow; no test-only inference facade is installed.
 test("S11 directly proves no inference egress or model persistence and hashes before parsing", async ({ page }) => {
   await observeModelPrivacy(page);
-  await routeModel(page);
+  const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await expect(step(page, "intro")).toBeVisible();
   const before = await startModelPrivacy(page);
   await toReview(page);
   const requests: { url: string; method: string; body: string | null }[] = [];
   page.on("request", request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
+  const consoleEvents: unknown[] = [];
+  page.on("console", () => { consoleEvents.push(null); });
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   expect(requests).toEqual([{ url: "http://127.0.0.1:4173/models/model-v2.json", method: "GET", body: null }]);
+  const preview = result(page).locator("[data-model-v2-preview]");
+  await expect(preview).toBeVisible();
+  await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
+  await expect(preview.locator("[data-model-v2-preview-value]")).toHaveText(/^\d\.\d{3}$/);
   await assertModelPrivacy(page, before, true);
+  expect(consoleEvents).toHaveLength(0);
+  expect(new URL(page.url()).searchParams.toString()).toBe("e2e=signed-in&screen=S11");
   // Positive controls prove the same observers detect a synthetic leak.
   await page.route("**/synthetic-egress-canary", route => route.fulfill({ body: "ok" }));
   await page.evaluate(async () => {

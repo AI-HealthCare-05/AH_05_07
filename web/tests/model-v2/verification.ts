@@ -28,6 +28,22 @@ const verification = {
     try { return this.run(cases); } finally { model.linear.weights[0] = original; }
   },
   async publicExecutionGuard(input: unknown) {
+    // Prove the changed async facade carries the real continuous value and the
+    // two-field projection, for the ordinary synthetic product and an older-age
+    // variant, before the deliberate poison test below.
+    const candidates = [input, { ...(input as Record<string, unknown>), age_years: 80 }];
+    for (const candidate of candidates) {
+      const result = await scoreModelV2Locally(candidate);
+      if (!Number.isFinite(result.continuousOutput)) throw new Error("mismatch");
+      const expected = evaluateSemantic(model, adaptProductInput(candidate)).score;
+      if (result.continuousOutput !== expected) throw new Error("mismatch");
+      const keys = Object.keys(result).sort();
+      if (keys.length !== 2 || keys[0] !== "continuousOutput" || keys[1] !== "projection") throw new Error("mismatch");
+      const projection = scoreProduct(model, candidate);
+      if (result.projection.schema_version !== projection.schema_version
+        || result.projection.product_wording !== projection.product_wording) throw new Error("mismatch");
+    }
+
     // Test-only poison after digest verification. Finite positive scale passes
     // the artifact shape guard but overflows during actual preprocessing.
     // This proves the exact async S11 facade executes, not just scoreProduct.

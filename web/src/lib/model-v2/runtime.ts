@@ -17,6 +17,7 @@ type Model = {
   linear: { weights: number[]; intercept: number; classes: number[] };
 };
 export type Projection = { schema_version: string; product_wording: string };
+export type LocalModelV2Result = { projection: Projection; continuousOutput: number };
 
 const unavailable = () => new ModelV2LocalError("inference_unavailable");
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
@@ -116,10 +117,17 @@ export function scoreProduct(model: Model, input: unknown): Projection {
 
 // Validation precedes asset loading; neither input nor numeric output is cached.
 // Each deliberate submission performs one verified load, with no retry/fallback.
-export async function scoreModelV2Locally(input: unknown): Promise<Projection> {
+// The browser-local return carries the two-field product projection plus a raw
+// continuous value for the time-boxed S11 research preview. It is never an API
+// response and is discarded outside the preview window.
+export async function scoreModelV2Locally(input: unknown): Promise<LocalModelV2Result> {
   const semantic = adaptProductInput(input);
   const model = await loadVerifiedModel();
-  return projectSemantic(model, semantic);
+  const { score } = evaluateSemantic(model, semantic);
+  return {
+    projection: { schema_version: SCHEMA, product_wording: WORDING },
+    continuousOutput: score,
+  };
 }
 
 function projectSemantic(model: Model, semantic: unknown): Projection {
