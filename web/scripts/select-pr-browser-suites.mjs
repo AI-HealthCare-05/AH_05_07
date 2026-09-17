@@ -110,12 +110,17 @@ const scenePolicyContractTestFiles = new Set([
   'web/e2e/presentation-policy.spec.ts',
 ]);
 
+const uiBuildMatrixFiles = new Set([
+  'web/scripts/verify-ui-build-matrix.mjs',
+]);
+
 const directlyRoutedTestFiles = new Set([
   ...savedSceneTestFiles,
   ...reviewSceneTestFiles,
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
   ...scenePolicyContractTestFiles,
+  ...uiBuildMatrixFiles,
 ]);
 
 const savedSceneSuite = Object.freeze({
@@ -141,6 +146,11 @@ const productionCompanionSuite = Object.freeze({
 const scenePolicyContractSuite = Object.freeze({
   name: 'scene policy contracts',
   command: 'npx playwright test e2e/scene-policy.spec.ts e2e/presentation-policy.spec.ts --config=playwright.config.ts --workers=1',
+});
+
+const uiBuildMatrixSuite = Object.freeze({
+  name: 'UI build matrix',
+  command: 'node scripts/verify-ui-build-matrix.mjs',
 });
 
 const normalAuthSuite = Object.freeze({
@@ -189,6 +199,7 @@ const knownWebFiles = new Set([
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
   ...scenePolicyContractTestFiles,
+  ...uiBuildMatrixFiles,
   ...selectorFiles,
 ]);
 
@@ -264,6 +275,7 @@ export function selectPrBrowserSuites(files) {
     if (touches(relevant, companionReviewTestFiles)) suites.push(companionReviewSuite);
     if (touches(relevant, productionCompanionTestFiles)) suites.push(productionCompanionSuite);
     if (touches(relevant, scenePolicyContractTestFiles)) suites.push(scenePolicyContractSuite);
+    if (touches(relevant, uiBuildMatrixFiles)) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
   }
 
@@ -275,6 +287,7 @@ export function selectPrBrowserSuites(files) {
     || touches(relevant, companionReviewTestFiles);
   const touchesProductionCompanionTests = touches(relevant, productionCompanionTestFiles);
   const touchesScenePolicyContracts = touches(relevant, scenePolicyContractTestFiles);
+  const touchesUiBuildMatrix = touches(relevant, uiBuildMatrixFiles);
 
   // App/main shell wiring selects auth + journey UI, then adds scene/companion
   // coverage only when the same diff touches those runtimes. It never pulls in
@@ -289,6 +302,7 @@ export function selectPrBrowserSuites(files) {
       suites.push(productionCompanionSuite);
     }
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
+    if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
   }
 
@@ -298,6 +312,7 @@ export function selectPrBrowserSuites(files) {
     || touchesCompanionReviewRuntime
     || touchesProductionCompanionTests
     || touchesScenePolicyContracts
+    || touchesUiBuildMatrix
   ) {
     const suites = [];
     if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
@@ -308,6 +323,7 @@ export function selectPrBrowserSuites(files) {
       suites.push(productionCompanionSuite);
     }
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
+    if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
   }
 

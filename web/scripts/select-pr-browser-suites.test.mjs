@@ -197,6 +197,22 @@ test('mixed directly routed tests compose their exact concern suites', () => {
   ]);
 });
 
+test('UI build matrix tooling runs only its own matrix lane', () => {
+  assert.deepEqual(names(['web/scripts/verify-ui-build-matrix.mjs']), [
+    'UI build matrix',
+  ]);
+});
+
+test('App shell plus UI build matrix composes both direct concerns', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/scripts/verify-ui-build-matrix.mjs',
+  ]), [
+    ...appShellGate,
+    'UI build matrix',
+  ]);
+});
+
 test('companion renderer changes run only review and production companion coverage', () => {
   assert.deepEqual(names(['web/src/components/CompanionReviewRenderer.tsx']), [
     'review companion runtime',
