@@ -13,9 +13,20 @@ const env = { ...process.env,
   VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_candidate_not_a_real_key',
 };
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-execFileSync(npm, ['run', 'build', '--', '--outDir', outDir], { cwd: web, env, stdio: 'inherit' });
+const childOptions = { cwd: web, env, stdio: 'inherit' };
+
+function npmCommand(args) {
+  if (process.platform !== 'win32') return { file: npm, args };
+  const command = [npm, ...args].join(' ');
+  return { file: process.env.ComSpec || 'cmd.exe', args: ['/d', '/s', '/c', command] };
+}
+
+const build = npmCommand(['run', 'build', '--', '--outDir', outDir]);
+execFileSync(build.file, build.args, childOptions);
+
 if (!process.argv.includes('--build-only')) {
-  const server = spawn(npm, ['run', 'preview', '--', '--outDir', outDir, '--host', '127.0.0.1', '--port', '4182', '--strictPort'], { cwd: web, env, stdio: 'inherit' });
+  const preview = npmCommand(['run', 'preview', '--', '--outDir', outDir, '--host', '127.0.0.1', '--port', '4182', '--strictPort']);
+  const server = spawn(preview.file, preview.args, childOptions);
   for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => server.kill(signal));
   server.on('exit', code => process.exit(code ?? 0));
 }
