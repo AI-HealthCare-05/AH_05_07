@@ -172,6 +172,31 @@ test('companion-review test-only changes run only the review companion suite', (
   ]);
 });
 
+test('production companion test-only changes run only production companion coverage', () => {
+  assert.deepEqual(names(['web/e2e/companion-production.spec.ts']), [
+    'production-on companion',
+  ]);
+});
+
+test('scene policy contract tests run without unrelated browser families', () => {
+  assert.deepEqual(names([
+    'web/e2e/scene-policy.spec.ts',
+    'web/e2e/presentation-policy.spec.ts',
+  ]), ['scene policy contracts']);
+});
+
+test('mixed directly routed tests compose their exact concern suites', () => {
+  assert.deepEqual(names([
+    'web/e2e/saved-scene-review.spec.ts',
+    'web/e2e/companion-production.spec.ts',
+    'web/e2e/scene-policy.spec.ts',
+  ]), [
+    'saved-scene migration parity',
+    'production-on companion',
+    'scene policy contracts',
+  ]);
+});
+
 test('companion renderer changes run only review and production companion coverage', () => {
   assert.deepEqual(names(['web/src/components/CompanionReviewRenderer.tsx']), [
     'review companion runtime',

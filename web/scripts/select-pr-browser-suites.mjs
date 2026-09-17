@@ -101,9 +101,21 @@ const companionReviewTestFiles = new Set([
   'web/e2e/companion-review.spec.ts',
 ]);
 
-const sceneEngineTestFiles = new Set([
+const productionCompanionTestFiles = new Set([
+  'web/e2e/companion-production.spec.ts',
+]);
+
+const scenePolicyContractTestFiles = new Set([
+  'web/e2e/scene-policy.spec.ts',
+  'web/e2e/presentation-policy.spec.ts',
+]);
+
+const directlyRoutedTestFiles = new Set([
   ...savedSceneTestFiles,
   ...reviewSceneTestFiles,
+  ...companionReviewTestFiles,
+  ...productionCompanionTestFiles,
+  ...scenePolicyContractTestFiles,
 ]);
 
 const savedSceneSuite = Object.freeze({
@@ -124,6 +136,11 @@ const companionReviewSuite = Object.freeze({
 const productionCompanionSuite = Object.freeze({
   name: 'production-on companion',
   command: 'npm run test:e2e:production:on',
+});
+
+const scenePolicyContractSuite = Object.freeze({
+  name: 'scene policy contracts',
+  command: 'npx playwright test e2e/scene-policy.spec.ts e2e/presentation-policy.spec.ts --config=playwright.config.ts --workers=1',
 });
 
 const normalAuthSuite = Object.freeze({
@@ -170,6 +187,8 @@ const knownWebFiles = new Set([
   ...savedSceneTestFiles,
   ...reviewSceneTestFiles,
   ...companionReviewTestFiles,
+  ...productionCompanionTestFiles,
+  ...scenePolicyContractTestFiles,
   ...selectorFiles,
 ]);
 
@@ -237,15 +256,14 @@ export function selectPrBrowserSuites(files) {
     if (suites.length > 0) return cloneSuites(suites);
   }
 
-  // Test-only lanes.
-  if (relevant.length > 0 && relevant.every(file => companionReviewTestFiles.has(file))) {
-    return cloneSuites([companionReviewSuite]);
-  }
-
-  if (relevant.length > 0 && relevant.every(file => sceneEngineTestFiles.has(file))) {
+  // Direct test-only lanes compose without escalating to unrelated browser families.
+  if (relevant.length > 0 && relevant.every(file => directlyRoutedTestFiles.has(file))) {
     const suites = [];
     if (touches(relevant, savedSceneTestFiles)) suites.push(savedSceneSuite);
     if (touches(relevant, reviewSceneTestFiles)) suites.push(reviewSceneSuite);
+    if (touches(relevant, companionReviewTestFiles)) suites.push(companionReviewSuite);
+    if (touches(relevant, productionCompanionTestFiles)) suites.push(productionCompanionSuite);
+    if (touches(relevant, scenePolicyContractTestFiles)) suites.push(scenePolicyContractSuite);
     return cloneSuites(suites);
   }
 
@@ -255,6 +273,8 @@ export function selectPrBrowserSuites(files) {
   const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(relevant, reviewSceneRuntimeFiles);
   const touchesCompanionReviewRuntime = touches(relevant, companionReviewRuntimeFiles)
     || touches(relevant, companionReviewTestFiles);
+  const touchesProductionCompanionTests = touches(relevant, productionCompanionTestFiles);
+  const touchesScenePolicyContracts = touches(relevant, scenePolicyContractTestFiles);
 
   // App/main shell wiring selects auth + journey UI, then adds scene/companion
   // coverage only when the same diff touches those runtimes. It never pulls in
@@ -265,17 +285,29 @@ export function selectPrBrowserSuites(files) {
     if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
     if (touchesCompanionReviewRuntime) {
       suites.push(companionReviewSuite, productionCompanionSuite);
+    } else if (touchesProductionCompanionTests) {
+      suites.push(productionCompanionSuite);
     }
+    if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     return cloneSuites(suites);
   }
 
-  if (touchesSavedSceneRuntime || touchesReviewSceneRuntime || touchesCompanionReviewRuntime) {
+  if (
+    touchesSavedSceneRuntime
+    || touchesReviewSceneRuntime
+    || touchesCompanionReviewRuntime
+    || touchesProductionCompanionTests
+    || touchesScenePolicyContracts
+  ) {
     const suites = [];
     if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
     if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
     if (touchesCompanionReviewRuntime) {
       suites.push(companionReviewSuite, productionCompanionSuite);
+    } else if (touchesProductionCompanionTests) {
+      suites.push(productionCompanionSuite);
     }
+    if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     return cloneSuites(suites);
   }
 
