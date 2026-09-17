@@ -1211,7 +1211,7 @@ function App() {
       ? "non_semantic"
       : undefined;
   const companionSelection = companionMode === "production"
-    ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave)
+    ? resolveProductionCompanion(companionMode, activeScreen, confirmedSave, companionSpeciesPreference)
     : resolveCompanionSelection(activeScreen, initialSearch, companionContext);
   const challengeDestination: ScreenId = activeChallenge ? "S06" : "S03";
   const homeChallengeTitle = activeChallengeEnded
@@ -1878,11 +1878,11 @@ function App() {
       if (presentation.journey) return (
         <Scene id="S14" {...journeyCopy.S14} tone="cream" className="journey-settings">
           <div className="journey-settings-list">
-            {import.meta.env.VITE_SK7_SCENE_MODE === "review" && <section className="journey-settings-section companion-identity-settings">
+            {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
               <div>
                 <p className="eyebrow">함께할 캐릭터</p>
                 <h2>내 동반자</h2>
-                <p>화면의 3D 캐릭터만 바뀌어요. 혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.</p>
+                <p>선택한 동반자는 로그인 화면과 7일 돌아보기의 3D 캐릭터에 사용해요. 혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.</p>
               </div>
               <label className="companion-identity-control" htmlFor="companion-species">
                 <span>캐릭터 선택</span>

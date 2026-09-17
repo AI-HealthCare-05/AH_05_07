@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 
 const productionAssetUrl = companionAssetManifest.bear.lite.url;
+const preferredProductionAssetUrl = companionAssetManifest.cat.lite.url;
 const emptyWindow = {
   start_on: "2026-09-01",
   end_on: "2026-09-07",
@@ -154,7 +155,42 @@ test("production S05 enables touch reactions only after celebrate settles idle",
   }
 });
 
-test("production S10 uses fixed bear-lite idle and keeps day focus presentation-only", async ({ page }) => {
+test("production S10 follows the saved companion identity and ignores query overrides", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
+  await installSyntheticApi(page);
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+
+  await page.goto(
+    "/?e2e=signed-in&screen=S14"
+      + "&companion_species=rabbit&companion_variant=standard&companion_clip=greet",
+  );
+
+  const select = page.locator("#companion-species");
+  await expect(select).toBeVisible();
+  await expect(select).toHaveValue("bear");
+  await select.selectOption("cat");
+  await expect(select).toHaveValue("cat");
+  expect(await page.evaluate(() => localStorage.getItem("sk7-companion-species"))).toBe("cat");
+
+  const assetResponsePromise = page.waitForResponse(
+    (response) => response.url() === preferredProductionAssetUrl,
+  );
+  await page.getByRole("button", { name: "7일 돌아보기", exact: true }).click();
+  const assetResponse = await assetResponsePromise;
+
+  expect(assetResponse.status()).toBe(200);
+  await expect(page.locator(".journey-recap")).toBeVisible();
+  await expect(page.locator("[data-companion-status]")).toHaveAttribute(
+    "data-companion-status",
+    "ready",
+    { timeout: 30_000 },
+  );
+  expect(companionRequests(requests)).toContain(preferredProductionAssetUrl);
+  expect(companionRequests(requests)).not.toContain(companionAssetManifest.rabbit.standard.url);
+});
+
+test("production S10 defaults to bear-lite idle and keeps day focus presentation-only", async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
   await installSyntheticApi(page);
   await page.goto(

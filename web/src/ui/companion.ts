@@ -108,12 +108,13 @@ export function resolveProductionCompanion(
   mode: CompanionMode,
   screen: ScreenId,
   confirmedSave: boolean,
+  species: CompanionSpecies = "bear",
 ): CompanionSelection | null {
   if (mode !== "production") return null;
   if (screen === "S10") {
     return {
       screen: "S10",
-      species: "bear",
+      species,
       variant: "lite",
       clip: "idle",
     };
