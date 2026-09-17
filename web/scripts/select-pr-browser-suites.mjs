@@ -31,9 +31,13 @@ const reviewSceneRuntimeFiles = new Set([
   'web/src/components/scene/environment.ts',
   'web/src/lib/seoulDate.ts',
   'web/src/lib/useSeoulDate.ts',
+  'web/src/ui/scene-manifest.v2.json',
   'web/src/ui/sceneManifest.generated.ts',
   'web/src/ui/scenePolicy.ts',
   'web/src/ui/sceneRecipes.ts',
+  'web/scripts/register-scene-posters.mjs',
+  'web/scripts/verify-scene-manifest.mjs',
+  'web/scripts/scene-manifest.test.mjs',
 ]);
 
 const companionReviewRuntimeFiles = new Set([
@@ -48,6 +52,30 @@ const broadBrowserRuntimeFiles = new Set([
   'web/src/App.tsx',
   'web/src/main.tsx',
 ]);
+
+const selectorFiles = new Set([
+  'web/scripts/select-pr-browser-suites.mjs',
+  'web/scripts/select-pr-browser-suites.test.mjs',
+]);
+
+const protectedBrowserFiles = new Set([
+  'web/src/lib/api.ts',
+  'web/src/lib/api-contract.ts',
+  'web/src/lib/authEmailConfirm.ts',
+  'web/src/lib/supabase.ts',
+  'web/package.json',
+  'web/package-lock.json',
+  'web/wrangler.jsonc',
+]);
+
+const protectedBrowserPrefixes = [
+  'web/src/lib/auth',
+  'web/src/lib/model',
+  'web/src/ui/model',
+  'web/public/model',
+  'web/e2e/model-v2',
+  'web/scripts/verify-model-v2-assets',
+];
 
 const sharedSceneRuntimeFiles = new Set([
   'web/src/components/SceneShell.tsx',
@@ -94,7 +122,23 @@ const productionCompanionSuite = Object.freeze({
   command: 'npm run test:e2e:production:on',
 });
 
-const fullSuites = Object.freeze([
+const normalAuthSuite = Object.freeze({
+  name: 'normal auth boundaries',
+  command: 'npx playwright test --config=playwright.ui-normal.config.ts',
+});
+
+const journeyUISuite = Object.freeze({
+  name: 'journey UI',
+  command: 'npm run test:e2e:ui:pr',
+});
+
+const selectorPolicySuite = Object.freeze({
+  name: 'selector policy unit test',
+  command: 'node --test web/scripts/select-pr-browser-suites.test.mjs',
+});
+
+// Current complete PR browser gate; nightly/manual/release still owns the full matrix.
+const completePrBrowserGate = Object.freeze([
   {
     name: 'browser regression',
     command: [
@@ -109,10 +153,20 @@ const fullSuites = Object.freeze([
     name: 'model-v2 firefox and webkit',
     command: 'npm run test:e2e:model-v2 -- --project=firefox --project=webkit',
   },
-  {
-    name: 'journey UI',
-    command: 'npm run test:e2e:ui:pr',
-  },
+  journeyUISuite,
+]);
+
+const knownWebFiles = new Set([
+  ...broadBrowserRuntimeFiles,
+  ...focusedFiles,
+  ...savedSceneRuntimeFiles,
+  ...reviewSceneRuntimeFiles,
+  ...companionReviewRuntimeFiles,
+  ...sharedSceneRuntimeFiles,
+  ...savedSceneTestFiles,
+  ...reviewSceneTestFiles,
+  ...companionReviewTestFiles,
+  ...selectorFiles,
 ]);
 
 function touches(files, set) {
@@ -123,47 +177,88 @@ function cloneSuites(suites) {
   return suites.map(suite => ({ ...suite }));
 }
 
+function isProtectedBrowserPath(file) {
+  if (protectedBrowserFiles.has(file)) return true;
+  return protectedBrowserPrefixes.some(prefix => file.startsWith(prefix));
+}
+
+function isUnknownWebRuntime(file) {
+  return file.startsWith('web/') && !knownWebFiles.has(file);
+}
+
 export function selectPrBrowserSuites(files) {
   const unique = [...new Set(files.filter(Boolean))];
 
-  if (unique.length > 0 && unique.every(file => focusedFiles.has(file))) {
+  // Docs do not affect browser suite scope.
+  const relevant = unique.filter(file => !file.startsWith('docs/'));
+  if (relevant.length === 0) {
+    return cloneSuites(completePrBrowserGate);
+  }
+
+  // Selector implementation/test-only changes run a tiny policy unit-test lane.
+  if (relevant.every(file => selectorFiles.has(file))) {
+    return cloneSuites([selectorPolicySuite]);
+  }
+
+  // Protected auth/API/model/dependency/deployment paths fall back to the full PR gate.
+  if (relevant.some(file => isProtectedBrowserPath(file))) {
+    return cloneSuites(completePrBrowserGate);
+  }
+
+  // Unknown/unclassified web runtime paths and non-web paths fall back to the full PR gate.
+  if (relevant.some(file => isUnknownWebRuntime(file) || !file.startsWith('web/'))) {
+    return cloneSuites(completePrBrowserGate);
+  }
+
+  // Focused presentation-only lanes.
+  if (relevant.length > 0 && relevant.every(file => focusedFiles.has(file))) {
     const suites = [];
-    if (touches(unique, todayFiles)) {
+    if (touches(relevant, todayFiles)) {
       suites.push({
         name: 'S02 focused UI',
         command: 'npx playwright test --config=playwright.ui-candidate.config.ts e2e/ui-candidate.cases.ts',
       });
     }
-    if (touches(unique, recapFiles)) {
+    if (touches(relevant, recapFiles)) {
       suites.push({
         name: 'S10 focused UI',
         command: 'npx playwright test --config=playwright.ui-candidate.config.ts e2e/recap-candidate.cases.ts',
       });
-      if (unique.includes('web/src/components/journey-recap.css')) suites.push(reviewSceneSuite);
+      if (relevant.includes('web/src/components/journey-recap.css')) suites.push(reviewSceneSuite);
     }
-    if (suites.length > 0) return suites;
+    if (suites.length > 0) return cloneSuites(suites);
   }
 
-  if (unique.length > 0 && unique.every(file => companionReviewTestFiles.has(file))) {
+  // Test-only lanes.
+  if (relevant.length > 0 && relevant.every(file => companionReviewTestFiles.has(file))) {
     return cloneSuites([companionReviewSuite]);
   }
 
-  if (unique.length > 0 && unique.every(file => sceneEngineTestFiles.has(file))) {
+  if (relevant.length > 0 && relevant.every(file => sceneEngineTestFiles.has(file))) {
     const suites = [];
-    if (touches(unique, savedSceneTestFiles)) suites.push(savedSceneSuite);
-    if (touches(unique, reviewSceneTestFiles)) suites.push(reviewSceneSuite);
+    if (touches(relevant, savedSceneTestFiles)) suites.push(savedSceneSuite);
+    if (touches(relevant, reviewSceneTestFiles)) suites.push(reviewSceneSuite);
     return cloneSuites(suites);
   }
 
-  const touchesBroadBrowserRuntime = touches(unique, broadBrowserRuntimeFiles);
-  const touchesSharedSceneRuntime = touches(unique, sharedSceneRuntimeFiles);
-  const touchesSavedSceneRuntime = touchesSharedSceneRuntime || touches(unique, savedSceneRuntimeFiles);
-  const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(unique, reviewSceneRuntimeFiles);
-  const touchesCompanionReviewRuntime = touches(unique, companionReviewRuntimeFiles)
-    || touches(unique, companionReviewTestFiles);
+  const touchesBroadBrowserRuntime = touches(relevant, broadBrowserRuntimeFiles);
+  const touchesSharedSceneRuntime = touches(relevant, sharedSceneRuntimeFiles);
+  const touchesSavedSceneRuntime = touchesSharedSceneRuntime || touches(relevant, savedSceneRuntimeFiles);
+  const touchesReviewSceneRuntime = touchesSharedSceneRuntime || touches(relevant, reviewSceneRuntimeFiles);
+  const touchesCompanionReviewRuntime = touches(relevant, companionReviewRuntimeFiles)
+    || touches(relevant, companionReviewTestFiles);
 
+  // App/main shell wiring selects auth + journey UI, then adds scene/companion
+  // coverage only when the same diff touches those runtimes. It never pulls in
+  // Model V2 cross-browser coverage merely because the shell changed.
   if (touchesBroadBrowserRuntime) {
-    return cloneSuites(fullSuites);
+    const suites = [normalAuthSuite, journeyUISuite];
+    if (touchesSavedSceneRuntime) suites.push(savedSceneSuite);
+    if (touchesReviewSceneRuntime) suites.push(reviewSceneSuite);
+    if (touchesCompanionReviewRuntime) {
+      suites.push(companionReviewSuite, productionCompanionSuite);
+    }
+    return cloneSuites(suites);
   }
 
   if (touchesSavedSceneRuntime || touchesReviewSceneRuntime || touchesCompanionReviewRuntime) {
@@ -176,7 +271,7 @@ export function selectPrBrowserSuites(files) {
     return cloneSuites(suites);
   }
 
-  return cloneSuites(fullSuites);
+  return cloneSuites(completePrBrowserGate);
 }
 
 function changedFiles(base, head) {

@@ -43,10 +43,16 @@ authoritative only for their own boundaries.
 - Run affected checks while iterating. The final PR retains required `lint` and
   `test`; specialized CI is routed by affected paths. Frontend/docs-only work may
   use lightweight required-check payloads, while backend/protected/unknown paths
-  retain the Python/AI/MySQL payload. Do not duplicate locally a broad suite owned
-  by final-candidate CI. The complete browser/evidence matrix is
-  not a routine PR or every-merge default; use the scheduled nightly run, an
-  explicit release run, or manual confidence work when its scope requires it.
+  retain the Python/AI/MySQL payload. Routine App shell / presentation wiring does
+  not by itself imply backend Python/AI/MySQL verification. Browser CI is
+  concern-routed; Model V2 cross-browser coverage is not a generic UI tax. Do not
+  duplicate locally a broad suite owned by final-candidate CI. The complete
+  browser/evidence matrix is not a routine PR or every-merge default; use the
+  scheduled nightly run, an explicit release run, or manual confidence work when
+  its scope requires it.
+- For AI-assisted local verification, redirect verbose passing test/build logs to
+  `/tmp` and surface only result summaries or focused failure excerpts. Do not feed
+  line-by-line passing Playwright output into model context.
 - Protected boundaries keep their relevant Issue, contract, test, and operational
   evidence. An ADR is for a durable architecture decision, not every implementation.
 - Reuse unchanged evidence within its exact scope. Do not create a second PR merely
