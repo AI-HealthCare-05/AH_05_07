@@ -931,19 +931,6 @@
   min-width: 0;
   isolation: isolate;
 }
-.login-companion-character::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: .35rem;
-  width: 72%;
-  height: 24%;
-  border-radius: 50%;
-  background: rgb(106 126 102 / .12);
-  filter: blur(.15rem);
-  transform: translateX(-50%);
-  z-index: -1;
-}
 .login-companion-character .companion-runtime-slot {
   position: absolute;
   inset: 0;
