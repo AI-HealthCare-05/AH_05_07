@@ -2,20 +2,25 @@
 
 ## Scope and status
 
-This register records the user-approved G1 visual source snapshots. The source
-review itself did not upload binaries; the later R2 v1 delivery is recorded as
-an operational fact below. The current application remains CSS-first after
-Issue #200 reverted the initial runtime binding for responsive regression.
+This register is a provenance ledger for user-approved visual source snapshots
+and immutable delivery identities; it is not the current runtime inventory.
+The source review itself did not upload binaries; the later R2 v1 delivery is
+recorded as an operational fact below. Issue #200's CSS-first state is a
+historical checkpoint. Current companion runtime status belongs to
+[companion-runtime.md](companion-runtime.md), while scene activation/status
+belongs to the scene contracts and current executable source.
 
 The SHA-256 value, byte size, and dimensions identify the reviewed source snapshot. A resized, recompressed, converted, or metadata-scrubbed file is a new derivative and requires its own versioned entry before public delivery.
 
 ## 3D companion R2 v1 delivery — Issue #247
 
 Issue [#247](https://github.com/AI-HealthCare-05/AH_05_07/issues/247) records the
-S3B delivery of the selected companion GLBs. This is a public, decorative,
-review-only delivery; it does not connect the assets to the product UI, does
-not replace the existing `visual/v1/` assets, and does not change the
-`CompanionRuntimeBoundary` default `off` state.
+historical S3B delivery of the selected companion GLBs. At that checkpoint the
+delivery was public, decorative and review-only and did not itself connect the
+assets to product UI or activate production. Later runtime stages reuse the
+same immutable object identities; their current use/activation is intentionally
+owned by [companion-runtime.md](companion-runtime.md), not inferred from this
+S3B register. The delivery did not replace the existing `visual/v1/` assets.
 
 The following common fields apply to every row in the delivery register:
 

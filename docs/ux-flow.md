@@ -4,7 +4,11 @@
 
 ```mermaid
 flowchart TD
-    A["S01 Email link"] --> B["S02 Today"]
+    A["S01 Signed-out · companion + email link"] --> B["Authenticated S02 Today"]
+    A --> P["30-second synthetic read-only preview"]
+    P --> Q["Demo S02 presentation"]
+    Q --> R["Login gate for product actions"]
+    R --> A
     B --> C["S04–S05 BP record"]
     B --> D["S07 Today detail"]
     B --> E["S08–S09 Records"]
@@ -25,6 +29,14 @@ bounded seven-day JSON export, one optional active challenge selection, daily
 check-ins, status-only check-in edit, explicit-confirmation check-in delete, and
 separated review screens. The first challenge check-in locks the chosen action.
 
+S01 also presents the 11-species decorative companion selector and narrator. The
+non-medical preference is stored only as `sk7-companion-species`. The signed-out
+`로그인 없이 30초 맛보기` path carries that preference into a synthetic,
+read-only Demo S02 presentation without creating an account/session, opening an
+API/DB write path, or persisting demo progress. Product actions from the preview
+are intercepted by a login gate. The preview is presentation-only and is never
+treated as authenticated product history.
+
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
 four primary destinations are Today, Records, Seven days, and Settings. S11 is a
 secondary tool reached from Settings and, when the current window is confirmed
@@ -34,7 +46,7 @@ screens remain reachable without introducing a router dependency.
 
 | Screen | Purpose |
 |---|---|
-| S01 | Signed-out email-link gate |
+| S01 | Signed-out companion narrator/selector, email-link gate, and synthetic read-only preview entry |
 | S02 | Today home; BP state determines the lead action |
 | S03 | Optional challenge choice |
 | S04–S05 | BP entry and confirmed new-save; successful edits return to their record detail |

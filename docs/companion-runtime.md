@@ -1,10 +1,35 @@
 # S3 companion 런타임 기반
 
-Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결정과 S3B
-게시를 런타임 활성화로 확장하지 않는다. 화면별 사용 범위와 동작 제한은
-[S2 기록](s2-design-selection.md)의 Issue #242 사람 결정에 따른다.
+> **Lifecycle note — 2026-09-18.** S3A–S3E 번호가 붙은 아래 rollout/측정
+> 문단은 해당 단계의 역사적 근거를 보존한다. 현재 실행 계약은
+> [`web/src/ui/companion.ts`](../web/src/ui/companion.ts), 현재 scene/host 코드,
+> 그리고 이 문서의 **Current runtime summary**가 우선한다.
 
-## S3 상태
+Issue #244의 S3 기반 단계에서 시작된 기록이다. S2 선정과 S3B 게시 자체는
+runtime activation을 뜻하지 않았으며, 후속 단계에서 별도 검증·활성화가
+진행되었다. S2 당시 결정은 [historical selection record](s2-design-selection.md)로
+보존한다.
+
+## Current runtime summary
+
+- Companion species는 선택된 11종이며 물범은 포함하지 않는다.
+- S01 로그인 narrator는 사용자가 고른 비의료적 `sk7-companion-species`
+  preference만 사용해 registered `lite` + `greet` profile을 연다.
+- S02 realtime scene은 같은 saved preference를 identity로 이어받되 registered
+  `lite` GLB만 사용한다. invalid preference는 bear로 fail-safe 하며 query, BP,
+  Model V2, challenge, record facts가 species를 고를 수 없다.
+- S10 production companion은 host가 전달한 같은 비의료적 preference를
+  `lite` + `idle` profile에 사용할 수 있고, preference가 없거나 invalid면 bear로
+  fallback한다. 이 identity는 S10의 health/record semantics와 분리된다.
+- S05 production save-success path는 여전히 fixed bear/lite
+  `celebrate → idle`이며 saved species preference로 바뀌지 않는다.
+- S01의 `로그인 없이 30초 맛보기`는 selected species를 synthetic/read-only
+  Demo S02 presentation에만 전달한다. account/session 또는 API/DB write를 열지
+  않고 demo progress를 저장하지 않으며 product action은 login gate로 막는다.
+- `off`와 reduced motion/failure 경계는 기존 semantic HTML/CSS와 poster/static
+  fallback을 보존한다.
+
+## Historical S3 rollout status
 
 - S3A: 사람 사용 범위·동작 제한·권리 결정 완료.
 - S3B: `companion/v1/` 11종 `standard/lite` 22개 R2 게시 및 source↔remote/public
@@ -17,9 +42,11 @@ Issue #244의 S3 기반 단계다. 이 문서는 S2의 사용자 `selected` 결�
   `bear`/`lite` profile만 만들고, confirmed save 이후 같은 GLB의 mixer에서
   `celebrate` one-shot 뒤 `idle`로 전환한다. 현재 tactile production v1은
   그 `idle` 전환이 끝난 뒤에만 head/body/feet pointer interaction을 연다.
-- P1 Living Replay production extension은 S10에서만 고정 `bear`/`lite`/`idle`
-  profile과 presentation-only day-focus head+spine attention을 추가한다. S10 tactile은
-  열지 않고 reduced motion에서는 neutral static을 유지한다. S10 realtime scene gate는
+- P1 Living Replay production extension은 당시 S10의 `lite`/`idle`
+  profile과 presentation-only day-focus head+spine attention을 추가했다. 이후
+  non-medical saved species preference를 받을 수 있도록 확장되었고 invalid/absent
+  preference는 bear로 fallback한다. S10 tactile은 열지 않고 reduced motion에서는
+  neutral static을 유지한다. S10 realtime scene gate는
   이 확장과 별개이며 계속 활성화하지 않는다.
 - live production state: **ACTIVE**. Phase B activation, public smoke, rollback
   rehearsal, and final restore are verified in
@@ -104,8 +131,10 @@ head/body/feet tactile controller를 생성한다. interaction은 저장 결과�
 모델 결과를 입력으로 받지 않는다. `prefers-reduced-motion: reduce`에서는 action,
 RAF, tactile interaction을 모두 시작하지 않고 neutral static model만 표시한다.
 
-S10 production selection은 save 상태와 무관한 고정 `bear`/`lite`/`idle` profile이다.
-7일 기록의 선택·혈압·챌린지·Model V2 사실은 selection이나 pose를 고르지 않는다.
+S10 production selection은 save 상태와 무관한 `lite`/`idle` profile이며,
+species는 host가 전달한 비의료적 saved preference만 사용할 수 있다. absent/invalid
+preference는 bear로 fallback한다. 7일 기록의 선택·혈압·챌린지·Model V2 사실은
+species, selection, pose를 고르지 않는다.
 day-focus는 활성화한 semantic control의 화면 위치만 presentation cue로 전달하며,
 head+spine bounded attention은 기존 envelope 안에서만 동작한다. S10 tactile은
 disabled이고 `prefers-reduced-motion: reduce`에서는 attention loop를 시작하지 않는다.
@@ -144,9 +173,9 @@ GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 `npm run test:e2e:production:on`은 실제 runtime delivery의 S05 production-on
 경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`,
 celebration 중 tactile 차단, idle 이후 mouse/touch tactile 활성화와 celebrate
-non-replay를 검증한다. 같은 suite는 S10의 fixed bear-lite idle, query 무시,
-presentation-only day-focus attention, tactile disabled, reduced motion static을
-검증하고 다른 화면은 계속 제외한다. failure isolation과 1366/390/320 non-overlap도
+non-replay를 검증한다. 같은 suite와 후속 identity regression은 S10의 saved/fallback species
+`lite`/`idle`, query 무시, presentation-only day-focus attention, tactile disabled,
+reduced motion static을 검증하고 다른 화면은 계속 제외한다. failure isolation과 1366/390/320 non-overlap도
 기존 S05 경계에서 유지한다. 이 테스트의 production variable은 local test web server에만
 주입한다.
 
@@ -168,10 +197,11 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
 ## S3E rollout and rollback contract
 
 - Production selection source: `resolveProductionCompanion`의 고정 계약. 입력은
-  mode, screen, `confirmedSave` boolean뿐이다. S05는 confirmed save일 때만
-  `celebrate → idle`, S10은 save 상태와 무관하게 고정 `idle` profile을 만든다.
+  mode, screen, `confirmedSave`, 그리고 S10에서만 사용할 수 있는 비의료적 species
+  preference다. S05는 confirmed save일 때만 fixed bear/lite `celebrate → idle`,
+  S10은 save 상태와 무관하게 saved/fallback species의 `lite`/`idle` profile을 만든다.
   BP value, 입력 기반 위험군 선별 신호, model output, challenge adherence/result는
-  입력으로 받지 않는다.
+  species나 animation 입력으로 받지 않는다.
 - S05 trigger: 실제 신규 save request가 성공으로 resolve된 뒤에만 `confirmedSave=true`;
   요청 시작, optimistic UI, timeout/unknown, 4xx/5xx, 저장 확인 전에는 false다.
   기존 혈압 기록의 수정 PUT은 성공 후 S09 상세로 복귀하며 이 S05 trigger에 포함하지 않는다.
