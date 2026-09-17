@@ -59,12 +59,18 @@ const selectableCharacterMap: Readonly<Record<CompanionSpecies, string>> = (() =
 
 // Conservative identity-size corrections established for S02. The S10 review
 // candidate reuses them, then browser bounds checks all species before publication.
-const selectableCharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
+const s02CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
   rabbit: 1.03,
   capybara: 0.96,
   hedgehog: 0.95,
   fox: 0.92,
   squirrel: 0.99,
+};
+
+// S10 has a different orthographic composition. Keep its small fit correction
+// separate so S02's already-qualified framing does not move.
+const s10CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
+  hedgehog: 0.86,
 };
 
 function resolveSelectableCharacterRecipe(
@@ -89,7 +95,9 @@ function resolveSelectableCharacterRecipe(
   return {
     ...baseRecipe,
     characterUrl: registered.delivery.url,
-    characterScale: selectableCharacterScale[species] ?? 1,
+    characterScale: screen === "S10"
+      ? (s10CharacterScale[species] ?? s02CharacterScale[species] ?? 1)
+      : (s02CharacterScale[species] ?? 1),
   };
 }
 
