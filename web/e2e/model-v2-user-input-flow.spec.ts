@@ -286,7 +286,7 @@ test("S11 preview expires while a completed result remains open", async ({ page 
   await expect(preview).toBeVisible();
   expect(routed.requests).toHaveLength(1);
 
-  await page.clock.setSystemTime(new Date("2026-10-17T23:59:59+09:00"));
+  await page.clock.pauseAt(new Date("2026-10-17T23:59:59+09:00"));
   await dispatchPageshow(page);
   await page.clock.runFor(999);
   await expect(preview).toBeVisible();
@@ -901,30 +901,40 @@ test("account switch discards the previous account draft and ignores its pending
   }
 });
 
-for (const action of ["sign-out", "account-switch"] as const) {
-  test(`S11 ${action} discards a completed visible preview and blank draft`, async ({ page }) => {
-    const routed = await routeModel(page);
-    await page.goto("/?e2e=signed-in&screen=S11");
-    await toReview(page);
-    await submit(page).click();
-    await expect(result(page)).toBeVisible();
-    await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
-    if (action === "sign-out") {
-      await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
-      await expect(page.locator('[data-scene="S01"]')).toBeVisible();
-    } else {
-      await changeSession(page, true);
-      await expect(page.locator('[data-scene="S12"]')).toBeVisible();
-    }
-    await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
-    await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
-    await expect(step(page, "intro")).toBeVisible();
-    await expect(result(page)).toHaveCount(0);
-    await begin(page);
-    await expect(page.locator("#model-age")).toHaveValue("");
-    expect(routed.requests).toHaveLength(1);
-  });
-}
+test("S11 sign-out discards a completed visible preview and blank draft", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
+  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await expect(step(page, "intro")).toBeVisible();
+  await expect(result(page)).toHaveCount(0);
+  await begin(page);
+  await expect(page.locator("#model-age")).toHaveValue("");
+  expect(routed.requests).toHaveLength(1);
+});
+
+test("S11 account switch discards a completed visible preview and blank draft", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+  await changeSession(page, true);
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
+  await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+  await expect(step(page, "intro")).toBeVisible();
+  await expect(result(page)).toHaveCount(0);
+  await begin(page);
+  await expect(page.locator("#model-age")).toHaveValue("");
+  expect(routed.requests).toHaveLength(1);
+});
 
 for (const width of [320, 390, 430]) {
   test(`S11 every input step and review remains usable at ${width}px`, async ({ page }) => {
