@@ -82,6 +82,12 @@ URL/version/file name은 사용하지 않는다.
 돌아보기만 review 후보로 둔다. S04, S07, S08, S09, S11, S12, S13, S14는
 중앙 정책에서 제외한다. 이는 비운영 review 범위이며 최종 운영 화면 배정이 아니다.
 
+S01 로그인 narrator는 위 review query 후보군을 넓히지 않는 별도 presentation profile이다.
+사용자가 고른 비의료적 species preference만 받아 `lite` + `greet`를 사용한다.
+`VITE_SK7_COMPANION_MODE` gate를 그대로 따르므로 `off`에서는 renderer/GLB 요청이 없고
+HTML 말주머니와 로그인/둘러보기 UI만 남는다. query parameter, 혈압 수치, 위험군 선별 신호,
+모델 결과, 챌린지 상태는 narrator 선택 입력으로 사용하지 않는다. tactile interaction은 열지 않는다.
+
 ## 동작 의미 경계
 
 - `idle`, `greet`, `curious`, `rest`: 일반 검토 후보

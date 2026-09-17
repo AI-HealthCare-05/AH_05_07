@@ -9,6 +9,7 @@ import { StructuredRecapFeedback } from "./components/StructuredRecapFeedback";
 import { LivingWeekReport } from "./components/LivingWeekReport";
 
 import { JourneyToday } from "./components/JourneyToday";
+import { LoginCompanionNarrator } from "./components/LoginCompanionNarrator";
 
 import { VisualStage } from "./components/VisualStage";
 
@@ -45,7 +46,7 @@ import { useSeoulDate } from "./lib/useSeoulDate";
 import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
-import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
+import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionMode, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
 import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
@@ -159,10 +160,35 @@ function isWindowEmpty(windowData: ObservationWindow | null): boolean {
     && windowData?.challenge_events.length === 0;
 }
 
-function Login({ onSession, recoveryMessage, journey }: { onSession: (session: Session) => void; recoveryMessage?: string; journey: boolean }) {
+function Login({
+  onSession,
+  recoveryMessage,
+  journey,
+  today,
+  companionMode,
+  companionSpecies,
+}: {
+  onSession: (session: Session) => void;
+  recoveryMessage?: string;
+  journey: boolean;
+  today: string;
+  companionMode: CompanionMode;
+  companionSpecies: CompanionSpecies;
+}) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState("");
+  const previewDays = useMemo(() => {
+    const observationPattern = [1, 0, 2, 1, 0, 1, 1] as const;
+    const participationPattern = ["기록함", "기록 없음", "기록함", "건너뜀", "기록 없음", "기록함", "기록 없음"] as const;
+    return observationPattern.map((observationCount, index) => ({
+      date: shiftDate(today, index - 6),
+      observationCount,
+      participation: participationPattern[index],
+    }));
+  }, [today]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -182,6 +208,41 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
     }
   }
 
+  if (journey && previewOpen) return (
+    <main className="journey-demo-preview-shell" data-scene="S01" data-demo-mode="read-only">
+      <header className="journey-demo-preview-bar">
+        <div>
+          <p className="eyebrow">둘러보기</p>
+          <strong>예시 화면 · 저장하지 않아요</strong>
+        </div>
+        <button type="button" className="secondary" onClick={() => { setPreviewOpen(false); setPreviewNotice(""); }}>로그인 화면으로</button>
+      </header>
+      {previewNotice && <p className="journey-demo-preview-notice" role="status">{previewNotice}</p>}
+      <JourneyToday
+        staticLandscape
+        today={today}
+        days={previewDays}
+        freshness="ready"
+        lead={{
+          key: "demo-login",
+          title: "이 화면이 로그인 후 첫 화면이에요.",
+          support: "둘러보기에서는 예시 기록만 보여드리고 실제 저장은 하지 않아요.",
+          action: "로그인하고 기록하기",
+          screen: "S04",
+        }}
+        secondary={[]}
+        onNavigate={(screen) => {
+          if (screen === "S04") {
+            setPreviewOpen(false);
+            setPreviewNotice("");
+            return;
+          }
+          setPreviewNotice("둘러보기는 오늘 화면까지만 보여드려요. 실제 기록과 7일 돌아보기는 로그인 후 사용할 수 있어요.");
+        }}
+      />
+    </main>
+  );
+
   if (journey) return (
     <main className="welcome-shell journey-login" data-scene="S01">
       <div className="journey-login-layout">
@@ -189,15 +250,23 @@ function Login({ onSession, recoveryMessage, journey }: { onSession: (session: S
           <p className="eyebrow">상균7데이즈</p>
           <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
           <p className="scene-body">측정한 혈압을 날짜·시간대별로 남기고 다시 확인하는 서비스예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
+          <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
         </section>
         <section className="welcome-card" aria-label="이메일 로그인">
           <form onSubmit={submit} aria-busy={pending}>
             <label htmlFor="email">이메일</label>
             <input id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
-            <button type="submit" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
+            <div className="entry-auth-wrap">
+              <button type="submit" className="entry-auth-button" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
+              <span className="entry-discount-note" aria-hidden="true">가입비 100% 할인 · 원래 무료예요</span>
+            </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>
           {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
+          <div className="journey-login-preview-entry">
+            <button type="button" className="secondary entry-preview-button" onClick={() => { setPreviewOpen(true); setPreviewNotice(""); }}>둘러보기</button>
+            <p>로그인 없이 예시 기록 화면을 먼저 볼 수 있어요. 둘러보기에서는 저장하지 않아요.</p>
+          </div>
           <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
           <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
           <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
@@ -1057,7 +1126,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <Login journey={presentation.journey} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login journey={presentation.journey} today={today} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
