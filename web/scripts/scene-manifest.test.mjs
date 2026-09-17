@@ -124,8 +124,10 @@ for (const [name, mutate, message] of [
 });
 for (const suffix of ["?unregistered=1", "/../other.webp"]) test(`rejects a modified public URL: ${suffix}`, () => {
   const manifest = structuredClone(original), posterR2 = structuredClone(inputs.posterR2);
-  manifest.assets[1].delivery.url += suffix;
-  posterR2.objects[0].url = manifest.assets[1].delivery.url;
+  const posterAsset = manifest.assets.find(a => a.kind === "poster");
+  const publicRecord = posterR2.objects.find(o => o.id === posterAsset.id);
+  posterAsset.delivery.url += suffix;
+  publicRecord.url = posterAsset.delivery.url;
   assert.throws(() => verifySceneManifest(manifest, { ...inputs, posterR2 }), /registered poster URL/);
 });
 test("local authoring remains valid without R2 evidence", () => {
@@ -147,7 +149,8 @@ test("registration preserves verified delivery and keeps uncaptured public ident
 });
 test("matching metadata cannot authorize a path outside the poster directory", () => {
   const manifest = structuredClone(original), posters = structuredClone(inputs.posters);
-  manifest.assets[1].delivery.objectKey = posters.posters[0].delivery.objectKey = "../../private.webp";
+  const posterAsset = manifest.assets.find(a => a.kind === "poster");
+  posterAsset.delivery.objectKey = posters.posters[0].delivery.objectKey = "../../private.webp";
   assert.throws(() => verifySceneManifest(manifest, { ...inputs, posters }), /object key/);
 });
 
@@ -222,13 +225,13 @@ test("rejects S02 allowlist with missing species", () => {
     const asset = manifest.assets.find(a => a.id === id);
     return asset?.companionSpecies !== "red_panda";
   });
-  assert.throws(() => verifySceneManifest(manifest, inputs), /all 11 approved species/);
+  assert.throws(() => verifySceneManifest(manifest, inputs), /missing items/);
 });
 
 test("rejects S02 allowlist with duplicate entry", () => {
   const manifest = structuredClone(original);
   manifest.s02SelectableCharacters.push(manifest.s02SelectableCharacters[0]);
-  assert.throws(() => verifySceneManifest(manifest, inputs), /exactly 11 unique/);
+  assert.throws(() => verifySceneManifest(manifest, inputs), /excess items/);
 });
 
 test("rejects S02 allowlist pointing at a non-character asset", () => {
