@@ -4,14 +4,57 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { sceneComposition, sceneProfile, type SceneRecipe } from "../../ui/sceneRecipes";
 import type { SceneLandmark } from "../../ui/scenePolicy";
+import {
+  livingReplayAttentionEventName,
+  type LivingReplayAttentionDetail,
+} from "../../ui/livingReplayAttention";
 import { createLandmark } from "./environment";
 import { createDiorama } from "./diorama";
 import { disposeScene } from "./disposeScene";
 
-type Props = { recipe: SceneRecipe; landmark: SceneLandmark["id"]; visible: boolean; onReady: () => void; onFailure: () => void };
+type Props = {
+  screen: "S02" | "S10";
+  recipe: SceneRecipe;
+  landmark: SceneLandmark["id"];
+  visible: boolean;
+  onReady: () => void;
+  onFailure: () => void;
+};
 
-/** Neutral clay study. No AnimationMixer, dynamic shadow pass or frame loop. */
-export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady, onFailure }: Props) {
+const REPLAY_MAX_YAW = 0.16;
+const REPLAY_MAX_PITCH = 0.075;
+const REPLAY_HEAD_YAW_SHARE = 0.78;
+const REPLAY_SPINE_YAW_SHARE = 0.22;
+const REPLAY_HEAD_PITCH_SHARE = 0.82;
+const REPLAY_SPINE_PITCH_SHARE = 0.18;
+const REPLAY_CUE_MS = 900;
+const REPLAY_RAMP_IN_MS = 150;
+const REPLAY_RAMP_OUT_MS = 250;
+
+function replayTarget(clientX: number, clientY: number) {
+  const width = Math.max(window.innerWidth, 1);
+  const height = Math.max(window.innerHeight, 1);
+  const normalizedX = THREE.MathUtils.clamp((clientX / width) * 2 - 1, -1, 1);
+  const normalizedY = THREE.MathUtils.clamp(1 - (clientY / height) * 2, -1, 1);
+  return {
+    yaw: normalizedX * REPLAY_MAX_YAW,
+    pitch: normalizedY * REPLAY_MAX_PITCH,
+  };
+}
+
+function replayStrength(elapsedMs: number) {
+  if (elapsedMs <= 0) return 0;
+  if (elapsedMs < REPLAY_RAMP_IN_MS) return elapsedMs / REPLAY_RAMP_IN_MS;
+  const rampOutStart = REPLAY_CUE_MS - REPLAY_RAMP_OUT_MS;
+  if (elapsedMs < rampOutStart) return 1;
+  if (elapsedMs < REPLAY_CUE_MS) {
+    return 1 - ((elapsedMs - rampOutStart) / REPLAY_RAMP_OUT_MS);
+  }
+  return 0;
+}
+
+/** Neutral clay study. No AnimationMixer, dynamic shadow pass or persistent frame loop. */
+export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, onReady, onFailure }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onReady, onFailure });
   callbacks.current = { onReady, onFailure };
@@ -44,6 +87,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
     let gpuSync: WebGLSync | null = null;
     let gpuPollFrame: number | undefined;
     let revealFrame: number | undefined;
+    let removeReplayAttention: (() => void) | undefined;
     const deleteGpuSync = () => {
       if (gpuContext && gpuSync) {
         try { gpuContext.deleteSync(gpuSync); } catch { /* Context loss already invalidated it. */ }
@@ -84,6 +128,155 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
         return true;
       } catch { fail(); return false; }
     };
+    const setupReplayAttention = (animatedModel: THREE.Object3D) => {
+      if (screen !== "S10") return;
+
+      const head = animatedModel.getObjectByName("head");
+      const spineCandidate = animatedModel.getObjectByName("spine");
+      if (!(head instanceof THREE.Bone)) {
+        element.dataset.companionLookEnabled = "false";
+        element.dataset.companionLookState = "unavailable";
+        return;
+      }
+
+      const spine = spineCandidate instanceof THREE.Bone ? spineCandidate : undefined;
+      const baseHead = head.quaternion.clone();
+      const baseSpine = spine?.quaternion.clone();
+      const headOffset = new THREE.Quaternion();
+      const spineOffset = new THREE.Quaternion();
+      const headEuler = new THREE.Euler(0, 0, 0, "YXZ");
+      const spineEuler = new THREE.Euler(0, 0, 0, "YXZ");
+      const headYawShare = spine ? REPLAY_HEAD_YAW_SHARE : 1;
+      const spineYawShare = spine ? REPLAY_SPINE_YAW_SHARE : 0;
+      const headPitchShare = spine ? REPLAY_HEAD_PITCH_SHARE : 1;
+      const spinePitchShare = spine ? REPLAY_SPINE_PITCH_SHARE : 0;
+
+      let replayFrame: number | undefined;
+      let cueStartedAt = 0;
+      let cueYaw = 0;
+      let cuePitch = 0;
+      let cueCount = 0;
+
+      const writeLook = (
+        yaw: number,
+        pitch: number,
+        state: "centered" | "replay-cue",
+        source: "none" | "replay",
+      ) => {
+        element.dataset.companionLookState = state;
+        element.dataset.companionLookSource = source;
+        element.dataset.companionLookYaw = yaw.toFixed(4);
+        element.dataset.companionLookPitch = pitch.toFixed(4);
+        element.dataset.companionLookHeadYaw = (yaw * headYawShare).toFixed(4);
+        element.dataset.companionLookSpineYaw = (yaw * spineYawShare).toFixed(4);
+        element.dataset.companionLookHeadPitch = (pitch * headPitchShare).toFixed(4);
+        element.dataset.companionLookSpinePitch = (pitch * spinePitchShare).toFixed(4);
+      };
+
+      const applyLook = (strength: number) => {
+        const yaw = cueYaw * strength;
+        const pitch = cuePitch * strength;
+
+        headEuler.set(pitch * headPitchShare, yaw * headYawShare, 0, "YXZ");
+        headOffset.setFromEuler(headEuler);
+        head.quaternion.copy(baseHead).multiply(headOffset);
+
+        if (spine && baseSpine) {
+          spineEuler.set(pitch * spinePitchShare, yaw * spineYawShare, 0, "YXZ");
+          spineOffset.setFromEuler(spineEuler);
+          spine.quaternion.copy(baseSpine).multiply(spineOffset);
+        }
+
+        writeLook(
+          yaw,
+          pitch,
+          strength > 0 ? "replay-cue" : "centered",
+          strength > 0 ? "replay" : "none",
+        );
+      };
+
+      const stopFrame = () => {
+        if (replayFrame !== undefined) {
+          window.cancelAnimationFrame(replayFrame);
+          replayFrame = undefined;
+        }
+      };
+
+      const settle = () => {
+        stopFrame();
+        cueStartedAt = 0;
+        applyLook(0);
+        element.dataset.companionReplayCue = "none";
+        if (!disposed) draw();
+      };
+
+      const stepCue = (now: number) => {
+        replayFrame = undefined;
+        if (disposed) return;
+        const elapsed = now - cueStartedAt;
+        const strength = replayStrength(elapsed);
+        applyLook(strength);
+        draw();
+
+        if (elapsed < REPLAY_CUE_MS) {
+          replayFrame = window.requestAnimationFrame(stepCue);
+        } else {
+          settle();
+        }
+      };
+
+      const followReplayFocus = (event: Event) => {
+        if (disposed || !visibleRef.current) return;
+        const detail = (event as CustomEvent<LivingReplayAttentionDetail>).detail;
+        if (!detail || detail.kind !== "day-focus") return;
+
+        stopFrame();
+        const target = replayTarget(detail.clientX, detail.clientY);
+        cueYaw = target.yaw;
+        cuePitch = target.pitch;
+        cueStartedAt = performance.now();
+        cueCount += 1;
+        element.dataset.companionReplayCue = "day-focus";
+        element.dataset.companionReplayCueCount = String(cueCount);
+        element.dataset.companionLookState = "replay-cue";
+        element.dataset.companionLookSource = "replay";
+        replayFrame = window.requestAnimationFrame(stepCue);
+      };
+
+      element.dataset.companionLookEnabled = "true";
+      element.dataset.companionLookPosture = spine ? "head-spine" : "head-only";
+      element.dataset.companionLookHeadBone = head.name;
+      element.dataset.companionLookSpineBone = spine?.name ?? "none";
+      element.dataset.companionLookHeadYawShare = headYawShare.toFixed(2);
+      element.dataset.companionLookSpineYawShare = spineYawShare.toFixed(2);
+      element.dataset.companionLookHeadPitchShare = headPitchShare.toFixed(2);
+      element.dataset.companionLookSpinePitchShare = spinePitchShare.toFixed(2);
+      element.dataset.companionLookMaxYaw = REPLAY_MAX_YAW.toFixed(3);
+      element.dataset.companionLookMaxPitch = REPLAY_MAX_PITCH.toFixed(3);
+      element.dataset.companionReplayCue = "none";
+      element.dataset.companionReplayCueCount = "0";
+      writeLook(0, 0, "centered", "none");
+
+      window.addEventListener(
+        livingReplayAttentionEventName,
+        followReplayFocus as EventListener,
+      );
+
+      removeReplayAttention = () => {
+        window.removeEventListener(
+          livingReplayAttentionEventName,
+          followReplayFocus as EventListener,
+        );
+        stopFrame();
+        head.quaternion.copy(baseHead);
+        if (spine && baseSpine) spine.quaternion.copy(baseSpine);
+        element.dataset.companionLookEnabled = "false";
+        element.dataset.companionLookState = "disabled";
+        element.dataset.companionLookSource = "none";
+        element.dataset.companionReplayCue = "none";
+      };
+    };
+
     const waitForGpu = () => {
       if (!renderer || disposed || failed || ready) return;
       const context = renderer.getContext();
@@ -200,6 +393,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
         // Keep normalization separate from the responsive world-space anchor.
         model.position.set(0, 0.05, 0.65);
         scene.add(model);
+        setupReplayAttention(gltf.scene);
         loaded = true;
         resize();
       }, undefined, fail);
@@ -209,6 +403,8 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       invalidate.current = null;
       cancelWarmup();
       observer?.disconnect();
+      removeReplayAttention?.();
+      removeReplayAttention = undefined;
       if (renderer) {
         renderer.domElement.removeEventListener("webglcontextlost", fail);
         renderer.domElement.remove();
@@ -218,7 +414,7 @@ export default function ThreeSceneRenderer({ recipe, landmark, visible, onReady,
       // Release the context itself on route/recipe exit, not just its assets.
       renderer?.forceContextLoss();
     };
-  }, [landmark, recipe.id, recipe.characterUrl]);
+  }, [screen, landmark, recipe.id, recipe.characterUrl]);
 
   return <div className="living-three-scene" ref={host} aria-hidden="true" />;
 }

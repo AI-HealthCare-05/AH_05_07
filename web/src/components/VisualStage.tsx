@@ -69,7 +69,7 @@ function SceneTierBoundary({ plan, failed, onFailure }: { plan: ScenePlan; faile
     {(!ready || failed || plan.tier === 1) && fallback}
     {active && !failed && plan.tier === 2 && <SceneFailureBoundary onFailure={onFailure}>
       <Suspense fallback={null}>
-        <ThreeSceneRenderer recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={onFailure} />
+        <ThreeSceneRenderer screen={plan.screen} recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={onFailure} />
       </Suspense>
     </SceneFailureBoundary>}
   </div>;
