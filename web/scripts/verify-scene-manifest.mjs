@@ -15,6 +15,14 @@ const posterKey = /^scene-review\/(s02|s10)\/v1\/(garden-gate|herb-garden|shade-
 export const posterDeliveryOrigin = "https://sk7-companion.gkrry.com";
 export const posterRequestOrigin = "http://127.0.0.1:4173";
 
+/**
+ * Deterministic planning reserve for S02 realtime scene activation.
+ * Derived from the current production build's observed renderer/loader chunks
+ * (GLTFLoader, ThreeSceneRenderer, disposeScene) totaling 169,023 bytes on
+ * origin/main c3210fa, rounded up to a reviewable constant.
+ */
+export const S02_RENDERER_LOADER_RESERVE_BYTES = 200000;
+
 export function verifiedPosterDelivery(poster, proof) {
   requireValue(proof?.status === "verified-public-delivery-review-only"
     && proof.bucket === "sk7-assets-prod" && proof.publicOrigin === posterDeliveryOrigin
@@ -152,9 +160,10 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
   verifyCompanionEvidence(inputs.companion);
   const assets = uniqueById(manifest.assets, "assets");
   const recipes = uniqueById(manifest.recipes, "recipes");
-  requireValue(assets.size === 45 && manifest.assets.filter(asset => asset.kind === "character").length === 1
+  const characterAssets = manifest.assets.filter(asset => asset.kind === "character");
+  requireValue(assets.size === 55 && characterAssets.length === 11
     && manifest.assets.filter(asset => asset.kind === "environment").length === 2
-    && manifest.assets.filter(asset => asset.kind === "poster").length === 42, "one character, two environments and 42 responsive posters required");
+    && manifest.assets.filter(asset => asset.kind === "poster").length === 42, "11 characters, two environments and 42 responsive posters required");
   const collections = [
     { screen: "S02", evidence: inputs.posters, publicEvidence: inputs.posterR2, sourceHashes: inputs.sourceHashes },
     { screen: "S10", evidence: inputs.dioramaPosters, publicEvidence: inputs.dioramaR2, sourceHashes: inputs.dioramaSourceHashes },
@@ -167,7 +176,7 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
     requireValue(asset.decoderIds.length === 0 && asset.extensionsRequired.length === 0, `${asset.id}: decoder/extension support not registered`);
     if (asset.kind === "character") {
       const source = inputs.companion.objects.find(item => item.asset_id === asset.provenance.sourceAssetId);
-      requireValue(source?.species === "bear" && source.variant === "lite", `${asset.id}: unregistered character`);
+      requireValue(source?.species === asset.companionSpecies && source.variant === "lite", `${asset.id}: unregistered character`);
       equal(asset.delivery, { url: `${inputs.companion.runtime_delivery.custom_domain}/${source.r2_object_key}`, objectKey: source.r2_object_key, sha256: source.sha256, byteLength: source.bytes, mime: source.mime }, asset.id);
       equal(asset.provenance, { sourceAssetId: source.asset_id, sourceHash: source.sha256, owner: source.owner, rightsBasis: source.rights_basis, reviewReference: inputs.companion.rights_decision_reference }, `${asset.id} provenance`);
       const evidence = inputs.forensics.assets.find(item => item.asset_id === source.asset_id);
@@ -204,11 +213,26 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       equal(asset.provenance, { sourceAssetId: modulePath, sourceHash: sha256, owner: "AI-HealthCare-05/AH_05_07", rightsBasis: "Repository-authored procedural review geometry", reviewReference: "https://github.com/AI-HealthCare-05/AH_05_07/issues/390" }, `${asset.id} provenance`);
     }
   }
-  const character = manifest.assets.find(asset => asset.kind === "character");
+  const bearCharacter = manifest.assets.find(asset => asset.kind === "character" && asset.companionSpecies === "bear");
+  const approvedSpecies = ["bear", "rabbit", "cat", "dog", "red_panda", "otter", "capybara", "hedgehog", "penguin", "fox", "squirrel"];
+  const allowlist = manifest.s02SelectableCharacters ?? [];
+  requireValue(allowlist.length === 11 && new Set(allowlist).size === 11, "S02 selectable character allowlist must contain exactly 11 unique entries");
+  const selectableCharacters = allowlist.map(id => {
+    const asset = assets.get(id);
+    requireValue(asset && asset.kind === "character" && typeof asset.companionSpecies === "string", `${id}: allowlist entry is not a registered selectable character`);
+    return asset;
+  });
+  requireValue(approvedSpecies.every(species => selectableCharacters.some(asset => asset.companionSpecies === species)), "S02 allowlist must cover all 11 approved species");
+  requireValue(selectableCharacters.every(asset => approvedSpecies.includes(asset.companionSpecies)), "S02 allowlist contains an unregistered species");
+  for (const asset of selectableCharacters) {
+    const source = inputs.companion.objects.find(item => item.asset_id === asset.provenance.sourceAssetId);
+    const expected = inputs.companion.objects.find(item => item.species === asset.companionSpecies && item.variant === "lite");
+    requireValue(source && expected && source.asset_id === expected.asset_id, `${asset.id}: scene registration does not match generated companion manifest`);
+  }
   for (const collection of collections) {
     equal(collection.evidence.sourceHashes, collection.sourceHashes, `${collection.screen} poster render source hashes`);
-    equal(collection.evidence.characterSha256, character.delivery.sha256, `${collection.screen} poster character identity`);
-    equal(collection.evidence.characterRightsReference, character.provenance.reviewReference, `${collection.screen} poster character rights`);
+    equal(collection.evidence.characterSha256, bearCharacter.delivery.sha256, `${collection.screen} poster character identity`);
+    equal(collection.evidence.characterRightsReference, bearCharacter.provenance.reviewReference, `${collection.screen} poster character rights`);
   }
   const selections = new Set();
   const posterSelections = new Set();
@@ -264,13 +288,30 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       current = fallback;
     }
     if (recipe.mode === "realtime") requireValue(visited.size === 2, `${recipe.id}: poster fallback required`);
-    // Conservative planning check. 250KB reserves renderer/loader code; it is NOT measured transfer.
-    // Only one poster profile downloads per activation. Reserve the largest,
-    // including fallback alongside the character and renderer allowance.
+    // Conservative planning check. Reserve is deterministic and derived from the
+    // observed renderer/loader chunks; it is NOT measured transfer. Only one
+    // poster profile downloads per activation. For S02 realtime recipes, account
+    // for every selectable character independently, not as simultaneous downloads.
     const reachable = [...reachableAssets].map(id => { requireValue(assets.has(id), `${recipe.id}: missing fallback asset`); return assets.get(id); });
-    const plannedBytes = (recipe.mode === "realtime" ? 250000 : 0)
-      + reachable.filter(a => a.kind !== "poster").reduce((sum, a) => sum + (a.delivery ?? a.sourceModule).byteLength, 0)
-      + Math.max(0, ...reachable.filter(a => a.kind === "poster").map(a => a.delivery.byteLength));
+    const largestPoster = Math.max(0, ...reachable.filter(a => a.kind === "poster").map(a => a.delivery.byteLength));
+    const nonPosterReachable = reachable.filter(a => a.kind !== "poster");
+    const nonCharacterNonPoster = nonPosterReachable.filter(a => a.kind !== "character");
+    const environmentAndDecoderBytes = nonCharacterNonPoster.reduce((sum, a) => sum + (a.delivery ?? a.sourceModule).byteLength, 0);
+    let plannedBytes;
+    if (recipe.mode === "realtime" && recipe.screens[0] === "S02") {
+      const baseCharacter = nonPosterReachable.find(a => a.kind === "character");
+      requireValue(baseCharacter && baseCharacter.companionSpecies === "bear", `${recipe.id}: S02 base recipe must reference bear`);
+      const alternatives = selectableCharacters.map(character => ({
+        characterId: character.id,
+        plannedBytes: S02_RENDERER_LOADER_RESERVE_BYTES + environmentAndDecoderBytes + character.delivery.byteLength + largestPoster,
+      }));
+      requireValue(alternatives.every(alt => alt.plannedBytes <= 900000), `${recipe.id}: selectable character activation exceeds 900000 bytes`);
+      plannedBytes = alternatives.find(alt => alt.characterId === baseCharacter.id).plannedBytes;
+    } else {
+      plannedBytes = (recipe.mode === "realtime" ? S02_RENDERER_LOADER_RESERVE_BYTES : 0)
+        + nonPosterReachable.reduce((sum, a) => sum + (a.delivery ?? a.sourceModule).byteLength, 0)
+        + largestPoster;
+    }
     requireValue(plannedBytes <= 900000, `${recipe.id}: planned activation exceeds 900000 bytes`);
     if (recipe.measurement.status === "measured") requireValue(recipe.measurement.encodedBytes <= 900000, `${recipe.id}: measured activation exceeds budget`);
     budgets.push({ recipeId: recipe.id, plannedBytes });

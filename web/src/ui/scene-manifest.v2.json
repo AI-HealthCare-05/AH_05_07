@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "manifestRevision": "s02-s10-clay-r2-001",
-  "sourceCommit": "2c25a0d1cf41f8a5a2aa72f93b9dbe62cbe13d74",
+  "sourceCommit": "c3210fa18bae0483e5302518d4426edb898a25fd",
   "assets": [
     {
       "runtimeProfile": "three-0.185.1-webgl",
@@ -59,6 +59,7 @@
       "kind": "character",
       "revision": "v007",
       "status": "review",
+      "companionSpecies": "bear",
       "provenance": {
         "sourceAssetId": "COMPANION-R2-001",
         "sourceHash": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
@@ -71,6 +72,726 @@
         "objectKey": "companion/v1/bear/v007/lite.glb",
         "sha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874",
         "byteLength": 518636,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-rabbit-lite",
+      "kind": "character",
+      "revision": "v002",
+      "status": "review",
+      "companionSpecies": "rabbit",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-003",
+        "sourceHash": "b3559b2925bb16381adf954432e11541542c14bac7d6e6a52e7fa7f402825627",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/rabbit/v002/lite.glb",
+        "objectKey": "companion/v1/rabbit/v002/lite.glb",
+        "sha256": "b3559b2925bb16381adf954432e11541542c14bac7d6e6a52e7fa7f402825627",
+        "byteLength": 519456,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-cat-lite",
+      "kind": "character",
+      "revision": "v002",
+      "status": "review",
+      "companionSpecies": "cat",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-005",
+        "sourceHash": "6a77bf8229d43f7094208143cb611bdbb46ffd185faf769efc5114d37e3ed960",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/cat/v002/lite.glb",
+        "objectKey": "companion/v1/cat/v002/lite.glb",
+        "sha256": "6a77bf8229d43f7094208143cb611bdbb46ffd185faf769efc5114d37e3ed960",
+        "byteLength": 528348,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-dog-lite",
+      "kind": "character",
+      "revision": "v001",
+      "status": "review",
+      "companionSpecies": "dog",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-007",
+        "sourceHash": "71762e0e00be1dd083fc0421533519921f0ac0c427fc08246632606406e92884",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/dog/v001/lite.glb",
+        "objectKey": "companion/v1/dog/v001/lite.glb",
+        "sha256": "71762e0e00be1dd083fc0421533519921f0ac0c427fc08246632606406e92884",
+        "byteLength": 518128,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-red_panda-lite",
+      "kind": "character",
+      "revision": "v003",
+      "status": "review",
+      "companionSpecies": "red_panda",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-009",
+        "sourceHash": "a6de102411b17295b2a9ea9a88592b4e4e9d4f3d8af73101f906f669ef927b48",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/red_panda/v003/lite.glb",
+        "objectKey": "companion/v1/red_panda/v003/lite.glb",
+        "sha256": "a6de102411b17295b2a9ea9a88592b4e4e9d4f3d8af73101f906f669ef927b48",
+        "byteLength": 644528,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-otter-lite",
+      "kind": "character",
+      "revision": "v003",
+      "status": "review",
+      "companionSpecies": "otter",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-011",
+        "sourceHash": "ac55dec25c28ff1cad1702f152987ed98e10620cc5f46a40862bfa6a86ffc27b",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/otter/v003/lite.glb",
+        "objectKey": "companion/v1/otter/v003/lite.glb",
+        "sha256": "ac55dec25c28ff1cad1702f152987ed98e10620cc5f46a40862bfa6a86ffc27b",
+        "byteLength": 548508,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-capybara-lite",
+      "kind": "character",
+      "revision": "v002",
+      "status": "review",
+      "companionSpecies": "capybara",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-013",
+        "sourceHash": "c6908aff87e737f53c7c1133bc509caa8ee5623521ffec5198f5c672bd003e20",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/capybara/v002/lite.glb",
+        "objectKey": "companion/v1/capybara/v002/lite.glb",
+        "sha256": "c6908aff87e737f53c7c1133bc509caa8ee5623521ffec5198f5c672bd003e20",
+        "byteLength": 513236,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-hedgehog-lite",
+      "kind": "character",
+      "revision": "v004",
+      "status": "review",
+      "companionSpecies": "hedgehog",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-015",
+        "sourceHash": "7a8730bd05ef339dcdaa08af1d7e3741b54a1637d97f7c397901d107399e08fa",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/hedgehog/v004/lite.glb",
+        "objectKey": "companion/v1/hedgehog/v004/lite.glb",
+        "sha256": "7a8730bd05ef339dcdaa08af1d7e3741b54a1637d97f7c397901d107399e08fa",
+        "byteLength": 598996,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-penguin-lite",
+      "kind": "character",
+      "revision": "v002",
+      "status": "review",
+      "companionSpecies": "penguin",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-017",
+        "sourceHash": "d209bf3f3f1390679f3d4902b09705fba3f94e75156f59041c7c9392f9549fe5",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/penguin/v002/lite.glb",
+        "objectKey": "companion/v1/penguin/v002/lite.glb",
+        "sha256": "d209bf3f3f1390679f3d4902b09705fba3f94e75156f59041c7c9392f9549fe5",
+        "byteLength": 576468,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-fox-lite",
+      "kind": "character",
+      "revision": "v002",
+      "status": "review",
+      "companionSpecies": "fox",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-019",
+        "sourceHash": "f4809971e572fe133465698ef73ac2b89ddff975141c8dc87a04f71f58637660",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/fox/v002/lite.glb",
+        "objectKey": "companion/v1/fox/v002/lite.glb",
+        "sha256": "f4809971e572fe133465698ef73ac2b89ddff975141c8dc87a04f71f58637660",
+        "byteLength": 556720,
+        "mime": "model/gltf-binary"
+      }
+    },
+    {
+      "runtimeProfile": "three-0.185.1-webgl",
+      "extensionsRequired": [],
+      "decoderIds": [],
+      "clips": [
+        {
+          "name": "celebrate",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "curious",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "greet",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "idle",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "move",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "rest",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        },
+        {
+          "name": "special",
+          "durationSeconds": 4,
+          "rootMotion": "unknown"
+        }
+      ],
+      "decorative": true,
+      "containsText": false,
+      "pointerPolicy": "inert",
+      "measurement": {
+        "status": "unmeasured",
+        "encodedBytes": null,
+        "drawCalls": null,
+        "gpuBytes": null,
+        "decodeMs": null,
+        "environment": null
+      },
+      "id": "moa-squirrel-lite",
+      "kind": "character",
+      "revision": "v001",
+      "status": "review",
+      "companionSpecies": "squirrel",
+      "provenance": {
+        "sourceAssetId": "COMPANION-R2-021",
+        "sourceHash": "3265086d5add45e0911852107b21db4a085349c002e743b2f403f8301426b6f5",
+        "owner": "emotigom",
+        "rightsBasis": "Issue #242 human use-scope decision",
+        "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/242"
+      },
+      "delivery": {
+        "url": "https://sk7-companion.gkrry.com/companion/v1/squirrel/v001/lite.glb",
+        "objectKey": "companion/v1/squirrel/v001/lite.glb",
+        "sha256": "3265086d5add45e0911852107b21db4a085349c002e743b2f403f8301426b6f5",
+        "byteLength": 540440,
         "mime": "model/gltf-binary"
       }
     },
@@ -4475,5 +5196,18 @@
         "environment": null
       }
     }
+  ],
+  "s02SelectableCharacters": [
+    "moa-bear-lite",
+    "moa-rabbit-lite",
+    "moa-cat-lite",
+    "moa-dog-lite",
+    "moa-red_panda-lite",
+    "moa-otter-lite",
+    "moa-capybara-lite",
+    "moa-hedgehog-lite",
+    "moa-penguin-lite",
+    "moa-fox-lite",
+    "moa-squirrel-lite"
   ]
 }

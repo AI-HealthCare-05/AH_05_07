@@ -7,6 +7,7 @@ import { TrailDayDetail } from './TrailDayDetail';
 import type { TrailDay } from '../ui/livingWeek';
 import { landmarkForCalendarDate } from '../ui/scenePolicy';
 import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
+import type { CompanionSpecies } from '../ui/companion';
 
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
@@ -19,10 +20,11 @@ type JourneyTodayProps = {
   freshness: 'loading' | 'ready' | 'refreshing' | 'error' | 'refresh-error';
   children?: ReactNode;
   onNavigate: (screen: ScreenId) => void;
+  companionSpecies?: CompanionSpecies | null;
 };
 
 /** The selection is disposable UI state. Facts and action destinations still belong to App. */
-export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate, companionSpecies }: JourneyTodayProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -73,7 +75,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           </div>
           <p className="today-companion-greeting">잠깐 쉬어가요.<br />오늘도, 함께.<span aria-hidden="true">♡</span></p>
           <div className="journey-view-frame">
-            {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={landscapeDate} /> : <VisualStage screen="S02" calendarDate={today} />}
+            {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={landscapeDate} /> : <VisualStage screen="S02" calendarDate={today} companionSpecies={companionSpecies} />}
           </div>
           <figcaption className="journey-view-caption"><span className="today-companion-dot" aria-hidden="true" /><span>모아와 잠깐</span><strong>{landmark?.label}</strong><span>{previewing ? '선택한 날짜에 머물러요' : '오늘의 길은 여기에서'}</span></figcaption>
         </figure>

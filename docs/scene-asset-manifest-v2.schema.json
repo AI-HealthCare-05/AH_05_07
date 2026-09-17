@@ -26,6 +26,16 @@
       "items": {
         "$ref": "#/$defs/recipe"
       }
+    },
+    "s02SelectableCharacters": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
   "required": [
@@ -33,7 +43,8 @@
     "manifestRevision",
     "sourceCommit",
     "assets",
-    "recipes"
+    "recipes",
+    "s02SelectableCharacters"
   ],
   "$defs": {
     "asset": {
@@ -202,6 +213,10 @@
         },
         "measurement": {
           "$ref": "#/$defs/measurement"
+        },
+        "companionSpecies": {
+          "type": "string",
+          "minLength": 1
         },
         "sourceModule": {
           "type": "object",

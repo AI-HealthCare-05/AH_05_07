@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const input = path.join(root, "web/src/ui/scene-manifest.v2.json");
 const manifest = JSON.parse(fs.readFileSync(input, "utf8"));
 const inputs = loadInputs();
-const character = manifest.assets.find(asset => asset.kind === "character");
+const characters = manifest.assets.filter(asset => asset.kind === "character");
 const environments = manifest.assets.filter(asset => asset.kind === "environment");
 for (const environment of environments) {
   const bytes = fs.readFileSync(path.join(root, environment.sourceModule.path));
@@ -47,7 +47,11 @@ for (const [screen, registration] of Object.entries(sceneRegistrations)) {
 }
 manifest.manifestRevision = allPosters.every(poster => poster.delivery.url.startsWith("https://")) ? "s02-s10-clay-r2-001" : "s02-s10-clay-review-001";
 // Keep the established S02 entries in their existing order for reviewable diffs.
-manifest.assets = [character, allPosters[0], environments[0], ...allPosters.slice(1, 21), environments[1], ...allPosters.slice(21)];
+manifest.assets = [...characters, allPosters[0], environments[0], ...allPosters.slice(1, 21), environments[1], ...allPosters.slice(21)];
+// Preserve the S02-only selectable-character registration added by the identity slice.
+if (!Array.isArray(manifest.s02SelectableCharacters) || manifest.s02SelectableCharacters.length !== 11) {
+  throw new Error("scene-manifest.v2.json is missing the S02 selectable-character allowlist");
+}
 manifest.recipes = allRecipes;
 const generated = generateSceneSource(manifest, inputs);
 fs.writeFileSync(input, `${JSON.stringify(manifest, null, 2)}\n`);
