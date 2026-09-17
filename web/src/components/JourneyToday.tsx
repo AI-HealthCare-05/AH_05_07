@@ -112,7 +112,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
         </div>
         <p className="today-records-note">혈압 관찰과 챌린지 참여는 서로 다른 사실로 남아요.</p>
         <nav className="home-links" aria-label="오늘 기록 바로가기">
-          {secondary.map(item => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => onNavigate(item.screen)}>
+          {secondary.map(item => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} onClick={() => onNavigate(item.screen)}>
             <span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">↗</span>
           </button>)}
           <div className="today-small-note"><span aria-hidden="true">❧</span><p>날짜별로 모아<br /><strong>다시 보는 기록.</strong></p></div>

@@ -37,6 +37,10 @@ const WHEEL_VALUES: Record<WheelPart, readonly number[]> = {
   minute: Array.from({ length: 60 }, (_, index) => index),
 };
 
+function isNonDrinkingAlcoholFrequency(value: string) {
+  return value === "none_past_year" || value === "lifetime_nonapplicable";
+}
+
 function wheelText(part: WheelPart, value: number) {
   if (part === "period") return value === 0 ? "오전" : "오후";
   if (part === "hour") return `${value}시`;
@@ -421,6 +425,13 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
   const [selection, setSelection] = useState<TimeSelection>(() => selectionRef.current);
 
   useEffect(() => {
+    if (!open) return;
+    const closeFromOutsidePointer = () => onClose();
+    document.addEventListener("pointerdown", closeFromOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeFromOutsidePointer);
+  }, [open, onClose]);
+
+  useEffect(() => {
     if (open) return;
     const restored = selectionFromTime(value);
     selectionRef.current = restored;
@@ -452,7 +463,8 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
     const canonical = canonicalTime(updated);
     if (canonical) onChange(canonical);
   };
-  return <div className="model-v2-time-field" data-open={open}>
+  return <div className="model-v2-time-field" data-open={open}
+    onPointerDown={open ? (event) => event.stopPropagation() : undefined}>
     <span id={`${id}-label`} className="model-v2-field-label">{label}</span>
     <button id={id} type="button" className="model-v2-time-trigger" disabled={disabled} aria-expanded={open}
       aria-controls={`${id}-picker`} aria-labelledby={`${id}-label ${id}-value`} aria-invalid={invalid || undefined}
@@ -532,7 +544,15 @@ export function ModelV2InputFlow({
 
   function update(key: keyof Draft, value: string) {
     if (requestInFlight.current) return;
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => {
+      if (key !== "alcoholFrequency") return { ...current, [key]: value };
+      const nonDrinking = isNonDrinkingAlcoholFrequency(value);
+      return {
+        ...current,
+        alcoholFrequency: value,
+        alcoholAmount: nonDrinking ? "none" : current.alcoholAmount === "none" ? "" : current.alcoholAmount,
+      };
+    });
     if (inputStep) setCompleted((current) => current.filter((item) => item !== inputStep));
     clearFeedback();
   }
@@ -632,12 +652,13 @@ export function ModelV2InputFlow({
     const invalid = invalidFields.includes(key);
     const isTime = field.type === "time";
     const complete = isTime && clockParts(draft[key]) !== null;
+    const alcoholAmountLocked = key === "alcoholAmount" && isNonDrinkingAlcoholFrequency(draft.alcoholFrequency);
     const describedBy = [isTime ? `${field.id}-status` : null, invalid ? INPUT_ERROR_ID : null].filter(Boolean).join(" ") || undefined;
     if (isTime) return <TimeWheelPicker key={key} id={field.id} label={field.label} value={draft[key]} invalid={invalid}
       describedBy={describedBy} disabled={pending} open={openTimeField === key}
       onOpen={() => setOpenTimeField(key)} onClose={() => setOpenTimeField(null)} onChange={(value) => update(key, value)} />;
     const shared = {
-      id: field.id, value: draft[key], disabled: pending, required: true,
+      id: field.id, value: draft[key], disabled: pending || alcoholAmountLocked, required: true,
       "aria-labelledby": `${field.id}-label`,
       "aria-invalid": invalid || undefined, "aria-describedby": describedBy,
       onChange: (event: { target: { value: string } }) => update(key, event.target.value),

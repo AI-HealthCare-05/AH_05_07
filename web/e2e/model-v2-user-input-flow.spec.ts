@@ -178,6 +178,50 @@ async function assertFitsViewport(page: Page) {
   }
 }
 
+test("S11 non-drinking frequency auto-selects and locks alcohol amount", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await begin(page);
+  await fillBasics(page);
+  await next(page).click();
+  await expectStep(page, "habits");
+
+  const frequency = page.getByLabel("음주 빈도");
+  const amount = page.getByLabel("한 번 마실 때 음주량");
+
+  await frequency.selectOption("none_past_year");
+  await expect(amount).toHaveValue("none");
+  await expect(amount).toBeDisabled();
+
+  await frequency.selectOption("lifetime_nonapplicable");
+  await expect(amount).toHaveValue("none");
+  await expect(amount).toBeDisabled();
+
+  await frequency.selectOption("lt_monthly");
+  await expect(amount).toBeEnabled();
+  await expect(amount).toHaveValue("");
+});
+
+test("S11 time picker keeps internal pointer events and closes on outside pointer", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toSleep(page);
+
+  const id = "model-weekday-bed";
+  const trigger = page.locator(`#${id}`);
+  await chooseTime(page, id, "23:30");
+
+  await expect(page.locator(`#${id}-picker`)).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expectTimeValue(page, id, "23:30");
+
+  await page.locator(".model-v2-step-heading").click({ position: { x: 8, y: 8 } });
+
+  await expect(page.locator(`#${id}-picker`)).toHaveCount(0);
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expectTimeValue(page, id, "23:30");
+});
+
 test("S11 requires explicit review submission and completes locally without sending transient inputs", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
