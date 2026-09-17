@@ -1,22 +1,29 @@
 # S2 3D 자산 디자인 선정 기록
 
-## 상태와 기준
+> **Lifecycle: HISTORICAL SELECTION RECORD — 2026-09-06.**
+> 이 문서는 Issue #242에서 11종 후보를 선정하고 당시 사용 범위를 결정한
+> 기록이다. 현재 runtime/production 상태를 설명하지 않는다. 최신 companion
+> 동작은 [companion runtime](companion-runtime.md)과 현재 소스 계약을 사용한다.
+
+## 당시 상태와 기준
 
 이 문서는 Issue [#242](https://github.com/AI-HealthCare-05/AH_05_07/issues/242)의
-사람 선정 결정과 현재 사용 범위를 기록한다. 11개 후보의 자산·허용 화면·동작
-정책·권리 근거는 결정되었지만 제품 코드/UI 연결이나 운영 배포 승인을 뜻하지
-않는다. 제품 적용은 별도 S3C Issue의 검토 범위에서만 다룬다.
+사람 선정 결정과 당시 검토 범위를 기록한다. 11개 후보의 자산·허용 화면·동작
+정책·권리 근거를 정한 selection checkpoint이며, 그 시점의 제품 코드/UI 연결이나
+운영 배포 승인을 뜻하지 않는다. 이후 runtime 연결·활성화 상태는 이 문서가
+아니라 후속 계약과 현재 소스가 소유한다.
 
-- 현재 기준 main: `73adb04a4157512e22dbb95fe0c0b6aeaa5f1f53`
+- 기록 당시 기준 main: `73adb04a4157512e22dbb95fe0c0b6aeaa5f1f53`
 - S1 inventory: `selected-inventory-eleven-001.json`, SHA-256
   `9fb23a63a612c7a30e8d01b6150bab258c239e4242d1f15224deeff5a1ecbd6f`
 - 집계: 선택 후보 11종, 후보별 선언 clip 7개, `(species, clip)` 기준 77개 고유 동작
 - 물범: `needs_revision` / `not_selected`, 선택 파일 0. S2 후보와 집계에서 계속 제외
 - S1 보존 근거: [upgrade-execution.md](upgrade-execution.md) 및 PR #241의 verifier 기록
-- 최신 사람 결정: 허용 화면은 S02/S03/S05/S10, 제외 화면은
+- 당시 사람 결정: 허용 화면은 S02/S03/S05/S10, 제외 화면은
   S04/S07/S08/S09/S11/S12/S13/S14이다.
 - S3B 게시 근거: [asset-register.md](asset-register.md) 및
-  [companion-r2-v1.json](evidence/companion-r2-v1.json). 제품 UI에는 아직 적용하지 않았다.
+  [companion-r2-v1.json](evidence/companion-r2-v1.json). 이 기록 시점에는
+  제품 UI에 아직 적용하지 않았다.
 
 ## 사람 결정
 
@@ -68,8 +75,9 @@ Issue #242의 최신 사람 결정에 따라 제품 적용 전 검토 범위를 
 
 물범은 `needs_revision`/`not_selected`이며 허용 화면·동작·R2 게시 대상이 0개다.
 `light.glb`는 로컬 원본 파일명을 유지하고 R2 key에서만 `lite.glb`로 매핑했다.
-사용 범위 결정은 `입력 기반 위험군 선별 신호`의 장식 보조 요소 경계를 유지하며,
-제품 UI/HTML/CSS 적용은 아직 하지 않았다.
+사용 범위 결정은 `입력 기반 위험군 선별 신호`의 장식 보조 요소 경계를 유지한다.
+이 기록 시점에는 제품 UI/HTML/CSS 적용을 하지 않았다. 후속 적용 상태는
+[companion runtime](companion-runtime.md)이 소유한다.
 
 결정 시 위험 점수·확률·등급·추천 행동을 캐릭터 동작으로 암시하지 않으며,
 `입력 기반 위험군 선별 신호`의 보조 시각 요소라는 표현 경계를 유지한다. 물범은
@@ -84,6 +92,7 @@ Issue #242의 최신 사람 결정에 따라 제품 적용 전 검토 범위를 
 - S3B에서는 새 생성·모델링·재렌더·자산 이동/사본을 하지 않았고 GLB/manifest bytes를
   변경하지 않았다. R2 게시만 완료했으며 UI/HTML/CSS 변경과 운영 활성화는 하지 않았다.
 
-다음 단계는 검증된 `companion/v1` manifest를 review runtime에 제한적으로 연결하는
-S3C Issue다. 그 전까지 Issue #242는 자동 종료하지 않으며, 제품 UI 적용이나 운영
-활성화로 해석하지 않는다.
+이 기록 이후 검증된 `companion/v1` manifest를 review runtime에 연결하는 S3C와
+후속 production 단계가 별도로 진행되었다. 따라서 위의 “다음 단계”, “아직 적용하지
+않음” 같은 문구는 2026-09-06 checkpoint에만 적용된다. 현재 상태는
+[companion runtime](companion-runtime.md), scene 계약, 그리고 실행 소스로 확인한다.
