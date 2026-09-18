@@ -10,7 +10,7 @@ No World v2 binary is Rejected.
 
 ## Gates completed
 
-For the eight World v2 binaries:
+For all eight World v2 binaries:
 
 - audited Master archive identity: PASS
 - candidate SHA-256 and byte identity: PASS
@@ -19,6 +19,8 @@ For the eight World v2 binaries:
 - isolated Three.js browser technical pre-qualification: PASS
 - both variants / seven clips browser playback: PASS
 - 1366 / 390 / 320 isolated viewer checks: PASS
+- Blender editable reimport/checkpoint reopen: PASS
+- human visual/art acceptance: **ACCEPT**
 
 For the four World v2 lite binaries:
 
@@ -32,15 +34,33 @@ For the four World v2 lite binaries:
 - S10 head/spine look-controller availability: PASS
 - horizontal overflow: none in the 36-case matrix
 - active/runtime mutation during review: none
+- tested physical Android device: **12 / 12 PASS**
+
+Supplemental iOS evidence:
+
+- Xcode iPhone Simulator Safari/WebKit: **12 / 12 PASS**
+- simulator result is not physical-iPhone qualification
+
+## Evidence now on main
+
+The completed gates are recorded by the merged review series:
+
+- #601 — isolated browser pre-qualification
+- #603 — S01/S02/S10 production-path screen qualification
+- #604 — Blender editable reimport
+- #605 — human visual/art acceptance
+- #607 — physical Android qualification
+- #609 — iOS Simulator Safari/WebKit qualification
+
+The iOS Simulator evidence explicitly does not claim physical-iPhone
+qualification.
 
 ## Gates still open
 
 Production promotion remains blocked on:
 
-- final owner visual/art acceptance
-- physical Android device qualification
-- physical iPhone/iPad qualification
-- Blender editable reimport where required
+- physical iPhone qualification
+- physical iPad qualification
 - immutable production delivery evidence
 - explicit active manifest promotion
 - explicit active registry promotion
@@ -49,24 +69,31 @@ Production promotion remains blocked on:
 
 ## Standard variants
 
-The World v2 standard binaries passed isolated browser technical qualification.
+The World v2 standard binaries passed isolated browser technical qualification
+and Blender editable reimport.
 
-They were not forced into S01/S02/S10 because current production contracts use
-lite companion binaries on those surfaces.
+They were not forced into S01/S02/S10 or physical-device production-path
+qualification because the current production contracts use lite companion
+binaries on those surfaces.
 
 This is intentional scope accuracy rather than missing coverage.
 
 ## Production boundary
 
-No candidate species was added to CompanionSpecies.
+No World v2 species has been added to `CompanionSpecies`.
 
-No active companion binary was replaced.
+No active companion binary has been replaced.
 
-No production URL was created.
+No production URL has been created for World v2.
 
-No R2 object was created, overwritten or deleted.
+No World v2 R2 object has been created, overwritten or deleted.
 
-No Cloudflare or deployment setting was changed.
+No Cloudflare or deployment setting has been changed by these qualification
+gates.
 
-The next decision should therefore be based on the remaining human/device and
-delivery gates, not on missing desktop browser integration evidence.
+The candidate inventory remains review-only and the World v2 family remains
+**Candidate**.
+
+The next gate is physical iPhone/iPad qualification. Immutable production
+delivery and active manifest/registry promotion must remain separate until those
+physical-device gates are resolved.
