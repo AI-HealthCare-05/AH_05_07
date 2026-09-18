@@ -563,6 +563,10 @@ test("S10 unified review scene receives bounded presentation-only day-focus atte
 
 
 test("S02 companion-off stays poster-only and requests no character GLB", async ({ page }) => {
+  test.skip(
+    process.env.SK7_SCENE_TEST_COMPANION !== "off",
+    "requires an explicit companion-off scene build",
+  );
   await page.addInitScript(() => {
     localStorage.setItem("sk7-companion-species", "fox");
   });

@@ -35,6 +35,9 @@ const reviewSceneRuntimeFiles = new Set([
   'web/src/ui/sceneManifest.generated.ts',
   'web/src/ui/scenePolicy.ts',
   'web/src/ui/sceneRecipes.ts',
+  'web/src/ui/companionSceneRegistry.ts',
+  'web/src/ui/companionPresentationProfiles.ts',
+  'web/scripts/scene-asset-inputs.mjs',
   'web/scripts/register-scene-posters.mjs',
   'web/scripts/verify-scene-manifest.mjs',
   'web/scripts/scene-manifest.test.mjs',
@@ -110,6 +113,13 @@ const productionS10SceneTestFiles = new Set([
   'web/playwright.s10-production.config.ts',
 ]);
 
+const companionAssetPlatformFiles = new Set([
+  'web/asset-candidates/companion-candidates.v1.json',
+  'web/scripts/generate-companion-manifest.mjs',
+  'web/scripts/verify-companion-candidates.mjs',
+  'web/scripts/verify-companion-candidates.test.mjs',
+]);
+
 const scenePolicyContractTestFiles = new Set([
   'web/e2e/scene-policy.spec.ts',
   'web/e2e/presentation-policy.spec.ts',
@@ -125,6 +135,7 @@ const directlyRoutedTestFiles = new Set([
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
   ...productionS10SceneTestFiles,
+  ...companionAssetPlatformFiles,
   ...scenePolicyContractTestFiles,
   ...uiBuildMatrixFiles,
 ]);
@@ -136,7 +147,7 @@ const savedSceneSuite = Object.freeze({
 
 const reviewSceneSuite = Object.freeze({
   name: 'S02 and S10 review scenes',
-  command: 'npm run test:e2e:scene',
+  command: 'npm run test:e2e:scene && SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays poster-only and requests no character GLB"',
 });
 
 const companionReviewSuite = Object.freeze({
@@ -152,6 +163,11 @@ const productionCompanionSuite = Object.freeze({
 const productionS10SceneSuite = Object.freeze({
   name: 'production S10 scene',
   command: 'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
+});
+
+const companionAssetPlatformSuite = Object.freeze({
+  name: 'companion asset platform',
+  command: 'node scripts/verify-companion-candidates.mjs && node --test scripts/verify-companion-candidates.test.mjs && npm run verify:companion-manifest',
 });
 
 const scenePolicyContractSuite = Object.freeze({
@@ -185,6 +201,7 @@ const completePrBrowserGate = Object.freeze([
     name: 'browser regression',
     command: [
       'npm run test:e2e',
+      'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
       'node --check ../tools/mvp1-capture.cjs',
       'node --check ../tools/submission-record.cjs',
       'node --check ../tools/submission-video-check.cjs',
@@ -210,6 +227,7 @@ const knownWebFiles = new Set([
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
   ...productionS10SceneTestFiles,
+  ...companionAssetPlatformFiles,
   ...scenePolicyContractTestFiles,
   ...uiBuildMatrixFiles,
   ...selectorFiles,
@@ -287,6 +305,7 @@ export function selectPrBrowserSuites(files) {
     if (touches(relevant, companionReviewTestFiles)) suites.push(companionReviewSuite);
     if (touches(relevant, productionCompanionTestFiles)) suites.push(productionCompanionSuite);
     if (touches(relevant, productionS10SceneTestFiles)) suites.push(productionS10SceneSuite);
+    if (touches(relevant, companionAssetPlatformFiles)) suites.push(companionAssetPlatformSuite);
     if (touches(relevant, scenePolicyContractTestFiles)) suites.push(scenePolicyContractSuite);
     if (touches(relevant, uiBuildMatrixFiles)) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
@@ -300,6 +319,7 @@ export function selectPrBrowserSuites(files) {
     || touches(relevant, companionReviewTestFiles);
   const touchesProductionCompanionTests = touches(relevant, productionCompanionTestFiles);
   const touchesProductionS10SceneTests = touches(relevant, productionS10SceneTestFiles);
+  const touchesCompanionAssetPlatform = touches(relevant, companionAssetPlatformFiles);
   const touchesScenePolicyContracts = touches(relevant, scenePolicyContractTestFiles);
   const touchesUiBuildMatrix = touches(relevant, uiBuildMatrixFiles);
 
@@ -316,6 +336,7 @@ export function selectPrBrowserSuites(files) {
       suites.push(productionCompanionSuite);
     }
     if (touchesProductionS10SceneTests) suites.push(productionS10SceneSuite);
+    if (touchesCompanionAssetPlatform) suites.push(companionAssetPlatformSuite);
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
@@ -327,6 +348,7 @@ export function selectPrBrowserSuites(files) {
     || touchesCompanionReviewRuntime
     || touchesProductionCompanionTests
     || touchesProductionS10SceneTests
+    || touchesCompanionAssetPlatform
     || touchesScenePolicyContracts
     || touchesUiBuildMatrix
   ) {
@@ -339,6 +361,7 @@ export function selectPrBrowserSuites(files) {
       suites.push(productionCompanionSuite);
     }
     if (touchesProductionS10SceneTests) suites.push(productionS10SceneSuite);
+    if (touchesCompanionAssetPlatform) suites.push(companionAssetPlatformSuite);
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);

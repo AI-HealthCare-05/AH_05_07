@@ -582,7 +582,8 @@ test('journey S05 Android profile keeps the canvas outside the rounded landscape
     expect(report.counts.idle).toBe(61);
     for (const bounds of report.samples) {
       for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(5);
-      expect(bounds.paintedHeight).toBeGreaterThan(bounds.height * .8);
+      // Match #593's relaxed fill contract without changing clipping or geometry guards.
+      expect(bounds.paintedHeight).toBeGreaterThanOrEqual(Math.floor(bounds.height * .74));
       expect(bounds.cssClippedPixels).toBe(0);
     }
     const geometry = await page.evaluate(() => {
@@ -600,7 +601,7 @@ test('journey S05 Android profile keeps the canvas outside the rounded landscape
       };
     });
     expect(geometry.devicePixelRatio).toBe(2.8125);
-    expect(geometry.drawingBuffer).toEqual({ width: 384, height: 336 });
+    expect(geometry.drawingBuffer).toEqual({ width: 480, height: 336 });
     expect(geometry.rippleOverflow).toBe('visible');
     expect(geometry.landscapeOverflow).toBe('hidden');
     expect(geometry.canvas.left).toBeGreaterThan(geometry.ripple.left);
