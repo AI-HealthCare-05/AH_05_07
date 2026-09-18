@@ -13,19 +13,23 @@ class VisualDecisionTests(unittest.TestCase):
 
         for species in ("koala", "mouse", "owl", "pig"):
             for variant in ("lite", "standard"):
-                candidates.append({
-                    "speciesKey": species,
-                    "variantKey": variant,
-                    "candidateId": f"CAND-{species}-{variant}",
-                    "sha256": (f"{species}-{variant}".encode().hex() + "0" * 64)[:64],
-                })
+                candidates.append(
+                    {
+                        "speciesKey": species,
+                        "variantKey": variant,
+                        "candidateId": f"CAND-{species}-{variant}",
+                        "sha256": (f"{species}-{variant}".encode().hex() + "0" * 64)[:64],
+                    }
+                )
 
         manifest = root / "review-manifest.json"
         manifest.write_text(
-            json.dumps({
-                "documentType": "COMPANION_WORLD_V2_VISUAL_REVIEW_PACKAGE",
-                "candidates": candidates,
-            }),
+            json.dumps(
+                {
+                    "documentType": "COMPANION_WORLD_V2_VISUAL_REVIEW_PACKAGE",
+                    "candidates": candidates,
+                }
+            ),
             encoding="utf-8",
         )
 
@@ -34,44 +38,44 @@ class VisualDecisionTests(unittest.TestCase):
         entries = []
 
         for species in ("koala", "mouse", "owl", "pig"):
-            lite = next(
-                item for item in candidates
-                if item["speciesKey"] == species and item["variantKey"] == "lite"
-            )
+            lite = next(item for item in candidates if item["speciesKey"] == species and item["variantKey"] == "lite")
             standard = next(
-                item for item in candidates
-                if item["speciesKey"] == species and item["variantKey"] == "standard"
+                item for item in candidates if item["speciesKey"] == species and item["variantKey"] == "standard"
             )
 
-            entries.append({
-                "speciesKey": species,
-                "liteCandidateId": lite["candidateId"],
-                "liteSha256": lite["sha256"],
-                "standardCandidateId": standard["candidateId"],
-                "standardSha256": standard["sha256"],
-                "decision": "pending",
-                "silhouette": "pending",
-                "motion": "pending",
-                "screenFit": {
-                    "S01": "pending",
-                    "S02": "pending",
-                    "S10": "pending",
-                },
-                "notes": "",
-            })
+            entries.append(
+                {
+                    "speciesKey": species,
+                    "liteCandidateId": lite["candidateId"],
+                    "liteSha256": lite["sha256"],
+                    "standardCandidateId": standard["candidateId"],
+                    "standardSha256": standard["sha256"],
+                    "decision": "pending",
+                    "silhouette": "pending",
+                    "motion": "pending",
+                    "screenFit": {
+                        "S01": "pending",
+                        "S02": "pending",
+                        "S10": "pending",
+                    },
+                    "notes": "",
+                }
+            )
 
         decision = root / "decision.json"
         decision.write_text(
-            json.dumps({
-                "documentType": "COMPANION_WORLD_V2_VISUAL_REVIEW_DECISION",
-                "status": "pending-human-review",
-                "reviewPackageManifestSha256": manifest_sha,
-                "species": entries,
-                "overallDecision": "pending",
-                "reviewer": "",
-                "reviewedAt": "",
-                "productionActivationApproved": False,
-            }),
+            json.dumps(
+                {
+                    "documentType": "COMPANION_WORLD_V2_VISUAL_REVIEW_DECISION",
+                    "status": "pending-human-review",
+                    "reviewPackageManifestSha256": manifest_sha,
+                    "species": entries,
+                    "overallDecision": "pending",
+                    "reviewer": "",
+                    "reviewedAt": "",
+                    "productionActivationApproved": False,
+                }
+            ),
             encoding="utf-8",
         )
 
