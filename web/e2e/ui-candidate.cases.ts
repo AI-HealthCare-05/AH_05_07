@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { companionAssetManifest } from '../src/ui/companionAssets.generated';
 import { installCompanionFramingProbe } from '../scripts/companion-framing-probe.mjs';
+import { chooseTime } from './model-v2-time-wheel';
 const companionOff = process.env.SK7_UI_TEST_COMPANION === 'off';
 const headers = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
 function deferred() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
@@ -43,6 +44,37 @@ async function save(page: Page) {
   await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).press('Enter');
 }
 async function probe(page: Page) { return page.evaluate(() => (window as unknown as { __uiProbe: () => { attempts: number; frames: number; canvases: number } }).__uiProbe()); }
+
+async function completeS11LifestyleSurvey(page: Page) {
+  await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+  await page.getByLabel('만 나이', { exact: true }).fill('35');
+  await page.getByLabel('성별', { exact: true }).selectOption('1');
+  await page.locator('#model-height').fill('170');
+  await page.locator('#model-weight').fill('68');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+
+  await page.getByLabel('최근 7일 동안 걸은 날은 며칠인가요?', { exact: true }).fill('4');
+  await page.locator('#model-walking-hours').fill('0');
+  await page.locator('#model-walking-minutes').fill('40');
+  await page.getByLabel('최근 7일 동안 근력운동을 한 날은 며칠인가요?', { exact: true }).selectOption('2_days');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+
+  for (const [id, value] of [
+    ['model-weekday-bed', '23:30'],
+    ['model-weekday-wake', '07:00'],
+    ['model-weekend-bed', '23:30'],
+    ['model-weekend-wake', '08:00'],
+  ] as const) await chooseTime(page, id, value);
+
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByLabel('일반담배(궐련) 흡연 상태는 어떤가요?', { exact: true }).selectOption('never_smoked');
+  await page.getByLabel('최근 1년 동안 술을 얼마나 자주 마셨나요?', { exact: true }).selectOption('lt_monthly');
+  await page.getByLabel('술을 마실 때, 보통 한 번에 몇 잔 마시나요?', { exact: true }).selectOption('1_2_drinks');
+  await page.getByRole('button', { name: '입력 확인하기', exact: true }).click();
+  await page.getByLabel('입력과 결과가 저장되지 않는다는 안내를 확인했어요.').check();
+  await page.getByRole('button', { name: '생활정보 분석하기', exact: true }).click();
+  await expect(page.locator('[data-model-v2-user-result="processed"]')).toBeVisible();
+}
 
 for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]) test(`North Star Home keeps its hierarchy and primary action reachable at ${width}x${height}`, async ({ page }) => {
   await page.setViewportSize({ width, height });
@@ -116,6 +148,72 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   await expect(page.locator('#S04-title')).toBeFocused();
   expect(state.posts()).toBe(0);
   expect(errors).toEqual([]);
+});
+
+test('S11 outcome continues to blood-pressure entry when today has no BP record', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await setup(page);
+  await page.goto('/?e2e=signed-in&screen=S11');
+  await completeS11LifestyleSurvey(page);
+
+  const result = page.locator('[data-model-v2-user-result="processed"]');
+  const bp = result.locator('[data-model-v2-continuity="blood-pressure"]');
+  const challenge = result.locator('[data-model-v2-continuity="challenge"]');
+
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
+  await expect(bp).toContainText('오늘 혈압 기록 전');
+  await expect(challenge).toContainText('진행 중인 7일 챌린지가 없어요.');
+  await expect(result).toContainText('설문 답을 평가해 추천하는 것이 아니라');
+  await page.getByRole('button', { name: '혈압 기록 남기기', exact: true }).click();
+  await expect(page.locator('#S04-title')).toBeFocused();
+});
+
+test('S11 outcome opens today detail when a BP record already exists', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await setup(page);
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: '2026-09-05',
+        end_on: '2026-09-11',
+        blood_pressure_observations: [{
+          id: 'synthetic-s11-morning',
+          observed_on: '2026-09-11',
+          period: 'morning',
+          systolic: 120,
+          diastolic: 80,
+        }],
+        active_challenge: {
+          id: 'synthetic-s11-challenge',
+          action_id: 'walk-10-minutes',
+          starts_on: '2026-09-05',
+          ends_on: '2026-09-11',
+          first_checkin_on: null,
+          status: 'active',
+        },
+        challenge_checkins: [],
+        challenge_events: [],
+      }),
+    });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S11');
+  await completeS11LifestyleSurvey(page);
+
+  const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText('오늘 아침 기록 있음');
+  await expect(result.locator('[data-model-v2-continuity="challenge"]')).toContainText(
+    '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.',
+  );
+
+  await page.getByRole('button', { name: '오늘 혈압 기록 보기', exact: true }).click();
+  await expect(page.locator('#S07-title')).toBeFocused();
+  await expect(page.locator('.journey-today-bp-records')).toContainText('120/80 mmHg');
 });
 
 test('heejoo feedback closeout keeps S02 mobile compact and the starting-point tool reachable', async ({ page }) => {

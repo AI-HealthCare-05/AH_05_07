@@ -16,6 +16,11 @@ type Props = {
   session: Session;
   captureRequestContext: (activeSession: Session | null) => ModelV2RequestContext | null;
   isCurrentRequestContext: (requestContext: ModelV2RequestContext) => boolean;
+  bloodPressureStatus: string;
+  bloodPressureSupport: string;
+  bloodPressureActionLabel: string;
+  challengeStatus: string;
+  challengeSupport: string;
   onStartBloodPressure: () => void;
   onReturnToToday: () => void;
 };
@@ -470,6 +475,11 @@ export function ModelV2InputFlow({
   session,
   captureRequestContext,
   isCurrentRequestContext,
+  bloodPressureStatus,
+  bloodPressureSupport,
+  bloodPressureActionLabel,
+  challengeStatus,
+  challengeSupport,
   onStartBloodPressure,
   onReturnToToday,
 }: Props) {
@@ -691,8 +701,17 @@ export function ModelV2InputFlow({
           }}
           aria-describedby={resultState === "input_invalid" ? INPUT_ERROR_ID : undefined}>
           {processed ? (
-            <ModelV2Outcome draft={draft} previewOutput={previewOpen ? previewOutput : null}
-              onStartBloodPressure={onStartBloodPressure} onReturnToToday={onReturnToToday} />
+            <ModelV2Outcome
+              draft={draft}
+              previewOutput={previewOpen ? previewOutput : null}
+              bloodPressureStatus={bloodPressureStatus}
+              bloodPressureSupport={bloodPressureSupport}
+              bloodPressureActionLabel={bloodPressureActionLabel}
+              challengeStatus={challengeStatus}
+              challengeSupport={challengeSupport}
+              onStartBloodPressure={onStartBloodPressure}
+              onReturnToToday={onReturnToToday}
+            />
           ) : (
             <>
               <header className="model-v2-step-heading">

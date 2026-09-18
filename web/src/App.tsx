@@ -1362,6 +1362,25 @@ function App() {
     },
   ] as HomeAction[]).filter((item) => item.key !== homeLead.key);
 
+  const modelV2BloodPressureAction = {
+    status: todayBloodPressureStatus,
+    support: todayBloodPressureSupport,
+    label: todayMeasurement ? "오늘 혈압 기록 보기" : "혈압 기록 남기기",
+    screen: todayMeasurement ? "S07" as const : "S04" as const,
+  };
+  const modelV2ChallengeStatus = activeChallengeEnded && activeChallenge
+    ? `${challengeLabel(activeChallenge.action_id)} · 기간이 끝났어요.`
+    : activeChallenge
+      ? todayCheckin
+        ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 ${checkinLabel(todayCheckin.status)}`
+        : `${challengeLabel(activeChallenge.action_id)} · 오늘 상태는 아직 기록하지 않았어요.`
+      : "진행 중인 7일 챌린지가 없어요.";
+  const modelV2ChallengeSupport = activeChallengeEnded
+    ? "오늘의 기록으로 돌아가 원하면 다음 챌린지를 고를 수 있어요."
+    : activeChallenge
+      ? "오늘의 기록에서 현재 챌린지 상태를 이어서 확인할 수 있어요."
+      : "원하면 오늘의 기록에서 7일 챌린지를 선택할 수 있어요.";
+
   function openCycleReview(end: string) {
     navigate("S10");
     selectDashboardWindow(`cycle:${end}`);
@@ -1963,7 +1982,12 @@ function App() {
           key={session.user.id}
           session={session}
           captureRequestContext={captureRequestContext}
-          onStartBloodPressure={() => navigate("S04")}
+          bloodPressureStatus={modelV2BloodPressureAction.status}
+          bloodPressureSupport={modelV2BloodPressureAction.support}
+          bloodPressureActionLabel={modelV2BloodPressureAction.label}
+          challengeStatus={modelV2ChallengeStatus}
+          challengeSupport={modelV2ChallengeSupport}
+          onStartBloodPressure={() => navigate(modelV2BloodPressureAction.screen)}
           onReturnToToday={() => navigate("S02")}
           isCurrentRequestContext={isCurrentRequestContext}
         />

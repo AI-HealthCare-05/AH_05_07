@@ -7,6 +7,11 @@ import { formatTimeKorean, reviewValue } from "./modelV2Steps";
 type Props = {
   draft: Draft;
   previewOutput: number | null;
+  bloodPressureStatus: string;
+  bloodPressureSupport: string;
+  bloodPressureActionLabel: string;
+  challengeStatus: string;
+  challengeSupport: string;
   onStartBloodPressure: () => void;
   onReturnToToday: () => void;
 };
@@ -33,7 +38,17 @@ function formatDurationMinutes(totalMinutes: number): string {
   return `${hours}시간 ${minutes}분`;
 }
 
-export function ModelV2Outcome({ draft, previewOutput, onStartBloodPressure, onReturnToToday }: Props) {
+export function ModelV2Outcome({
+  draft,
+  previewOutput,
+  bloodPressureStatus,
+  bloodPressureSupport,
+  bloodPressureActionLabel,
+  challengeStatus,
+  challengeSupport,
+  onStartBloodPressure,
+  onReturnToToday,
+}: Props) {
   // Mounted only after successful local inference with this unchanged draft.
   // Reuse its canonical derivation; presentation rounding never feeds the model.
   const features = useMemo(() => adaptProductInput(buildPayload(draft)), [draft]);
@@ -49,6 +64,7 @@ export function ModelV2Outcome({ draft, previewOutput, onStartBloodPressure, onR
   return <div className="model-v2-outcome" data-model-v2-user-result="processed">
     <header className="model-v2-outcome-heading">
       <span className="model-v2-outcome-mark" aria-hidden="true">✓</span>
+      <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
       <h2 id="model-v2-result-title" tabIndex={-1}>오늘의 생활 패턴을 정리했어요</h2>
       <p>방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.</p>
     </header>
@@ -104,11 +120,23 @@ export function ModelV2Outcome({ draft, previewOutput, onStartBloodPressure, onR
 
     <section className="model-v2-result-next" aria-labelledby="model-v2-next-title">
       <h3 id="model-v2-next-title">다음으로 할 수 있어요</h3>
+      <div className="model-v2-next-context" aria-label="현재 앱 기록 상태">
+        <div data-model-v2-continuity="blood-pressure">
+          <span>오늘 혈압</span>
+          <strong>{bloodPressureStatus}</strong>
+          <small>{bloodPressureSupport}</small>
+        </div>
+        <div data-model-v2-continuity="challenge">
+          <span>7일 챌린지</span>
+          <strong>{challengeStatus}</strong>
+          <small>{challengeSupport}</small>
+        </div>
+      </div>
       <div className="model-v2-actions">
-        <button type="button" onClick={onStartBloodPressure}>혈압 기록 남기기</button>
+        <button type="button" onClick={onStartBloodPressure}>{bloodPressureActionLabel}</button>
         <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>
       </div>
-      <p className="model-v2-result-explanation">혈압 기록과 7일 생활 챌린지는 이 요약과 별도로 이용할 수 있어요.</p>
+      <p className="model-v2-result-explanation">설문 답을 평가해 추천하는 것이 아니라, 현재 앱에 남아 있는 혈압·챌린지 기록 상태에 맞춰 이어갈 화면을 보여줘요.</p>
     </section>
 
     <p className="model-v2-result-disclaimer">

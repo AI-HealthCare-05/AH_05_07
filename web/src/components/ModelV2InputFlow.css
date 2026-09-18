@@ -610,6 +610,14 @@
   line-height: 1.45;
 }
 
+.model-v2-flow .model-v2-outcome-kicker {
+  margin: 0;
+  color: var(--sk7-focus);
+  font-size: .78rem;
+  font-weight: var(--sk7-weight-bold);
+  line-height: 1.5;
+}
+
 .model-v2-flow .model-v2-result-section {
   display: grid;
   gap: .7rem;
@@ -683,6 +691,38 @@
   font-size: .9375rem;
   font-weight: var(--sk7-weight-medium);
   line-height: 1.65;
+}
+
+.model-v2-flow .model-v2-next-context {
+  display: grid;
+  width: 100%;
+  border-top: 1px solid color-mix(in srgb, var(--sk7-border) 78%, transparent);
+}
+
+.model-v2-flow .model-v2-next-context > div {
+  display: grid;
+  gap: .18rem;
+  padding-block: .6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk7-border) 78%, transparent);
+}
+
+.model-v2-flow .model-v2-next-context span {
+  color: var(--sk7-ink-muted);
+  font-size: .75rem;
+  font-weight: var(--sk7-weight-bold);
+  line-height: 1.5;
+}
+
+.model-v2-flow .model-v2-next-context strong {
+  color: var(--sk7-ink);
+  font-size: .875rem;
+  line-height: 1.55;
+}
+
+.model-v2-flow .model-v2-next-context small {
+  color: var(--sk7-ink-muted);
+  font-size: .75rem;
+  line-height: 1.55;
 }
 
 .model-v2-flow .model-v2-result-next .model-v2-actions {
