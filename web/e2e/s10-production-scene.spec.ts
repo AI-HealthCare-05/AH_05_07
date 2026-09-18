@@ -237,3 +237,32 @@ test("leaving production S10 disposes its scene canvas before the record explore
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   await expect(page.locator('[data-living-scene="S10"]')).toHaveCount(0);
 });
+
+test("production S10 health and challenge facts cannot choose the saved scene identity", async ({ page }) => {
+  await installSyntheticApi(page, {
+    systolic: 210,
+    diastolic: 118,
+    challengeStatus: "completed",
+  });
+
+  const requests: string[] = [];
+  page.on("request", request => requests.push(request.url()));
+
+  await openProductionS10(
+    page,
+    "fox",
+    "&companion_species=bear&companion_variant=standard&companion_clip=special"
+      + "&systolic=260&diastolic=160&risk=high&score=0.99&challenge_status=completed",
+  );
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  await expect.poll(() => sceneGlbRequests(requests)).toEqual([
+    companionAssetManifest.fox.lite.url,
+  ]);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+});
