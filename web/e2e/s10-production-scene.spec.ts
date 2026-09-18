@@ -198,3 +198,42 @@ test("production S10 reduced motion stays poster-only with no character GLB", as
   await page.waitForTimeout(250);
   expect(sceneGlbRequests(requests)).toEqual([]);
 });
+
+test("failed production S10 GLB falls back without losing semantic record controls", async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.route(
+    "https://sk7-companion.gkrry.com/companion/v1/**",
+    route => route.abort("failed"),
+  );
+
+  const stage = await openProductionS10(page, "cat");
+  await expect(stage).toHaveCount(1);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "fallback",
+    { timeout: 20_000 },
+  );
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+
+  await expect(page.getByRole("heading", { name: "7일 돌아보기" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "기록 찾아보기", exact: true })).toBeVisible();
+});
+
+test("leaving production S10 disposes its scene canvas before the record explorer", async ({ page }) => {
+  await installSyntheticApi(page);
+  await openProductionS10(page, "cat");
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S08");
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator('[data-living-scene="S10"]')).toHaveCount(0);
+});
