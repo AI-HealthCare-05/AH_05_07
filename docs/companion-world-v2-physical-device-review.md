@@ -117,3 +117,18 @@ reviewer checks **캐릭터가 실제 화면에 보입니다**.
 If the character is absent, clipped beyond recognition, or otherwise not
 visually present, the reviewer must use FAIL even if the renderer itself is
 technically ready.
+
+## Automatic session completion
+
+Physical-device review sessions no longer require `Ctrl+C`.
+
+When all 12 cases for the selected physical device class have been recorded,
+the LAN server writes `physical-device-summary.json`, returns the final event
+response, closes its listener, and exits automatically.
+
+The runner then prints the final qualification result.
+
+A completed 12/12 PASS therefore returns the shell prompt naturally.
+
+This avoids treating manual terminal interruption as part of the qualification
+procedure.

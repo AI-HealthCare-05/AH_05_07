@@ -5,6 +5,7 @@ import {
 import {
   existsSync,
   mkdirSync,
+  readFileSync,
   writeFileSync,
 } from "node:fs";
 import net from "node:net";
@@ -397,7 +398,7 @@ console.log(
 );
 
 console.log(
-  "Press Ctrl+C here only after the device review is finished.",
+  "The server will close automatically when all 12 cases are recorded.",
 );
 
 console.log("");
@@ -433,6 +434,69 @@ const execution =
     },
   );
 
-process.exitCode =
-  execution.status
-  ?? 0;
+const summaryFile =
+  path.join(
+    evidence,
+    "physical-device-summary.json",
+  );
+
+if (
+  !existsSync(
+    summaryFile,
+  )
+) {
+  console.error(
+    "Physical device review ended without a final summary.",
+  );
+
+  process.exitCode =
+    execution.status
+    ?? 1;
+} else {
+  const summary =
+    JSON.parse(
+      readFileSync(
+        summaryFile,
+        "utf8",
+      ),
+    );
+
+  console.log("");
+  console.log(
+    "=== PHYSICAL DEVICE REVIEW COMPLETE ===",
+  );
+
+  console.log(
+    JSON.stringify(
+      summary,
+      null,
+      2,
+    ),
+  );
+
+  if (
+    execution.status === 0
+    && summary.status === "passed"
+    && summary.expectedCases === 12
+    && summary.completedCases === 12
+    && summary.passedCases === 12
+    && summary.failedCases === 0
+    && summary.qualified === true
+  ) {
+    console.log("");
+    console.log(
+      `${device.toUpperCase()} PHYSICAL DEVICE: 12 / 12 PASS`,
+    );
+
+    process.exitCode =
+      0;
+  } else {
+    console.error("");
+    console.error(
+      `${device.toUpperCase()} PHYSICAL DEVICE: NOT QUALIFIED`,
+    );
+
+    process.exitCode =
+      1;
+  }
+}

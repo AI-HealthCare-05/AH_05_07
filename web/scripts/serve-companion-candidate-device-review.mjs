@@ -5,6 +5,7 @@ import {
   readFileSync,
   readdirSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
@@ -222,6 +223,12 @@ const eventsFile =
   path.join(
     evidence,
     "physical-device-events.ndjson",
+  );
+
+const summaryFile =
+  path.join(
+    evidence,
+    "physical-device-summary.json",
   );
 
 function readEvents() {
@@ -1300,6 +1307,35 @@ function json(
   res.end(bytes);
 }
 
+let shutdownScheduled =
+  false;
+
+function windowShutdown(
+  exitCode,
+) {
+  if (
+    shutdownScheduled
+  ) {
+    return;
+  }
+
+  shutdownScheduled =
+    true;
+
+  setTimeout(
+    () => {
+      server.close(
+        () => {
+          process.exit(
+            exitCode,
+          );
+        },
+      );
+    },
+    750,
+  );
+}
+
 const server =
   createServer(
     (req, res) => {
@@ -1391,15 +1427,56 @@ const server =
                 + "\n",
               );
 
+              const summary =
+                summarizeEvents(
+                  readEvents(),
+                  event.deviceClass,
+                );
+
+              if (
+                summary.complete
+              ) {
+                writeFileSync(
+                  summaryFile,
+                  JSON.stringify(
+                    {
+                      documentType:
+                        "COMPANION_WORLD_V2_PHYSICAL_DEVICE_SUMMARY",
+                      status:
+                        summary.qualified
+                          ? "passed"
+                          : "failed",
+                      ...summary,
+                      productionActivationApproved:
+                        false,
+                    },
+                    null,
+                    2,
+                  )
+                  + "\n",
+                );
+              }
+
               json(
                 res,
                 201,
                 {
                   status:
                     "recorded",
+                  summary,
                 },
                 setCookie,
               );
+
+              if (
+                summary.complete
+              ) {
+                windowShutdown(
+                  summary.qualified
+                    ? 0
+                    : 1,
+                );
+              }
             } catch (
               error
             ) {
