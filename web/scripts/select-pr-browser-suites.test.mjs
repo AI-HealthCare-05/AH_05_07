@@ -178,6 +178,26 @@ test('production companion test-only changes run only production companion cover
   ]);
 });
 
+test('production S10 scene test and config route only to the exact-production scene lane', () => {
+  assert.deepEqual(names([
+    'web/e2e/s10-production-scene.spec.ts',
+    'web/playwright.s10-production.config.ts',
+  ]), ['production S10 scene']);
+});
+
+test('App plus shared scene runtime and production S10 contract compose focused lanes', () => {
+  assert.deepEqual(names([
+    'web/src/App.tsx',
+    'web/src/components/VisualStage.tsx',
+    'web/e2e/s10-production-scene.spec.ts',
+    'web/playwright.s10-production.config.ts',
+  ]), [
+    ...appShellGate,
+    'S02 and S10 review scenes',
+    'production S10 scene',
+  ]);
+});
+
 test('scene policy contract tests run without unrelated browser families', () => {
   assert.deepEqual(names([
     'web/e2e/scene-policy.spec.ts',
