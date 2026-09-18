@@ -147,7 +147,7 @@ const savedSceneSuite = Object.freeze({
 
 const reviewSceneSuite = Object.freeze({
   name: 'S02 and S10 review scenes',
-  command: 'npm run test:e2e:scene',
+  command: 'npm run test:e2e:scene && SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays poster-only and requests no character GLB"',
 });
 
 const companionReviewSuite = Object.freeze({

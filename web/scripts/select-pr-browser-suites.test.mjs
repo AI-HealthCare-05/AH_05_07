@@ -134,6 +134,13 @@ test('review-scene runtime changes run only the S02/S10 scene suite', () => {
   ]);
 });
 
+test('review-scene suite verifies companion-off under an explicit off build', () => {
+  assert.equal(
+    suites(['web/src/components/VisualStage.tsx'])[0].command,
+    'npm run test:e2e:scene && SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays poster-only and requests no character GLB"',
+  );
+});
+
 test('shared journey scene CSS runs the two directly related engine suites', () => {
   assert.deepEqual(names(['web/src/components/journey-candidate.css']), [
     'saved-scene migration parity',
