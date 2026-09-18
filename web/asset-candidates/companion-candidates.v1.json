@@ -194,6 +194,534 @@
         "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
         "sourceRevision": "world-v2-001"
       }
+    },
+    {
+      "candidateId": "COMPANION-CAND-BEAR-V007-OPTIMIZED-LITE",
+      "speciesKey": "bear",
+      "version": "v007",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/bear-v007-lite-factory-opt.glb",
+      "sha256": "223e9cc38738d3e6e2dd8f5931d9418b4ea6e1490e3a2620c58519ffa8ade828",
+      "bytes": 511844,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-BEAR-V007-OPTIMIZED-STANDARD",
+      "speciesKey": "bear",
+      "version": "v007",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/bear-v007-standard-factory-opt.glb",
+      "sha256": "09bb484bbe1cc43fd139b1b9ea4e7995bdb5a9db4384ba1cff6185ea3d810660",
+      "bytes": 1025880,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAPYBARA-V002-OPTIMIZED-LITE",
+      "speciesKey": "capybara",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/capybara-v002-lite-factory-opt.glb",
+      "sha256": "8431b3e9984152017f5846191ba7ce2bb16cbbd428593557ca1d3ce2c6b3ace9",
+      "bytes": 507468,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAPYBARA-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "capybara",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/capybara-v002-standard-factory-opt.glb",
+      "sha256": "276cd8abbf34671414b38383c107a4d713817734caf0ecf1b993ab3530cd5a9a",
+      "bytes": 1021672,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAT-V002-OPTIMIZED-LITE",
+      "speciesKey": "cat",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/cat-v002-lite-factory-opt.glb",
+      "sha256": "625803013cb17e921dbedc984c0908e32022fe272de4f8c3f7039564315560c8",
+      "bytes": 515336,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAT-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "cat",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/cat-v002-standard-factory-opt.glb",
+      "sha256": "691edc7a4d25ee8e10c67ee2ebe658fc4e240db1c1b7aa4303032095d025c9ba",
+      "bytes": 1030108,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-DOG-V001-OPTIMIZED-LITE",
+      "speciesKey": "dog",
+      "version": "v001",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/dog-v001-lite-factory-opt.glb",
+      "sha256": "d621bbfe1a189c56c09606626066f35092f982c64ab3104cf546b6d40033d833",
+      "bytes": 511336,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-DOG-V001-OPTIMIZED-STANDARD",
+      "speciesKey": "dog",
+      "version": "v001",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/dog-v001-standard-factory-opt.glb",
+      "sha256": "69a204080f5b8cb074dd1d1f6348ef480ec2ca4197746fa1da59d16379317a2c",
+      "bytes": 1026048,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-FOX-V002-OPTIMIZED-LITE",
+      "speciesKey": "fox",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/fox-v002-lite-factory-opt.glb",
+      "sha256": "1c08ce67c6bd94ba651c4af12cf5af30a2ea69cd3437336d69991977791460b5",
+      "bytes": 547652,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-FOX-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "fox",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/fox-v002-standard-factory-opt.glb",
+      "sha256": "abcb95b3612ecb9a9eda07cac998fcf50c3a188419dbc707838c54d56adad218",
+      "bytes": 1072044,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-HEDGEHOG-V004-OPTIMIZED-LITE",
+      "speciesKey": "hedgehog",
+      "version": "v004",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/hedgehog-v004-lite-factory-opt.glb",
+      "sha256": "b6ea7c2b83c6f49c3242e68d9bf78e754f2a4a82a5f371187de00f3bd636d3e6",
+      "bytes": 519832,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-HEDGEHOG-V004-OPTIMIZED-STANDARD",
+      "speciesKey": "hedgehog",
+      "version": "v004",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/hedgehog-v004-standard-factory-opt.glb",
+      "sha256": "ab6348240a5cab3f55802d753924860f33c5cf2a3632d7eb04f75d25acc5776a",
+      "bytes": 1043336,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-OTTER-V003-OPTIMIZED-LITE",
+      "speciesKey": "otter",
+      "version": "v003",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/otter-v003-lite-factory-opt.glb",
+      "sha256": "1cd62dc2a9405dd41d99dfa1693a96892696a504c2db5a26a8f23b6e204b185f",
+      "bytes": 534604,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-OTTER-V003-OPTIMIZED-STANDARD",
+      "speciesKey": "otter",
+      "version": "v003",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/otter-v003-standard-factory-opt.glb",
+      "sha256": "340af5bfee2ff769795135f44b69f804ac64ea9c464404d35fe3136a0f05fb47",
+      "bytes": 1054040,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-PENGUIN-V002-OPTIMIZED-LITE",
+      "speciesKey": "penguin",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/penguin-v002-lite-factory-opt.glb",
+      "sha256": "08fa29316c49cccb70021e068cd4691ca06140703455c2c23fdb1b9f44d10495",
+      "bytes": 566644,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-PENGUIN-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "penguin",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/penguin-v002-standard-factory-opt.glb",
+      "sha256": "e443a31f7f8c511b1b54b64d902aa52eaf75bd346ce2161404ac0e1c3a657760",
+      "bytes": 1087496,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-RABBIT-V002-OPTIMIZED-LITE",
+      "speciesKey": "rabbit",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/rabbit-v002-lite-factory-opt.glb",
+      "sha256": "9fe126d2e7749ec4268149dba51c7a0c2565918e128c3bb6e19bca368e3414b6",
+      "bytes": 512652,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-RABBIT-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "rabbit",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/rabbit-v002-standard-factory-opt.glb",
+      "sha256": "a23f37ddd65df266e3786aa8823f9cdd0b5b7a01dbbd521fe0c7f47d488789a0",
+      "bytes": 1026684,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-RED_PANDA-V003-OPTIMIZED-LITE",
+      "speciesKey": "red_panda",
+      "version": "v003",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/red_panda-v003-lite-factory-opt.glb",
+      "sha256": "63d6c2f15fd594bb0abb51e4bb5191f463b1e274fa865d99c243fcd55bf5febc",
+      "bytes": 635492,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-RED_PANDA-V003-OPTIMIZED-STANDARD",
+      "speciesKey": "red_panda",
+      "version": "v003",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/red_panda-v003-standard-factory-opt.glb",
+      "sha256": "6d76125ddf090df0533433aaf0561fb8369b2c8be71c58fc5e9d181ae9d7462c",
+      "bytes": 1189376,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-SQUIRREL-V001-OPTIMIZED-LITE",
+      "speciesKey": "squirrel",
+      "version": "v001",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/squirrel-v001-lite-factory-opt.glb",
+      "sha256": "c7d8982107ba2ea987f79e3234790af3b9700fcce51901f853c3fff089e7a85d",
+      "bytes": 532324,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-SQUIRREL-V001-OPTIMIZED-STANDARD",
+      "speciesKey": "squirrel",
+      "version": "v001",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/squirrel-v001-standard-factory-opt.glb",
+      "sha256": "109097d8c140607a71d1b1ea34f6a9aa8a72e44e7743a625a6e3eb45cb63ad22",
+      "bytes": 1050536,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "Existing SK7 owner rights decision for the upstream 11 companion assets (Issue #242 / asset register), plus 2026-09-18 owner approval for planned candidate intake work; optimized derivative review only, not production activation. Evidence: docs/evidence/companion-optimized-v1-provenance.md",
+        "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774"
+      }
     }
   ]
 }
