@@ -201,6 +201,7 @@ const completePrBrowserGate = Object.freeze([
     name: 'browser regression',
     command: [
       'npm run test:e2e',
+      'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
       'node --check ../tools/mvp1-capture.cjs',
       'node --check ../tools/submission-record.cjs',
       'node --check ../tools/submission-video-check.cjs',
