@@ -32,6 +32,14 @@ function event(
       1,
     layoutOverflow:
       false,
+    canvasVisible:
+      true,
+    targetInViewport:
+      true,
+    subjectVisible:
+      true,
+    humanVisibleConfirmed:
+      true,
     renderer:
       "fixture",
     frameSample:
@@ -122,6 +130,48 @@ test(
     assert.equal(
       result.failedCases,
       1,
+    );
+  },
+);
+
+test(
+  "pass requires explicit human visible confirmation",
+  () => {
+    const broken = {
+      ...event(
+        "owl",
+        "S10",
+      ),
+      humanVisibleConfirmed:
+        false,
+    };
+
+    assert.throws(
+      () =>
+        validateEvent(
+          broken,
+        ),
+    );
+  },
+);
+
+test(
+  "pass requires visible candidate subject",
+  () => {
+    const broken = {
+      ...event(
+        "owl",
+        "S10",
+      ),
+      subjectVisible:
+        false,
+    };
+
+    assert.throws(
+      () =>
+        validateEvent(
+          broken,
+        ),
     );
   },
 );

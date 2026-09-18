@@ -239,6 +239,24 @@ export function validateEvent(
     1,
   );
 
+  for (
+    const field
+    of [
+      "rendererReady",
+      "layoutOverflow",
+      "canvasVisible",
+      "targetInViewport",
+      "subjectVisible",
+      "humanVisibleConfirmed",
+    ]
+  ) {
+    assert.equal(
+      typeof event[field],
+      "boolean",
+      `${field} must be boolean`,
+    );
+  }
+
   if (
     event.decision === "pass"
   ) {
@@ -250,6 +268,26 @@ export function validateEvent(
     assert.equal(
       event.layoutOverflow,
       false,
+    );
+
+    assert.equal(
+      event.canvasVisible,
+      true,
+    );
+
+    assert.equal(
+      event.targetInViewport,
+      true,
+    );
+
+    assert.equal(
+      event.subjectVisible,
+      true,
+    );
+
+    assert.equal(
+      event.humanVisibleConfirmed,
+      true,
     );
   }
 
