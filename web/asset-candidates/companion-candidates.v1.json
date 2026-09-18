@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "status": "staging",
+  "purpose": "Review-only metadata intake. Entries here never activate a runtime companion.",
+  "candidates": []
+}
