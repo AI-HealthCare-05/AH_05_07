@@ -1,0 +1,221 @@
+{
+  "documentType": "WORLD_PROPS_V2_IDENTITY_EVIDENCE",
+  "status": "review-evidence-only",
+  "sourceArchiveSha256": "5f7541e8f48a0f3dd7bf58e0cf6f82d19a25063c38f8c018567bdfb727cebed2",
+  "sourceRevision": "world-v2-001",
+  "propCount": 11,
+  "frontendDuplicateCopyCount": 6,
+  "props": [
+    {
+      "assetKey": "ball",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/ball-world-v2-001.glb",
+      "sha256": "fde706f21b3c11d92e65ed50e8f9e0608256b6fcc623923b8d804f40e617288e",
+      "bytes": 34924,
+      "triangles": 1924,
+      "primitives": 3,
+      "meshes": 3,
+      "skins": 0,
+      "clips": [
+        "nudge"
+      ],
+      "frontendDuplicateCopies": [],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "book",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/book-world-v2-001.glb",
+      "sha256": "d00f00fa5a0465bb062d8981e4d19502567db9bc0504b8ea52e23dd524a74304",
+      "bytes": 46736,
+      "triangles": 4992,
+      "primitives": 8,
+      "meshes": 8,
+      "skins": 0,
+      "clips": [
+        "page-peek"
+      ],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/book-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "cushion",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/cushion-world-v2-001.glb",
+      "sha256": "221c625eecba774265b60e6ffce7cf4481b676caeb7f70578718e0fe4f89865e",
+      "bytes": 28116,
+      "triangles": 1404,
+      "primitives": 2,
+      "meshes": 2,
+      "skins": 0,
+      "clips": [
+        "settle"
+      ],
+      "frontendDuplicateCopies": [],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "lamp",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/lamp-world-v2-001.glb",
+      "sha256": "537bf071404a4a0bb78fc0f03797dda4b5e3569a7505125c436c16e5cb527505",
+      "bytes": 28916,
+      "triangles": 1400,
+      "primitives": 4,
+      "meshes": 4,
+      "skins": 0,
+      "clips": [],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/lamp-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "mug",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/mug-world-v2-001.glb",
+      "sha256": "b054fc1c14515d2341180d55814d40fab70a6c31c2a3fe7e2d9dac57133dcbdc",
+      "bytes": 25708,
+      "triangles": 1272,
+      "primitives": 3,
+      "meshes": 3,
+      "skins": 0,
+      "clips": [],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/mug-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "notebook",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/notebook-world-v2-001.glb",
+      "sha256": "94d986b3b923b1d415715ec0825ff27c88178758f68068c66418aeda267ebc5d",
+      "bytes": 46544,
+      "triangles": 4368,
+      "primitives": 7,
+      "meshes": 7,
+      "skins": 0,
+      "clips": [
+        "page-peek"
+      ],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/notebook-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "paper-plane",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/paper-plane-world-v2-001.glb",
+      "sha256": "2831c8dfd0cfe0b0b1dd9e89fc0fa9b881067f4cc965384158c976e768b46864",
+      "bytes": 3036,
+      "triangles": 5,
+      "primitives": 1,
+      "meshes": 1,
+      "skins": 0,
+      "clips": [
+        "short-glide"
+      ],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/paper-plane-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": true
+    },
+    {
+      "assetKey": "pencil",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/pencil-world-v2-001.glb",
+      "sha256": "35c0a546e3ab6fcb33bd9240bf28d4a24e9930bb25cb2c71dd5ffe78a34ff237",
+      "bytes": 6108,
+      "triangles": 144,
+      "primitives": 4,
+      "meshes": 4,
+      "skins": 0,
+      "clips": [],
+      "frontendDuplicateCopies": [],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "plant",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/plant-world-v2-001.glb",
+      "sha256": "43e90d15e2c4d6745932c012977339a536ec63e13839066d98af5b3898d5b43d",
+      "bytes": 83480,
+      "triangles": 5280,
+      "primitives": 18,
+      "meshes": 18,
+      "skins": 0,
+      "clips": [
+        "leaf-sway"
+      ],
+      "frontendDuplicateCopies": [
+        "SK7_Asset_Factory_Master_20260918/03_Frontend_Asset_Factory/SK7_Frontend_Asset_Factory_PR591/inputs/assets/props/plant-world-v2-001.glb"
+      ],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "stool",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/stool-world-v2-001.glb",
+      "sha256": "c1e51f6083efd2e41a5220a640d64ea5c6b12c82b239f2de4334485faf95df49",
+      "bytes": 23232,
+      "triangles": 1504,
+      "primitives": 6,
+      "meshes": 6,
+      "skins": 0,
+      "clips": [],
+      "frontendDuplicateCopies": [],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    },
+    {
+      "assetKey": "table",
+      "sourceRevision": "world-v2-001",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/props/table-world-v2-001.glb",
+      "sha256": "79308f12f39991d1fa693b8304bd56cfa0a80100d10081ea16c8a3962b0573e5",
+      "bytes": 14944,
+      "triangles": 880,
+      "primitives": 5,
+      "meshes": 5,
+      "skins": 0,
+      "clips": [],
+      "frontendDuplicateCopies": [],
+      "classification": "Candidate",
+      "assetLane": "props",
+      "companionCandidateInventory": false,
+      "artHold": false
+    }
+  ]
+}

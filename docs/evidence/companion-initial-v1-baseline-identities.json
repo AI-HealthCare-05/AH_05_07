@@ -1,0 +1,233 @@
+{
+  "documentType": "COMPANION_INITIAL_V1_BASELINE_IDENTITY_EVIDENCE",
+  "status": "review-evidence-only",
+  "sourceArchiveSha256": "5f7541e8f48a0f3dd7bf58e0cf6f82d19a25063c38f8c018567bdfb727cebed2",
+  "candidateCount": 8,
+  "speciesCount": 4,
+  "candidates": [
+    {
+      "speciesKey": "koala",
+      "variantKey": "lite",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/koala-factory004-lite.glb",
+      "sha256": "bcd264c1017a6f59de123083b48adfc29917f509c485f4c1a10573303f4ca1a5",
+      "bytes": 513288,
+      "triangles": 15516,
+      "primitives": 18,
+      "meshes": 18,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/koala-factory004-lite.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "koala",
+      "variantKey": "standard",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/koala-factory004-standard.glb",
+      "sha256": "919a3c8c642a9761e2e518919ee2e6e3ea0eef0a88c9f4528fe8b4d11bf9c136",
+      "bytes": 968136,
+      "triangles": 32044,
+      "primitives": 18,
+      "meshes": 18,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/koala-factory004-standard.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "mouse",
+      "variantKey": "lite",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/mouse-factory004-lite.glb",
+      "sha256": "940a00062aa2b8a49bdc8dcb2884e5914700e71532ef979d6b6e3617b636a504",
+      "bytes": 579060,
+      "triangles": 18302,
+      "primitives": 23,
+      "meshes": 23,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/mouse-factory004-lite.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "mouse",
+      "variantKey": "standard",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/mouse-factory004-standard.glb",
+      "sha256": "96d6164297f6d2bee029dfc6aebc17b9e7c10e7cfff3d8ffea623549085033b9",
+      "bytes": 1061852,
+      "triangles": 35924,
+      "primitives": 23,
+      "meshes": 23,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/mouse-factory004-standard.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "owl",
+      "variantKey": "lite",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/owl-factory004-lite.glb",
+      "sha256": "1d02ef47c5837b7ac241bf5b70cb79050e5fc3675d69d55449c3442597ba0b53",
+      "bytes": 648412,
+      "triangles": 19662,
+      "primitives": 18,
+      "meshes": 17,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/owl-factory004-lite.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "owl",
+      "variantKey": "standard",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/owl-factory004-standard.glb",
+      "sha256": "5e92254d70d4dec4459b06fc6b90ce2cdf9bbcfeda603a8bc28e8ae8e643c385",
+      "bytes": 1167308,
+      "triangles": 38294,
+      "primitives": 18,
+      "meshes": 17,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/owl-factory004-standard.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "pig",
+      "variantKey": "lite",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/pig-factory004-lite.glb",
+      "sha256": "e5e96d79275e4fef7040d3037bd4045b143a3f5648cbf43acd56a62d7a26f0e1",
+      "bytes": 525332,
+      "triangles": 15952,
+      "primitives": 14,
+      "meshes": 14,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/pig-factory004-lite.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    },
+    {
+      "speciesKey": "pig",
+      "variantKey": "standard",
+      "version": "v001",
+      "sourceRevision": "factory004",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/new-candidates/pig-factory004-standard.glb",
+      "sha256": "99c5bdd6cc5e2008e04cf52582ed0831698fc5dc670ef1439ec7a1a12b7b5f9a",
+      "bytes": 942744,
+      "triangles": 30920,
+      "primitives": 14,
+      "meshes": 14,
+      "skins": 1,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "duplicatePaths": [
+        "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/inputs/recovered-candidates/pig-factory004-standard.glb"
+      ],
+      "classification": "Candidate",
+      "disposition": "preserved-comparison-baseline-only",
+      "canonicalIntake": "hold"
+    }
+  ]
+}
