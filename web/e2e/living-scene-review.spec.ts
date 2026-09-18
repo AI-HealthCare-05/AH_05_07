@@ -40,6 +40,45 @@ test("short 320x568 journey yields decorative realtime scene before core UI", as
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 
+
+test("S02 keeps its decoded poster over a hidden canvas until the first GPU frame is ready", async ({ page }) => {
+  let releaseGlb!: () => void;
+  let markGlbStarted!: () => void;
+  const glbGate = new Promise<void>(resolve => { releaseGlb = resolve; });
+  const glbStarted = new Promise<void>(resolve => { markGlbStarted = resolve; });
+
+  await page.route("**/*.glb*", async route => {
+    markGlbStarted();
+    await glbGate;
+    await route.continue();
+  });
+
+  await page.goto(url);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await glbStarted;
+
+  const runtime = page.locator("[data-living-scene-status]");
+  const canvas = page.locator(".living-three-scene canvas");
+  const poster = page.locator(".living-scene-fallback img");
+
+  await expect(runtime).toHaveAttribute("data-living-scene-status", "poster");
+  await expect(canvas).toHaveCount(1);
+  await expect(canvas).toHaveCSS("visibility", "hidden");
+  await expect(poster).toHaveCount(1);
+  await poster.evaluate((image: HTMLImageElement) => image.decode());
+  await expect(poster).toBeVisible();
+
+  releaseGlb();
+
+  await expect(runtime).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+  await expect(canvas).toHaveCSS("visibility", "visible");
+  await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
+});
+
 for (const [width, height] of [[320, 844], [390, 844], [1366, 768]]) {
   test(`review renders at ${width}x${height}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });

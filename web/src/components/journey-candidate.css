@@ -732,7 +732,7 @@
 
 /* Room for outstretched celebrate hands without shrinking the whole character.
    Only the inline journey S05 canvas changes; landscape and actions keep their size. */
-.app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 6rem); bottom: auto; width: 12rem; height: calc(100% - 1.5rem); }
+.app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 7.5rem); bottom: auto; width: 15rem; height: calc(100% - 1.5rem); }
 
 /* S01/S12 only: preserve the shared scenes and normal presentation. */
 .journey-login.welcome-shell { --sk7-focus: #3f594a; min-height: 100svh; overflow: visible; padding: clamp(1.25rem, 5vw, 4rem); }
