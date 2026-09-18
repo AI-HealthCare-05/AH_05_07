@@ -17,7 +17,7 @@ function deferred() {
   const promise = new Promise<void>(resolve => { release = resolve; });
   return { promise, release };
 }
-async function api(context: BrowserContext, options: { active?: ActiveChallenge; write?: (index: number) => Promise<'uncertain' | void> } = {}) {
+async function api(context: BrowserContext, options: { active?: ActiveChallenge; write?: (index: number) => Promise<'uncertain' | 'locked' | void> } = {}) {
   const state = { active: { ...(options.active ?? ended) }, writes: [] as Request[], closed: [] as ActiveChallenge[] };
   await context.route('http://e2e.invalid/**', async route => {
     const request = route.request();
@@ -36,6 +36,9 @@ async function api(context: BrowserContext, options: { active?: ActiveChallenge;
     if (url.pathname.endsWith('/challenges/active') && request.method() === 'POST') {
       state.writes.push(request);
       const outcome = await options.write?.(state.writes.length);
+      if (outcome === 'locked') {
+        return json({ detail: { code: 'challenge_selection_locked', message: 'Challenge selection is locked.' } }, 409);
+      }
       // Browser fixture models the existing one-active constraint; service/DB tests own its enforcement.
       if (state.active.id === ended.id) {
         state.closed.push({ ...state.active, status: 'closed' });
@@ -153,6 +156,16 @@ test('Living Cycle uncertain creation requires a read and never automatically re
   expect(state.writes).toHaveLength(1);
   await page.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true }).click();
   await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
+});
+
+test('Living Cycle keeps a challenge lock conflict distinct from an observation duplicate', async ({ page, context }) => {
+  const state = await api(context, { write: async () => 'locked' });
+  await page.goto('/?e2e=signed-in&screen=S03');
+  await page.getByRole('button', { name: /수면 시간 지키기/ }).click();
+  await expect(page.getByText('첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.', { exact: true })).toBeVisible();
+  await expect(page.getByText('같은 날짜와 시간대에 이미 기록이 있습니다.', { exact: false })).toHaveCount(0);
+  expect(state.writes).toHaveLength(1);
+  expect(state.closed).toHaveLength(0);
 });
 
 test('Living Cycle two tabs reconcile a losing creation response through a read', async ({ page, context }) => {

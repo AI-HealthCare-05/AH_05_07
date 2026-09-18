@@ -52,7 +52,8 @@ The observation and legacy-event tables:
 - reference `auth.users(id)` with `ON DELETE CASCADE`;
 - enable RLS and require `auth.uid() = user_id` for reads and writes;
 - become inaccessible at `expires_at` after 30 days through RLS; a scheduled PostgreSQL job later purges the expired rows physically;
-- store structured values only.
+- store structured values only;
+- enforce the blood-pressure range checks and `systolic > diastolic` at the database boundary as well as in the API input contract.
 
 `challenge_events` remains readable as a legacy daily-event record until its existing 30-day retention period ends. It is not used to establish an active challenge.
 
@@ -80,7 +81,7 @@ The active-challenge portion of the target diagram is now implemented by the rev
 | Observation API | Production core | Preserve owned BP update/delete and bounded export; allow status-only current-check-in update and explicit-confirmation delete without changing the challenge action, date, or owner. |
 | Observation tables | Production | Preserve RLS, ownership indexes, uniqueness, exact-time access expiry, and 30-day physical retention. |
 | Challenge domain | Implemented as separate active challenge and check-ins | Complete current-release owner edit/delete and recovery evidence. |
-| Model V2 product API | S11 production path | Authenticated `/api/v1/model-v2/product-score` projects only schema version and approved wording; inference remains transient. |
+| Model V2 product API | Authenticated server contract | `/api/v1/model-v2/product-score` projects only schema version and approved wording; normal signed-in S11 computes browser-locally without a feature-bearing inference POST, and inference remains transient. |
 | Legacy risk-signal API | Scaffold | Remains unavailable; it is not the Model V2 product surface. |
 | Health endpoints | Implemented | `/live` checks process liveness; `/ready` checks only that required runtime configuration is present and reveals no configuration or record data. |
 | Structured feedback | P1 partial; S10 source path plus `POST /api/v1/feedback`, with project-owner aggregate review procedure | Keep the fixed review record separate from product facts and online training. The review procedure returns only non-persisted counts for the seven completed Korea dates through the existing Supabase control plane; it adds no product reviewer role, endpoint, RPC, or row-level admin view. |

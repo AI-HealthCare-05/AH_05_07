@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(25);
+SELECT plan(27);
 
 INSERT INTO auth.users (id, email)
 VALUES
@@ -50,6 +50,29 @@ SELECT results_eq(
   $$,
   ARRAY['aaaaaaaa-0000-0000-0000-000000000001'::uuid],
   'owner can create a synthetic blood-pressure observation'
+);
+
+SELECT throws_ok(
+  $$
+    INSERT INTO public.blood_pressure_observations
+      (user_id, observed_on, period, systolic, diastolic)
+    VALUES
+      ('33333333-3333-3333-3333-333333333333', '2026-09-03', 'morning', 80, 90)
+  $$,
+  '23514',
+  NULL,
+  'database rejects an owner blood-pressure insert when systolic is not greater than diastolic'
+);
+
+SELECT throws_ok(
+  $$
+    UPDATE public.blood_pressure_observations
+    SET systolic = 70, diastolic = 80
+    WHERE id = 'aaaaaaaa-0000-0000-0000-000000000001'
+  $$,
+  '23514',
+  NULL,
+  'database rejects an owner blood-pressure update when systolic is not greater than diastolic'
 );
 
 SELECT results_eq(
