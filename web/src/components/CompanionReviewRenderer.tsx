@@ -99,7 +99,9 @@ export default function CompanionReviewRenderer({
     // height-based fitting prevents long tails or wide bodies from shrinking it away.
     // Existing default callers keep the original camera and max-dimension fit.
     const loginNarrator = framing === "login-narrator";
-    const cameraFov = framing === "journey-s05" ? 34 : loginNarrator ? 32 : 28;
+    // Production desktop showed the celebrate envelope extending beyond the prior 34° frame.
+    // Keep the relaxed camera scoped to the transient inline S05 presentation only.
+    const cameraFov = framing === "journey-s05" ? 38 : loginNarrator ? 32 : 28;
     const camera = new THREE.PerspectiveCamera(cameraFov, 1, 0.01, 100);
     const tactileEligible = interactionActivation !== "disabled";
     setStatus(host, "loading");
