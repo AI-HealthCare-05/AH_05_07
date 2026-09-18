@@ -1,0 +1,395 @@
+{
+  "version": 1,
+  "baseline_main": "19882649e695ab81aa169920ebf8c8e831107917",
+  "status": "integration-candidate",
+  "runtime_dependencies_added": 0,
+  "runtime_canvas_added": 0,
+  "source_files_patched": 6,
+  "production_activated": false,
+  "assets": [
+    {
+      "path": "assets/ui/v1/decor/leaf-corner.svg",
+      "kind": "decor",
+      "id": "leaf-corner",
+      "bytes": 436,
+      "sha256": "8cb66fa88cb4f57da2e56e4cb4945fd1a7119d26491fddd9d081f4b8a942ef8b",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/decor/paper-thread.svg",
+      "kind": "decor",
+      "id": "paper-thread",
+      "bytes": 345,
+      "sha256": "1e83dec654c087d01e2ceb2e3698de470531983f37337fcaf176e8b08a11bdf8",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/decor/speech-tip.svg",
+      "kind": "decor",
+      "id": "speech-tip",
+      "bytes": 280,
+      "sha256": "71be8232f6a5743adf7bcd2a0b9b6579d4b181815cb8894515b908539767a1df",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/decor/window-light.svg",
+      "kind": "decor",
+      "id": "window-light",
+      "bytes": 408,
+      "sha256": "a7415978ed0e2b9de3596656ce7a1a1f9f56644704061b57143b65a316de7f2d",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/arrow-down.svg",
+      "kind": "icons",
+      "id": "arrow-down",
+      "bytes": 303,
+      "sha256": "f56c70c6e0fccf4ff2a48f21a796c91e24f8add821269907b48490953ac6a0ba",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/arrow-right.svg",
+      "kind": "icons",
+      "id": "arrow-right",
+      "bytes": 304,
+      "sha256": "1be0d4fb033921c32d38855b63ca251933ae0dbc6b7a409f828a4520e91e5831",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/arrow-up-right.svg",
+      "kind": "icons",
+      "id": "arrow-up-right",
+      "bytes": 306,
+      "sha256": "4d7e1fc971a8252ee11f3cd0de04dff5621df45b6ddebdd9869a681a2d792b53",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/calendar.svg",
+      "kind": "icons",
+      "id": "calendar",
+      "bytes": 559,
+      "sha256": "2db64b2ede2490d36da6afadf09603b8a6d52e627dcd239de29c29d59aa47216",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/check.svg",
+      "kind": "icons",
+      "id": "check",
+      "bytes": 297,
+      "sha256": "2b51f48196c02ae157cb7b354c6bd824c452fb22b08d0b4e0ad360dd4c8e0f66",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/chevron-down.svg",
+      "kind": "icons",
+      "id": "chevron-down",
+      "bytes": 296,
+      "sha256": "4079ecb3171a6d8d10d1e9f062c09aee5f28d2e2ae0a3a97c7421517af970cb3",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/chevron-left.svg",
+      "kind": "icons",
+      "id": "chevron-left",
+      "bytes": 297,
+      "sha256": "71f17eac966ac0b93667d22779cf98e62527e3eb4a5a0be6252b045370a4bcce",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/chevron-right.svg",
+      "kind": "icons",
+      "id": "chevron-right",
+      "bytes": 297,
+      "sha256": "8df1189ee2a5fb4b152fda2cd456314c3fba7c1e4c12f34cad7db626a5e3f39d",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/clock.svg",
+      "kind": "icons",
+      "id": "clock",
+      "bytes": 444,
+      "sha256": "e7a9a39f821701740a33d27290bb806e87dfd881779a7d2833e5f1366282d152",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/close.svg",
+      "kind": "icons",
+      "id": "close",
+      "bytes": 297,
+      "sha256": "b7148b57cb28bf28c41c5f417838f378c9bac767578e42e9b2c0611704527d50",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/companion.svg",
+      "kind": "icons",
+      "id": "companion",
+      "bytes": 752,
+      "sha256": "c356cf111d3726bb27a15c8a235236a2e94740363881d187bc4975f010338fd4",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/download.svg",
+      "kind": "icons",
+      "id": "download",
+      "bytes": 328,
+      "sha256": "4b8e8f5949fb207cedcba01092740285a467275adeb36ed85f3aa8003af1f8ab",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/evening.svg",
+      "kind": "icons",
+      "id": "evening",
+      "bytes": 470,
+      "sha256": "38309d8f1ddccfa3da098ba1b85d099fcdd0916fffb7eee5d059fd67449afe40",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/help.svg",
+      "kind": "icons",
+      "id": "help",
+      "bytes": 485,
+      "sha256": "a162fa6426eddd970477b56aeab2a0a7c308d6baea484c151cdabf2617db9990",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/info.svg",
+      "kind": "icons",
+      "id": "info",
+      "bytes": 450,
+      "sha256": "142b72b5b3ce1f2b7a97755c99a56da76b1299b68579ebd6633522c72b132401",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/leaf.svg",
+      "kind": "icons",
+      "id": "leaf",
+      "bytes": 454,
+      "sha256": "c2a804f57084af5dea6a70ec3e051e3f48340194c5d1b3022be946682ac272a7",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/lock.svg",
+      "kind": "icons",
+      "id": "lock",
+      "bytes": 457,
+      "sha256": "8281ddc6a90c7d5631e0b2ec530e92ac58853f53954b14b3459b18d0ed32a5b3",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/mail.svg",
+      "kind": "icons",
+      "id": "mail",
+      "bytes": 502,
+      "sha256": "4c6293c3c78e557a3bf6c0441fff0b06355b54c46a2d8da7e99c927b5e505a10",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/morning.svg",
+      "kind": "icons",
+      "id": "morning",
+      "bytes": 472,
+      "sha256": "2b563fb27c41ed856ba9aa49a7c29b2b9f7aef3cdfee8fc9f90e56a229aa1ae2",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/observation.svg",
+      "kind": "icons",
+      "id": "observation",
+      "bytes": 497,
+      "sha256": "d85545fa5a269d606905de69a494c2a54e899c9dfa0697cd754c7ee3d50c2e67",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/participation.svg",
+      "kind": "icons",
+      "id": "participation",
+      "bytes": 533,
+      "sha256": "a8098f28a34140d1e4c66890304f409906587b5fa46d85eb39ed73170adaada2",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/pause.svg",
+      "kind": "icons",
+      "id": "pause",
+      "bytes": 292,
+      "sha256": "344ce837ad8de8d39d15f4035c94e526c6594687419509cb55f832d12228dad3",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/play.svg",
+      "kind": "icons",
+      "id": "play",
+      "bytes": 371,
+      "sha256": "f150e1622f5c2734b4a4114c0c6f485c45b63027ee19df28f05d081bd8e44a28",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/plus.svg",
+      "kind": "icons",
+      "id": "plus",
+      "bytes": 292,
+      "sha256": "da44b4f2a17f2aa14ed042950d15ae048305b7992281cb0a20496912dfa9a57b",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/print.svg",
+      "kind": "icons",
+      "id": "print",
+      "bytes": 448,
+      "sha256": "7b2bd1f42da414910a2d5620e4f79e9cbfc466a1bf8a2e589daad0fcb1ddc354",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/recap.svg",
+      "kind": "icons",
+      "id": "recap",
+      "bytes": 568,
+      "sha256": "d27d80acc819c9a3fc1a70eb1ce9a2eb36fae3d81426dd0330c98461550b6e87",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/records.svg",
+      "kind": "icons",
+      "id": "records",
+      "bytes": 472,
+      "sha256": "c82c4d4ed47da40c7354f790f4137505eb16f2af03b66dc02d23007be765cd4a",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/retry.svg",
+      "kind": "icons",
+      "id": "retry",
+      "bytes": 395,
+      "sha256": "502850a772aa7a3c9e6adb32a632504b159693c1324abb9678a206f1b6c43bc4",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/icons/screening.svg",
+      "kind": "icons",
+      "id": "screening",
+      "bytes": 528,
+      "sha256": "5a0ed560b0ff5a1955019c0f6bde9697725b38fa7fb6a4e071577b32edca4e0a",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/settings.svg",
+      "kind": "icons",
+      "id": "settings",
+      "bytes": 442,
+      "sha256": "3c805f9f1ea2626d2cf1bc4ffea90ce42883c21517bb43948c855d56800112f6",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/today.svg",
+      "kind": "icons",
+      "id": "today",
+      "bytes": 493,
+      "sha256": "23380c5e5780387bc116f032a1b737b37878968d327b65ec3b75d9270ff7c519",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/icons/warning.svg",
+      "kind": "icons",
+      "id": "warning",
+      "bytes": 527,
+      "sha256": "2ad0160c0a727023e68c86171fbb2e3536a35f0dbd6d621c10bb989bf7dc9833",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/book-160.webp",
+      "kind": "objects",
+      "id": "book",
+      "bytes": 4216,
+      "sha256": "f459aefe5a0f34746092c05d5910dcdf3b453047b7ebe25fbfc13f580b9a5781",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/objects/book-320.webp",
+      "kind": "objects",
+      "id": "book",
+      "bytes": 8080,
+      "sha256": "77b44b3d04210e9df3cb31672c29d658c5ffcf7807988d0ff950faddc1d046fe",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/objects/lamp-160.webp",
+      "kind": "objects",
+      "id": "lamp",
+      "bytes": 3376,
+      "sha256": "d03a659190c55bccf5aa4f0a954106370b8b1b7a0292ef7d1f59391c083110bb",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/lamp-320.webp",
+      "kind": "objects",
+      "id": "lamp",
+      "bytes": 6224,
+      "sha256": "57e098f94c7230cd5e78208208f82a23126a443c4c2c39c20bff4349c2d80abf",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/mug-160.webp",
+      "kind": "objects",
+      "id": "mug",
+      "bytes": 5212,
+      "sha256": "64517785b4d8e95e1dfb29d515e5b6a381d215ee0c02c693f48078291e365444",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/mug-320.webp",
+      "kind": "objects",
+      "id": "mug",
+      "bytes": 9908,
+      "sha256": "1f91883a91cdeb6862a9e72c04822919c7b0329c57b433484f332e5d7e97fd10",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/notebook-160.webp",
+      "kind": "objects",
+      "id": "notebook",
+      "bytes": 4154,
+      "sha256": "cd9fb84f1d1cb721579aaaa39d428b31c5e4f4dfb187fa13466b70a6a8463adc",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/objects/notebook-320.webp",
+      "kind": "objects",
+      "id": "notebook",
+      "bytes": 8090,
+      "sha256": "4518eceb07834ef18114f9a431db4ef888e6bfb08d27ea7e396fd5bf584d7863",
+      "integration": "source-wired; full-app QA pending"
+    },
+    {
+      "path": "assets/ui/v1/objects/paper-plane-160.webp",
+      "kind": "objects",
+      "id": "paper-plane",
+      "bytes": 2610,
+      "sha256": "f8da04ac06584f2bb2e08d912c41c9c8ec3ef8aebb093f75b02058f1bbdcea55",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/paper-plane-320.webp",
+      "kind": "objects",
+      "id": "paper-plane",
+      "bytes": 4416,
+      "sha256": "ff451be26cda0a7d2d3396cde3f078fa17d0499f2a979030c40cda6aee016b12",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/plant-160.webp",
+      "kind": "objects",
+      "id": "plant",
+      "bytes": 5594,
+      "sha256": "137df700e2964693b4deee1cee824c31c09bc6dda39b382f475759dd80985527",
+      "integration": "library candidate; not auto-exposed"
+    },
+    {
+      "path": "assets/ui/v1/objects/plant-320.webp",
+      "kind": "objects",
+      "id": "plant",
+      "bytes": 12012,
+      "sha256": "010427b9819cf54097fb02ad08eb16b09ea01f4f9bf2fef6d34a94746a7c5756",
+      "integration": "library candidate; not auto-exposed"
+    }
+  ]
+}

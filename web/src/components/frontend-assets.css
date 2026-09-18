@@ -1,0 +1,257 @@
+/* Small presentation-only primitives. Existing layouts, data and scene runtimes own behavior. */
+:root {
+  --ui-action: #355447;
+  --ui-action-hover: #294438;
+  --ui-action-pressed: #233c31;
+  --ui-ink: #34473d;
+  --ui-muted: #626a62;
+  --ui-paper: #fffdf8;
+  --ui-line: #aab8aa;
+  --ui-soft: #edf2e9;
+  --ui-focus: #235448;
+}
+
+.ui-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: -.16em;
+  overflow: visible;
+  pointer-events: none;
+  stroke: currentColor;
+  fill: none;
+}
+.primary-nav .ui-icon[data-nav-icon] {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0;
+  border-radius: 0;
+  transform: none;
+}
+
+/* Four native-button recipes, not image buttons. Text can wrap and scale. */
+.ui-control,
+.journey-login .journey-demo-entry-button,
+.journey-login .entry-auth-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  min-height: 2.75rem;
+  max-width: 100%;
+  border: 1px solid var(--ui-action);
+  border-radius: .75rem;
+  padding: .72rem 1rem;
+  background: var(--ui-action);
+  color: #fff;
+  box-shadow: 0 2px 0 #243e3226, inset 0 1px 0 #ffffff20;
+  font: inherit;
+  font-weight: 680;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color 140ms, border-color 140ms, box-shadow 140ms;
+}
+.journey-login .journey-demo-entry-button { min-height: 3.25rem; }
+.ui-control--secondary {
+  background: var(--ui-paper);
+  color: var(--ui-action);
+  border-color: var(--ui-line);
+  box-shadow: 0 1px 0 #34473d0d;
+}
+.ui-control--subtle {
+  background: transparent;
+  color: var(--ui-action);
+  border-color: transparent;
+  box-shadow: none;
+}
+.ui-control--icon { width: 2.75rem; height: 2.75rem; padding: .65rem; }
+@media (hover: hover) {
+  .ui-control:hover:not(:disabled),
+  .journey-login .journey-demo-entry-button:hover:not(:disabled),
+  .journey-login .entry-auth-button:hover:not(:disabled) {
+    background: var(--ui-action-hover);
+    border-color: var(--ui-action-hover);
+    color: #fff;
+    transform: none;
+    box-shadow: 0 2px 0 #243e3226;
+  }
+  .ui-control--secondary:hover:not(:disabled),
+  .ui-control--subtle:hover:not(:disabled) {
+    background: var(--ui-soft);
+    color: var(--ui-action-pressed);
+    border-color: var(--ui-line);
+    box-shadow: none;
+  }
+}
+.ui-control:active:not(:disabled),
+.journey-login .journey-demo-entry-button:active:not(:disabled),
+.journey-login .entry-auth-button:active:not(:disabled) {
+  background: var(--ui-action-pressed);
+  border-color: var(--ui-action-pressed);
+  color: #fff;
+  transform: none;
+  box-shadow: inset 0 2px 1px #00000012;
+}
+.ui-control:focus-visible,
+.journey-login .journey-demo-entry-button:focus-visible,
+.journey-login .entry-auth-button:focus-visible,
+.companion-identity-control select:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px var(--ui-paper);
+}
+.ui-control:disabled,
+.journey-login .journey-demo-entry-button:disabled,
+.journey-login .entry-auth-button:disabled {
+  opacity: 1;
+  background: #e7ebe4;
+  border-color: #bcc8ba;
+  color: #606b5e;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.ui-control[aria-busy="true"] .ui-icon { opacity: .75; }
+
+/* Keep the platform select and the stored species contract. No replacement dropdown JS. */
+.companion-identity-control select {
+  border-color: #8faaa0;
+  background-color: #fffdf8;
+  color: #233e36;
+  border-radius: .7rem;
+  box-shadow: inset 0 1px 2px #24473707;
+}
+.companion-identity-control select:disabled { opacity: 1; color: #606b5e; background-color: #e7ebe4; }
+.login-companion-bubble {
+  border-color: #cbd4c5;
+  background: #fffdf8;
+  box-shadow: 0 3px 0 #dfe6d42b;
+}
+.login-companion-bubble > span { display: inline-flex; align-items: center; gap: .35rem; color: #596557; }
+.login-companion-bubble::before {
+  left: -.82rem;
+  bottom: .55rem;
+  width: 1.15rem;
+  height: .9rem;
+  border: 0;
+  border-radius: 0;
+  background: url('/assets/ui/v1/decor/speech-tip.svg') center / contain no-repeat;
+  transform: none;
+  pointer-events: none;
+}
+
+/* New glyphs take the place of emoji/old filled paths, not the neighboring labels. */
+.journey-today .today-sun.ui-icon { width: 1.125rem; height: 1.125rem; color: #826b30; }
+.journey-today .today-wave.ui-icon { width: 1.5rem; height: 1.5rem; color: #5c7863; }
+.journey-today .today-leaf.ui-icon { width: 2rem; height: 2rem; color: #3b7a60; }
+.journey-today .today-record-icon--observation { color: #3a6170; background: #eaf2f4; }
+.journey-today .today-record-icon--participation { color: #506c47; background: #eef3e8; }
+.journey-today .today-record-icon .ui-icon { width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; }
+.journey-today .home-lead button.ui-control { background: #164a47; border-color: #164a47; color: #fff; box-shadow: 0 2px 0 #173e3918; }
+.journey-today .home-lead button.ui-control:hover:not(:disabled) { background: #103a38; transform: none; }
+.journey-today .home-lead button.ui-control:focus-visible { outline: 3px solid #235448; outline-offset: 3px; }
+.journey-today .home-links button > .ui-icon { color: #3a7061; }
+.recap-week-summary dt { display: flex; align-items: center; gap: .4rem; }
+.recap-week-summary dt .ui-icon { color: #3c6257; }
+.recap-day-record-link .ui-icon, .recap-records-jump .ui-icon { margin-inline-start: .25rem; }
+
+/* Transparent 2D derivatives: no canvas, baked blob shadow, status encoding or interaction. */
+.ui-object {
+  display: block;
+  width: 9rem;
+  height: 9rem;
+  max-width: 100%;
+  flex: 0 0 auto;
+  pointer-events: none;
+  user-select: none;
+}
+.ui-object img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.ui-object img[hidden] { display: none; }
+.journey-note .journey-note-object { width: 10rem; height: 10rem; }
+.recap-tools-intro { position: relative; }
+.recap-tools-intro:has(.recap-tools-object) { min-height: 7.5rem; padding-inline-end: 8.5rem; }
+.recap-tools-intro .recap-tools-object { position: absolute; inset-inline-end: 0; top: 0; width: 7.5rem; height: 7.5rem; }
+
+/* Optional helper UI. The caller owns its wording, state and action; images stay decorative. */
+.ui-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  min-width: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid #ccd6c6;
+  border-radius: .9rem;
+  background: #f5f7f1;
+  color: var(--ui-ink);
+}
+.ui-notice > .ui-icon { margin-top: .15rem; color: #3c6257; }
+.ui-notice__copy { min-width: 0; display: grid; gap: .35rem; }
+.ui-notice__copy > strong { font-weight: 700; line-height: 1.45; }
+.ui-notice__copy > p { margin: 0; color: var(--ui-muted); line-height: 1.65; }
+.ui-notice__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .35rem; }
+.ui-notice--retry { background: #faf6ed; border-color: #d9c8aa; }
+.ui-notice--retry > .ui-icon { color: #78552c; }
+.ui-notice--empty { background: #fffdf8; border-color: #d7dbcd; }
+.ui-notice--quiet { border: 0; border-inline-start: 2px solid #b6c9b1; border-radius: 0; background: transparent; }
+.ui-tag { display: inline-flex; align-items: center; gap: .32rem; max-width: 100%; padding: .2rem .5rem; border: 1px solid #b4c6ad; border-radius: .35rem; background: #eef3e8; color: #35503f; font-size: .75rem; font-weight: 650; line-height: 1.5; }
+.ui-tag--neutral { color: #555d66; background: #f0f3f5; border-color: #bfcbd2; }
+.ui-tag--outline { color: #455e4e; background: transparent; border-color: #9aaa9b; }
+
+@media (max-width: 580px) {
+  .recap-tools-intro:has(.recap-tools-object) { min-height: 0; padding-inline-end: 0; }
+  .recap-tools-intro .recap-tools-object { display: none; }
+  .ui-notice { gap: .65rem; padding: .85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-control, .journey-login .journey-demo-entry-button, .journey-login .entry-auth-button { transition: none; animation: none; }
+}
+@media (forced-colors: active) {
+  .ui-control, .journey-login .journey-demo-entry-button, .journey-login .entry-auth-button { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; }
+  .ui-control:disabled, .journey-login .journey-demo-entry-button:disabled, .journey-login .entry-auth-button:disabled { color: GrayText; border-color: GrayText; }
+  .ui-control:focus-visible, .journey-login .journey-demo-entry-button:focus-visible, .journey-login .entry-auth-button:focus-visible, .companion-identity-control select:focus-visible { outline-color: Highlight; box-shadow: none; }
+  .ui-icon { stroke: currentColor; }
+  .login-companion-bubble::before, .ui-object { display: none; }
+  .ui-notice, .ui-tag { border-color: CanvasText; color: CanvasText; background: Canvas; }
+}
+@media print { .ui-object, .login-companion-bubble::before { display: none; } }
+
+/* S08: selected is both a check shape and native aria-pressed, never just a color. */
+.record-explorer .record-explorer-buttons > button[aria-pressed] {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+}
+.record-explorer .record-explorer-buttons > button[aria-pressed] > .record-filter-check {
+  flex: 0 0 1rem;
+  width: 1rem;
+  height: 1rem;
+  visibility: hidden;
+}
+.record-explorer .record-explorer-buttons > button[aria-pressed="true"] > .record-filter-check { visibility: visible; }
+.record-explorer .record-explorer-open { display: inline-flex; align-items: center; gap: .3rem; }
+.record-explorer .record-explorer-empty {
+  position: relative;
+  padding-inline-end: 9.5rem;
+  min-height: 9rem;
+  background-image: url('/assets/ui/v1/decor/paper-thread.svg');
+  background-position: left bottom;
+  background-size: min(100%, 40rem) 4rem;
+  background-repeat: no-repeat;
+}
+.record-explorer .record-explorer-empty-object { position: absolute; inset-inline-end: .25rem; top: .25rem; width: 8rem; height: 8rem; }
+@media (max-width: 580px) {
+  .record-explorer .record-explorer-empty { padding-inline-end: 1rem; background-image: none; }
+  .record-explorer .record-explorer-empty-object { position: static; width: 5rem; height: 5rem; margin-bottom: .3rem; }
+}
+@media (forced-colors: active), print {
+  .record-explorer .record-explorer-empty { background-image: none; padding-inline-end: 1rem; }
+}
+.journey-today .home-lead button.ui-control:active:not(:disabled) { background: #0c302e; box-shadow: inset 0 2px 1px #00000012; }
+.journey-today .home-lead button.ui-control:disabled { background: #e7ebe4; border-color: #bcc8ba; color: #606b5e; box-shadow: none; }
+@media (forced-colors: active) {
+  .journey-today .home-lead button.ui-control { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; }
+  .journey-today .home-lead button.ui-control:disabled { color: GrayText; border-color: GrayText; }
+}

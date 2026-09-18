@@ -5,6 +5,7 @@ import App from "./App";
 import "./styles.css";
 import "./components/journey-candidate.css";
 import "./components/journey-today.css";
+import "./components/frontend-assets.css";
 
 const PRELOAD_RECOVERY_KEY = "sk7:vite-preload-recovery-at";
 const PRELOAD_RECOVERY_COOLDOWN_MS = 60_000;
