@@ -1,6 +1,45 @@
 # Deployment SSOT
 
-## Current web production record — 2026-09-14
+## Current web production record — 2026-09-18
+
+**OPERATOR-VERIFIED PRODUCTION RELEASE.**
+
+The deployed upstream source is
+`ea8ce31bf01fd63b0a9946e74b022520b2776fb7`; deployment mirror snapshot
+`b65d3ab2c37a9ca2bdcaa4ed38f3447d2f1404ab` was created by sync run
+`35324770506`.
+
+Cloudflare serves Worker version
+`07678494-b593-46ae-940f-d52e3f7d6391` at 100%. The distinct verified web
+rollback target is `b68ef833-00d3-450a-b788-e5de5ecd1e0c`.
+
+Production build selection was operator-verified as
+`VITE_SK7_UI_MODE=journey`, `VITE_SK7_SCENE_MODE=production`, and
+`VITE_SK7_COMPANION_MODE=production`.
+
+Cloud Run remains on `bp7-api-feedback-a04e311` at 100% traffic. The retained
+API rollback revision is `bp7-api-hyeol-cors-0912a`. No API redeployment was
+required because no API source changed after the verified structured-feedback
+production release.
+
+Production Supabase already contains migration
+`20260916124000_structured_recap_feedback`; the table remains RLS-enabled. No
+migration was reapplied during this release.
+
+Manual Full Browser E2E run `35323794321` passed. Public deployment smoke and
+the affected signed-in production scene flow passed. A real Worker
+rollback-to-previous → smoke → restore → smoke rehearsal also passed, with final
+serving state restored to Worker
+`07678494-b593-46ae-940f-d52e3f7d6391` at 100%.
+
+Wrangler reports the Worker source as `Unknown`; therefore mirror/source,
+deployment timing and Worker identity are recorded as separate observations and
+are not represented as native Cloudflare Git provenance.
+
+See
+[`evidence/production-release-20260918.md`](evidence/production-release-20260918.md)
+for the sanitized closeout record.
+## Previous web production record — 2026-09-14
 
 **OPERATOR-VERIFIED WEB ROLLOUT.** Canonical `main` is
 `37fc06d02b78d35a064c8d2f0c74575d4011f96d`; its final change is repository
