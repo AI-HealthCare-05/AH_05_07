@@ -1925,7 +1925,7 @@ function App() {
     if (activeScreen === "S10") {
       if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" body="이 기간에 남긴 혈압 기록을 날짜와 시간대별로 확인해요. 챌린지 참여는 별도로 표시해요." tone="water" className="journey-recap">
         {renderCycleActions()}
-        <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape} companionSpecies={s10CompanionSpecies} productionSceneEnabled={s10SceneOwnsDecoration} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} period={isCycleReview ? "completed-cycle" : isPriorDashboard ? "prior" : "current"} freshness={windowState}
+        <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape && !s10SceneOwnsDecoration} companionSpecies={s10CompanionSpecies} productionSceneEnabled={s10SceneOwnsDecoration} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} period={isCycleReview ? "completed-cycle" : isPriorDashboard ? "prior" : "current"} freshness={windowState}
           navigation={renderWindowNavigation()}
           records={focusedDate => <>
             {renderRecordLane("blood-pressure", "혈압 관찰", "이 구간에 혈압 관찰 기록이 없습니다.", true, false, focusedDate)}
