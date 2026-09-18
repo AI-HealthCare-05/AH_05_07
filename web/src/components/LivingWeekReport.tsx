@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { TrailDay } from '../ui/livingWeek';
-import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
+import { formatTrailDate, projectReportBloodPressure, summarizeTrailDays, type ReportObservation } from '../ui/livingWeekPresentation';
 import { landmarkForCalendarDate } from '../ui/scenePolicy';
 import './living-week-report.css';
 
 type LivingWeekReportProps = {
   days: readonly TrailDay[];
-  observations: readonly { date: string; period: string; measurement: string }[];
+  observations: readonly ReportObservation[];
+  checkins: readonly { date: string; actionLabel: string; statusLabel: string }[];
   hasLegacyRecords: boolean;
   unconfirmedChanges: boolean;
   freshness: 'ready' | 'refreshing' | 'refresh-error';
@@ -16,9 +17,10 @@ type LivingWeekReportProps = {
 };
 
 /** A presentation of the loaded calendar facts, with only user-facing record fields. */
-export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, completedCycle = false, onClose }: LivingWeekReportProps) {
+export function LivingWeekReport({ days, observations, checkins, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, completedCycle = false, onClose }: LivingWeekReportProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summary = summarizeTrailDays(days);
+  const bloodPressure = projectReportBloodPressure(days, observations);
   const generatedTime = new Intl.DateTimeFormat('ko-KR', {
     timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: false,
@@ -33,7 +35,7 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
     <div className="week-report-toolbar">
       <button className="secondary" type="button" onClick={onClose}>7일 돌아보기로 돌아가기</button>
       <button type="button" onClick={() => window.print()}>인쇄 / PDF로 저장</button>
-      <p>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장할 수 있어요. 저장한 PDF와 인쇄물은 계정의 30일 보관과 별개로 직접 관리해 주세요.</p>
+      <p>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장할 수 있어요.</p>
     </div>
     <article className="week-report-document" data-living-week-report>
       <header className="week-report-header">
@@ -41,7 +43,8 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
         <h1 id="living-week-report-title" ref={headingRef} tabIndex={-1}>7일 기록 리포트</h1>
         <p className="week-report-range"><time dateTime={days[0].date}>{formatTrailDate(days[0].date)}</time> ~ <time dateTime={days[6].date}>{formatTrailDate(days[6].date)}</time></p>
         <p className="week-report-generated">리포트 열람 시각 · <time dateTime={createdAt.toISOString()}>{generatedTime}</time> (서울)</p>
-        <p>7일 돌아보기에서 불러온 {completedCycle ? '종료된 7일' : '현재 7일'} 전체 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.</p>
+        <p>표시된 {completedCycle ? '종료된 7일' : '현재 7일'} 구간에 저장되어 현재 불러온 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.</p>
+        <p>필요하면 PDF로 저장하거나 인쇄해 진료·상담 때 이 기록을 직접 보여줄 수 있어요.</p>
       </header>
 
       {(freshness !== 'ready' || unconfirmedChanges) && <p className="week-report-freshness" role="status" data-report-freshness={freshness}>
@@ -56,11 +59,18 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
           <section aria-labelledby="week-report-bp-title">
             <h3 id="week-report-bp-title">혈압 관찰</h3>
             <dl data-report-summary="blood-pressure">
-              <div><dt>전체 관찰</dt><dd>{summary.observationCount}건</dd></div>
-              <div><dt>관찰이 있는 날짜</dt><dd>{summary.observationDateCount}일</dd></div>
-              <div><dt>관찰 기록 없음</dt><dd>{days.length - summary.observationDateCount}일</dd></div>
+              <div><dt>전체 관찰</dt><dd>{bloodPressure.observationCount}건</dd></div>
+              <div><dt>아침 기록</dt><dd>{bloodPressure.morningCount}건</dd></div>
+              <div><dt>저녁 기록</dt><dd>{bloodPressure.eveningCount}건</dd></div>
+              <div><dt>관찰이 있는 날짜</dt><dd>{bloodPressure.observationDateCount}일</dd></div>
+              <div><dt>관찰 기록 없음</dt><dd>{days.length - bloodPressure.observationDateCount}일</dd></div>
             </dl>
-            <p>사용자가 직접 남긴 측정 기록이에요.</p>
+            <p>아침·저녁은 기록할 때 선택한 구분이며, 실제 측정 시각을 뜻하지 않아요.</p>
+            {bloodPressure.mean && <p data-report-mean>
+              단순 평균 (수축기/이완기) · {bloodPressure.mean.systolic.toFixed(1)}/{bloodPressure.mean.diastolic.toFixed(1)} mmHg<br />
+              이 기간에 저장되어 현재 불러온 {bloodPressure.observationCount}건의 단순 산술 평균이에요. 각 기록을 같은 비중으로 계산해요.
+            </p>}
+            <p>‘관찰 기록 없음’은 현재 불러올 수 있는 혈압 기록이 없는 날짜예요. 측정하지 않았다는 뜻은 아니며, 미입력·삭제·만료 중 어떤 이유인지는 알 수 없어요.</p>
           </section>
           <section aria-labelledby="week-report-challenge-title">
             <h3 id="week-report-challenge-title">챌린지 참여</h3>
@@ -87,17 +97,23 @@ export function LivingWeekReport({ days, observations, hasLegacyRecords, unconfi
             <div>
               <dl><div><dt>혈압 관찰</dt><dd>{day.observationCount}건</dd></div></dl>
               {day.observationCount > 0 ? <ul aria-label={`${formatTrailDate(day.date)} 혈압 측정 기록`}>
-                {observations.filter(record => record.date === day.date).map((record, index) => <li key={index}>{record.period} · {record.measurement}</li>)}
+                {bloodPressure.observations.filter(record => record.date === day.date).map((record, index) => <li key={index}>{record.period === 'morning' ? '아침' : '저녁'} · {record.systolic}/{record.diastolic} mmHg</li>)}
               </ul> : <p>혈압 관찰 기록 없음</p>}
             </div>
-            <dl><div><dt>챌린지 참여</dt><dd>{day.participation}</dd></div></dl>
+            <div>
+              <dl><div><dt>챌린지 참여</dt><dd>{day.participation}</dd></div></dl>
+              {day.participation !== '기록 없음' && <ul aria-label={`${formatTrailDate(day.date)} 챌린지 참여 기록`}>
+                {checkins.filter(record => record.date === day.date).map((record, index) => <li key={index}>{record.actionLabel} · {record.statusLabel}</li>)}
+              </ul>}
+            </div>
           </div>
         </section>)}
       </section>
 
       <footer className="week-report-footer">
         {hasLegacyRecords && <p>이전 방식의 기록은 이 리포트의 요약과 날짜별 기록에 포함하지 않았어요. 7일 돌아보기의 별도 목록에서 확인할 수 있어요.</p>}
-        <p>이 리포트는 사용자가 남긴 7일 기록을 정리한 자료이며, 진단·치료·치료 효과 판정이 아닙니다.</p>
+        <p>이 리포트는 사용자가 입력한 7일 기록의 정리본이며, 진단·치료·치료 효과 판정이 아닙니다.</p>
+        <p>PDF와 인쇄물은 사용자가 직접 관리하는 사본이며, 계정의 30일 서버 보관과 별개예요.</p>
       </footer>
     </article>
   </main>;
