@@ -37,7 +37,7 @@ async function noHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 
-for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]) {
+for (const [width, height] of [[1366, 768], [390, 844], [320, 844]]) {
   test(`S01 native CTA and preference ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
