@@ -140,8 +140,8 @@ test("S11 groups walking duration and weekday/weekend clocks without inventing a
     for (const part of ["bed", "wake"]) await expect(group.locator(`#model-${prefix}-${part}`)).toHaveAttribute("data-time-complete", "false");
   }
   await expect(step(page, "sleep")).toContainText("각 시각의 오전·오후를 확인해 주세요. 자정은 오전 12:00이에요.");
-  await expect(step(page, "sleep")).toContainText("임의로 입력하지 않아도 돼요.");
-  await expect(step(page, "sleep")).toContainText("이 도구를 완료하려면 네 시각이 모두 필요하지만 다른 기록 기능은 그대로 이용할 수 있어요.");
+  await expect(step(page, "sleep")).toContainText("시간을 억지로 정하지 않아도 돼요.");
+  await expect(step(page, "sleep")).toContainText("네 시각을 정하기 어려운 경우에는 이 도구를 건너뛰어도 혈압 기록과 다른 기능은 그대로 이용할 수 있어요.");
   await fillSleep(page);
   await next(page).click();
   await expectStep(page, "habits");

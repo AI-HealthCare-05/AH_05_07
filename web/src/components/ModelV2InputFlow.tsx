@@ -864,7 +864,7 @@ export function ModelV2InputFlow({
                   <legend>주말에는 보통 몇 시에 취침하고 기상하나요?</legend>
                   <div className="field-grid">{renderField("weekendBed", "model-v2-sleep-help")}{renderField("weekendWake", "model-v2-sleep-help")}</div>
                 </fieldset>
-                <p className="model-v2-field-help">일정이 자주 바뀌어 평소 시각을 정하기 어렵다면 임의로 입력하지 않아도 돼요. 이 도구를 완료하려면 네 시각이 모두 필요하지만 다른 기록 기능은 그대로 이용할 수 있어요.</p>
+                <p className="model-v2-field-help">일정이 자주 바뀐다면 시간을 억지로 정하지 않아도 돼요. 네 시각을 정하기 어려운 경우에는 이 도구를 건너뛰어도 혈압 기록과 다른 기능은 그대로 이용할 수 있어요.</p>
               </>}
 
               {step === "habits" && <div className="field-grid model-v2-fields-single">{STEPS.habits.fields.map((key) => renderField(key))}</div>}
