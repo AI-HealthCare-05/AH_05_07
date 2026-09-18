@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { allScreenIds } from "../src/ui/journey";
+import { companionSpecies } from "../src/ui/companion";
+import { activeSceneCompanionSpecies, getActiveSceneCharacter } from "../src/ui/companionSceneRegistry";
+import { getSceneCharacterPresentationProfile } from "../src/ui/companionPresentationProfiles";
 import { landmarkForCalendarDate, resolveSceneGate, resolveScenePlan, sceneLandmarks, screenVisualModes, seoulCalendarDate, type ScenePresentation } from "../src/ui/scenePolicy";
 
 const presentation: ScenePresentation = { screen: "S02", calendarDate: "2026-09-09", reducedMotion: false, visualDisabled: false, webglAvailable: true, gate: "review" };
@@ -46,4 +49,25 @@ test("untrusted extra domain properties cannot affect scene selection", () => {
     expect(resolveScenePlan(tainted)).toEqual(baseline);
   }
   }
+});
+
+
+test("candidate asset intake cannot expand the active 11-species scene registry", () => {
+  expect([...activeSceneCompanionSpecies]).toEqual([...companionSpecies]);
+  expect(activeSceneCompanionSpecies).toHaveLength(11);
+
+  for (const species of companionSpecies) {
+    const active = getActiveSceneCharacter(species);
+    expect(active.species).toBe(species);
+    expect(active.url).toMatch(/^https:\/\/sk7-companion\.gkrry\.com\/companion\/v1\//);
+    expect(active.sha256).toMatch(/^[a-f0-9]{64}$/);
+
+    const s02 = getSceneCharacterPresentationProfile("S02", species);
+    const s10 = getSceneCharacterPresentationProfile("S10", species);
+    expect(s02.scale).toBeGreaterThan(0);
+    expect(s10.scale).toBeGreaterThan(0);
+  }
+
+  expect(getSceneCharacterPresentationProfile("S02", "hedgehog").scale).toBe(0.95);
+  expect(getSceneCharacterPresentationProfile("S10", "hedgehog").scale).toBe(0.86);
 });
