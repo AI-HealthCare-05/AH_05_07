@@ -23,16 +23,17 @@ identity remains a separate deployment-SSOT/control-plane question.
   realtime scene은 같은 saved preference를 identity로 이어받되 registered
   `lite` GLB만 사용한다. invalid preference는 bear로 fail-safe 하며 query, BP,
   Model V2, challenge, record facts가 species를 고를 수 없다.
-- S10 production companion은 host가 전달한 같은 비의료적 preference를
-  `lite` + `idle` profile에 사용할 수 있고, preference가 없거나 invalid면 bear로
-  fallback한다. S10 full-scene realtime은 계속 review-only라 production에서 두
-  WebGL character owner가 동시에 열리지 않는다.
-- S10 review full-scene 후보는 같은 registered 11종 `lite` identity를 scene
-  character에 직접 연결하고 별도 companion renderer를 억제한다. 날짜 focus는
-  record facts가 아니라 semantic control의 화면 좌표만 받아 최대 900ms의
-  bounded head+spine cue로 표시한 뒤 neutral pose로 돌아간다. 화면 밖의
-  decorative scene은 cue를 소비하지 않으며, 보이는 상태에서만 bounded RAF를
-  시작한다. 이 후보는 production S10 full-scene activation을 포함하지 않는다.
+- S10 exact-production Journey path는 같은 비의료적 saved preference를
+  registered `lite` scene character에 직접 연결하며, 별도 companion renderer를
+  억제해 한 화면에 character owner가 하나만 남도록 한다. preference가 없거나
+  invalid면 bear로 fallback한다.
+- S10 unified full-scene owner의 날짜 focus는 record facts가 아니라 semantic
+  control의 화면 좌표만 받아 최대 900ms의 bounded head+spine cue로 표시한 뒤
+  neutral pose로 돌아간다. 화면 밖의 decorative scene은 cue를 소비하지 않으며,
+  보이는 상태에서만 bounded RAF를 시작한다.
+- scene gate가 missing/off인 production fallback에서는 기존 독립 production
+  companion의 `lite` + `idle` 경로가 계속 유효하다. source activation 자체는
+  Cloudflare build variable이나 deployed Worker 상태를 바꾸지 않는다.
 - S05는 confirmed host persistence 뒤 exact `review` 또는 `production` scene
   gate에서 qualified SavedScene을 열며 fixed registered bear-lite
   `celebrate → idle`을 사용한다. saved species preference를 사용하지 않는다.

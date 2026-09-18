@@ -27,11 +27,13 @@ approved bear profile. Query parameters, BP, Model V2 input/output, challenge
 facts, record coverage, or health semantics must never choose either review or
 production species.
 
-When the S10 review scene is active it is the single decorative character owner:
+When the S10 scene is active in review or in an explicitly authorized
+exact-production Journey host, it is the single decorative character owner:
 the separate companion renderer is suppressed, the registered lite identity is
 bound directly to the scene, and day-focus receives only the selected control's
-screen coordinates. This does not activate the S10 full scene in production;
-that remains a separate protected release decision.
+screen coordinates. Exact-production S10 requires that explicit host ownership
+bit; legacy/non-Journey callers remain closed so two production character
+renderers cannot coexist.
 
 S05 remains a separate confirmed-save exception: its qualified SavedScene uses
 the fixed registered bear/lite asset, not the saved species preference. The
@@ -42,9 +44,11 @@ synthetic/read-only and must not create product data.
 
 At the current source baseline, exact `review` keeps the qualified S02/S10
 realtime review paths available. Exact `production` authorizes the qualified
-S02 realtime scene only when the Journey presentation is selected. S10
-full-scene realtime stays review-only; production S10 keeps the static Journey
-landscape plus its independently qualified production companion.
+S02 realtime scene when Journey presentation is selected and now also authorizes
+S10 only when the Journey host explicitly hands ownership to the unified full
+scene. In that S10 path the separate production companion is suppressed.
+If the scene gate is missing/off, the independently qualified production
+companion remains the rollback/fallback behavior.
 
 This describes source capability, not proof of the deployed Cloudflare
 scene/UI variables. Runtime deployment identity and control-plane verification
