@@ -134,6 +134,13 @@ test('review-scene runtime changes run only the S02/S10 scene suite', () => {
   ]);
 });
 
+test('review-scene suite verifies companion-off under an explicit off build', () => {
+  assert.equal(
+    suites(['web/src/components/VisualStage.tsx'])[0].command,
+    'npm run test:e2e:scene && SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays poster-only and requests no character GLB"',
+  );
+});
+
 test('shared journey scene CSS runs the two directly related engine suites', () => {
   assert.deepEqual(names(['web/src/components/journey-candidate.css']), [
     'saved-scene migration parity',
@@ -183,6 +190,24 @@ test('production S10 scene test and config route only to the exact-production sc
     'web/e2e/s10-production-scene.spec.ts',
     'web/playwright.s10-production.config.ts',
   ]), ['production S10 scene']);
+});
+
+test('candidate inventory and verifier use only the companion asset platform lane', () => {
+  assert.deepEqual(names([
+    'web/asset-candidates/companion-candidates.v1.json',
+    'web/scripts/verify-companion-candidates.mjs',
+    'web/scripts/verify-companion-candidates.test.mjs',
+  ]), ['companion asset platform']);
+});
+
+test('asset platform plus scene recipe changes compose candidate and scene coverage', () => {
+  assert.deepEqual(names([
+    'web/asset-candidates/companion-candidates.v1.json',
+    'web/src/ui/sceneRecipes.ts',
+  ]), [
+    'S02 and S10 review scenes',
+    'companion asset platform',
+  ]);
 });
 
 test('App plus shared scene runtime and production S10 contract compose focused lanes', () => {

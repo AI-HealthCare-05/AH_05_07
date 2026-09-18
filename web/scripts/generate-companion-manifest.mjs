@@ -1,12 +1,14 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
+import { validateCandidateInventory } from "./verify-companion-candidates.mjs";
 
 const scriptRoot = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptRoot, "..");
 const repoRoot = path.resolve(webRoot, "..");
 const evidencePath = path.join(repoRoot, "docs", "evidence", "companion-r2-v1.json");
 const outputPath = path.join(webRoot, "src", "ui", "companionAssets.generated.ts");
+const candidateInventoryPath = path.join(webRoot, "asset-candidates", "companion-candidates.v1.json");
 const approvedRuntimeOrigin = "https://sk7-companion.gkrry.com";
 const approvedBucket = "sk7-assets-prod";
 const approvedPrefix = "companion/v1/";
@@ -110,5 +112,7 @@ export function buildGeneratedSource(evidence) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const evidence = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  const candidates = JSON.parse(fs.readFileSync(candidateInventoryPath, "utf8"));
+  validateCandidateInventory(candidates);
   fs.writeFileSync(outputPath, buildGeneratedSource(evidence));
 }

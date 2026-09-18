@@ -227,3 +227,17 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
 - 위 Phase B 기록은 S05 rollout의 역사적 live evidence다. P1 S10 source activation
   merge만으로 현재 served production을 증명하지 않으며, mirror/build-variable/deploy/public
   smoke/rollback 확인은 별도 deployment 단계에서 기록한다.
+
+## Extensible candidate intake
+
+Future companion batches are staged through
+[the companion asset platform](companion-asset-platform.md). Candidate metadata
+is deliberately outside the active runtime manifest: adding a species, variant,
+clip, or new binary digest to the candidate pool cannot make it selectable or
+production-active. The current 11-species active registry remains explicit and
+cross-checked against immutable companion delivery evidence.
+
+Scene fit data now lives separately from binary identity so S02/S10 framing can
+evolve without turning candidate registration into activation. Promotion from a
+candidate batch to the active set requires its own reviewed runtime/evidence
+change; deployment remains a separate decision.

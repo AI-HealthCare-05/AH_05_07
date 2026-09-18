@@ -291,3 +291,14 @@ Before any registered candidate is uploaded or shipped:
 3. Record the derivative's new asset ID, immutable object key, SHA-256, MIME type, dimensions, byte size, review date, and source asset ID.
 4. Validate visual quality, loading behavior, accessible fallback, cache behavior, and deletion or replacement procedure.
 5. Link the approving Issue and pull request before R2 upload.
+
+### Companion candidate-pool separation
+
+Large future companion batches do not extend the active R2/runtime inventory by
+being generated or reviewed. Review-only metadata first enters
+`web/asset-candidates/companion-candidates.v1.json` under the
+[companion asset platform](companion-asset-platform.md). That staging record
+contains no runtime URL/object binding and cannot modify the current 11-species
+active manifest. A later explicit promotion must record immutable delivery
+identity and the directly affected runtime qualification before an asset can join
+the active set.

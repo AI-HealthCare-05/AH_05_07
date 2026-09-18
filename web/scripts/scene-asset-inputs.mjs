@@ -4,6 +4,8 @@ const sharedSources = [
   "web/src/components/scene/disposeScene.ts",
   "web/src/components/VisualStage.tsx",
   "web/src/ui/sceneRecipes.ts",
+  "web/src/ui/companionSceneRegistry.ts",
+  "web/src/ui/companionPresentationProfiles.ts",
   "web/src/ui/scenePolicy.ts",
   "web/src/styles.css",
   "web/scripts/capture-scene-posters.mjs",
