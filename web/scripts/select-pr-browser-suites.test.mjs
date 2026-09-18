@@ -185,6 +185,24 @@ test('production S10 scene test and config route only to the exact-production sc
   ]), ['production S10 scene']);
 });
 
+test('candidate inventory and verifier use only the companion asset platform lane', () => {
+  assert.deepEqual(names([
+    'web/asset-candidates/companion-candidates.v1.json',
+    'web/scripts/verify-companion-candidates.mjs',
+    'web/scripts/verify-companion-candidates.test.mjs',
+  ]), ['companion asset platform']);
+});
+
+test('asset platform plus scene recipe changes compose candidate and scene coverage', () => {
+  assert.deepEqual(names([
+    'web/asset-candidates/companion-candidates.v1.json',
+    'web/src/ui/sceneRecipes.ts',
+  ]), [
+    'S02 and S10 review scenes',
+    'companion asset platform',
+  ]);
+});
+
 test('App plus shared scene runtime and production S10 contract compose focused lanes', () => {
   assert.deepEqual(names([
     'web/src/App.tsx',
