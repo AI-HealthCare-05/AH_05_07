@@ -1,0 +1,76 @@
+{
+  "documentType": "COMPANION_WORLD_V2_VISUAL_REVIEW_DECISION",
+  "status": "completed-human-review",
+  "reviewPackageManifestSha256": "06e4da1ade0371d57691f57c6b7d86059267e46a572658c2fe2a91f5740126df",
+  "scope": "visual-art-review-only",
+  "species": [
+    {
+      "speciesKey": "koala",
+      "liteCandidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "liteSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "standardCandidateId": "COMPANION-CAND-KOALA-V002-STANDARD",
+      "standardSha256": "27c5e1582a727533bd45fbaa815474f49d37178d0993d6dcb8cf374e2e8f3208",
+      "decision": "accept",
+      "silhouette": "accept",
+      "motion": "accept",
+      "screenFit": {
+        "S01": "accept",
+        "S02": "accept",
+        "S10": "accept"
+      },
+      "notes": "Human visual/art review accepted for the prepared World v2 review package."
+    },
+    {
+      "speciesKey": "mouse",
+      "liteCandidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "liteSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "standardCandidateId": "COMPANION-CAND-MOUSE-V002-STANDARD",
+      "standardSha256": "fc82de1c761f5975711fd4bb775698645c44b50e6a578264ab04f14a06b98c62",
+      "decision": "accept",
+      "silhouette": "accept",
+      "motion": "accept",
+      "screenFit": {
+        "S01": "accept",
+        "S02": "accept",
+        "S10": "accept"
+      },
+      "notes": "Human visual/art review accepted for the prepared World v2 review package."
+    },
+    {
+      "speciesKey": "owl",
+      "liteCandidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "liteSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "standardCandidateId": "COMPANION-CAND-OWL-V002-STANDARD",
+      "standardSha256": "1e773423d08ba333d628517ad49ce5cb926cd4a967d482efb3acab2ae5b0b5b5",
+      "decision": "accept",
+      "silhouette": "accept",
+      "motion": "accept",
+      "screenFit": {
+        "S01": "accept",
+        "S02": "accept",
+        "S10": "accept"
+      },
+      "notes": "Human visual/art review accepted for the prepared World v2 review package."
+    },
+    {
+      "speciesKey": "pig",
+      "liteCandidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "liteSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "standardCandidateId": "COMPANION-CAND-PIG-V002-STANDARD",
+      "standardSha256": "ecbb40473145750026c91c0d1f6b14142db05887ab2acf1f91693433ba7b849b",
+      "decision": "accept",
+      "silhouette": "accept",
+      "motion": "accept",
+      "screenFit": {
+        "S01": "accept",
+        "S02": "accept",
+        "S10": "accept"
+      },
+      "notes": "Human visual/art review accepted for the prepared World v2 review package."
+    }
+  ],
+  "overallDecision": "accept-family",
+  "reviewer": "project-owner",
+  "reviewedAt": "2026-09-18T20:59:31+0900",
+  "productionActivationApproved": false
+}
