@@ -1,0 +1,801 @@
+{
+  "documentType": "COMPANION_CANDIDATE_SK7_SCREEN_INTEGRATION",
+  "status": "passed",
+  "scope": "local-production-path-with-candidate-response-substitution",
+  "family": "world-v2",
+  "expectedCases": 36,
+  "completedCases": 36,
+  "passedCases": 36,
+  "failedCases": 0,
+  "species": [
+    "koala",
+    "mouse",
+    "owl",
+    "pig"
+  ],
+  "screens": [
+    "S01",
+    "S02",
+    "S10"
+  ],
+  "viewports": [
+    {
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 320,
+      "height": 844
+    }
+  ],
+  "candidateVariant": "lite",
+  "runtimeSelectionIdentity": "bear-lite-active-contract",
+  "candidateSubstitutionOnly": true,
+  "activeRegistryModified": false,
+  "activeManifestModified": false,
+  "runtimeUrlModified": false,
+  "r2Modified": false,
+  "productionReady": false,
+  "records": [
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S01",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 1073
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S01",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 992
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S01",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 990
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S02",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.4164544652209954,
+        "right": -0.14712050012828756,
+        "bottom": -0.41510192936086565,
+        "top": 0.7607366369418883,
+        "height": 155.7986100351149
+      },
+      "durationMs": 1064
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S02",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.45057779383242896,
+        "right": -0.0510557346603374,
+        "bottom": -0.6134278600388858,
+        "top": 0.7040654586585235,
+        "height": 95.51826560556218
+      },
+      "durationMs": 1025
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S02",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.5796337314729427,
+        "right": -0.06567928202265061,
+        "bottom": -0.6134278600388858,
+        "top": 0.7040654586585235,
+        "height": 98.8119989023057
+      },
+      "durationMs": 1021
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S10",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9403425025286766,
+        "right": -0.3415403644021686,
+        "bottom": -0.5406529022917472,
+        "top": 0.4380046272166481,
+        "height": 46.975561416402975
+      },
+      "durationMs": 1274
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.8602107499431039,
+        "right": -0.11970087629594683,
+        "bottom": -0.5958989883571241,
+        "top": 0.5820950592983173,
+        "height": 37.69580952497412
+      },
+      "durationMs": 1272
+    },
+    {
+      "status": "passed",
+      "species": "koala",
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "candidateSha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "screen": "S10",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9072535253306173,
+        "right": -0.12624701796838142,
+        "bottom": -0.5958989883571241,
+        "top": 0.5820950592983173,
+        "height": 35.33982142966324
+      },
+      "durationMs": 1281
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S01",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 991
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S01",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 985
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S01",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 1017
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S02",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.4189773283003753,
+        "right": -0.14459763704890757,
+        "bottom": -0.4246771463511334,
+        "top": 0.770311853932156,
+        "height": 158.33604253753586
+      },
+      "durationMs": 1029
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S02",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.4490747211987519,
+        "right": -0.052558807294014444,
+        "bottom": -0.6298581091512876,
+        "top": 0.7204957077709255,
+        "height": 97.90065172686045
+      },
+      "durationMs": 1030
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S02",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.5777001439520781,
+        "right": -0.06761286954351521,
+        "bottom": -0.6298581091512876,
+        "top": 0.7204957077709255,
+        "height": 101.27653626916599
+      },
+      "durationMs": 1019
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S10",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9341195336315049,
+        "right": -0.3477633332993403,
+        "bottom": -0.554404736943424,
+        "top": 0.45175646186832485,
+        "height": 48.29573754296395
+      },
+      "durationMs": 1263
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.8569377190854116,
+        "right": -0.12297390715363905,
+        "bottom": -0.6105018887762257,
+        "top": 0.5966979597174188,
+        "height": 38.63039515179662
+      },
+      "durationMs": 1273
+    },
+    {
+      "status": "passed",
+      "species": "mouse",
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "candidateSha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "screen": "S10",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9038015005978951,
+        "right": -0.1296990427011037,
+        "bottom": -0.6105018887762257,
+        "top": 0.5966979597174188,
+        "height": 36.21599545480933
+      },
+      "durationMs": 1282
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S01",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 1018
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S01",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 1001
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S01",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 1008
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S02",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.4274385935980287,
+        "right": -0.1361363717512543,
+        "bottom": -0.43332410955761563,
+        "top": 0.7789588171386381,
+        "height": 160.62748778725364
+      },
+      "durationMs": 1063
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S02",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.462093816812314,
+        "right": -0.03953971168045235,
+        "bottom": -0.6392419956737544,
+        "top": 0.7298795942933921,
+        "height": 99.26131527261812
+      },
+      "durationMs": 1026
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S02",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.5944482107103314,
+        "right": -0.050864802785261905,
+        "bottom": -0.6392419956737544,
+        "top": 0.7298795942933921,
+        "height": 102.68411924753599
+      },
+      "durationMs": 1023
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S10",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.953986653711427,
+        "right": -0.32789621321941825,
+        "bottom": -0.5607931933382507,
+        "top": 0.4581449182631515,
+        "height": 48.90902935686731
+      },
+      "durationMs": 1264
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.8811119246084104,
+        "right": -0.09879970163064022,
+        "bottom": -0.6186686022068383,
+        "top": 0.6048646731480313,
+        "height": 39.153064811355826
+      },
+      "durationMs": 1273
+    },
+    {
+      "status": "passed",
+      "species": "owl",
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "candidateSha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "screen": "S10",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9292977329854328,
+        "right": -0.10420281031356586,
+        "bottom": -0.6186686022068383,
+        "top": 0.6048646731480313,
+        "height": 36.70599826064608
+      },
+      "durationMs": 1282
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S01",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 992
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S01",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 992
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S01",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": null,
+      "durationMs": 970
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S02",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.42172789079664325,
+        "right": -0.14184707455263976,
+        "bottom": -0.4265045599163779,
+        "top": 0.7721392674974,
+        "height": 158.82030713232558
+      },
+      "durationMs": 1057
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S02",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.4540638491285177,
+        "right": -0.047569679364248656,
+        "bottom": -0.6309924029824255,
+        "top": 0.721630001602063,
+        "height": 98.06512433237542
+      },
+      "durationMs": 1026
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S02",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.5841182739138967,
+        "right": -0.06119473958169664,
+        "bottom": -0.6309924029824255,
+        "top": 0.721630001602063,
+        "height": 101.44668034383665
+      },
+      "durationMs": 1029
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S10",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9422852457513513,
+        "right": -0.339597621179494,
+        "bottom": -0.5548162289733539,
+        "top": 0.4521679538982545,
+        "height": 48.3352407778372
+      },
+      "durationMs": 1271
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.8662694286964144,
+        "right": -0.11364219754263624,
+        "bottom": -0.6114463517240684,
+        "top": 0.5976424226652614,
+        "height": 38.69084078045855
+      },
+      "durationMs": 1271
+    },
+    {
+      "status": "passed",
+      "species": "pig",
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "candidateSha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "screen": "S10",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "activeRequestUrl": "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb",
+      "activeRequestCount": 1,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "layoutOverflow": false,
+      "subjectBounds": {
+        "left": -0.9136435380782496,
+        "right": -0.11985700522074916,
+        "bottom": -0.6114463517240684,
+        "top": 0.5976424226652614,
+        "height": 36.27266323167989
+      },
+      "durationMs": 1265
+    }
+  ]
+}
