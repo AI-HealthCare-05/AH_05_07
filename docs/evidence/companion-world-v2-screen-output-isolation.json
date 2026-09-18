@@ -1,0 +1,18 @@
+{
+  "documentType": "COMPANION_CANDIDATE_SCREEN_OUTPUT_ISOLATION",
+  "status": "passed",
+  "harnessCommit": "b08a0bf74bc4241098725a9d07c3b0b143fc5c32",
+  "screenIntegrationSummarySha256": "9b50e2e639c5053761e96475bf0feb276954b66363c366d56f6d1e699ca7a6ca",
+  "cases": 36,
+  "passedCases": 36,
+  "failedCases": 0,
+  "buildOutputInsideRepository": false,
+  "repositoryCleanAfterBrowserRun": true,
+  "port": 4173,
+  "processKilled": false,
+  "alternatePortUsed": false,
+  "candidateInventoryModified": false,
+  "activeRuntimeModified": false,
+  "r2Modified": false,
+  "productionReady": false
+}

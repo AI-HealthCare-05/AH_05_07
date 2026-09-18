@@ -7,6 +7,7 @@ import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { seoulDate } from "../lib/seoulDate";
 import { useSeoulDate } from "../lib/useSeoulDate";
 import { Scene } from "./SceneShell";
+import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
 import "./ModelV2InputFlow.css";
@@ -64,32 +65,6 @@ const PREVIEW_START = "2026-09-17";
 const PREVIEW_END = "2026-10-17";
 function isPreviewDate(date: string): boolean {
   return PREVIEW_START <= date && date <= PREVIEW_END;
-}
-
-function formatDurationMinutes(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours <= 0) return `${minutes}분`;
-  if (minutes === 0) return `${hours}시간`;
-  return `${hours}시간 ${minutes}분`;
-}
-
-function walkingDuration(draft: Draft): string {
-  const hours = finiteNumber(draft.walkingHours);
-  const minutes = finiteNumber(draft.walkingMinutes);
-  if (hours === null || minutes === null) return "선택 필요";
-  return formatDurationMinutes((hours * 60) + minutes);
-}
-
-function sleepDuration(start: string, end: string): string {
-  const startParts = clockParts(start);
-  const endParts = clockParts(end);
-  if (!startParts || !endParts) return "선택 필요";
-
-  const startMinutes = (startParts[0] * 60) + startParts[1];
-  const endMinutes = (endParts[0] * 60) + endParts[1];
-  const duration = (endMinutes - startMinutes + (24 * 60)) % (24 * 60);
-  return formatDurationMinutes(duration);
 }
 
 function PeriodSelector({ selected, label, disabled, onSelect }: {
@@ -537,6 +512,7 @@ export function ModelV2InputFlow({
   const showOlderApplicabilityNotice = age !== null && age >= 80;
   const processed = resultState === "processed";
   const inputStep = step !== "intro" && step !== "review" ? step : null;
+  const isLastInputStep = inputStep === INPUT_STEPS[INPUT_STEPS.length - 1];
   const progressIndex = PROGRESS_STEPS.findIndex((item) => item === step);
   const timeCompleteCount = TIME_FIELD_KEYS.filter((key) => clockParts(draft[key])).length;
 
@@ -653,13 +629,17 @@ export function ModelV2InputFlow({
     }
   }
 
-  function renderField(key: keyof Draft) {
+  function renderField(key: keyof Draft, contextId?: string) {
     const field = FIELDS[key];
+    const label = field.inputLabel ?? field.label;
     const invalid = invalidFields.includes(key);
     const isTime = field.type === "time";
     const complete = isTime && clockParts(draft[key]) !== null;
     const alcoholAmountLocked = key === "alcoholAmount" && isNonDrinkingAlcoholFrequency(draft.alcoholFrequency);
-    const describedBy = [isTime ? `${field.id}-status` : null, invalid ? INPUT_ERROR_ID : null].filter(Boolean).join(" ") || undefined;
+    const help = key === "alcoholAmount"
+      ? alcoholAmountLocked ? "음주량은 ‘해당 없음’으로 처리돼요. 따로 답하지 않아도 돼요." : "보통 한 번에 마시는 양을 선택해 주세요."
+      : field.help;
+    const describedBy = [contextId, help ? `${field.id}-help` : null, isTime ? `${field.id}-status` : null, invalid ? INPUT_ERROR_ID : null].filter(Boolean).join(" ") || undefined;
     if (isTime) return <TimeWheelPicker key={key} id={field.id} label={field.label} value={draft[key]} invalid={invalid}
       describedBy={describedBy} disabled={pending} open={openTimeField === key}
       onOpen={() => setOpenTimeField(key)} onClose={() => setOpenTimeField(null)} onChange={(value) => update(key, value)} />;
@@ -671,11 +651,12 @@ export function ModelV2InputFlow({
     };
     return (
       <label htmlFor={field.id} key={key}>
-        <span id={`${field.id}-label`}>{field.label}{field.unit && <> <span className="unit">{field.unit}</span></>}</span>
+        <span id={`${field.id}-label`}>{label}{field.unit && field.unit !== label && <> <span className="unit">{field.unit}</span></>}</span>
+        {help && <span id={`${field.id}-help`} className="model-v2-field-help">{help}</span>}
         {field.options ? (
           <select {...shared}>
             <option value="">선택</option>
-            {field.options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            {field.options.map(([value, label, inputLabel]) => <option key={value} value={value}>{inputLabel ?? label}</option>)}
           </select>
         ) : (
           <input {...shared} type={field.type} min={field.min} max={field.max} step={field.step} inputMode={field.inputMode}
@@ -710,88 +691,13 @@ export function ModelV2InputFlow({
           }}
           aria-describedby={resultState === "input_invalid" ? INPUT_ERROR_ID : undefined}>
           {processed ? (
-            <>
-              <div className="model-v2-outcome" data-model-v2-user-result="processed" role="status" aria-live="polite">
-                <span className="model-v2-outcome-mark" aria-hidden="true">✓</span>
-                <span className="status-pill">오늘의 시작점</span>
-                <h2 id="model-v2-result-title" tabIndex={-1}>오늘의 시작점을 정리했어요.</h2>
-                <p>혈압 기록이 아직 없어도 방금 입력한 활동·수면·생활습관을 이 화면에서 한눈에 확인할 수 있어요.</p>
-
-                <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">
-                  <section className="model-v2-result-section">
-                    <h3>활동</h3>
-                    <dl>
-                      <div>
-                        <dt>최근 7일 걷기</dt>
-                        <dd>{draft.walkingDays}일 · 걷는 날 평균 {walkingDuration(draft)}</dd>
-                      </div>
-                      <div>
-                        <dt>근력운동</dt>
-                        <dd>{reviewValue("strengthDays", draft)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-
-                  <section className="model-v2-result-section">
-                    <h3>수면</h3>
-                    <dl>
-                      <div>
-                        <dt>평일</dt>
-                        <dd>{formatTimeKorean(draft.weekdayBed)} → {formatTimeKorean(draft.weekdayWake)} · {sleepDuration(draft.weekdayBed, draft.weekdayWake)}</dd>
-                      </div>
-                      <div>
-                        <dt>주말</dt>
-                        <dd>{formatTimeKorean(draft.weekendBed)} → {formatTimeKorean(draft.weekendWake)} · {sleepDuration(draft.weekendBed, draft.weekendWake)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-
-                  <section className="model-v2-result-section">
-                    <h3>생활 습관</h3>
-                    <dl>
-                      <div>
-                        <dt>흡연</dt>
-                        <dd>{reviewValue("smoking", draft)}</dd>
-                      </div>
-                      <div>
-                        <dt>음주</dt>
-                        <dd>{reviewValue("alcoholFrequency", draft)} · {reviewValue("alcoholAmount", draft)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-                </div>
-
-                <div className="model-v2-result-model-note" aria-label="Model V2 처리 안내">
-                  <strong>Model V2 처리가 완료됐어요.</strong>
-                  {previewOpen && previewOutput !== null && Number.isFinite(previewOutput) ? (
-                    <div data-model-v2-preview>
-                      <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
-                      <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
-                      <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
-                      <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>
-                    </div>
-                  ) : (
-                    <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
-                  )}
-                </div>
-
-                <p className="model-v2-result-disclaimer">
-                  이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
-                  특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
-                </p>
-                <p>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
-                <p>혈압 기록과 7일 생활 챌린지는 이 요약과 별도로 이용할 수 있어요.</p>
-              </div>
-              <div className="model-v2-actions">
-                <button type="button" onClick={onStartBloodPressure}>혈압 기록 남기기</button>
-                <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>
-              </div>
-            </>
+            <ModelV2Outcome draft={draft} previewOutput={previewOpen ? previewOutput : null}
+              onStartBloodPressure={onStartBloodPressure} onReturnToToday={onReturnToToday} />
           ) : (
             <>
               <header className="model-v2-step-heading">
                 <p className="model-v2-kicker">{step === "intro" ? "입력 전에 잠깐" : step === "review" ? "분석 전 마지막 확인" : `${progressIndex + 1}번째 이야기`}</p>
-                <h2 id={STEP_TITLE_ID} tabIndex={-1}>{step === "intro" ? "내 생활정보를 하나씩 살펴봐요" : STEPS[step].label}</h2>
+                <h2 id={STEP_TITLE_ID} tabIndex={-1}>{step === "intro" ? "생활정보를 입력해요" : STEPS[step].label}</h2>
                 {step !== "intro" && <p>{STEPS[step].description}</p>}
               </header>
 
@@ -802,8 +708,10 @@ export function ModelV2InputFlow({
               {step === "intro" && <section className="model-v2-intro" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
                 <p><strong>선택 도구 · 이번 이용에만 사용</strong></p>
-                <p>입력을 마치면 활동·수면·생활습관을 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.</p>
+                <p>기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주를 차례로 입력해요. 네 가지 주제 뒤에 입력 확인 단계가 있어요.</p>
+                <p>입력한 내용은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에 사용해요.</p>
                 <p><strong>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</strong></p>
+                <p>이 도구를 이용하지 않아도 혈압 기록과 생활 챌린지는 이용할 수 있어요.</p>
                 <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
                 {previewOpen ? (
                   <>
@@ -813,7 +721,7 @@ export function ModelV2InputFlow({
                 ) : (
                   <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
                 )}
-                <p>나이, 체격, 생활 습관, 활동, 수면 정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
+                <p>입력한 생활정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
                 <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
                 <p>마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
                 <details className="model-v2-notice-details">
@@ -827,23 +735,39 @@ export function ModelV2InputFlow({
                 만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
               </p>}
 
-              {inputStep && inputStep !== "sleep" && <>
-                <div className={`field-grid${inputStep === "habits" ? " model-v2-fields-single" : ""}`}>{STEPS[inputStep].fields.map(renderField)}</div>
-                {inputStep === "habits" && <p className="model-v2-privacy-note">최근 1년간 또는 평생 마시지 않았다면 음주량은 ‘해당 없음’을 선택해 주세요.</p>}
-                {inputStep === "activity" && <p className="model-v2-privacy-note">걷는 날의 시간과 분을 나누어 입력해 주세요. 걷지 않았다면 걷기 일수·시간·분에 각각 0을 입력해 주세요.</p>}
+              {step === "basics" && <>
+                <p id="model-v2-measurement-help" className="model-v2-field-help">키와 몸무게는 알고 있는 측정값을 입력해 주세요.</p>
+                <div className="field-grid">{STEPS.basics.fields.map((key) => renderField(key, key === "height" || key === "weight" ? "model-v2-measurement-help" : undefined))}</div>
+              </>}
+
+              {step === "activity" && <>
+                {renderField("walkingDays")}
+                <fieldset className="model-v2-question-group" aria-describedby="model-v2-walking-help model-v2-walking-zero-help">
+                  <legend>그중 걷는 날에는 하루 평균 얼마나 걸었나요?</legend>
+                  <p id="model-v2-walking-help" className="model-v2-field-help">걷지 않은 날은 평균에 넣지 않아요. 예를 들어 40분은 0시간 40분으로 입력해 주세요.</p>
+                  <div className="field-grid">
+                    {renderField("walkingHours", "model-v2-walking-help model-v2-walking-zero-help")}
+                    {renderField("walkingMinutes", "model-v2-walking-help model-v2-walking-zero-help")}
+                  </div>
+                  <p id="model-v2-walking-zero-help" className="model-v2-field-help">걷기 일수가 0일이면 시간과 분도 모두 0으로 입력해 주세요.</p>
+                </fieldset>
+                {renderField("strengthDays")}
               </>}
 
               {step === "sleep" && <>
-                <p className="model-v2-sleep-caption">시간 선택 {timeCompleteCount} / 4 · 자정은 오전 12:00으로 선택해 주세요.</p>
-                <fieldset className="model-v2-sleep-group">
-                  <legend>평일</legend>
-                  <div className="field-grid">{renderField("weekdayBed")}{renderField("weekdayWake")}</div>
+                <p id="model-v2-sleep-help" className="model-v2-sleep-caption">시간 선택 {timeCompleteCount} / 4 · 각 시각의 오전·오후를 확인해 주세요. 자정은 오전 12:00이에요.</p>
+                <fieldset className="model-v2-question-group">
+                  <legend>평일에는 보통 몇 시에 취침하고 기상하나요?</legend>
+                  <div className="field-grid">{renderField("weekdayBed", "model-v2-sleep-help")}{renderField("weekdayWake", "model-v2-sleep-help")}</div>
                 </fieldset>
-                <fieldset className="model-v2-sleep-group">
-                  <legend>주말</legend>
-                  <div className="field-grid">{renderField("weekendBed")}{renderField("weekendWake")}</div>
+                <fieldset className="model-v2-question-group">
+                  <legend>주말에는 보통 몇 시에 취침하고 기상하나요?</legend>
+                  <div className="field-grid">{renderField("weekendBed", "model-v2-sleep-help")}{renderField("weekendWake", "model-v2-sleep-help")}</div>
                 </fieldset>
+                <p className="model-v2-field-help">일정이 자주 바뀐다면 시간을 억지로 정하지 않아도 돼요. 네 시각을 정하기 어려운 경우에는 이 도구를 건너뛰어도 혈압 기록과 다른 기능은 그대로 이용할 수 있어요.</p>
               </>}
+
+              {step === "habits" && <div className="field-grid model-v2-fields-single">{STEPS.habits.fields.map((key) => renderField(key))}</div>}
 
               {step === "review" && <>
                 <div className="model-v2-review">
@@ -853,13 +777,13 @@ export function ModelV2InputFlow({
                   </section>)}
                 </div>
                 <div className="model-v2-review-notice">
-                  <p>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+                  <p>이번 입력과 결과는 저장되지 않아요. 화면을 나가거나 새로고침하면 사라져요.</p>
                   <p>혈압 기록과 7일 생활 챌린지는 별도로 이용할 수 있어요.</p>
                   <label className="signal-consent" htmlFor="model-notice-accepted">
                     <input id="model-notice-accepted" type="checkbox" checked={noticeAccepted}
                       onChange={(event) => { setNoticeAccepted(event.target.checked); clearFeedback(); }} disabled={pending}
                       aria-invalid={consentInvalid || undefined} aria-describedby={consentInvalid ? INPUT_ERROR_ID : undefined} />
-                    위 안내를 확인했습니다.
+                    입력과 결과가 저장되지 않는다는 안내를 확인했어요.
                   </label>
                 </div>
               </>}
@@ -868,7 +792,7 @@ export function ModelV2InputFlow({
                 {step !== "intro" && <button type="button" className="secondary" disabled={pending} onClick={() => goTo(progressIndex === 0 ? "intro" : PROGRESS_STEPS[progressIndex - 1])}>이전</button>}
                 {step === "intro" ? <button key="intro" type="button" onClick={() => goTo("basics")}>입력 시작하기</button>
                   : step === "review" ? <button key="submit" ref={submitRef} type="submit" disabled={pending}>{pending ? "생활정보 분석 중" : "생활정보 분석하기"}</button>
-                    : <button key={step} type="button" disabled={pending} onClick={advance}>{editingReview ? "입력 확인으로 돌아가기" : step === "sleep" ? "입력 확인하기" : "다음"}</button>}
+                    : <button key={step} type="button" disabled={pending} onClick={advance}>{editingReview ? "입력 확인으로 돌아가기" : isLastInputStep ? "입력 확인하기" : "다음"}</button>}
               </div>
             </>
           )}

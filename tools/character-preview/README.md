@@ -87,6 +87,24 @@ world-space vertex의 최저 Y를 한 번 계산해 두 변형에 공통 적용�
 곰/토끼/강아지의 renderer 없는 Three/Box3 사전 대조에서 차이가 확인되어, 실제 바닥
 재생 검토 전에 이 공통 표준형 기준을 고정했다. 상대 GLB 단위이며 물리 mm 기준이 아니다.
 
+## Candidate inventory bridge
+
+`web/asset-candidates/companion-candidates.v1.json`의 review-only 후보를
+제품 runtime에 연결하지 않고 이 검토실에서 검사할 때는
+`docs/companion-candidate-browser-prequalification.md`의 계약을 사용한다.
+
+`prepare_candidate_review.py`는 지정한 Master archive에서 정확한 candidate
+SHA-256과 byte size를 다시 확인하고, 저장소 밖의 새 검수 폴더에 GLB 사본과
+검수용 `catalog.json`을 만든다.
+
+`verify_candidate_review.cjs`는 준비된 입력의 identity를 다시 확인한 뒤 기존
+`verify.cjs`를 호출한다. 브라우저 검증 후에도 browser verifier가 읽은 GLB
+SHA-256이 canonical candidate identity와 동일한지 확인한다.
+
+이 경로의 PASS는 isolated browser technical pre-qualification이다.
+S01/S02/S10 활성화, 실제 모바일 기기 성능, 사람의 최종 디자인 승인 또는
+production 승인을 의미하지 않는다.
+
 ## 검증
 
 기존 locked Playwright를 사용한다. 준비·build는 로컬 검증이며 배포가 아니다.
