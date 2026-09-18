@@ -1052,8 +1052,6 @@ function fixtureScript() {
         || !state.humanVisibleConfirmed;
     }
 
-    refresh();
-
     setInterval(
       refresh,
       500,
@@ -1164,6 +1162,7 @@ function fixtureScript() {
       bar
     );
 
+    refresh();
     void focusReviewTarget();
   }
 
