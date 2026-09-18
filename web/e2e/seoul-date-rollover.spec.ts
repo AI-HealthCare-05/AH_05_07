@@ -223,21 +223,21 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
       await page.getByLabel(/키/).fill("170");
       await page.getByLabel(/몸무게/).fill("68");
       await page.getByRole("button", { name: "다음", exact: true }).click();
-      await page.getByLabel("흡연 상태").selectOption("never_smoked");
-      await page.getByLabel("음주 빈도").selectOption("lt_monthly");
-      await page.getByLabel("한 번 마실 때 음주량").selectOption("1_2_drinks");
-      await page.getByRole("button", { name: "다음", exact: true }).click();
-      await page.getByLabel("최근 7일 걷기 일수").fill("4");
+      await page.getByLabel("최근 7일 동안 걸은 날은 며칠인가요?", { exact: true }).fill("4");
       await page.locator("#model-walking-hours").fill("0");
       await page.locator("#model-walking-minutes").fill("40");
-      await page.getByLabel("최근 7일 근력운동").selectOption("2_days");
+      await page.getByLabel("최근 7일 동안 근력운동을 한 날은 며칠인가요?", { exact: true }).selectOption("2_days");
       await page.getByRole("button", { name: "다음", exact: true }).click();
       await chooseTimeWheel(page, "model-weekday-bed", "23:30");
       await chooseTimeWheel(page, "model-weekday-wake", "07:00");
       await chooseTimeWheel(page, "model-weekend-bed", "23:30");
       await chooseTimeWheel(page, "model-weekend-wake", "08:00");
+      await page.getByRole("button", { name: "다음", exact: true }).click();
+      await page.getByLabel("일반담배(궐련) 흡연 상태는 어떤가요?", { exact: true }).selectOption("never_smoked");
+      await page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true }).selectOption("lt_monthly");
+      await page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true }).selectOption("1_2_drinks");
       await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
-      await page.getByLabel("위 안내를 확인했습니다.").check();
+      await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
       await page.getByRole("button", { name: "기본 정보 수정", exact: true }).click();
     }
     const field = draft === "blood-pressure" ? page.getByLabel(/수축기/) : page.getByLabel("나이");
@@ -257,7 +257,7 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
       await expect(field).toHaveValue("35");
       await expect(page.getByLabel(/키/)).toHaveValue("170");
       await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
-      await expect(page.getByLabel("위 안내를 확인했습니다.")).toBeChecked();
+      await expect(page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.")).toBeChecked();
     }
     expect(api.writes).toHaveLength(0);
   });
