@@ -135,3 +135,66 @@ test("production S10 invalid saved identity fails safe to bear-lite with one own
   ]);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
 });
+
+test("production S10 day focus reaches the unified scene as a bounded presentation cue", async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  const stage = await openProductionS10(page, "fox");
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const runtime = page.locator(".living-three-scene");
+  const buttons = page.locator(".seven-day-trail .trail-day-button");
+
+  await expect(buttons).toHaveCount(7);
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-posture", "head-spine");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "0");
+
+  await stage.scrollIntoViewIfNeeded();
+  await buttons.nth(2).evaluate((element: HTMLButtonElement) => element.click());
+
+  await expect(buttons.nth(2)).toHaveAttribute("aria-pressed", "true");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "1");
+  await expect(runtime).toHaveAttribute("data-companion-look-source", "replay");
+
+  await expect.poll(async () => {
+    const yaw = Number(await runtime.getAttribute("data-companion-look-spine-yaw") ?? "0");
+    const pitch = Number(await runtime.getAttribute("data-companion-look-spine-pitch") ?? "0");
+    return Math.max(Math.abs(yaw), Math.abs(pitch));
+  }).toBeGreaterThan(0.0005);
+
+  await expect(runtime).toHaveAttribute(
+    "data-companion-replay-cue",
+    "none",
+    { timeout: 3_000 },
+  );
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "centered");
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+});
+
+test("production S10 reduced motion stays poster-only with no character GLB", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installSyntheticApi(page);
+
+  const requests: string[] = [];
+  page.on("request", request => requests.push(request.url()));
+
+  const stage = await openProductionS10(page, "fox");
+  await expect(stage).toHaveCount(1);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "poster",
+  );
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+
+  await page.waitForTimeout(250);
+  expect(sceneGlbRequests(requests)).toEqual([]);
+});
