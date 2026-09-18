@@ -20,7 +20,7 @@ const timeInputs = [
 
 type Step = "intro" | "basics" | "habits" | "activity" | "sleep" | "review";
 const stepTitles = {
-  basics: "기본 정보", habits: "생활 습관", activity: "활동", sleep: "수면", review: "입력 확인",
+  basics: "기본 정보", activity: "최근 7일 활동", sleep: "평일·주말 수면", habits: "흡연·음주", review: "입력 확인",
 };
 
 async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?: boolean; skipClock?: boolean } = {}) {
@@ -82,23 +82,23 @@ async function begin(page: Page) {
 }
 
 async function fillBasics(page: Page, age = "35") {
-  await page.getByLabel("나이", { exact: true }).fill(age);
+  await page.getByLabel("만 나이", { exact: true }).fill(age);
   await page.getByLabel("성별", { exact: true }).selectOption("1");
   await page.locator("#model-height").fill("170");
   await page.locator("#model-weight").fill("68");
 }
 
 async function fillHabits(page: Page) {
-  await page.getByLabel("흡연 상태").selectOption("never_smoked");
-  await page.getByLabel("음주 빈도").selectOption("lt_monthly");
-  await page.getByLabel("한 번 마실 때 음주량").selectOption("1_2_drinks");
+  await page.getByLabel("일반담배(궐련) 흡연 상태는 어떤가요?", { exact: true }).selectOption("never_smoked");
+  await page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true }).selectOption("lt_monthly");
+  await page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true }).selectOption("1_2_drinks");
 }
 
 async function fillActivity(page: Page) {
-  await page.getByLabel("최근 7일 걷기 일수").fill("4");
+  await page.getByLabel("최근 7일 동안 걸은 날은 며칠인가요?", { exact: true }).fill("4");
   await page.locator("#model-walking-hours").fill("0");
   await page.locator("#model-walking-minutes").fill("40");
-  await page.getByLabel("최근 7일 근력운동").selectOption("2_days");
+  await page.getByLabel("최근 7일 동안 근력운동을 한 날은 며칠인가요?", { exact: true }).selectOption("2_days");
 }
 
 async function fillSleep(page: Page) {
@@ -109,21 +109,61 @@ async function toSleep(page: Page, age = "35") {
   await begin(page);
   await fillBasics(page, age);
   await next(page).click();
-  await expectStep(page, "habits");
-  await fillHabits(page);
-  await next(page).click();
   await expectStep(page, "activity");
   await fillActivity(page);
   await next(page).click();
   await expectStep(page, "sleep");
 }
 
-async function toReview(page: Page, age = "35", consent = true) {
-  await toSleep(page, age);
+test("S11 groups walking duration and weekday/weekend clocks without inventing answers", async ({ page }) => {
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await begin(page);
+  await expect(page.locator("#model-height")).toHaveAccessibleDescription("키와 몸무게는 알고 있는 측정값을 입력해 주세요.");
+  await fillBasics(page);
+  await next(page).click();
+  await expectStep(page, "activity");
+  const walking = page.getByRole("group", { name: "그중 걷는 날에는 하루 평균 얼마나 걸었나요?", exact: true });
+  await expect(walking).toBeVisible();
+  await expect(walking.getByLabel("시간", { exact: true })).toHaveValue("");
+  await expect(walking.getByLabel("분", { exact: true })).toHaveValue("");
+  await expect(walking).toContainText("걷지 않은 날은 평균에 넣지 않아요. 예를 들어 40분은 0시간 40분으로 입력해 주세요.");
+  await expect(walking).toContainText("걷기 일수가 0일이면 시간과 분도 모두 0으로 입력해 주세요.");
+  await expect(page.locator("#model-walking-days")).toHaveAccessibleDescription("같은 날 여러 번 걸었어도 하루로 세어 주세요.");
+  await expect(page.locator('#model-strength option[value="0_days"]')).toHaveText("하지 않았어요 · 0일");
+  await fillActivity(page);
+  await next(page).click();
+  await expectStep(page, "sleep");
+  for (const [period, prefix] of [["평일", "weekday"], ["주말", "weekend"]]) {
+    const group = page.getByRole("group", { name: `${period}에는 보통 몇 시에 취침하고 기상하나요?`, exact: true });
+    await expect(group).toBeVisible();
+    for (const part of ["bed", "wake"]) await expect(group.locator(`#model-${prefix}-${part}`)).toHaveAttribute("data-time-complete", "false");
+  }
+  await expect(step(page, "sleep")).toContainText("각 시각의 오전·오후를 확인해 주세요. 자정은 오전 12:00이에요.");
+  await expect(step(page, "sleep")).toContainText("임의로 입력하지 않아도 돼요.");
+  await expect(step(page, "sleep")).toContainText("이 도구를 완료하려면 네 시각이 모두 필요하지만 다른 기록 기능은 그대로 이용할 수 있어요.");
   await fillSleep(page);
+  await next(page).click();
+  await expectStep(page, "habits");
+  await expect(next(page)).toHaveCount(0);
+  await fillHabits(page);
   await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
   await expectStep(page, "review");
-  if (consent) await page.getByLabel("위 안내를 확인했습니다.").check();
+});
+
+async function toHabits(page: Page, age = "35") {
+  await toSleep(page, age);
+  await fillSleep(page);
+  await next(page).click();
+  await expectStep(page, "habits");
+}
+
+async function toReview(page: Page, age = "35", consent = true) {
+  await toHabits(page, age);
+  await fillHabits(page);
+  await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+  await expectStep(page, "review");
+  if (consent) await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
 }
 
 async function expectErrorCleanup(page: Page) {
@@ -181,25 +221,32 @@ async function assertFitsViewport(page: Page) {
 test("S11 non-drinking frequency auto-selects and locks alcohol amount", async ({ page }) => {
   await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
-  await begin(page);
-  await fillBasics(page);
-  await next(page).click();
-  await expectStep(page, "habits");
+  await toHabits(page);
 
-  const frequency = page.getByLabel("음주 빈도");
-  const amount = page.getByLabel("한 번 마실 때 음주량");
+  const frequency = page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true });
+  const amount = page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true });
 
   await frequency.selectOption("none_past_year");
   await expect(amount).toHaveValue("none");
   await expect(amount).toBeDisabled();
+  await expect(amount).toHaveAccessibleDescription("음주량은 ‘해당 없음’으로 처리돼요. 따로 답하지 않아도 돼요.");
 
   await frequency.selectOption("lifetime_nonapplicable");
   await expect(amount).toHaveValue("none");
   await expect(amount).toBeDisabled();
+  await expect(amount).toHaveAccessibleDescription("음주량은 ‘해당 없음’으로 처리돼요. 따로 답하지 않아도 돼요.");
 
   await frequency.selectOption("lt_monthly");
   await expect(amount).toBeEnabled();
   await expect(amount).toHaveValue("");
+  await expect(amount).toHaveAccessibleDescription("보통 한 번에 마시는 양을 선택해 주세요.");
+  await expect(page.locator("#model-smoking option")).toHaveText([
+    "선택", "현재 매일 피워요", "현재 가끔 피워요", "전에 피웠지만 지금은 피우지 않아요", "피운 적이 없어요",
+  ]);
+  await expect(frequency.locator("option")).toHaveText([
+    "선택", "최근 1년 동안 마시지 않았어요", "한 달에 1번 미만", "한 달에 1번 정도", "한 달에 2~4번",
+    "일주일에 2~3번", "일주일에 4번 이상", "술을 마신 적이 없어요",
+  ]);
 });
 
 test("S11 time picker keeps internal pointer events and closes on outside pointer", async ({ page }) => {
@@ -238,18 +285,28 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
   await expect(step(page, "intro")).toContainText("선택 도구 · 이번 이용에만 사용");
-  await expect(step(page, "intro")).toContainText("입력을 마치면 활동·수면·생활습관을 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.");
+  await expect(step(page, "intro")).toContainText("입력한 내용은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에 사용해요.");
   await expect(step(page, "intro")).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   await expect(step(page, "intro")).toContainText("혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.");
   await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
+  await expect(page.locator("#model-v2-step-title")).toHaveText("생활정보를 입력해요");
+  await expect(page.locator(".model-v2-progress li > span:nth-child(2)")).toHaveText([
+    "기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주", "입력 확인",
+  ]);
+  await expect(step(page, "intro")).toContainText("네 가지 주제 뒤에 입력 확인 단계가 있어요.");
+  await expect(step(page, "intro")).toContainText("이 도구를 이용하지 않아도 혈압 기록과 생활 챌린지는 이용할 수 있어요.");
   await expect(page.locator("#model-age")).toHaveCount(0);
   await expect(submit(page)).toHaveCount(0);
   await toReview(page);
   await expect(step(page, "review")).toContainText("분석 전 마지막 확인");
-  await expect(step(page, "review")).toContainText("분석 전에 입력한 내용이 맞는지 확인해 주세요.");
+  await expect(step(page, "review")).toContainText("입력한 내용이 맞는지 확인해 주세요. 수정한 뒤 이 화면으로 돌아올 수 있어요.");
   expect(routed.requests).toHaveLength(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(4);
   const review = step(page, "review");
+  await expect(review.locator(".model-v2-review-group h3")).toHaveText(["기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주"]);
+  await expect(review.locator("dt")).toHaveCount(15);
+  expect(await review.locator("dt").allTextContents()).not.toEqual(expect.arrayContaining([expect.stringMatching(/인가요|어떤가요/)]));
+  await expect(review).toContainText("이번 입력과 결과는 저장되지 않아요. 화면을 나가거나 새로고침하면 사라져요.");
   for (const text of ["35", "남성", "170", "68", "비흡연", "월 1회 미만", "1~2잔", "40", "오후 11:30", "오전 7:00", "오전 8:00"]) {
     await expect(review).toContainText(text);
   }
@@ -411,8 +468,8 @@ test("S11 prevents double submission and freezes review edits while analysis is 
     await toReview(page);
     await submit(page).dblclick();
     await expect(page.getByRole("button", { name: "생활정보 분석 중", exact: true })).toBeDisabled();
-    await expect(page.getByLabel("위 안내를 확인했습니다.")).toBeDisabled();
-    for (const title of ["기본 정보", "생활 습관", "활동", "수면"]) {
+    await expect(page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.")).toBeDisabled();
+    for (const title of ["기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주"]) {
       await expect(page.getByRole("button", { name: `${title} 수정`, exact: true })).toBeDisabled();
     }
     expect(routed.requests).toHaveLength(1);
@@ -427,28 +484,31 @@ test("S11 prevents double submission and freezes review edits while analysis is 
 test("S11 previous navigation preserves every completed step without issuing a request", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
-  await toSleep(page);
-  await fillSleep(page);
-  await previous(page).click();
-  await expectStep(page, "activity");
-  for (const [id, value] of [["model-walking-days", "4"], ["model-walking-hours", "0"], ["model-walking-minutes", "40"], ["model-strength", "2_days"]]) {
-    await expect(page.locator(`#${id}`)).toHaveValue(value);
+  await toReview(page);
+  const values = {
+    basics: [["model-age", "35"], ["model-sex", "1"], ["model-height", "170"], ["model-weight", "68"]],
+    activity: [["model-walking-days", "4"], ["model-walking-hours", "0"], ["model-walking-minutes", "40"], ["model-strength", "2_days"]],
+    habits: [["model-smoking", "never_smoked"], ["model-alcohol-frequency", "lt_monthly"], ["model-alcohol-amount", "1_2_drinks"]],
+  };
+  async function expectValues(current: "basics" | "activity" | "sleep" | "habits") {
+    await expectStep(page, current);
+    if (current === "sleep") {
+      for (const [id, value] of timeInputs) await expectTimeValue(page, id, value);
+    } else {
+      for (const [id, value] of values[current]) await expect(page.locator(`#${id}`)).toHaveValue(value);
+    }
   }
-  await previous(page).click();
-  await expectStep(page, "habits");
-  for (const [id, value] of [["model-smoking", "never_smoked"], ["model-alcohol-frequency", "lt_monthly"], ["model-alcohol-amount", "1_2_drinks"]]) {
-    await expect(page.locator(`#${id}`)).toHaveValue(value);
+  for (const current of ["habits", "sleep", "activity", "basics"] as const) {
+    await previous(page).click();
+    await expectValues(current);
   }
-  await previous(page).click();
-  await expectStep(page, "basics");
-  for (const [id, value] of [["model-age", "35"], ["model-sex", "1"], ["model-height", "170"], ["model-weight", "68"]]) {
-    await expect(page.locator(`#${id}`)).toHaveValue(value);
+  for (const current of ["activity", "sleep", "habits"] as const) {
+    await next(page).click();
+    await expectValues(current);
   }
-  await next(page).click();
-  await next(page).click();
-  await next(page).click();
-  await expectStep(page, "sleep");
-  for (const [id, value] of timeInputs) await expectTimeValue(page, id, value);
+  await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+  await expectStep(page, "review");
+  await expect(page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.")).toBeChecked();
   expect(routed.requests).toHaveLength(0);
 });
 
@@ -458,9 +518,9 @@ test("S11 review edits return directly to review and submit only the corrected v
   await toReview(page);
   const edits = [
     { step: "basics", title: "기본 정보", id: "model-weight", value: "69", text: "69" },
-    { step: "habits", title: "생활 습관", id: "model-smoking", value: "former_currently_not_smoking", text: "과거 흡연, 현재 금연" },
-    { step: "activity", title: "활동", id: "model-walking-minutes", value: "45", text: "45" },
-    { step: "sleep", title: "수면", id: "model-weekend-wake", value: "08:15", text: "오전 8:15" },
+    { step: "habits", title: "흡연·음주", id: "model-smoking", value: "former_currently_not_smoking", text: "과거 흡연, 현재 금연" },
+    { step: "activity", title: "최근 7일 활동", id: "model-walking-minutes", value: "45", text: "45" },
+    { step: "sleep", title: "평일·주말 수면", id: "model-weekend-wake", value: "08:15", text: "오전 8:15" },
   ] as const;
   for (const edit of edits) {
     await page.getByRole("button", { name: `${edit.title} 수정`, exact: true }).click();
@@ -473,7 +533,7 @@ test("S11 review edits return directly to review and submit only the corrected v
     await expect(step(page, "review")).toContainText(edit.text);
     expect(routed.requests).toHaveLength(0);
   }
-  await page.getByLabel("위 안내를 확인했습니다.").check();
+  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
@@ -486,13 +546,13 @@ test("S11 native keyboard navigation focuses each new heading and Enter in a fie
   await page.keyboard.press("Enter");
   await expectStep(page, "basics");
   await page.keyboard.press("Tab");
-  await expect(page.getByLabel("나이", { exact: true })).toBeFocused();
+  await expect(page.getByLabel("만 나이", { exact: true })).toBeFocused();
   await fillBasics(page);
   await page.locator("#model-weight").press("Enter");
   await expect(step(page, "basics")).toBeVisible();
   await next(page).focus();
   await page.keyboard.press("Enter");
-  await expectStep(page, "habits");
+  await expectStep(page, "activity");
   await previous(page).focus();
   await page.keyboard.press("Enter");
   await expectStep(page, "basics");
@@ -505,10 +565,11 @@ test("S11 validates each incomplete input step locally, focuses the control and 
   await begin(page);
   for (const [id, fill] of [
     ["model-age", () => fillBasics(page)],
-    ["model-smoking", () => fillHabits(page)],
     ["model-walking-days", () => fillActivity(page)],
+    ["model-weekday-bed", () => fillSleep(page)],
+    ["model-smoking", () => fillHabits(page)],
   ] as const) {
-    await next(page).click();
+    await page.getByRole("button", { name: /^(다음|입력 확인하기)$/ }).click();
     const field = page.locator(`#${id}`);
     await expect(field).toBeFocused();
     await expect(field).toHaveAttribute("aria-invalid", "true");
@@ -517,9 +578,9 @@ test("S11 validates each incomplete input step locally, focuses the control and 
     await expect(page.locator("#model-v2-input-error")).toBeVisible();
     await fill();
     await expectErrorCleanup(page);
-    await next(page).click();
+    await page.getByRole("button", { name: /^(다음|입력 확인하기)$/ }).click();
   }
-  await expectStep(page, "sleep");
+  await expectStep(page, "review");
   expect(routed.requests).toHaveLength(0);
 });
 
@@ -536,7 +597,7 @@ test("S11 blocks under-19 input at basic information and focuses age", async ({ 
   await page.locator("#model-age").fill("35");
   await expectErrorCleanup(page);
   await next(page).click();
-  await expectStep(page, "habits");
+  await expectStep(page, "activity");
   expect(routed.requests).toHaveLength(0);
 });
 
@@ -610,11 +671,14 @@ test("S11 time wheels support keyboard selection, exact 12-hour conversion, and 
   await chooseTime(page, "model-weekday-wake", "12:15");
   await chooseTime(page, "model-weekend-bed", "23:59");
   await chooseTime(page, "model-weekend-wake", "00:00");
+  await next(page).click();
+  await expectStep(page, "habits");
+  await fillHabits(page);
   await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
   await expect(step(page, "review")).toContainText("오전 12:15");
   await expect(step(page, "review")).toContainText("오후 12:15");
   await expect(step(page, "review")).toContainText("오후 11:59");
-  await page.getByLabel("위 안내를 확인했습니다.").check();
+  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
@@ -625,7 +689,7 @@ test("S11 links missing review acknowledgement to the focused checkbox and clear
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page, "35", false);
   await submit(page).click();
-  const consent = page.getByLabel("위 안내를 확인했습니다.");
+  const consent = page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.");
   await expect(consent).toBeFocused();
   await expect(consent).toHaveAttribute("aria-invalid", "true");
   await expect(consent).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
@@ -664,7 +728,7 @@ test("S11 catches walking hours and normalizes non-drinking amount during review
   }));
   const returnToReview = page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true });
 
-  await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
   await page.locator("#model-walking-days").fill("5");
   const hours = page.locator("#model-walking-hours");
   await hours.fill("30");
@@ -673,7 +737,7 @@ test("S11 catches walking hours and normalizes non-drinking amount during review
   await expect(hours).toBeFocused();
   await expect(hours).toHaveAttribute("aria-invalid", "true");
   await expect(hours).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
-  await expect(page.getByRole("alert")).toHaveText("걷는 날 하루 평균 시간은 0~24시간 사이의 정수로 입력해 주세요.");
+  await expect(page.getByRole("alert")).toHaveText("시간은 0~24 중 소수점 없이 입력해 주세요.");
   expect(requests).toEqual([]);
 
   await hours.fill("0");
@@ -683,7 +747,7 @@ test("S11 catches walking hours and normalizes non-drinking amount during review
   await returnToReview.click();
   await expectStep(page, "review");
 
-  await page.getByRole("button", { name: "생활 습관 수정", exact: true }).click();
+  await page.getByRole("button", { name: "흡연·음주 수정", exact: true }).click();
   await page.locator("#model-alcohol-frequency").selectOption("none_past_year");
   const amount = page.locator("#model-alcohol-amount");
   await expect(amount).toHaveValue("none");
@@ -704,11 +768,11 @@ test("S11 activity requires whole numbers in each walking range and accepts both
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
   for (const [id, maximum, guidance] of [
-    ["model-walking-days", 7, "최근 7일 걷기 일수는 0~7일 사이의 정수로 입력해 주세요."],
-    ["model-walking-hours", 24, "걷는 날 하루 평균 시간은 0~24시간 사이의 정수로 입력해 주세요."],
-    ["model-walking-minutes", 59, "걷는 날 추가 시간은 0~59분 사이의 정수로 입력해 주세요."],
+    ["model-walking-days", 7, "걷기 일수는 0~7일 중 소수점 없이 입력해 주세요."],
+    ["model-walking-hours", 24, "시간은 0~24 중 소수점 없이 입력해 주세요."],
+    ["model-walking-minutes", 59, "분은 0~59 중 소수점 없이 입력해 주세요."],
   ] as const) {
-    await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+    await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
     const field = page.locator(`#${id}`);
     for (const value of ["-1", "0.5", String(maximum + 1)]) {
       await field.fill(value);
@@ -724,7 +788,7 @@ test("S11 activity requires whole numbers in each walking range and accepts both
       await expect(field).not.toHaveAttribute("aria-invalid");
       await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
       await expectStep(page, "review");
-      await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+      await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
     }
     // Restore an ordinary valid combination before checking the next field.
     await fillActivity(page);
@@ -736,9 +800,7 @@ test("S11 activity requires whole numbers in each walking range and accepts both
 test("S11 habits normalizes lifetime non-drinking and validates every drinking frequency before advancing", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
-  await begin(page);
-  await fillBasics(page);
-  await next(page).click();
+  await toHabits(page);
   await fillHabits(page);
   const amount = page.locator("#model-alcohol-amount");
 
@@ -749,26 +811,26 @@ test("S11 habits normalizes lifetime non-drinking and validates every drinking f
     if (nonDrinking) {
       await expect(amount).toHaveValue("none");
       await expect(amount).toBeDisabled();
-      await next(page).click();
-      await expectStep(page, "activity");
+      await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+      await expectStep(page, "review");
       await previous(page).click();
       continue;
     }
 
     await expect(amount).toBeEnabled();
     await amount.selectOption("none");
-    await next(page).click();
+    await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
     await expect(step(page, "habits")).toBeVisible();
     await expect(amount).toBeFocused();
     await expect(amount).toHaveAttribute("aria-invalid", "true");
     await expect(amount).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
     await expect(page.getByRole("alert")).toHaveText(
-      "음주량의 ‘해당 없음’은 최근 1년간 또는 평생 마시지 않은 경우에만 선택할 수 있어요. 한 번 마실 때 음주량을 선택해 주세요.",
+      "술을 마셨다고 답한 경우에는 ‘해당 없음’을 선택할 수 없어요. 보통 한 번에 마시는 양을 선택해 주세요.",
     );
     await amount.selectOption("1_2_drinks");
     await expectErrorCleanup(page);
-    await next(page).click();
-    await expectStep(page, "activity");
+    await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+    await expectStep(page, "review");
     await previous(page).click();
   }
 
@@ -779,7 +841,7 @@ test("S11 keeps invalid combinations on review with focused safe copy, editable 
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
-  await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
   await page.locator("#model-walking-days").fill("0");
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
   await submit(page).click();
@@ -789,16 +851,16 @@ test("S11 keeps invalid combinations on review with focused safe copy, editable 
   await expect(error).not.toContainText(/170|height_cm|never_smoked|model_v2_input_invalid|\/secret\/model\.joblib/);
   await expect(step(page, "review")).toBeVisible();
   await expect(page.locator('form.measurement-panel [aria-invalid="true"]')).toHaveCount(0);
-  for (const title of ["기본 정보", "생활 습관", "활동", "수면"]) await expect(page.getByRole("button", { name: `${title} 수정`, exact: true })).toBeEnabled();
+  for (const title of ["기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주"]) await expect(page.getByRole("button", { name: `${title} 수정`, exact: true })).toBeEnabled();
   await expect(page.locator("form.measurement-panel")).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
   expect(routed.requests).toHaveLength(0);
-  await page.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
   await expect(page.locator("#model-walking-days")).toHaveValue("0");
   await expect(page.locator("#model-walking-days")).not.toHaveAttribute("aria-invalid");
   await page.locator("#model-walking-days").fill("4");
   await expectErrorCleanup(page);
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
-  await page.getByLabel("위 안내를 확인했습니다.").check();
+  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toHaveLength(1);
@@ -1008,17 +1070,17 @@ for (const width of [320, 390, 430]) {
     await fillBasics(page);
     await assertFitsViewport(page);
     await next(page).click();
-    await fillHabits(page);
-    await assertFitsViewport(page);
-    await next(page).click();
     await fillActivity(page);
     await assertFitsViewport(page);
     await next(page).click();
     await fillSleep(page);
     await assertFitsViewport(page);
+    await next(page).click();
+    await fillHabits(page);
+    await assertFitsViewport(page);
     await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
     await assertFitsViewport(page);
-    await page.getByLabel("위 안내를 확인했습니다.").check();
+    await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
@@ -1035,7 +1097,7 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await assertFitsViewport(page);
   await toReview(page);
   await assertFitsViewport(page);
-  await page.getByRole("button", { name: "수면 수정", exact: true }).focus();
+  await page.getByRole("button", { name: "평일·주말 수면 수정", exact: true }).focus();
   await page.keyboard.press("Enter");
   await expectStep(page, "sleep");
   await page.locator("#model-weekday-bed").click();

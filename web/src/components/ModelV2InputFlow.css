@@ -204,7 +204,7 @@
   line-height: 1.6;
 }
 
-.model-v2-flow .model-v2-sleep-group {
+.model-v2-flow .model-v2-question-group {
   display: grid;
   gap: .9rem;
   min-inline-size: 0;
@@ -213,12 +213,12 @@
   border: 0;
 }
 
-.model-v2-flow .model-v2-sleep-group + .model-v2-sleep-group {
+.model-v2-flow .model-v2-question-group + .model-v2-question-group {
   padding-top: 1.4rem;
   border-top: 1px solid var(--sk7-border);
 }
 
-.model-v2-flow .model-v2-sleep-group legend {
+.model-v2-flow .model-v2-question-group legend {
   max-width: 100%;
   padding: 0 0 .45rem;
   color: var(--sk7-ink);
@@ -227,9 +227,11 @@
   line-height: 1.6;
 }
 
+.model-v2-flow .model-v2-field-help,
 .model-v2-flow .model-v2-sleep-caption {
   color: var(--sk7-ink-muted);
   font-size: .875rem;
+  font-weight: normal;
   line-height: 1.7;
 }
 
