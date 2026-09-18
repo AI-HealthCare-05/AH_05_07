@@ -19,12 +19,19 @@ selection. Record navigation does not move a character in time.
 
 ## Companion identity firewall
 
-S01 narrator and the S02 identity handoff may use only the saved 11-species
-`sk7-companion-species` preference. Production S10 may receive the same
-non-medical preference through its existing host boundary; invalid or absent
-preference falls back to the approved bear profile. Query parameters, BP,
-Model V2 input/output, challenge facts, record coverage, or health semantics
-must never choose the production species.
+S01 narrator, S02 scene identity, and the S10 unified review-scene candidate
+may use only the saved 11-species `sk7-companion-species` preference.
+Production S10 continues to receive the same non-medical preference through its
+existing separate host boundary; invalid or absent preference falls back to the
+approved bear profile. Query parameters, BP, Model V2 input/output, challenge
+facts, record coverage, or health semantics must never choose either review or
+production species.
+
+When the S10 review scene is active it is the single decorative character owner:
+the separate companion renderer is suppressed, the registered lite identity is
+bound directly to the scene, and day-focus receives only the selected control's
+screen coordinates. This does not activate the S10 full scene in production;
+that remains a separate protected release decision.
 
 S05 remains a separate confirmed-save exception: its qualified SavedScene uses
 the fixed registered bear/lite asset, not the saved species preference. The

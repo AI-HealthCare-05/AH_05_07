@@ -9,6 +9,7 @@ import posterR2 from "../../docs/evidence/scene-clay-r2.json" with { type: "json
 import type { Page } from "@playwright/test";
 
 const url = "/?fixture=VP-10&screen=S02";
+const s10Url = "/?fixture=VP-10&screen=S10";
 function expectRelativeSubjectHeight(subjectHeight: number, stageHeight: number, composition: ReturnType<typeof sceneComposition>) {
   // The Living Journey frame intentionally scales the registered composition.
   // Preserve its approved subject-to-stage proportions instead of old absolute pixels.
@@ -325,7 +326,103 @@ test("S02 reduced motion keeps the selected identity on the static fallback with
   ).toBe("fox");
 });
 
-test("S02 companion identity does not alter the S10 scene character recipe", async ({ page }) => {
+const s10ViewportRepresentatives = new Set(["bear", "fox", "hedgehog"]);
+
+for (const species of companionSpecies) {
+  test(`S10 review scene owns saved ${species} identity without a second companion renderer`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript((savedSpecies: string) => {
+      localStorage.setItem("sk7-companion-species", savedSpecies);
+    }, species);
+
+    const glbRequests: string[] = [];
+    page.on("request", request => {
+      if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+    });
+
+    const querySpecies = species === "bear" ? "fox" : "bear";
+    await page.goto(
+      `${s10Url}&companion_species=${querySpecies}&companion_variant=standard&companion_clip=special`,
+    );
+    await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+    await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+      "data-living-scene-status",
+      "ready",
+      { timeout: 20_000 },
+    );
+
+    await expect.poll(() => glbRequests.length).toBe(1);
+    expect(glbRequests[0]).toBe(companionAssetManifest[species].lite.url);
+
+    await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+    await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+
+    const assertBounds = async () => {
+      await expect.poll(async () => {
+        const raw = await page.locator("[data-subject-bounds]").getAttribute("data-subject-bounds");
+        if (!raw) return false;
+        const bounds = JSON.parse(raw);
+        return bounds.left >= -1
+          && bounds.right <= 1
+          && bounds.bottom >= -1
+          && bounds.top <= 1;
+      }).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    };
+
+    await assertBounds();
+
+    if (s10ViewportRepresentatives.has(species)) {
+      for (const [width, height] of [
+        [320, 844],
+        [390, 844],
+        [1366, 768],
+      ] as const) {
+        await page.setViewportSize({ width, height });
+        await expect.poll(async () => {
+          return page.locator(".living-three-scene canvas").evaluate((canvas: HTMLCanvasElement) => {
+            const host = canvas.parentElement;
+            if (!host) return false;
+            const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+            return Math.abs(canvas.width - Math.floor(host.clientWidth * dpr)) <= 1
+              && Math.abs(canvas.height - Math.floor(host.clientHeight * dpr)) <= 1;
+          });
+        }).toBe(true);
+        await page.evaluate(() => new Promise<void>(resolve => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }));
+        await assertBounds();
+      }
+    }
+  });
+}
+
+test("S10 invalid saved identity fails safe to bear-lite", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "seal");
+  });
+
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+
+  await page.goto(`${s10Url}&companion_species=fox`);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+  await expect.poll(() => glbRequests.length).toBe(1);
+  expect(glbRequests[0]).toBe(companionAssetManifest.bear.lite.url);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+});
+
+test("S10 reduced motion keeps the unified owner on the poster without loading a GLB", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() => {
     localStorage.setItem("sk7-companion-species", "fox");
   });
@@ -335,7 +432,30 @@ test("S02 companion identity does not alter the S10 scene character recipe", asy
     if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
   });
 
-  await page.goto("/?fixture=VP-10&screen=S10&companion_species=fox");
+  await page.goto(`${s10Url}&companion_species=bear`);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "poster",
+  );
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+
+  await page.waitForTimeout(300);
+  expect(glbRequests).toEqual([]);
+  expect(await page.evaluate(() => localStorage.getItem("sk7-companion-species"))).toBe("fox");
+});
+
+
+test("S10 unified review scene receives bounded presentation-only day-focus attention", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "fox");
+  });
+
+  await page.goto(s10Url);
   await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
 
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
@@ -344,14 +464,62 @@ test("S02 companion identity does not alter the S10 scene character recipe", asy
     { timeout: 20_000 },
   );
 
-  await expect.poll(() => glbRequests.length).toBe(1);
+  const runtime = page.locator(".living-three-scene");
+  const buttons = page.locator(".seven-day-trail .trail-day-button");
 
-  const s10Recipe = findSceneRecipe("S10", "footbridge");
-  expect(s10Recipe).not.toBeNull();
-  expect(glbRequests[0]).toBe(s10Recipe!.characterUrl);
-  expect(glbRequests[0]).not.toBe(companionAssetManifest.fox.lite.url);
+  await expect(buttons).toHaveCount(7);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+  await expect(runtime).toHaveAttribute("data-companion-look-enabled", "true");
+  await expect(runtime).toHaveAttribute("data-companion-look-posture", "head-spine");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "0");
 
-  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+  await buttons.nth(1).click();
+  await expect(buttons.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "1");
+  await expect(runtime).toHaveAttribute("data-companion-look-source", "replay");
+
+  await expect.poll(async () => {
+    const yaw = Number(await runtime.getAttribute("data-companion-look-spine-yaw") ?? "0");
+    const pitch = Number(await runtime.getAttribute("data-companion-look-spine-pitch") ?? "0");
+    return Math.max(Math.abs(yaw), Math.abs(pitch));
+  }, { timeout: 2_000 }).toBeGreaterThan(0.0005);
+
+  const totalYaw = Math.abs(Number(await runtime.getAttribute("data-companion-look-yaw")));
+  const totalPitch = Math.abs(Number(await runtime.getAttribute("data-companion-look-pitch")));
+  const maxYaw = Number(await runtime.getAttribute("data-companion-look-max-yaw"));
+  const maxPitch = Number(await runtime.getAttribute("data-companion-look-max-pitch"));
+  expect(totalYaw).toBeLessThanOrEqual(maxYaw);
+  expect(totalPitch).toBeLessThanOrEqual(maxPitch);
+
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue", "none", { timeout: 3_000 });
+  await expect(runtime).toHaveAttribute("data-companion-look-state", "centered");
+  await expect(runtime).toHaveAttribute("data-companion-look-yaw", "0.0000");
+  await expect(runtime).toHaveAttribute("data-companion-look-pitch", "0.0000");
+
+  // Selecting the first day expands detail content and can push the decorative
+  // scene outside the IntersectionObserver viewport. The scene intentionally
+  // ignores attention cues while it is not visible, so restore that explicit
+  // runtime precondition without scrolling the keyboard target back over it.
+  const stage = page.locator(".living-visual-stage");
+  await stage.scrollIntoViewIfNeeded();
+  await expect.poll(async () => stage.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < window.innerHeight;
+  })).toBe(true);
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
+  await buttons.nth(2).evaluate((element: HTMLButtonElement) => {
+    element.focus({ preventScroll: true });
+  });
+  await expect(buttons.nth(2)).toBeFocused();
+
+  await page.keyboard.press("Enter");
+  await expect(buttons.nth(2)).toHaveAttribute("aria-pressed", "true");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "2");
+  await expect(runtime).toHaveAttribute("data-companion-replay-cue", "day-focus");
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
 });
 
 

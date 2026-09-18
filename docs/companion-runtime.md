@@ -27,6 +27,12 @@ identity remains a separate deployment-SSOT/control-plane question.
   `lite` + `idle` profile에 사용할 수 있고, preference가 없거나 invalid면 bear로
   fallback한다. S10 full-scene realtime은 계속 review-only라 production에서 두
   WebGL character owner가 동시에 열리지 않는다.
+- S10 review full-scene 후보는 같은 registered 11종 `lite` identity를 scene
+  character에 직접 연결하고 별도 companion renderer를 억제한다. 날짜 focus는
+  record facts가 아니라 semantic control의 화면 좌표만 받아 최대 900ms의
+  bounded head+spine cue로 표시한 뒤 neutral pose로 돌아간다. 화면 밖의
+  decorative scene은 cue를 소비하지 않으며, 보이는 상태에서만 bounded RAF를
+  시작한다. 이 후보는 production S10 full-scene activation을 포함하지 않는다.
 - S05는 confirmed host persistence 뒤 exact `review` 또는 `production` scene
   gate에서 qualified SavedScene을 열며 fixed registered bear-lite
   `celebrate → idle`을 사용한다. saved species preference를 사용하지 않는다.

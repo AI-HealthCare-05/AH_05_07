@@ -2,7 +2,7 @@ import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, ty
 
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
-import { resolveS02CharacterRecipe, sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
+import { resolveS02CharacterRecipe, resolveS10CharacterRecipe, sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
 import type { CompanionSpecies } from "../ui/companion";
 
 
@@ -69,7 +69,7 @@ function SceneTierBoundary({ plan, failed, onFailure }: { plan: ScenePlan; faile
     {(!ready || failed || plan.tier === 1) && fallback}
     {active && !failed && plan.tier === 2 && <SceneFailureBoundary onFailure={onFailure}>
       <Suspense fallback={null}>
-        <ThreeSceneRenderer recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={onFailure} />
+        <ThreeSceneRenderer screen={plan.screen} recipe={plan.recipe} landmark={plan.landmark.id} visible={visible} onReady={() => setReady(true)} onFailure={onFailure} />
       </Suspense>
     </SceneFailureBoundary>}
   </div>;
@@ -85,7 +85,7 @@ function SceneRuntimeBoundary({ plan }: { plan: ScenePlan }) {
 type VisualStageProps = {
   screen: JourneyScreenId;
   calendarDate: string;
-  /** S02-only selectable identity. `undefined` keeps default S10 behavior. `null` forces tier-1 poster-only (companion off). */
+  /** S02/S10 selectable identity. `undefined` keeps the base recipe; `null` forces tier-1 poster-only. */
   companionSpecies?: CompanionSpecies | null;
 };
 
@@ -101,13 +101,15 @@ export function VisualStage({ screen, calendarDate, companionSpecies }: VisualSt
   const basePlan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
     webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE });
   if (!basePlan) return null;
-  const isS02 = screen === "S02";
-  const s02Bound = isS02 && companionSpecies !== undefined
-    ? resolveS02CharacterRecipe(basePlan.recipe, companionSpecies ?? "bear")
+  const identityScreen = screen === "S02" || screen === "S10";
+  const identityBound = identityScreen && companionSpecies !== undefined
+    ? screen === "S02"
+      ? resolveS02CharacterRecipe(basePlan.recipe, companionSpecies ?? "bear")
+      : resolveS10CharacterRecipe(basePlan.recipe, companionSpecies ?? "bear")
     : basePlan.recipe;
-  const plan: ScenePlan = isS02 && companionSpecies === null
-    ? { ...basePlan, recipe: s02Bound, tier: 1 }
-    : { ...basePlan, recipe: s02Bound };
+  const plan: ScenePlan = identityScreen && companionSpecies === null
+    ? { ...basePlan, recipe: identityBound, tier: 1 }
+    : { ...basePlan, recipe: identityBound };
   return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={basePlan.recipe.id} data-scene-date={calendarDate} aria-hidden="true" style={{
     "--scene-height-320": `${plan.recipe.compositions.mobile320.stageHeight}px`,
     "--scene-height-390": `${plan.recipe.compositions.mobile390.stageHeight}px`,
