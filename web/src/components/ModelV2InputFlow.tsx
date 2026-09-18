@@ -7,6 +7,7 @@ import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { seoulDate } from "../lib/seoulDate";
 import { useSeoulDate } from "../lib/useSeoulDate";
 import { Scene } from "./SceneShell";
+import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
 import "./ModelV2InputFlow.css";
@@ -64,32 +65,6 @@ const PREVIEW_START = "2026-09-17";
 const PREVIEW_END = "2026-10-17";
 function isPreviewDate(date: string): boolean {
   return PREVIEW_START <= date && date <= PREVIEW_END;
-}
-
-function formatDurationMinutes(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours <= 0) return `${minutes}분`;
-  if (minutes === 0) return `${hours}시간`;
-  return `${hours}시간 ${minutes}분`;
-}
-
-function walkingDuration(draft: Draft): string {
-  const hours = finiteNumber(draft.walkingHours);
-  const minutes = finiteNumber(draft.walkingMinutes);
-  if (hours === null || minutes === null) return "선택 필요";
-  return formatDurationMinutes((hours * 60) + minutes);
-}
-
-function sleepDuration(start: string, end: string): string {
-  const startParts = clockParts(start);
-  const endParts = clockParts(end);
-  if (!startParts || !endParts) return "선택 필요";
-
-  const startMinutes = (startParts[0] * 60) + startParts[1];
-  const endMinutes = (endParts[0] * 60) + endParts[1];
-  const duration = (endMinutes - startMinutes + (24 * 60)) % (24 * 60);
-  return formatDurationMinutes(duration);
 }
 
 function PeriodSelector({ selected, label, disabled, onSelect }: {
@@ -716,83 +691,8 @@ export function ModelV2InputFlow({
           }}
           aria-describedby={resultState === "input_invalid" ? INPUT_ERROR_ID : undefined}>
           {processed ? (
-            <>
-              <div className="model-v2-outcome" data-model-v2-user-result="processed" role="status" aria-live="polite">
-                <span className="model-v2-outcome-mark" aria-hidden="true">✓</span>
-                <span className="status-pill">오늘의 시작점</span>
-                <h2 id="model-v2-result-title" tabIndex={-1}>오늘의 시작점을 정리했어요.</h2>
-                <p>혈압 기록이 아직 없어도 방금 입력한 활동·수면·생활습관을 이 화면에서 한눈에 확인할 수 있어요.</p>
-
-                <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">
-                  <section className="model-v2-result-section">
-                    <h3>활동</h3>
-                    <dl>
-                      <div>
-                        <dt>최근 7일 걷기</dt>
-                        <dd>{draft.walkingDays}일 · 걷는 날 평균 {walkingDuration(draft)}</dd>
-                      </div>
-                      <div>
-                        <dt>근력운동</dt>
-                        <dd>{reviewValue("strengthDays", draft)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-
-                  <section className="model-v2-result-section">
-                    <h3>수면</h3>
-                    <dl>
-                      <div>
-                        <dt>평일</dt>
-                        <dd>{formatTimeKorean(draft.weekdayBed)} → {formatTimeKorean(draft.weekdayWake)} · {sleepDuration(draft.weekdayBed, draft.weekdayWake)}</dd>
-                      </div>
-                      <div>
-                        <dt>주말</dt>
-                        <dd>{formatTimeKorean(draft.weekendBed)} → {formatTimeKorean(draft.weekendWake)} · {sleepDuration(draft.weekendBed, draft.weekendWake)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-
-                  <section className="model-v2-result-section">
-                    <h3>생활 습관</h3>
-                    <dl>
-                      <div>
-                        <dt>흡연</dt>
-                        <dd>{reviewValue("smoking", draft)}</dd>
-                      </div>
-                      <div>
-                        <dt>음주</dt>
-                        <dd>{reviewValue("alcoholFrequency", draft)} · {reviewValue("alcoholAmount", draft)}</dd>
-                      </div>
-                    </dl>
-                  </section>
-                </div>
-
-                <div className="model-v2-result-model-note" aria-label="Model V2 처리 안내">
-                  <strong>Model V2 처리가 완료됐어요.</strong>
-                  {previewOpen && previewOutput !== null && Number.isFinite(previewOutput) ? (
-                    <div data-model-v2-preview>
-                      <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
-                      <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
-                      <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
-                      <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>
-                    </div>
-                  ) : (
-                    <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
-                  )}
-                </div>
-
-                <p className="model-v2-result-disclaimer">
-                  이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
-                  특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
-                </p>
-                <p>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
-                <p>혈압 기록과 7일 생활 챌린지는 이 요약과 별도로 이용할 수 있어요.</p>
-              </div>
-              <div className="model-v2-actions">
-                <button type="button" onClick={onStartBloodPressure}>혈압 기록 남기기</button>
-                <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>
-              </div>
-            </>
+            <ModelV2Outcome draft={draft} previewOutput={previewOpen ? previewOutput : null}
+              onStartBloodPressure={onStartBloodPressure} onReturnToToday={onReturnToToday} />
           ) : (
             <>
               <header className="model-v2-step-heading">

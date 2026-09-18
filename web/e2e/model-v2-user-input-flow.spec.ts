@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
 import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
 import { chooseMinuteByKeyboard, chooseTime, expectTimeValue } from "./model-v2-time-wheel";
 
@@ -68,6 +69,19 @@ const next = (page: Page) => page.getByRole("button", { name: "다음", exact: t
 const previous = (page: Page) => page.getByRole("button", { name: "이전", exact: true });
 const submit = (page: Page) => page.getByRole("button", { name: "생활정보 분석하기", exact: true });
 const result = (page: Page) => page.locator('[data-model-v2-user-result="processed"]');
+
+async function openResearch(page: Page) {
+  const disclosure = result(page).locator("details[data-model-v2-research]");
+  if (await disclosure.getAttribute("open") === null) await disclosure.locator("summary").click();
+  await expect(disclosure).toHaveAttribute("open", "");
+}
+
+async function openModelInputs(page: Page) {
+  const disclosure = result(page).locator("details[data-model-v2-inputs]");
+  if (await disclosure.getAttribute("open") === null) await disclosure.locator("summary").click();
+  await expect(disclosure).toHaveAttribute("open", "");
+  await expect(disclosure.locator("[data-model-v2-feature]")).toHaveCount(11);
+}
 
 async function expectStep(page: Page, value: Exclude<Step, "intro">) {
   await expect(step(page, value)).toBeVisible();
@@ -207,7 +221,7 @@ async function dispatchPageshow(page: Page) {
 async function assertFitsViewport(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   const controls = step(page, await page.locator("[data-model-v2-step]").getAttribute("data-model-v2-step") as Step)
-    .locator("input, select, button");
+    .locator("input:visible, select:visible, button:visible, summary:visible");
   for (const control of await controls.all()) {
     const geometry = await control.evaluate((element) => {
       const box = element.getBoundingClientRect();
@@ -216,6 +230,37 @@ async function assertFitsViewport(page: Page) {
     expect(geometry.left).toBeGreaterThanOrEqual(0);
     expect(geometry.right).toBeLessThanOrEqual(geometry.viewport + 1);
   }
+}
+
+async function assertResultKeyboardAccess(page: Page) {
+  await expect(page.locator("#model-v2-result-title")).toBeFocused();
+  for (const name of ["혈압 기록 남기기", "오늘의 기록으로 돌아가기"]) {
+    await page.keyboard.press("Tab");
+    const button = page.getByRole("button", { name, exact: true });
+    await expect(button).toBeFocused();
+    await expect(button).toBeInViewport();
+  }
+  const research = result(page).locator("details[data-model-v2-research]");
+  await page.keyboard.press("Tab");
+  await expect(research.locator("summary")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(research).toHaveAttribute("open", "");
+  await expect(research.locator("[data-model-v2-preview]")).toBeVisible();
+  const inputs = result(page).locator("details[data-model-v2-inputs]");
+  await page.keyboard.press("Tab");
+  await expect(inputs.locator("summary")).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(inputs).toHaveAttribute("open", "");
+  await expect(inputs.locator("[data-model-v2-feature]")).toHaveCount(11);
+  await assertFitsViewport(page);
+  await page.keyboard.press("Enter");
+  await expect(inputs).not.toHaveAttribute("open");
+  await expect(inputs.locator("dl")).toBeHidden();
+  await page.keyboard.press("Shift+Tab");
+  await expect(research.locator("summary")).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(research).not.toHaveAttribute("open");
+  await assertFitsViewport(page);
 }
 
 test("S11 non-drinking frequency auto-selects and locks alcohol amount", async ({ page }) => {
@@ -314,25 +359,37 @@ test("S11 requires explicit review submission and completes locally without send
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
-  await expect(result(page)).toContainText("오늘의 시작점을 정리했어요.");
-  for (const text of [
-    "혈압 기록이 아직 없어도",
-    "활동",
-    "4일 · 걷는 날 평균 40분",
-    "근력운동",
-    "2일",
-    "수면",
-    "오후 11:30 → 오전 7:00 · 7시간 30분",
-    "오후 11:30 → 오전 8:00 · 8시간 30분",
-    "생활 습관",
-    "비흡연",
-    "월 1회 미만 · 1~2잔",
-    "Model V2 처리가 완료됐어요.",
-  ]) {
-    await expect(result(page)).toContainText(text);
-  }
+  await expect(page.locator("#model-v2-result-title")).toHaveText("오늘의 생활 패턴을 정리했어요");
+  await expect(page.locator("#model-v2-result-title")).toBeFocused();
+  await expect(result(page)).not.toHaveAttribute("role", "status");
+  await expect(result(page)).not.toHaveAttribute("aria-live");
+  await expect(result(page).locator('[role="status"], [aria-live]')).toHaveCount(0);
+  await expect(result(page).locator("h3")).toHaveText([
+    "활동", "수면", "생활 습관", "체격 참고", "다음으로 할 수 있어요", "연구 모델 결과",
+  ]);
+  await expect(result(page)).toContainText("방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.");
+  const activity = result(page).getByRole("region", { name: "활동", exact: true });
+  await expect(activity.locator("dd")).toHaveText(["4일", "40분", "약 160분", "2일"]);
+  await expect(activity).toContainText("입력한 걷기 일수에 걷는 날 하루 평균 시간을 곱한 단순 계산값이에요.");
+  const sleep = result(page).getByRole("region", { name: "수면", exact: true });
+  await expect(sleep.locator(".model-v2-result-clock")).toHaveText(["오후 11:30 → 오전 7:00", "오후 11:30 → 오전 8:00"]);
+  await expect(sleep.locator("dd").nth(0)).toContainText("7시간 30분");
+  await expect(sleep.locator("dd").nth(1)).toContainText("8시간 30분");
+  await expect(sleep).toContainText("주말이 평일보다 1시간 길어요.");
+  await expect(sleep).toContainText("입력한 취침·기상 시각 사이의 간격이에요.");
+  const habits = result(page).getByRole("region", { name: "생활 습관", exact: true });
+  await expect(habits.locator("dd")).toHaveText(["비흡연", "월 1회 미만 · 한 번 1~2잔"]);
+  await expect(result(page)).not.toContainText(/어떤가요|마셨나요|마시나요|권장량|건강 목표|충분|부족|과체중|비만/);
+  const body = result(page).getByRole("region", { name: "체격 참고", exact: true });
+  await expect(body.locator("dd")).toHaveText(["170 cm", "68 kg", "23.5"]);
+  await expect(body).toContainText("입력한 키와 몸무게로 계산한 참고값이에요.");
+  await expect(result(page).locator("details[data-model-v2-research]")).not.toHaveAttribute("open");
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeHidden();
+  await expect(result(page).locator("details[data-model-v2-inputs]")).not.toHaveAttribute("open");
+  await expect(result(page).getByText("모델에 사용된 입력 보기", { exact: true })).toBeVisible();
   await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   const preview = result(page).locator("[data-model-v2-preview]");
+  await openResearch(page);
   await expect(preview).toBeVisible();
   await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
   const previewValue = preview.locator("[data-model-v2-preview-value]");
@@ -343,6 +400,20 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(preview).not.toContainText("%");
   await expect(preview.locator("[data-model-v2-preview-band], .model-v2-preview-band")).toHaveCount(0);
   await expect(preview).not.toContainText(/저위험|중위험|고위험/);
+  await openModelInputs(page);
+  const entries = result(page).locator("[data-model-v2-feature]");
+  expect(await entries.evaluateAll(nodes => nodes.map(node => node.getAttribute("data-model-v2-feature")))).toEqual([...FEATURES]);
+  await expect(entries.locator("dt code")).toHaveText([...FEATURES]);
+  const canonical = adaptProductInput({
+    age_years: 35, sex_knhanes: 1, height_cm: 170, weight_kg: 68,
+    cigarette_smoking_state: "never_smoked", alcohol_frequency: "lt_monthly", alcohol_amount_category: "1_2_drinks",
+    walking_days_7d: 4, walking_active_day_hours: 0, walking_active_day_minutes: 40, strength_days_7d: "2_days",
+    weekday_bed_hour: 23, weekday_bed_minute: 30, weekday_wake_hour: 7, weekday_wake_minute: 0,
+    weekend_bed_hour: 23, weekend_bed_minute: 30, weekend_wake_hour: 8, weekend_wake_minute: 0,
+  });
+  await expect(entries.locator("dd")).toHaveText(FEATURES.map(feature => String(canonical[feature])));
+  await expect(result(page).locator('[data-model-v2-feature="bmi_from_height_weight"] dd')).not.toHaveText("23.5");
+  await expect(page.getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "혈압 기록 남기기", exact: true })).toBeVisible();
   await expect(submit(page)).toHaveCount(0);
   await expect(page.locator('.model-v2-progress li[data-complete="true"]')).toHaveCount(5);
@@ -351,7 +422,44 @@ test("S11 requires explicit review submission and completes locally without send
 
   await page.getByRole("button", { name: "혈압 기록 남기기", exact: true }).click();
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await expect(result(page)).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
 });
+
+for (const example of [
+  { name: "zero walking and equal sleep intervals", days: "0", hours: "0", minutes: "0", weekly: "약 0분", daily: "0분", bed: "23:30", wake: "07:00", weekendWake: "07:00", weekdayDuration: "7시간 30분", weekendDuration: "7시간 30분", comparison: "입력한 평일·주말 수면 구간의 길이가 같아요." },
+  { name: "walking hours and shorter weekend interval after midnight", days: "3", hours: "1", minutes: "20", weekly: "약 240분", daily: "1시간 20분", bed: "00:30", wake: "07:00", weekendWake: "06:00", weekdayDuration: "6시간 30분", weekendDuration: "5시간 30분", comparison: "주말이 평일보다 1시간 짧아요." },
+]) {
+  test(`S11 result preserves arithmetic for ${example.name}`, async ({ page }) => {
+    await routeModel(page);
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toReview(page);
+    await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
+    await page.locator("#model-walking-days").fill(example.days);
+    await page.locator("#model-walking-hours").fill(example.hours);
+    await page.locator("#model-walking-minutes").fill(example.minutes);
+    await page.locator("#model-strength").selectOption("5_plus_days");
+    await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
+    await page.getByRole("button", { name: "평일·주말 수면 수정", exact: true }).click();
+    for (const [id, value] of [
+      ["model-weekday-bed", example.bed], ["model-weekday-wake", example.wake],
+      ["model-weekend-bed", example.bed], ["model-weekend-wake", example.weekendWake],
+    ]) await chooseTime(page, id, value);
+    await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).getByRole("region", { name: "활동", exact: true }).locator("dd")).toHaveText([
+      `${example.days}일`, example.daily, example.weekly, "5일 이상",
+    ]);
+    const sleep = result(page).getByRole("region", { name: "수면", exact: true });
+    await expect(sleep.locator("dd").nth(0)).toContainText(example.weekdayDuration);
+    await expect(sleep.locator("dd").nth(1)).toContainText(example.weekendDuration);
+    await expect(sleep.locator(".model-v2-sleep-comparison")).toHaveText(example.comparison);
+    await openModelInputs(page);
+    await expect(result(page).locator('[data-model-v2-feature="walking_minutes_per_active_day"] dd')).toHaveText(String(Number(example.hours) * 60 + Number(example.minutes)));
+    await expect(result(page).locator('[data-model-v2-feature="strength_days_7d"] dd')).toHaveText("5_plus_days");
+  });
+}
 
 test.describe("S11 preview window", () => {
   test.use({ timezoneId: "America/Los_Angeles" });
@@ -373,6 +481,8 @@ test.describe("S11 preview window", () => {
       expect(routed.requests).toEqual([{ method: "GET", body: null }]);
       const preview = result(page).locator("[data-model-v2-preview]");
       const note = result(page).locator(".model-v2-result-model-note");
+      await expect(result(page).locator("details[data-model-v2-research]")).not.toHaveAttribute("open");
+      await openResearch(page);
       if (expectPreview) {
         await expect(preview).toBeVisible();
         await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
@@ -393,6 +503,7 @@ test("S11 preview expires while a completed result remains open", async ({ page 
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   const preview = result(page).locator("[data-model-v2-preview]");
+  await openResearch(page);
   await expect(preview).toBeVisible();
   expect(routed.requests).toHaveLength(1);
 
@@ -415,6 +526,7 @@ for (const event of ["visibilitychange", "pageshow"] as const) {
     await toReview(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
+    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
 
     await page.clock.setSystemTime(new Date("2026-10-18T00:00:01+09:00"));
@@ -876,6 +988,7 @@ test("S11 keeps 503 unavailable recoverable with retained review values and no a
   await expect(step(page, "review")).toBeVisible();
   await expect(submit(page)).toBeEnabled();
   await expect(result(page)).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
   await page.waitForTimeout(150);
   expect(routed.requests).toHaveLength(1);
   await submit(page).click();
@@ -897,6 +1010,7 @@ test("S11 timeout never turns late success into completion and permits only an e
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
     await expect(result(page)).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
     await expect(page.getByRole("status").filter({ hasText: "자동으로 다시 요청하지 않습니다" })).toBeVisible();
     expect(routed.requests).toHaveLength(1);
     await submit(page).click();
@@ -931,6 +1045,7 @@ test("S11 sign-out discards pending local inference and returns to signed-out re
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
     await expect(result(page)).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
     expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
   } finally { routed.releaseFirst(); }
 });
@@ -945,6 +1060,7 @@ test("S11 same-user token refresh preserves pending local completion", async ({ 
     await changeSession(page);
     routed.releaseFirst();
     await expect(result(page)).toBeVisible();
+    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
     expect(routed.requests).toEqual([{ method: "GET", body: null }]);
@@ -961,6 +1077,7 @@ test("S11 reload discards a reviewed draft and acknowledgement", async ({ page }
   await expect(page.locator("#model-age")).toHaveValue("");
   await expect(page.locator("#model-sex")).toHaveValue("");
   await expect(result(page)).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
   expect(routed.requests).toHaveLength(0);
 });
 
@@ -979,6 +1096,7 @@ test("leaving S11 discards the transient draft and the completed result on retur
     await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
     await expect(result(page)).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
     if (!completed) {
       await begin(page);
       await expect(page.locator("#model-age")).toHaveValue("");
@@ -1019,6 +1137,7 @@ test("account switch discards the previous account draft and ignores its pending
     await begin(page);
     await expect(page.locator("#model-age")).toHaveValue("");
     await expect(result(page)).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
     expect(routed.requests).toHaveLength(1);
   } finally {
     routed.releaseFirst();
@@ -1031,12 +1150,14 @@ test("S11 sign-out discards a completed visible preview and blank draft", async 
   await toReview(page);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
   await page.goto("/?e2e=signed-in&screen=S11");
   await expect(step(page, "intro")).toBeVisible();
   await expect(result(page)).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
   await begin(page);
   await expect(page.locator("#model-age")).toHaveValue("");
   expect(routed.requests).toHaveLength(1);
@@ -1048,6 +1169,7 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   await toReview(page);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await changeSession(page, true);
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
@@ -1055,13 +1177,14 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
   await expect(step(page, "intro")).toBeVisible();
   await expect(result(page)).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
   await begin(page);
   await expect(page.locator("#model-age")).toHaveValue("");
   expect(routed.requests).toHaveLength(1);
 });
 
 for (const width of [320, 390, 430]) {
-  test(`S11 every input step and review remains usable at ${width}px`, async ({ page }) => {
+  test(`S11 every input step, review and result remains usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await routeModel(page);
     await page.goto("/?e2e=signed-in&screen=S11");
@@ -1083,6 +1206,8 @@ for (const width of [320, 390, 430]) {
     await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
     await submit(page).click();
     await expect(result(page)).toBeVisible();
+    await assertResultKeyboardAccess(page);
+    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   });
@@ -1114,6 +1239,8 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await expectStep(page, "review");
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  await assertResultKeyboardAccess(page);
+  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
@@ -1144,11 +1271,13 @@ test("S11 directly proves no inference egress or model persistence and hashes be
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
-  expect(requests).toEqual([{ url: "http://127.0.0.1:4173/models/model-v2.json", method: "GET", body: null }]);
   const preview = result(page).locator("[data-model-v2-preview]");
+  await openResearch(page);
   await expect(preview).toBeVisible();
   await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
   await expect(preview.locator("[data-model-v2-preview-value]")).toHaveText(/^\d\.\d{3}$/);
+  await openModelInputs(page);
+  expect(requests).toEqual([{ url: "http://127.0.0.1:4173/models/model-v2.json", method: "GET", body: null }]);
   await assertModelPrivacy(page, before, true);
   expect(consoleEvents).toHaveLength(0);
   expect(new URL(page.url()).searchParams.toString()).toBe("e2e=signed-in&screen=S11");
@@ -1210,6 +1339,7 @@ for (const failure of ["missing", "hash_mismatch", "malformed", "oversized", "ov
     await submit(page).click();
     await expect(page.locator("#model-v2-unavailable")).toBeVisible({ timeout: 11_000 });
     await expect(result(page)).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
     await expect(submit(page)).toBeEnabled();
     await expect(page.locator("#model-v2-unavailable")).not.toContainText(/height_cm|1e-200|SHA-256|model-v2.json/);
     expect(requests).toEqual(["crypto_unavailable", "arithmetic"].includes(failure) ? [] : ["/models/model-v2.json"]);
