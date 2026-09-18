@@ -1,0 +1,253 @@
+{
+  "documentType": "OPTIMIZED_COMPANION_CANDIDATE_IDENTITY_EVIDENCE",
+  "status": "review-evidence-only",
+  "sourceArchiveSha256": "5f7541e8f48a0f3dd7bf58e0cf6f82d19a25063c38f8c018567bdfb727cebed2",
+  "sourceRevision": "sha256:0414073ca69bb741ea1e19368d4d5a716cdc025012712bcff4651eefcc29b774",
+  "candidateCount": 22,
+  "speciesCount": 11,
+  "totalBytes": 17522404,
+  "candidates": [
+    {
+      "candidateId": "COMPANION-CAND-BEAR-V007-OPTIMIZED-LITE",
+      "speciesKey": "bear",
+      "version": "v007",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/bear-v007-lite-factory-opt.glb",
+      "sha256": "223e9cc38738d3e6e2dd8f5931d9418b4ea6e1490e3a2620c58519ffa8ade828",
+      "bytes": 511844,
+      "triangles": 14280,
+      "upstreamActiveSha256": "7960a83fc11ffb57943227172caebe0dbabbd78a84f302d69df50e8ddcbc4874"
+    },
+    {
+      "candidateId": "COMPANION-CAND-BEAR-V007-OPTIMIZED-STANDARD",
+      "speciesKey": "bear",
+      "version": "v007",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/bear-v007-standard-factory-opt.glb",
+      "sha256": "09bb484bbe1cc43fd139b1b9ea4e7995bdb5a9db4384ba1cff6185ea3d810660",
+      "bytes": 1025880,
+      "triangles": 32638,
+      "upstreamActiveSha256": "48bfc97022f9799c2dccc58c0d0037a4cf06e846147e9b81864b814a5b214712"
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAPYBARA-V002-OPTIMIZED-LITE",
+      "speciesKey": "capybara",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/capybara-v002-lite-factory-opt.glb",
+      "sha256": "8431b3e9984152017f5846191ba7ce2bb16cbbd428593557ca1d3ce2c6b3ace9",
+      "bytes": 507468,
+      "triangles": 14272,
+      "upstreamActiveSha256": "c6908aff87e737f53c7c1133bc509caa8ee5623521ffec5198f5c672bd003e20"
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAPYBARA-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "capybara",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/capybara-v002-standard-factory-opt.glb",
+      "sha256": "276cd8abbf34671414b38383c107a4d713817734caf0ecf1b993ab3530cd5a9a",
+      "bytes": 1021672,
+      "triangles": 32636,
+      "upstreamActiveSha256": "de7ceab11ef6d22682737b99dfa18f5930cae345fbbd965c4776b621101f8c9a"
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAT-V002-OPTIMIZED-LITE",
+      "speciesKey": "cat",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/cat-v002-lite-factory-opt.glb",
+      "sha256": "625803013cb17e921dbedc984c0908e32022fe272de4f8c3f7039564315560c8",
+      "bytes": 515336,
+      "triangles": 14272,
+      "upstreamActiveSha256": "6a77bf8229d43f7094208143cb611bdbb46ffd185faf769efc5114d37e3ed960"
+    },
+    {
+      "candidateId": "COMPANION-CAND-CAT-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "cat",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/cat-v002-standard-factory-opt.glb",
+      "sha256": "691edc7a4d25ee8e10c67ee2ebe658fc4e240db1c1b7aa4303032095d025c9ba",
+      "bytes": 1030108,
+      "triangles": 32656,
+      "upstreamActiveSha256": "5635a2e619e0d2bbeabe125423462350f7eae6ed8c1a6f0b6c4ca00ec1053afb"
+    },
+    {
+      "candidateId": "COMPANION-CAND-DOG-V001-OPTIMIZED-LITE",
+      "speciesKey": "dog",
+      "version": "v001",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/dog-v001-lite-factory-opt.glb",
+      "sha256": "d621bbfe1a189c56c09606626066f35092f982c64ab3104cf546b6d40033d833",
+      "bytes": 511336,
+      "triangles": 14276,
+      "upstreamActiveSha256": "71762e0e00be1dd083fc0421533519921f0ac0c427fc08246632606406e92884"
+    },
+    {
+      "candidateId": "COMPANION-CAND-DOG-V001-OPTIMIZED-STANDARD",
+      "speciesKey": "dog",
+      "version": "v001",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/dog-v001-standard-factory-opt.glb",
+      "sha256": "69a204080f5b8cb074dd1d1f6348ef480ec2ca4197746fa1da59d16379317a2c",
+      "bytes": 1026048,
+      "triangles": 32658,
+      "upstreamActiveSha256": "7c20c8aae1114e0be52da20acc11fc25fc60c9a4379af9fc8440b3ad9734cf8b"
+    },
+    {
+      "candidateId": "COMPANION-CAND-FOX-V002-OPTIMIZED-LITE",
+      "speciesKey": "fox",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/fox-v002-lite-factory-opt.glb",
+      "sha256": "1c08ce67c6bd94ba651c4af12cf5af30a2ea69cd3437336d69991977791460b5",
+      "bytes": 547652,
+      "triangles": 14954,
+      "upstreamActiveSha256": "f4809971e572fe133465698ef73ac2b89ddff975141c8dc87a04f71f58637660"
+    },
+    {
+      "candidateId": "COMPANION-CAND-FOX-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "fox",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/fox-v002-standard-factory-opt.glb",
+      "sha256": "abcb95b3612ecb9a9eda07cac998fcf50c3a188419dbc707838c54d56adad218",
+      "bytes": 1072044,
+      "triangles": 33538,
+      "upstreamActiveSha256": "247dfd616e2be0955040961d74ef9942d63de06a5a711a04cd4f27377b4028aa"
+    },
+    {
+      "candidateId": "COMPANION-CAND-HEDGEHOG-V004-OPTIMIZED-LITE",
+      "speciesKey": "hedgehog",
+      "version": "v004",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/hedgehog-v004-lite-factory-opt.glb",
+      "sha256": "b6ea7c2b83c6f49c3242e68d9bf78e754f2a4a82a5f371187de00f3bd636d3e6",
+      "bytes": 519832,
+      "triangles": 14186,
+      "upstreamActiveSha256": "7a8730bd05ef339dcdaa08af1d7e3741b54a1637d97f7c397901d107399e08fa"
+    },
+    {
+      "candidateId": "COMPANION-CAND-HEDGEHOG-V004-OPTIMIZED-STANDARD",
+      "speciesKey": "hedgehog",
+      "version": "v004",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/hedgehog-v004-standard-factory-opt.glb",
+      "sha256": "ab6348240a5cab3f55802d753924860f33c5cf2a3632d7eb04f75d25acc5776a",
+      "bytes": 1043336,
+      "triangles": 32882,
+      "upstreamActiveSha256": "a957fe8de2f6902198ebe4328589e2b852050a9656dda2504c5edfd89f7b0ede"
+    },
+    {
+      "candidateId": "COMPANION-CAND-OTTER-V003-OPTIMIZED-LITE",
+      "speciesKey": "otter",
+      "version": "v003",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/otter-v003-lite-factory-opt.glb",
+      "sha256": "1cd62dc2a9405dd41d99dfa1693a96892696a504c2db5a26a8f23b6e204b185f",
+      "bytes": 534604,
+      "triangles": 14764,
+      "upstreamActiveSha256": "ac55dec25c28ff1cad1702f152987ed98e10620cc5f46a40862bfa6a86ffc27b"
+    },
+    {
+      "candidateId": "COMPANION-CAND-OTTER-V003-OPTIMIZED-STANDARD",
+      "speciesKey": "otter",
+      "version": "v003",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/otter-v003-standard-factory-opt.glb",
+      "sha256": "340af5bfee2ff769795135f44b69f804ac64ea9c464404d35fe3136a0f05fb47",
+      "bytes": 1054040,
+      "triangles": 33250,
+      "upstreamActiveSha256": "83106523fa0ab0e360c914d4522b3c5f4b32c0bdf0c29ee712565d1f5168330e"
+    },
+    {
+      "candidateId": "COMPANION-CAND-PENGUIN-V002-OPTIMIZED-LITE",
+      "speciesKey": "penguin",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/penguin-v002-lite-factory-opt.glb",
+      "sha256": "08fa29316c49cccb70021e068cd4691ca06140703455c2c23fdb1b9f44d10495",
+      "bytes": 566644,
+      "triangles": 15510,
+      "upstreamActiveSha256": "d209bf3f3f1390679f3d4902b09705fba3f94e75156f59041c7c9392f9549fe5"
+    },
+    {
+      "candidateId": "COMPANION-CAND-PENGUIN-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "penguin",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/penguin-v002-standard-factory-opt.glb",
+      "sha256": "e443a31f7f8c511b1b54b64d902aa52eaf75bd346ce2161404ac0e1c3a657760",
+      "bytes": 1087496,
+      "triangles": 34142,
+      "upstreamActiveSha256": "62159b3a39f921b0948bcc5862ff186578e55fe1e5dd9e9b6df803e6138e7144"
+    },
+    {
+      "candidateId": "COMPANION-CAND-RABBIT-V002-OPTIMIZED-LITE",
+      "speciesKey": "rabbit",
+      "version": "v002",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/rabbit-v002-lite-factory-opt.glb",
+      "sha256": "9fe126d2e7749ec4268149dba51c7a0c2565918e128c3bb6e19bca368e3414b6",
+      "bytes": 512652,
+      "triangles": 14280,
+      "upstreamActiveSha256": "b3559b2925bb16381adf954432e11541542c14bac7d6e6a52e7fa7f402825627"
+    },
+    {
+      "candidateId": "COMPANION-CAND-RABBIT-V002-OPTIMIZED-STANDARD",
+      "speciesKey": "rabbit",
+      "version": "v002",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/rabbit-v002-standard-factory-opt.glb",
+      "sha256": "a23f37ddd65df266e3786aa8823f9cdd0b5b7a01dbbd521fe0c7f47d488789a0",
+      "bytes": 1026684,
+      "triangles": 32638,
+      "upstreamActiveSha256": "25f0165c11eea89b9f90360e72435d4ccca98bf67d30b4d45df18f8b2c580704"
+    },
+    {
+      "candidateId": "COMPANION-CAND-RED_PANDA-V003-OPTIMIZED-LITE",
+      "speciesKey": "red_panda",
+      "version": "v003",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/red_panda-v003-lite-factory-opt.glb",
+      "sha256": "63d6c2f15fd594bb0abb51e4bb5191f463b1e274fa865d99c243fcd55bf5febc",
+      "bytes": 635492,
+      "triangles": 17126,
+      "upstreamActiveSha256": "a6de102411b17295b2a9ea9a88592b4e4e9d4f3d8af73101f906f669ef927b48"
+    },
+    {
+      "candidateId": "COMPANION-CAND-RED_PANDA-V003-OPTIMIZED-STANDARD",
+      "speciesKey": "red_panda",
+      "version": "v003",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/red_panda-v003-standard-factory-opt.glb",
+      "sha256": "6d76125ddf090df0533433aaf0561fb8369b2c8be71c58fc5e9d181ae9d7462c",
+      "bytes": 1189376,
+      "triangles": 36280,
+      "upstreamActiveSha256": "29ddc43291cbfa3fc7c7479f983e5d560eddfa83a2966094773278f471f997a7"
+    },
+    {
+      "candidateId": "COMPANION-CAND-SQUIRREL-V001-OPTIMIZED-LITE",
+      "speciesKey": "squirrel",
+      "version": "v001",
+      "variantKey": "optimized-lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/squirrel-v001-lite-factory-opt.glb",
+      "sha256": "c7d8982107ba2ea987f79e3234790af3b9700fcce51901f853c3fff089e7a85d",
+      "bytes": 532324,
+      "triangles": 14786,
+      "upstreamActiveSha256": "3265086d5add45e0911852107b21db4a085349c002e743b2f403f8301426b6f5"
+    },
+    {
+      "candidateId": "COMPANION-CAND-SQUIRREL-V001-OPTIMIZED-STANDARD",
+      "speciesKey": "squirrel",
+      "version": "v001",
+      "variantKey": "optimized-standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/01_Companion_Factory/SK7_Companion_Factory_Run_20260917/delivery/existing-optimized/squirrel-v001-standard-factory-opt.glb",
+      "sha256": "109097d8c140607a71d1b1ea34f6a9aa8a72e44e7743a625a6e3eb45cb63ad22",
+      "bytes": 1050536,
+      "triangles": 33232,
+      "upstreamActiveSha256": "1a256a93117cda2884a11ff91dc35eac33b5544595fc3e8d3d8882828cd5afff"
+    }
+  ]
+}
