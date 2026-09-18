@@ -1,5 +1,6 @@
 import { sceneManifest } from "./sceneManifest.generated";
-import { getCompanionAsset } from "./companionAssets.generated";
+import { getActiveSceneCharacter } from "./companionSceneRegistry";
+import { getSceneCharacterPresentationProfile } from "./companionPresentationProfiles";
 import type { CompanionSpecies } from "./companion";
 
 export type SceneProfile = "mobile320" | "mobile390" | "desktop";
@@ -44,35 +45,6 @@ export function sceneComposition(recipe: SceneRecipe, viewportWidth: number) {
   return recipe.compositions[sceneProfile(viewportWidth)];
 }
 
-const selectableCharacterMap: Readonly<Record<CompanionSpecies, string>> = (() => {
-  const map = {} as Record<CompanionSpecies, string>;
-  // The manifest field retains its historical S02 name, but the exact same
-  // registered 11 lite identities can be reused by the S10 review owner.
-  const allowlist = (sceneManifest as any).s02SelectableCharacters as string[];
-  for (const id of allowlist) {
-    const asset = sceneManifest.assets.find(a => a.id === id && a.kind === "character");
-    const species = (asset as any)?.companionSpecies as CompanionSpecies | undefined;
-    if (species) map[species] = id;
-  }
-  return map;
-})();
-
-// Conservative identity-size corrections established for S02. The S10 review
-// candidate reuses them, then browser bounds checks all species before publication.
-const s02CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
-  rabbit: 1.03,
-  capybara: 0.96,
-  hedgehog: 0.95,
-  fox: 0.92,
-  squirrel: 0.99,
-};
-
-// S10 has a different orthographic composition. Keep its small fit correction
-// separate so S02's already-qualified framing does not move.
-const s10CharacterScale: Readonly<Partial<Record<CompanionSpecies, number>>> = {
-  hedgehog: 0.86,
-};
-
 function resolveSelectableCharacterRecipe(
   baseRecipe: SceneRecipe,
   screen: "S02" | "S10",
@@ -82,22 +54,12 @@ function resolveSelectableCharacterRecipe(
   if (!baseRecipe.id.startsWith(prefix)) {
     throw new Error(`${screen} identity binding rejected for non-${screen} recipe`);
   }
-  const registeredId = selectableCharacterMap[species];
-  if (!registeredId) throw new Error(`unregistered selectable species: ${species}`);
-  const registered = sceneManifest.assets.find(a => a.id === registeredId && a.kind === "character");
-  if (!registered || !("delivery" in registered)) {
-    throw new Error(`missing registered character: ${registeredId}`);
-  }
-  const companion = getCompanionAsset(species, "lite");
-  if (registered.delivery.url !== companion.url || registered.delivery.sha256 !== companion.sha256) {
-    throw new Error(`scene registration mismatch for ${species}`);
-  }
+  const registered = getActiveSceneCharacter(species);
+  const presentation = getSceneCharacterPresentationProfile(screen, species);
   return {
     ...baseRecipe,
-    characterUrl: registered.delivery.url,
-    characterScale: screen === "S10"
-      ? (s10CharacterScale[species] ?? s02CharacterScale[species] ?? 1)
-      : (s02CharacterScale[species] ?? 1),
+    characterUrl: registered.url,
+    characterScale: presentation.scale,
   };
 }
 
@@ -113,8 +75,8 @@ export function resolveS02CharacterRecipe(
 }
 
 /**
- * Review-only S10 ownership candidate. Uses exactly the same registered lite
- * identity set as S02; production authorization remains in scenePolicy.
+ * S10 uses the same active registered lite identity set as S02.
+ * Production authorization remains in scenePolicy; candidate assets never enter here.
  */
 export function resolveS10CharacterRecipe(
   baseRecipe: SceneRecipe,
