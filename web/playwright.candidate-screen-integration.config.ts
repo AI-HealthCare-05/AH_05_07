@@ -28,6 +28,17 @@ const useSoftwareWebGL =
     || process.env.GITHUB_ACTIONS,
   );
 
+const buildRoot =
+  path.join(
+    outputRoot,
+    "candidate-screen-build",
+  );
+
+const quotedBuildRoot =
+  JSON.stringify(
+    buildRoot,
+  );
+
 export default defineConfig({
   testDir:
     "./e2e",
@@ -87,8 +98,8 @@ export default defineConfig({
 
   webServer: {
     command:
-      "npm run build -- --outDir test-results/candidate-screen-build"
-      + " && npm run preview -- --outDir test-results/candidate-screen-build"
+      `npm run build -- --outDir ${quotedBuildRoot}`
+      + ` && npm run preview -- --outDir ${quotedBuildRoot}`
       + " --host 127.0.0.1 --port 4173 --strictPort",
 
     env: {
