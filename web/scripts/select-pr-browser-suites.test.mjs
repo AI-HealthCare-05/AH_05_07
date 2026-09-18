@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { selectPrBrowserSuites } from './select-pr-browser-suites.mjs';
 
 const suites = files => selectPrBrowserSuites(files);
@@ -335,4 +336,80 @@ test('unknown or workflow changes fall back to the complete PR browser gate', ()
 
 test('empty diff fails safe to the complete PR browser gate', () => {
   assert.deepEqual(names([]), fullGate);
+});
+
+
+// These dependency-free source contracts run in the classify job before npm ci.
+// Browser execution still belongs to the actual config-specific CI commands.
+const source = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+
+test('production S10 is excluded from the generic browser build', () => {
+  const config = source('../playwright.config.ts');
+  const ignoreList = config.match(/testIgnore:\s*(\[[^\]]*\])/);
+  assert.ok(ignoreList, 'the generic configuration must declare isolated suites');
+  assert.deepEqual(JSON.parse(ignoreList[1]), [
+    '**/saved-scene-review.spec.ts',
+    '**/living-scene-review.spec.ts',
+    '**/diorama-scene-review.spec.ts',
+    '**/seoul-date-rollover.spec.ts',
+    '**/production-fixture-boundary.spec.ts',
+    '**/companion-review.spec.ts',
+    '**/companion-production.spec.ts',
+    '**/living-replay.spec.ts',
+    '**/s10-production-scene.spec.ts',
+  ], 'isolate production S10 without broadening ignores or collecting other dedicated suites');
+});
+
+test('the shared regression command retains the explicit production S10 run', () => {
+  const regression = suites(['web/playwright.config.ts']).find(
+    suite => suite.name === 'browser regression',
+  );
+  assert.ok(regression, 'the complete PR gate must retain browser regression');
+  assert.deepEqual(regression.command.split(' && ').slice(0, 2), [
+    'npm run test:e2e',
+    'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
+  ]);
+});
+
+test('the dedicated production S10 suite keeps its explicit synthetic build modes', () => {
+  const config = source('../playwright.s10-production.config.ts');
+  assert.match(config, /testMatch:\s*"s10-production-scene\.spec\.ts"/);
+  assert.doesNotMatch(config, /testIgnore\s*:/, 'the dedicated suite must not ignore its own production tests');
+  for (const [key, value] of [
+    ['VITE_SK7_E2E_MODE', '1'],
+    ['VITE_SK7_UI_MODE', 'journey'],
+    ['VITE_SK7_SCENE_MODE', 'production'],
+    ['VITE_SK7_COMPANION_MODE', 'production'],
+  ]) assert.match(config, new RegExp(`${key}:\\s*"${value}"`));
+  assert.match(config, /--host 127\.0\.0\.1 --port 4173 --strictPort/);
+  assert.equal(
+    suites(['web/e2e/s10-production-scene.spec.ts'])[0].command,
+    'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
+  );
+});
+
+test('S05 Android shares the relaxed fill threshold without dropping motion or clipping guards', () => {
+  const ui = source('../e2e/ui-candidate.cases.ts');
+  const threshold = 'expect(bounds.paintedHeight).toBeGreaterThanOrEqual(Math.floor(bounds.height * .74));';
+  assert.equal(ui.split(threshold).length - 1, 2, 'both framing paths must retain the same fill threshold');
+  assert.doesNotMatch(ui, /paintedHeight\)\.toBeGreaterThan\(bounds\.height \* \.8\)/);
+  const begin = ui.indexOf("test('journey S05 Android profile keeps the canvas outside the rounded landscape clip'");
+  const end = ui.indexOf("\nfor (const outcome", begin);
+  assert.ok(begin >= 0 && end > begin);
+  const android = ui.slice(begin, end);
+  assert.ok(android.includes(threshold));
+  assert.ok(android.includes('expect(report.counts.celebrate).toBeGreaterThanOrEqual(235)'));
+  assert.ok(android.includes('expect(report.counts.idle).toBe(61)'));
+  assert.ok(android.includes("for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(5);"));
+  assert.ok(android.includes('expect(bounds.cssClippedPixels).toBe(0)'));
+  assert.ok(android.includes('expect(geometry.devicePixelRatio).toBe(2.8125)'));
+  assert.ok(android.includes('expect(geometry.drawingBuffer).toEqual({ width: 480, height: 336 })'));
+  assert.ok(android.includes("expect(geometry.rippleOverflow).toBe('visible')"));
+  assert.ok(android.includes("expect(geometry.landscapeOverflow).toBe('hidden')"));
+  for (const [edge, comparison] of [
+    ['left', 'toBeGreaterThan'],
+    ['right', 'toBeLessThan'],
+    ['top', 'toBeGreaterThan'],
+    ['bottom', 'toBeLessThan'],
+  ]) assert.ok(android.includes(`expect(geometry.canvas.${edge}).${comparison}(geometry.ripple.${edge})`));
 });
