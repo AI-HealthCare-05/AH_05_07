@@ -129,6 +129,23 @@ const uiBuildMatrixFiles = new Set([
   'web/scripts/verify-ui-build-matrix.mjs',
 ]);
 
+const frontendAssetOnlyFiles = new Set([
+  'web/e2e/frontend-assets.cases.ts',
+  'web/playwright.frontend-assets.config.ts',
+  'web/scripts/frontend-assets.manifest.json',
+  'web/scripts/frontend-assets.test.mjs',
+  'web/src/components/UiIcon.tsx',
+  'web/src/components/UiNotice.tsx',
+  'web/src/components/UiObject.tsx',
+  'web/src/components/frontend-assets.css',
+  'web/src/ui/uiIconPaths.ts',
+  ...selectorFiles,
+]);
+
+const frontendAssetOnlyPrefixes = [
+  'web/public/assets/ui/v1/',
+];
+
 const directlyRoutedTestFiles = new Set([
   ...savedSceneTestFiles,
   ...reviewSceneTestFiles,
@@ -195,6 +212,15 @@ const selectorPolicySuite = Object.freeze({
   command: 'node --test scripts/select-pr-browser-suites.test.mjs',
 });
 
+const frontendAssetSuite = Object.freeze({
+  name: 'frontend asset UI',
+  command: [
+    'node --test scripts/frontend-assets.test.mjs',
+    'SK7_UI_TEST_COMPANION=off npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
+    'npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
+  ].join(' && '),
+});
+
 // Current complete PR browser gate; nightly/manual/release still owns the full matrix.
 const completePrBrowserGate = Object.freeze([
   {
@@ -250,6 +276,27 @@ function isUnknownWebRuntime(file) {
   return file.startsWith('web/') && !knownWebFiles.has(file);
 }
 
+function isFrontendAssetOnlyPath(file) {
+  return frontendAssetOnlyFiles.has(file)
+    || frontendAssetOnlyPrefixes.some(prefix => file.startsWith(prefix));
+}
+
+function isFrontendAssetOnlyDiff(files) {
+  const hasAssetConcern = files.some(
+    file => file === 'web/e2e/frontend-assets.cases.ts'
+      || file === 'web/playwright.frontend-assets.config.ts'
+      || file === 'web/scripts/frontend-assets.manifest.json'
+      || file === 'web/scripts/frontend-assets.test.mjs'
+      || file === 'web/src/components/UiIcon.tsx'
+      || file === 'web/src/components/UiNotice.tsx'
+      || file === 'web/src/components/UiObject.tsx'
+      || file === 'web/src/components/frontend-assets.css'
+      || file === 'web/src/ui/uiIconPaths.ts'
+      || frontendAssetOnlyPrefixes.some(prefix => file.startsWith(prefix)),
+  );
+  return hasAssetConcern && files.every(file => isFrontendAssetOnlyPath(file));
+}
+
 export function selectPrBrowserSuites(files) {
   const unique = [...new Set(files.filter(Boolean))];
 
@@ -271,6 +318,12 @@ export function selectPrBrowserSuites(files) {
   // Protected auth/API/model/dependency/deployment paths fall back to the full PR gate.
   if (relevant.some(file => isProtectedBrowserPath(file))) {
     return cloneSuites(completePrBrowserGate);
+  }
+
+  // Frontend-asset-only diffs use their exact presentation lane. Shared product
+  // runtime files are deliberately excluded so behavior changes still widen coverage.
+  if (isFrontendAssetOnlyDiff(relevant)) {
+    return cloneSuites([frontendAssetSuite]);
   }
 
   // Unknown/unclassified web runtime paths and non-web paths fall back to the full PR gate.

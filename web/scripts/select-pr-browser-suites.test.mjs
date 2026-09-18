@@ -413,3 +413,65 @@ test('S05 Android shares the relaxed fill threshold without dropping motion or c
     ['bottom', 'toBeLessThan'],
   ]) assert.ok(android.includes(`expect(geometry.canvas.${edge}).${comparison}(geometry.ripple.${edge})`));
 });
+
+test('frontend asset-only changes use the exact focused browser lane', () => {
+  assert.deepEqual(names([
+    'web/e2e/frontend-assets.cases.ts',
+    'web/playwright.frontend-assets.config.ts',
+    'web/public/assets/ui/v1/icons/today.svg',
+    'web/public/assets/ui/v1/objects/notebook-320.webp',
+    'web/scripts/frontend-assets.manifest.json',
+    'web/scripts/frontend-assets.test.mjs',
+    'web/src/components/UiIcon.tsx',
+    'web/src/components/UiNotice.tsx',
+    'web/src/components/UiObject.tsx',
+    'web/src/components/frontend-assets.css',
+    'web/src/ui/uiIconPaths.ts',
+  ]), ['frontend asset UI']);
+});
+
+test('frontend asset lane runs source contracts plus off and production modes', () => {
+  const suite = suites(['web/e2e/frontend-assets.cases.ts'])[0];
+  assert.equal(suite.name, 'frontend asset UI');
+  assert.deepEqual(suite.command.split(' && '), [
+    'node --test scripts/frontend-assets.test.mjs',
+    'SK7_UI_TEST_COMPANION=off npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
+    'npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
+  ]);
+});
+
+test('selector maintenance can accompany frontend asset-only changes', () => {
+  assert.deepEqual(names([
+    'web/e2e/frontend-assets.cases.ts',
+    'web/scripts/select-pr-browser-suites.mjs',
+    'web/scripts/select-pr-browser-suites.test.mjs',
+  ]), ['frontend asset UI']);
+});
+
+test('shared JourneyToday behavior never collapses into the frontend asset-only lane', () => {
+  assert.deepEqual(names([
+    'web/e2e/frontend-assets.cases.ts',
+    'web/src/components/JourneyToday.tsx',
+  ]), fullGate);
+});
+
+test('shared main shell wiring never collapses into the frontend asset-only lane', () => {
+  assert.deepEqual(names([
+    'web/src/main.tsx',
+    'web/src/components/frontend-assets.css',
+  ]), fullGate);
+});
+
+test('frontend asset changes plus protected model paths still use the complete gate', () => {
+  assert.deepEqual(names([
+    'web/e2e/frontend-assets.cases.ts',
+    'web/src/ui/model/ModelScore.tsx',
+  ]), fullGate);
+});
+
+test('frontend asset changes plus unknown runtime paths still use the complete gate', () => {
+  assert.deepEqual(names([
+    'web/e2e/frontend-assets.cases.ts',
+    'web/src/unknown/NewRuntime.tsx',
+  ]), fullGate);
+});
