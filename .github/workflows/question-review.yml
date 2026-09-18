@@ -33,6 +33,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Normalize scene evidence sources on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          git -c core.autocrlf=false checkout --force HEAD -- \
+            web/src/ui/companionSceneRegistry.ts \
+            web/src/ui/companionPresentationProfiles.ts
       - uses: actions/setup-node@v4
         with:
           node-version: 24
