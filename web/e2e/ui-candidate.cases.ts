@@ -168,6 +168,43 @@ test('S11 outcome continues to blood-pressure entry when today has no BP record'
   await expect(page.locator('#S04-title')).toBeFocused();
 });
 
+test('S11 post-survey journey closes through BP save, saved confirmation, today, and a fresh S11', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const state = await setup(page);
+
+  await page.goto('/?e2e=signed-in&screen=S11');
+  await completeS11LifestyleSurvey(page);
+
+  const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result).toBeVisible();
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
+
+  await page.getByRole('button', { name: '혈압 기록 남기기', exact: true }).click();
+  await expect(page.locator('#S04-title')).toBeFocused();
+  await expect(result).toHaveCount(0);
+
+  await save(page);
+  await expect(page.locator('#S05-title')).toBeFocused();
+  await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeVisible();
+  expect(state.posts()).toBe(1);
+
+  await page.getByRole('button', { name: '오늘의 기록 보기', exact: true }).click();
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+
+  const startingPoint = page.locator('.today-starting-point-entry');
+  await expect(startingPoint).toBeVisible();
+  await startingPoint.click();
+
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(page.locator('[data-model-v2-user-result="processed"]')).toHaveCount(0);
+  await expect(page.locator('[data-model-v2-feature]')).toHaveCount(0);
+
+  await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+  await expect(page.locator('#model-age')).toHaveValue('');
+  await expect(page.locator('#model-height')).toHaveValue('');
+  await expect(page.locator('#model-weight')).toHaveValue('');
+});
+
 test('S11 outcome opens today detail when a BP record already exists', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setup(page);
