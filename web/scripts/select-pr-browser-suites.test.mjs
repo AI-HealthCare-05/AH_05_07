@@ -357,7 +357,8 @@ test('production S10 is excluded from the generic browser build', () => {
     '**/companion-production.spec.ts',
     '**/living-replay.spec.ts',
     '**/s10-production-scene.spec.ts',
-  ], 'isolate production S10 without broadening ignores or collecting other dedicated suites');
+    '**/companion-candidate-screen-integration.spec.ts',
+  ], 'isolate dedicated suites without broadening ignores into ordinary browser coverage');
 });
 
 test('the shared regression command retains the explicit production S10 run', () => {
