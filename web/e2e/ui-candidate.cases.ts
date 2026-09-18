@@ -508,8 +508,10 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journ
   type Bounds = { phase: string; width: number; height: number; left: number; right: number; top: number; bottom: number; paintedHeight: number; cssClippedPixels: number };
   type Probe = { sample: () => Bounds; report: () => { samples: Bounds[]; counts: Record<string, number>; paused: boolean }; pauseAfter: (phase: string, frames: number) => void };
   const margins = (bounds: Bounds) => {
-    for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(5);
-    expect(bounds.paintedHeight).toBeGreaterThan(bounds.height * .8);
+    // The relaxed S05 framing intentionally trades a little fill for reliable
+    // celebrate head/hand clearance in real desktop rendering.
+    for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge], `${bounds.phase} ${edge}`).toBeGreaterThanOrEqual(8);
+    expect(bounds.paintedHeight).toBeGreaterThanOrEqual(Math.floor(bounds.height * .74));
     expect(bounds.cssClippedPixels, 'painted pixels inside the rounded parent clip').toBe(0);
   };
   const reports = [];
