@@ -1183,6 +1183,38 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   expect(routed.requests).toHaveLength(1);
 });
 
+test("S11 result keeps the primary desktop hierarchy visible at 1366x768", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+
+  await expect(page.locator(".model-v2-layout")).toHaveAttribute("data-model-v2-processed", "true");
+
+  const summaryColumns = await result(page).locator(".model-v2-result-summary").evaluate((element) =>
+    getComputedStyle(element).gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+  );
+  expect(summaryColumns).toBe(2);
+
+  await expect(page.getByRole("button", { name: "혈압 기록 남기기", exact: true })).toBeInViewport();
+
+  const research = result(page).locator("details[data-model-v2-research]");
+  const inputs = result(page).locator("details[data-model-v2-inputs]");
+  await expect(research).not.toHaveAttribute("open");
+  await expect(inputs).not.toHaveAttribute("open");
+
+  const nextTop = await result(page).locator(".model-v2-result-next").evaluate((element) =>
+    element.getBoundingClientRect().top,
+  );
+  const researchTop = await result(page).locator(".model-v2-result-model-note").evaluate((element) =>
+    element.getBoundingClientRect().top,
+  );
+  expect(nextTop).toBeLessThan(researchTop);
+  await assertFitsViewport(page);
+});
+
 for (const width of [320, 390, 430]) {
   test(`S11 every input step, review and result remains usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });

@@ -59,7 +59,7 @@ export function ModelV2Outcome({ draft, previewOutput, onStartBloodPressure, onR
         <dl>
           <div><dt>최근 7일 걷기</dt><dd>{walkingDays}일</dd></div>
           <div><dt>걷는 날 하루 평균</dt><dd>{formatDurationMinutes(walkingMinutes)}</dd></div>
-          <div><dt>입력 기준 주간 합계</dt><dd>약 {weeklyWalkingMinutes}분</dd></div>
+          <div className="model-v2-result-keyfact"><dt>입력 기준 주간 합계</dt><dd>약 {weeklyWalkingMinutes}분</dd></div>
           <div><dt>최근 7일 근력운동</dt><dd>{reviewValue("strengthDays", draft)}</dd></div>
         </dl>
         <p className="model-v2-result-explanation">입력한 걷기 일수에 걷는 날 하루 평균 시간을 곱한 단순 계산값이에요.</p>
