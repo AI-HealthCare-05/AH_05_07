@@ -49,6 +49,36 @@ test("candidate inventory can stage a newer asset for an existing species withou
   assert.equal(validateCandidateInventory(inventory([nextBear])).candidateCount, 1);
 });
 
+test("candidate inventory can stage optimized review variants for an existing species without activation", () => {
+  const optimizedLite = {
+    ...validCandidate,
+    candidateId: "COMPANION-CAND-BEAR-V007-OPTIMIZED-LITE",
+    speciesKey: "bear",
+    version: "v007",
+    variantKey: "optimized-lite",
+    sha256: "c".repeat(64),
+    status: "review",
+  };
+
+  const optimizedStandard = {
+    ...optimizedLite,
+    candidateId: "COMPANION-CAND-BEAR-V007-OPTIMIZED-STANDARD",
+    variantKey: "optimized-standard",
+    sha256: "d".repeat(64),
+  };
+
+  assert.deepEqual(
+    validateCandidateInventory(
+      inventory([optimizedLite, optimizedStandard]),
+    ),
+    {
+      candidateCount: 2,
+      speciesCount: 1,
+      status: "staging",
+    },
+  );
+});
+
 for (const [key, value] of [
   ["runtimeUrl", "https://example.invalid/model.glb"],
   ["objectKey", "companion/v2/seal.glb"],
