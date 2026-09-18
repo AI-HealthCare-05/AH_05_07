@@ -290,6 +290,7 @@ function fixtureScript() {
     screen,
     deviceClass,
     activeRequestCount: 0,
+    humanVisibleConfirmed: false,
   };
 
   Object.defineProperty(
@@ -540,6 +541,177 @@ function fixtureScript() {
     );
   }
 
+  function reviewTarget() {
+    return screen === "S01"
+      ? document.querySelector(
+          "[data-login-companion]"
+        )
+      : document.querySelector(
+          ".living-visual-stage[data-living-scene='"
+          + screen
+          + "']"
+        );
+  }
+
+  function reviewCanvas() {
+    return screen === "S01"
+      ? document.querySelector(
+          "[data-login-companion] canvas[data-companion-canvas]"
+        )
+      : document.querySelector(
+          ".living-three-scene canvas"
+        );
+  }
+
+  function rectIntersectsViewport(
+    element,
+  ) {
+    if (!element) {
+      return false;
+    }
+
+    const rect =
+      element.getBoundingClientRect();
+
+    return (
+      rect.width > 1
+      && rect.height > 1
+      && rect.right > 0
+      && rect.bottom > 0
+      && rect.left < window.innerWidth
+      && rect.top < window.innerHeight
+    );
+  }
+
+  function canvasVisibleState() {
+    const canvas =
+      reviewCanvas();
+
+    if (!canvas) {
+      return false;
+    }
+
+    const style =
+      getComputedStyle(
+        canvas
+      );
+
+    return (
+      style.display !== "none"
+      && style.visibility !== "hidden"
+      && Number(style.opacity || "1") > 0
+      && rectIntersectsViewport(
+        canvas
+      )
+    );
+  }
+
+  function targetInViewportState() {
+    return rectIntersectsViewport(
+      reviewTarget()
+    );
+  }
+
+  function subjectVisibleState() {
+    if (screen === "S01") {
+      return (
+        canvasVisibleState()
+        && rectIntersectsViewport(
+          document.querySelector(
+            "[data-login-companion] .companion-runtime-slot"
+          )
+        )
+      );
+    }
+
+    const runtime =
+      document.querySelector(
+        ".living-three-scene[data-subject-bounds]"
+      );
+
+    const raw =
+      runtime?.getAttribute(
+        "data-subject-bounds"
+      );
+
+    if (!raw) {
+      return false;
+    }
+
+    try {
+      const bounds =
+        JSON.parse(raw);
+
+      const width =
+        Number(bounds.right)
+        - Number(bounds.left);
+
+      const height =
+        Number(bounds.top)
+        - Number(bounds.bottom);
+
+      const intersects =
+        Number(bounds.right) > -1
+        && Number(bounds.left) < 1
+        && Number(bounds.top) > -1
+        && Number(bounds.bottom) < 1;
+
+      return (
+        intersects
+        && width > 0.05
+        && height > 0.05
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function automaticReady() {
+    return (
+      readyState()
+      && state.activeRequestCount === 1
+      && document.documentElement.scrollWidth
+        <= window.innerWidth
+      && canvasVisibleState()
+      && targetInViewportState()
+      && subjectVisibleState()
+    );
+  }
+
+  async function focusReviewTarget() {
+    for (
+      let attempt = 0;
+      attempt < 80;
+      attempt += 1
+    ) {
+      const target =
+        reviewTarget();
+
+      if (target) {
+        target.scrollIntoView({
+          block: "center",
+          inline: "nearest",
+          behavior: "auto",
+        });
+
+        if (
+          readyState()
+          && state.activeRequestCount === 1
+        ) {
+          return;
+        }
+      }
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            125,
+          )
+      );
+    }
+  }
+
   function rendererString() {
     const canvas =
       screen === "S01"
@@ -677,6 +849,21 @@ function fixtureScript() {
   async function submit(
     decision,
   ) {
+    if (
+      decision === "pass"
+      && (
+        !automaticReady()
+        || !state.humanVisibleConfirmed
+      )
+    ) {
+      alert(
+        "PASS 조건이 아직 충족되지 않았습니다. "
+        + "캐릭터가 실제로 보이는지 확인하고 체크박스를 선택해 주세요."
+      );
+
+      return;
+    }
+
     const rendererReady =
       readyState();
 
@@ -705,6 +892,14 @@ function fixtureScript() {
         state.activeRequestCount,
       layoutOverflow:
         overflow,
+      canvasVisible:
+        canvasVisibleState(),
+      targetInViewport:
+        targetInViewportState(),
+      subjectVisible:
+        subjectVisibleState(),
+      humanVisibleConfirmed:
+        state.humanVisibleConfirmed,
       renderer:
         rendererString(),
       frameSample:
@@ -828,6 +1023,9 @@ function fixtureScript() {
       "7px";
 
     function refresh() {
+      const autoReady =
+        automaticReady();
+
       info.textContent =
         deviceClass
         + " · "
@@ -841,7 +1039,17 @@ function fixtureScript() {
         + " · ready="
         + readyState()
         + " · glb="
-        + state.activeRequestCount;
+        + state.activeRequestCount
+        + " · canvas="
+        + canvasVisibleState()
+        + " · subject="
+        + subjectVisibleState()
+        + " · auto="
+        + autoReady;
+
+      pass.disabled =
+        !autoReady
+        || !state.humanVisibleConfirmed;
     }
 
     refresh();
@@ -851,6 +1059,54 @@ function fixtureScript() {
       500,
     );
 
+    const visibleLabel =
+      document.createElement(
+        "label"
+      );
+
+    Object.assign(
+      visibleLabel.style,
+      {
+        display:
+          "flex",
+        alignItems:
+          "center",
+        gap:
+          "7px",
+        marginBottom:
+          "8px",
+        fontSize:
+          "14px",
+      },
+    );
+
+    const visibleCheck =
+      document.createElement(
+        "input"
+      );
+
+    visibleCheck.type =
+      "checkbox";
+
+    visibleCheck.style.width =
+      "20px";
+
+    visibleCheck.style.height =
+      "20px";
+
+    visibleCheck.onchange =
+      () => {
+        state.humanVisibleConfirmed =
+          visibleCheck.checked;
+      };
+
+    visibleLabel.append(
+      visibleCheck,
+      document.createTextNode(
+        "캐릭터가 실제 화면에 보입니다"
+      ),
+    );
+
     const pass =
       document.createElement(
         "button"
@@ -858,6 +1114,9 @@ function fixtureScript() {
 
     pass.textContent =
       "PASS";
+
+    pass.disabled =
+      true;
 
     const fail =
       document.createElement(
@@ -896,6 +1155,7 @@ function fixtureScript() {
 
     bar.append(
       info,
+      visibleLabel,
       pass,
       fail,
     );
@@ -903,6 +1163,8 @@ function fixtureScript() {
     document.body.append(
       bar
     );
+
+    void focusReviewTarget();
   }
 
   if (

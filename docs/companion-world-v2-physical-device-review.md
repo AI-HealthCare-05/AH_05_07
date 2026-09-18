@@ -88,3 +88,32 @@ renderer ready.
 Physical-device PASS is still not production activation.
 
 Candidate delivery, active registry promotion and release remain separate gates.
+
+## Visible-subject hardening
+
+The first Android review attempt exposed a harness gap: an S10 case could reach
+the technical renderer-ready/request-count conditions while the human reviewer
+did not actually see the candidate character.
+
+That attempt is not qualification evidence.
+
+The hardened review now requires all PASS events to satisfy:
+
+- renderer ready
+- exactly one candidate-substituted registered GLB request
+- no horizontal overflow
+- review canvas visibly intersects the physical viewport
+- review target visibly intersects the physical viewport
+- candidate subject bounds intersect the normalized scene view
+- non-trivial projected subject width and height
+- explicit human confirmation that the character is actually visible
+
+The harness automatically scrolls the S01 narrator or S02/S10 visual stage into
+the physical viewport.
+
+PASS remains disabled until the automatic visibility checks pass and the human
+reviewer checks **캐릭터가 실제 화면에 보입니다**.
+
+If the character is absent, clipped beyond recognition, or otherwise not
+visually present, the reviewer must use FAIL even if the renderer itself is
+technically ready.
