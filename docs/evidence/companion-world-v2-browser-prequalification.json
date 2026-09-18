@@ -1,0 +1,535 @@
+{
+  "documentType": "COMPANION_CANDIDATE_BROWSER_PREQUALIFICATION",
+  "status": "passed",
+  "scope": "isolated-character-preview-technical-prequalification",
+  "family": "world-v2",
+  "species": [
+    "koala",
+    "mouse",
+    "owl",
+    "pig"
+  ],
+  "speciesCount": 4,
+  "candidateCount": 8,
+  "candidateIds": [
+    "COMPANION-CAND-KOALA-V002-STANDARD",
+    "COMPANION-CAND-KOALA-V002-LITE",
+    "COMPANION-CAND-MOUSE-V002-STANDARD",
+    "COMPANION-CAND-MOUSE-V002-LITE",
+    "COMPANION-CAND-OWL-V002-STANDARD",
+    "COMPANION-CAND-OWL-V002-LITE",
+    "COMPANION-CAND-PIG-V002-STANDARD",
+    "COMPANION-CAND-PIG-V002-LITE"
+  ],
+  "candidateInventorySha256": "0332f957c75e2f9091e14ee8f80d5fea46b459b936503807eaac7b118abffe0d",
+  "sourceArchiveSha256": "5f7541e8f48a0f3dd7bf58e0cf6f82d19a25063c38f8c018567bdfb727cebed2",
+  "candidateReviewInputSha256": "2cf348dbcaf1a685601502abd2cfcfcacd4e4c1c6fa77854460c07259e47ba87",
+  "catalogSha256": "013366142a5867dfc4f933752378dade60ebeb54fe6c8eb4ee12fa650d863c96",
+  "browserVerificationSha256": "7846ffe5ccc7268cb74bce5a85a06d0dd2e0db5f4028c390ea97b78a63cf60e0",
+  "availableAnimalsTested": 4,
+  "clipVariantChecks": 56,
+  "checks": [
+    "read_only_path_boundary",
+    "initial_selected_asset_only",
+    "all_available_variant_clips_bone_playback",
+    "pause_stop_play",
+    "desktop_390_320_viewports",
+    "keyboard_focus_rotation",
+    "10_swap_resource_counts_bounded",
+    "fixed_ground_reference_toggle_release_and_views",
+    "light_first_no_hidden_standard_and_common_reference",
+    "pending_asset_not_counted",
+    "failed_glb_static_fallback",
+    "reduced_motion_unloads_glb",
+    "context_loss_fallback",
+    "initial_reduced_motion_no_glb_fetch",
+    "no_webgl_static_fallback",
+    "no_page_errors_or_external_network",
+    "production_bundle_isolated",
+    "catalog_and_glb_bytes_unchanged"
+  ],
+  "assetManifest": [
+    {
+      "animal": "koala",
+      "variant": "standard",
+      "file": "koala/standard.glb",
+      "bytes": 1010084,
+      "sha256": "27c5e1582a727533bd45fbaa815474f49d37178d0993d6dcb8cf374e2e8f3208",
+      "triangles": 32044,
+      "materials": 5,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 5,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "koala",
+      "variant": "light",
+      "file": "koala/light.glb",
+      "bytes": 547288,
+      "sha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "triangles": 15516,
+      "materials": 5,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 5,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "mouse",
+      "variant": "standard",
+      "file": "mouse/standard.glb",
+      "bytes": 1120212,
+      "sha256": "fc82de1c761f5975711fd4bb775698645c44b50e6a578264ab04f14a06b98c62",
+      "triangles": 35924,
+      "materials": 6,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 6,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "mouse",
+      "variant": "light",
+      "file": "mouse/light.glb",
+      "bytes": 626692,
+      "sha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "triangles": 18302,
+      "materials": 6,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 6,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "owl",
+      "variant": "standard",
+      "file": "owl/standard.glb",
+      "bytes": 1183524,
+      "sha256": "1e773423d08ba333d628517ad49ce5cb926cd4a967d482efb3acab2ae5b0b5b5",
+      "triangles": 38294,
+      "materials": 8,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 8,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "owl",
+      "variant": "light",
+      "file": "owl/light.glb",
+      "bytes": 662592,
+      "sha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "triangles": 19661,
+      "materials": 8,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 8,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "pig",
+      "variant": "standard",
+      "file": "pig/standard.glb",
+      "bytes": 978524,
+      "sha256": "ecbb40473145750026c91c0d1f6b14142db05887ab2acf1f91693433ba7b849b",
+      "triangles": 30920,
+      "materials": 5,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 5,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    },
+    {
+      "animal": "pig",
+      "variant": "light",
+      "file": "pig/light.glb",
+      "bytes": 559404,
+      "sha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "triangles": 15952,
+      "materials": 5,
+      "textures": [],
+      "bones": 20,
+      "skinnedMeshes": 5,
+      "clips": [
+        {
+          "name": "celebrate",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "curious",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "greet",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "idle",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "move",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "rest",
+          "duration": 4,
+          "tracks": 60
+        },
+        {
+          "name": "special",
+          "duration": 4,
+          "tracks": 60
+        }
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+      "platform": "MacIntel",
+      "variant": "light",
+      "animal": "koala",
+      "loadMs": 11.699999999254942,
+      "sampleCount": 386,
+      "sampleIntervalMs": 3216.600000000006,
+      "frameMsP50": 8.299999999988358,
+      "frameMsP95": 9.300000000017462,
+      "fpsFromMeanInterval": 120.00248709817798,
+      "rule": "RAF intervals after most recent load/resize plus 1000ms; latest at most 600; active animation only; linear quantiles",
+      "rendererPath": "browser_default",
+      "softwareRenderer": true,
+      "browserChannel": "default_headless_shell",
+      "renderPixelRatio": 1,
+      "antialias": false,
+      "browserVideoRecording": false,
+      "actualMobileDevice": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+      "platform": "MacIntel",
+      "variant": "light",
+      "animal": "koala",
+      "loadMs": 11.699999999254942,
+      "sampleCount": 387,
+      "sampleIntervalMs": 3225,
+      "frameMsP50": 8.300000000017462,
+      "frameMsP95": 9.300000000017462,
+      "fpsFromMeanInterval": 120,
+      "rule": "RAF intervals after most recent load/resize plus 1000ms; latest at most 600; active animation only; linear quantiles",
+      "rendererPath": "browser_default",
+      "softwareRenderer": true,
+      "browserChannel": "default_headless_shell",
+      "renderPixelRatio": 1,
+      "antialias": false,
+      "browserVideoRecording": false,
+      "actualMobileDevice": false
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+      "platform": "MacIntel",
+      "variant": "light",
+      "animal": "koala",
+      "loadMs": 11.699999999254942,
+      "sampleCount": 385,
+      "sampleIntervalMs": 3215.6999999999825,
+      "frameMsP50": 8.300000000017462,
+      "frameMsP95": 9.300000000017462,
+      "fpsFromMeanInterval": 119.72509873433532,
+      "rule": "RAF intervals after most recent load/resize plus 1000ms; latest at most 600; active animation only; linear quantiles",
+      "rendererPath": "browser_default",
+      "softwareRenderer": true,
+      "browserChannel": "default_headless_shell",
+      "renderPixelRatio": 1,
+      "antialias": false,
+      "browserVideoRecording": false,
+      "actualMobileDevice": false
+    }
+  ],
+  "limitations": [
+    "Browser viewport and recorded renderer only; not a physical mobile device or production FPS.",
+    "Bone playback/resource checks are not joint penetration or visual quality approval.",
+    "No real health or model data accessed.",
+    "This is isolated candidate technical pre-qualification, not SK7 S01/S02/S10 product integration qualification.",
+    "This is not physical Android/iOS qualification.",
+    "This is not final owner visual or art acceptance.",
+    "This does not activate candidates, publish R2 objects, or change production runtime."
+  ],
+  "sk7RuntimeIntegrated": false,
+  "physicalDeviceQualified": false,
+  "artAccepted": false,
+  "productionReady": false
+}
