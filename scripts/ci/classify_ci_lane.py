@@ -79,6 +79,12 @@ SCENE_FILES = {
     "web/src/components/SceneShell.tsx",
 }
 
+SCENE_NEUTRAL_FILES = {
+    "web/asset-candidates/companion-candidates.v1.json",
+    "web/scripts/verify-companion-candidates.mjs",
+    "web/scripts/verify-companion-candidates.test.mjs",
+}
+
 DEPLOYMENT_FILES = {
     "cloudbuild.api.yaml",
     "web/wrangler.jsonc",
@@ -151,6 +157,8 @@ def is_protected_web(path: str) -> bool:
 
 
 def is_scene(path: str) -> bool:
+    if path in SCENE_NEUTRAL_FILES:
+        return False
     if path in SCENE_FILES or path.startswith(SCENE_PREFIXES):
         return True
     if not path.startswith("web/"):
@@ -222,6 +230,18 @@ def self_test() -> None:
         (
             ["web/src/components/CompanionReviewRenderer.tsx"],
             Result("frontend", True, True, False, False, False),
+        ),
+        (
+            ["web/asset-candidates/companion-candidates.v1.json"],
+            Result("frontend", True, False, False, False, False),
+        ),
+        (
+            [
+                "web/asset-candidates/companion-candidates.v1.json",
+                "web/scripts/verify-companion-candidates.mjs",
+                "web/scripts/verify-companion-candidates.test.mjs",
+            ],
+            Result("frontend", True, False, False, False, False),
         ),
         (
             ["web/src/App.tsx"],
