@@ -1,0 +1,302 @@
+{
+  "documentType": "COMPANION_WORLD_V2_ANDROID_PHYSICAL_QUALIFICATION",
+  "status": "passed",
+  "scope": "single-tested-physical-android-device",
+  "sourceEventsSha256": "5808fdf726d433061c6c82c49df620d60b07a9a329d6b53a54f0f9c61f683de3",
+  "expectedCases": 12,
+  "completedCases": 12,
+  "passedCases": 12,
+  "failedCases": 0,
+  "species": [
+    "koala",
+    "mouse",
+    "pig",
+    "owl"
+  ],
+  "screens": [
+    "S01",
+    "S02",
+    "S10"
+  ],
+  "candidateVariant": "lite",
+  "visibilityContract": {
+    "rendererReady": true,
+    "singleCandidateRequest": true,
+    "noHorizontalOverflow": true,
+    "canvasVisible": true,
+    "targetInViewport": true,
+    "subjectVisible": true,
+    "humanVisibleConfirmed": true
+  },
+  "previousAndroidV1Qualification": "invalidated",
+  "physicalDeviceClass": "android",
+  "physicalDeviceModel": "not-recorded",
+  "records": [
+    {
+      "candidate": "koala",
+      "screen": "S01",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 92,
+        "fpsFromMeanInterval": 60.15430887929909,
+        "frameMsP95": 16.700000000000728
+      },
+      "recordedAt": "2026-09-18T12:42:23.622Z"
+    },
+    {
+      "candidate": "koala",
+      "screen": "S02",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.16131164881659,
+        "frameMsP95": 16.700000000000728
+      },
+      "recordedAt": "2026-09-18T12:42:29.558Z"
+    },
+    {
+      "candidate": "koala",
+      "screen": "S10",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.141431498248615,
+        "frameMsP95": 16.700000000000728
+      },
+      "recordedAt": "2026-09-18T12:42:34.989Z"
+    },
+    {
+      "candidate": "mouse",
+      "screen": "S01",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.141431498248615,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:38.366Z"
+    },
+    {
+      "candidate": "mouse",
+      "screen": "S02",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.16791476520629,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:42.360Z"
+    },
+    {
+      "candidate": "mouse",
+      "screen": "S10",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.1613116488166,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:45.842Z"
+    },
+    {
+      "candidate": "pig",
+      "screen": "S01",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.15733456732994,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:49.016Z"
+    },
+    {
+      "candidate": "pig",
+      "screen": "S02",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.16791476520628,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:52.226Z"
+    },
+    {
+      "candidate": "pig",
+      "screen": "S10",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.16393681067665,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:42:55.673Z"
+    },
+    {
+      "candidate": "owl",
+      "screen": "S01",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 90,
+        "fpsFromMeanInterval": 60.16042780748663,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:43:00.356Z"
+    },
+    {
+      "candidate": "owl",
+      "screen": "S02",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.14143149824863,
+        "frameMsP95": 16.700000000000273
+      },
+      "recordedAt": "2026-09-18T12:43:03.454Z"
+    },
+    {
+      "candidate": "owl",
+      "screen": "S10",
+      "decision": "pass",
+      "viewportWidth": 384,
+      "viewportHeight": 718,
+      "devicePixelRatio": 2.8125,
+      "rendererReady": true,
+      "activeRequestCount": 1,
+      "layoutOverflow": false,
+      "canvasVisible": true,
+      "targetInViewport": true,
+      "subjectVisible": true,
+      "humanVisibleConfirmed": true,
+      "renderer": "ANGLE (Qualcomm, Adreno (TM) 642L, OpenGL ES 3.2)",
+      "frameSample": {
+        "sampleCount": 91,
+        "fpsFromMeanInterval": 60.1613116488166,
+        "frameMsP95": 16.700000000000045
+      },
+      "recordedAt": "2026-09-18T12:43:06.526Z"
+    }
+  ],
+  "productionActivationApproved": false,
+  "productionReady": false
+}
