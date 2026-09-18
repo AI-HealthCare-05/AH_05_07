@@ -39,11 +39,7 @@ def load_json(path: Path) -> dict:
 def png_dimensions(path: Path) -> tuple[int, int]:
     header = path.read_bytes()[:24]
 
-    if (
-        len(header) < 24
-        or header[:8] != b"\x89PNG\r\n\x1a\n"
-        or header[12:16] != b"IHDR"
-    ):
+    if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
         raise ValueError(f"not a PNG: {path}")
 
     width, height = struct.unpack(">II", header[16:24])
@@ -81,8 +77,7 @@ def find_screen_image(
 
     if len(matches) != 1:
         raise ValueError(
-            f"expected one screenshot for {species}/{screen}/{width}x{height}, "
-            f"got {[str(x) for x in matches]}"
+            f"expected one screenshot for {species}/{screen}/{width}x{height}, got {[str(x) for x in matches]}"
         )
 
     return matches[0]
@@ -108,11 +103,7 @@ def candidate_map(candidate_input: dict) -> dict[tuple[str, str], dict]:
 
         result[key] = item
 
-    expected = {
-        (species, variant)
-        for species in SPECIES
-        for variant in ("lite", "standard")
-    }
+    expected = {(species, variant) for species in SPECIES for variant in ("lite", "standard")}
 
     if set(result) != expected:
         raise ValueError("candidate input does not contain exact World v2 family")
@@ -185,7 +176,7 @@ def copy_png(source: Path, destination: Path) -> dict:
     }
 
 
-def build_package(
+def build_package(  # noqa: C901
     candidate_root: Path,
     prequal_root: Path,
     screen_root: Path,
@@ -219,14 +210,10 @@ def build_package(
 
     candidates = candidate_map(candidate)
 
-    screen_pngs = sorted(
-        (screen_root / "playwright").rglob("candidate-screen.png")
-    )
+    screen_pngs = sorted((screen_root / "playwright").rglob("candidate-screen.png"))
 
     if len(screen_pngs) != 36:
-        raise ValueError(
-            f"expected 36 screen screenshots, got {len(screen_pngs)}"
-        )
+        raise ValueError(f"expected 36 screen screenshots, got {len(screen_pngs)}")
 
     screen_records = {
         (
@@ -276,54 +263,46 @@ def build_package(
 
                     copied = copy_png(source, partial / relative)
 
-                    screen_items.append({
-                        "kind": "screen",
-                        "speciesKey": species,
-                        "candidateId": lite["candidateId"],
-                        "candidateSha256": lite["sha256"],
-                        "variantKey": "lite",
-                        "screen": screen_id,
-                        "viewport": {
-                            "width": width,
-                            "height": height,
-                        },
-                        "renderer": record.get("renderer"),
-                        "subjectBounds": record.get("subjectBounds"),
-                        "activeRequestCount": record.get("activeRequestCount"),
-                        "layoutOverflow": record.get("layoutOverflow"),
-                        **{
-                            **copied,
-                            "path": relative.as_posix(),
-                        },
-                    })
+                    screen_items.append(
+                        {
+                            "kind": "screen",
+                            "speciesKey": species,
+                            "candidateId": lite["candidateId"],
+                            "candidateSha256": lite["sha256"],
+                            "variantKey": "lite",
+                            "screen": screen_id,
+                            "viewport": {
+                                "width": width,
+                                "height": height,
+                            },
+                            "renderer": record.get("renderer"),
+                            "subjectBounds": record.get("subjectBounds"),
+                            "activeRequestCount": record.get("activeRequestCount"),
+                            "layoutOverflow": record.get("layoutOverflow"),
+                            **{
+                                **copied,
+                                "path": relative.as_posix(),
+                            },
+                        }
+                    )
 
-        asset_manifest = {
-            (item["animal"], item["variant"]): item
-            for item in verification["assetManifest"]
-        }
+        asset_manifest = {(item["animal"], item["variant"]): item for item in verification["assetManifest"]}
 
         if len(asset_manifest) != 8:
             raise ValueError("isolated verifier asset manifest is not 8 binaries")
 
         for species in SPECIES:
             for viewer_variant in VIEWER_VARIANTS:
-                canonical_variant = (
-                    "lite" if viewer_variant == "light" else "standard"
-                )
+                canonical_variant = "lite" if viewer_variant == "light" else "standard"
 
                 candidate_item = candidates[(species, canonical_variant)]
                 browser_asset = asset_manifest[(species, viewer_variant)]
 
                 if browser_asset["sha256"] != candidate_item["sha256"]:
-                    raise ValueError(
-                        f"browser asset identity differs for "
-                        f"{species}/{canonical_variant}"
-                    )
+                    raise ValueError(f"browser asset identity differs for {species}/{canonical_variant}")
 
                 for clip in CLIPS:
-                    source = prequal_root / (
-                        f"{species}-{viewer_variant}-{clip}.png"
-                    )
+                    source = prequal_root / (f"{species}-{viewer_variant}-{clip}.png")
 
                     if not source.is_file():
                         raise ValueError(f"missing pose screenshot: {source.name}")
@@ -338,18 +317,20 @@ def build_package(
 
                     copied = copy_png(source, partial / relative)
 
-                    pose_items.append({
-                        "kind": "pose",
-                        "speciesKey": species,
-                        "candidateId": candidate_item["candidateId"],
-                        "candidateSha256": candidate_item["sha256"],
-                        "variantKey": canonical_variant,
-                        "clip": clip,
-                        **{
-                            **copied,
-                            "path": relative.as_posix(),
-                        },
-                    })
+                    pose_items.append(
+                        {
+                            "kind": "pose",
+                            "speciesKey": species,
+                            "candidateId": candidate_item["candidateId"],
+                            "candidateSha256": candidate_item["sha256"],
+                            "variantKey": canonical_variant,
+                            "clip": clip,
+                            **{
+                                **copied,
+                                "path": relative.as_posix(),
+                            },
+                        }
+                    )
 
         if len(screen_items) != 36 or len(pose_items) != 56:
             raise ValueError("review package image count mismatch")
@@ -359,18 +340,10 @@ def build_package(
             "status": "ready-for-human-review",
             "family": "world-v2",
             "sourceEvidence": {
-                "candidateReviewInputSha256": sha256_file(
-                    candidate_root / "candidate-review-input.json"
-                ),
-                "browserQualificationSha256": sha256_file(
-                    prequal_root / "candidate-qualification.json"
-                ),
-                "browserVerificationSha256": sha256_file(
-                    prequal_root / "verification.json"
-                ),
-                "screenIntegrationSha256": sha256_file(
-                    screen_root / "screen-integration.json"
-                ),
+                "candidateReviewInputSha256": sha256_file(candidate_root / "candidate-review-input.json"),
+                "browserQualificationSha256": sha256_file(prequal_root / "candidate-qualification.json"),
+                "browserVerificationSha256": sha256_file(prequal_root / "verification.json"),
+                "screenIntegrationSha256": sha256_file(screen_root / "screen-integration.json"),
             },
             "species": list(SPECIES),
             "screenScreenshotCount": len(screen_items),
@@ -411,12 +384,8 @@ def build_package(
                     "speciesKey": species,
                     "liteCandidateId": candidates[(species, "lite")]["candidateId"],
                     "liteSha256": candidates[(species, "lite")]["sha256"],
-                    "standardCandidateId": candidates[
-                        (species, "standard")
-                    ]["candidateId"],
-                    "standardSha256": candidates[
-                        (species, "standard")
-                    ]["sha256"],
+                    "standardCandidateId": candidates[(species, "standard")]["candidateId"],
+                    "standardSha256": candidates[(species, "standard")]["sha256"],
                     "decision": "pending",
                     "silhouette": "pending",
                     "motion": "pending",
@@ -481,10 +450,10 @@ def build_html(root: Path, manifest: dict, manifest_sha: str) -> None:
             screen_cards.append(
                 f"""
                 <figure>
-                  <img loading="lazy" src="{html.escape(item['path'])}">
+                  <img loading="lazy" src="{html.escape(item["path"])}">
                   <figcaption>
-                    {html.escape(item['screen'])}
-                    · {item['viewport']['width']}×{item['viewport']['height']}
+                    {html.escape(item["screen"])}
+                    · {item["viewport"]["width"]}×{item["viewport"]["height"]}
                     · lite
                   </figcaption>
                 </figure>
@@ -497,23 +466,19 @@ def build_html(root: Path, manifest: dict, manifest_sha: str) -> None:
             pose_cards.append(
                 f"""
                 <figure>
-                  <img loading="lazy" src="{html.escape(item['path'])}">
+                  <img loading="lazy" src="{html.escape(item["path"])}">
                   <figcaption>
-                    {html.escape(item['variantKey'])}
-                    · {html.escape(item['clip'])}
+                    {html.escape(item["variantKey"])}
+                    · {html.escape(item["clip"])}
                   </figcaption>
                 </figure>
                 """
             )
 
-        lite = next(
-            c for c in manifest["candidates"]
-            if c["speciesKey"] == species and c["variantKey"] == "lite"
-        )
+        lite = next(c for c in manifest["candidates"] if c["speciesKey"] == species and c["variantKey"] == "lite")
 
         standard = next(
-            c for c in manifest["candidates"]
-            if c["speciesKey"] == species and c["variantKey"] == "standard"
+            c for c in manifest["candidates"] if c["speciesKey"] == species and c["variantKey"] == "standard"
         )
 
         sections.append(
@@ -521,16 +486,16 @@ def build_html(root: Path, manifest: dict, manifest_sha: str) -> None:
             <section>
               <h2>{html.escape(species)}</h2>
               <p class="identity">
-                lite <code>{lite['sha256']}</code><br>
-                standard <code>{standard['sha256']}</code>
+                lite <code>{lite["sha256"]}</code><br>
+                standard <code>{standard["sha256"]}</code>
               </p>
               <h3>실제 SK7 화면</h3>
               <div class="screen-grid">
-                {''.join(screen_cards)}
+                {"".join(screen_cards)}
               </div>
               <h3>동작 / 변형 25% pose</h3>
               <div class="pose-grid">
-                {''.join(pose_cards)}
+                {"".join(pose_cards)}
               </div>
             </section>
             """
@@ -611,7 +576,7 @@ code {{
 결정은 decision-template.json에 별도로 기록합니다.
 </p>
 </header>
-{''.join(sections)}
+{"".join(sections)}
 </body>
 </html>
 """

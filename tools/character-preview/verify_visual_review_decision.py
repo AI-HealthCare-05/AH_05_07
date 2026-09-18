@@ -16,7 +16,7 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify(decision_path: Path, manifest_path: Path, allow_pending: bool = False) -> dict:
+def verify(decision_path: Path, manifest_path: Path, allow_pending: bool = False) -> dict:  # noqa: C901
     decision = json.loads(decision_path.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
@@ -40,10 +40,7 @@ def verify(decision_path: Path, manifest_path: Path, allow_pending: bool = False
     if {entry.get("speciesKey") for entry in entries} != SPECIES:
         raise ValueError("decision species set mismatch")
 
-    candidate_index = {
-        (item["speciesKey"], item["variantKey"]): item
-        for item in manifest["candidates"]
-    }
+    candidate_index = {(item["speciesKey"], item["variantKey"]): item for item in manifest["candidates"]}
 
     pending_found = False
 
@@ -109,9 +106,7 @@ def verify(decision_path: Path, manifest_path: Path, allow_pending: bool = False
                 ]
 
                 if any(value != "accept" for value in accepted):
-                    raise ValueError(
-                        "accept-family requires every species visual field to accept"
-                    )
+                    raise ValueError("accept-family requires every species visual field to accept")
 
     return {
         "status": "valid-pending" if pending_found else "valid-completed",
