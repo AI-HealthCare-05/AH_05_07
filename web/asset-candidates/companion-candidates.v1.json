@@ -2,5 +2,198 @@
   "schemaVersion": 1,
   "status": "staging",
   "purpose": "Review-only metadata intake. Entries here never activate a runtime companion.",
-  "candidates": []
+  "candidates": [
+    {
+      "candidateId": "COMPANION-CAND-KOALA-V002-LITE",
+      "speciesKey": "koala",
+      "version": "v002",
+      "variantKey": "lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/koala-world-v2-001-lite.glb",
+      "sha256": "9fa34f6339b7699ffeeac48e688dabe349207b7a6c465b4ffda7a53f159b6657",
+      "bytes": 547288,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-KOALA-V002-STANDARD",
+      "speciesKey": "koala",
+      "version": "v002",
+      "variantKey": "standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/koala-world-v2-001-standard.glb",
+      "sha256": "27c5e1582a727533bd45fbaa815474f49d37178d0993d6dcb8cf374e2e8f3208",
+      "bytes": 1010084,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-MOUSE-V002-LITE",
+      "speciesKey": "mouse",
+      "version": "v002",
+      "variantKey": "lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/mouse-world-v2-001-lite.glb",
+      "sha256": "efbcd9e0ece9f31088accf16868b885d0af54be7621b392fbdddead38433b0e7",
+      "bytes": 626692,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-MOUSE-V002-STANDARD",
+      "speciesKey": "mouse",
+      "version": "v002",
+      "variantKey": "standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/mouse-world-v2-001-standard.glb",
+      "sha256": "fc82de1c761f5975711fd4bb775698645c44b50e6a578264ab04f14a06b98c62",
+      "bytes": 1120212,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-PIG-V002-LITE",
+      "speciesKey": "pig",
+      "version": "v002",
+      "variantKey": "lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/pig-world-v2-001-lite.glb",
+      "sha256": "e228d555af6eed3c986a65dec69c33cd55e638162c322bde3852a9041bd2e76a",
+      "bytes": 559404,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-PIG-V002-STANDARD",
+      "speciesKey": "pig",
+      "version": "v002",
+      "variantKey": "standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/pig-world-v2-001-standard.glb",
+      "sha256": "ecbb40473145750026c91c0d1f6b14142db05887ab2acf1f91693433ba7b849b",
+      "bytes": 978524,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-OWL-V002-LITE",
+      "speciesKey": "owl",
+      "version": "v002",
+      "variantKey": "lite",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/owl-world-v2-001-lite.glb",
+      "sha256": "4e4b6e7b2aa6e276da8c63c8d01eedc2fc35835da853b0d918d468d13d886861",
+      "bytes": 662592,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    },
+    {
+      "candidateId": "COMPANION-CAND-OWL-V002-STANDARD",
+      "speciesKey": "owl",
+      "version": "v002",
+      "variantKey": "standard",
+      "sourceFile": "SK7_Asset_Factory_Master_20260918/02_World_Factory/SK7_World_Factory_v2/assets/companions/owl-world-v2-001-standard.glb",
+      "sha256": "1e773423d08ba333d628517ad49ce5cb926cd4a967d482efb3acab2ae5b0b5b5",
+      "bytes": 1183524,
+      "clips": [
+        "celebrate",
+        "curious",
+        "greet",
+        "idle",
+        "move",
+        "rest",
+        "special"
+      ],
+      "status": "review",
+      "provenance": {
+        "owner": "emotigom",
+        "rightsBasis": "SK7 owner approval dated 2026-09-18 documented in docs/evidence/companion-world-v2-candidate-provenance.md; project storage, review, distribution and use approved; no known third-party 3D/stock asset dependency; candidate provenance only, not production activation.",
+        "sourceRevision": "world-v2-001"
+      }
+    }
+  ]
 }
