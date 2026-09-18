@@ -2089,7 +2089,10 @@ function App() {
     {reportVisible && reportCreatedAt && windowData && ready && <LivingWeekReport
       days={trailDays}
       observations={windowData.blood_pressure_observations.map(record => ({
-        date: record.observed_on, period: periodLabel(record.period), measurement: displayMeasurement(record),
+        date: record.observed_on, period: record.period, systolic: record.systolic, diastolic: record.diastolic,
+      }))}
+      checkins={windowData.challenge_checkins.map(record => ({
+        date: record.observed_on, actionLabel: challengeLabel(record.action_id), statusLabel: checkinLabel(record.status),
       }))}
       hasLegacyRecords={windowData.challenge_events.length > 0}
       unconfirmedChanges={Boolean(notice?.reload)}

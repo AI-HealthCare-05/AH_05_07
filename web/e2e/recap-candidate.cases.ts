@@ -1,7 +1,7 @@
 // Included by the existing required review scene suite; no workflow changes.
 import { expect, test, type Page } from '@playwright/test';
 import { sevenDayFacts } from '../src/ui/livingWeek';
-import { summarizeTrailDays } from '../src/ui/livingWeekPresentation';
+import { projectReportBloodPressure, summarizeTrailDays, type ReportObservation } from '../src/ui/livingWeekPresentation';
 import { readFileSync } from 'node:fs';
 const fixtureScript = readFileSync(new URL('../scripts/journey-review-fixture.mjs', import.meta.url), 'utf8').replace('export function', 'function') + '\njourneyReviewFixture();';
 const screen = (page: Page) => page.locator('.journey-recap');
@@ -470,6 +470,46 @@ test('living week uses Seoul dates and date-only landmarks with mixed facts and 
   expect(runtimeRequests.filter(url => /ThreeSceneRenderer/.test(url))).toEqual([]);
 });
 
+const reportObservation = (date: string, period: ReportObservation['period'], systolic: number, diastolic: number): ReportObservation => ({ date, period, systolic, diastolic });
+const morning = reportObservation('2026-09-11', 'morning', 120, 80);
+const evening = reportObservation('2026-09-11', 'evening', 126, 82);
+const earlier = reportObservation('2026-09-09', 'evening', 118, 78);
+
+for (const scenario of [
+  { name: 'zero observations', observations: [], morning: 0, evening: 0, dates: 0, mean: null },
+  { name: 'one morning observation', observations: [morning], morning: 1, evening: 0, dates: 1, mean: null },
+  { name: 'one evening observation', observations: [evening], morning: 0, evening: 1, dates: 1, mean: null },
+  { name: 'only mornings', observations: [morning, reportObservation('2026-09-09', 'morning', 119, 77)], morning: 2, evening: 0, dates: 2, mean: { systolic: 119.5, diastolic: 78.5 } },
+  { name: 'only evenings', observations: [evening, earlier], morning: 0, evening: 2, dates: 2, mean: { systolic: 122, diastolic: 80 } },
+  { name: 'two observations on one day', observations: [evening, morning], morning: 1, evening: 1, dates: 1, mean: { systolic: 123, diastolic: 81 } },
+  { name: 'two on one day and one on another, with missing dates', observations: [evening, earlier, morning], morning: 1, evening: 2, dates: 2, mean: { systolic: 364 / 3, diastolic: 80 } },
+]) test(`living week report arithmetic: ${scenario.name}`, () => {
+  const days = sevenDayFacts('2026-09-11', scenario.observations.map(record => ({ observed_on: record.date })), [
+    { observed_on: '2026-09-10', status: 'completed' },
+  ]);
+  const facts = projectReportBloodPressure(days, scenario.observations);
+  expect(facts).toMatchObject({
+    observationCount: scenario.observations.length, observationDateCount: scenario.dates,
+    morningCount: scenario.morning, eveningCount: scenario.evening, mean: scenario.mean,
+  });
+  expect(facts.morningCount + facts.eveningCount).toBe(facts.observationCount);
+  expect(facts.observationDateCount).toBe(summarizeTrailDays(days).observationDateCount);
+  expect(days.find(day => day.date === '2026-09-10')?.observationCount).toBe(0);
+});
+
+test('living week report projection scopes the full range and orders raw facts without mutating them', () => {
+  const observations = Object.freeze([
+    evening, reportObservation('2026-09-12', 'morning', 180, 100), earlier,
+    reportObservation('2026-09-04', 'evening', 170, 90), morning,
+  ].map(record => Object.freeze(record)));
+  const facts = projectReportBloodPressure(sevenDayFacts('2026-09-11', [], []), observations);
+  expect(facts.observations).toEqual([earlier, morning, evening]);
+  expect(facts.observationCount).toBe(3);
+  expect(facts.observationDateCount).toBe(2);
+  expect(facts.mean).toEqual({ systolic: 364 / 3, diastolic: 80 });
+  expect(observations[0]).toBe(evening);
+});
+
 const report = (page: Page) => page.locator('[data-living-week-report]');
 const reportAction = (page: Page) => page.getByRole('button', { name: '7일 리포트 보기', exact: true });
 const reportDates = ['2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11'];
@@ -544,9 +584,9 @@ test('living week report preserves the complete selected week with separate fact
       ...responseWindow(url.searchParams.get('start_on')!, url.searchParams.get('end_on')!),
       ...privateMetadata,
       blood_pressure_observations: [
-        { ...privateMetadata, id: 'report-bp-morning-private-canary', observed_on: '2026-09-11', period: 'morning', systolic: 120, diastolic: 80 },
         { ...privateMetadata, id: 'report-bp-evening-private-canary', observed_on: '2026-09-11', period: 'evening', systolic: 126, diastolic: 82 },
         { ...privateMetadata, id: 'report-bp-earlier-private-canary', observed_on: '2026-09-09', period: 'evening', systolic: 118, diastolic: 78 },
+        { ...privateMetadata, id: 'report-bp-morning-private-canary', observed_on: '2026-09-11', period: 'morning', systolic: 120, diastolic: 80 },
       ],
       challenge_checkins: [
         { id: 'report-checkin-private-canary-a', challenge_id: 'report-challenge-private-canary', observed_on: '2026-09-05', action_id: 'sleep-routine', status: 'completed' },
@@ -563,6 +603,17 @@ test('living week report preserves the complete selected week with separate fact
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(0);
   const requestsBeforeReport = dataRequests;
   const storageBeforeReport = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, url: location.href }));
+  await page.evaluate(() => {
+    const effects = { fetch: 0, storage: 0, share: 0, beacon: 0 };
+    Object.defineProperty(window, 'reportEffects', { value: () => effects });
+    const fetch = window.fetch.bind(window);
+    window.fetch = (...args) => { effects.fetch++; return fetch(...args); };
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) { effects.storage++; setItem.call(this, key, value); };
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async () => { effects.share++; } });
+    const sendBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = (...args) => { effects.beacon++; return sendBeacon(...args); };
+  });
   await reportAction(page).press('Enter');
   await expect(report(page)).toBeVisible();
   await expect(report(page).getByRole('heading', { name: '7일 기록 리포트', exact: true })).toBeFocused();
@@ -570,6 +621,11 @@ test('living week report preserves the complete selected week with separate fact
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/3\s*건/);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰이 있는 날짜\s*2일/);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰 기록 없음\s*5일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
+    '전체 관찰3건', '아침 기록1건', '저녁 기록2건', '관찰이 있는 날짜2일', '관찰 기록 없음5일',
+  ]);
+  await expect(report(page).locator('[data-report-mean]')).toContainText('121.3/80.0 mmHg');
+  await expect(report(page).locator('[data-report-mean]')).toContainText('이 기간에 저장되어 현재 불러온 3건의 단순 산술 평균');
   await expect(report(page).locator('[data-report-summary="challenge"] > div')).toHaveText([
     '체크인이 있는 날짜3일', '기록함1일', '건너뜀1일', '혼합1일', '기록 없음4일',
   ]);
@@ -580,10 +636,15 @@ test('living week report preserves the complete selected week with separate fact
   await expect(lastDay).toContainText('아침 · 120/80 mmHg');
   await expect(lastDay).toContainText('저녁 · 126/82 mmHg');
   await expect(lastDay).toContainText('혼합');
+  await expect(lastDay.getByRole('list', { name: /혈압 측정 기록/ }).locator('li')).toHaveText(['아침 · 120/80 mmHg', '저녁 · 126/82 mmHg']);
+  await expect(lastDay.getByRole('list', { name: /챌린지 참여 기록/ }).locator('li')).toHaveText(['10분 걷기 · 기록함', '수면 시간 지키기 · 건너뜀']);
   await expect(report(page).locator('[data-report-date="2026-09-09"]')).toContainText('저녁 · 118/78 mmHg');
   await expect(report(page).locator('[data-report-date="2026-09-05"]')).toContainText('기록함');
+  await expect(report(page).locator('[data-report-date="2026-09-05"]')).toContainText('수면 시간 지키기 · 기록함');
   await expect(report(page).locator('[data-report-date="2026-09-10"]')).toContainText('건너뜀');
+  await expect(report(page).locator('[data-report-date="2026-09-10"]')).toContainText('10분 걷기 · 건너뜀');
   await expect(report(page).locator('[data-report-date="2026-09-08"]')).toContainText('기록 없음');
+  await expect(report(page).locator('[data-report-date="2026-09-08"] li')).toHaveCount(0);
   for (const day of await report(page).locator('[data-report-date]').all()) {
     await expect(day.locator('time')).toHaveCount(1);
     await expect(day).toContainText('혈압 관찰');
@@ -594,6 +655,7 @@ test('living week report preserves the complete selected week with separate fact
   expect(await report(page).innerText()).not.toMatch(/정상|좋은 수치|나쁜 수치|목표 달성|건강 점수|성공률|참여율|개선율|%/);
   expect(dataRequests).toBe(requestsBeforeReport);
   expect(downloads).toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { reportEffects: () => object }).reportEffects())).toEqual({ fetch: 0, storage: 0, share: 0, beacon: 0 });
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, url: location.href }))).toEqual(storageBeforeReport);
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).press('Enter');
   await expect(report(page)).toHaveCount(0);
@@ -615,6 +677,10 @@ test('living week report distinguishes initial loading and failure from confirme
   await reportAction(page).click();
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/0\s*건/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
+    '전체 관찰0건', '아침 기록0건', '저녁 기록0건', '관찰이 있는 날짜0일', '관찰 기록 없음7일',
+  ]);
+  await expect(report(page).locator('[data-report-mean]')).toHaveCount(0);
   await expect(report(page).locator('[data-report-summary="challenge"]')).toContainText(/0\s*일/);
   for (const day of await report(page).locator('[data-report-date]').all()) await expect(day).toContainText('기록 없음');
 });
@@ -667,6 +733,10 @@ test('living week report identifies retained data during refresh and after refre
   await expect(report(page)).toContainText('마지막으로 불러온');
   await expect(report(page)).toContainText('새로고침 중');
   await expect(report(page)).toContainText('120/80 mmHg');
+  await page.emulateMedia({ media: 'print' });
+  await expect(report(page).locator('[data-report-freshness]')).toBeVisible();
+  await expect(report(page).locator('[data-report-freshness]')).toContainText('새로고침 중');
+  await page.emulateMedia({ media: 'screen' });
   heldRefresh.release();
   await expect(report(page)).toContainText(/최신 여부.*(미확인|확인하지 못)/);
   await page.emulateMedia({ media: 'print' });
@@ -675,13 +745,15 @@ test('living week report identifies retained data during refresh and after refre
   await expect(report(page)).toContainText('120/80 mmHg');
 });
 
-for (const width of [320, 430]) test(`living week report reflows at ${width}px with 200% text`, async ({ page }) => {
+for (const width of [320, 390, 430]) test(`living week report reflows at ${width}px with 200% text`, async ({ page }) => {
   await page.setViewportSize({ width, height: 844 });
   await fixture(page);
   await reportAction(page).click();
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   await expect(report(page)).toBeVisible();
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);
+  await expect(report(page).locator('[data-report-mean]')).toContainText('119.0/79.0 mmHg');
+  await expect(report(page).getByText('10분 걷기 · 기록함', { exact: true })).toBeVisible();
   await noOverflow(page);
   for (const day of await report(page).locator('[data-report-date]').all()) {
     expect(await day.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
@@ -703,9 +775,11 @@ test('living week report prints only semantic report content through an explicit
   expect(printCalls).toBe(0);
   expect(downloads).toBe(0);
   const printAction = page.getByRole('button', { name: '인쇄 / PDF로 저장', exact: true });
+  const beforePrint = await page.locator('body').innerText();
   await printAction.press('Enter');
   await expect.poll(() => printCalls).toBe(1);
   expect(downloads).toBe(0);
+  expect(await page.locator('body').innerText()).toBe(beforePrint);
   await page.emulateMedia({ media: 'print' });
   await expect(report(page)).toBeVisible();
   await expect(page.locator('[data-living-week-app]')).toBeHidden();
@@ -716,6 +790,27 @@ test('living week report prints only semantic report content through an explicit
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);
   await expect(report(page)).toContainText('혈압 관찰');
   await expect(report(page)).toContainText('챌린지 참여');
+  await expect(page.locator('.week-report-toolbar')).toBeHidden();
+  await expect(report(page).locator('[data-report-mean]')).toBeVisible();
+  await expect(report(page).locator('[data-report-mean]')).toContainText('119.0/79.0 mmHg');
+  await expect(report(page).getByText('아침 · 120/80 mmHg', { exact: true })).toBeVisible();
+  await expect(report(page).getByText('저녁 · 118/78 mmHg', { exact: true })).toBeVisible();
+  await expect(report(page).getByText('10분 걷기 · 건너뜀', { exact: true })).toBeVisible();
+  await expect(report(page).getByText(/측정하지 않았다는 뜻은 아니며/)).toBeVisible();
+  await expect(report(page).getByText(/현재 7일.*현재 불러온/)).toBeVisible();
+  await expect(report(page).getByText(/진료·상담 때 이 기록을 직접/)).toBeVisible();
+  const footer = report(page).locator('footer');
+  await expect(footer).toBeVisible();
+  await expect(footer).toContainText('사용자가 입력한 7일 기록의 정리본');
+  await expect(footer).toContainText('진단·치료·치료 효과 판정이 아닙니다');
+  await expect(footer).toContainText('사용자가 직접 관리하는 사본');
+  await expect(footer).toContainText('30일 서버 보관과 별개');
+  for (const day of await report(page).locator('[data-report-date]').all()) {
+    await expect(day.locator('time')).toBeVisible();
+    await expect(day.locator('header > p')).toBeHidden();
+    await expect(day).toHaveCSS('break-inside', 'avoid');
+    await expect(day).toHaveCSS('color', 'rgb(0, 0, 0)');
+  }
   const selectableText = await report(page).evaluate(node => {
     const range = document.createRange();
     range.selectNodeContents(node);
@@ -741,6 +836,53 @@ test('living week report leaves no private report content after logout', async (
   await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
   await expect(report(page)).toHaveCount(0);
   await expect(page.getByText('120/80 mmHg', { exact: false })).toHaveCount(0);
+});
+
+for (const submit of [false, true]) test(`living week report excludes ${submit ? 'an uncertain save' : 'an unsaved draft'} without retrying`, async ({ page }) => {
+  let windowRequests = 0;
+  let saveRequests = 0;
+  const saveHeaders = { ...headers, 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: saveHeaders });
+    if (url.pathname.endsWith('/window')) {
+      windowRequests++;
+      return route.fulfill({ headers: saveHeaders, contentType: 'application/json', body: JSON.stringify(responseWindow(url.searchParams.get('start_on')!, url.searchParams.get('end_on')!)) });
+    }
+    if (request.method() === 'POST' && url.pathname.endsWith('/blood-pressure')) {
+      saveRequests++;
+      return route.fulfill({ status: 503, headers: saveHeaders, contentType: 'application/json', body: '{"detail":{"code":"observation_storage_not_ready"}}' });
+    }
+    return route.abort();
+  });
+  await page.goto('/?e2e=signed-in&screen=S04');
+  await page.getByRole('combobox', { name: '시간대', exact: true }).selectOption('evening');
+  await page.getByRole('spinbutton', { name: '수축기 mmHg', exact: true }).fill('135');
+  await page.getByRole('spinbutton', { name: '이완기 mmHg', exact: true }).fill('89');
+  if (submit) {
+    await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
+    await expect(page.getByText('저장 여부를 확인하지 못했어요.', { exact: false }).first()).toBeVisible();
+  }
+  await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+  await reportAction(page).click();
+  await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
+    '전체 관찰1건', '아침 기록1건', '저녁 기록0건', '관찰이 있는 날짜1일', '관찰 기록 없음6일',
+  ]);
+  await expect(report(page).locator('[data-report-mean]')).toHaveCount(0);
+  await expect(report(page)).not.toContainText('135/89');
+  for (const media of ['screen', 'print'] as const) {
+    await page.emulateMedia({ media });
+    await expect(report(page).getByText('아침 · 120/80 mmHg', { exact: true })).toBeVisible();
+    if (submit) {
+      await expect(report(page).locator('[data-report-freshness]')).toBeVisible();
+      await expect(report(page).locator('[data-report-freshness]')).toContainText('저장 또는 삭제의 반영 여부를 아직 확인하지 못했어요.');
+    } else await expect(report(page).locator('[data-report-freshness]')).toHaveCount(0);
+  }
+  expect(windowRequests).toBe(1);
+  expect(saveRequests).toBe(Number(submit));
 });
 
 test('living week report retains an uncertain deletion warning on screen and in print', async ({ page }) => {
@@ -775,6 +917,7 @@ test('living week report retains an uncertain deletion warning on screen and in 
   await reportAction(page).click();
   await expect(report(page)).toContainText('120/80 mmHg');
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/1\s*건/);
+  await expect(report(page).locator('[data-report-mean]')).toHaveCount(0);
   const freshness = report(page).locator('[data-report-freshness]');
   await expect(freshness).toHaveAttribute('data-report-freshness', 'ready');
   await expect(freshness).toContainText('최신 여부 미확인');

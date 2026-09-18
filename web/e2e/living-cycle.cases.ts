@@ -71,6 +71,9 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await expect(page.locator('[data-living-week-report]')).toContainText('120/80 mmHg');
   await expect(page.locator('[data-living-week-report]')).not.toContainText('121/81 mmHg');
   await expect(page.locator('[data-living-week-report]')).toContainText('종료된 7일');
+  await expect(page.locator('[data-living-week-report]')).toContainText('10분 걷기 · 기록함');
+  await expect(page.locator('[data-report-mean]')).toHaveCount(0);
+  const completedReportFacts = await page.locator('[data-report-date]').allTextContents();
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기' }).click();
   await expect(page.getByRole('button', { name: '7일 리포트 보기', exact: true })).toBeFocused();
   await expect(page.locator('[data-dashboard-window]')).toHaveAttribute('data-dashboard-window', 'cycle:2026-09-11');
@@ -100,6 +103,13 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await page.getByRole('button', { name: '종료된 7일 돌아보기' }).click();
   await page.getByRole('button', { name: '7일 리포트 보기', exact: true }).click();
   await expect(page.locator('[data-living-week-report]')).toContainText('120/80 mmHg');
+  await expect(page.locator('[data-living-week-report]')).not.toContainText('121/81 mmHg');
+  await expect(page.locator('[data-living-week-report]')).toContainText('10분 걷기 · 기록함');
+  await expect(page.locator('[data-living-week-report]')).not.toContainText('수면 시간 지키기');
+  await expect(page.locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
+    '전체 관찰1건', '아침 기록1건', '저녁 기록0건', '관찰이 있는 날짜1일', '관찰 기록 없음6일',
+  ]);
+  expect(await page.locator('[data-report-date]').allTextContents()).toEqual(completedReportFacts);
   expect(state.writes).toHaveLength(1);
 });
 
