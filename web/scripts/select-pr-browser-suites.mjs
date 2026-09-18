@@ -105,6 +105,11 @@ const productionCompanionTestFiles = new Set([
   'web/e2e/companion-production.spec.ts',
 ]);
 
+const productionS10SceneTestFiles = new Set([
+  'web/e2e/s10-production-scene.spec.ts',
+  'web/playwright.s10-production.config.ts',
+]);
+
 const scenePolicyContractTestFiles = new Set([
   'web/e2e/scene-policy.spec.ts',
   'web/e2e/presentation-policy.spec.ts',
@@ -119,6 +124,7 @@ const directlyRoutedTestFiles = new Set([
   ...reviewSceneTestFiles,
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
+  ...productionS10SceneTestFiles,
   ...scenePolicyContractTestFiles,
   ...uiBuildMatrixFiles,
 ]);
@@ -141,6 +147,11 @@ const companionReviewSuite = Object.freeze({
 const productionCompanionSuite = Object.freeze({
   name: 'production-on companion',
   command: 'npm run test:e2e:production:on',
+});
+
+const productionS10SceneSuite = Object.freeze({
+  name: 'production S10 scene',
+  command: 'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
 });
 
 const scenePolicyContractSuite = Object.freeze({
@@ -198,6 +209,7 @@ const knownWebFiles = new Set([
   ...reviewSceneTestFiles,
   ...companionReviewTestFiles,
   ...productionCompanionTestFiles,
+  ...productionS10SceneTestFiles,
   ...scenePolicyContractTestFiles,
   ...uiBuildMatrixFiles,
   ...selectorFiles,
@@ -274,6 +286,7 @@ export function selectPrBrowserSuites(files) {
     if (touches(relevant, reviewSceneTestFiles)) suites.push(reviewSceneSuite);
     if (touches(relevant, companionReviewTestFiles)) suites.push(companionReviewSuite);
     if (touches(relevant, productionCompanionTestFiles)) suites.push(productionCompanionSuite);
+    if (touches(relevant, productionS10SceneTestFiles)) suites.push(productionS10SceneSuite);
     if (touches(relevant, scenePolicyContractTestFiles)) suites.push(scenePolicyContractSuite);
     if (touches(relevant, uiBuildMatrixFiles)) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
@@ -286,6 +299,7 @@ export function selectPrBrowserSuites(files) {
   const touchesCompanionReviewRuntime = touches(relevant, companionReviewRuntimeFiles)
     || touches(relevant, companionReviewTestFiles);
   const touchesProductionCompanionTests = touches(relevant, productionCompanionTestFiles);
+  const touchesProductionS10SceneTests = touches(relevant, productionS10SceneTestFiles);
   const touchesScenePolicyContracts = touches(relevant, scenePolicyContractTestFiles);
   const touchesUiBuildMatrix = touches(relevant, uiBuildMatrixFiles);
 
@@ -301,6 +315,7 @@ export function selectPrBrowserSuites(files) {
     } else if (touchesProductionCompanionTests) {
       suites.push(productionCompanionSuite);
     }
+    if (touchesProductionS10SceneTests) suites.push(productionS10SceneSuite);
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
@@ -311,6 +326,7 @@ export function selectPrBrowserSuites(files) {
     || touchesReviewSceneRuntime
     || touchesCompanionReviewRuntime
     || touchesProductionCompanionTests
+    || touchesProductionS10SceneTests
     || touchesScenePolicyContracts
     || touchesUiBuildMatrix
   ) {
@@ -322,6 +338,7 @@ export function selectPrBrowserSuites(files) {
     } else if (touchesProductionCompanionTests) {
       suites.push(productionCompanionSuite);
     }
+    if (touchesProductionS10SceneTests) suites.push(productionS10SceneSuite);
     if (touchesScenePolicyContracts) suites.push(scenePolicyContractSuite);
     if (touchesUiBuildMatrix) suites.push(uiBuildMatrixSuite);
     return cloneSuites(suites);
