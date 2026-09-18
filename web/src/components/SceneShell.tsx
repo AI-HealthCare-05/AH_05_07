@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
+import { UiIcon } from "./UiIcon";
+import { iconForScreen } from "../ui/uiIconPaths";
+
 import { SavedSceneBoundary } from "./SavedSceneBoundary";
 import { allowsSavedScene, type SavedSceneEvent } from "../ui/savedScene";
 
@@ -99,7 +102,7 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
             onClick={() => onNavigate(item.screen)}
             key={item.screen}
           >
-            <span aria-hidden="true" data-nav-icon={item.screen} />
+            <UiIcon name={iconForScreen(item.screen)} size={20} data-nav-icon={item.screen} />
             <span className="nav-label-wide">{item.label}</span>
             <span className="nav-label-short">{item.shortLabel}</span>
           </button>

@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef } from "react";
+import { UiIcon } from "./UiIcon";
+import { UiObject } from "./UiObject";
 import type { BloodPressureObservation } from "../lib/api";
 import { exploreRecords, recordTypes, type ExplorerSelection, type RecordBrowseItem } from "../ui/recordExplorer";
 import type { ExplorerReturnPoint } from "./useRecordExplorerMemory";
@@ -76,14 +78,14 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
       <fieldset className="record-explorer-filter">
         <legend>기록 종류</legend>
         <div className="record-explorer-buttons">
-          {recordTypes.map(({ kind, label }) => <button key={kind} ref={kind === "all" ? allFilter : undefined} type="button" className="secondary" aria-pressed={selection.filter === kind} onClick={() => onSelect({ ...selection, filter: kind })}>{label} {counts[kind]}개</button>)}
+          {recordTypes.map(({ kind, label }) => <button key={kind} ref={kind === "all" ? allFilter : undefined} type="button" className="secondary" aria-pressed={selection.filter === kind} onClick={() => onSelect({ ...selection, filter: kind })}><UiIcon name="check" size={16} className="record-filter-check" />{label} {counts[kind]}개</button>)}
         </div>
       </fieldset>
       {dates.length > 0 && <fieldset className="record-explorer-filter">
         <legend>기록 날짜</legend>
         <div className="record-explorer-buttons">
-          <button type="button" className="secondary" aria-pressed={selection.date === null} onClick={() => onSelect({ ...selection, date: null })}>모든 날짜</button>
-          {dates.map(date => <button key={date} type="button" className="secondary" aria-label={dateLabel(date)} aria-pressed={selection.date === date} onClick={() => onSelect({ ...selection, date })}><time dateTime={date}>{Number(date.slice(5, 7))}.{Number(date.slice(8))}</time></button>)}
+          <button type="button" className="secondary" aria-pressed={selection.date === null} onClick={() => onSelect({ ...selection, date: null })}><UiIcon name="check" size={16} className="record-filter-check" />모든 날짜</button>
+          {dates.map(date => <button key={date} type="button" className="secondary" aria-label={dateLabel(date)} aria-pressed={selection.date === date} onClick={() => onSelect({ ...selection, date })}><UiIcon name="check" size={16} className="record-filter-check" /><time dateTime={date}>{Number(date.slice(5, 7))}.{Number(date.slice(8))}</time></button>)}
         </div>
       </fieldset>}
     </div>
@@ -113,12 +115,13 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
                 <span>{item.kind === "blood-pressure" ? periodLabel(item.record.period) : checkinLabel(item.record.status)}</span>
               </span>
               <span className="record-explorer-access" id={`${descriptionId}-${date}-${index}-access`}>{isReadOnly(item) ? "읽기 전용" : "수정 가능"}</span>
-              <span className="record-explorer-open" aria-hidden="true">상세 보기 →</span>
+              <span className="record-explorer-open" aria-hidden="true">상세 보기 <UiIcon name="arrow-right" size={18} /></span>
             </button>
           </li>)}
         </ul>
       </section>)}
     </div> : <div className="record-explorer-empty">
+      <UiObject name="notebook" className="record-explorer-empty-object" />
       <h2>{counts.all === 0 ? "이 7일에는 기록이 없어요." : "선택한 조건에 맞는 기록이 없어요."}</h2>
       {selection.date && !dates.includes(selection.date) && <p>선택한 날짜: {dateLabel(selection.date)}</p>}
       <p>{counts.all === 0 ? "다른 7일 구간을 선택하거나 오늘의 기록으로 돌아가 기록을 남겨 보세요." : "이 기간에는 기록이 있지만 선택한 종류나 날짜의 기록은 없어요."}</p>
