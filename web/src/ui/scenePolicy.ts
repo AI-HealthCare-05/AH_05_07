@@ -46,6 +46,8 @@ export type ScenePresentation = Readonly<{
   visualDisabled: boolean;
   webglAvailable: boolean;
   gate: unknown;
+  /** S10 exact-production requires an explicit Journey host ownership decision. */
+  productionS10Enabled?: boolean;
 }>;
 
 export type ScenePlan = Readonly<{
@@ -61,10 +63,10 @@ export function resolveScenePlan(input: ScenePresentation): ScenePlan | null {
   const gate = resolveSceneGate(input.gate);
   if (gate === "off" || input.visualDisabled) return null;
   if (input.screen !== "S02" && input.screen !== "S10") return null;
-  // S10 already has a separately qualified production companion with identity
-  // and day-focus attention. Keep its full-scene renderer review-only so one
-  // production screen never owns two WebGL character renderers at once.
-  if (gate === "production" && input.screen === "S10") return null;
+  // Exact-production S10 opens only when the Journey host explicitly hands
+  // decorative ownership to this scene. Legacy/non-Journey callers stay closed,
+  // preventing a second production character renderer from appearing.
+  if (gate === "production" && input.screen === "S10" && input.productionS10Enabled !== true) return null;
   const landmark = landmarkForCalendarDate(input.calendarDate);
   if (!landmark) return null;
   const recipe = findSceneRecipe(input.screen, landmark.id);

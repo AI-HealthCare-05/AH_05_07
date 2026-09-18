@@ -87,10 +87,12 @@ type VisualStageProps = {
   calendarDate: string;
   /** S02/S10 selectable identity. `undefined` keeps the base recipe; `null` forces tier-1 poster-only. */
   companionSpecies?: CompanionSpecies | null;
+  /** Explicit host authorization for the S10 exact-production full-scene owner. */
+  productionS10Enabled?: boolean;
 };
 
 /** Separate review boundary. Existing S05 and all semantic children stay outside. */
-export function VisualStage({ screen, calendarDate, companionSpecies }: VisualStageProps) {
+export function VisualStage({ screen, calendarDate, companionSpecies, productionS10Enabled = false }: VisualStageProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -99,7 +101,8 @@ export function VisualStage({ screen, calendarDate, companionSpecies }: VisualSt
     return () => media.removeEventListener("change", update);
   }, []);
   const basePlan = resolveScenePlan({ screen, calendarDate, reducedMotion, visualDisabled: false,
-    webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE });
+    webglAvailable: typeof WebGL2RenderingContext !== "undefined", gate: import.meta.env.VITE_SK7_SCENE_MODE,
+    productionS10Enabled });
   if (!basePlan) return null;
   const identityScreen = screen === "S02" || screen === "S10";
   const identityBound = identityScreen && companionSpecies !== undefined

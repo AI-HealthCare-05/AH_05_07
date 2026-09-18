@@ -13,12 +13,14 @@ test("fixed Seoul weekday journey crosses UTC midnight without challenge inputs"
   for (const date of ["2026-02-29", "2026-09-31", "invalid", "2026-9-9", "2026-09-09T00:00:00Z"]) expect(landmarkForCalendarDate(date)).toBeNull();
 });
 
-test("production activates qualified S02 while S10 keeps its independent production companion", () => {
+test("production S10 requires explicit host ownership while review remains directly available", () => {
   for (const gate of [undefined, null, "", "on", "Review"]) expect(resolveScenePlan({ ...presentation, gate })).toBeNull();
   expect(resolveSceneGate("production")).toBe("production");
   for (const screen of allScreenIds) {
     expect(resolveScenePlan({ ...presentation, gate: "review", screen }) !== null).toBe(screen === "S02" || screen === "S10");
     expect(resolveScenePlan({ ...presentation, gate: "production", screen }) !== null).toBe(screen === "S02");
+    expect(resolveScenePlan({ ...presentation, gate: "production", screen, productionS10Enabled: true }) !== null)
+      .toBe(screen === "S02" || screen === "S10");
   }
   expect(screenVisualModes.S05).toBe("legacy-s05");
   expect(screenVisualModes.S11).toBe("layered");

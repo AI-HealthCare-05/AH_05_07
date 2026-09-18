@@ -8,9 +8,9 @@
     "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
     "web/src/components/scene/ThreeSceneRenderer.tsx": "dd6bbb75ecde9b672ee387d71099d839298a5395d2c2d2d8ccdae290cfe7d71f",
     "web/src/components/scene/disposeScene.ts": "8e1118fa12ec735c62ecea215b32ad774880fc37ca53e195224bcf0fb8d96bf7",
-    "web/src/components/VisualStage.tsx": "310af3e3e25a02e503edd4e859f961f752b60b474640b2088f52e946200d9be2",
+    "web/src/components/VisualStage.tsx": "e7543027e966015922149620eaddbbc6dac8b6914761505345c6a7c7afe577bf",
     "web/src/ui/sceneRecipes.ts": "3950a85b404f92743533d6da16387c1700d991f424aad90f8d42e1f730e23907",
-    "web/src/ui/scenePolicy.ts": "16747bccfb128963dbe83b9fff61aa17eeff5f2c99c89e64a268c3f49609d695",
+    "web/src/ui/scenePolicy.ts": "4a21260fdadd0ded1d8c980ab557196bba0adb8a2038b4782095c6d28f56b9c3",
     "web/src/styles.css": "ec97eaf235ac407ce80d8cef57dac4ded7430eaed94790baa73abb57e438beec",
     "web/scripts/capture-scene-posters.mjs": "0d98b95b85d721c7730ae2b1ff632cf3fe596fffe1546176e1791238684a2fdf"
   },
