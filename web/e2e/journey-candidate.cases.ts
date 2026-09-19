@@ -339,8 +339,7 @@ test('display theme defaults safely and preserves semantic boundaries across rel
     const styles = getComputedStyle(settings);
     return {
       canvas: styles.getPropertyValue('--sk7-canvas').trim(),
-      text: styles.getPropertyValue('--sk7-text').trim(),
-      border: styles.getPropertyValue('--sk7-border').trim(),
+      surfaceSubtle: styles.getPropertyValue('--sk7-surface-subtle').trim(),
       accent: styles.getPropertyValue('--sk7-accent').trim(),
       success: styles.getPropertyValue('--sk7-success').trim(),
       warning: styles.getPropertyValue('--sk7-warning').trim(),
@@ -357,8 +356,7 @@ test('display theme defaults safely and preserves semantic boundaries across rel
   expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('rabbit');
   const warmTokens = await semanticTokens();
   expect(warmTokens.canvas).not.toBe(cloudTokens.canvas);
-  expect(warmTokens.text).not.toBe(cloudTokens.text);
-  expect(warmTokens.border).not.toBe(cloudTokens.border);
+  expect(warmTokens.surfaceSubtle).not.toBe(cloudTokens.surfaceSubtle);
   expect(warmTokens.accent).toBe(cloudTokens.accent);
   expect(warmTokens.success).toBe(cloudTokens.success);
   expect(warmTokens.warning).toBe(cloudTokens.warning);
@@ -374,8 +372,7 @@ test('display theme defaults safely and preserves semantic boundaries across rel
   expect(await page.evaluate(() => localStorage.getItem('sk7-ui-theme'))).toBe('high-contrast');
   const highContrastTokens = await semanticTokens();
   expect(highContrastTokens.canvas).not.toBe(cloudTokens.canvas);
-  expect(highContrastTokens.text).not.toBe(cloudTokens.text);
-  expect(highContrastTokens.border).not.toBe(cloudTokens.border);
+  expect(highContrastTokens.surfaceSubtle).not.toBe(cloudTokens.surfaceSubtle);
   expect(highContrastTokens.accent).toBe(cloudTokens.accent);
   expect(highContrastTokens.success).toBe(cloudTokens.success);
   expect(highContrastTokens.warning).toBe(cloudTokens.warning);
