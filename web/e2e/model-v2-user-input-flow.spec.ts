@@ -1187,8 +1187,7 @@ test("leaving S11 discards the transient draft and the completed result on retur
       await expect(result(page)).toBeVisible();
     }
     await page.getByRole("button", { name: completed ? "오늘의 기록으로 돌아가기" : "오늘의 기록", exact: true }).click();
-    await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
-    await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+    await page.getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
     await expect(result(page)).toHaveCount(0);
     await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
@@ -1196,8 +1195,7 @@ test("leaving S11 discards the transient draft and the completed result on retur
       await begin(page);
       await expect(page.locator("#model-age")).toHaveValue("");
       await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
-      await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
-      await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+      await page.getByRole("button", { name: "AI 분석", exact: true }).click();
     }
   }
   expect(routed.requests).toHaveLength(1);
@@ -1216,8 +1214,7 @@ test("account switch discards the previous account draft and ignores its pending
     routed.releaseFirst();
     await expect.poll(routed.settled).toBe(1);
     expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
-    await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
-    await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+    await page.getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(step(page, "intro")).toBeVisible();
     await begin(page);
     await expect(page.locator("#model-age")).toHaveValue("");
@@ -1256,8 +1253,7 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await changeSession(page, true);
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
-  await page.getByRole("button", { name: "설정과 도움말", exact: true }).click();
-  await page.getByRole("button", { name: "선별 신호 도구 열기", exact: true }).click();
+  await page.getByRole("button", { name: "AI 분석", exact: true }).click();
   await expect(step(page, "intro")).toBeVisible();
   await expect(result(page)).toHaveCount(0);
   await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);

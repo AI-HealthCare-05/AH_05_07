@@ -335,7 +335,7 @@ test("different-user transition cannot be cleared by stale account deletion comp
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page.locator('[role="dialog"]')).toHaveCount(0);
   await expect(page.getByText("삭제 처리 중")).toHaveCount(0);
-  await page.getByRole("button", { name: "설정과 도움말" }).click();
+  await page.getByRole("button", { name: "설정" }).click();
   await page.getByRole("button", { name: "7일 기록 보기" }).click();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
   await expect(page.getByText("125/82 mmHg")).toBeVisible();
@@ -505,7 +505,7 @@ test("an in-flight pre-deletion window response cannot restore the deleted accou
   await page.goto("/?e2e=signed-in&screen=S10");
   await expect(page.getByText("120/80 mmHg")).toBeVisible();
   await page.getByRole("button", { name: "새로고침" }).click();
-  await page.getByRole("button", { name: "설정과 도움말" }).click();
+  await page.getByRole("button", { name: "설정" }).click();
   await page.getByRole("button", { name: "계정 삭제" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "계속" }).click();

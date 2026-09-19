@@ -19,7 +19,7 @@ flowchart TD
     J --> C
     J --> G
     J --> I["S11 Transient local Model V2 result + app-state continuation"]
-    H --> I
+    B -->|AI 분석 primary navigation| I
     I -->|fresh current facts: no BP today| C
     I -->|fresh current facts: BP exists| D
     I -->|current record freshness unconfirmed| B
@@ -41,11 +41,17 @@ are intercepted by a login gate. The preview is presentation-only and is never
 treated as authenticated product history.
 
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
-four primary destinations are Today, Records, Seven days, and Settings. S11 is a
-secondary tool reached from Settings and, when the current window is confirmed
-empty, from S12 as a lower-priority non-persistent option. Direct S11 URLs,
-authentication boundaries, and browser back/forward remain valid. Focused work
-screens remain reachable without introducing a router dependency.
+five primary destinations are `오늘의 기록`, `AI 분석`, `기록 찾아보기`,
+`7일 돌아보기`, and `설정` (mobile: `오늘`, `AI`, `기록`, `7일`, `설정`).
+S11 owns the AI navigation state and is one primary-navigation action away from
+any signed-in primary screen; S14 owns Settings only, with no duplicate AI entry.
+S02's contextual `오늘의 시작점` entry and S12's optional lifestyle entry remain.
+The discoverability label `AI 분석` does not expand the S11 meaning of
+`입력 기반 위험군 선별 신호`: browser-local computation, the temporary research
+preview, interpretation prohibitions, non-persistence, and expiry remain governed
+by the [Model V2 product contract](model-v2-product-contract.md).
+Direct S11 URLs, authentication boundaries, and browser back/forward remain valid.
+Focused work screens remain reachable without introducing a router dependency.
 
 | Screen | Purpose |
 |---|---|
@@ -57,9 +63,9 @@ screens remain reachable without introducing a router dependency.
 | S07 | Today detail with separate BP/challenge/legacy fact lanes |
 | S08–S09 | Record browse, accumulated-record overview, and one selected record with its date/period context |
 | S10 | Current/prior seven-day recap, partial-record coverage, human-readable report/PDF, and export |
-| S11 | Optional browser-local Model V2 result, transient `오늘의 시작점` lifestyle summary, and one app-state continuation; input, result and continuation are not persisted |
+| S11 | Primary `AI 분석` capability with an optional browser-local Model V2 result, transient `오늘의 시작점` lifestyle summary, and one app-state continuation; input, result and continuation are not persisted |
 | S12–S13 | Confirmed empty and initial-load failure; current S12 keeps BP recording primary while exposing S11 as a lower-priority optional path |
-| S14 | Account, retention/help, and entry to optional tools |
+| S14 | Settings: account and retention/help |
 
 ## Accepted P0 flow
 
@@ -71,7 +77,7 @@ flowchart TD
     B --> E["Find a past record"]
     B --> F["Optional 7-day challenge"]
     B --> G["Settings"]
-    G --> H["Optional input-based risk signal"]
+    B --> H["AI 분석 · S11 input-based risk signal"]
 ```
 
 The core path is BP-first, but the product still preserves three separate facts:

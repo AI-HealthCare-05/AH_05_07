@@ -21,15 +21,16 @@ export type JourneyScreenId = (typeof allScreenIds)[number];
 
 export const primaryNavigation: ReadonlyArray<{ screen: ScreenId; label: string; shortLabel: string }> = [
   { screen: "S02", label: "오늘의 기록", shortLabel: "오늘" },
+  { screen: "S11", label: "AI 분석", shortLabel: "AI" },
   { screen: "S08", label: "기록 찾아보기", shortLabel: "기록" },
   { screen: "S10", label: "7일 돌아보기", shortLabel: "7일" },
-  { screen: "S14", label: "설정과 도움말", shortLabel: "설정" },
+  { screen: "S14", label: "설정", shortLabel: "설정" },
 ];
 
 export function primaryNavigationScreen(screen: ScreenId): ScreenId {
   if (screen === "S08" || screen === "S09") return "S08";
   if (screen === "S10") return "S10";
-  if (screen === "S11" || screen === "S14") return "S14";
+  if (screen === "S11" || screen === "S14") return screen;
   return "S02";
 }
 
