@@ -2034,3 +2034,20 @@
     margin-top: .1rem;
   }
 }
+
+/* SK7 QA MICRO-FRICTION — S09
+   Read-only remains explicit without competing with the selected fact. */
+
+.app-shell[data-screen="S09"] .journey-record-detail .notice-warning {
+  padding: .65rem .8rem;
+  border: 0;
+  border-left: 2px solid #c9a36b;
+  border-radius: .35rem;
+  background: #fff9ed;
+  box-shadow: none;
+  color: #665538;
+}
+
+.app-shell[data-screen="S09"] .journey-record-detail .notice-warning + .inline-actions {
+  margin-top: .2rem;
+}
