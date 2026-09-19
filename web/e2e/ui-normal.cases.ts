@@ -110,7 +110,7 @@ test('normal artifact excludes test authentication and fixture injection', () =>
   expect(readdirSync(dist)).not.toContain('journey-review-fixture.mjs');
 });
 
-test('normal mocked auth preserves empty S12, selects journey and keeps S11 transient/non-numeric', async ({ page }) => {
+for (const preview of [false, true]) test(`normal mocked auth keeps S11 transient with ${preview ? 'visible preview' : 'non-numeric completion'}`, async ({ page }) => {
   // Browser-owned synthetic storage + intercepted API only; no real auth/DB integration.
   let empty = true;
   let modelRequests = 0;
@@ -122,7 +122,7 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
       expect(request.postData()).toBeNull();
     }
   });
-  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.clock.setFixedTime(new Date(preview ? '2026-09-17T03:00:00Z' : '2026-09-11T03:00:00Z'));
   await page.addInitScript(() => localStorage.setItem('sb-auth-auth-token', JSON.stringify({
     access_token: 'local-mock-auth-token', refresh_token: 'local-mock-refresh-token', token_type: 'bearer', expires_in: 3600, expires_at: 2000000000,
     user: { id: 'local-mock-user', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '2026-09-01T00:00:00Z' },
@@ -173,7 +173,16 @@ test('normal mocked auth preserves empty S12, selects journey and keeps S11 tran
   await expect(result).toBeVisible();
   expect(modelRequests).toBe(0);
   expect(modelAssets).toBe(1);
-  expect(await result.innerText()).not.toMatch(/0\.\d+|\d+%|저위험|중위험|고위험/);
+  const value = result.locator('[data-model-v2-preview-value]');
+  if (preview) {
+    await expect(value).toHaveText('0.055');
+    await expect(value).toBeVisible();
+    expect(await value.evaluate(node => node.closest('details'))).toBeNull();
+  } else {
+    await expect(value).toHaveCount(0);
+    expect(await result.innerText()).not.toMatch(/0\.\d+/);
+  }
+  expect(await result.innerText()).not.toMatch(/\d+%|저위험|중위험|고위험/);
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(storage).not.toContain('never_smoked'); expect(storage).not.toContain('23:30');
   await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();

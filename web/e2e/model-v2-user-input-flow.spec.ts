@@ -1,6 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
+import { modelV2PresentationMode, visibleModelV2Output } from "../src/ui/modelV2VisibilityPolicy";
+import { seoulDate } from "../src/lib/seoulDate";
 import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
 import { chooseMinuteByKeyboard, chooseTime, expectTimeValue } from "./model-v2-time-wheel";
 
@@ -20,6 +22,26 @@ const timeInputs = [
   ["model-weekend-bed", "23:30"],
   ["model-weekend-wake", "08:00"],
 ] as const;
+
+test("Model V2 presentation policy is KST-bound, transient and fail closed", () => {
+  for (const [instant, expected] of [
+    ["2026-09-16T14:59:59.999Z", "non_numeric"],
+    ["2026-09-16T15:00:00.000Z", "research_preview"],
+    ["2026-10-17T14:59:59.999Z", "research_preview"],
+    ["2026-10-17T15:00:00.000Z", "non_numeric"],
+  ] as const) {
+    const kstDate = seoulDate(new Date(instant));
+    expect(modelV2PresentationMode(kstDate)).toBe(expected);
+    expect(visibleModelV2Output(0.73149, kstDate)).toBe(expected === "research_preview" ? 0.73149 : null);
+  }
+  for (const invalid of ["", "2026-9-17", "2026-09-31", "2026-09-17extra", "not-a-date"]) {
+    expect(modelV2PresentationMode(invalid)).toBe("non_numeric");
+    expect(visibleModelV2Output(0.73149, invalid)).toBeNull();
+  }
+  for (const output of [null, NaN, Infinity, -Infinity]) {
+    expect(visibleModelV2Output(output, "2026-09-17")).toBeNull();
+  }
+});
 
 type Step = "intro" | "basics" | "habits" | "activity" | "sleep" | "review";
 const stepTitles = {
@@ -72,7 +94,7 @@ const previous = (page: Page) => page.getByRole("button", { name: "이전", exac
 const submit = (page: Page) => page.getByRole("button", { name: "생활정보 분석하기", exact: true });
 const result = (page: Page) => page.locator('[data-model-v2-user-result="processed"]');
 
-async function openResearch(page: Page) {
+async function openTechnicalDetails(page: Page) {
   const disclosure = result(page).locator("details[data-model-v2-research]");
   if (await disclosure.getAttribute("open") === null) await disclosure.locator("summary").click();
   await expect(disclosure).toHaveAttribute("open", "");
@@ -216,6 +238,19 @@ async function dispatchVisibilityChange(page: Page, state: "hidden" | "visible")
   }, state);
 }
 
+async function observePreviewInsertion(page: Page) {
+  await page.evaluate(() => {
+    new MutationObserver(mutations => {
+      for (const mutation of mutations) for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement && (node.matches("[data-model-v2-preview]")
+          || node.querySelector("[data-model-v2-preview]"))) {
+          (window as unknown as { previewInserted?: boolean }).previewInserted = true;
+        }
+      }
+    }).observe(document.body, { subtree: true, childList: true });
+  });
+}
+
 async function dispatchPageshow(page: Page) {
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
 }
@@ -235,21 +270,26 @@ async function assertFitsViewport(page: Page) {
 }
 
 async function assertResultKeyboardAccess(page: Page) {
+  // macOS WebKit's native Tab skips buttons; Option+Tab includes all controls.
+  // Keep the same ordered focus/viewport assertions on every platform.
+  const tabKey = process.platform === "darwin" && test.info().project.use.browserName === "webkit"
+    ? "Alt+Tab" : "Tab";
   await expect(page.locator("#model-v2-result-title")).toBeFocused();
   for (const name of ["혈압 기록 남기기", "오늘의 기록으로 돌아가기"]) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(tabKey);
     const button = page.getByRole("button", { name, exact: true });
     await expect(button).toBeFocused();
     await expect(button).toBeInViewport();
   }
   const research = result(page).locator("details[data-model-v2-research]");
-  await page.keyboard.press("Tab");
+  await page.keyboard.press(tabKey);
   await expect(research.locator("summary")).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(research).toHaveAttribute("open", "");
-  await expect(research.locator("[data-model-v2-preview]")).toBeVisible();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
+  await expect(research).toContainText("소수점 셋째 자리 표시는 화면 표시용 반올림");
   const inputs = result(page).locator("details[data-model-v2-inputs]");
-  await page.keyboard.press("Tab");
+  await page.keyboard.press(tabKey);
   await expect(inputs.locator("summary")).toBeFocused();
   await page.keyboard.press("Space");
   await expect(inputs).toHaveAttribute("open", "");
@@ -258,10 +298,11 @@ async function assertResultKeyboardAccess(page: Page) {
   await page.keyboard.press("Enter");
   await expect(inputs).not.toHaveAttribute("open");
   await expect(inputs.locator("dl")).toBeHidden();
-  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press(`Shift+${tabKey}`);
   await expect(research.locator("summary")).toBeFocused();
   await page.keyboard.press("Space");
   await expect(research).not.toHaveAttribute("open");
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await assertFitsViewport(page);
 }
 
@@ -361,13 +402,13 @@ test("S11 requires explicit review submission and completes locally without send
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
-  await expect(page.locator("#model-v2-result-title")).toHaveText("오늘의 생활 패턴을 정리했어요");
+  await expect(page.locator("#model-v2-result-title")).toHaveText("연구 모델 분석 결과");
   await expect(page.locator("#model-v2-result-title")).toBeFocused();
   await expect(result(page)).not.toHaveAttribute("role", "status");
   await expect(result(page)).not.toHaveAttribute("aria-live");
   await expect(result(page).locator('[role="status"], [aria-live]')).toHaveCount(0);
   await expect(result(page).locator("h3")).toHaveText([
-    "활동", "수면", "생활 습관", "체격 참고", "다음으로 할 수 있어요", "연구 모델 결과",
+    "오늘의 생활 패턴을 정리했어요", "활동", "수면", "생활 습관", "체격 참고", "다음으로 할 수 있어요", "처리 방식과 입력 상세",
   ]);
   await expect(result(page)).toContainText("방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.");
   const activity = result(page).getByRole("region", { name: "활동", exact: true });
@@ -386,19 +427,37 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(body.locator("dd")).toHaveText(["170 cm", "68 kg", "23.5"]);
   await expect(body).toContainText("입력한 키와 몸무게로 계산한 참고값이에요.");
   await expect(result(page).locator("details[data-model-v2-research]")).not.toHaveAttribute("open");
-  await expect(result(page).locator("[data-model-v2-preview]")).toBeHidden();
+  await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await expect(result(page).locator("details[data-model-v2-inputs]")).not.toHaveAttribute("open");
   await expect(result(page).getByText("모델에 사용된 입력 보기", { exact: true })).toBeVisible();
   await expect(result(page)).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
   const preview = result(page).locator("[data-model-v2-preview]");
-  await openResearch(page);
   await expect(preview).toBeVisible();
   await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
   const previewValue = preview.locator("[data-model-v2-preview-value]");
   await expect(previewValue).toHaveCount(1);
   await expect(previewValue).toHaveText(/^\d\.\d{3}$/);
+  // Frozen public asset + this exact synthetic survey, independently evaluated.
+  await expect(previewValue).toHaveText("0.055");
+  await expect(previewValue).toBeInViewport();
+  expect(await previewValue.evaluate(node => node.closest("details"))).toBeNull();
+  expect(await result(page).evaluate(node => {
+    const value = node.querySelector("[data-model-v2-preview-value]")!;
+    const summary = node.querySelector(".model-v2-summary-heading")!;
+    return Boolean(value.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && value.getBoundingClientRect().bottom < summary.getBoundingClientRect().top;
+  })).toBe(true);
+  await expect(result(page).locator(".model-v2-local-privacy")).toBeVisible();
+  await expect(result(page).locator(".model-v2-local-privacy")).toHaveText("이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함");
+  await expect(preview).toContainText("입력한 생활정보를 이 기기에서 Model V2가 처리해 만든 연속 출력입니다.");
+  await expect(preview.locator(".model-v2-result-disclaimer")).toBeVisible();
   await expect(preview).toContainText("이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.");
-  await expect(preview).toContainText("소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.");
+  await openTechnicalDetails(page);
+  const technical = result(page).locator("details[data-model-v2-research]");
+  await expect(technical).toContainText("소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.");
+  await expect(technical).toContainText("계산에 필요한 모델 파일은 네트워크에서 받을 수 있어요.");
+  await technical.locator("summary").click();
+  await expect(previewValue).toBeVisible();
   await expect(preview).not.toContainText("%");
   await expect(preview.locator("[data-model-v2-preview-band], .model-v2-preview-band")).toHaveCount(0);
   await expect(preview).not.toContainText(/저위험|중위험|고위험/);
@@ -482,9 +541,8 @@ test.describe("S11 preview window", () => {
       await expect(result(page)).toBeVisible();
       expect(routed.requests).toEqual([{ method: "GET", body: null }]);
       const preview = result(page).locator("[data-model-v2-preview]");
-      const note = result(page).locator(".model-v2-result-model-note");
+      const note = result(page).locator(".model-v2-outcome-heading");
       await expect(result(page).locator("details[data-model-v2-research]")).not.toHaveAttribute("open");
-      await openResearch(page);
       if (expectPreview) {
         await expect(preview).toBeVisible();
         await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
@@ -505,7 +563,6 @@ test("S11 preview expires while a completed result remains open", async ({ page 
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   const preview = result(page).locator("[data-model-v2-preview]");
-  await openResearch(page);
   await expect(preview).toBeVisible();
   expect(routed.requests).toHaveLength(1);
 
@@ -516,7 +573,7 @@ test("S11 preview expires while a completed result remains open", async ({ page 
 
   await page.clock.runFor(1);
   await expect(preview).toHaveCount(0);
-  await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+  await expect(result(page).locator(".model-v2-outcome-heading")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
   expect(routed.requests).toHaveLength(1);
 });
 
@@ -528,7 +585,6 @@ for (const event of ["visibilitychange", "pageshow"] as const) {
     await toReview(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
-    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
 
     await page.clock.setSystemTime(new Date("2026-10-18T00:00:01+09:00"));
@@ -539,7 +595,7 @@ for (const event of ["visibilitychange", "pageshow"] as const) {
       await dispatchPageshow(page);
     }
     await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
-    await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+    await expect(result(page).locator(".model-v2-outcome-heading")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
     expect(routed.requests).toHaveLength(1);
   });
 }
@@ -550,17 +606,7 @@ test("S11 pending completion after preview expiry stays non-numeric", async ({ p
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
-    await page.evaluate(() => {
-      new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
-              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
-            }
-          }
-        }
-      }).observe(document.body, { subtree: true, childList: true });
-    });
+    await observePreviewInsertion(page);
     await submit(page).click();
     await expect.poll(() => routed.requests.length).toBe(1);
     await page.clock.setSystemTime(new Date("2026-10-18T00:00:05+09:00"));
@@ -569,7 +615,7 @@ test("S11 pending completion after preview expiry stays non-numeric", async ({ p
     await expect(result(page)).toBeVisible();
     expect(await page.evaluate(() => (window as unknown as { previewInserted?: boolean }).previewInserted ?? false)).toBe(false);
     await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
-    await expect(result(page).locator(".model-v2-result-model-note")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
+    await expect(result(page).locator(".model-v2-outcome-heading")).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
   } finally {
     routed.releaseFirst();
   }
@@ -715,13 +761,15 @@ test("S11 blocks under-19 input at basic information and focuses age", async ({ 
   expect(routed.requests).toHaveLength(0);
 });
 
-test("S11 retains the age-80 applicability notice through review without blocking an eligible request", async ({ page }) => {
+test("S11 retains the age-80 applicability notice through review and visible result without blocking an eligible request", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page, "80");
   await expect(page.locator('[data-scene="S11"]')).toContainText("적용 근거가 상대적으로 약합니다");
   await submit(page).click();
   await expect(result(page)).toBeVisible();
+  await expect(result(page)).toContainText("적용 근거가 상대적으로 약합니다");
+  await expect(result(page).locator("[data-model-v2-preview-value]")).toBeVisible();
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
@@ -1029,17 +1077,7 @@ test("S11 sign-out discards pending local inference and returns to signed-out re
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
-    await page.evaluate(() => {
-      new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
-              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
-            }
-          }
-        }
-      }).observe(document.body, { subtree: true, childList: true });
-    });
+    await observePreviewInsertion(page);
     await submit(page).click();
     await expect.poll(() => routed.requests.length).toBe(1);
     await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
@@ -1062,7 +1100,6 @@ test("S11 same-user token refresh preserves pending local completion", async ({ 
     await changeSession(page);
     routed.releaseFirst();
     await expect(result(page)).toBeVisible();
-    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
     expect(routed.requests).toEqual([{ method: "GET", body: null }]);
@@ -1082,6 +1119,32 @@ test("S11 reload discards a reviewed draft and acknowledgement", async ({ page }
   await expect(page.locator("[data-model-v2-feature]")).toHaveCount(0);
   expect(routed.requests).toHaveLength(0);
 });
+
+test("S11 reload discards a completed visible result without recomputing it", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page).locator("[data-model-v2-preview-value]")).toBeVisible();
+  await page.reload();
+  await expect(step(page, "intro")).toBeVisible();
+  await expect(page.locator("[data-model-v2-preview-value]")).toHaveCount(0);
+  await begin(page);
+  await expect(page.locator("#model-age")).toHaveValue("");
+  expect(routed.requests).toHaveLength(1);
+});
+
+for (const syntheticState of ["not_ready", "result_available_not_user_visible"]) {
+  test(`S11 signed-in result ignores synthetic ${syntheticState}`, async ({ page }) => {
+    await routeModel(page);
+    await page.goto(`/?e2e=signed-in&screen=S11&model_v2_state=${syntheticState}`);
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toBeVisible();
+    await expect(page.locator("[data-model-v2-synthetic-result]")).toHaveCount(0);
+  });
+}
 
 test("leaving S11 discards the transient draft and the completed result on return", async ({ page }) => {
   const routed = await routeModel(page);
@@ -1115,17 +1178,7 @@ test("account switch discards the previous account draft and ignores its pending
   try {
     await page.goto("/?e2e=signed-in&screen=S11");
     await toReview(page);
-    await page.evaluate(() => {
-      new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement && node.hasAttribute("data-model-v2-preview")) {
-              (window as unknown as { previewInserted?: boolean }).previewInserted = true;
-            }
-          }
-        }
-      }).observe(document.body, { subtree: true, childList: true });
-    });
+    await observePreviewInsertion(page);
     await submit(page).click();
     await expect(page.getByRole("button", { name: "생활정보 분석 중", exact: true })).toBeDisabled();
     await changeSession(page, true);
@@ -1152,7 +1205,6 @@ test("S11 sign-out discards a completed visible preview and blank draft", async 
   await toReview(page);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: null })));
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
@@ -1171,7 +1223,6 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   await toReview(page);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
-  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   await changeSession(page, true);
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
@@ -1209,7 +1260,6 @@ for (const width of [320, 390, 430]) {
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     await assertResultKeyboardAccess(page);
-    await openResearch(page);
     await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   });
@@ -1242,7 +1292,6 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   await assertResultKeyboardAccess(page);
-  await openResearch(page);
   await expect(result(page).locator("[data-model-v2-preview]")).toBeVisible();
   expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
@@ -1274,7 +1323,6 @@ test("S11 directly proves no inference egress or model persistence and hashes be
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   const preview = result(page).locator("[data-model-v2-preview]");
-  await openResearch(page);
   await expect(preview).toBeVisible();
   await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
   await expect(preview.locator("[data-model-v2-preview-value]")).toHaveText(/^\d\.\d{3}$/);

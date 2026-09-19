@@ -4,6 +4,13 @@ Status: accepted for source integration by the user's explicit 2026-09-13
 human decision; [Issue #490](https://github.com/AI-HealthCare-05/AH_05_07/issues/490).
 Production deployment requires separate approval. This is not G10 displayability PASS.
 
+Lifecycle note: this ADR preserves the original integration/disclosure decision.
+Current S11 numeric visibility is owned by the later human decision in the
+[Model V2 product contract](../model-v2-product-contract.md#current-authority).
+Its time-boxed preview supersedes only the original UI non-numeric restriction;
+the frozen inference, disclosure tradeoff, fail-closed and privacy boundaries
+below remain binding. This note is not deployment evidence.
+
 ## Decision and scope
 
 S11 validates its existing 19-field transient input and runs the canonical

@@ -9,12 +9,13 @@ const states = [
 
 const prohibited = ["저위험", "중위험", "고위험", "정상", "비정상", "안전", "치료 효과", "예방 성공"];
 
-test("S11 defaults to not_ready and exposes no result value", async ({ page }) => {
+test("S11 retained synthetic fixture defaults to not_ready and exposes no result value", async ({ page }) => {
   await page.goto("/?fixture=VP-10&screen=S11");
   const scene = page.locator('[data-scene="S11"]');
   const card = scene.locator("[data-model-v2-result-state]");
   await expect(scene).toBeVisible();
   await expect(card).toHaveAttribute("data-model-v2-result-state", "not_ready");
+  await expect(card).toHaveAttribute("data-model-v2-synthetic-result");
   await expect(card).toContainText("아직 준비 중이에요");
   await expect(card).toContainText("현재는 점수, 확률, 등급을 표시하지 않습니다.");
   const text = await scene.innerText();

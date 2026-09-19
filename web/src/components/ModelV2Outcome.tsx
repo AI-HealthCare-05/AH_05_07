@@ -63,11 +63,28 @@ export function ModelV2Outcome({
 
   return <div className="model-v2-outcome" data-model-v2-user-result="processed">
     <header className="model-v2-outcome-heading">
-      <span className="model-v2-outcome-mark" aria-hidden="true">✓</span>
-      <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
-      <h2 id="model-v2-result-title" tabIndex={-1}>오늘의 생활 패턴을 정리했어요</h2>
-      <p>방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.</p>
+      <h2 id="model-v2-result-title" tabIndex={-1}>{hasPreview ? "연구 모델 분석 결과" : "생활정보 처리를 완료했어요"}</h2>
+      {hasPreview ? (
+        <div data-model-v2-preview>
+          <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
+          <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
+          <p>입력한 생활정보를 이 기기에서 Model V2가 처리해 만든 연속 출력입니다.</p>
+          <p className="model-v2-result-disclaimer">이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+        </div>
+      ) : (
+        <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
+      )}
+      <p className="model-v2-local-privacy">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
+      {Number(draft.age) >= 80 && <p className="notice notice-warning">
+        만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
+      </p>}
     </header>
+
+    <div className="model-v2-summary-heading">
+      <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
+      <h3>오늘의 생활 패턴을 정리했어요</h3>
+      <p>방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.</p>
+    </div>
 
     <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">
       <section className="model-v2-result-section" aria-labelledby="model-v2-activity-title">
@@ -146,20 +163,12 @@ export function ModelV2Outcome({
     <p className="model-v2-result-explanation">이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
 
     <section className="model-v2-result-model-note" aria-labelledby="model-v2-research-title">
-      <h3 id="model-v2-research-title">연구 모델 결과</h3>
+      <h3 id="model-v2-research-title">처리 방식과 입력 상세</h3>
       <details className="model-v2-notice-details" data-model-v2-research>
-        <summary>{hasPreview ? "연구/개발 미리보기 펼쳐보기" : "Model V2 처리 안내"}</summary>
+        <summary>Model V2 처리 안내</summary>
         <p>Model V2 처리가 완료됐어요.</p>
-        {hasPreview ? (
-          <div data-model-v2-preview>
-            <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
-            <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
-            <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
-            <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>
-          </div>
-        ) : (
-          <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
-        )}
+        <p>계산에 필요한 모델 파일은 네트워크에서 받을 수 있어요. 이 분석의 생활정보와 결과값은 서버 추론 요청으로 전송하지 않고, 이 브라우저에서 일시적으로 처리합니다.</p>
+        {hasPreview && <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>}
       </details>
       <details className="model-v2-notice-details" data-model-v2-inputs>
         <summary>모델에 사용된 입력 보기</summary>

@@ -1,6 +1,23 @@
 # Deployment SSOT
 
-## Current web production record — 2026-09-18
+## Runtime currentness — source-record conflict identified 2026-09-19
+
+**CURRENT SERVING IDENTITY NOT RE-VERIFIED IN THIS RECONCILIATION.** The former
+“Current web production record” below describes the 2026-09-18 observation,
+Worker `07678494-b593-46ae-940f-d52e3f7d6391`. The later
+[S11 closeout](evidence/s11-production-closeout-20260919.md) records a
+2026-09-19 rollout of source `3ab88f72154897cb80dffae71f93b160dc595258`,
+mirror `375d996065b431dbdeb619b60d656fd1445eed79`, and Worker
+`f8f3ef10-fded-4b3c-95cd-399dace0bf54`, with its own rollback identity.
+
+This is a source evidence conflict about currentness. Both dated records remain
+evidence for their recorded scopes; neither is promoted to today's live runtime
+without control-plane verification. Before a release, read the actual serving
+Worker/source/build configuration and compatible rollback identities. This task
+does not query or mutate production, sync the mirror, or re-verify API/Supabase
+state. The original observations below and the S11 closeout remain unchanged.
+
+## Recorded web production evidence — 2026-09-18
 
 **OPERATOR-VERIFIED PRODUCTION RELEASE.**
 
@@ -65,7 +82,7 @@ and has no server fallback; the authenticated server endpoint remains.
 
 ## Historical server-inference S11 production evidence
 
-This is the last retained rollout record, not a live inventory. Current API
+This is a retained server-inference rollout record, not a live inventory. Current API
 revision/image/traffic and Worker version/build/source binding must be read from
 control planes at release time. [Fast start](project-handoff.md#fast-start) owns
 source-task routing; the record below does not prove deployment of later main.

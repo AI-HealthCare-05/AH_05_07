@@ -6,6 +6,7 @@ import { scoreModelV2Locally } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { seoulDate } from "../lib/seoulDate";
 import { useSeoulDate } from "../lib/useSeoulDate";
+import { modelV2PresentationMode, modelV2PreviewEndLabel, visibleModelV2Output } from "../ui/modelV2VisibilityPolicy";
 import { Scene } from "./SceneShell";
 import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
@@ -64,12 +65,6 @@ function canonicalTime(selection: TimeSelection): string | null {
   if (selection.period === undefined || selection.hour === undefined || selection.minute === undefined) return null;
   const hour = (selection.hour % 12) + (selection.period === 1 ? 12 : 0);
   return `${String(hour).padStart(2, "0")}:${String(selection.minute).padStart(2, "0")}`;
-}
-
-const PREVIEW_START = "2026-09-17";
-const PREVIEW_END = "2026-10-17";
-function isPreviewDate(date: string): boolean {
-  return PREVIEW_START <= date && date <= PREVIEW_END;
 }
 
 function PeriodSelector({ selected, label, disabled, onSelect }: {
@@ -502,7 +497,8 @@ export function ModelV2InputFlow({
   const submitRef = useRef<HTMLButtonElement>(null);
 
   const today = useSeoulDate();
-  const previewOpen = isPreviewDate(today) && isPreviewDate(seoulDate());
+  const previewOpen = modelV2PresentationMode(today) === "research_preview"
+    && modelV2PresentationMode(seoulDate()) === "research_preview";
 
   useEffect(() => {
     mounted.current = true;
@@ -618,9 +614,7 @@ export function ModelV2InputFlow({
     try {
       const localResult = await scoreModelV2Locally(payload);
       if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
-      setPreviewOutput(isPreviewDate(seoulDate()) && Number.isFinite(localResult.continuousOutput)
-        ? localResult.continuousOutput
-        : null);
+      setPreviewOutput(visibleModelV2Output(localResult.continuousOutput, seoulDate()));
       setResultState("processed");
       setFocusRequest({ id: "model-v2-result-title" });
     } catch (error) {
@@ -734,7 +728,7 @@ export function ModelV2InputFlow({
                 <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
                 {previewOpen ? (
                   <>
-                    <p>2026년 10월 17일(KST)까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
+                    <p>{modelV2PreviewEndLabel}까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
                     <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
                   </>
                 ) : (

@@ -51,9 +51,9 @@ import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompa
 import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
-  getModelV2ResultView,
-  resolveModelV2ResultState,
-} from "./ui/modelV2ResultState";
+  getSyntheticModelV2ResultView,
+  resolveSyntheticModelV2ResultState,
+} from "./ui/modelV2SyntheticResultState";
 
 const challengeActions = [
   { id: "walk-10-minutes", label: "10분 걷기", note: "가볍게 바깥 공기를 만나는 시간" },
@@ -371,11 +371,11 @@ function App() {
   const today = useSeoulDate(fixture?.asOf);
   const evidenceMode = Boolean(fixture);
   const authEmailConfirmIntent = useMemo(() => resolveAuthEmailConfirmIntent(window.location.href), []);
-  const modelV2ResultState = useMemo(
-    () => resolveModelV2ResultState(initialSearch.get("model_v2_state"), allowsE2eFixture()),
-    [initialSearch],
+  const syntheticModelV2ResultState = useMemo(
+    () => resolveSyntheticModelV2ResultState(initialSearch.get("model_v2_state"), evidenceMode && allowsE2eFixture()),
+    [initialSearch, evidenceMode],
   );
-  const modelV2ResultView = getModelV2ResultView(modelV2ResultState);
+  const syntheticModelV2ResultView = getSyntheticModelV2ResultView(syntheticModelV2ResultState);
   const [requestedScreen, setRequestedScreen] = useState<ScreenId>(() => parseScreen(initialSearch.get("screen")));
   const [dashboardWindow, setDashboardWindow] = useState<DashboardWindow>(() => parseDashboardWindow(initialSearch.get("dashboard_window"), today));
   const selectedBounds = useMemo(
@@ -1991,7 +1991,7 @@ function App() {
 
     if (activeScreen === "S11") {
       if (evidenceMode || !session) {
-        return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-result-state={modelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{modelV2ResultView.status}</span><h2>{modelV2ResultView.heading}</h2><p>{modelV2ResultView.body}</p></div><p className="signal-disclaimer">{modelV2ResultView.disclaimer}</p></Scene>;
+        return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={syntheticModelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{syntheticModelV2ResultView.status}</span><h2>{syntheticModelV2ResultView.heading}</h2><p>{syntheticModelV2ResultView.body}</p></div><p className="signal-disclaimer">{syntheticModelV2ResultView.disclaimer}</p></Scene>;
       }
       return (
         <ModelV2InputFlow
