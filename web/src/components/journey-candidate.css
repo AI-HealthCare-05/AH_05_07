@@ -1141,3 +1141,375 @@
     width: 100%;
   }
 }
+
+/* SK7 JOURNEY COHESION — S03-S09
+   Carry S02's calm depth and surface hierarchy through the core journey.
+   These selectors are screen-scoped so recovery/settings/Model V2 remain
+   outside this presentation pass. */
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+):has(.journey-candidate) {
+  --sk7-ink: #142f38;
+  --sk7-ink-muted: #61747a;
+  --sk7-focus: #164a47;
+  --sk7-border: #dce7e3;
+  --journey-surface: #fffffff2;
+  --journey-surface-soft: #f6faf8ef;
+  --journey-accent: #477d69;
+  --journey-accent-deep: #164a47;
+  --journey-shadow: #173e3912;
+
+  background:
+    radial-gradient(circle at 82% 4%, #e8f2ec 0, transparent 28rem),
+    linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+):has(.journey-candidate) .primary-nav {
+  border-color: #dfe8e5;
+  background: #ffffff7d;
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+):has(.journey-candidate) .primary-nav button.is-active {
+  background: #e2f0e9;
+  color: #153f3d;
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+) .journey-candidate {
+  --sk7-focus: #164a47;
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+) .journey-candidate h1 {
+  color: #102f38;
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+) .journey-candidate .scene-body {
+  color: #586c72;
+}
+
+.app-shell:is(
+  [data-screen="S03"],
+  [data-screen="S04"],
+  [data-screen="S05"],
+  [data-screen="S06"],
+  [data-screen="S07"],
+  [data-screen="S08"],
+  [data-screen="S09"]
+) .journey-candidate .eyebrow {
+  color: #55746d;
+}
+
+
+/* S03 — optional challenge: selectable objects, not flat beige cards. */
+
+.app-shell[data-screen="S03"] .journey-challenge-choice .challenge-choice-context {
+  border: 1px solid #dce7e3;
+  border-radius: 1rem;
+  background: #fffffff0;
+  box-shadow:
+    0 10px 26px #173e390d,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile {
+  border-color: #dae6e0;
+  border-radius: 1rem;
+  background: linear-gradient(155deg, #ffffff 0%, #f1f7f3 100%);
+  box-shadow:
+    0 8px 20px #173e390c,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile:hover:not(:disabled) {
+  border-color: #9dbbab;
+  background: linear-gradient(155deg, #ffffff, #e8f3ed);
+}
+
+.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile.is-selected {
+  border-color: #5f907d;
+  background: linear-gradient(155deg, #f3fbf6, #dfeee6);
+  box-shadow:
+    0 10px 24px #173e3912,
+    inset 0 0 0 1px #ffffffb8;
+}
+
+
+/* S04 — measurement sheet: strongest task surface after S02 primary action. */
+
+.app-shell[data-screen="S04"] .journey-entry .measurement-panel {
+  border: 1px solid #d8e5df;
+  border-top: 4px solid #4f806e;
+  border-radius: .7rem .7rem 1rem 1rem;
+  background: #fffffff4;
+  box-shadow:
+    0 18px 40px #173e3913,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S04"] .journey-entry .measurement-guide {
+  border-bottom-color: #e0e9e5;
+}
+
+.app-shell[data-screen="S04"] .journey-entry .field-grid label[for="systolic"],
+.app-shell[data-screen="S04"] .journey-entry .field-grid label[for="diastolic"] {
+  border-top-color: #e0e9e5;
+}
+
+.app-shell[data-screen="S04"] .journey-entry .measurement-panel button[type="submit"] {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3924;
+}
+
+
+/* S05 — confirmation: saved fact settles into the landscape, next step is clear. */
+
+.app-shell[data-screen="S05"] .journey-saved .save-ripple-landscape {
+  border: 1px solid #dce7df;
+  background:
+    radial-gradient(circle at 65% 24%, #fff9dc 0 2.2rem, transparent 2.25rem),
+    linear-gradient(180deg, #edf6ef 0%, #dfeade 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffffcf,
+    0 12px 28px #173e390b;
+}
+
+.app-shell[data-screen="S05"] .journey-saved .save-ripple-landscape::before {
+  background: linear-gradient(180deg, #b9ceb9, #a7bea8);
+}
+
+.app-shell[data-screen="S05"] .journey-saved .save-ripple > span {
+  background: #164a47;
+  box-shadow:
+    0 6px 16px #173e3921,
+    inset 0 1px 0 #ffffff38;
+}
+
+.app-shell[data-screen="S05"] .journey-saved .save-next-step {
+  border: 1px solid #dbe7e1;
+  border-radius: 1rem;
+  background: #fffffff2;
+  box-shadow:
+    0 12px 28px #173e3911,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S05"] .journey-saved .split-actions > button:first-child {
+  border-color: #ffffff4f;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3924;
+}
+
+.app-shell[data-screen="S05"] .journey-saved .split-actions > button.secondary {
+  border-color: #cfded7;
+  background: #ffffffba;
+}
+
+
+/* S06 — challenge remains visibly optional and below BP hierarchy. */
+
+.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-summary-card {
+  border-color: #dce7e2;
+  border-radius: 1rem;
+  background: #fffffff0;
+  box-shadow:
+    0 9px 22px #173e390b,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-checkin-card {
+  border-color: #d7e5df;
+  background: linear-gradient(155deg, #f7fbf8, #edf5f0);
+}
+
+.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-next-actions > button:first-child {
+  border-color: #ffffff4f;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3920;
+}
+
+
+/* S07 — today's measured fact leads; optional participation stays secondary. */
+
+.app-shell[data-screen="S07"] .journey-today-review .today-date {
+  border: 1px solid #dce7e3;
+  border-radius: .9rem;
+  background: #ffffffd9;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S07"] .journey-today-review .fact-lanes > section {
+  border-color: #e0e9e5;
+  background: #ffffffc9;
+}
+
+.app-shell[data-screen="S07"] .journey-today-review .fact-lanes > .fact-lead {
+  border-color: #cfe0d8;
+  background: linear-gradient(155deg, #ffffff 0%, #eef7f2 100%);
+  box-shadow:
+    0 12px 28px #173e3910,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S07"] .journey-today-review .journey-today-challenge {
+  border-color: #e0e7e4;
+  background: #f7faf8;
+}
+
+
+/* S08 — records remain a utility view, but use the same surface system. */
+
+.app-shell[data-screen="S08"] .scene.record-explorer-scene[data-scene="S08"] {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-shell[data-screen="S08"] .journey-records .window-nav {
+  border: 1px solid #dce7e3;
+  border-radius: .85rem;
+  background: #ffffffe8;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer {
+  --record-explorer-ink: #173b40;
+  --record-explorer-muted: #607378;
+  --record-explorer-rule: #dce7e3;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button {
+  border-color: #cadbd4;
+  border-radius: .65rem;
+  background: #ffffffbc;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button[aria-pressed="true"] {
+  border-color: #164a47;
+  background: #164a47;
+  color: #fff;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-list {
+  border-left-color: #d8e4df;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-list > li {
+  border-bottom-color: #dfe8e4;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row {
+  border-radius: .75rem;
+}
+
+.app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row:hover:not(:disabled) {
+  background: #edf5f1;
+}
+
+
+/* S09 — one selected fact gets one strong readable sheet. */
+
+.app-shell[data-screen="S09"] .journey-record-detail .record-detail {
+  border: 1px solid #d7e4de;
+  border-top: 4px solid #4f806e;
+  border-radius: .7rem .7rem 1rem 1rem;
+  background: #fffffff4;
+  box-shadow:
+    0 16px 36px #173e3912,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S09"] .journey-record-detail .record-detail-facts {
+  border-top-color: #dfe9e4;
+}
+
+.app-shell[data-screen="S09"] .journey-record-detail .record-detail-facts div {
+  border-bottom-color: #dfe9e4;
+}
+
+.app-shell[data-screen="S09"] .journey-record-detail .record-detail > .inline-actions:last-child {
+  border-top-color: #dfe9e4;
+}
+
+
+@media (max-width: 580px) {
+  .app-shell:is(
+    [data-screen="S03"],
+    [data-screen="S04"],
+    [data-screen="S05"],
+    [data-screen="S06"],
+    [data-screen="S07"],
+    [data-screen="S08"],
+    [data-screen="S09"]
+  ):has(.journey-candidate) {
+    background:
+      linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
+  }
+
+  .app-shell[data-screen="S03"] .journey-challenge-choice .challenge-choice-context,
+  .app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile,
+  .app-shell[data-screen="S05"] .journey-saved .save-next-step,
+  .app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-summary-card,
+  .app-shell[data-screen="S07"] .journey-today-review .fact-lanes > .fact-lead,
+  .app-shell[data-screen="S09"] .journey-record-detail .record-detail {
+    box-shadow:
+      0 7px 18px #173e390d,
+      inset 0 1px 0 #fff;
+  }
+
+  .app-shell[data-screen="S04"] .journey-entry .measurement-panel {
+    box-shadow:
+      0 10px 24px #173e3910,
+      inset 0 1px 0 #fff;
+  }
+
+  .app-shell[data-screen="S08"] .journey-records .window-nav {
+    box-shadow: inset 0 1px 0 #fff;
+  }
+}
