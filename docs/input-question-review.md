@@ -95,8 +95,9 @@ CDC 출처 링크 외 자동 네트워크 요청이 없고 connect-src는 none�
 [자동 검증](../tools/question-review/verify.cjs)은 1366×768 및390×844에서 모든
 합성 사례의 표시, 긴 한국어/URL의 가로 넘침, Tab/Shift+Tab/Enter/Space와 focus,
 출처 링크 접근, 요청·저장 시도 부재를 확인한다. production build에도 화면 문자열이
-없는지 검사한다. [Windows/Linux CI](../.github/workflows/question-review.yml)에
-연결하며 기존 일반·모델 합성·evidence workflow는 유지한다. 원문 의미·한국어 번역의
+없는지 검사한다. Linux PR 검증은 [Browser E2E의 model concern](../.github/workflows/browser-e2e.yml)에,
+Windows 호환성은 [수동 evidence controls](../.github/workflows/evidence-controls.yml)에
+연결한다. 원문 의미·한국어 번역의
 타당성은 이 브라우저 검사로 증명하지 않는다. 스크린리더 실제 사용자 검사는 미실시다.
 
 기존 [503 회귀 검사](../app/tests/risk_signal_apis/test_risk_signal_api.py)는 합성 요청으로

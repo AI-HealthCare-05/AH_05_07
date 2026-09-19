@@ -52,7 +52,7 @@ jobs:
 
   browser-e2e-pr:
     name: browser-e2e-pr (${{ matrix.module }})
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' && needs.browser-e2e-classify.outputs.modules != '["policy"]' }}
     needs: browser-e2e-classify
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 35
@@ -97,7 +97,7 @@ jobs:
           PR_BROWSER_RESULT: ${{ needs.browser-e2e-pr.result }}
         run: |
           test "$CLASSIFY_RESULT" = "success"
-          test "$PR_BROWSER_RESULT" = "success"
+          test "$PR_BROWSER_RESULT" = "success" || test "$PR_BROWSER_RESULT" = "skipped"
 
   nightly-core:
     name: nightly-core

@@ -60,7 +60,7 @@ historical line references were not used as source authority.
 | S05 saved-scene lazy boundary / renderer | [`web/src/components/SavedSceneBoundary.tsx`](../../web/src/components/SavedSceneBoundary.tsx), [`web/src/components/scene/SavedSceneRenderer.tsx`](../../web/src/components/scene/SavedSceneRenderer.tsx) |
 | Fallback contracts | [`docs/scene-fallback-contract.md`](../scene-fallback-contract.md), [`web/src/components/StaticSceneFallback.tsx`](../../web/src/components/StaticSceneFallback.tsx) |
 | Release and served-state authority | [`docs/scene-release-gates.md`](../scene-release-gates.md), [`docs/deployment-ssot.md`](../deployment-ssot.md) |
-| Focused tests / CI routing | [`web/e2e/scene-policy.spec.ts`](../../web/e2e/scene-policy.spec.ts), [`web/e2e/companion-production.spec.ts`](../../web/e2e/companion-production.spec.ts), [`web/e2e/s10-production-scene.spec.ts`](../../web/e2e/s10-production-scene.spec.ts), [`web/scripts/select-pr-browser-suites.mjs`](../../web/scripts/select-pr-browser-suites.mjs), [`.github/workflows/companion-assets.yml`](../../.github/workflows/companion-assets.yml) |
+| Focused tests / CI routing | [`web/e2e/scene-policy.spec.ts`](../../web/e2e/scene-policy.spec.ts), [`web/e2e/companion-production.spec.ts`](../../web/e2e/companion-production.spec.ts), [`web/e2e/s10-production-scene.spec.ts`](../../web/e2e/s10-production-scene.spec.ts), [`web/scripts/select-pr-browser-suites.mjs`](../../web/scripts/select-pr-browser-suites.mjs), [`.github/workflows/evidence-controls.yml`](../../.github/workflows/evidence-controls.yml) |
 
 ## A. Current data flow
 
