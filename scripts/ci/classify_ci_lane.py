@@ -47,9 +47,7 @@ PROTECTED_WEB_PREFIXES = (
 MODEL_WEB_TEST_FILES = {
     "web/playwright.model-v2.config.ts",
 }
-MODEL_WEB_TEST_PREFIXES = (
-    "web/e2e/model-v2-",
-)
+MODEL_WEB_TEST_PREFIXES = ("web/e2e/model-v2-",)
 
 MODEL_WEB_PREFIXES = (
     "web/src/lib/model",
