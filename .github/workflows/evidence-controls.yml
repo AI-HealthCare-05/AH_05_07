@@ -1,0 +1,169 @@
+name: Evidence controls
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".gitattributes"
+      - ".python-version"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "data/manifest/**"
+      - "docs/adr/0006-local-character-preview.md"
+      - "docs/api-p95-verification-preflight.md"
+      - "docs/asset-register.md"
+      - "docs/character-preview-verification.md"
+      - "docs/evidence/companion-r2-v1.json"
+      - "docs/evidence/local-reliability.json"
+      - "docs/evidence/model-*.json"
+      - "docs/model-*-runbook.md"
+      - "docs/upgrade-local-reliability.md"
+      - "scripts/ci/verify_api_p95_evidence.py"
+      - "scripts/ci/verify_model_*.py"
+      - "scripts/data/**"
+      - "scripts/model/**"
+      - "scripts/ops/measure_api_p95.py"
+      - "tests/data/**"
+      - "tests/model/**"
+      - "tools/character-preview/**"
+      - "tools/companions/**"
+      - "tools/local-reliability/**"
+      - "web/playwright.companion-asset.config.ts"
+      - "web/scripts/generate-companion-manifest.mjs"
+      - "web/scripts/select-pr-browser-suites.mjs"
+      - "web/scripts/select-pr-browser-suites.test.mjs"
+      - "web/scripts/verify-companion-*.mjs"
+      - "web/src/ui/companionAssets.generated.ts"
+      - ".github/workflows/evidence-controls.yml"
+  workflow_dispatch:
+    inputs:
+      module:
+        description: Evidence or compatibility module to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - model-data
+          - companion-assets
+          - local-reliability
+          - browser-compatibility
+      platform:
+        description: Hosted platform for the manual compatibility run
+        required: true
+        default: linux
+        type: choice
+        options:
+          - linux
+          - windows
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evidence-controls-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evidence-classify:
+    name: evidence classify
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.select.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify shared concern selector
+        run: node --test web/scripts/select-pr-browser-suites.test.mjs
+      - name: Select affected evidence modules
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REQUESTED_MODULE: ${{ inputs.module }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" > /tmp/sk7-ci-modules
+            modules=$(sed -n 's/^evidence_modules=//p' /tmp/sk7-ci-modules)
+          elif [ "$REQUESTED_MODULE" = "all" ]; then
+            modules='["model-data","companion-assets","local-reliability","browser-compatibility"]'
+          else
+            modules="[\"$REQUESTED_MODULE\"]"
+          fi
+          echo "modules=$modules" >> "$GITHUB_OUTPUT"
+
+  evidence:
+    name: evidence (${{ matrix.module }})
+    needs: evidence-classify
+    if: ${{ needs.evidence-classify.outputs.modules != '["policy"]' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.platform == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.evidence-classify.outputs.modules) }}
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Set up Node
+        if: matrix.module == 'companion-assets' || matrix.module == 'browser-compatibility'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install web dependencies for companion asset controls
+        if: matrix.module == 'companion-assets'
+        working-directory: web
+        run: npm ci
+      - name: Set up uv
+        if: matrix.module == 'model-data'
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Verify model and data evidence
+        if: matrix.module == 'model-data'
+        run: |
+          python scripts/ci/verify_model_gate_1b_contract.py --evidence docs/evidence/model-gate-1b.json
+          uv sync --frozen --group ai
+          uv run --frozen --group ai python scripts/ci/verify_model_comparison.py --evidence docs/evidence/model-comparison.json
+          uv run --frozen --group ai python -c "import hashlib, pathlib; assert hashlib.sha256(pathlib.Path('docs/evidence/model-uncertainty.json').read_bytes()).hexdigest() == '59843a41746f155d73bd759749f8c1be93ab8ec6b1cebf262b4f8e57bb0ea812'"
+          uv run --frozen --group ai python scripts/ci/verify_model_uncertainty.py --evidence docs/evidence/model-uncertainty.json
+          uv run --frozen --group ai python -m pytest tests/data tests/model -q
+      - name: Verify companion asset evidence and boundaries
+        if: matrix.module == 'companion-assets'
+        run: |
+          python -m unittest discover -s tools/companions -p 'test_*.py' -v
+          node --test tools/character-preview/test_production_isolation.cjs
+          node web/scripts/verify-companion-candidates.mjs
+          node --test web/scripts/verify-companion-candidates.test.mjs
+          node web/scripts/verify-companion-manifest.mjs
+          node web/scripts/verify-scene-manifest.mjs
+      - name: Verify local reliability controls
+        if: matrix.module == 'local-reliability'
+        run: |
+          python tools/local-reliability/test_controls.py
+          python tools/local-reliability/verify_report.py docs/evidence/local-reliability.json
+          python scripts/ops/measure_api_p95.py --self-test
+          python scripts/ci/verify_api_p95_evidence.py --self-test
+      - name: Run manual browser compatibility
+        if: matrix.module == 'browser-compatibility'
+        shell: bash
+        run: |
+          cd web
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run build
+          npx playwright test --config=playwright.companion-asset.config.ts
+          cd ..
+          node --test tools/character-preview/test_production_isolation.cjs
+          node tools/character-preview/verify.cjs --synthetic --record-smoke
+          node tools/question-review/verify.cjs

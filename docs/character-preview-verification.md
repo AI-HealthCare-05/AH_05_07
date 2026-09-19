@@ -178,8 +178,9 @@ catalog의 `source_commit` c46c772…는 저장소 기준이며 generator나 vie
 실행 후 UI를 `카탈로그 기준 커밋`으로 정정하고 토끼의 추가 자세/화면에서 실제 표기를
 확인했다. 이 표기 정정은 별도 커밋이며 앞선 JSON·영상·캡처·실행 SHA를 바꾸지 않았다.
 
-Windows/Linux CI는 임시 fixture만 실행한다. 실제 자산은 Git·CI runner에 자동
-업로드하지 않는다. 공개 가능한 CI의 코드 경계 검사와 외부 로컬 자산 검증을
+Linux PR browser/evidence concern과 수동 Windows compatibility는 임시 fixture만
+실행한다. 실제 자산은 Git·CI runner에 자동 업로드하지 않는다. 공개 가능한 CI의
+코드 경계 검사와 외부 로컬 자산 검증을
 구분하며, 제작 품질 통과 동물/clip 수는 G4의 검사 결과에서만 집계한다.
 
 바닥이 없던 위 결과의 접지 검토 한계를 보완하기 위해 고정 바닥/격자 토글과

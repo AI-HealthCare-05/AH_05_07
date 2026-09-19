@@ -34,6 +34,24 @@ This makes the migration reversible without another code change.
 
 Do not place Blacksmith credentials in the repository.
 
+## CI responsibility map
+
+Pull requests keep the required `lint` and `test` statuses from
+`.github/workflows/checks.yml`. Browser E2E selects only affected `core`,
+`journey`, `scene`, `model`, or `assets` concerns; selector-only changes use its
+small policy test. Evidence controls similarly select `model-data`,
+`companion-assets`, or `local-reliability`. Routine pull requests use Linux as
+the authoritative hosted check.
+
+The scheduled Browser E2E run keeps broader confidence in three independently
+failing groups: `nightly-core`, `nightly-scene`, and `nightly-model`. Each group
+checks out and installs dependencies once. Specialized evidence workflows do
+not repeat their pull-request payload on a `main` push.
+
+Windows compatibility is available through the manual Evidence controls
+workflow. Trusted persistent Linux/macOS runners remain a separate manual-only
+security boundary.
+
 ## Trusted local runner fleet
 
 The local machines are intentionally excluded from `pull_request`, `push`, and
@@ -104,6 +122,6 @@ stable rather than broadening this infrastructure change.
 
 - PR merge gates: managed ephemeral cloud runner when enabled; GitHub-hosted
   fallback otherwise.
-- Windows WSL2 and Mac: trusted manual verification only.
+- Hosted Windows compatibility, Windows WSL2, and Mac: manual verification only.
 - Merge, deployment, and real-device acceptance remain separate actions.
 - Do not change local runners into public-PR runners.

@@ -101,9 +101,9 @@ class Sk7ctlTests(unittest.TestCase):
 
     def test_saved_scene_e2e_only_selects_targeted_suite_without_build(self) -> None:
         plan = sk7ctl.verification_plan(["web/e2e/saved-scene-review.spec.ts"], "routine", "focused", self.real_root)
-        self.assertIn("cd web && npm run test:e2e:saved-scene", self._displays(plan))
+        self.assertIn("cd web && node scripts/browser-ci-modules.mjs scene", self._displays(plan))
         self.assertNotIn("cd web && npm run build", self._displays(plan))
-        targeted = next(item for item in plan if item["display"].endswith("test:e2e:saved-scene"))
+        targeted = next(item for item in plan if item.get("name") == "scene")
         self.assertEqual(targeted["cost"], "MODERATE")
         self.assertIn("focused", targeted["profiles"])
 
@@ -119,8 +119,7 @@ class Sk7ctlTests(unittest.TestCase):
             self.real_root,
         )
         names = [item.get("name") for item in plan]
-        self.assertEqual(names.count("S02 and S10 review scenes"), 1)
-        self.assertEqual(names.count("saved-scene migration parity"), 1)
+        self.assertEqual(names.count("scene"), 1)
 
     def test_web_runtime_source_includes_build(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/App.tsx"], "routine", "focused", self.real_root)
@@ -132,7 +131,7 @@ class Sk7ctlTests(unittest.TestCase):
 
     def test_unknown_e2e_spec_escalates_to_complete_pr_gate(self) -> None:
         plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root)
-        regression = next(item for item in plan if item.get("name") == "browser regression")
+        regression = next(item for item in plan if item.get("name") == "core")
         self.assertEqual(regression["cost"], "EXPENSIVE")
         self.assertNotIn("focused", regression["profiles"])
 
@@ -143,7 +142,7 @@ class Sk7ctlTests(unittest.TestCase):
         displays = self._displays(plan)
         self.assertIn("cd web && npm run verify:scene-manifest", displays)
         self.assertIn("cd web && npm run build", displays)
-        self.assertIn("cd web && npm run test:e2e:scene", displays)
+        self.assertIn("cd web && node scripts/browser-ci-modules.mjs scene", displays)
         device = next(item for item in plan if item["display"].startswith("representative Android/iOS"))
         self.assertFalse(device["run"])
 
@@ -278,16 +277,16 @@ class Sk7ctlTests(unittest.TestCase):
 
     # --- Local verification router v1 tests ---
 
-    def test_s02_focused_ui_is_moderate_and_selected_in_focused(self) -> None:
+    def test_journey_today_is_moderate_and_selected_in_focused(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/components/JourneyToday.tsx"], "routine", "focused", self.real_root)
-        suite = next(item for item in plan if item.get("name") == "S02 focused UI")
+        suite = next(item for item in plan if item.get("name") == "journey")
         self.assertEqual(suite["cost"], "MODERATE")
         self.assertIn("focused", suite["profiles"])
         self.assertTrue(suite["run"])
 
-    def test_s10_focused_ui_is_moderate_and_selected_in_focused(self) -> None:
+    def test_journey_recap_is_moderate_and_selected_in_focused(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root)
-        suite = next(item for item in plan if item.get("name") == "S10 focused UI")
+        suite = next(item for item in plan if item.get("name") == "journey")
         self.assertEqual(suite["cost"], "MODERATE")
         self.assertIn("focused", suite["profiles"])
         self.assertTrue(suite["run"])
@@ -295,14 +294,14 @@ class Sk7ctlTests(unittest.TestCase):
     def test_app_shell_selects_auth_and_journey_ui_not_full_matrix(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/App.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
-        self.assertIn("normal auth boundaries", names)
-        self.assertIn("journey UI", names)
-        self.assertNotIn("browser regression", names)
+        self.assertIn("core", names)
+        self.assertIn("journey", names)
+        self.assertNotIn("model", names)
 
     def test_scene_companion_runtime_selects_review_scene_suite(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/components/VisualStage.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
-        self.assertIn("S02 and S10 review scenes", names)
+        self.assertIn("scene", names)
         self.assertIn("cd web && npm run build", self._displays(plan))
 
     def _model_test_item(self, plan: list[dict[str, object]]) -> dict[str, object] | None:
@@ -353,20 +352,20 @@ class Sk7ctlTests(unittest.TestCase):
 
     def test_full_profile_includes_expensive_browser_regression(self) -> None:
         plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "full", self.real_root)
-        suite = next(item for item in plan if item.get("name") == "browser regression")
+        suite = next(item for item in plan if item.get("name") == "core")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertIn("full", suite["profiles"])
 
     def test_pr_profile_includes_expensive_browser_regression_for_unknown_spec(self) -> None:
         plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "pr", self.real_root)
-        suite = next(item for item in plan if item.get("name") == "browser regression")
+        suite = next(item for item in plan if item.get("name") == "core")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertIn("pr", suite["profiles"])
         self.assertNotIn("focused", suite["profiles"])
 
     def test_focused_profile_skips_expensive_browser_regression(self) -> None:
         plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root)
-        suite = next(item for item in plan if item.get("name") == "browser regression")
+        suite = next(item for item in plan if item.get("name") == "core")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertNotIn("focused", suite["profiles"])
 
@@ -411,14 +410,14 @@ class Sk7ctlTests(unittest.TestCase):
     def test_s10_change_does_not_run_saved_scene_suite(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
-        self.assertIn("S10 focused UI", names)
-        self.assertNotIn("saved-scene migration parity", names)
+        self.assertIn("journey", names)
+        self.assertNotIn("scene", names)
 
     def test_selector_policy_unit_test_is_cheap(self) -> None:
         plan = sk7ctl.verification_plan(
             ["web/scripts/select-pr-browser-suites.mjs"], "routine", "focused", self.real_root
         )
-        suite = next(item for item in plan if item.get("name") == "selector policy unit test")
+        suite = next(item for item in plan if item.get("name") == "policy")
         self.assertEqual(suite["cost"], "CHEAP")
         self.assertIn("focused", suite["profiles"])
 

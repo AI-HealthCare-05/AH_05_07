@@ -92,9 +92,9 @@ docker volume ls -q --filter "label=com.supabase.cli.project=<동일 project_id>
 대조한 후 그 process만 종료한다. 다른 PID를 포트 이름만 보고 종료하지 않는다.
 정리 실패는 “검증 성공”으로 바꾸지 않는다. 로컬 디스크 보존은 독립 백업이 아니다.
 
-Windows/Linux CI는 URL/redirect·환경 오염·원격 Docker 거부·출력 보존·집계 산술의
-dependency-free controls를 실행한다. 실제 API의 지연값이나 SQL을 CI에서 재계산한
-증거가 아니다. 기존 일반·합성·committed model evidence CI는 그대로 유지한다.
+Linux PR evidence controls는 URL/redirect·환경 오염·원격 Docker 거부·출력 보존·집계
+산술의 dependency-free controls를 실행한다. Windows 호환성은 같은 workflow의 수동
+실행으로 보존한다. 실제 API의 지연값이나 SQL을 CI에서 재계산한 증거가 아니다.
 
 ## 실행 결과와 남은 조건
 
@@ -136,7 +136,7 @@ UTC18:48:49–18:49:26에 겹쳤다. PUT owner 단계 끝부분과 anonymous win
 실제 기능 경로로 검사했지만 반복 지연 분포를 측정하지 않았다. 모든 API를 포괄한
 성능 승인이나 SLA 검증으로 확대하지 않는다.
 
-Windows/Linux CI의7개 controls와 committed aggregate 검사는 최상위/phase 필드,
+Linux PR 및 수동 Windows compatibility의7개 controls와 committed aggregate 검사는 최상위/phase 필드,
 표본/오류율 산술, 유한 지연값·분위수 순서를 검사한다. raw timing이 공개되지 않으므로
 P95를 독립 재계산하지 않으며 HTTP/SQL을 재실행하지 않는다. source/정리와 내용의
 적정성은 실제 로컬 실행 및 이 문서의 검토 기록과 함께 읽어야 한다.

@@ -44,17 +44,18 @@ VERIFICATION_KEYS = {"lane", "files", "out_of_scope_files", "results"}
 RESULT_KEYS = {"command", "result", "scope"}
 PROFILES = {"focused", "pr", "full"}
 
-# Browser suites from the repository-owned Node selector are tagged by cost for
-# local profile routing. The selector itself remains the single source of truth
-# for which suites are relevant; this table only controls *when* they execute.
-BROWSER_SUITE_COSTS = {
-    "selector policy unit test": "CHEAP",
-    "S02 focused UI": "MODERATE",
-    "S10 focused UI": "MODERATE",
-    "browser regression": "EXPENSIVE",
-    "model-v2 firefox and webkit": "EXPENSIVE",
+# Browser concern modules from the repository-owned Node selector are tagged by
+# cost for local profile routing. The selector owns path policy, while the Node
+# module runner owns the commands used locally and in GitHub Actions.
+BROWSER_MODULE_COSTS = {
+    "policy": "CHEAP",
+    "journey": "MODERATE",
+    "scene": "MODERATE",
+    "assets": "MODERATE",
+    "core": "EXPENSIVE",
+    "model": "EXPENSIVE",
 }
-DEFAULT_BROWSER_SUITE_COST = "MODERATE"
+DEFAULT_BROWSER_MODULE_COST = "MODERATE"
 
 # Model V2 research files map to the smallest directly affected test. Shared
 # helpers/contracts widen coverage only when they actually change.
@@ -543,25 +544,11 @@ def cmd_plan(args: argparse.Namespace, root: Path, store: StateStore) -> int:  #
     return 0
 
 
-def _scene_runtime_suites(paths: Sequence[str]) -> set[str]:
-    selected: set[str] = set()
-    for path in paths:
-        lowered = path.lower()
-        if any(marker in lowered for marker in ("savedscene", "saved-scene", "saved_scene")):
-            selected.add("npm run test:e2e:saved-scene")
-        elif "scene" in lowered or "manifest" in lowered:
-            selected.add("npm run test:e2e:scene")
-        if "companion" in lowered:
-            selected.add("npm run test:e2e:review")
-    return selected
-
-
 def _select_browser_suites(paths: Sequence[str], root: Path) -> list[dict[str, Any]]:
-    """Call the repository-owned browser selector and return tagged suites.
+    """Call the repository-owned browser selector and return tagged modules.
 
-    The Node selector is the single source of truth for which browser suites
-    match a set of changed files. This function only annotates each suite with
-    a local cost and shell-ready argv so ``sk7ctl`` can decide when to run it.
+    The Node selector is the single source of truth for which browser concerns
+    match changed files. The shared module runner remains the command owner.
     """
     if not paths:
         return []
@@ -580,12 +567,12 @@ def _select_browser_suites(paths: Sequence[str], root: Path) -> list[dict[str, A
             }
         ]
 
-    # The selector exports selectPrBrowserSuites(files). Import it directly so
+    # Import the selector directly so
     # we can pass the current changed-file set without needing a temporary commit.
     selector_abs = selector.resolve().as_posix()
     script = (
         f"import('{selector_abs}').then(m => "
-        "console.log(JSON.stringify(m.selectPrBrowserSuites(JSON.parse(process.argv[1])))))"
+        "console.log(JSON.stringify(m.selectPrBrowserModules(JSON.parse(process.argv[1])))))"
     )
     proc = subprocess.run(
         ["node", "-e", script, json.dumps(list(paths))],
@@ -609,7 +596,7 @@ def _select_browser_suites(paths: Sequence[str], root: Path) -> list[dict[str, A
         ]
 
     try:
-        suites = json.loads(proc.stdout)
+        modules = json.loads(proc.stdout)
     except json.JSONDecodeError as exc:
         return [
             {
@@ -625,20 +612,18 @@ def _select_browser_suites(paths: Sequence[str], root: Path) -> list[dict[str, A
         ]
 
     plan: list[dict[str, Any]] = []
-    for suite in suites:
-        name = suite.get("name", "unknown")
-        command = suite.get("command", "")
-        cost = BROWSER_SUITE_COSTS.get(name, DEFAULT_BROWSER_SUITE_COST)
+    for module in modules:
+        cost = BROWSER_MODULE_COSTS.get(module, DEFAULT_BROWSER_MODULE_COST)
+        command = f"node scripts/browser-ci-modules.mjs {module}"
         plan.append(
             {
                 "cost": cost,
-                "name": name,
+                "name": module,
                 "display": f"cd web && {command}",
                 "cwd": "web",
-                "shell": command,
-                "argv": [],
+                "argv": ["node", "scripts/browser-ci-modules.mjs", module],
                 "run": True,
-                "scope": f"browser suite '{name}' selected by web/scripts/select-pr-browser-suites.mjs",
+                "scope": f"browser module '{module}' selected by web/scripts/select-pr-browser-suites.mjs",
                 "profiles": {"focused", "pr", "full"} if cost in {"CHEAP", "MODERATE"} else {"pr", "full"},
             }
         )
@@ -851,35 +836,18 @@ def verification_plan(  # noqa: C901
             )
         )
 
-    # Browser tests are only relevant when the diff touches web code. Reuse the
-    # repository-owned selector for the web subset so we do not duplicate rules.
-    web_paths = [path for path in paths if path.startswith("web/")]
-    if web_paths:
-        browser_suites = _select_browser_suites(web_paths, root)
+    # Reuse the repository-owned selector for browser-facing web and review-tool
+    # paths so local planning follows the same concern ownership as GitHub CI.
+    browser_paths = [
+        path
+        for path in paths
+        if path.startswith(("web/", "tools/character-preview/", "tools/question-review/", "tools/submission-"))
+    ]
+    if browser_paths:
+        browser_suites = _select_browser_suites(browser_paths, root)
         plan.extend(browser_suites)
     else:
         browser_suites = []
-
-    # Fallback for scene/companion runtime paths that are not recognized by the
-    # dedicated selector: keep the historical deterministic mapping so local
-    # iteration still runs a targeted suite instead of the broad matrix.
-    selected_fallback = _scene_runtime_suites(web_runtime_paths)
-    existing_commands = {item.get("shell", "") for item in browser_suites if item.get("shell")}
-    for command in selected_fallback:
-        if command in existing_commands:
-            continue
-        plan.append(
-            _check(
-                cost="MODERATE",
-                name=command,
-                display=f"cd web && {command}",
-                cwd="web",
-                argv=command.split(),
-                shell=command,
-                scope="directly affected scene/companion runtime (fallback mapping)",
-                profiles={"focused", "pr", "full"},
-            )
-        )
 
     if scene_runtime:
         plan.append(
