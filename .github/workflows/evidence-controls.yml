@@ -120,6 +120,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Install web dependencies for companion asset controls
+        if: matrix.module == 'companion-assets'
+        working-directory: web
+        run: npm ci
       - name: Set up uv
         if: matrix.module == 'model-data'
         uses: astral-sh/setup-uv@v5
