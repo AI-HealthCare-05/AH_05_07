@@ -1250,17 +1250,14 @@ function App() {
   const reportAvailable = !evidenceMode && Boolean(session) && (!isPriorDashboard || isCycleReview) && ready
     && windowData?.start_on === startOn && windowData?.end_on === endOn;
   const reportVisible = reportCreatedAt !== null && reportAvailable && requestedScreen === "S10";
-  const automaticallyEmpty =
-    windowState === "ready" &&
-    requestedScreen === "S02" &&
-    isWindowEmpty(windowData) &&
-    !confirmedSave;
-  const truthfulFallback: ScreenId = isWindowEmpty(windowData) ? "S12" : "S02";
+  const confirmedWindowEmpty = windowState === "ready" && isWindowEmpty(windowData);
+  const automaticallyEmpty = confirmedWindowEmpty && requestedScreen === "S02" && !confirmedSave;
+  const truthfulFallback: ScreenId = confirmedWindowEmpty ? "S12" : "S02";
   const activeScreen: ScreenId = windowState === "error"
     ? "S13"
     : requestedScreen === "S05" && !confirmedSave
       ? truthfulFallback
-      : requestedScreen === "S13" || (requestedScreen === "S12" && !isWindowEmpty(windowData))
+      : requestedScreen === "S13" || (requestedScreen === "S12" && !confirmedWindowEmpty)
         ? truthfulFallback
         : requestedScreen === "S06" && !activeChallenge
           ? truthfulFallback
@@ -2004,10 +2001,10 @@ function App() {
           key={session.user.id}
           session={session}
           captureRequestContext={captureRequestContext}
-          bloodPressureStatus={isPriorDashboard ? "오늘 혈압 상태 미확인" : todayBloodPressureStatus}
+          bloodPressureStatus={modelV2Continuation.key === "confirm-today" ? "오늘 혈압 상태 · 최신 여부 미확인" : todayBloodPressureStatus}
           bloodPressureSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 기록을 확인해요." : todayBloodPressureSupport}
           continuation={modelV2Continuation}
-          challengeStatus={isPriorDashboard ? "오늘 챌린지 상태 미확인" : modelV2ChallengeStatus}
+          challengeStatus={modelV2Continuation.key === "confirm-today" ? "오늘 챌린지 상태 · 최신 여부 미확인" : modelV2ChallengeStatus}
           challengeSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 챌린지 상태를 확인해요." : modelV2ChallengeSupport}
           onContinue={() => navigate(modelV2Continuation.destination)}
           onReturnToToday={() => navigate("S02")}

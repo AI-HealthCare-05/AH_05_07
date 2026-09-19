@@ -268,6 +268,50 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await expect(page.locator('#model-weight')).toHaveValue('');
 });
 
+for (const screen of ['S02', 'S12', 'S05', 'S06']) {
+  test(`empty routing truthfulness for ${screen} across ready, refreshing and refresh-error`, async ({ page }) => {
+    await setupS11Continuation(page, s11ContinuationCases[0]);
+    await page.goto(`/?e2e=signed-in&screen=${screen}`);
+    await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    await expect(page.locator('#S10-title')).toBeVisible();
+    const held = deferred();
+    let refreshing = false;
+    await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      refreshing = true;
+      await held.promise;
+      return route.fulfill({ status: 503, headers, contentType: 'application/json', body: JSON.stringify({ detail: { code: 'temporarily_unavailable' } }) });
+    });
+    try {
+      await page.getByRole('button', { name: '새로고침', exact: true }).click();
+      await expect.poll(() => refreshing).toBe(true);
+      // Restore the original requested route without reloading the retained window.
+      await page.goBack();
+      await expect(page).toHaveURL(new RegExp(`screen=${screen}`));
+      for (const freshness of ['refreshing', 'refresh-error']) {
+        if (freshness === 'refresh-error') {
+          held.release();
+          await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
+        }
+        await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+        await expect(page.locator('[data-scene="S12"], [data-scene="S05"], [data-scene="S06"]')).toHaveCount(0);
+      }
+    } finally {
+      held.release();
+    }
+  });
+}
+
+test('empty routing truthfulness preserves confirmed prior-window empty copy', async ({ page }) => {
+  await setupS11Continuation(page, s11ContinuationCases[0]);
+  await page.goto('/?e2e=signed-in&screen=S12&dashboard_window=prior');
+  const empty = page.locator('[data-scene="S12"]');
+  await expect(empty).toBeVisible();
+  await expect(empty).toContainText('이전 7일 · 읽기 전용');
+  await expect(empty).toContainText('이 기간에는 기록이 없어요.');
+});
+
 for (const retainedEmpty of [false, true]) test(`S11 continuation H: retained ${retainedEmpty ? 'empty' : 'BP/challenge'} refreshing and refresh-error facts return to Today without duplicate actions`, async ({ page }) => {
   await setupS11Continuation(page, s11ContinuationCases[retainedEmpty ? 0 : 2]);
   await page.goto('/?e2e=signed-in&screen=S10');
@@ -298,6 +342,10 @@ for (const retainedEmpty of [false, true]) test(`S11 continuation H: retained ${
       await expect(next.getByRole('heading', { name: '오늘 기록 상태를 먼저 확인해요', exact: true })).toBeVisible();
       await expect(next.getByRole('button')).toHaveCount(1);
       await expect(next.getByRole('button')).toHaveText('오늘 화면에서 확인하기');
+      const context = result.locator('.model-v2-next-context');
+      await expect(context.locator('[data-model-v2-continuity="blood-pressure"] strong')).toHaveText('오늘 혈압 상태 · 최신 여부 미확인');
+      await expect(context.locator('[data-model-v2-continuity="challenge"] strong')).toHaveText('오늘 챌린지 상태 · 최신 여부 미확인');
+      await expect(context).not.toContainText(/오늘 아침 기록 있음|오늘 혈압 기록 전|오늘 상태는 아직 기록하지 않았어요|진행 중인 7일 챌린지가 없어요/);
     }
     await next.getByRole('button').click();
     await expect(page.locator('#S02-title')).toBeFocused();
@@ -315,8 +363,8 @@ test('S11 continuation treats a prior-window view as unconfirmed current facts',
   await completeS11LifestyleSurvey(page);
   const result = page.locator('[data-model-v2-user-result="processed"]');
   await expect(result.locator('[data-model-v2-continuation]')).toHaveAttribute('data-model-v2-continuation', 'confirm-today');
-  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText('오늘 혈압 상태 미확인');
-  await expect(result.locator('[data-model-v2-continuity="challenge"]')).toContainText('오늘 챌린지 상태 미확인');
+  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText('오늘 혈압 상태 · 최신 여부 미확인');
+  await expect(result.locator('[data-model-v2-continuity="challenge"]')).toContainText('오늘 챌린지 상태 · 최신 여부 미확인');
   await expect(result.getByRole('button')).toHaveCount(1);
   await result.getByRole('button', { name: '오늘 화면에서 확인하기', exact: true }).click();
   await expect(page.locator('#S02-title')).toBeFocused();
