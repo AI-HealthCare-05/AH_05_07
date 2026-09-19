@@ -40,7 +40,7 @@ export function parseScreen(value: string | null): ScreenId {
 
 export const journeyCopy = {
   S01: {
-    eyebrow: "상균7데이즈",
+    eyebrow: "SK7",
     title: "측정한 혈압을 기록하고 최근 7일을 확인해요",
     body: "같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.",
   },
