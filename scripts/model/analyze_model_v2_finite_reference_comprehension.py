@@ -15,8 +15,10 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from threadpoolctl import threadpool_limits
 
+from app.services.model_v2_inference import FEATURES, load_verified_artifact
 from scripts.model import analyze_model_v2_reference_distribution as b
 
 REPO = Path(__file__).resolve().parents[2]
@@ -33,6 +35,39 @@ PERCENTILES = {f"p{p:02d}": p / 100 for p in range(1, 100)}
 
 # Synthetic example percentiles for the comprehension prototype.
 EXAMPLE_PERCENTILES = (10, 25, 50, 75, 82, 90)
+
+# B3 reads only the frozen R1 artifact and the G6 validation parquet.
+# This is a deliberate narrowing of B's load_sources(); do not reuse B's loader.
+B3_ARTIFACT = b.ARTIFACT
+B3_VALIDATION_ROLE = "validation_2024"
+B3_VALIDATION_CONFIG = b.ROLES[B3_VALIDATION_ROLE]
+B3_COLUMNS = [*FEATURES, "wt_itvex", "kstrata", "psu"]
+
+
+def load_validation_source(root, reference_model_sha=b.EXPECTED_ARTIFACT_SHA256):
+    """Load only the frozen model artifact and the G6 validation 2024 cohort.
+
+    No development, temporal, or final-test rows are resolved or opened.
+    Only the 11 semantic features plus wt_itvex/kstrata/psu are read.
+    """
+    if reference_model_sha != b.EXPECTED_ARTIFACT_SHA256:
+        raise ValueError("reference/model SHA mismatch")
+    artifact_path = b.approved_path(root, B3_ARTIFACT)
+    artifact = load_verified_artifact(artifact_path, enabled=True)
+    config = B3_VALIDATION_CONFIG
+    path = b.approved_path(root, config["path"])
+    if b.sha256(path) != config["sha256"]:
+        raise ValueError("approved cohort SHA mismatch")
+    frame = pd.read_parquet(path, columns=B3_COLUMNS)
+    design = b.design_diagnostics(frame)
+    if len(frame) != config["n"]:
+        raise ValueError(f"approved cohort count mismatch: {len(frame)} != {config['n']}")
+    if design["psu"] != config["psu"]:
+        raise ValueError(f"approved cohort PSU mismatch: {design['psu']} != {config['psu']}")
+    if frame[["kstrata", "psu"]].isna().any().any():
+        raise ValueError("missing survey design metadata")
+    b.checked_values(np.zeros(len(frame)), frame["wt_itvex"].to_numpy())
+    return {B3_VALIDATION_ROLE: frame}, artifact["pipeline"]
 
 
 def read_b_evidence():
@@ -252,7 +287,7 @@ def run(root, output, created_at, reference_model_sha=b.EXPECTED_ARTIFACT_SHA256
         raise ValueError("refusing to overwrite existing evidence")
     metadata = identity(created_at)
     _prior = read_b_evidence()
-    frames, pipeline = b.load_sources(root, reference_model_sha)
+    frames, pipeline = load_validation_source(root, reference_model_sha)
     payload = {
         "identity": metadata,
         **analyze(frames, pipeline),

@@ -32,6 +32,9 @@ Done:
 - Responsive layout, keyboard focus, 200% text, no horizontal overflow,
   non-color-only markers, text equivalents.
 - Synthetic and local-integration tests; no G8 access; no production change.
+- Validation-only data execution: only the frozen artifact and the G6 validation
+  2024 parquet are opened; development, temporal, and final-test sources are not
+  loaded by the B3 runner.
 
 Not done:
 
@@ -83,6 +86,11 @@ consistent with B's 8.141403 pp. This is published, not hidden.
 The same score maps to different positions depending on weighting policy,
 reinforcing that the number is a position inside a fixed reference, not a
 probability or health severity.
+
+In the presentation prototype, the 82 position is the **weighted research-position
+example**; the unweighted position for the same synthetic output is 77.56.
+The choice between weighted and unweighted policy remains unresolved for
+product use.
 
 ## Aggregate lookup artifact
 

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from scripts.model import analyze_model_v2_finite_reference_comprehension as research
@@ -191,7 +192,7 @@ def test_windows_checkout_crlf_only_allowed_without_rewriting_b(monkeypatch, tmp
 
 def test_output_file_bytes_match_returned_hash(monkeypatch, tmp_path):
     monkeypatch.setattr(research, "identity", lambda _: make_identity())
-    monkeypatch.setattr(b, "load_sources", lambda *_: ({}, None))
+    monkeypatch.setattr(research, "load_validation_source", lambda *_: ({}, None))
     monkeypatch.setattr(
         research,
         "analyze",
@@ -238,10 +239,28 @@ def test_overwrite_rejected(tmp_path):
 
 
 @pytest.mark.skipif(not os.getenv("SK7_REFERENCE_DATA_ROOT"), reason="approved local integration is opt-in")
-def test_local_finite_reference_lookup_without_g8_fit_or_row_output(tmp_path):
+def test_local_finite_reference_lookup_without_g8_fit_or_row_output(monkeypatch, tmp_path):
     root = Path(os.environ["SK7_REFERENCE_DATA_ROOT"]).resolve()
     created_at = os.environ.get("SK7_REFERENCE_CREATED_AT", "2026-09-19T01:00:00Z")
     first, second = tmp_path / "first.json", tmp_path / "second.json"
+
+    approved_accesses = []
+    parquet_reads = []
+    original_approved_path = b.approved_path
+
+    def tracking_approved_path(r, rel):
+        approved_accesses.append(rel)
+        return original_approved_path(r, rel)
+
+    original_read_parquet = pd.read_parquet
+
+    def tracking_read_parquet(*args, **kwargs):
+        parquet_reads.append(args[0])
+        return original_read_parquet(*args, **kwargs)
+
+    monkeypatch.setattr(b, "approved_path", tracking_approved_path)
+    monkeypatch.setattr(pd, "read_parquet", tracking_read_parquet)
+
     assert research.run(root, first, created_at) == research.run(root, second, created_at)
     assert first.read_bytes() == second.read_bytes()
     result = json.loads(first.read_text())["payload"]
@@ -250,3 +269,13 @@ def test_local_finite_reference_lookup_without_g8_fit_or_row_output(tmp_path):
     assert "p82" in result["synthetic_examples"]
     assert all(k in result["lookup"]["weighted"] for k in research.PERCENTILES)
     assert all(v is False for v in result["safety"].values())
+
+    # B3 must resolve only the frozen artifact and the G6 validation parquet.
+    assert set(approved_accesses) == {b.ARTIFACT, b.ROLES["validation_2024"]["path"]}
+    assert len(parquet_reads) == 1
+    read_path = str(parquet_reads[0])
+    assert read_path.endswith(b.ROLES["validation_2024"]["path"])
+    assert "development" not in read_path
+    assert "temporal" not in read_path
+    assert "final-test" not in read_path
+    assert "final_test" not in read_path

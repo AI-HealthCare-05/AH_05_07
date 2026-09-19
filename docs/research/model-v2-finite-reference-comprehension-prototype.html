@@ -237,6 +237,10 @@
       <p><strong>이 화면은 연구 목적의 정적 목업입니다.</strong> 실제 사용자 입력을 받지 않으며, 실제 참가자 데이터를 노출하지 않습니다. 모든 숫자 예시는 합성(synthetic)입니다.</p>
     </div>
 
+    <div class="notice">
+      <p>이 목업의 82 위치 표시는 <strong>조사 가중치를 적용한 연구 위치 예시</strong>입니다. 가중치 정책(weighted vs unweighted) 자체는 아직 제품 결정이 아닙니다.</p>
+    </div>
+
     <section aria-labelledby="what">
       <h2 id="what">무엇을 비교하는가?</h2>
       <p>동결된 연구 참조 데이터 <code>G6 validation product-complete subset (N=869)</code>에서 같은 동결 모델로 계산한 내부 연속 출력의 <strong>상대적 위치</strong>입니다.</p>
@@ -258,9 +262,9 @@
 
     <section class="arm" aria-labelledby="arm-b">
       <h2 id="arm-b"><span class="arm-label">Arm B</span><br>이름 붙은 유한 참조, 텍스트 백분위</h2>
-      <p class="value-muted">연구 참조 데이터에서의 모델 출력 위치</p>
+      <p class="value-muted">조사 가중치를 적용한 연구 위치 · 약 82백분위</p>
       <p class="value">82백분위</p>
-      <p>869건의 동결 참조 기록 중 약 82% 위치에 해당하는 출력입니다.</p>
+      <p>같은 합성 출력의 가중치 미적용 유한 순위는 약 <strong>77.56백분위</strong>입니다. 두 값은 서로 다른 가중치 정책을 보여주며, 어느 쪽도 제품용으로 선택되지 않았습니다.</p>
       <div class="notice">
         <p>이 숫자는 <strong>질환이 있을 확률 82%</strong>가 아닙니다. 나이·성별이 비슷한 사람들과 비교한 값도 아닙니다.</p>
       </div>
@@ -268,14 +272,14 @@
 
     <section class="arm" aria-labelledby="arm-c">
       <h2 id="arm-c"><span class="arm-label">Arm C</span><br>분포 마커 — 백분위 숫자 없음</h2>
-      <p>참조 데이터 분포 위에 현재 합성 출력을 표시합니다.</p>
-      <div class="distribution" role="img" aria-label="참조 데이터 모델 출력 분포(0에서 100) 위 합성 출력 마커, 약 82번째 위치">
+      <p>참조 데이터 분포 위에 현재 합성 출력을 표시합니다. 이 마커는 <strong>조사 가중치를 적용한 연구 위치</strong>를 보여줍니다.</p>
+      <div class="distribution" role="img" aria-label="참조 데이터 모델 출력 분포(0에서 100) 위 조사 가중치를 적용한 합성 출력 마커, 약 82번째 연구 위치">
         <div class="distribution-track">
           <div class="distribution-marker" style="left: 82%;"></div>
         </div>
         <div class="distribution-label">
           <span>0</span>
-          <span>합성 출력 위치</span>
+          <span>조사 가중치를 적용한 합성 출력 위치</span>
           <span>100</span>
         </div>
       </div>
@@ -284,7 +288,7 @@
 
     <section class="arm" aria-labelledby="arm-d">
       <h2 id="arm-d"><span class="arm-label">Arm D</span><br>100개 위치 설명</h2>
-      <p>참조 데이터의 모델 출력 분포를 100개의 위치로 나누면 약 <strong>82번째 지점</strong>입니다.</p>
+      <p>참조 데이터의 모델 출력 분포를 100개의 위치로 나누면, <strong>조사 가중치를 적용한 연구 위치</strong>는 약 <strong>82번째 지점</strong>입니다.</p>
       <div class="notice">
         <p>이 표현이 오히려 “82% 확률”로 오핼될 수 있는지 평가해야 합니다.</p>
       </div>
@@ -298,7 +302,7 @@
     </section>
 
     <section aria-labelledby="comprehension">
-      <h2 id="comprehension">이핵 게이트</h2>
+      <h2 id="comprehension">이해 게이트</h2>
       <p>각 표현을 본 사용자가 다음을 구별할 수 있어야 합니다. “모르겠다”는 정답으로 처리하지 않습니다.</p>
       <ul class="checklist">
         <li><span class="answer">아니다</span> — 82백분위는 질환이 있을 확률 82%를 뜻하는가?</li>
@@ -318,6 +322,7 @@
         <li>조사 가중치 적용 유한 위치: <strong>82.08백분위</strong></li>
       </ul>
       <p>두 방식의 최대 차이는 약 <strong>8.14 pp</strong>입니다. B/B2 결과를 숨기지 않고 보여줍니다.</p>
+      <p>이 목업에서 82로 표시된 위치는 <strong>조사 가중치를 적용한 연구 위치</strong>이며, 가중치 정책 자체는 아직 제품 결정이 아닙니다.</p>
     </section>
 
     <details>
