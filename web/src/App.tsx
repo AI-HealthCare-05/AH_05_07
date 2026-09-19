@@ -1223,19 +1223,19 @@ function App() {
     : windowData?.blood_pressure_observations.length ?? 0;
   const todayBloodPressureSupport = !todayMeasurement
     ? recentBloodPressureCount > 0
-      ? `최근 7일에 혈압 기록 ${recentBloodPressureCount}건이 있어요. 오늘 측정한 값을 이어서 남겨요.`
-      : "오늘 측정한 값을 남겨요."
+      ? `최근 7일 혈압 기록 ${recentBloodPressureCount}건`
+      : "오늘 기록 없음"
     : todayMorningMeasurement && todayEveningMeasurement
-      ? "아침·저녁 기록이 있어요. 저장한 내용을 확인해요."
+      ? "아침·저녁 기록 있음"
       : todayMorningMeasurement
-        ? "아침 기록이 있어요. 저장한 내용을 확인해요."
-        : "저녁 기록이 있어요. 저장한 내용을 확인해요.";
+        ? "아침 기록 있음"
+        : "저녁 기록 있음";
   const additionalBloodPressureSupport =
     todayMorningMeasurement && !todayEveningMeasurement
-      ? "아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
+      ? "아침 기록 있음 · 저녁은 필요할 때 추가"
       : todayEveningMeasurement && !todayMorningMeasurement
-        ? "저녁 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요."
-        : "오늘 측정한 값을 바로 기록해요.";
+        ? "저녁 기록 있음 · 아침은 필요할 때 추가"
+        : "오늘 기록 없음";
   const controlsDisabled = pendingAction !== null || isPriorDashboard || accountDeletionPending;
   const readNavigationDisabled = pendingAction !== null || accountDeletionPending;
   const displayMeasurement = (record: BloodPressureObservation) => evidenceMode ? "•••/•• mmHg" : `${record.systolic}/${record.diastolic} mmHg`;
@@ -1329,7 +1329,7 @@ function App() {
       ? {
           key: "records",
           title: "기록 찾아보기",
-          support: "오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.",
+          support: "아침·저녁 기록 있음 · 지난 기록은 날짜별",
           action: "기록 찾아보기",
           screen: "S08",
         }
@@ -1353,8 +1353,8 @@ function App() {
       key: "today-detail",
       title: todayMeasurement ? "오늘 상세" : "오늘 상태",
       support: todayMeasurement
-        ? "오늘 남긴 혈압 기록과 챌린지 상태를 확인해요."
-        : "오늘 혈압 기록 여부와 챌린지 상태를 확인해요.",
+        ? "혈압 기록 · 챌린지 상태"
+        : "혈압 기록 없음 · 챌린지 상태",
       action: todayMeasurement ? "오늘 상세 열기" : "오늘 상태 보기",
       screen: "S07",
     },
@@ -1497,11 +1497,7 @@ function App() {
 
     return (
       <div className="journey-today-detail" data-today-scope={isPriorDashboard ? "prior" : "current"} data-record-priority="blood-pressure">
-        <p className="journey-today-scope">
-          {isPriorDashboard
-            ? "이전 7일 조회 중이에요. 이 화면에서는 오늘의 실제 기록 상태를 확인하거나 새로 남길 수 없어요."
-            : "현재 7일 · 오늘 포함. 혈압, 챌린지 상태, 이전 방식 기록을 각각 확인해요."}
-        </p>
+        {isPriorDashboard && <p className="journey-today-scope">이전 7일 조회 중 · 오늘 상태를 확인하거나 새로 기록할 수 없어요.</p>}
         <div className="fact-lanes">
           <section className="fact-lead">
             <p className="eyebrow">혈압 관찰</p>
@@ -1533,10 +1529,8 @@ function App() {
             <p className="eyebrow">선택 기능 · 챌린지 참여</p>
             <h2>{isPriorDashboard ? "오늘 상태 미확인" : currentChallenge ? challengeLabel(activeChallenge!.action_id) : activeChallengeEnded ? "종료된 챌린지" : "아직 선택 없음"}</h2>
             <p>{isPriorDashboard ? "선택한 이전 구간에서는 오늘 챌린지 상태를 확인하거나 기록할 수 없어요." : currentChallenge ? todayCheckin ? `오늘 상태 · ${checkinLabel(todayCheckin.status)}` : "오늘 상태를 확인하고 기록할 수 있어요." : activeChallengeEnded ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요." : "행동을 선택하면 오늘 상태를 따로 기록할 수 있어요."}</p>
-            {!isPriorDashboard && <p className="journey-today-challenge-note">{todayCheckin?.status === "skipped"
-              ? "'건너뜀'도 오늘 상태로 저장된 기록이에요. 혈압 기록과는 별도예요."
-              : "챌린지 상태는 혈압 기록과 별도로 저장해요."}</p>}
-            {(!activeChallenge || activeChallengeEnded) && !isPriorDashboard ? <button type="button" onClick={() => navigate("S03")} disabled={controlsDisabled}>행동 고르기</button> : canRecordTodayStatus && <div className="journey-checkin-actions"><p>오늘 상태를 저장해요.</p><div className="inline-actions"><button type="button" onClick={() => void submitActiveChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button><button className="secondary" type="button" onClick={() => void submitActiveChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button></div></div>}
+            {!isPriorDashboard && todayCheckin?.status === "skipped" && <p className="journey-today-challenge-note">'건너뜀'도 오늘 상태로 저장되며 혈압 기록과는 별도예요.</p>}
+            {(!activeChallenge || activeChallengeEnded) && !isPriorDashboard ? <button type="button" onClick={() => navigate("S03")} disabled={controlsDisabled}>행동 고르기</button> : canRecordTodayStatus && <div className="journey-checkin-actions"><div className="inline-actions"><button type="button" onClick={() => void submitActiveChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button><button className="secondary" type="button" onClick={() => void submitActiveChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button></div></div>}
           </section>
           <section>
             <p className="eyebrow">이전 방식 기록</p>
@@ -1571,7 +1565,7 @@ function App() {
       if (presentation.journey) return (
         <Scene id="S12" eyebrow={isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}
           title={isPriorDashboard ? "이 기간에는 기록이 없어요." : "측정한 혈압부터 기록해요"}
-          body={isPriorDashboard ? "선택한 이전 구간을 확인했어요. 남긴 기록은 없으며, 새 기록은 현재 7일에서 시작할 수 있어요." : "혈압 기록은 바로 시작할 수 있고, 7일을 채우지 않아도 남긴 기록부터 확인할 수 있어요. 챌린지는 별도로 선택할 수 있어요."}
+          body={isPriorDashboard ? "이전 구간에는 기록이 없으며, 새 기록은 현재 7일에서 시작할 수 있어요." : undefined}
           tone="sage" className="journey-empty">
           <p className="journey-empty-period" aria-label="조회 기간"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
           {isPriorDashboard ? (
@@ -1583,12 +1577,11 @@ function App() {
               <div className="journey-empty-actions">
                 <section className="journey-empty-action">
                   <h2>혈압 기록</h2>
-                  <p id="empty-bp-help">측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.</p>
-                  <button type="button" aria-describedby="empty-bp-help" onClick={() => navigate("S04")}>혈압 기록하기</button>
+                  <button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button>
                 </section>
                 <section className="journey-empty-action">
                   <h2>7일 챌린지</h2>
-                  <p id="empty-challenge-help">선택 기능이에요. 원하면 이어갈 행동을 골라요. 혈압 기록과 별도로 시작할 수 있어요.</p>
+                  <p id="empty-challenge-help">선택 기능 · 혈압 기록과 별도로 시작해요.</p>
                   <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
                 </section>
               </div>
@@ -1597,7 +1590,7 @@ function App() {
                 <div>
                   <p className="eyebrow">선택 도구 · 저장 안 함</p>
                   <h2 id="empty-signal-title">생활정보를 먼저 정리할 수도 있어요</h2>
-                  <p id="empty-signal-help">활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요. 혈압 기록과는 별도예요.</p>
+                  <p id="empty-signal-help">활동·수면·생활습관을 이번 이용에만 정리해요.</p>
                 </div>
                 <button className="text-button" type="button" aria-describedby="empty-signal-help" onClick={() => navigate("S11")}>생활정보 정리하기</button>
               </aside>
@@ -1619,7 +1612,7 @@ function App() {
 
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
-      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} body={activeChallengeEnded ? "원할 때만 다시 시작해요. 행동을 누르면 오늘부터 새 챌린지가 시작되고 이전 기록은 그대로 남아요." : "혈압 기록과는 별도예요. 처음 상태를 저장하기 전까지 행동을 바꿀 수 있어요."} tone="sage" className="journey-candidate journey-challenge-choice">
+      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} tone="sage" className="journey-candidate journey-challenge-choice">
         <div className="challenge-choice-context" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
           <p className="eyebrow">선택 기능</p>
           <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
@@ -1793,10 +1786,10 @@ function App() {
               ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
               : "최근 기록에서 방금 저장한 혈압을 확인해요"}</strong>
           <p>{savedFactKind === "challenge-checkin"
-            ? "저장이 끝났어요. 챌린지 상태는 혈압 기록과 별도로 남고, 오늘의 기록과 최근 7일에서 다시 확인할 수 있어요."
+            ? "챌린지 상태는 혈압 기록과 별도로 남아요."
             : savedBloodPressureIsToday
-              ? "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."
-              : "저장이 끝났어요. 기록 찾아보기에서 날짜와 시간대별로 다시 확인할 수 있어요."}</p>
+              ? "오늘 화면에서 바로 확인할 수 있어요."
+              : "기록 찾아보기에서 날짜·시간대별로 확인할 수 있어요."}</p>
         </div>}
         <div className="split-actions journey-continuation-actions journey-continuation-actions--saved">
           <button type="button" onClick={() => {
@@ -1814,7 +1807,7 @@ function App() {
     }
 
     if (activeScreen === "S06") {
-      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} body={activeChallengeEnded ? "챌린지 기간은 끝났어요. 오늘 상태를 새로 기록하지 않아요." : "혈압과는 별도로, 선택한 행동과 오늘 남길 상태를 확인해요."} tone="sage" className="journey-candidate journey-challenge-summary">
+      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} tone="sage" className="journey-candidate journey-challenge-summary">
         <section className="locked-challenge journey-challenge-summary-card" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
           <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
@@ -1845,27 +1838,21 @@ function App() {
     }
 
     if (activeScreen === "S07") {
-      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" body={isPriorDashboard
-        ? "선택한 이전 7일의 범위를 보고 있어요."
-        : todayMeasurement
-          ? "오늘 남긴 혈압 기록을 먼저 확인하고, 챌린지 참여와 이전 방식 기록은 따로 살펴봐요."
-          : "오늘은 아직 혈압 기록이 없어요. 챌린지 참여와 이전 방식 기록은 각각 따로 확인할 수 있어요."} tone="cream" className="journey-candidate journey-today-review">
+      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="cream" className="journey-candidate journey-today-review">
         <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
           ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
-          : todayMeasurement
-            ? "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."
-            : "오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요."}</span></div>
+          : "혈압·챌린지·이전 기록을 따로 확인해요."}</span></div>
         {journeyTodayLanes()}
         <div className="journey-continuation-actions" aria-label="오늘 기록 다음 행동">
           <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
           <button type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
         </div>
       </Scene>;
-      return <Scene id="S07" {...journeyCopy.S07} tone="cream"><div className="today-date"><strong>{dateLabel(today)}</strong><span>서로 다른 사실은 합치지 않고 나란히 보여드려요.</span></div>{todayLanes()}<button className="secondary" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
+      return <Scene id="S07" {...journeyCopy.S07} tone="cream"><div className="today-date"><strong>{dateLabel(today)}</strong></div>{todayLanes()}<button className="secondary" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
     }
 
     if (activeScreen === "S08") {
-      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body={`${dashboardPeriodName}에서 종류와 날짜로 기록을 찾아요.`} tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
+      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
         <div className="scene-toolbar">
           <span className="utility-label">조회 기간</span>
           {presentation.journey ? (
@@ -1958,7 +1945,7 @@ function App() {
     }
 
     if (activeScreen === "S10") {
-      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" body="이 기간에 남긴 혈압 기록을 날짜와 시간대별로 확인해요. 챌린지 참여는 별도로 표시해요." tone="water" className="journey-recap">
+      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" tone="water" className="journey-recap">
         {renderCycleActions()}
         <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape && !s10SceneOwnsDecoration} companionSpecies={s10CompanionSpecies} productionSceneEnabled={s10SceneOwnsDecoration} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} period={isCycleReview ? "completed-cycle" : isPriorDashboard ? "prior" : "current"} freshness={windowState}
           navigation={renderWindowNavigation()}
@@ -1973,8 +1960,8 @@ function App() {
               <h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2>
               <p>챌린지 기간<br /><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>
               <strong>선택한 구간 안의 체크인 기록 {activeChallengeCheckins.length}개</strong>
-              <small>'기록함'과 '건너뜀'은 모두 저장된 체크인 기록이에요. 혈압 기록과 합치지 않고, 전체 챌린지 누적 성과로도 해석하지 않아요.</small>
-            </> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>선택 기능이에요. 참여하지 않아도 {dashboardPeriodName}의 혈압 기록을 그대로 확인할 수 있어요.</p></>}
+              <small>'기록함'·'건너뜀' 모두 체크인이며 혈압 기록이나 누적 성과와 합치지 않아요.</small>
+            </> : <h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2>}
           </section>}
           actions={<>
             {renderReportAction()}
@@ -2020,7 +2007,7 @@ function App() {
               <div>
                 <p className="eyebrow">함께할 캐릭터</p>
                 <h2>내 동반자</h2>
-                <p>선택한 동반자는 로그인 화면과 7일 돌아보기의 3D 캐릭터에 사용해요. 혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.</p>
+                <p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p>
               </div>
               <label className="companion-identity-control" htmlFor="companion-species">
                 <span>캐릭터 선택</span>
@@ -2039,8 +2026,8 @@ function App() {
             <section className="journey-settings-section">
               <div>
                 <p className="eyebrow">기록과 파일</p>
-                <h2>기록을 찾아보고 파일을 관리해요</h2>
-                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
+                <h2>30일 보관</h2>
+                <p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
               <p className="journey-settings-note">내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p>
@@ -2048,8 +2035,7 @@ function App() {
             <section className="journey-settings-section">
               <div>
                 <p className="eyebrow">이용 안내</p>
-                <h2>기록을 확인하는 방법</h2>
-                <p>이메일 링크로 로그인한 계정의 기록을 확인해요.</p>
+                <h2>이메일 로그인 계정</h2>
               </div>
               <dl className="journey-settings-facts">
                 <div><dt>언어</dt><dd>한국어</dd></div>
@@ -2079,7 +2065,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>현재 계정</h2><p>이메일 링크로 연결된 기록만 보여요.</p></div></section>{!evidenceMode && <section><div><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2><p>날짜를 한국 시간으로 표시해요.</p></div></section><section><div><p className="eyebrow">내 기록</p><h2>최근 7일 기록</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다. 화면의 최근 7일 탐색은 이 보관 기간과 다른 개념이에요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;

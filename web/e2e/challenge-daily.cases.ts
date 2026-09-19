@@ -127,8 +127,7 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
 
   const pendingChallengeLane = page.locator('[data-today-challenge-state="pending"]');
   await expect(pendingChallengeLane).toContainText("선택 기능 · 챌린지 참여");
-  await expect(pendingChallengeLane).toContainText("챌린지 상태는 혈압 기록과 별도로 저장해요.");
-  await expect(page.getByText("오늘 상태를 저장해요.", { exact: true })).toBeVisible();
+  await expect(page.locator(".today-date")).toContainText("혈압·챌린지·이전 기록을 따로 확인해요.");
   await page.getByRole("button", { name: "기록함", exact: true }).click();
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
 
@@ -170,7 +169,7 @@ test("prior S03/S07 keep read navigation but Home return resets to current witho
 
   await page.goto("/?e2e=signed-in&screen=S07&dashboard_window=prior");
   const s07 = page.locator('[data-scene="S07"]');
-  await expect(page.locator('[data-today-scope="prior"]')).toContainText("오늘의 실제 기록 상태를 확인하거나 새로 남길 수 없어요.");
+  await expect(page.locator('[data-today-scope="prior"]')).toContainText("오늘 상태를 확인하거나 새로 기록할 수 없어요.");
   await expect(page.getByText("오늘 상태 미확인", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "기록함", exact: true })).toHaveCount(0);
   await expect(page.getByText("선택한 7일의 이전 방식 기록 · 읽기 전용.", { exact: false })).toBeVisible();
@@ -214,12 +213,12 @@ for (const status of ["completed", "skipped"] as const) test(`S07 keeps today's 
   });
 
   await page.goto("/?e2e=signed-in&screen=S07");
-  await expect(page.locator('[data-today-scope="current"]')).toContainText("현재 7일 · 오늘 포함");
+  await expect(page.locator('[data-today-scope="current"]')).toBeVisible();
+  await expect(page.locator(".today-date")).toContainText("혈압·챌린지·이전 기록을 따로 확인해요.");
   const challengeLane = page.locator(`[data-today-challenge-state="${status}"]`);
   await expect(challengeLane).toContainText("선택 기능 · 챌린지 참여");
   await expect(challengeLane).toContainText(`오늘 상태 · ${status === "completed" ? "기록함" : "건너뜀"}`);
-  if (status === "skipped") await expect(challengeLane).toContainText("'건너뜀'도 오늘 상태로 저장된 기록이에요.");
-  else await expect(challengeLane).toContainText("챌린지 상태는 혈압 기록과 별도로 저장해요.");
+  if (status === "skipped") await expect(challengeLane).toContainText("'건너뜀'도 오늘 상태로 저장되며 혈압 기록과는 별도예요.");
   await expect(page.getByText(`오늘 상태 · ${status === "completed" ? "기록함" : "건너뜀"}`, { exact: true })).toBeVisible();
   await expect(page.getByText("오늘 기록 없음", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "기록함", exact: true })).toHaveCount(0);

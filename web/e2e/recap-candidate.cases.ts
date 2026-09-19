@@ -28,16 +28,17 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await recordsJump.click();
     await expect(page.locator('#recap-journal-records')).toBeFocused();
     await expect(page.locator('.recap-journal-intro')).toContainText('혈압 기록 먼저 보기');
-    await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록으로 구분돼요.');
+    await expect(page.locator('.recap-journal-intro')).toContainText('7일 전체 기록 표시 중');
+    await expect(page.locator('.recap-week-overview')).toContainText('혈압과 챌린지 기록은 따로 표시해요.');
     await expect(page.locator('.recap-trail-heading')).toContainText('그날의 기록만 아래에서 확인');
     const tools = page.locator('[data-recap-tools]');
-    await expect(page.locator('.recap-tools-intro')).toContainText('이 7일의 기록을 한눈에 정리해요');
-    await expect(page.locator('.recap-tools-intro')).toContainText('기록이 한 건만 있어도');
-    await expect(page.locator('.recap-tools-intro')).toContainText('인쇄하거나 PDF로 저장할 수 있어요');
+    await expect(page.locator('.recap-tools-intro')).toContainText('리포트와 내보내기');
+    await expect(page.locator('.recap-tools-intro')).toContainText('인쇄·PDF');
+    await expect(page.locator('.recap-tools-intro')).toContainText('JSON으로 내보낼 수 있어요');
     await expect(tools.locator('.living-week-report-action')).toBeVisible();
     await expect(tools.getByRole('button')).toHaveCount(3);
     await expect(page.locator('.recap-optional-intro')).toContainText('선택 기능');
-    await expect(page.locator('.recap-optional-intro')).toContainText('혈압 기록과 따로 확인');
+    await expect(page.locator('.recap-optional-intro')).toContainText('생활 챌린지는 별도 기록이에요');
     if (width <= 680) {
       const totalsBox = await page.locator('.recap-week-totals').boundingBox();
       const landscapeBox = await page.locator('.recap-landscape').boundingBox();
@@ -56,8 +57,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     const challengeProgress = page.locator('[data-challenge-progress]');
     await expect(challengeProgress).toContainText('선택 기능 · 현재 챌린지');
     await expect(challengeProgress).toContainText('선택한 구간 안의 체크인 기록 2개');
-    await expect(challengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
-    await expect(challengeProgress).toContainText('혈압 기록과 합치지 않고');
+    await expect(challengeProgress).toContainText("'기록함'·'건너뜀' 모두 체크인이며");
+    await expect(challengeProgress).toContainText('혈압 기록이나 누적 성과와 합치지 않아요.');
     await expect(page.locator('[data-checkin-status="skipped"]')).toHaveText('건너뜀');
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     const bp = page.locator('[data-record-lane="blood-pressure"]');
@@ -111,9 +112,6 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('2건');
   await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 2일');
   await expect(page.locator('[data-week-fact="participation-date-count"]')).toHaveText('3일');
-  await expect(page.locator('[data-recap-payoff]')).toHaveText(
-    '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.',
-  );
   await expect(page.locator('[data-recap-coverage]')).toHaveText(
     '혈압 관찰과 챌린지 참여 기록이 없는 날 3일도 빈 날로 그대로 보여요.',
   );
@@ -172,7 +170,7 @@ test('recap rapid touch leaves only the selected date treatment', async ({ brows
 test('recap prior window keeps current scenery and challenge context with read-only detail and actions', async ({ page }) => {
   await fixture(page);
   const exportHint = page.locator('.recap-tools > p');
-  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.');
+  await expect(exportHint).toHaveText('내보낸 파일은 본인 기기에 보관해요.');
   await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
   const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
@@ -184,7 +182,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('.seven-day-trail [aria-current]')).toHaveCount(0);
   await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(exportHint).toHaveText('이전 7일은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.');
+  await expect(exportHint).toHaveText('파일 내보내기는 현재 7일에서 사용할 수 있어요.');
   await expect(page.locator('.window-nav')).toContainText('8월 29일');
   await expect(page.locator('.window-nav')).toContainText('9월 4일');
   await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
@@ -193,7 +191,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(priorChallengeProgress).toContainText('선택 기능 · 현재 챌린지');
   await expect(priorChallengeProgress).toContainText('2026-09-09 ~ 2026-09-15');
   await expect(priorChallengeProgress).toContainText('선택한 구간 안의 체크인 기록 0개');
-  await expect(priorChallengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
+  await expect(priorChallengeProgress).toContainText("'기록함'·'건너뜀' 모두 체크인이며");
   await expect(page.getByRole('button', { name: '이전 7일 내보내기' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();
@@ -208,7 +206,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.locator('.seven-day-trail button[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '7일 전체 보기', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(2);
-  await expect(exportHint).toHaveText('현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.');
+  await expect(exportHint).toHaveText('내보낸 파일은 본인 기기에 보관해요.');
   await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeEnabled();
 });

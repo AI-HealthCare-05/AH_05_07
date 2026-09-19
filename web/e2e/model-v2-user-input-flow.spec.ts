@@ -398,17 +398,20 @@ test("S11 requires explicit review submission and completes locally without send
   const storageBefore = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
   await expect(step(page, "intro")).toBeVisible();
   await expect(page.locator('[data-scene="S11"]')).toContainText("입력 기반 위험군 선별 신호");
-  await expect(step(page, "intro")).toContainText("선택 도구 · 이번 이용에만 사용");
-  await expect(step(page, "intro")).toContainText("입력한 내용은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에 사용해요.");
-  await expect(step(page, "intro")).toContainText("이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.");
-  await expect(step(page, "intro")).toContainText("혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.");
-  await expect(step(page, "intro")).toContainText("직접 분석을 시작할 수 있어요.");
+  const intro = step(page, "intro");
+  await expect(intro).toContainText("기본 정보·활동·수면·생활습관을 입력합니다.");
+  await expect(intro).toContainText("이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.");
+  await expect(intro).toContainText("이 값은 확률·진단·위험등급이 아니며 치료·예방 효과를 뜻하지 않습니다.");
+  const dataUse = intro.locator(".model-v2-notice-details");
+  await expect(dataUse).not.toHaveAttribute("open");
+  await expect(dataUse).toContainText("입력은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에만 사용해요.");
+  await expect(dataUse).toContainText("혈압 기록은 별도로 저장되며, 이 도구를 건너뛰어도 기록과 챌린지를 이용할 수 있어요.");
+  await expect(page.getByRole("button", { name: "입력 시작하기", exact: true })).toBeVisible();
   await expect(page.locator("#model-v2-step-title")).toHaveText("생활정보를 입력해요");
   await expect(page.locator(".model-v2-progress li > span:nth-child(2)")).toHaveText([
     "기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주", "입력 확인",
   ]);
-  await expect(step(page, "intro")).toContainText("네 가지 주제 뒤에 입력 확인 단계가 있어요.");
-  await expect(step(page, "intro")).toContainText("이 도구를 이용하지 않아도 혈압 기록과 생활 챌린지는 이용할 수 있어요.");
+  await expect(dataUse).toContainText("질문은 기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주와 입력 확인으로 구성돼요.");
   await expect(page.locator("#model-age")).toHaveCount(0);
   await expect(submit(page)).toHaveCount(0);
   await toReview(page);
@@ -436,7 +439,6 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(result(page).locator("h3")).toHaveText([
     "오늘의 생활 패턴을 정리했어요", "활동", "수면", "생활 습관", "체격 참고", "다음 한 걸음", "처리 방식과 입력 상세",
   ]);
-  await expect(result(page)).toContainText("방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.");
   const activity = result(page).getByRole("region", { name: "활동", exact: true });
   await expect(activity.locator("dd")).toHaveText(["4일", "40분", "약 160분", "2일"]);
   await expect(activity).toContainText("입력한 걷기 일수에 걷는 날 하루 평균 시간을 곱한 단순 계산값이에요.");
