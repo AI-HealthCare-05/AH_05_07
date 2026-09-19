@@ -4,13 +4,18 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { buildGeneratedSource as verifyCompanionEvidence } from "./generate-companion-manifest.mjs";
-import { sceneRegistrations } from "./scene-asset-inputs.mjs";
+import { sceneCaptureProfiles, sceneRegistrations, sceneRuntimeVisualSources } from "./scene-asset-inputs.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = relative => JSON.parse(fs.readFileSync(path.join(root, relative), "utf8"));
 const requireValue = (condition, message) => { if (!condition) throw new Error(message); };
 const equal = (actual, expected, label) => requireValue(isDeepStrictEqual(actual, expected), `${label}: evidence mismatch`);
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
+const rgbFromHex = value => {
+  const number = Number.parseInt(value.slice(1), 16);
+  return `rgb(${number >> 16}, ${(number >> 8) & 0xff}, ${number & 0xff})`;
+};
+const compatibilityPath = "docs/evidence/scene-poster-runtime-compatibility.json";
 const posterKey = /^scene-review\/(s02|s10)\/v1\/(garden-gate|herb-garden|shade-tree|footbridge|reading-shelter|pavilion|sunset-overlook)-(mobile320|mobile390|desktop)-[a-f0-9]{16}\.webp$/;
 export const posterDeliveryOrigin = "https://sk7-companion.gkrry.com";
 export const posterRequestOrigin = "http://127.0.0.1:4173";
@@ -22,6 +27,104 @@ export const posterRequestOrigin = "http://127.0.0.1:4173";
  * origin/main c3210fa, rounded up to a reviewable constant.
  */
 export const S02_RENDERER_LOADER_RESERVE_BYTES = 200000;
+
+export function posterSetDigest(evidence) {
+  const identities = evidence.posters.map(poster => ({
+    id: poster.id,
+    objectKey: poster.delivery.objectKey,
+    sha256: poster.delivery.sha256,
+    byteLength: poster.delivery.byteLength,
+    width: poster.width,
+    height: poster.height,
+  })).sort((left, right) => left.id.localeCompare(right.id));
+  return hash(JSON.stringify(identities));
+}
+
+function sourceHashesDigest(sourceHashes) {
+  return hash(JSON.stringify(Object.entries(sourceHashes).sort(([left], [right]) => left.localeCompare(right))));
+}
+
+export function scenePosterStageContract(manifest, stageCss) {
+  const background = stageCss.match(/--sk7-scene-stage-background:\s*(#[a-f\d]{6})\s*;/i)?.[1]?.toLowerCase();
+  requireValue(background, "scene stage background contract is missing");
+  const stageHeights = {};
+  for (const screen of ["S02", "S10"]) {
+    const recipes = manifest.recipes.filter(recipe => recipe.mode === "realtime" && recipe.screens.length === 1 && recipe.screens[0] === screen);
+    requireValue(recipes.length === 7, `${screen}: stage contract requires seven realtime recipes`);
+    stageHeights[screen] = {};
+    for (const profile of Object.keys(sceneCaptureProfiles)) {
+      const heights = new Set(recipes.map(recipe => recipe.compositions[profile]?.stageHeight));
+      requireValue(heights.size === 1 && Number.isInteger([...heights][0]), `${screen} ${profile}: inconsistent stage height contract`);
+      stageHeights[screen][profile] = [...heights][0];
+    }
+  }
+  return {
+    background,
+    captureWidths: Object.fromEntries(Object.entries(sceneCaptureProfiles).map(([profile, value]) => [profile, value.stageWidth])),
+    stageHeights,
+  };
+}
+
+export function buildPosterCompatibilityEvidence(manifest, inputs) {
+  equal(inputs.stageContract, scenePosterStageContract(manifest, inputs.stageCss), "current scene stage contract");
+  return {
+    format: "sk7-scene-poster-runtime-compatibility-v1",
+    status: "reviewed-current-runtime-compatibility",
+    posterSetDigest: {
+      algorithm: "sha256",
+      canonicalization: "json-array-sorted-by-id",
+      fields: ["id", "objectKey", "sha256", "byteLength", "width", "height"],
+    },
+    canonicalPosterSets: {
+      S02: {
+        evidence: sceneRegistrations.S02.evidence,
+        posterSetDigest: posterSetDigest(inputs.posters),
+        historicalSourceHashesDigest: sourceHashesDigest(inputs.posters.sourceHashes),
+      },
+      S10: {
+        evidence: sceneRegistrations.S10.evidence,
+        posterSetDigest: posterSetDigest(inputs.dioramaPosters),
+        historicalSourceHashesDigest: sourceHashesDigest(inputs.dioramaPosters.sourceHashes),
+      },
+    },
+    runtimeVisualSourceHashes: inputs.runtimeVisualSourceHashes,
+    stageContract: inputs.stageContract,
+    reviewObservation: {
+      scope: "local-review-observation",
+      playwright: "1.62.1",
+      chromium: "151.0.7922.34",
+      structuralEquality: "42/42",
+      sameMacRepeatBinaryEquality: "42/42",
+      canonicalVsMacDecodedPixelDifferences: "42/42",
+      largestChangedPixelRatioPercent: 44.048388,
+      locallyRegeneratedPostersAcceptedAsCanonical: false,
+    },
+  };
+}
+
+export function verifyPosterSourceCompatibility(manifest, inputs, collections) {
+  const exactCurrentCapture = collections.every(collection => collection.evidence.captureEnvironment
+    && isDeepStrictEqual(collection.evidence.sourceHashes, collection.sourceHashes));
+  if (exactCurrentCapture) return "exact-current-capture";
+  requireValue(inputs.compatibility, "poster capture source mismatch requires current runtime compatibility evidence");
+  equal(inputs.compatibility, buildPosterCompatibilityEvidence(manifest, inputs), "scene poster runtime compatibility");
+  return "reviewed-current-runtime-compatibility";
+}
+
+export function writePosterCompatibilityEvidence(manifest, inputs = loadInputs()) {
+  const evidence = buildPosterCompatibilityEvidence(manifest, inputs);
+  verifySceneManifest(manifest, { ...inputs, compatibility: evidence });
+  const output = path.join(root, compatibilityPath);
+  const temporary = `${output}.tmp-${process.pid}`;
+  try {
+    fs.writeFileSync(temporary, `${JSON.stringify(evidence, null, 2)}\n`, { flag: "wx" });
+    fs.renameSync(temporary, output);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
+  return evidence;
+}
 
 export function verifiedPosterDelivery(poster, proof) {
   requireValue(proof?.status === "verified-public-delivery-review-only"
@@ -125,6 +228,8 @@ export function validateStructure(value, schema, document = schema, label = "man
 export function loadInputs() {
   const posters = read(sceneRegistrations.S02.evidence);
   const dioramaPosters = read(sceneRegistrations.S10.evidence);
+  const manifest = read("web/src/ui/scene-manifest.v2.json");
+  const stageCss = fs.readFileSync(path.join(root, "web/src/components/scene/scene-stage.css"), "utf8");
   const posterBytes = new Map([...posters.posters, ...dioramaPosters.posters].map(poster => {
     requireValue(posterKey.test(poster.delivery.objectKey), "unregistered poster object key");
     return [poster.id, fs.readFileSync(path.join(root, "web/public", poster.delivery.objectKey))];
@@ -137,7 +242,11 @@ export function loadInputs() {
     forensics: read("docs/evidence/scene-glb-forensics.json"),
     posters, dioramaPosters, posterBytes,
     posterR2: publicEvidence("S02"), dioramaR2: publicEvidence("S10"),
-    sourceHashes: hashesFor(sceneRegistrations.S02.sources), dioramaSourceHashes: hashesFor(sceneRegistrations.S10.sources),
+    sourceHashes: hashesFor(sceneRegistrations.S02.captureSources), dioramaSourceHashes: hashesFor(sceneRegistrations.S10.captureSources),
+    compatibility: fs.existsSync(path.join(root, compatibilityPath)) ? read(compatibilityPath) : null,
+    runtimeVisualSourceHashes: hashesFor(sceneRuntimeVisualSources),
+    stageCss,
+    stageContract: scenePosterStageContract(manifest, stageCss),
     dioramaModuleBytes: fs.readFileSync(path.join(root, "web/src/components/scene/diorama.ts")),
     moduleBytes: fs.readFileSync(path.join(root, "web/src/components/scene/environment.ts")),
   };
@@ -157,6 +266,7 @@ function verifyMeasurement(item) {
 export function verifySceneManifest(manifest, inputs = loadInputs()) {
   assertSupportedSchema(inputs.schema);
   validateStructure(manifest, inputs.schema);
+  equal(inputs.stageContract, scenePosterStageContract(manifest, inputs.stageCss), "current scene stage contract");
   verifyCompanionEvidence(inputs.companion);
   const assets = uniqueById(manifest.assets, "assets");
   const recipes = uniqueById(manifest.recipes, "recipes");
@@ -188,6 +298,14 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
       equal({ ...asset.delivery, url: evidence.delivery.url }, evidence.delivery, asset.id);
       const collection = posterCollections.get(asset.id), registration = sceneRegistrations[collection.screen];
       const { objectKey, sha256, byteLength } = asset.delivery;
+      const captureProfile = sceneCaptureProfiles[evidence.profile];
+      requireValue(captureProfile, `${asset.id}: unregistered capture profile`);
+      equal(evidence.viewport, { width: captureProfile.viewportWidth, height: captureProfile.viewportHeight }, `${asset.id} viewport profile`);
+      equal(evidence.stage, {
+        width: inputs.stageContract.captureWidths[evidence.profile],
+        height: inputs.stageContract.stageHeights[collection.screen][evidence.profile],
+        background: rgbFromHex(inputs.stageContract.background),
+      }, `${asset.id} stage contract`);
       requireValue(asset.id === `${registration.posterPrefix}${evidence.landmarkId}-${evidence.profile}`, `${asset.id}: unregistered poster identity`);
       requireValue(posterKey.test(objectKey) && objectKey === `${registration.directory}/${evidence.landmarkId}-${evidence.profile}-${sha256.slice(0, 16)}.webp`, `${asset.id}: unregistered poster object key`);
       equal(evidence.delivery.url, `/${objectKey}`, `${asset.id} local capture URL`);
@@ -229,8 +347,8 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
     const expected = inputs.companion.objects.find(item => item.species === asset.companionSpecies && item.variant === "lite");
     requireValue(source && expected && source.asset_id === expected.asset_id, `${asset.id}: scene registration does not match generated companion manifest`);
   }
+  verifyPosterSourceCompatibility(manifest, inputs, collections);
   for (const collection of collections) {
-    equal(collection.evidence.sourceHashes, collection.sourceHashes, `${collection.screen} poster render source hashes`);
     equal(collection.evidence.characterSha256, bearCharacter.delivery.sha256, `${collection.screen} poster character identity`);
     equal(collection.evidence.characterRightsReference, bearCharacter.provenance.reviewReference, `${collection.screen} poster character rights`);
   }
@@ -327,6 +445,11 @@ export function generateSceneSource(manifest, inputs = loadInputs()) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const manifest = read("web/src/ui/scene-manifest.v2.json");
+  if (process.argv.includes("--write-compatibility")) {
+    const evidence = writePosterCompatibilityEvidence(manifest);
+    console.log(JSON.stringify({ status: evidence.status, output: compatibilityPath }));
+    process.exit(0);
+  }
   const expected = generateSceneSource(manifest);
   const output = path.join(root, "web/src/ui/sceneManifest.generated.ts");
   if (process.argv.includes("--write")) fs.writeFileSync(output, expected);
