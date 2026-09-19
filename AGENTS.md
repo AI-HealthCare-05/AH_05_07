@@ -38,7 +38,9 @@ docs that do not alter a protected boundary:
 
 - An Issue is optional. The user's request and PR body may be the task record.
 - Use one coherent short branch and PR; do not split work by screen or create
-  paperwork-only follow-up PRs.
+  paperwork-only follow-up PRs. Accumulate logical, locally checked commits,
+  then batch-push a reviewable candidate. Do not push per micro-step or bundle
+  unrelated work merely to reduce CI runs.
 - During development, run the smallest affected checks. Final-candidate CI keeps
   the required named `lint` and `test` merge gates, but their payload is
   path-aware: frontend/docs lanes may satisfy them with lightweight routing while
@@ -95,6 +97,21 @@ or a new dependency/topology:
 - An incident becomes a durable rule only with reusable value, a clear scope,
   and human review. Completed audits, expired hypotheses, and old thresholds are
   not startup requirements for a new task.
+
+### Long-running work and restart
+
+- At meaningful checkpoints and before a session handoff, preserve task-owned
+  work and one concise restart record: worktree/branch, HEAD and reviewed base,
+  owned/unfinished paths, checks with environment/scope, blockers, and next action.
+  Reuse the task's existing handoff/state; do not add a mandatory ledger or schema.
+- Chat history and temporary paths alone are not durable storage. Verify that
+  referenced artifacts are recoverable, including required Base/Delta dependencies
+  when used. Reconcile checkpoints with live Git/source state on restart; do not
+  replay unchanged audits or silently overwrite newer decisions.
+- For an unchanged external blocker, keep it `BLOCKED` and avoid repeated
+  acquisition attempts. Continue only independent work already authorized by the
+  task; otherwise checkpoint and hand off. Never weaken a gate or invent work to
+  meet an elapsed-time, commit-count, or test-count target.
 
 ## Autonomous execution lane
 
