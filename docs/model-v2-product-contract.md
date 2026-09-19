@@ -1,14 +1,37 @@
 # Model V2 Product Contract
 
-## Current time-boxed research/development preview — 2026-09-17
+## Current authority
+
+This document owns current S11 visibility and product semantics. Requirements,
+architecture/scene guidance and AGENTS reference this decision rather than
+defining independent preview windows. [Issue #396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396)
+records the human authorization; the 2026-09-19 human instruction makes the
+already-authorized output visible by default. Source capability is distinct from
+the dated rollout records in [deployment SSOT](deployment-ssot.md).
+
+| Boundary | Current authority / implementation |
+| --- | --- |
+| Numeric visibility, precision, expiry | Current decision below; executable policy in [modelV2VisibilityPolicy.ts](../web/src/ui/modelV2VisibilityPolicy.ts). A future human extension updates this decision and that policy, not duplicated dates in components or reference docs. |
+| Signed-in success | [ModelV2InputFlow](../web/src/components/ModelV2InputFlow.tsx) → [ModelV2Outcome](../web/src/components/ModelV2Outcome.tsx); the separate synthetic/anonymous fallback is not a visibility gate. |
+| Frozen model / independent facts | [Architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md), G3 semantics and retained sections 3–4/10 below. Artifact, preprocessing and the 11-feature order remain unchanged. |
+| Input and applicability | Complete transient 19-field input through the [versioned adapter](../web/src/lib/model-v2/adapter.ts); under-19 is rejected; age 80+ carries a caution without a new upper cutoff. Invalid/missing answers are not silently imputed. |
+| Browser privacy | In-memory draft/output only; verified public model asset GET is allowed. No feature/result inference POST, server fallback, persistence, logging, telemetry or joins with BP/challenge/prior-result/other-account data. |
+| API | The authenticated server contract remains exactly `schema_version` and `product_wording`. Browser-local continuous output is not an API response. |
+| Historical evidence | T1 planning below, original ADR-0008 disclosure approval and research/readiness reports retain their dated findings. Old unavailable/disabled/unresolved labels do not override this current decision. |
+
+## Current time-boxed research/development preview — clarified 2026-09-19
 
 Human decision in Issue #396 authorizes one narrow exception to the standing
 non-numeric display rule.
 
 - Window: **2026-09-17 through 2026-10-17 KST**.
 - Audience: signed-in S11 users; no extra whitelist is required.
-- S11 may show the already-computed browser-local continuous output as
-  **`연구/개발 미리보기 · 내부 연속 출력`** and as a plain decimal only.
+- After successful browser-local computation, S11 shows the continuous output
+  immediately under **`연구 모델 분석 결과`**, labelled
+  **`연구/개발 미리보기 · 내부 연속 출력`**, as a plain decimal rounded to
+  three fractional digits for display only (`toFixed(3)`). It is primary result
+  content and must be visible without opening any disclosure. Display rounding
+  never feeds the model or establishes a threshold.
 - It is not a probability, percentage, percentile, diagnosis, normal/abnormal
   result, low/medium/high band, severity, future hypertension chance, or
   treatment/prevention effect.
@@ -22,19 +45,39 @@ non-numeric display rule.
 This is temporary research/development visibility of an existing computation,
 not permanent result semantics or a G10 threshold decision.
 
+Result order: visible model output, what it is/is not, local privacy cue,
+existing “오늘의 시작점” activity/sleep/lifestyle summary, existing state-aware
+next action, then optional technical/11-feature disclosures. BP/challenge facts
+may choose the next screen but never enter inference or interpret its output.
+The semantic limitation and privacy cue must remain visible with the number.
+
+“이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함”
+refers to this analysis's input/result, not all application network activity.
+Technical disclosure explains that the public model asset can be downloaded.
+No absolute privacy/confidentiality claim is made.
+
+The inclusive KST calendar window expires at 2026-10-18 00:00:00 KST. Outside
+it, discard numeric output and show non-numeric completion plus the existing
+lifestyle summary/actions. Enforce expiry on an open result, page resume and
+pending completion; do not retain a value to restore later. Leaving, reloading,
+sign-out or account switch must not restore the prior transient draft/result.
+Failures remain fail-closed without a provisional value or server fallback.
+
 ## Approved browser integration decision — 2026-09-13
 
 [ADR-0008](adr/0008-s11-verifiable-local-inference.md) records the human-approved
 browser disclosure tradeoff and S11 source integration in Issue #490. The S11
-submission path validates its unchanged transient 19-field input, runs the frozen
-11-feature computation locally, and returns only the canonical two nonnumeric
-fields. It sends no feature-bearing inference request and has no server fallback.
+submission path validates its unchanged transient 19-field input and runs the
+frozen 11-feature computation locally. The original approval exposed only the
+canonical two nonnumeric fields; the current local return also carries the raw
+continuous output for the preview above. The API projection remains unchanged.
+S11 sends no feature-bearing inference request and has no server fallback.
 Build-pinned SHA-256 verification precedes artifact parsing/use; failures close
 without persisting inputs or results. The authenticated server endpoint remains.
 
 Browser owners can reconstruct internal continuous outputs from disclosed fitted
 parameters. This is explicitly accepted; it is **not G10 displayability PASS**,
-permission for application score/probability/percentile/band display, a frozen
+permanent permission for application score/probability/percentile/band display, a frozen
 model/semantic change, real-user expansion or production deployment approval.
 All product, privacy and independent-fact invariants below remain binding.
 
@@ -58,7 +101,15 @@ not the frozen feature schema, derivations, model, data-use or output semantics.
 - Frozen invariants, exact 11-feature meanings, privacy, no persistence and
   no BP/challenge joins remain in force. An ADR or status edit cannot relax them.
 
-## Retained T1 planning record
+## Retained T1 planning record — historical lifecycle, binding frozen semantics
+
+The original sections below are retained as a historical record. In particular,
+section 2's readiness/activation matrix, section 5's T2 blockers, section 8's
+unavailable/precision statements, section 9's requirements conflicts, section
+14's status map and the unresolved-decision list describe T1, not today's S11.
+Current visibility/applicability is defined above. Frozen semantics, prohibited
+interpretations, privacy and independent-fact invariants still apply. Do not
+rewrite historical PASS/BLOCKED findings as new evidence.
 
 Original status: **PROPOSED / PRODUCTION DISABLED** (2026-09-08 snapshot only).
 Round 2, PHASE 0, T1 · [Issue #302](https://github.com/AI-HealthCare-05/AH_05_07/issues/302).
@@ -78,7 +129,7 @@ authorize training, artifact reconstruction, model comparison, threshold
 creation, risk bands, recalibration, or production enablement. T1 changes
 documentation only.
 
-## 2. Lifecycle status matrix
+## 2. Historical T1 lifecycle status matrix
 
 | Stage | Recorded decision | What it proves | What it does NOT prove |
 | --- | --- | --- | --- |
@@ -166,7 +217,7 @@ The versioned product adapter normalizes only browser bedtime `00:xx` to the
 source-compatible bedtime `24:xx` form before that frozen derivation. Browser
 wake `00:xx` remains unchanged because its clock meaning is distinct.
 
-## 5. Known semantic parity blockers
+## 5. Historical T1 semantic parity blockers
 
 All five are **KNOWN BLOCKER — T2**, established by static comparison of G3
 derivations with [R2 validation](../app/services/model_v2_inference.py) and its
@@ -229,7 +280,7 @@ research-cohort differences require review before release. The output is an
 `입력 기반 위험군 선별 신호`, not a diagnosis, treatment outcome, or certainty
 about a future event. The target is cross-sectional, not future incidence.
 
-## 8. User-visible result contract
+## 8. Historical T1 user-visible result planning
 
 Approved product wording is **`입력 기반 위험군 선별 신호`**. Current S11
 remains an honest unavailable state. No provisional score is permitted.
@@ -358,7 +409,7 @@ These are future requirements, not completed gates. Follow the
 classification. This documentation-only PR needs no deployment. T15/T16/T19/T20
 must not reinterpret readiness telemetry as permission to enable scoring.
 
-## 14. Current / historical authority map
+## 14. Historical T1 authority map
 
 Authority is concern-specific. Use the latest release evidence for current
 lifecycle state, G3 derivations for frozen semantics, and this entry point for
@@ -400,7 +451,7 @@ wording, and scope review. No model execution, artifact binary access,
 participant-level reads, final-test access/hash/re-evaluation, research changes,
 runtime/API/web/DB changes, deployment, or R2 mutation is authorized by T1.
 
-## Unresolved product decisions
+## Historical T1 unresolved product decisions
 
 1. Whether Round 2 finishes as a synthetic-only pilot or real-user use receives
    a separate review. This contract authorizes no real-user expansion.

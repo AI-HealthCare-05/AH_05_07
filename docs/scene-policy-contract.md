@@ -74,11 +74,10 @@ neither establishes physical-device acceptance.
 
 ## Current model UI
 
-Real signed-in S11 uses `ModelV2InputFlow`; synthetic evidence uses
-`modelV2ResultState`. The API product projection remains non-numeric. From
-2026-09-17 through 2026-10-17 KST only, S11 may additionally render the
-already-computed browser-local continuous output as the time-boxed
-research/development preview defined by
+Real signed-in S11 uses `ModelV2InputFlow`; synthetic evidence and the anonymous
+fallback use `modelV2SyntheticResultState`, which never controls signed-in
+visibility. The API product projection remains non-numeric. S11's default-visible
+browser-local research preview, authorized window and automatic expiry follow
 [the Model V2 product contract](model-v2-product-contract.md).
 
 That temporary value is presentation-only for S11: it is not an API numeric

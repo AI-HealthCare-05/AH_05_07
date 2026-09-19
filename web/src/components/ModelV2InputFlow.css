@@ -587,6 +587,7 @@
 }
 
 .model-v2-flow .model-v2-outcome-heading,
+.model-v2-flow .model-v2-summary-heading,
 .model-v2-flow .model-v2-result-next {
   display: grid;
   gap: .7rem;
@@ -764,13 +765,22 @@
 .model-v2-flow [data-model-v2-preview] {
   display: grid;
   gap: .65rem;
-  margin-top: .65rem;
 }
 
 .model-v2-flow [data-model-v2-preview-value] {
+  margin: 0;
   color: var(--sk7-ink);
-  font-size: 1.25rem;
+  font-size: 3rem;
+  font-weight: var(--sk7-weight-bold);
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
+}
+
+.model-v2-flow .model-v2-local-privacy {
+  margin: 0;
+  color: var(--sk7-ink-muted);
+  font-size: .875rem;
+  line-height: 1.7;
 }
 
 .model-v2-flow .model-v2-feature-list {
@@ -913,17 +923,26 @@
   }
 
   .model-v2-flow .model-v2-outcome-heading {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 1;
+  }
+
+  .model-v2-flow .model-v2-summary-heading {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .model-v2-flow .model-v2-result-summary {
+    grid-column: 1;
+    grid-row: 3;
   }
 
   .model-v2-flow .model-v2-result-next {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 3;
     align-self: start;
   }
 
-  .model-v2-flow .model-v2-result-summary,
   .model-v2-flow .model-v2-result-disclaimer,
   .model-v2-flow .model-v2-outcome > .model-v2-result-explanation,
   .model-v2-flow .model-v2-result-model-note {

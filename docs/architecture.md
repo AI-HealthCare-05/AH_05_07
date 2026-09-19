@@ -4,7 +4,7 @@
 
 React/Vite static assets run on the Cloudflare Worker `ah-05-07-pages`. The browser uses Supabase Auth email magic links and sends its Supabase JWT to FastAPI on the Cloud Run service `bp7-api` in Seoul. FastAPI performs record operations through the caller's JWT, while Supabase PostgreSQL RLS remains the ownership boundary.
 
-Authenticated Model V2 production paths now exist. The authenticated `/api/v1/model-v2/product-score` contract projects only `schema_version` and `product_wording`; the API projection remains non-numeric. Signed-in S11 performs the frozen computation browser-locally with no feature-bearing inference POST or server fallback. From 2026-09-17 through 2026-10-17 KST only, S11 may additionally render that already-computed browser-local continuous output as the temporary research/development preview defined by [the Model V2 product contract](model-v2-product-contract.md). The preview is not an API numeric response and is not persisted. Raw Model V2 product input and result are not stored. The frozen Model V2 contract is canonical in [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md). The legacy `/api/v1/risk-signal` scaffold remains separately unavailable. Redis, a separate application worker, OCR, and an LLM remain deferred until an ADR and measurement demonstrate a requirement.
+Authenticated Model V2 production paths now exist. The authenticated `/api/v1/model-v2/product-score` contract projects only `schema_version` and `product_wording`; the API projection remains non-numeric. Signed-in S11 performs the frozen computation browser-locally with no feature-bearing inference POST or server fallback. S11 renders the already-computed continuous output as the primary, default-visible research/development preview according to [the Model V2 product contract](model-v2-product-contract.md#current-authority), which owns the authorized window, precision and expiry. The preview is not an API numeric response and is not persisted. Raw Model V2 product input and result are not stored. The frozen Model V2 contract is canonical in [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md). The legacy `/api/v1/risk-signal` scaffold remains separately unavailable. Redis, a separate application worker, OCR, and an LLM remain deferred until an ADR and measurement demonstrate a requirement.
 
 [Submission architecture SVG](diagrams/mvp1-architecture.svg) and [ERD SVG](diagrams/mvp1-erd.svg) distinguish the current source implementation from unimplemented targets. [MVP1 closeout](mvp1-closeout.md) owns requirement gaps and client acceptance; an internal target is not client approval of reduced scope.
 
@@ -12,7 +12,7 @@ Authenticated Model V2 production paths now exist. The authenticated `/api/v1/mo
 
 | Talos evaluation axis | SK7 status | Accepted next boundary |
 |---|---|---|
-| Public-data model and result quality | Frozen Model V2 S11 product path returns only `schema_version` and `product_wording`; legacy risk-signal remains a `503 model_not_ready` scaffold. | Preserve frozen artifact, exact response projection, and non-diagnostic semantics; no provisional score is permitted. |
+| Public-data model and result quality | Frozen Model V2 API returns only `schema_version` and `product_wording`; signed-in S11 computes locally and presents its authorized preview. Legacy risk-signal remains a `503 model_not_ready` scaffold. | Preserve frozen artifact and API projection; S11 display and expiry follow the [current product contract](model-v2-product-contract.md#current-authority). Failed inference never produces a provisional value. |
 | Chronic-condition tracking dashboard | BP and challenge records are separated, but the evaluator-facing seven-day trend, empty/failure states, and evidence pack remain partial. | Present measurement, challenge adherence, and model signal as separate facts; do not render a causal or improvement conclusion. |
 | Lifestyle challenge | Active seven-day challenge, first-check-in action lock, and status-only check-in changes are implemented. | Finish signed-in browser and mobile evidence before treating the flow as submission-complete. |
 | Feedback and reminders | The first S10 structured-comprehension feedback slice is source-implemented; internal review is defined as a project-owner control-plane aggregate only. Delegated review and reminders are not implemented. | Feedback remains separate from BP, challenge, and Model V2 facts and is never an online-training label. Do not add a reviewer API/RPC/UI until a non-owner delegation need is demonstrated; production migration/release remains a separate gate. |
@@ -23,7 +23,8 @@ flowchart TD
     UI["React/Vite · Cloudflare Worker"] --> AUTH["Supabase Auth"]
     UI -->|"Supabase JWT"| API["FastAPI · Cloud Run"]
     API -->|"Caller JWT"| DB["Supabase Data API and PostgreSQL RLS"]
-    API --> MODEL["Frozen Model V2: transient inference, two-field product projection"]
+    UI --> LOCAL["S11 browser-local frozen Model V2: transient preview under product contract"]
+    API --> MODEL["Separate authenticated Model V2 API: two-field product projection"]
     RESEARCH["Local research: approved aggregate evidence; no runtime connection"]
 ```
 
@@ -116,7 +117,7 @@ The ADR must define the measured trigger, state transitions, idempotency key, re
 |---|---|---|
 | Product record | BP observation, challenge selection, challenge check-in | Supabase structured tables with JWT, RLS, retention, and deletion. |
 | Review data | S10 structured comprehension response | Separate Supabase structured table with JWT, RLS, 30-day retention, account cascade, no free text/health values, and no online-training use. |
-| Model V2 transient fact | Internal inference result and product input | Do not persist or expose raw input, result, probability, score, or band. |
+| Model V2 transient fact | Browser-local inference result and product input | Never persist. S11 may display the transient raw decimal and its own input details only as defined by the [current product contract](model-v2-product-contract.md#current-authority); no probability/band interpretation. |
 | Public asset | Tutorial image, synthetic demo video, licensed audio | Cloudflare R2 with provenance and lifecycle metadata. |
 | Forbidden | Name, contact, free-text history, original document, device export, JWT, service-role key | Do not collect or place in product tables, R2, logs, demos, or Git. |
 

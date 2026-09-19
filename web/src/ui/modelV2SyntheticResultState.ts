@@ -1,4 +1,7 @@
-export const MODEL_V2_RESULT_STATE_CONTRACT_VERSION = "model-v2-result-state-v1";
+// Retained T6 synthetic/evidence states, also used for the anonymous fallback.
+// This is not inference readiness or the signed-in S11 visibility policy.
+// Keep the historical state values for existing evidence fixtures.
+export const MODEL_V2_SYNTHETIC_RESULT_CONTRACT_VERSION = "model-v2-result-state-v1";
 
 export const modelV2ResultStates = [
   "not_ready",
@@ -52,11 +55,11 @@ const RESULT_VIEWS: Readonly<Record<ModelV2ResultState, ModelV2ResultView>> = {
   },
 };
 
-export function getModelV2ResultView(state: ModelV2ResultState): ModelV2ResultView {
+export function getSyntheticModelV2ResultView(state: ModelV2ResultState): ModelV2ResultView {
   return RESULT_VIEWS[state];
 }
 
-export function resolveModelV2ResultState(
+export function resolveSyntheticModelV2ResultState(
   requestedState: string | null,
   allowSyntheticOverride: boolean,
 ): ModelV2ResultState {

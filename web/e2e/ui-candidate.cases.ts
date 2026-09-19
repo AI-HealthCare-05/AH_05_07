@@ -153,10 +153,13 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
 test('S11 outcome continues to blood-pressure entry when today has no BP record', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await setup(page);
+  await page.clock.setFixedTime(new Date('2026-09-17T03:00:00Z'));
   await page.goto('/?e2e=signed-in&screen=S11');
   await completeS11LifestyleSurvey(page);
 
   const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result.locator('[data-model-v2-preview-value]')).toBeVisible();
+  await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
   const bp = result.locator('[data-model-v2-continuity="blood-pressure"]');
   const challenge = result.locator('[data-model-v2-continuity="challenge"]');
 
@@ -172,10 +175,13 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await page.setViewportSize({ width: 390, height: 844 });
   const state = await setup(page);
 
+  await page.clock.setFixedTime(new Date('2026-09-17T03:00:00Z'));
   await page.goto('/?e2e=signed-in&screen=S11');
   await completeS11LifestyleSurvey(page);
 
   const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result.locator('[data-model-v2-preview-value]')).toBeVisible();
+  await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
   await expect(result).toBeVisible();
   await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
 
