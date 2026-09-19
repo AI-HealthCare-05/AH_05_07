@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Increment B3 — finite-reference comparator research prototype</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #4a4a4a;
+      --border: #c0c0c0;
+      --accent: #2563eb;
+      --marker: #111827;
+      --danger: #dc2626;
+      --surface: #f3f4f6;
+      --focus: #f59e0b;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --border: #475569;
+        --accent: #60a5fa;
+        --marker: #f8fafc;
+        --danger: #f87171;
+        --surface: #1e293b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      line-height: 1.3;
+      margin: 0 0 0.5rem;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      background: var(--surface);
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .notice {
+      border-left: 0.25rem solid var(--danger);
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      margin: 1rem 0;
+    }
+
+    .notice p {
+      margin: 0;
+    }
+
+    .arm {
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .arm h2 {
+      font-size: 1rem;
+      margin: 0 0 0.75rem;
+    }
+
+    .arm-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0.25rem 0;
+    }
+
+    .value-muted {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .distribution {
+      margin: 1rem 0;
+    }
+
+    .distribution-track {
+      position: relative;
+      height: 1.5rem;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--surface),
+        var(--surface) 9.8%,
+        var(--border) 9.8%,
+        var(--border) 10%
+      );
+      border: 1px solid var(--border);
+      border-radius: 0.25rem;
+    }
+
+    .distribution-marker {
+      position: absolute;
+      top: -0.25rem;
+      width: 0.25rem;
+      height: 2rem;
+      background: var(--marker);
+      border: 1px solid var(--bg);
+      transform: translateX(-50%);
+    }
+
+    .distribution-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    ul.checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0;
+    }
+
+    ul.checklist li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    ul.checklist li:last-child {
+      border-bottom: none;
+    }
+
+    .answer {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.875em;
+      background: var(--surface);
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:focus,
+    button:focus {
+      outline: 0.1875rem solid var(--focus);
+      outline-offset: 0.125rem;
+    }
+
+    details {
+      margin-top: 0.75rem;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--accent);
+    }
+
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 320px) {
+      body {
+        padding: 0.75rem;
+      }
+      .value {
+        font-size: 1.25rem;
+      }
+    }
+
+    @media (min-width: 321px) and (max-width: 430px) {
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="tag">research-only prototype</span>
+    <h1>Increment B3 — finite-reference comparator</h1>
+
+    <div class="notice">
+      <p><strong>이 화면은 연구 목적의 정적 목업입니다.</strong> 실제 사용자 입력을 받지 않으며, 실제 참가자 데이터를 노출하지 않습니다. 모든 숫자 예시는 합성(synthetic)입니다.</p>
+    </div>
+
+    <section aria-labelledby="what">
+      <h2 id="what">무엇을 비교하는가?</h2>
+      <p>동결된 연구 참조 데이터 <code>G6 validation product-complete subset (N=869)</code>에서 같은 동결 모델로 계산한 내부 연속 출력의 <strong>상대적 위치</strong>입니다.</p>
+      <p>이것은 <strong>아닙니다</strong>:</p>
+      <ul>
+        <li>질환이 있을 확률</li>
+        <li>나이·성별이 비슷한 사람들과의 비교</li>
+        <li>건강 상태의 좋고 나쁨</li>
+        <li>진단 또는 치료·예방 효과</li>
+      </ul>
+    </section>
+
+    <section class="arm" aria-labelledby="arm-a">
+      <h2 id="arm-a"><span class="arm-label">Arm A</span><br>현재 스타일 — 내부 연속 출력</h2>
+      <p class="value-muted">연구/개발 미리보기</p>
+      <p class="value">내부 연속 출력 · 0.635</p>
+      <p>모델의 내부 연속 출력값입니다. 질환이 있을 확률을 뜻하지 않습니다.</p>
+    </section>
+
+    <section class="arm" aria-labelledby="arm-b">
+      <h2 id="arm-b"><span class="arm-label">Arm B</span><br>이름 붙은 유한 참조, 텍스트 백분위</h2>
+      <p class="value-muted">연구 참조 데이터에서의 모델 출력 위치</p>
+      <p class="value">82백분위</p>
+      <p>869건의 동결 참조 기록 중 약 82% 위치에 해당하는 출력입니다.</p>
+      <div class="notice">
+        <p>이 숫자는 <strong>질환이 있을 확률 82%</strong>가 아닙니다. 나이·성별이 비슷한 사람들과 비교한 값도 아닙니다.</p>
+      </div>
+    </section>
+
+    <section class="arm" aria-labelledby="arm-c">
+      <h2 id="arm-c"><span class="arm-label">Arm C</span><br>분포 마커 — 백분위 숫자 없음</h2>
+      <p>참조 데이터 분포 위에 현재 합성 출력을 표시합니다.</p>
+      <div class="distribution" role="img" aria-label="참조 데이터 모델 출력 분포(0에서 100) 위 합성 출력 마커, 약 82번째 위치">
+        <div class="distribution-track">
+          <div class="distribution-marker" style="left: 82%;"></div>
+        </div>
+        <div class="distribution-label">
+          <span>0</span>
+          <span>합성 출력 위치</span>
+          <span>100</span>
+        </div>
+      </div>
+      <p class="value-muted">숫자 없이 위치만 표시합니다. 색상만으로 의미를 전달하지 않습니다.</p>
+    </section>
+
+    <section class="arm" aria-labelledby="arm-d">
+      <h2 id="arm-d"><span class="arm-label">Arm D</span><br>100개 위치 설명</h2>
+      <p>참조 데이터의 모델 출력 분포를 100개의 위치로 나누면 약 <strong>82번째 지점</strong>입니다.</p>
+      <div class="notice">
+        <p>이 표현이 오히려 “82% 확률”로 오핼될 수 있는지 평가해야 합니다.</p>
+      </div>
+    </section>
+
+    <section class="arm" aria-labelledby="arm-e">
+      <h2 id="arm-e"><span class="arm-label">Arm E</span><br>비교 없음</h2>
+      <p>내부 연속 출력의 출처와 한계만 설명합니다.</p>
+      <p class="value-muted">연구/개발 미리보기 · 내부 연속 출력</p>
+      <p>이 값은 연구 참조 데이터와 비교한 위치가 아닙니다.</p>
+    </section>
+
+    <section aria-labelledby="comprehension">
+      <h2 id="comprehension">이핵 게이트</h2>
+      <p>각 표현을 본 사용자가 다음을 구별할 수 있어야 합니다. “모르겠다”는 정답으로 처리하지 않습니다.</p>
+      <ul class="checklist">
+        <li><span class="answer">아니다</span> — 82백분위는 질환이 있을 확률 82%를 뜻하는가?</li>
+        <li><span class="answer">아니다</span> — 나이·성별이 비슷한 사람만 비교한 것인가?</li>
+        <li><span class="answer">아니다</span> — 건강상태가 나쁜 사람 중 상위 18%를 뜻하는가?</li>
+        <li><span class="answer">아니다</span> — 이 숫자는 진단인가?</li>
+        <li><span class="answer">아니다</span> — 숫자가 낮아지면 생활습관 때문에 건강이 좋아졌다는 뜻인가?</li>
+        <li><span class="answer">동결 참조 기록에 같은 동결 모델을 적용한 출력 분포</span> — 실제 비교되는 것은 무엇인가?</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="synthetic">
+      <h2 id="synthetic">합성 예시 상세</h2>
+      <p>사용된 합성 내부 연속 출력: <code>0.635</code></p>
+      <ul>
+        <li>가중치 미적용 유한 순위: <strong>77.56백분위</strong></li>
+        <li>조사 가중치 적용 유한 위치: <strong>82.08백분위</strong></li>
+      </ul>
+      <p>두 방식의 최대 차이는 약 <strong>8.14 pp</strong>입니다. B/B2 결과를 숨기지 않고 보여줍니다.</p>
+    </section>
+
+    <details>
+      <summary>접근성 및 뷰포트 점검</summary>
+      <ul>
+        <li>320 px, 390 px, 430 px 해상도 지원</li>
+        <li>200% 텍스트 확대 대응</li>
+        <li>키보드 포커스 표시</li>
+        <li>가로 스크롤 없음</li>
+        <li>색상만으로 의미 전달하지 않음</li>
+        <li>분포 마커에 텍스트 대체 설명 제공</li>
+      </ul>
+    </details>
+
+    <footer>
+      <p>Branch: <code>research/model-v2-finite-reference-comprehension</code></p>
+      <p>Source artifact SHA-256: <code>d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84</code></p>
+      <p>Reference: <code>G6 validation product-complete subset, N=869</code></p>
+    </footer>
+  </div>
+</body>
+</html>
