@@ -119,8 +119,8 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   await expect(page.locator('[data-challenge-period="active"]')).toContainText("2026-09-15");
   const pendingCheckin = page.locator('[data-challenge-checkin-state="pending"]');
   await expect(pendingCheckin).toContainText("'기록함' 또는 '건너뜀'");
-  await expect(pendingCheckin).toContainText("'건너뜀'도 오늘 상태를 남긴 기록");
-  await expect(pendingCheckin).toContainText("혈압 기록과 합쳐서 판단하지 않아요");
+  await expect(pendingCheckin).toContainText("'건너뜀'도 저장된 오늘 상태");
+  await expect(pendingCheckin).toContainText("혈압 기록과는 별도예요");
   await page.getByRole("button", { name: "오늘 상태 확인·기록하기" }).click();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   expect(nonGetRequests).toEqual([]);

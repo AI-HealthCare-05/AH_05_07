@@ -2008,3 +2008,27 @@
     width: 100%;
   }
 }
+
+/* SK7 QA MICRO-FRICTION — S06 */
+
+.app-shell[data-screen="S06"] .journey-challenge-summary .scene-body {
+  max-width: 34rem;
+}
+
+@media (max-width: 580px) {
+  .app-shell[data-screen="S06"] .journey-challenge-summary {
+    gap: .8rem;
+  }
+
+  .app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-summary-card {
+    padding: .85rem .95rem;
+  }
+
+  .app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-checkin-note {
+    margin-top: .2rem;
+  }
+
+  .app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-next-actions {
+    margin-top: .1rem;
+  }
+}

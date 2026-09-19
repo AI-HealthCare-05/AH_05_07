@@ -1811,7 +1811,7 @@ function App() {
     }
 
     if (activeScreen === "S06") {
-      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} body={activeChallengeEnded ? "챌린지 기간은 끝났어요. 오늘 상태를 새로 기록하지 않아요." : "혈압과는 별도로, 선택한 행동과 오늘 남길 상태를 확인해요."} tone="sage" className="journey-candidate journey-challenge-summary">
+      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} body={activeChallengeEnded ? "챌린지 기간은 끝났어요. 오늘 상태를 새로 기록하지 않아요." : "챌린지 상태는 혈압 기록과 별도로 확인해요."} tone="sage" className="journey-candidate journey-challenge-summary">
         <section className="locked-challenge journey-challenge-summary-card" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
           <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
@@ -1827,9 +1827,9 @@ function App() {
               ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요."
               : todayCheckin
                 ? `오늘은 '${checkinLabel(todayCheckin.status)}' 상태로 저장되어 있어요.`
-                : "오늘은 '기록함' 또는 '건너뜀' 중 하나를 상태로 저장할 수 있어요."}</p>
+                : "오늘 상태는 '기록함' 또는 '건너뜀'으로 남겨요."}</p>
           {!isPriorDashboard && !activeChallengeEnded && <p className="journey-challenge-checkin-note">
-            '건너뜀'도 오늘 상태를 남긴 기록이에요. 혈압 기록과 합쳐서 판단하지 않아요.
+            '건너뜀'도 저장된 오늘 상태예요. 혈압 기록과는 별도예요.
           </p>}
         </section>
         {renderCycleActions()}
