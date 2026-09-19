@@ -298,7 +298,7 @@ function Login({
     <main className="welcome-shell journey-login" data-scene="S01">
       <div className="journey-login-layout">
         <section className="journey-login-intro" aria-labelledby="login-title">
-          <p className="eyebrow">상균7데이즈</p>
+          <p className="eyebrow">SK7</p>
           <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
           <p className="scene-body">혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요. 한 건부터 바로 시작할 수 있어요.</p>
           <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
@@ -1189,7 +1189,7 @@ function App() {
     return (
       <main className="welcome-shell">
         <section className="welcome-card" aria-live="polite">
-          <p className="eyebrow">상균7데이즈</p>
+          <p className="eyebrow">SK7</p>
           <h1>{authEmailConfirmPending ? "로그인 링크를 확인하고 있어요." : "로그인 상태를 확인하고 있어요."}</h1>
           <p className="scene-body">잠시만 기다려 주세요.</p>
         </section>

@@ -21,7 +21,7 @@ test('normal artifact serves static robots and llms discovery files', async ({ r
   const llms = await request.get('/llms.txt');
   expect(llms.ok()).toBe(true);
   const llmsText = await llms.text();
-  expect(llmsText).toMatch(/^# 상균7데이즈 \(SK7\)/);
+  expect(llmsText).toMatch(/^# SK7$/m);
   expect(llmsText).toContain('https://hyeol.app/');
   expect(llmsText).toContain('https://github.com/AI-HealthCare-05/AH_05_07');
   expect(llmsText).not.toContain('<!doctype');
