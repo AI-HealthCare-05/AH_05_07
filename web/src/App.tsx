@@ -744,12 +744,12 @@ function App() {
       setNotice(makeNotice("error", "입력 내용을 저장할 수 없어요. 날짜와 값의 형식을 확인한 뒤 수정해 주세요.", { origin: "request-error" }));
       return;
     }
-    if (error instanceof ApiRequestError && (error.status === 409 || error.code === "observation_conflict")) {
-      setNotice(makeNotice("error", "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.", { origin: "request-error" }));
-      return;
-    }
     if (error instanceof ApiRequestError && error.code === "challenge_selection_locked") {
       setNotice(makeNotice("error", "첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.", { origin: "request-error" }));
+      return;
+    }
+    if (error instanceof ApiRequestError && (error.status === 409 || error.code === "observation_conflict")) {
+      setNotice(makeNotice("error", "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.", { origin: "request-error" }));
       return;
     }
     const message = context === "export"

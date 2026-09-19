@@ -1,5 +1,13 @@
 # Data contract
 
+> **Version scope.** The NHANES/BP-threshold sections below describe the earlier
+> research contract and must not be read as the current frozen Model V2 source or
+> target. Current Model V2 is the separately frozen **KNHANES 2024** path in
+> `docs/research/model-v2-g3-freeze-contract.md`; its executable preparation uses
+> `HE_HP == 4` as the positive cross-sectional state target and preserves the
+> frozen 11-feature contract. Product behavior follows
+> `docs/model-v2-product-contract.md`.
+
 ## Source
 
 Primary candidate: **NHANES 2017–March 2020 Pre-pandemic**. The combined release is nationally representative and documents demographic, examination, questionnaire, dietary, and laboratory modules. [CDC data overview](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2017-2020) · [questionnaire index](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/questionnaires.aspx?Cycle=2017-2020)
