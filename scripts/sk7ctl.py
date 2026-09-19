@@ -741,7 +741,9 @@ def _check(
     }
 
 
-def verification_plan(paths: Sequence[str], lane: str, profile: str, root: Path) -> list[dict[str, Any]]:
+def verification_plan(  # noqa: C901
+    paths: Sequence[str], lane: str, profile: str, root: Path
+) -> list[dict[str, Any]]:
     if profile not in PROFILES:
         raise Sk7Error(f"unknown profile: {profile}")
 
@@ -954,7 +956,7 @@ def _format_result(item: dict[str, Any], returncode: int, output: str, duration:
 def _run_check(item: dict[str, Any], root: Path, env: dict[str, str]) -> tuple[int, str, float, Path]:
     """Run a single check, capturing output to /tmp, and return (rc, output, duration, log_path)."""
     started = time.monotonic()
-    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d-%H%M%S")
     log_path = Path("/tmp") / f"sk7ctl_{timestamp}_{_log_slug(item['display'])}.log"
 
     if item.get("shell"):
@@ -994,7 +996,9 @@ def _render_plan_item(item: dict[str, Any], selected: bool) -> str:
     return f"- {mark} {item['cost']}: {item['display']} — {item['scope']}{manual}"
 
 
-def cmd_verify(args: argparse.Namespace, root: Path, store: StateStore) -> int:
+def cmd_verify(  # noqa: C901
+    args: argparse.Namespace, root: Path, store: StateStore
+) -> int:
     state = store.load()
     task = _require_task(state)
     dirty = dirty_files(root)
