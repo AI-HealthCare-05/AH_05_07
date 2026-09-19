@@ -156,8 +156,8 @@ SELECT throws_ok(
     SET action_id = 'sleep-routine'
     WHERE id = '77777777-7777-4777-8777-777777773791'
   $$,
-  'P0001',
-  NULL,
+  'PT409',
+  'challenge_selection_locked',
   'authenticated direct update cannot change the selection after the challenge window ended'
 );
 

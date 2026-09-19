@@ -488,6 +488,34 @@ async def test_select_active_challenge_rejects_replacement_after_first_checkin()
 
 
 @pytest.mark.asyncio
+async def test_select_active_challenge_maps_database_conflict_to_locked_error() -> None:
+    session = SupabaseSession(user_id="session-user-id", access_token="session-token")
+    active_challenge = {
+        "id": "active-challenge-id",
+        "action_id": "walk-10-minutes",
+        "starts_on": "2026-09-02",
+        "ends_on": "2026-09-08",
+        "first_checkin_on": None,
+    }
+    request = httpx.Request("PATCH", "https://example.supabase.co/rest/v1/active_challenges")
+    response = httpx.Response(409, request=request)
+    conflict = httpx.HTTPStatusError("challenge selection locked", request=request, response=response)
+
+    with (
+        patch(
+            "app.services.observation_store.get_owned_active_challenge",
+            new=AsyncMock(return_value=active_challenge),
+        ),
+        patch(
+            "app.services.observation_store.update_owned_record",
+            new=AsyncMock(side_effect=conflict),
+        ),
+    ):
+        with pytest.raises(ChallengeSelectionLockedError):
+            await select_owned_active_challenge("sleep-routine", date(2026, 9, 2), session)
+
+
+@pytest.mark.asyncio
 async def test_create_challenge_checkin_uses_the_active_challenge_and_session_identity() -> None:
     session = SupabaseSession(user_id="session-user-id", access_token="session-token")
     active_challenge = {"id": "active-challenge-id", "action_id": "walk-10-minutes"}
