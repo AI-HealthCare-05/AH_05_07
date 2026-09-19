@@ -100,9 +100,7 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertTrue(any(item["display"] == "web build" and item["cost"] == "SKIP" for item in plan))
 
     def test_saved_scene_e2e_only_selects_targeted_suite_without_build(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/saved-scene-review.spec.ts"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/saved-scene-review.spec.ts"], "routine", "focused", self.real_root)
         self.assertIn("cd web && npm run test:e2e:saved-scene", self._displays(plan))
         self.assertNotIn("cd web && npm run build", self._displays(plan))
         targeted = next(item for item in plan if item["display"].endswith("test:e2e:saved-scene"))
@@ -129,15 +127,11 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertIn("cd web && npm run build", self._displays(plan))
 
     def test_scene_named_e2e_spec_does_not_add_manifest_check(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/diorama-scene-review.spec.ts"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/diorama-scene-review.spec.ts"], "routine", "focused", self.real_root)
         self.assertNotIn("cd web && npm run verify:scene-manifest", self._displays(plan))
 
     def test_unknown_e2e_spec_escalates_to_complete_pr_gate(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root)
         regression = next(item for item in plan if item.get("name") == "browser regression")
         self.assertEqual(regression["cost"], "EXPENSIVE")
         self.assertNotIn("focused", regression["profiles"])
@@ -285,18 +279,14 @@ class Sk7ctlTests(unittest.TestCase):
     # --- Local verification router v1 tests ---
 
     def test_s02_focused_ui_is_moderate_and_selected_in_focused(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/src/components/JourneyToday.tsx"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/src/components/JourneyToday.tsx"], "routine", "focused", self.real_root)
         suite = next(item for item in plan if item.get("name") == "S02 focused UI")
         self.assertEqual(suite["cost"], "MODERATE")
         self.assertIn("focused", suite["profiles"])
         self.assertTrue(suite["run"])
 
     def test_s10_focused_ui_is_moderate_and_selected_in_focused(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root)
         suite = next(item for item in plan if item.get("name") == "S10 focused UI")
         self.assertEqual(suite["cost"], "MODERATE")
         self.assertIn("focused", suite["profiles"])
@@ -310,9 +300,7 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertNotIn("browser regression", names)
 
     def test_scene_companion_runtime_selects_review_scene_suite(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/src/components/VisualStage.tsx"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/src/components/VisualStage.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
         self.assertIn("S02 and S10 review scenes", names)
         self.assertIn("cd web && npm run build", self._displays(plan))
@@ -335,9 +323,7 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertEqual(item["argv"], [sys.executable, "-m", "pytest", sk7ctl.MODEL_B3_TEST])
 
     def test_shared_model_helper_widens_to_all_model_tests(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["scripts/model/preprocessing.py"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["scripts/model/preprocessing.py"], "routine", "focused", self.real_root)
         item = self._model_test_item(plan)
         self.assertIsNotNone(item)
         self.assertEqual(set(item["argv"]), {sys.executable, "-m", "pytest", *sk7ctl.MODEL_TEST_FILES})
@@ -356,9 +342,7 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertNotIn(sk7ctl.MODEL_B2_TEST, item["argv"])
 
     def test_data_preparation_only_runs_targeted_data_test(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["scripts/data/preparation.py"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["scripts/data/preparation.py"], "routine", "focused", self.real_root)
         item = self._data_test_item(plan)
         self.assertIsNotNone(item)
         self.assertEqual(item["argv"], [sys.executable, "-m", "pytest", *sk7ctl.DATA_TEST_FILES])
@@ -368,26 +352,20 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertTrue(any("full Browser E2E matrix" in item["display"] for item in plan))
 
     def test_full_profile_includes_expensive_browser_regression(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/new-flow.spec.ts"], "routine", "full", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "full", self.real_root)
         suite = next(item for item in plan if item.get("name") == "browser regression")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertIn("full", suite["profiles"])
 
     def test_pr_profile_includes_expensive_browser_regression_for_unknown_spec(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/new-flow.spec.ts"], "routine", "pr", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "pr", self.real_root)
         suite = next(item for item in plan if item.get("name") == "browser regression")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertIn("pr", suite["profiles"])
         self.assertNotIn("focused", suite["profiles"])
 
     def test_focused_profile_skips_expensive_browser_regression(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/e2e/new-flow.spec.ts"], "routine", "focused", self.real_root)
         suite = next(item for item in plan if item.get("name") == "browser regression")
         self.assertEqual(suite["cost"], "EXPENSIVE")
         self.assertNotIn("focused", suite["profiles"])
@@ -431,9 +409,7 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertTrue(log_path.exists())
 
     def test_s10_change_does_not_run_saved_scene_suite(self) -> None:
-        plan = sk7ctl.verification_plan(
-            ["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root
-        )
+        plan = sk7ctl.verification_plan(["web/src/components/JourneyRecap.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
         self.assertIn("S10 focused UI", names)
         self.assertNotIn("saved-scene migration parity", names)
