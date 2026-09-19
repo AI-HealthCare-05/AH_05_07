@@ -182,6 +182,10 @@ async def select_owned_active_challenge(
                 return await update_owned_record(
                     "active_challenges", str(active_challenge["id"]), {"action_id": action_id}, session
                 )
+            except httpx.HTTPStatusError as error:
+                if error.response.status_code == 409:
+                    raise ChallengeSelectionLockedError from error
+                raise
             except OwnedRecordMissingError as error:
                 raise ActiveChallengeMissingError from error
 
