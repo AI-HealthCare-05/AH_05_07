@@ -37,7 +37,7 @@ The verifier must require no production credentials or network access and must f
 ## Recorded S11 release evidence
 
 The retained source/runtime/rollback tuple and operator verification are owned by
-[deployment SSOT](../deployment-ssot.md#historical-server-inference-s11-production-evidence).
+[historical deployment evidence](../evidence/deployment-history-through-20260918.md#historical-server-inference-s11-production-evidence).
 API provenance remains in [release-s11-api.json](release-s11-api.json); its
 immutable evidence is unchanged. Do not maintain a second current-runtime table here.
 

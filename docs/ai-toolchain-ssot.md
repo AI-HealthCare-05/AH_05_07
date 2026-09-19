@@ -9,7 +9,7 @@ runtime state. Use the concern-specific authorities below instead:
 
 | Concern | Authority |
 | --- | --- |
-| Contribution policy, risk lane, startup routing | `AGENTS.md`, `docs/project-handoff.md#fast-start` |
+| Contribution policy, risk lane, startup routing | [AGENTS.md](../AGENTS.md), [documentation authority map](README.md); [project handoff](project-handoff.md#fast-start) for restart context |
 | Current product requirements | `docs/requirements.md` |
 | Frozen Model V2 product semantics and data-use boundary | `docs/model-v2-product-contract.md`, `docs/architecture/ARCHITECTURE_INVARIANTS.md` |
 | Current source implementation | canonical repository `main`, executable code, migrations, and tests |
@@ -136,8 +136,9 @@ transitive versions still requires normal review and passing affected checks.
 
 When reconstructing project context, do not infer current product/model/runtime
 status from historical Gate 1B, model-comparison, model-card, or readiness
-documents. Start from `AGENTS.md` and `docs/project-handoff.md#fast-start`, then
-open only the concern-specific authority from the table at the top of this file.
+documents. Start from [AGENTS.md](../AGENTS.md) and the
+[documentation authority map](README.md), then open only the concern-specific
+authority. Use [project handoff](project-handoff.md#fast-start) for restart context.
 
 If a historical record conflicts with a current authority, the historical record
 remains evidence for its recorded SHA and scope; it does not become a competing
