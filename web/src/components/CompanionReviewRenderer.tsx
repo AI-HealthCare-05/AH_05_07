@@ -8,7 +8,7 @@ import {
   type CompanionClip,
   type CompanionSelection,
 } from "../ui/companion";
-import { getCompanionAsset } from "../ui/companionAssets.generated";
+import type { CompanionAsset } from "../ui/companionAssets.generated";
 import type {
   CompanionFraming,
   CompanionInteractionActivation,
@@ -26,6 +26,7 @@ import { createCompanionReactionRelease } from "./companionReactionRelease";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
+  asset: CompanionAsset;
   reducedMotion: boolean;
   framing?: CompanionFraming;
   interactionActivation?: CompanionInteractionActivation;
@@ -72,6 +73,7 @@ function setStatus(host: HTMLDivElement, status: RenderStatus, clipNames = "") {
 
 export default function CompanionReviewRenderer({
   selection,
+  asset,
   reducedMotion,
   framing = "default",
   interactionActivation = "disabled",
@@ -173,7 +175,6 @@ export default function CompanionReviewRenderer({
       resize();
 
       const loader = new GLTFLoader();
-      const asset = getCompanionAsset(selection.species, selection.variant);
       loader.load(asset.url, (gltf) => {
         if (disposed) {
           disposeObject(gltf.scene);
@@ -461,7 +462,7 @@ export default function CompanionReviewRenderer({
       renderer?.dispose();
       host.replaceChildren();
     };
-  }, [attentionLook, framing, interactionActivation, reducedMotion, selection.species, selection.variant]);
+  }, [asset.url, attentionLook, framing, interactionActivation, reducedMotion, selection.species, selection.variant]);
 
   useEffect(() => {
     controllerRef.current?.play(selection, reducedMotion);

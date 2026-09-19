@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { allScreenIds } from "../src/ui/journey";
 import { companionSpecies, companionVariants, type CompanionSpecies } from "../src/ui/companion";
+import { getActiveCompanionAsset } from "../src/ui/companionActiveAsset";
 import { companionAssetManifest, getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { activeSceneCompanionSpecies, getActiveSceneCharacter } from "../src/ui/companionSceneRegistry";
 import { getSceneCharacterPresentationProfile } from "../src/ui/companionPresentationProfiles";
@@ -76,6 +77,7 @@ test("active scene registry resolves every species to its generated lite deliver
   for (const species of companionSpecies) {
     const active = getActiveSceneCharacter(species);
     const generatedLite = getCompanionAsset(species, "lite");
+    expect(getActiveCompanionAsset(species)).toBe(generatedLite);
     const registeredAsset = sceneManifest.assets.find((asset) => asset.id === active.id);
 
     if (!registeredAsset || registeredAsset.kind !== "character" || !("delivery" in registeredAsset)) {
