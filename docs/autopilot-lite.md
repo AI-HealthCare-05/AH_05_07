@@ -62,6 +62,24 @@ The agent reads `AGENTS.md`, the fast-start handoff, and only the contract/tests
 for the boundary it is changing. It runs the smallest affected checks while
 iterating; it does not repeat the full browser/release matrix by default.
 
+## Local verification and handoff
+
+Reuse [sk7ctl](../scripts/sk7ctl.py), not another verification router. With this
+task's plan active, `python3 scripts/sk7ctl.py verify --profile focused` previews
+the checks; add `--run` to execute and record them. `pr` and `full` are explicit
+broader profiles, not replacements for required hosted CI.
+
+`sk7ctl` keeps one active task in `<git-common-dir>/sk7ctl/state.json`, shared by
+linked worktrees. Check `python3 scripts/sk7ctl.py plan show` before writing it;
+`plan` mutations and `verify --run` need one owner at a time. If another lane owns
+that state, use the affected commands directly and preserve your own handoff
+without replacing its plan or verification record.
+
+`python3 scripts/sk7ctl.py handoff` prints the existing restart record; it does
+not save the work or export assets. Save the record and required task artifacts
+outside temporary storage, following the
+[AGENTS restart rules](../AGENTS.md#long-running-work-and-restart).
+
 ## Guard before publish
 
 The guard inspects committed changes plus staged, unstaged, and untracked files:
