@@ -1,5 +1,33 @@
 import type { TrailDay } from './livingWeek';
 
+export type ReportObservation = {
+  date: string;
+  period: 'morning' | 'evening';
+  systolic: number;
+  diastolic: number;
+};
+
+/** Loaded BP facts only, scoped and ordered for the report without changing the source. */
+export function projectReportBloodPressure(days: readonly TrailDay[], observations: readonly ReportObservation[]) {
+  const dates = new Set(days.map(day => day.date));
+  const records = observations.filter(record => dates.has(record.date)).sort((left, right) =>
+    left.date.localeCompare(right.date) || Number(left.period === 'evening') - Number(right.period === 'evening'));
+  const morningCount = records.filter(record => record.period === 'morning').length;
+  return {
+    observations: records,
+    observationCount: records.length,
+    observationDateCount: new Set(records.map(record => record.date)).size,
+    morningCount,
+    eveningCount: records.length - morningCount,
+    // Each stored observation has equal weight; missing dates/periods add no values.
+    // A single observation stays in the raw list without a duplicate average.
+    mean: records.length < 2 ? null : {
+      systolic: records.reduce((sum, record) => sum + record.systolic, 0) / records.length,
+      diastolic: records.reduce((sum, record) => sum + record.diastolic, 0) / records.length,
+    },
+  };
+}
+
 /** Display-only counts of the supplied calendar window, independent of exports. */
 export function summarizeTrailDays(days: readonly TrailDay[]) {
   return days.reduce((summary, day) => ({

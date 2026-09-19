@@ -44,6 +44,7 @@
   html:has(.living-week-report) { background: white; min-width: 0; }
   body:has(.living-week-report) [data-living-week-app],
   .living-week-report .week-report-toolbar,
+  .living-week-report .week-report-day > header p,
   .living-week-report button { display: none !important; }
   .living-week-report { page: living-week-report; width: auto; max-width: none; margin: 0; padding: 0; color: #000; font-size: 10.5pt; line-height: 1.5; }
   .week-report-document { border: 0; border-radius: 0; padding: 0; box-shadow: none; background: white; }
