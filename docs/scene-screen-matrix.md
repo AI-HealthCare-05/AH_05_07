@@ -3,22 +3,24 @@
 A0: decorative aria-hidden visual, empty poster alt, pointer inert; semantic headings/status/buttons; existing focus/navigation; 44px primary targets, 16px mobile form text, 320px reflow and 200% zoom. Character is never a required control.
 L0: no scene downloads. L1: viewport-specific asynchronous image/layers only. L3: semantic UI/fallback first; eligible visible recipe only then lazy 3D. LS: unchanged S05 confirmed-save gate.
 
+Current Living Journey visual grammar: S02 is the signed-in visual north star. Presentation follows environment → primary task/action → journey surface → factual/utility layer while each screen keeps its own semantic and runtime ownership. S03–S10 carry that grammar through the core journey; S01 and S12–S14 use the same surface/depth language at entry, empty, recovery, and settings boundaries. S11 remains governed separately by the Model V2 product contract.
+
 ## S01
 | Field | Contract |
 |---|---|
-| visual mode | static |
-| primary visual | gate poster |
-| character presence | none |
-| environment presence | gate fragment |
-| semantic DOM relationship | email form, status and recovery |
-| mobile composition | form first; optional short gate |
-| desktop composition | form beside gate |
-| allowed animation | short semantic fade |
-| prohibited animation | loop/reward |
-| loading strategy | L1 |
-| fallback | T1>T0 |
-| accessibility behavior | A0 + email labels |
-| performance tier | static |
+| visual mode | semantic entry + optional real-time companion narrator + read-only preview |
+| primary visual | login/auth surface with companion narrator; preview reuses read-only S02 |
+| character presence | selected companion when companion runtime is enabled; never required for login |
+| environment presence | quiet entry surface; read-only preview exposes S02 environment |
+| semantic DOM relationship | email form, status/recovery, companion preference and preview gate |
+| mobile composition | login purpose/auth first; narrator and preview remain bounded at 320px |
+| desktop composition | purpose/narrator beside strong auth surface |
+| allowed animation | companion idle within its independent gate; short semantic feedback |
+| prohibited animation | login success reward, health reaction, preview writes |
+| loading strategy | semantic form is immediate; companion follows its independent runtime gate |
+| fallback | login and preview entry remain complete without companion renderer |
+| accessibility behavior | A0 + email labels + 16px mobile input + preview dialog/focus contract |
+| performance tier | semantic + optional companion |
 
 ## S02
 | Field | Contract |
@@ -196,53 +198,53 @@ Review implementation: [calendar diorama and responsive posters](scene-s10-diora
 ## S12
 | Field | Contract |
 |---|---|
-| visual mode | static |
-| primary visual | approved empty poster |
-| character presence | existing static only |
-| environment presence | neutral garden |
-| semantic DOM relationship | confirmed empty + two actions |
-| mobile composition | actions + large optional poster |
-| desktop composition | text beside poster |
-| allowed animation | semantic entrance |
-| prohibited animation | withered garden/blame |
-| loading strategy | L1 |
-| fallback | T1>T0 |
-| accessibility behavior | A0 + truthful empty |
-| performance tier | static |
+| visual mode | semantic + CSS-first 2.5D empty garden |
+| primary visual | truthful empty-state actions over a quiet garden surface |
+| character presence | none |
+| environment presence | neutral CSS garden; no reward/failure metaphor |
+| semantic DOM relationship | confirmed empty/current-or-prior period + BP/challenge actions + optional S11 tool link |
+| mobile composition | factual empty state and BP action first; secondary options follow |
+| desktop composition | bounded action surfaces with quiet garden context |
+| allowed animation | semantic entrance/control feedback only |
+| prohibited animation | withered garden, blame, streak or completion framing |
+| loading strategy | L0 semantic/CSS presentation |
+| fallback | semantic actions and period remain complete without decoration |
+| accessibility behavior | A0 + truthful empty + 200% text/touch-target contract |
+| performance tier | semantic / CSS-first |
 
 ## S13
 | Field | Contract |
 |---|---|
-| visual mode | static |
-| primary visual | approved retry poster |
-| character presence | existing static only |
-| environment presence | minimal neutral |
-| semantic DOM relationship | load failure and retry |
-| mobile composition | retry first |
-| desktop composition | text beside poster |
-| allowed animation | semantic entrance |
-| prohibited animation | storm/anxiety/retry loop |
-| loading strategy | L1 |
-| fallback | T1>T0 |
-| accessibility behavior | A0 + error/retry |
-| performance tier | static |
+| visual mode | semantic recovery surface |
+| primary visual | bounded error explanation and one retry action |
+| character presence | none |
+| environment presence | minimal neutral/coral recovery context |
+| semantic DOM relationship | load failure is distinct from truthful empty; retry performs a bounded read |
+| mobile composition | explanation and retry remain visible at 200% text |
+| desktop composition | centered bounded recovery surface |
+| allowed animation | semantic entrance only |
+| prohibited animation | storm/anxiety metaphor, retry loop, automatic write |
+| loading strategy | L0 semantic/CSS presentation |
+| fallback | error explanation and retry control |
+| accessibility behavior | A0 + alert/retry + no horizontal overflow |
+| performance tier | semantic |
 
 ## S14
 | Field | Contract |
 |---|---|
-| visual mode | none |
-| primary visual | none |
-| character presence | none |
-| environment presence | none |
-| semantic DOM relationship | settings/account deletion/help |
-| mobile composition | vertical settings |
-| desktop composition | bounded settings |
-| allowed animation | dialog feedback |
-| prohibited animation | scene motion |
+| visual mode | semantic utility surfaces |
+| primary visual | grouped settings surfaces within the Living Journey visual grammar |
+| character presence | preference control only; no required scene character |
+| environment presence | quiet shared product background; no scene world |
+| semantic DOM relationship | companion preference, records/files guidance, help, logout and account deletion |
+| mobile composition | vertical grouped settings; destructive action remains explicit |
+| desktop composition | bounded grouped settings with utility hierarchy |
+| allowed animation | control/dialog feedback only |
+| prohibited animation | scene motion, health reaction, deletion reward |
 | loading strategy | L0 |
-| fallback | T0 |
-| accessibility behavior | A0 + deletion confirmation |
-| performance tier | semantic |
+| fallback | semantic settings remain complete without decoration |
+| accessibility behavior | A0 + help disclosure + deletion confirmation/focus return |
+| performance tier | semantic / CSS-first |
 
 ## Mobile focal acceptance
 320px: projected Moa height candidate 112–144 CSS px; stage 176–224px. 390px: 132–176px; stage 208–272px. Desktop: Moa 200–280px; stage 320–440px. Measure visible subject, not canvas size. Keep face/ears/silhouette; crop only secondary environment. Short 320x568 may flow visual below controls or omit it, never shrink the desktop world into a thumbnail. No horizontal page scroll. Poster and GLB must use dedicated composition profiles.
