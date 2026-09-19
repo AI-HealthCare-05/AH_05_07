@@ -17,8 +17,12 @@ function deferred() {
   const promise = new Promise<void>(resolve => { release = resolve; });
   return { promise, release };
 }
-async function api(context: BrowserContext, options: { active?: ActiveChallenge; write?: (index: number) => Promise<'uncertain' | 'locked' | void> } = {}) {
-  const state = { active: { ...(options.active ?? ended) }, writes: [] as Request[], closed: [] as ActiveChallenge[] };
+async function api(context: BrowserContext, options: { active?: ActiveChallenge; write?: (index: number) => Promise<'uncertain' | 'locked' | 'replacement-absent' | void> } = {}) {
+  const state: { active: ActiveChallenge | null; writes: Request[]; closed: ActiveChallenge[] } = {
+    active: { ...(options.active ?? ended) },
+    writes: [],
+    closed: [],
+  };
   await context.route('http://e2e.invalid/**', async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -40,8 +44,14 @@ async function api(context: BrowserContext, options: { active?: ActiveChallenge;
         return json({ detail: { code: 'challenge_selection_locked', message: 'Challenge selection is locked.' } }, 409);
       }
       // Browser fixture models the existing one-active constraint; service/DB tests own its enforcement.
-      if (state.active.id === ended.id) {
+      if (state.active?.id === ended.id) {
         state.closed.push({ ...state.active, status: 'closed' });
+        if (outcome === 'replacement-absent') {
+          state.active = null;
+          return json({ detail: { code: 'observation_storage_not_ready' } }, 503);
+        }
+        state.active = { ...next, action_id: request.postDataJSON().action_id };
+      } else if (!state.active) {
         state.active = { ...next, action_id: request.postDataJSON().action_id };
       }
       if (outcome === 'uncertain') return json({ detail: { code: 'observation_storage_not_ready' } }, 503);
@@ -195,7 +205,41 @@ test('Living Cycle two tabs reconcile a losing creation response through a read'
   await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
   expect(state.writes).toHaveLength(2);
   expect(state.closed).toHaveLength(1);
-  expect(state.active.id).toBe(next.id);
+  expect(state.active?.id).toBe(next.id);
+});
+
+test('Living Cycle represents close-committed replacement-absent state and retries only on explicit choice', async ({ page, context }) => {
+  const state = await api(context, {
+    write: async index => index === 1 ? 'replacement-absent' : undefined,
+  });
+  await page.goto('/?e2e=signed-in&screen=S03');
+
+  const replacement = page.getByRole('button', { name: /수면 시간 지키기/ });
+  await replacement.click();
+
+  await expect(page.getByText('저장 여부를 확인하지 못했어요.', { exact: false })).toBeVisible();
+  await expect(page.getByText('7일 챌린지를 선택했습니다.', { exact: true })).toHaveCount(0);
+  await expect(replacement).toBeDisabled();
+  expect(state.writes).toHaveLength(1);
+  expect(state.closed).toEqual([{ ...ended, status: 'closed' }]);
+  expect(state.active).toBeNull();
+
+  await page.getByRole('button', { name: '선택 상태 다시 확인하기', exact: true }).click();
+
+  await expect(replacement).toBeEnabled();
+  await expect(replacement).toContainText('선택하기');
+  expect(state.writes).toHaveLength(1);
+  expect(state.active).toBeNull();
+
+  await replacement.click();
+
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
+  await expect(page.getByText('7일 챌린지를 선택했습니다.', { exact: true })).toBeVisible();
+  expect(state.writes).toHaveLength(2);
+  expect(state.closed).toHaveLength(1);
+  expect(state.active?.id).toBe(next.id);
+  expect(state.active?.action_id).toBe('sleep-routine');
 });
 
 test('Living Cycle ignores an old session creation response', async ({ page, context }) => {
