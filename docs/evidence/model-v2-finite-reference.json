@@ -17,7 +17,7 @@
     },
     "identity": {
       "adapter_version": "model-v2-product-input-adapter-v2",
-      "analysis_source_commit": "5087838fedf2267f2e0694473944c8e494d819b9",
+      "analysis_source_commit": "602c8a041935fe8671e28b4cd9bb759f029ff4e0",
       "b_evidence_file_sha256": "52e93da3762b6357b65d8977238c5b74d0878e78d40cb19c60659a2ff4189fe2",
       "b_evidence_newline_policy": "verify_pinned_LF_bytes_accept_checkout_CRLF_only",
       "b_evidence_payload_sha256": "91f073359507e2934dd58cea354c8acaac3fed49ede5924bba2405e2a16445ab",
@@ -36,8 +36,8 @@
       "source_file_sha256": {
         "b_script": "37e9c69ec8e377b834212a12402bcd7d28df1b085b414fe8ddf611ca59278645",
         "contract": "f86c2ccba65a47c458eaed5c0f0caf70401566619aae398fb3d3098f32636163",
-        "script": "c8c05d0a78d48c6eefdc2c5b08c8c90554f4db600bf29d4f9682920ed24c7607",
-        "tests": "4fe278a3ac98b9c2522d4c8d83300edc3cd1eead6597f61dba193be073771599"
+        "script": "64e7287a6b7e4eef5e2714661aeb154f2f0a138cb392da0378db4aae6f9dca27",
+        "tests": "0ceae73281cb2a6e7caead4ab88b2f0e4b76680403afe08a1e952fe16779c03a"
       },
       "validity": "research_only_no_product_authorization"
     },
@@ -289,5 +289,5 @@
       "max_abs_position_difference_pp": 8.141295
     }
   },
-  "payload_sha256": "a4c7cc64b5446e0f698111b4e0da812e323369e4fdb16770d8a179a32f52f7fb"
+  "payload_sha256": "03b942d8cfb65a9d1753ce6d2d698a1ddbc9bb74ef34e2c4016c79ce0f31c63c"
 }
