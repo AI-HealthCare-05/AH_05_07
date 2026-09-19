@@ -7,6 +7,10 @@ import "./components/journey-candidate.css";
 import "./components/journey-today.css";
 import "./components/frontend-assets.css";
 import "./modern-palette.css";
+import "./theme-presets.css";
+import { applyThemePreference, readThemePreference } from "./ui/themePreference";
+
+applyThemePreference(readThemePreference());
 
 const PRELOAD_RECOVERY_KEY = "sk7:vite-preload-recovery-at";
 const PRELOAD_RECOVERY_COOLDOWN_MS = 60_000;

@@ -408,7 +408,9 @@
 }
 
 /* S13/S14: Journey-only load recovery and settings composition. */
-.journey-load-error.scene, .journey-settings.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; max-width: 54rem; margin-inline: auto; }
+.journey-load-error.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; }
+.journey-load-error.scene, .journey-settings.scene { max-width: 54rem; margin-inline: auto; }
+.journey-settings.scene { --sk7-accent: var(--sk7-accent-active); }
 .journey-load-error > .scene-visual-background, .journey-load-error > .scene-visual-character, .journey-load-error::after,
 .journey-settings > .scene-visual-background, .journey-settings > .scene-visual-character, .journey-settings::after { display: none; }
 .journey-load-error .scene-copy, .journey-settings .scene-copy { max-width: 39rem; }
@@ -417,22 +419,35 @@
 .journey-load-error-card p:first-child { color: #303a31; font-size: 1.1rem; font-weight: 650; }
 .journey-load-error-card button { margin-top: .35rem; min-height: 3rem; border-radius: .5rem; }
 .journey-settings-list { display: grid; gap: 1.5rem; }
-.journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem 2rem; border-top: 1px solid #d8d7c9; padding: 1.5rem 0 0; }
+.journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem 2rem; border-top: 1px solid var(--sk7-border); padding: 1.5rem 0 0; }
 .journey-settings-section > div { display: grid; gap: .45rem; }
 .journey-settings-section h2 { font-size: 1.35rem; letter-spacing: -.04em; }
-.journey-settings-section p:not(.eyebrow) { color: #62675a; line-height: 1.65; }
+.journey-settings-section p:not(.eyebrow) { color: var(--sk7-text-muted); line-height: 1.65; }
 .journey-settings-section > button { min-height: 2.9rem; border-radius: .5rem; white-space: nowrap; }
 .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: 1 / -1; margin: 0; }
-.journey-settings-note { border-left: 3px solid #a4b395; padding-left: .8rem; font-size: .88rem; }
+.journey-settings-note { border-left: 3px solid var(--sk7-border-strong); padding-left: .8rem; font-size: .88rem; }
 .journey-settings-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-.journey-settings-facts div { display: grid; gap: .2rem; border: 1px solid #e1dfd3; border-radius: .45rem; background: #fffdf7; padding: .75rem .9rem; }
-.journey-settings-facts dt { color: #737365; font-size: .75rem; }
-.journey-settings-facts dd { margin: 0; color: #414c40; font-weight: 650; }
-.journey-settings-help { border: 1px solid #dedbcf; border-radius: .45rem; background: #fffdf7; padding: 0 .9rem; }
-.journey-settings-help summary { min-height: 3rem; display: list-item; align-content: center; cursor: pointer; color: #414c40; font-weight: 650; }
-.journey-settings-help p { border-top: 1px solid #e5e1d7; padding: .8rem 0 1rem; font-size: .9rem; }
-.journey-settings-account { align-items: center; border-color: #d3b6ad; padding-bottom: .25rem; }
-.journey-settings-account > button { background: #9b4c43; }
+.journey-settings-facts div { display: grid; gap: .2rem; border: 1px solid var(--sk7-border); border-radius: .45rem; background: var(--sk7-surface-subtle); padding: .75rem .9rem; }
+.journey-settings-facts dt { color: var(--sk7-text-muted); font-size: .75rem; }
+.journey-settings-facts dd { margin: 0; color: var(--sk7-text); font-weight: 650; }
+.journey-settings-help { border: 1px solid var(--sk7-border); border-radius: .45rem; background: var(--sk7-surface-subtle); padding: 0 .9rem; }
+.journey-settings-help summary { min-height: 3rem; display: list-item; align-content: center; cursor: pointer; color: var(--sk7-text); font-weight: 650; }
+.journey-settings-help p { border-top: 1px solid var(--sk7-border); padding: .8rem 0 1rem; font-size: .9rem; }
+.journey-settings-account { align-items: start; padding-bottom: .25rem; }
+.journey-settings-account-actions { grid-column: 1 / -1; }
+.journey-settings-account-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem 2rem; padding: 1rem 0; border-top: 1px solid var(--sk7-border); }
+.journey-settings-account-row > div { display: grid; gap: .35rem; }
+.journey-settings-account-row h3 { color: var(--sk7-text); }
+.journey-settings-account-row > button { white-space: nowrap; }
+.journey-settings-account-danger { border-color: var(--sk7-danger-border); }
+
+.theme-preset-control { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; min-width: 0; margin: 0; border: 0; padding: 0; }
+.theme-preset-control legend { margin-bottom: .65rem; color: var(--sk7-text); font-weight: 700; }
+.theme-preset-control label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .65rem; min-height: var(--sk7-target-min); border: 1px solid var(--sk7-border-strong); border-radius: var(--sk7-radius-sm); background: var(--sk7-surface-control); padding: .7rem .8rem; cursor: pointer; }
+.theme-preset-control label:has(input:checked) { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); box-shadow: inset 0 0 0 1px var(--sk7-accent); }
+.theme-preset-control input { width: 1rem; min-width: 1rem; min-height: 1rem; margin: 0; accent-color: var(--sk7-accent); }
+.theme-preset-control span { display: grid; gap: .15rem; min-width: 0; }
+.theme-preset-control small { color: var(--sk7-text-muted); font-weight: 500; line-height: 1.4; }
 
 @media (max-width: 580px) {
   .journey-load-error.scene, .journey-settings.scene { max-width: none; }
@@ -442,6 +457,10 @@
   .journey-settings-section > button { width: 100%; }
   .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: auto; }
   .journey-settings-facts { gap: .55rem; }
+  .theme-preset-control { grid-template-columns: minmax(0, 1fr); }
+  .journey-settings-account-actions { grid-column: auto; }
+  .journey-settings-account-row { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .journey-settings-account-row > button { width: 100%; white-space: normal; }
 }
 
 /* S03: make challenge participation clearly optional and explain the lock boundary. */
@@ -1791,15 +1810,13 @@
 /* S14 — settings is a utility destination in the same product world. */
 
 .app-shell[data-screen="S14"] .journey-settings.scene {
-  border: 1px solid #dce7e2;
-  background: linear-gradient(180deg, #fbfdfb 0%, #f6f9f7 100%);
-  box-shadow:
-    0 18px 42px #173e3910,
-    inset 0 1px 0 #fff;
+  border: 1px solid var(--sk7-border);
+  background: var(--sk7-surface);
+  box-shadow: var(--sk7-shadow-raised);
 }
 
 .app-shell[data-screen="S14"] .journey-settings .scene-copy h1 {
-  color: #102f38;
+  color: var(--sk7-text);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-list {
@@ -1807,58 +1824,65 @@
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section {
-  border: 1px solid #dce7e2;
+  border: 1px solid var(--sk7-border);
   border-radius: 1rem;
-  background: #ffffffe5;
+  background: var(--sk7-surface);
   padding: 1.05rem 1.15rem;
-  box-shadow:
-    0 7px 18px #173e3908,
-    inset 0 1px 0 #fff;
+  box-shadow: var(--sk7-shadow-soft);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section.companion-identity-settings {
-  border-color: #cfe0d8;
-  background: linear-gradient(155deg, #ffffff, #eef7f2);
+  border-color: var(--sk7-border-accent);
+  background: var(--sk7-surface-accent);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section > div h2 {
-  color: #173b40;
+  color: var(--sk7-text);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-note {
-  border-left-color: #75a48f;
+  border-left-color: var(--sk7-border-strong);
   border-radius: 0 .55rem .55rem 0;
-  background: #f2f7f4;
+  background: var(--sk7-surface-subtle);
   padding: .65rem .8rem;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-facts div {
-  border-color: #dce7e2;
+  border-color: var(--sk7-border);
   border-radius: .65rem;
-  background: #f8fbf9;
+  background: var(--sk7-surface-subtle);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-help {
-  border-color: #dce7e2;
+  border-color: var(--sk7-border);
   border-radius: .65rem;
-  background: #f8fbf9;
+  background: var(--sk7-surface-subtle);
 }
 
 .app-shell[data-screen="S14"] .journey-settings-help p {
-  border-top-color: #dfe8e4;
+  border-top-color: var(--sk7-border);
 }
 
-.app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) {
-  border-color: #ead1cc;
-  background: #fff9f7;
+.app-shell[data-screen="S14"] .journey-settings-account-danger {
+  border-color: var(--sk7-danger-border);
+  background: var(--sk7-danger-soft);
+  padding-inline: .85rem;
 }
 
-.app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) .eyebrow {
-  color: #9b5d54;
+.app-shell[data-screen="S14"] .journey-settings-account-danger h3 {
+  color: var(--sk7-danger-text);
 }
 
-.app-shell[data-screen="S14"] .journey-settings-account:not(:has(> .danger)) {
-  background: #f8faf9;
+.app-shell[data-screen="S14"] .companion-identity-settings h2,
+.app-shell[data-screen="S14"] .companion-identity-settings p:not(.eyebrow),
+.app-shell[data-screen="S14"] .companion-identity-control {
+  color: var(--sk7-text);
+}
+
+.app-shell[data-screen="S14"] .companion-identity-control select {
+  border-color: var(--sk7-border-strong);
+  background: var(--sk7-surface-control);
+  color: var(--sk7-text);
 }
 
 @media (max-width: 760px) {
@@ -1870,28 +1894,32 @@
 }
 
 @media (max-width: 580px) {
-  .app-shell:is(
-    [data-screen="S12"],
-    [data-screen="S13"],
-    [data-screen="S14"]
-  ) {
+  .app-shell:is([data-screen="S12"], [data-screen="S13"]) {
     background:
       linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
   }
 
+  .app-shell[data-screen="S14"] { background: var(--sk7-canvas); }
+
   .app-shell[data-screen="S12"] .journey-empty.scene,
-  .app-shell[data-screen="S13"] .journey-load-error.scene,
-  .app-shell[data-screen="S14"] .journey-settings.scene {
+  .app-shell[data-screen="S13"] .journey-load-error.scene {
     box-shadow:
       0 9px 24px #173e390c,
       inset 0 1px 0 #fff;
   }
 
-  .app-shell[data-screen="S12"] .journey-empty .journey-empty-action,
-  .app-shell[data-screen="S14"] .journey-settings-section {
+  .app-shell[data-screen="S14"] .journey-settings.scene {
+    box-shadow: var(--sk7-shadow-soft);
+  }
+
+  .app-shell[data-screen="S12"] .journey-empty .journey-empty-action {
     box-shadow:
       0 6px 16px #173e3908,
       inset 0 1px 0 #fff;
+  }
+
+  .app-shell[data-screen="S14"] .journey-settings-section {
+    box-shadow: var(--sk7-shadow-soft);
   }
 
   .app-shell[data-screen="S14"] .journey-settings-section {

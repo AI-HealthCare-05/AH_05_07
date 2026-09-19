@@ -50,6 +50,7 @@ import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eH
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionMode, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
 import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
+import { applyThemePreference, readThemePreference, themePreferenceOptions, writeThemePreference } from "./ui/themePreference";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
 import {
   getSyntheticModelV2ResultView,
@@ -360,6 +361,7 @@ function App() {
   const initialSearch = useMemo(() => new URLSearchParams(window.location.search), []);
   const companionMode = useMemo(() => resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE), []);
   const [companionSpeciesPreference, setCompanionSpeciesPreference] = useState<CompanionSpecies>(() => readCompanionIdentity());
+  const [themePreference, setThemePreference] = useState(() => readThemePreference());
   const e2eSession = useMemo(() => getE2eSession(initialSearch.get("e2e")), [initialSearch]);
   const fixture = useMemo(
     () => getEvidenceFixture(
@@ -2003,9 +2005,38 @@ function App() {
       if (presentation.journey) return (
         <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings">
           <div className="journey-settings-list">
+            <section className="journey-settings-section journey-settings-display">
+              <div>
+                <p className="eyebrow">화면</p>
+                <h2>화면 테마</h2>
+                <p>이 브라우저의 화면에만 적용돼요. 기록·분석에는 영향이 없어요.</p>
+              </div>
+              <fieldset className="theme-preset-control">
+                <legend>화면 테마</legend>
+                {themePreferenceOptions.map((option) => <label key={option.value}>
+                  <input
+                    type="radio"
+                    name="sk7-theme-preset"
+                    value={option.value}
+                    checked={themePreference === option.value}
+                    onChange={(event) => {
+                      const theme = writeThemePreference(event.target.value);
+                      applyThemePreference(theme);
+                      setThemePreference(theme);
+                    }}
+                  />
+                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                </label>)}
+              </fieldset>
+              <dl className="journey-settings-facts">
+                <div><dt>언어</dt><dd>한국어</dd></div>
+                <div><dt>시간</dt><dd>한국 시간</dd></div>
+              </dl>
+              <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
+            </section>
             {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
               <div>
-                <p className="eyebrow">함께할 캐릭터</p>
+                <p className="eyebrow">동반자</p>
                 <h2>내 동반자</h2>
                 <p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p>
               </div>
@@ -2025,42 +2056,39 @@ function App() {
             </section>}
             <section className="journey-settings-section">
               <div>
-                <p className="eyebrow">기록과 파일</p>
-                <h2>30일 보관</h2>
+                <p className="eyebrow">기록과 데이터</p>
+                <h2>30일 보관과 내보낸 파일</h2>
                 <p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
               <p className="journey-settings-note">내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p>
-            </section>
-            <section className="journey-settings-section">
-              <div>
-                <p className="eyebrow">이용 안내</p>
-                <h2>이메일 로그인 계정</h2>
-              </div>
-              <dl className="journey-settings-facts">
-                <div><dt>언어</dt><dd>한국어</dd></div>
-                <div><dt>시간</dt><dd>한국 시간</dd></div>
-              </dl>
               <details className="journey-settings-help">
                 <summary>저장 여부가 확실하지 않을 때</summary>
                 <p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p>
               </details>
             </section>
-            {!evidenceMode && <section className="journey-settings-section journey-settings-account">
-              <div>
-                <p className="eyebrow">기기 연결</p>
-                <h2>이 기기에서 로그아웃</h2>
-                <p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p>
-              </div>
-              <button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button>
-            </section>}
             <section className="journey-settings-section journey-settings-account">
               <div>
-                <p className="eyebrow">계정 관리</p>
-                <h2>계정 삭제</h2>
-                <p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p>
+                <p className="eyebrow">계정</p>
+                <h2>이메일 로그인 계정</h2>
+                <p>기기 연결과 계정 삭제를 여기에서 관리해요.</p>
               </div>
-              <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button>
+              <div className="journey-settings-account-actions">
+                {!evidenceMode && <div className="journey-settings-account-row">
+                  <div>
+                    <h3>이 기기에서 로그아웃</h3>
+                    <p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p>
+                  </div>
+                  <button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button>
+                </div>}
+                <div className="journey-settings-account-row journey-settings-account-danger">
+                  <div>
+                    <h3>계정 삭제</h3>
+                    <p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p>
+                  </div>
+                  <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button>
+                </div>
+              </div>
             </section>
           </div>
         </Scene>

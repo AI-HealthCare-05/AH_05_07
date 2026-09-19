@@ -1,0 +1,32 @@
+/* Cloud remains the unmodified :root palette in styles.css. Theme presets
+   override neutral product chrome only; brand, status, and scene-owned tokens
+   remain independent. */
+html[data-sk7-theme="warm"] {
+  --sk7-canvas: #fbf7f2;
+  --sk7-surface-solid: #fffdfa;
+  --sk7-surface: #fffdfa;
+  --sk7-surface-raised: #fffdfa;
+  --sk7-surface-subtle: #f5eee7;
+  --sk7-surface-control: #fffaf5;
+  --sk7-text: #2f2925;
+  --sk7-text-muted: #756a61;
+  --sk7-border: #e1d6cb;
+  --sk7-border-strong: #c8b8aa;
+  --sk7-shadow-soft: 0 8px 24px rgb(79 62 48 / .09);
+  --sk7-shadow-raised: 0 16px 40px rgb(79 62 48 / .13);
+}
+
+html[data-sk7-theme="high-contrast"] {
+  --sk7-canvas: #f3f4f6;
+  --sk7-surface-solid: #fff;
+  --sk7-surface: #fff;
+  --sk7-surface-raised: #fff;
+  --sk7-surface-subtle: #e9ecf1;
+  --sk7-surface-control: #fff;
+  --sk7-text: #111318;
+  --sk7-text-muted: #414752;
+  --sk7-border: #aeb4bf;
+  --sk7-border-strong: #737b88;
+  --sk7-shadow-soft: 0 8px 24px rgb(17 19 24 / .13);
+  --sk7-shadow-raised: 0 16px 40px rgb(17 19 24 / .18);
+}

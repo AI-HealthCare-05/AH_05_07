@@ -295,6 +295,14 @@ test('review companion identity preference persists without health semantics', a
 
   await page.goto('/?e2e=signed-in&screen=S14');
   const select = page.getByLabel('캐릭터 선택');
+  await expect(page.getByRole('group', { name: '화면 테마' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '30일 보관과 내보낸 파일' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '이메일 로그인 계정' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '계정 삭제' })).toBeVisible();
+  if (await select.count() === 0) {
+    await expect(page.locator('.companion-identity-settings')).toHaveCount(0);
+    return;
+  }
   await expect(select).toBeVisible();
   await expect(select.locator('option')).toHaveCount(11);
   await expect(select).toHaveValue('bear');
@@ -312,4 +320,71 @@ test('review companion identity preference persists without health semantics', a
   await expect(page.getByLabel('캐릭터 선택')).toHaveValue('bear');
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('display theme defaults safely and preserves semantic boundaries across reloads', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await candidate(page);
+  await page.evaluate(() => localStorage.setItem('sk7-companion-species', 'rabbit'));
+
+  await expect(page.locator('html')).toHaveAttribute('data-sk7-theme', 'cloud');
+  await page.goto('/?e2e=signed-in&screen=S14');
+  const cloud = page.getByRole('radio', { name: /^Cloud/ });
+  const warm = page.getByRole('radio', { name: /^Warm/ });
+  const highContrast = page.getByRole('radio', { name: /^High Contrast/ });
+  await expect(cloud).toBeChecked();
+
+  const semanticTokens = () => page.locator('.journey-settings').evaluate((settings) => {
+    const styles = getComputedStyle(settings);
+    return {
+      canvas: styles.getPropertyValue('--sk7-canvas').trim(),
+      text: styles.getPropertyValue('--sk7-text').trim(),
+      border: styles.getPropertyValue('--sk7-border').trim(),
+      accent: styles.getPropertyValue('--sk7-accent').trim(),
+      success: styles.getPropertyValue('--sk7-success').trim(),
+      warning: styles.getPropertyValue('--sk7-warning').trim(),
+      danger: styles.getPropertyValue('--sk7-danger').trim(),
+    };
+  });
+  const cloudTokens = await semanticTokens();
+  const rootAccent = await page.locator('html').evaluate((root) => getComputedStyle(root).getPropertyValue('--sk7-accent').trim());
+  expect(cloudTokens.accent).toBe(rootAccent);
+
+  await warm.check();
+  await expect(page.locator('html')).toHaveAttribute('data-sk7-theme', 'warm');
+  expect(await page.evaluate(() => localStorage.getItem('sk7-ui-theme'))).toBe('warm');
+  expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('rabbit');
+  const warmTokens = await semanticTokens();
+  expect(warmTokens.canvas).not.toBe(cloudTokens.canvas);
+  expect(warmTokens.text).not.toBe(cloudTokens.text);
+  expect(warmTokens.border).not.toBe(cloudTokens.border);
+  expect(warmTokens.accent).toBe(cloudTokens.accent);
+  expect(warmTokens.success).toBe(cloudTokens.success);
+  expect(warmTokens.warning).toBe(cloudTokens.warning);
+  expect(warmTokens.danger).toBe(cloudTokens.danger);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-sk7-theme', 'warm');
+  await expect(warm).toBeChecked();
+
+  await highContrast.check();
+  await expect(page.locator('html')).toHaveAttribute('data-sk7-theme', 'high-contrast');
+  expect(await page.evaluate(() => localStorage.getItem('sk7-ui-theme'))).toBe('high-contrast');
+  const highContrastTokens = await semanticTokens();
+  expect(highContrastTokens.canvas).not.toBe(cloudTokens.canvas);
+  expect(highContrastTokens.text).not.toBe(cloudTokens.text);
+  expect(highContrastTokens.border).not.toBe(cloudTokens.border);
+  expect(highContrastTokens.accent).toBe(cloudTokens.accent);
+  expect(highContrastTokens.success).toBe(cloudTokens.success);
+  expect(highContrastTokens.warning).toBe(cloudTokens.warning);
+  expect(highContrastTokens.danger).toBe(cloudTokens.danger);
+
+  await page.reload();
+  await expect(highContrast).toBeChecked();
+  await page.evaluate(() => localStorage.setItem('sk7-ui-theme', 'unsupported'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-sk7-theme', 'cloud');
+  await expect(cloud).toBeChecked();
 });
