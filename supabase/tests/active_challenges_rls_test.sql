@@ -56,7 +56,7 @@ SELECT throws_ok(
     SET action_id = 'sleep-routine'
     WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
   $$,
-  'P0001',
+  'PT409',
   'challenge_selection_locked',
   'first check-in locks the selected action'
 );
