@@ -3,15 +3,19 @@ name: Browser E2E
 on:
   workflow_dispatch:
   schedule:
-    # Full browser confidence pass once per night (03:30 Asia/Seoul).
+    # Broad confidence once per night (03:30 Asia/Seoul).
     - cron: "30 18 * * *"
   pull_request:
     branches: [main]
     paths:
       - "web/**"
-      - "!web/src/ui/companionAssets.generated.ts"
+      - "tools/character-preview/**"
+      - "tools/question-review/**"
       - "tools/mvp1-capture.cjs"
       - "tools/submission-*"
+      - "docs/adr/0006-local-character-preview.md"
+      - "docs/character-preview-verification.md"
+      - "docs/input-question-review.md"
       - ".github/workflows/browser-e2e.yml"
 
 permissions:
@@ -27,22 +31,19 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     outputs:
-      matrix: ${{ steps.select.outputs.matrix }}
+      modules: ${{ steps.select.outputs.browser_modules }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Verify browser suite selector
+      - name: Verify CI concern selector
         run: node --test web/scripts/select-pr-browser-suites.test.mjs
-
-      - name: Select affected browser suites
+      - name: Select affected browser modules
         id: select
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -50,15 +51,15 @@ jobs:
         run: node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
   browser-e2e-pr:
-    name: browser-e2e-pr (${{ matrix.suite.name }})
+    name: browser-e2e-pr (${{ matrix.module }})
     if: github.event_name == 'pull_request'
     needs: browser-e2e-classify
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 20
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
-        suite: ${{ fromJSON(needs.browser-e2e-classify.outputs.matrix) }}
+        module: ${{ fromJSON(needs.browser-e2e-classify.outputs.modules) }}
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
       options: --user 1001
@@ -68,17 +69,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Install dependencies
+      - name: Set up Python for character asset checks
+        if: matrix.module == 'assets'
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install dependencies once for the selected module
+        if: matrix.module != 'policy'
         run: npm ci
-
-      - name: Run ${{ matrix.suite.name }}
-        run: ${{ matrix.suite.command }}
+      - name: Run ${{ matrix.module }} browser module
+        run: node scripts/browser-ci-modules.mjs "${{ matrix.module }}"
 
   browser-e2e:
     name: browser-e2e
@@ -87,7 +91,7 @@ jobs:
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
-      - name: Verify PR browser suites
+      - name: Verify PR browser modules
         env:
           CLASSIFY_RESULT: ${{ needs.browser-e2e-classify.result }}
           PR_BROWSER_RESULT: ${{ needs.browser-e2e-pr.result }}
@@ -95,42 +99,11 @@ jobs:
           test "$CLASSIFY_RESULT" = "success"
           test "$PR_BROWSER_RESULT" = "success"
 
-  browser-e2e-full:
-    # Full matrix is confidence/release coverage, not a per-merge gate.
-    name: browser-e2e-full (${{ matrix.suite.name }})
+  nightly-core:
+    name: nightly-core
     if: github.event_name != 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - name: browser evidence fixtures
-            command: npm run test:e2e
-          - name: companion runtime transport
-            command: node scripts/diagnose-companion-r2.mjs
-          - name: review companion runtime
-            command: npm run test:e2e:review
-          - name: production-on companion
-            command: npm run test:e2e:production:on
-          - name: saved-scene migration parity
-            command: npm run test:e2e:saved-scene
-          - name: S02 and S10 review scenes
-            command: npm run test:e2e:scene
-          - name: journey UI production
-            command: npm run test:e2e:ui:pr
-          - name: journey UI companion off
-            command: SK7_UI_TEST_COMPANION=off npm run test:e2e:ui:pr
-          - name: normal auth boundaries
-            command: npx playwright test --config=playwright.ui-normal.config.ts
-          - name: UI build matrix
-            command: node scripts/verify-ui-build-matrix.mjs
-          - name: submission capture script syntax
-            command: >-
-              node --check ../tools/mvp1-capture.cjs &&
-              node --check ../tools/submission-record.cjs &&
-              node --check ../tools/submission-video-check.cjs &&
-              node --check ../tools/submission-slides.mjs
+    timeout-minutes: 60
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
       options: --user 1001
@@ -138,16 +111,53 @@ jobs:
       run:
         working-directory: web
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: npm ci
+      - name: Run core, Journey and asset confidence
+        run: node scripts/browser-ci-modules.mjs core journey assets
 
-      - name: Install dependencies
-        run: npm ci
+  nightly-scene:
+    name: nightly-scene
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Run scene confidence
+        run: node scripts/browser-ci-modules.mjs scene
 
-      - name: Run ${{ matrix.suite.name }}
-        run: ${{ matrix.suite.command }}
+  nightly-model:
+    name: nightly-model
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Run Model V2 confidence
+        run: node scripts/browser-ci-modules.mjs model
