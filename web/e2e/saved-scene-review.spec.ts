@@ -1,4 +1,3 @@
-import "./journey-candidate.cases";
 import { createHash } from "node:crypto";
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
