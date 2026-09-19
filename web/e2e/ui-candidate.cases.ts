@@ -150,6 +150,161 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
+test('Journey polish baseline keeps hierarchy and reflow stable across key surfaces', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+
+  const screens = ['S02', 'S08', 'S10', 'S14'] as const;
+  const viewports = [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1366, height: 768 },
+  ] as const;
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+
+    for (const screen of screens) {
+      await page.goto(`/?e2e=signed-in&screen=${screen}`);
+      await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        `${screen} ${viewport.width}x${viewport.height} horizontal overflow`,
+      ).toBe(true);
+    }
+  }
+
+  await page.setViewportSize({ width: 683, height: 384 });
+
+  for (const screen of screens) {
+    await page.goto(`/?e2e=signed-in&screen=${screen}`);
+    await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      `${screen} 200% layout proxy horizontal overflow`,
+    ).toBe(true);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?e2e=signed-in&screen=S02');
+
+  const today = page.locator('.journey-today');
+  await expect(today).toBeVisible();
+
+  const todayHierarchy = await today.evaluate(element => {
+    const lead = element.querySelector('.home-lead') as HTMLElement;
+    const secondary = element.querySelector('.home-links button') as HTMLElement;
+
+    return {
+      leadShadow: getComputedStyle(lead).boxShadow,
+      secondaryShadow: getComputedStyle(secondary).boxShadow,
+    };
+  });
+
+  expect(todayHierarchy.leadShadow).not.toBe('none');
+  expect(todayHierarchy.secondaryShadow).toBe('none');
+
+  await page.goto('/?e2e=signed-in&screen=S08');
+
+  const recordUtility = await page.locator('.journey-records .window-nav').evaluate(element => {
+    const style = getComputedStyle(element);
+    const layers: string[] = [];
+
+    if (style.boxShadow !== 'none') {
+      let depth = 0;
+      let layer = '';
+
+      for (const character of style.boxShadow) {
+        if (character === '(') depth += 1;
+        if (character === ')') depth -= 1;
+
+        if (character === ',' && depth === 0) {
+          layers.push(layer.trim());
+          layer = '';
+        } else {
+          layer += character;
+        }
+      }
+
+      if (layer.trim()) layers.push(layer.trim());
+    }
+
+    return {
+      top: style.borderTopWidth,
+      bottom: style.borderBottomWidth,
+      radius: style.borderRadius,
+      shadow: style.boxShadow,
+      hasOuterShadow: layers.some(layer => !layer.includes('inset')),
+    };
+  });
+
+  expect(recordUtility.top).toBe('0px');
+  expect(recordUtility.bottom).not.toBe('0px');
+  expect(recordUtility.radius).toBe('0px');
+  expect(recordUtility.hasOuterShadow).toBe(false);
+
+  await page.goto('/?e2e=signed-in&screen=S10');
+
+  await expect(
+    page.getByRole('heading', {
+      name: '7일 기록을 리포트로 정리해요',
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole('button', {
+      name: '오늘 화면으로 돌아가기',
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  await page.goto('/?e2e=signed-in&screen=S14');
+
+  const ordinarySettings = page.locator('.journey-settings-section').filter({
+    hasText: '기록을 찾아보고 파일을 관리해요',
+  });
+
+  const ordinarySurface = await ordinarySettings.evaluate(element => {
+    const style = getComputedStyle(element);
+
+    return {
+      top: style.borderTopWidth,
+      bottom: style.borderBottomWidth,
+      radius: style.borderRadius,
+      shadow: style.boxShadow,
+    };
+  });
+
+  expect(ordinarySurface.top).toBe('0px');
+  expect(ordinarySurface.bottom).not.toBe('0px');
+  expect(ordinarySurface.radius).toBe('0px');
+  expect(ordinarySurface.shadow).toBe('none');
+
+  const deleteSection = page.locator('.journey-settings-section').filter({
+    has: page.getByRole('button', {
+      name: '계정 삭제',
+      exact: true,
+    }),
+  });
+
+  const destructiveSurface = await deleteSection.evaluate(element => {
+    const style = getComputedStyle(element);
+
+    return {
+      top: style.borderTopWidth,
+      radius: style.borderRadius,
+    };
+  });
+
+  expect(destructiveSurface.top).not.toBe('0px');
+  expect(destructiveSurface.radius).not.toBe('0px');
+});
+
 test('S11 outcome continues to blood-pressure entry when today has no BP record', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await setup(page);
