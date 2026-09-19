@@ -22,6 +22,7 @@ import {
   createCompanionLookController,
   type CompanionLookController,
 } from "./companionLook";
+import { createCompanionReactionRelease } from "./companionReactionRelease";
 
 type CompanionReviewRendererProps = Readonly<{
   selection: CompanionSelection;
@@ -259,15 +260,7 @@ export default function CompanionReviewRenderer({
            ] as const));
            let currentAction: THREE.AnimationAction | null = null;
            let finishedListener: ((event: { action: THREE.AnimationAction }) => void) | null = null;
-           let reactionReleaseTimer: number | undefined;
            let enableInteraction: (() => void) | undefined;
-
-           const clearReactionReleaseTimer = () => {
-             if (reactionReleaseTimer !== undefined) {
-               window.clearTimeout(reactionReleaseTimer);
-               reactionReleaseTimer = undefined;
-             }
-           };
 
            const markAnimation = (clip: CompanionClip, reactionState: "idle" | "active") => {
              host.dataset.companionAnimationClip = clip;
@@ -275,18 +268,7 @@ export default function CompanionReviewRenderer({
              host.dataset.companionReactionState = tactileEligible ? reactionState : "disabled";
            };
 
-           const stopCurrent = () => {
-             clearReactionReleaseTimer();
-             if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
-             finishedListener = null;
-             currentAction?.stop();
-             currentAction = null;
-             animationMixer.stopAllAction();
-           };
-
            const settleReactionToIdle = () => {
-             reactionReleaseTimer = undefined;
-
              const idleAction = actions.get("idle");
              if (!idleAction) {
                fail();
@@ -311,15 +293,26 @@ export default function CompanionReviewRenderer({
              markAnimation("idle", "idle");
            };
 
+           const reactionRelease = createCompanionReactionRelease<number>({
+             onElapsed: settleReactionToIdle,
+             schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
+             cancelScheduled: (handle) => window.clearTimeout(handle),
+           });
+
+           const stopCurrent = () => {
+             reactionRelease.cancel();
+             if (finishedListener) animationMixer.removeEventListener("finished", finishedListener);
+             finishedListener = null;
+             currentAction?.stop();
+             currentAction = null;
+             animationMixer.stopAllAction();
+           };
+
            const releaseReaction = () => {
-             clearReactionReleaseTimer();
              // Start the minimum visible hold when the pointer is released.
              // A busy frame between pointerdown and pointerup must not consume
              // the post-tap reaction before the user can actually see it.
-             reactionReleaseTimer = window.setTimeout(
-               settleReactionToIdle,
-               TACTILE_MIN_REACTION_VISIBLE_MS,
-             );
+             reactionRelease.release();
            };
 
            const react = (zone: CompanionGrabZone) => {
@@ -328,7 +321,7 @@ export default function CompanionReviewRenderer({
                return;
              }
 
-             clearReactionReleaseTimer();
+             reactionRelease.cancel();
 
              const reactionAction = actions.get(reactionClip);
              if (!reactionAction) {

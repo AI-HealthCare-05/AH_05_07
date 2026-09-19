@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { createCompanionReactionRelease } from "../src/components/companionReactionRelease";
 import { companionClips, companionExcludedScreens, companionSpecies, companionVariants } from "../src/ui/companion";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 
@@ -13,6 +14,77 @@ function reviewUrl(screen: string, query = selection) {
 function companionRequests(urls: string[]) {
   return urls.filter((url) => /sk7-companion\.gkrry\.com\/companion\/v1\/.+\.glb(?:\?|$)/i.test(url));
 }
+
+test("companion reaction release owns one resettable 300ms timer per instance", () => {
+  let now = 0;
+  let nextHandle = 0;
+  const pending = new Map<number, { dueAt: number; callback: () => void }>();
+  const schedule = (callback: () => void, delayMs: number) => {
+    const handle = nextHandle++;
+    pending.set(handle, { dueAt: now + delayMs, callback });
+    return handle;
+  };
+  const cancelScheduled = (handle: number) => {
+    pending.delete(handle);
+  };
+  const runFor = (durationMs: number) => {
+    now += durationMs;
+    for (const [handle, timer] of [...pending]) {
+      if (timer.dueAt <= now) {
+        pending.delete(handle);
+        timer.callback();
+      }
+    }
+  };
+  const elapsed: string[] = [];
+  const zeroHandle = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("zero"),
+    schedule,
+    cancelScheduled,
+  });
+  const first = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("first"),
+    schedule,
+    cancelScheduled,
+  });
+  const second = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("second"),
+    schedule,
+    cancelScheduled,
+  });
+
+  zeroHandle.release(); // The first handle is 0 and must still be cancellable.
+  zeroHandle.cancel();
+  zeroHandle.cancel();
+  runFor(300);
+  expect(elapsed).toEqual([]);
+
+  first.release();
+  runFor(299);
+  expect(elapsed).toEqual([]);
+  runFor(1);
+  expect(elapsed).toEqual(["first"]);
+
+  first.release();
+  runFor(200);
+  first.release();
+  runFor(299);
+  expect(elapsed).toEqual(["first"]);
+  runFor(1);
+  expect(elapsed).toEqual(["first", "first"]);
+
+  first.release();
+  first.cancel();
+  first.cancel();
+  runFor(300);
+  expect(elapsed).toEqual(["first", "first"]);
+
+  first.release();
+  second.release();
+  first.cancel();
+  runFor(300);
+  expect(elapsed).toEqual(["first", "first", "second"]);
+});
 
 test("review mode is fail-closed without a complete explicit selection", async ({ page }) => {
   const requests: string[] = [];
