@@ -58,9 +58,12 @@ METHODS = (
 
 def read_b_evidence():
     path = REPO / B_EVIDENCE
-    if b.sha256(path) != B_FILE_SHA:
+    # Git for Windows may check out this unchanged JSON as CRLF. Verify the
+    # exact published LF bytes and then its payload; do not reformat/rewrite B.
+    raw = path.read_bytes().replace(b"\r\n", b"\n")
+    if hashlib.sha256(raw).hexdigest() != B_FILE_SHA:
         raise ValueError("B evidence file mismatch; stop and investigate")
-    envelope = json.loads(path.read_text())
+    envelope = json.loads(raw)
     payload = envelope["payload"]
     if envelope["payload_sha256"] != B_PAYLOAD_SHA or hashlib.sha256(b.canonical(payload)).hexdigest() != B_PAYLOAD_SHA:
         raise ValueError("B evidence payload mismatch")
@@ -332,6 +335,7 @@ def aggregate_schema():
             "adapter_version": {b.ADAPTER_VERSION},
             "b_evidence_file_sha256": {B_FILE_SHA},
             "b_evidence_payload_sha256": {B_PAYLOAD_SHA},
+            "b_evidence_newline_policy": {"verify_pinned_LF_bytes_accept_checkout_CRLF_only"},
             "reviewed_local_kdca_guide_sha256": {GUIDE_SHA},
             "source_sha256": old["identity"]["source_sha256"],
             "source_file_sha256": b.fields("script contract tests b_script split_script g3_manifest", b.HASH),
@@ -422,6 +426,7 @@ def identity(created_at):
         "adapter_version": b.ADAPTER_VERSION,
         "b_evidence_file_sha256": B_FILE_SHA,
         "b_evidence_payload_sha256": B_PAYLOAD_SHA,
+        "b_evidence_newline_policy": "verify_pinned_LF_bytes_accept_checkout_CRLF_only",
         "reviewed_local_kdca_guide_sha256": GUIDE_SHA,
         "source_sha256": inherited["source_sha256"],
         "source_file_sha256": {k: b.sha256(REPO / p) for k, p in files.items()},
@@ -458,8 +463,8 @@ def run(root, output, created_at, reference_model_sha=b.EXPECTED_ARTIFACT_SHA256
     }
     serialized = serialize_evidence(payload)
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("x", encoding="utf-8") as stream:
-        stream.write(serialized)
+    with output.open("xb") as stream:
+        stream.write(serialized.encode())
     return hashlib.sha256(serialized.encode()).hexdigest()
 
 

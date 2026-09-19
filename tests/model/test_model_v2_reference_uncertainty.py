@@ -1,5 +1,6 @@
 """Synthetic design/stability and publication tests; real-data execution is opt-in."""
 
+import hashlib
 import json
 import os
 from copy import deepcopy
@@ -208,9 +209,37 @@ def test_frozen_b_evidence_and_model_identity(monkeypatch, tmp_path):
     assert research.read_b_evidence()["identity"]["model_sha256"] == b.EXPECTED_ARTIFACT_SHA256
     with pytest.raises(ValueError, match="reference/model SHA"):
         research.run(tmp_path, tmp_path / "unused.json", "2026-09-19T01:00:00Z", "0" * 64)
-    monkeypatch.setattr(b, "sha256", lambda _: "0" * 64)
+    monkeypatch.setattr(research, "B_FILE_SHA", "0" * 64)
     with pytest.raises(ValueError, match="B evidence file mismatch"):
         research.read_b_evidence()
+
+
+def test_windows_checkout_crlf_only_allowed_without_rewriting_b(monkeypatch, tmp_path):
+    original = (research.REPO / research.B_EVIDENCE).read_bytes().replace(b"\r\n", b"\n")
+    expected = research.read_b_evidence()
+    checkout = tmp_path / research.B_EVIDENCE
+    checkout.parent.mkdir(parents=True)
+    crlf = original.replace(b"\n", b"\r\n")
+    checkout.write_bytes(crlf)
+    assert hashlib.sha256(crlf).hexdigest() != research.B_FILE_SHA
+    monkeypatch.setattr(research, "REPO", tmp_path)
+    assert research.read_b_evidence() == expected
+    assert checkout.read_bytes() == crlf  # Verification never rewrites B.
+    checkout.write_bytes(crlf.replace(b'"payload":', b'"payload" :', 1))
+    with pytest.raises(ValueError, match="B evidence file mismatch"):
+        research.read_b_evidence()  # Even extra whitespace beyond CRLF is rejected.
+
+
+def test_output_file_bytes_match_returned_hash(monkeypatch, tmp_path, payload):
+    monkeypatch.setattr(research, "identity", lambda _: payload["identity"])
+    monkeypatch.setattr(b, "load_sources", lambda *_: ({}, None))
+    fields = ("coverage", "psu_deletion_sensitivity", "validation_tails", "sensitivity_matrix")
+    monkeypatch.setattr(research, "analyze", lambda *_: {k: payload[k] for k in fields})
+    path = tmp_path / "aggregate.json"
+    digest = research.run(tmp_path, path, "2026-09-19T01:00:00Z")
+    assert digest == hashlib.sha256(path.read_bytes()).hexdigest()
+    assert b"\r\n" not in path.read_bytes()
+    assert json.loads(path.read_bytes())["payload"]["identity"] == payload["identity"]
 
 
 def test_g8_path_rejected_before_any_filesystem_resolution_or_open(monkeypatch, tmp_path):

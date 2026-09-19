@@ -51,6 +51,11 @@ Before new statistics are accepted, verify B's aggregate file/payload hashes and
 reproduce its cohort summaries with the unchanged B implementation. Compare the
 six-decimal aggregate summaries, not the commit-dependent provenance envelope.
 On any mismatch, stop and investigate; do not rewrite B to fit new results.
+The pinned B file hash refers to its published LF bytes. Permit only Git's CRLF
+checkout conversion by mapping CRLF back to LF **in memory** before the exact
+file-hash check, then verify the unchanged payload hash. Reject every other byte
+change, including formatting. Never rewrite B. B2 output is written as UTF-8 LF
+bytes so its returned file hash matches disk on Windows as well as Unix.
 
 ## Estimands and methodology review
 
