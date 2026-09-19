@@ -1955,7 +1955,7 @@ function App() {
     }
 
     if (activeScreen === "S10") {
-      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" body="이 기간에 남긴 혈압 기록을 날짜와 시간대별로 확인해요. 챌린지 참여는 별도로 표시해요." tone="water" className="journey-recap">
+      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" body="혈압 기록은 날짜별로, 챌린지 참여는 따로 확인해요." tone="water" className="journey-recap">
         {renderCycleActions()}
         <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape && !s10SceneOwnsDecoration} companionSpecies={s10CompanionSpecies} productionSceneEnabled={s10SceneOwnsDecoration} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} period={isCycleReview ? "completed-cycle" : isPriorDashboard ? "prior" : "current"} freshness={windowState}
           navigation={renderWindowNavigation()}
@@ -1970,7 +1970,7 @@ function App() {
               <h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2>
               <p>챌린지 기간<br /><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>
               <strong>선택한 구간 안의 체크인 기록 {activeChallengeCheckins.length}개</strong>
-              <small>'기록함'과 '건너뜀'은 모두 저장된 체크인 기록이에요. 혈압 기록과 합치지 않고, 전체 챌린지 누적 성과로도 해석하지 않아요.</small>
+              <small>체크인은 저장된 기록 수예요. 혈압 기록과 합치지 않고 챌린지 성과로 해석하지 않아요.</small>
             </> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>선택 기능이에요. 참여하지 않아도 {dashboardPeriodName}의 혈압 기록을 그대로 확인할 수 있어요.</p></>}
           </section>}
           actions={<>

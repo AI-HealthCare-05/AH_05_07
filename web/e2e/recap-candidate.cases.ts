@@ -28,10 +28,10 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await recordsJump.click();
     await expect(page.locator('#recap-journal-records')).toBeFocused();
     await expect(page.locator('.recap-journal-intro')).toContainText('혈압 기록 먼저 보기');
-    await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록으로 구분돼요.');
+    await expect(page.locator('.recap-journal-intro')).toContainText('챌린지 참여는 별도 목록이에요.');
     await expect(page.locator('.recap-trail-heading')).toContainText('그날의 기록만 아래에서 확인');
     const tools = page.locator('[data-recap-tools]');
-    await expect(page.locator('.recap-tools-intro')).toContainText('이 7일의 기록을 한눈에 정리해요');
+    await expect(page.locator('.recap-tools-intro')).toContainText('7일 기록을 리포트로 정리해요');
     await expect(page.locator('.recap-tools-intro')).toContainText('기록이 한 건만 있어도');
     await expect(page.locator('.recap-tools-intro')).toContainText('인쇄하거나 PDF로 저장할 수 있어요');
     await expect(tools.locator('.living-week-report-action')).toBeVisible();
@@ -56,7 +56,7 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     const challengeProgress = page.locator('[data-challenge-progress]');
     await expect(challengeProgress).toContainText('선택 기능 · 현재 챌린지');
     await expect(challengeProgress).toContainText('선택한 구간 안의 체크인 기록 2개');
-    await expect(challengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
+    await expect(challengeProgress).toContainText('체크인은 저장된 기록 수예요.');
     await expect(challengeProgress).toContainText('혈압 기록과 합치지 않고');
     await expect(page.locator('[data-checkin-status="skipped"]')).toHaveText('건너뜀');
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
@@ -193,7 +193,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(priorChallengeProgress).toContainText('선택 기능 · 현재 챌린지');
   await expect(priorChallengeProgress).toContainText('2026-09-09 ~ 2026-09-15');
   await expect(priorChallengeProgress).toContainText('선택한 구간 안의 체크인 기록 0개');
-  await expect(priorChallengeProgress).toContainText("'기록함'과 '건너뜀'은 모두 저장된 체크인 기록");
+  await expect(priorChallengeProgress).toContainText('체크인은 저장된 기록 수예요.');
   await expect(page.getByRole('button', { name: '이전 7일 내보내기' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();

@@ -71,7 +71,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
             <div>
               <p className="eyebrow">최근 기록 다시 보기</p>
               <h2 id="living-week-title">이 기간의 혈압 기록을 날짜별로 확인해요</h2>
-              <p>{readOnly ? '지난 기간에 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.' : '오늘까지 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.'}</p>
+              <p>{readOnly ? '지난 기간의 혈압 기록을 날짜별로 확인해요. 챌린지 참여는 따로 봐요.' : '혈압 기록을 날짜별로 확인해요. 챌린지 참여는 따로 봐요.'}</p>
             </div>
           </header>
           <div className="recap-week-totals">
@@ -107,7 +107,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           <button type="button" className="recap-day-record-link" onClick={focusRecords}>이 날짜의 기록 목록 <UiIcon name="arrow-down" size={18} /></button>
         </TrailDayDetail> : <p className="recap-overview-note">{factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0
           ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
-          : '혈압 관찰과 챌린지 참여를 날짜 순서로 따로 확인해요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
+          : '혈압 기록과 챌린지 참여는 날짜별로 따로 확인해요. 이전 방식 기록은 아래 목록에 있어요.'}</p>}
       </div>
       <div className="recap-week-notes">
         {factsKnown && hasRecordedFacts && <p className="recap-week-payoff" data-recap-payoff>
@@ -145,7 +145,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           <h2>{focusedDate ? <><time dateTime={focusedDate}>{Number(focusedDate.slice(5, 7))}월 {Number(focusedDate.slice(8))}일</time>의 기록</> : '7일의 기록'}</h2>
         </div>
         <div className="recap-journal-scope" data-record-scope={focusedDate ? 'day' : 'week'}>
-          <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.` : '7일의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.'}</p>
+          <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 보고 있어요. 챌린지 참여는 별도 목록이에요.` : '7일 혈압 기록을 보고 있어요. 챌린지 참여는 별도 목록이에요.'}</p>
           {focusedDate && <button type="button" className="recap-clear-day" onClick={() => setSelectedDate(null)}>7일 전체 기록 보기</button>}
         </div>
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
@@ -155,8 +155,8 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <div className="recap-tools-intro">
           <UiObject name="book" className="recap-tools-object" />
           <p className="eyebrow">기록 활용</p>
-          <h3>이 7일의 기록을 한눈에 정리해요</h3>
-          <p>기록이 한 건만 있어도 날짜·시간대별 혈압 기록을 읽기 좋은 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요. 내보내기는 파일 보관용이고, 새로고침은 최신 기록을 다시 확인할 때 사용해요.</p>
+          <h3>7일 기록을 리포트로 정리해요</h3>
+          <p>기록이 한 건만 있어도 혈압 기록을 날짜·시간대별 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요. 내보내기는 파일 보관용, 새로고침은 최신 기록 확인용이에요.</p>
         </div>
         <p className="recap-tools-state">{readOnly
           ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
