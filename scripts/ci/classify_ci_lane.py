@@ -44,6 +44,11 @@ PROTECTED_WEB_PREFIXES = (
     "web/scripts/verify-model-v2-assets",
 )
 
+MODEL_WEB_TEST_FILES = {
+    "web/playwright.model-v2.config.ts",
+}
+MODEL_WEB_TEST_PREFIXES = ("web/e2e/model-v2-",)
+
 MODEL_WEB_PREFIXES = (
     "web/src/lib/model",
     "web/src/ui/model",
@@ -166,8 +171,12 @@ def is_scene(path: str) -> bool:
     return any(token in path for token in SCENE_TOKENS)
 
 
+def is_model_web_test(path: str) -> bool:
+    return path in MODEL_WEB_TEST_FILES or path.startswith(MODEL_WEB_TEST_PREFIXES)
+
+
 def is_model_web(path: str) -> bool:
-    return path.startswith(MODEL_WEB_PREFIXES)
+    return is_model_web_test(path) or path.startswith(MODEL_WEB_PREFIXES)
 
 
 def is_deployment(path: str) -> bool:
@@ -176,6 +185,10 @@ def is_deployment(path: str) -> bool:
 
 def requires_full(path: str) -> bool:
     if is_docs(path):
+        return False
+    # Browser-only Model V2 test/config changes exercise the frozen product
+    # contract but do not modify Python/AI/MySQL/deployment semantics.
+    if is_model_web_test(path):
         return False
     if is_web(path):
         return is_protected_web(path)
@@ -262,6 +275,21 @@ def self_test() -> None:
         (
             ["web/src/App.tsx", "web/package.json"],
             Result("full", True, False, False, False, True),
+        ),
+        (
+            ["web/e2e/model-v2-user-input-flow.spec.ts"],
+            Result("frontend", True, False, True, False, False),
+        ),
+        (
+            ["web/playwright.model-v2.config.ts"],
+            Result("frontend", True, False, True, False, False),
+        ),
+        (
+            [
+                "web/e2e/model-v2-user-input-flow.spec.ts",
+                "web/src/lib/model-v2/runtime.ts",
+            ],
+            Result("full", True, False, True, False, True),
         ),
         (
             ["web/src/lib/api.ts"],
