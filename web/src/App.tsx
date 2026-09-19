@@ -2037,10 +2037,10 @@ function App() {
               <div>
                 <p className="eyebrow">기록과 파일</p>
                 <h2>기록을 찾아보고 파일을 관리해요</h2>
-                <p>최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요. 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
+                <p>화면에서는 최근 7일을 탐색해요. 혈압 관찰과 챌린지 기록은 저장 후 30일 동안 보관돼요.</p>
               </div>
               <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button>
-              <p className="journey-settings-note">내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p>
+              <p className="journey-settings-note">내보낸 JSON·PDF와 인쇄물은 계정과 별개로 직접 관리해요.</p>
             </section>
             <section className="journey-settings-section">
               <div>
@@ -2054,7 +2054,7 @@ function App() {
               </dl>
               <details className="journey-settings-help">
                 <summary>저장 여부가 확실하지 않을 때</summary>
-                <p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p>
+                <p>같은 요청을 반복하기 전에 기록 목록을 새로고침해 반영 여부를 확인해 주세요.</p>
               </details>
             </section>
             <section className="journey-settings-section">
