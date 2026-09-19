@@ -27,6 +27,11 @@ authoritative only for their own boundaries.
   entry, empty, recovery, and settings boundaries. S11 remains a separate
   Model V2 product-contract surface. Restyling must not reopen completed screen
   semantics, data meanings, scene ownership, or Model V2 contracts.
+- Final Living Journey continuity baseline: keep the existing global primary
+  navigation and route model. Within the journey, local continuation actions make
+  the established record loop explicit: record → confirmed save → today/detail or
+  record exploration → seven-day review → Today. Do not replace this with a new
+  linear stepper, duplicate persistence, or a second navigation state machine.
 
 ### Read only the affected authority
 
