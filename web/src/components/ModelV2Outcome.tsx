@@ -3,16 +3,17 @@ import { useMemo } from "react";
 import { adaptProductInput, FEATURES } from "../lib/model-v2/adapter";
 import { buildPayload, type Draft } from "./modelV2Draft";
 import { formatTimeKorean, reviewValue } from "./modelV2Steps";
+import type { ModelV2Continuation } from "./modelV2Continuation";
 
 type Props = {
   draft: Draft;
   previewOutput: number | null;
   bloodPressureStatus: string;
   bloodPressureSupport: string;
-  bloodPressureActionLabel: string;
+  continuation: ModelV2Continuation;
   challengeStatus: string;
   challengeSupport: string;
-  onStartBloodPressure: () => void;
+  onContinue: () => void;
   onReturnToToday: () => void;
 };
 
@@ -43,10 +44,10 @@ export function ModelV2Outcome({
   previewOutput,
   bloodPressureStatus,
   bloodPressureSupport,
-  bloodPressureActionLabel,
+  continuation,
   challengeStatus,
   challengeSupport,
-  onStartBloodPressure,
+  onContinue,
   onReturnToToday,
 }: Props) {
   // Mounted only after successful local inference with this unchanged draft.
@@ -136,7 +137,15 @@ export function ModelV2Outcome({
     </div>
 
     <section className="model-v2-result-next" aria-labelledby="model-v2-next-title">
-      <h3 id="model-v2-next-title">다음으로 할 수 있어요</h3>
+      <p className="eyebrow">현재 기록 기준</p>
+      <h3 id="model-v2-next-title">다음 한 걸음</h3>
+      <div className="model-v2-continuation" data-model-v2-continuation={continuation.key}>
+        <h4>{continuation.title}</h4>
+        <p>{continuation.support}</p>
+        <div className="model-v2-actions">
+          <button type="button" onClick={onContinue}>{continuation.actionLabel}</button>
+        </div>
+      </div>
       <div className="model-v2-next-context" aria-label="현재 앱 기록 상태">
         <div data-model-v2-continuity="blood-pressure">
           <span>오늘 혈압</span>
@@ -149,11 +158,8 @@ export function ModelV2Outcome({
           <small>{challengeSupport}</small>
         </div>
       </div>
-      <div className="model-v2-actions">
-        <button type="button" onClick={onStartBloodPressure}>{bloodPressureActionLabel}</button>
-        <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>
-      </div>
-      <p className="model-v2-result-explanation">설문 답을 평가해 추천하는 것이 아니라, 현재 앱에 남아 있는 혈압·챌린지 기록 상태에 맞춰 이어갈 화면을 보여줘요.</p>
+      <p className="model-v2-result-explanation">다음 행동은 분석값이 아니라, 현재 앱에 남아 있는 오늘 기록 상태만 보고 정해요.</p>
+      {continuation.destination !== "S02" && <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>}
     </section>
 
     <p className="model-v2-result-disclaimer">

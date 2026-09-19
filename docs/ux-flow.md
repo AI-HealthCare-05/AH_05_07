@@ -18,8 +18,11 @@ flowchart TD
     B -. confirmed empty .-> J["S12 Confirmed empty"]
     J --> C
     J --> G
-    J --> I["S11 Optional signal tool"]
+    J --> I["S11 Transient local Model V2 result + app-state continuation"]
     H --> I
+    I -->|fresh current facts: no BP today| C
+    I -->|fresh current facts: BP exists| D
+    I -->|current record freshness unconfirmed| B
 ```
 
 Issue #190 introduced the Calm Clay Journey application shell and semantic
@@ -54,7 +57,7 @@ screens remain reachable without introducing a router dependency.
 | S07 | Today detail with separate BP/challenge/legacy fact lanes |
 | S08–S09 | Record browse, accumulated-record overview, and one selected record with its date/period context |
 | S10 | Current/prior seven-day recap, partial-record coverage, human-readable report/PDF, and export |
-| S11 | Optional input-based risk-signal tool; entered activity/sleep/lifestyle facts are summarized as a transient `오늘의 시작점`, without persisting the input or result |
+| S11 | Optional browser-local Model V2 result, transient `오늘의 시작점` lifestyle summary, and one app-state continuation; input, result and continuation are not persisted |
 | S12–S13 | Confirmed empty and initial-load failure; current S12 keeps BP recording primary while exposing S11 as a lower-priority optional path |
 | S14 | Account, retention/help, and entry to optional tools |
 
@@ -79,9 +82,27 @@ The core path is BP-first, but the product still preserves three separate facts:
    becoming a prerequisite for BP recording, challenge use, record browsing, or export.
 
 For a confirmed current empty window, S12 keeps blood-pressure recording as the
-primary action and exposes S11 only as a secondary option. S11 summarizes the
-entered activity, sleep, and lifestyle facts as a transient `오늘의 시작점`;
-the input and result are not persisted.
+primary action and exposes S11 only as a secondary option. S11 shows the transient
+browser-local Model V2 result under the [current visibility contract](model-v2-product-contract.md),
+then summarizes the entered activity, sleep, and lifestyle facts as `오늘의 시작점`.
+Its “다음 한 걸음” presents one primary action before the separate BP/challenge
+status context. These routes use stored/current app state, never Model V2 output
+or survey answers:
+
+- Unconfirmed current-record freshness (including retained refreshing/refresh-error
+  data or a prior-window view): S02 to confirm today's state first.
+- Fresh current facts with no BP today: S04 to record a measured value, regardless
+  of challenge state.
+- BP exists and an active challenge has no check-in today: S07 for the existing
+  `기록함 / 건너뜀` controls.
+- Other confirmed states with BP: S07 to review today's records. Both `completed`
+  and `skipped` count as recorded; a missing or ended challenge does not force
+  challenge selection or permit an ended-challenge check-in.
+
+The secondary Today action remains unless the primary already leads to S02.
+Continuation also works outside the numeric preview window. No input, result or
+continuation is persisted; leaving S11 discards the survey/result, and re-entry
+starts a fresh survey.
 
 The Today BP window is always today plus the previous six calendar dates. An
 active challenge has its own start/end dates and never changes the Home BP

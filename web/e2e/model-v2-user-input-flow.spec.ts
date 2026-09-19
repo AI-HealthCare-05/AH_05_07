@@ -1,4 +1,6 @@
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { resolveModelV2Continuation, type ModelV2ContinuationState } from "../src/components/modelV2Continuation";
 import { expect, test, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
 import { modelV2PresentationMode, visibleModelV2Output } from "../src/ui/modelV2VisibilityPolicy";
@@ -41,6 +43,30 @@ test("Model V2 presentation policy is KST-bound, transient and fail closed", () 
   for (const output of [null, NaN, Infinity, -Infinity]) {
     expect(visibleModelV2Output(output, "2026-09-17")).toBeNull();
   }
+});
+
+test("S11 continuation accepts only explicit app facts and is independent of numeric visibility", () => {
+  const source = readFileSync(new URL("../src/components/modelV2Continuation.ts", import.meta.url), "utf8");
+  expect(source).toContain("resolveModelV2Continuation(state: ModelV2ContinuationState)");
+  expect(source).not.toMatch(/\b(import|previewOutput|draft|features|localStorage|sessionStorage|indexedDB|fetch)\b/);
+  for (const bloodPressure of ["missing", "exists"] as const) {
+    for (const challenge of ["none", "ended", "active_pending", "active_recorded"] as const) {
+      const state: ModelV2ContinuationState = { freshness: "confirmed", bloodPressure, challenge };
+      const expectedKey = bloodPressure === "missing" ? "record-blood-pressure"
+        : challenge === "active_pending" ? "record-challenge" : "review-today";
+      const expected = resolveModelV2Continuation(state);
+      expect(expected.key).toBe(expectedKey);
+      expect(expected.destination).toBe(bloodPressure === "missing" ? "S04" : "S07");
+      // The display value is a separate fact; it is never an argument to the resolver.
+      for (const previewOutput of [0.123, 0.731, 0.999, null]) {
+        const outcome = { previewOutput, continuation: resolveModelV2Continuation(state) };
+        expect(outcome.continuation).toEqual(expected);
+      }
+    }
+  }
+  expect(resolveModelV2Continuation({ freshness: "retained_or_unconfirmed" })).toMatchObject({
+    key: "confirm-today", destination: "S02", actionLabel: "오늘 화면에서 확인하기",
+  });
 });
 
 type Step = "intro" | "basics" | "habits" | "activity" | "sleep" | "review";
@@ -408,7 +434,7 @@ test("S11 requires explicit review submission and completes locally without send
   await expect(result(page)).not.toHaveAttribute("aria-live");
   await expect(result(page).locator('[role="status"], [aria-live]')).toHaveCount(0);
   await expect(result(page).locator("h3")).toHaveText([
-    "오늘의 생활 패턴을 정리했어요", "활동", "수면", "생활 습관", "체격 참고", "다음으로 할 수 있어요", "처리 방식과 입력 상세",
+    "오늘의 생활 패턴을 정리했어요", "활동", "수면", "생활 습관", "체격 참고", "다음 한 걸음", "처리 방식과 입력 상세",
   ]);
   await expect(result(page)).toContainText("방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.");
   const activity = result(page).getByRole("region", { name: "활동", exact: true });
@@ -551,6 +577,10 @@ test.describe("S11 preview window", () => {
         await expect(preview).toHaveCount(0);
         await expect(note).toContainText("현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.");
       }
+      await expect(result(page).getByRole("heading", { name: "오늘의 생활 패턴을 정리했어요" })).toBeVisible();
+      await expect(result(page).locator("[data-model-v2-continuation]")).toHaveAttribute("data-model-v2-continuation", "record-blood-pressure");
+      await result(page).getByRole("button", { name: "혈압 기록 남기기", exact: true }).click();
+      await expect(page.locator("#S04-title")).toBeFocused();
     });
   }
 });
