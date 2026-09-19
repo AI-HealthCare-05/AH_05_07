@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { createCompanionReactionRelease } from "../src/components/companionReactionRelease";
 import { companionClips, companionExcludedScreens, companionSpecies, companionVariants } from "../src/ui/companion";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 
@@ -13,6 +14,77 @@ function reviewUrl(screen: string, query = selection) {
 function companionRequests(urls: string[]) {
   return urls.filter((url) => /sk7-companion\.gkrry\.com\/companion\/v1\/.+\.glb(?:\?|$)/i.test(url));
 }
+
+test("companion reaction release owns one resettable 300ms timer per instance", () => {
+  let now = 0;
+  let nextHandle = 0;
+  const pending = new Map<number, { dueAt: number; callback: () => void }>();
+  const schedule = (callback: () => void, delayMs: number) => {
+    const handle = nextHandle++;
+    pending.set(handle, { dueAt: now + delayMs, callback });
+    return handle;
+  };
+  const cancelScheduled = (handle: number) => {
+    pending.delete(handle);
+  };
+  const runFor = (durationMs: number) => {
+    now += durationMs;
+    for (const [handle, timer] of [...pending]) {
+      if (timer.dueAt <= now) {
+        pending.delete(handle);
+        timer.callback();
+      }
+    }
+  };
+  const elapsed: string[] = [];
+  const zeroHandle = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("zero"),
+    schedule,
+    cancelScheduled,
+  });
+  const first = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("first"),
+    schedule,
+    cancelScheduled,
+  });
+  const second = createCompanionReactionRelease({
+    onElapsed: () => elapsed.push("second"),
+    schedule,
+    cancelScheduled,
+  });
+
+  zeroHandle.release(); // The first handle is 0 and must still be cancellable.
+  zeroHandle.cancel();
+  zeroHandle.cancel();
+  runFor(300);
+  expect(elapsed).toEqual([]);
+
+  first.release();
+  runFor(299);
+  expect(elapsed).toEqual([]);
+  runFor(1);
+  expect(elapsed).toEqual(["first"]);
+
+  first.release();
+  runFor(200);
+  first.release();
+  runFor(299);
+  expect(elapsed).toEqual(["first"]);
+  runFor(1);
+  expect(elapsed).toEqual(["first", "first"]);
+
+  first.release();
+  first.cancel();
+  first.cancel();
+  runFor(300);
+  expect(elapsed).toEqual(["first", "first"]);
+
+  first.release();
+  second.release();
+  first.cancel();
+  runFor(300);
+  expect(elapsed).toEqual(["first", "first", "second"]);
+});
 
 test("review mode is fail-closed without a complete explicit selection", async ({ page }) => {
   const requests: string[] = [];
@@ -369,6 +441,315 @@ test("touch release restarts the minimum visible reaction hold after a long pres
   } finally {
     await context.close();
   }
+});
+
+test("legacy reaction lifetime starts its 300ms hold at accepted release", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  const cases = [
+    { pressMs: 0, pointerId: 101, ratio: 0.18, zone: "head", clip: "curious" },
+    { pressMs: 20, pointerId: 102, ratio: 0.52, zone: "body", clip: "greet" },
+    { pressMs: 80, pointerId: 103, ratio: 0.86, zone: "feet", clip: "rest" },
+    { pressMs: 200, pointerId: 104, ratio: 0.18, zone: "head", clip: "curious" },
+  ] as const;
+
+  for (const { pressMs, pointerId, ratio, zone, clip } of cases) {
+    const y = box!.y + box!.height * ratio;
+    if (pressMs === 0) {
+      await canvas.evaluate((element, input) => {
+        element.dispatchEvent(new PointerEvent("pointerdown", {
+          ...input,
+          button: 0,
+          buttons: 1,
+          bubbles: true,
+          cancelable: true,
+        }));
+        element.dispatchEvent(new PointerEvent("pointerup", {
+          ...input,
+          button: 0,
+          buttons: 0,
+          bubbles: true,
+          cancelable: true,
+        }));
+      }, { pointerId, pointerType: "mouse", isPrimary: true, clientX: x, clientY: y });
+    } else {
+      await canvas.dispatchEvent("pointerdown", {
+        pointerId,
+        pointerType: "mouse",
+        isPrimary: true,
+        button: 0,
+        buttons: 1,
+        clientX: x,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      });
+      await page.clock.runFor(pressMs);
+      await canvas.dispatchEvent("pointerup", {
+        pointerId,
+        pointerType: "mouse",
+        isPrimary: true,
+        button: 0,
+        buttons: 0,
+        clientX: x,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      });
+    }
+
+    await expect(runtime).toHaveAttribute("data-companion-grab-zone", zone);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-clip", clip);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+    await page.clock.runFor(299);
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+    await page.clock.runFor(1);
+    // idle marks the start of the 0.18s fade-out, not its completion.
+    await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+    await expect(runtime).toHaveAttribute("data-companion-animation-clip", "idle");
+    await page.clock.runFor(180);
+  }
+});
+
+test("legacy reaction lifetime retap during hold cancels the same-zone release deadline", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const y = box!.y + box!.height * 0.18;
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 111, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 111, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  await page.clock.runFor(200);
+  await canvas.dispatchEvent("pointerdown", { pointerId: 112, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 112, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
+
+  await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "curious");
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+});
+
+test("legacy reaction lifetime retap during hold replaces a different-zone release deadline", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const headY = box!.y + box!.height * 0.18;
+  const feetY = box!.y + box!.height * 0.86;
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 121, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 121, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.clock.runFor(200);
+  await canvas.dispatchEvent("pointerdown", { pointerId: 122, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: feetY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 122, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: feetY, bubbles: true, cancelable: true });
+
+  await expect(runtime).toHaveAttribute("data-companion-grab-zone", "feet");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "rest");
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+});
+
+test("legacy reaction lifetime retap during idle fade starts a new reaction without another GLB", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const headY = box!.y + box!.height * 0.18;
+  const bodyY = box!.y + box!.height * 0.52;
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 131, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 131, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.clock.runFor(300);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+  await canvas.dispatchEvent("pointerdown", { pointerId: 132, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 132, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+
+  await expect(runtime).toHaveAttribute("data-companion-reaction-clip", "greet");
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  expect(companionRequests(requests)).toHaveLength(1);
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+});
+
+test("legacy reaction lifetime keeps pointercancel and capture cleanup release semantics", async ({ page }) => {
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const headY = box!.y + box!.height * 0.18;
+  const bodyY = box!.y + box!.height * 0.52;
+  const feetY = box!.y + box!.height * 0.86;
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 141, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointercancel", { pointerId: 141, pointerType: "mouse", isPrimary: true, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+  await page.clock.runFor(180);
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 142, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("lostpointercapture", { pointerId: 142, pointerType: "mouse", isPrimary: true, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+  await page.clock.runFor(180);
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 143, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: feetY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 143, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: feetY, bubbles: true, cancelable: true });
+  await page.clock.runFor(200);
+  await canvas.dispatchEvent("lostpointercapture", { pointerId: 143, pointerType: "mouse", isPrimary: true, clientX: x, clientY: feetY, bubbles: true, cancelable: true });
+  await page.clock.runFor(99);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+  await page.clock.runFor(180);
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 144, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 144, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.clock.runFor(200);
+  await canvas.dispatchEvent("pointercancel", { pointerId: 145, pointerType: "mouse", isPrimary: true, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("lostpointercapture", { pointerId: 145, pointerType: "mouse", isPrimary: true, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.clock.runFor(99);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
+});
+
+test("legacy reaction lifetime cleans a pending hold during same-document owner removal", async ({ page }) => {
+  const pageErrors: Error[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error));
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const headY = box!.y + box!.height * 0.18;
+  const bodyY = box!.y + box!.height * 0.52;
+  const mainFrame = page.mainFrame();
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 151, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 151, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: headY, bubbles: true, cancelable: true });
+  await page.evaluate(() => {
+    (window as Window & { legacyReactionHost?: Element }).legacyReactionHost = document.querySelector("[data-companion-status]");
+  });
+  await page.clock.runFor(100);
+
+  await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S08");
+  expect(page.mainFrame()).toBe(mainFrame);
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+  expect(await page.evaluate(() => (window as Window & { legacyReactionHost?: Element }).legacyReactionHost?.isConnected)).toBe(false);
+
+  await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S02");
+  const nextRuntime = page.locator("[data-companion-status]");
+  const nextCanvas = page.locator("[data-companion-canvas]");
+  await expect(nextRuntime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await nextCanvas.scrollIntoViewIfNeeded();
+  await nextCanvas.dispatchEvent("pointerdown", { pointerId: 152, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+  await nextCanvas.dispatchEvent("pointerup", { pointerId: 152, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: bodyY, bubbles: true, cancelable: true });
+
+  await page.clock.runFor(199);
+  await expect(nextRuntime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(nextRuntime).toHaveAttribute("data-companion-reaction-state", "active");
+  expect(await page.evaluate(() => (window as Window & { legacyReactionHost?: Element }).legacyReactionHost?.getAttribute("data-companion-reaction-state"))).toBe("active");
+  await page.clock.runFor(99);
+  await expect(nextRuntime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(nextRuntime).toHaveAttribute("data-companion-reaction-state", "idle");
+  expect(pageErrors).toEqual([]);
+});
+
+test("legacy reaction lifetime survives an unrelated parent rerender without another GLB", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.goto(reviewUrl("S02"));
+  const runtime = page.locator("[data-companion-status]");
+  const canvas = page.locator("[data-companion-canvas]");
+  await expect(runtime).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const y = box!.y + box!.height * 0.18;
+  await page.evaluate(() => {
+    (window as Window & { originalCompanionCanvas?: Element }).originalCompanionCanvas = document.querySelector("[data-companion-canvas]");
+  });
+  await page.clock.install({ time: new Date("2026-09-11T03:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-09-11T03:00:01Z"));
+
+  await canvas.dispatchEvent("pointerdown", { pointerId: 161, pointerType: "mouse", isPrimary: true, button: 0, buttons: 1, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  await canvas.dispatchEvent("pointerup", { pointerId: 161, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0, clientX: x, clientY: y, bubbles: true, cancelable: true });
+  await page.evaluate(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("record", "parent-rerender");
+    window.history.pushState(window.history.state, "", url);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await page.evaluate(() => new Promise<void>((resolve) => queueMicrotask(resolve)));
+
+  expect(await page.evaluate(() => document.querySelector("[data-companion-canvas]") === (window as Window & { originalCompanionCanvas?: Element }).originalCompanionCanvas)).toBe(true);
+  expect(companionRequests(requests)).toHaveLength(1);
+  await page.clock.runFor(299);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "active");
+  await page.clock.runFor(1);
+  await expect(runtime).toHaveAttribute("data-companion-reaction-state", "idle");
 });
 
 
