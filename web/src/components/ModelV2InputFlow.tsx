@@ -686,7 +686,7 @@ export function ModelV2InputFlow({
               </li>;
             })}
           </ol>
-          <p className="model-v2-privacy-note">선택 도구 · 이번 이용에만 사용<br />입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요.</p>
+          <p className="model-v2-privacy-note">이번 입력에만 사용 · 입력과 결과 저장 안 함</p>
         </aside>
 
         <form ref={formRef} className="measurement-panel model-v2-panel" data-model-v2-step={step}
@@ -721,27 +721,23 @@ export function ModelV2InputFlow({
 
               {step === "intro" && <section className="model-v2-intro" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
-                <p><strong>선택 도구 · 이번 이용에만 사용</strong></p>
-                <p>기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주를 차례로 입력해요. 네 가지 주제 뒤에 입력 확인 단계가 있어요.</p>
-                <p>입력한 내용은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에 사용해요.</p>
-                <p><strong>이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</strong></p>
-                <p>이 도구를 이용하지 않아도 혈압 기록과 생활 챌린지는 이용할 수 있어요.</p>
-                <p>혈압 기록은 별도로 저장해 최근 7일에서 날짜·시간대별로 다시 확인할 수 있어요.</p>
+                <p>기본 정보·활동·수면·생활습관을 입력합니다.</p>
+                <p><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong></p>
                 {previewOpen ? (
                   <>
                     <p>{modelV2PreviewEndLabel}까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
-                    <p>이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+                    <p>이 값은 확률·진단·위험등급이 아니며 치료·예방 효과를 뜻하지 않습니다.</p>
                   </>
                 ) : (
                   <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
                 )}
-                <p>입력한 생활정보를 바탕으로 연구 데이터에서 함께 나타난 패턴을 확인합니다.</p>
-                <p>건강 상태나 앞으로의 변화를 판단하는 결과는 아니며, 의료적 판단을 제공하지 않습니다.</p>
-                <p>마지막 확인 단계에서 직접 분석을 시작할 수 있어요.</p>
                 <details className="model-v2-notice-details">
                   <summary>입력 정보 이용 안내</summary>
+                  <p>질문은 기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주와 입력 확인으로 구성돼요.</p>
+                  <p>입력은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에만 사용해요.</p>
                   <p>학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>
                   <p>혈압 관찰, 챌린지 기록, 이전 결과, 다른 사용자의 정보와 자동으로 결합하지 않습니다.</p>
+                  <p>혈압 기록은 별도로 저장되며, 이 도구를 건너뛰어도 기록과 챌린지를 이용할 수 있어요.</p>
                 </details>
               </section>}
 

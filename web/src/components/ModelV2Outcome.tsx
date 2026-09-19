@@ -84,7 +84,6 @@ export function ModelV2Outcome({
     <div className="model-v2-summary-heading">
       <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
       <h3>오늘의 생활 패턴을 정리했어요</h3>
-      <p>방금 입력한 내용을 바탕으로 활동 · 수면 · 생활습관을 한눈에 정리했어요.</p>
     </div>
 
     <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">

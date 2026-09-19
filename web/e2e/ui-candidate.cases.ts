@@ -467,7 +467,7 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(home.locator('.journey-facts')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록');
   await expect(home.locator('#home-lead-support')).toHaveText(
-    '최근 7일에 혈압 기록 1건이 있어요. 오늘 측정한 값을 이어서 남겨요.',
+    '최근 7일 혈압 기록 1건',
   );
   await expect(home.locator('.home-lead button')).toHaveAccessibleName('혈압 기록하기');
   const weeklySummary = home.locator('.living-trace-summary');
@@ -483,18 +483,16 @@ test('North Star Home recognizes recent history when a returning user has not re
 
   const todayState = home.locator('[data-home-concept="today-detail"]');
   await expect(todayState).toContainText('오늘 상태');
-  await expect(todayState).toContainText('오늘 혈압 기록 여부와 챌린지 상태를 확인해요.');
+  await expect(todayState).toContainText('혈압 기록 없음 · 챌린지 상태');
   await expect(todayState).toHaveAttribute('data-home-destination', 'S07');
 
   await todayState.press('Enter');
 
   const todayReview = page.locator('[data-scene="S07"]');
   await expect(todayReview).toBeVisible();
-  await expect(todayReview.locator('.scene-body')).toContainText(
-    '오늘은 아직 혈압 기록이 없어요.',
-  );
+  await expect(todayReview.locator('.scene-body')).toHaveCount(0);
   await expect(todayReview.locator('.today-date')).toContainText(
-    '오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요.',
+    '혈압·챌린지·이전 기록을 따로 확인해요.',
   );
   await expect(todayReview.locator('.fact-lead')).toContainText('오늘 기록 없음');
 });
@@ -599,7 +597,7 @@ test('North Star Home stops offering another BP slot when both daily periods are
   await expect(home).toBeVisible();
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
   await expect(home.locator('#home-lead-support')).toHaveText(
-    '아침·저녁 기록이 있어요. 저장한 내용을 확인해요.',
+    '아침·저녁 기록 있음',
   );
 
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toHaveCount(0);
@@ -628,7 +626,7 @@ test('North Star Home stops offering another BP slot when both daily periods are
   const recordsAction = home.locator('[data-home-concept="records"]');
   await expect(recordsAction).toContainText('기록 찾아보기');
   await expect(recordsAction).toContainText(
-    '오늘 아침·저녁 기록이 모두 있어요. 지난 기록은 날짜별로 확인해요.',
+    '아침·저녁 기록 있음 · 지난 기록은 날짜별',
   );
   await expect(recordsAction).toHaveAttribute('data-home-destination', 'S08');
 
@@ -647,14 +645,14 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   await expect(home.locator('.home-lead')).toContainText('오늘 혈압 기록 확인');
   await expect(home.locator('.home-lead-kicker')).toHaveText('오늘 기록');
   await expect(home.locator('#home-lead-support')).toHaveText(
-    '아침 기록이 있어요. 저장한 내용을 확인해요.',
+    '아침 기록 있음',
   );
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText('혈압 추가 기록');
   await expect(home.locator('[data-home-concept="blood-pressure"]')).toContainText(
-    '아침 기록이 있어요. 다른 시간대 측정값은 필요할 때 추가할 수 있어요.',
+    '아침 기록 있음 · 저녁은 필요할 때 추가',
   );
   const recentWindow = home.locator('[data-window-kind="recent-history"]');
-  await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
+  await expect(recentWindow).toContainText('오늘 포함 · 날짜별 혈압 기록');
   await expect(home.getByRole('meter', { name: '챌린지 기간의 오늘 위치' })).toHaveCount(0);
   await expect(home.locator('.today-cycle-progress')).toHaveCount(0);
   const boundaryRequests = () => state.urls.filter(url => /e2e\.invalid|ThreeSceneRenderer|SavedSceneRenderer|CompanionReviewRenderer|\.glb(?:\?|$)/.test(url));
@@ -674,7 +672,7 @@ test('North Star Home previews a past date visibly on mobile while today facts a
   expect(labelBox.height).toBeGreaterThan(12);
   await expect(previewLabel).toBeInViewport({ ratio: 1 });
   await expect(facts).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
-  await expect(recentWindow).toContainText('오늘을 포함한 최근 7일');
+  await expect(recentWindow).toContainText('오늘 포함 · 날짜별 혈압 기록');
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(boundaryRequests()).toEqual(beforeSelection);
   await home.getByRole('button', { name: '오늘로 돌아오기', exact: true }).press('Enter');
@@ -701,7 +699,7 @@ test('North Star Home identifies a directly opened prior window without claiming
   await expect(home.locator('[data-trail-date]')).toHaveCount(7);
   await expect(home.locator('[data-trail-date]').first()).toHaveAttribute('data-trail-date', '2026-08-29');
   await expect(home.locator('[data-trail-date]').last()).toHaveAttribute('data-trail-date', '2026-09-04');
-  await expect(home.locator('.living-week-heading')).toContainText('선택한 7일');
+  await expect(home.locator('.living-week-heading')).toContainText('선택한 기간 · 날짜별 혈압 기록');
   await expect(home.locator('.living-week-heading')).not.toContainText('오늘을 포함한');
   await expect(home.locator('.journey-facts')).toHaveText('혈압 관찰미확인챌린지 참여미확인');
 });
@@ -1022,7 +1020,7 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   if (!prior) {
     const signal = page.locator('.journey-empty-signal');
     await expect(signal).toContainText('생활정보를 먼저 정리할 수도 있어요');
-    await expect(signal).toContainText('이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.');
+    await expect(signal).toContainText('활동·수면·생활습관을 이번 이용에만 정리해요.');
 
     await page.getByRole('button', { name: '생활정보 정리하기', exact: true }).click();
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
@@ -1033,7 +1031,6 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.locator('#S12-title').focus(); await page.keyboard.press('Tab');
   const bp = page.getByRole('button', { name: '혈압 기록하기', exact: true });
-  await expect(page.locator('#empty-bp-help')).toContainText('측정한 혈압값을 날짜·시간대와 함께 바로 기록해요.');
   await expect(bp).toBeFocused(); await expect(bp).toBeInViewport({ ratio: 1 });
   expect(await bp.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); })).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -1160,10 +1157,10 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
 
   await page.goto('/?e2e=signed-in&screen=S14');
   const settings = page.locator('.journey-settings');
-  await expect(settings).toContainText('최근 7일 탐색은 화면에서 기록을 찾아보는 범위예요.');
+  await expect(settings).toContainText('저장한 시점부터 30일 동안 보관돼요.');
   await expect(settings).toContainText('내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고');
   await expect(settings).toContainText('인쇄물도 계정과 별개이므로 직접 관리해요.');
-  await expect(settings).toContainText('이메일 링크로 로그인한 계정의 기록을 확인해요.');
+  await expect(settings).toContainText('이메일 로그인 계정');
   await settings.locator('summary').click();
   await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.');
   await page.screenshot({ path: testInfo.outputPath('s14-desktop-1440-help-open.png'), fullPage: true });
@@ -1197,7 +1194,7 @@ test('past-dated BP confirmation points to record history instead of today', asy
 
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
   await expect(page.locator('.save-next-step')).toContainText('최근 기록에서 방금 저장한 혈압을 확인해요');
-  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜와 시간대별로');
+  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜·시간대별로');
   const savedScene = page.locator('[data-scene="S05"]');
   await expect(savedScene.getByRole('button', { name: '기록 찾아보기', exact: true })).toBeVisible();
   await expect(savedScene.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toHaveCount(0);

@@ -59,7 +59,6 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <div className="scene-copy">
             <p className="eyebrow"><UiIcon name="morning" className="today-sun" size={18} /><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
             <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 혈압 기록을,<br />날짜별로 이어봐요.<UiIcon name="leaf" className="today-wave" size={24} /></h1>
-            <p className="scene-body">측정한 혈압을 기록하고, 최근 7일을 날짜·시간대별로 확인해요.<br />7일을 채우지 않아도 남긴 기록부터 볼 수 있어요.</p>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div className="home-lead-copy">
@@ -84,7 +83,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
       </div>
       <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
         <header className="living-week-heading">
-          <div className="living-week-title"><UiIcon name="leaf" className="today-leaf" size={28} /><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘을 포함한 최근 7일 · 날짜별 혈압 기록을 확인해요' : '선택한 7일 · 날짜별 혈압 기록을 확인해요'}</p></div></div>
+          <div className="living-week-title"><UiIcon name="leaf" className="today-leaf" size={28} /><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘 포함 · 날짜별 혈압 기록' : '선택한 기간 · 날짜별 혈압 기록'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
         <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="today-journey-details" onClick={() => setCalendarOpen(open => { const next = !open; if (next && selectedDay) setDetailOpen(true); return next; })}>{calendarOpen ? "날짜별 기록 자세히 접기" : "날짜별 기록 자세히 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
@@ -101,7 +100,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           <TrailDayDetail id="today-trail-detail" day={selectedDay} today={today} factsKnown={factsKnown} />
         </details>}
         {todayDay && <button type="button" className="text-button today-return" aria-pressed={selectedDay?.date === today} onClick={() => selectDay(today)}>오늘로 돌아오기</button>}
-        <details className="living-week-guide"><summary>최근 7일을 왜 보여주나요?</summary><p>최근 기록을 날짜·시간대별로 다시 보기 위한 범위예요. 7일을 채우지 않아도 남긴 기록부터 볼 수 있어요. 혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시합니다.</p></details>
+        <details className="living-week-guide"><summary>최근 7일을 왜 보여주나요?</summary><p>7일을 채우지 않아도 남긴 기록부터 날짜·시간대별로 볼 수 있어요.</p></details>
         </div>
         </div>
       </section>

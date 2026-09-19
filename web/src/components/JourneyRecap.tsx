@@ -70,8 +70,8 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           <header className="living-week-heading">
             <div>
               <p className="eyebrow">최근 기록 다시 보기</p>
-              <h2 id="living-week-title">이 기간의 혈압 기록을 날짜별로 확인해요</h2>
-              <p>{readOnly ? '지난 기간에 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.' : '오늘까지 남긴 혈압 기록을 날짜와 시간대별로 살펴봐요. 챌린지 참여는 따로 표시해요.'}</p>
+              <h2 id="living-week-title">날짜별 기록</h2>
+              <p>혈압과 챌린지 기록은 따로 표시해요.</p>
             </div>
           </header>
           <div className="recap-week-totals">
@@ -105,16 +105,11 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <div className="recap-day-focus" id="recap-day-context" data-day-focused={Boolean(selectedDay)}>
         {selectedDay ? <TrailDayDetail key={selectedDay.date} day={selectedDay} today={today} factsKnown={factsKnown}>
           <button type="button" className="recap-day-record-link" onClick={focusRecords}>이 날짜의 기록 목록 <UiIcon name="arrow-down" size={18} /></button>
-        </TrailDayDetail> : <p className="recap-overview-note">{factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0
-          ? readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'
-          : '혈압 관찰과 챌린지 참여를 날짜 순서로 따로 확인해요. 이전 방식의 기록은 아래 목록에서 확인해요.'}</p>}
+        </TrailDayDetail> : factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0 ? <p className="recap-overview-note">
+          {readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'}
+        </p> : null}
       </div>
       <div className="recap-week-notes">
-        {factsKnown && hasRecordedFacts && <p className="recap-week-payoff" data-recap-payoff>
-          {period === 'prior'
-            ? '이 기간에 남긴 기록은 날짜별로 확인할 수 있어요. 리포트는 현재 7일에서 볼 수 있어요.'
-            : '이 기간에 남긴 기록은 날짜별로 확인하고, 아래에서 7일 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요.'}
-        </p>}
         {factsKnown && hasPartialRecordedFacts && <p className="recap-week-coverage" data-recap-coverage>
           혈압 관찰과 챌린지 참여 기록이 없는 날 {missingFactDayCount}일도 빈 날로 그대로 보여요.
         </p>}
@@ -145,7 +140,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           <h2>{focusedDate ? <><time dateTime={focusedDate}>{Number(focusedDate.slice(5, 7))}월 {Number(focusedDate.slice(8))}일</time>의 기록</> : '7일의 기록'}</h2>
         </div>
         <div className="recap-journal-scope" data-record-scope={focusedDate ? 'day' : 'week'}>
-          <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)}의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.` : '7일의 혈압 기록을 먼저 펼쳐 보고 있어요. 챌린지 참여는 별도 목록으로 구분돼요.'}</p>
+          <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)} 기록 표시 중` : '7일 전체 기록 표시 중'}</p>
           {focusedDate && <button type="button" className="recap-clear-day" onClick={() => setSelectedDate(null)}>7일 전체 기록 보기</button>}
         </div>
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
@@ -155,12 +150,12 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <div className="recap-tools-intro">
           <UiObject name="book" className="recap-tools-object" />
           <p className="eyebrow">기록 활용</p>
-          <h3>이 7일의 기록을 한눈에 정리해요</h3>
-          <p>기록이 한 건만 있어도 날짜·시간대별 혈압 기록을 읽기 좋은 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있어요. 내보내기는 파일 보관용이고, 새로고침은 최신 기록을 다시 확인할 때 사용해요.</p>
+          <h3>리포트와 내보내기</h3>
+          <p>혈압 기록을 인쇄·PDF로 정리하고, 현재 7일은 JSON으로 내보낼 수 있어요.</p>
         </div>
         <p className="recap-tools-state">{readOnly
-          ? `${periodName}은 읽기 전용이에요. 파일 내보내기는 현재 7일에서 사용할 수 있어요.`
-          : '현재 7일의 기록을 파일로 보관해 나중에 다시 확인할 수 있어요.'}</p>
+          ? '파일 내보내기는 현재 7일에서 사용할 수 있어요.'
+          : '내보낸 파일은 본인 기기에 보관해요.'}</p>
         {focusedDate && !readOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
         <div className="scene-actions utility-actions" data-recap-tools>{actions}</div>
       </footer>
@@ -168,8 +163,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
     <div className="recap-current-challenge">
       <div className="recap-optional-intro">
         <p className="eyebrow">선택 기능</p>
-        <strong>생활 챌린지는 혈압 기록과 따로 확인해요</strong>
-        <p>7일 혈압 기록과 하나의 점수나 완료 상태로 합치지 않아요.</p>
+        <strong>생활 챌린지는 별도 기록이에요</strong>
       </div>
       {challenge}
     </div>

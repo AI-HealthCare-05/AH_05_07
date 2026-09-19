@@ -133,7 +133,7 @@ test('blocked UI derivatives do not change text, actions, facts or introduce a c
   const art = page.locator('.recap-tools-object');
   await art.scrollIntoViewIfNeeded();
   await expect(art.locator('img')).toBeHidden();
-  await expect(page.getByRole('heading', { name: '이 7일의 기록을 한눈에 정리해요' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '리포트와 내보내기' })).toBeVisible();
   await expect(page.locator('.recap-records-jump')).toBeEnabled();
   await expect(page.locator('[data-week-fact="observation-count"]')).toContainText('0');
   expect(state.writes()).toBe(0);
