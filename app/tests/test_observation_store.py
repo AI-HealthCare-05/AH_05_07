@@ -152,10 +152,16 @@ async def test_export_observations_sets_json_attachment_header() -> None:
         patch("app.apis.v1.observation_routers.observation_session", new=AsyncMock(return_value=session)),
         patch(
             "app.apis.v1.observation_routers.list_owned_records",
-            new=AsyncMock(side_effect=[blood_pressure_observations, challenge_events, challenge_checkins]),
+            new=AsyncMock(side_effect=[blood_pressure_observations, challenge_events]),
         ),
         patch(
-            "app.apis.v1.observation_routers.get_owned_active_challenge", new=AsyncMock(return_value=active_challenge)
+            "app.apis.v1.observation_routers.get_owned_challenge_window",
+            new=AsyncMock(
+                return_value={
+                    "active_challenge": active_challenge,
+                    "challenge_checkins": challenge_checkins,
+                }
+            ),
         ),
     ):
         response = await export_observations(date(2026, 9, 1), date(2026, 9, 7), "Bearer session-token")
