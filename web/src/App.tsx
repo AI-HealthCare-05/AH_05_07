@@ -1773,7 +1773,7 @@ function App() {
               )}
             </div>
           </form>
-          {presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘의 기록으로 돌아가기</button>}
+          {presentation.journey && <button type="button" className="text-button journey-back" onClick={() => navigate("S02")} disabled={controlsDisabled}>← 오늘 화면으로 돌아가기</button>}
         </Scene>
       );
     }
@@ -1795,7 +1795,7 @@ function App() {
               ? "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."
               : "저장이 끝났어요. 기록 찾아보기에서 날짜와 시간대별로 다시 확인할 수 있어요."}</p>
         </div>}
-        <div className="split-actions">
+        <div className="split-actions journey-continuation-actions journey-continuation-actions--saved">
           <button type="button" onClick={() => {
             setConfirmedSave(false);
             savedScene.clear();
@@ -1853,14 +1853,27 @@ function App() {
             ? "혈압 기록을 먼저 확인하고, 챌린지 참여는 따로 봐요."
             : "오늘 혈압 기록 여부와 챌린지 참여를 각각 확인해요."}</span></div>
         {journeyTodayLanes()}
-        <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
+        <div className="journey-continuation-actions" aria-label="오늘 기록 다음 행동">
+          <button className="secondary" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
+          <button type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
+        </div>
       </Scene>;
       return <Scene id="S07" {...journeyCopy.S07} tone="cream"><div className="today-date"><strong>{dateLabel(today)}</strong><span>서로 다른 사실은 합치지 않고 나란히 보여드려요.</span></div>{todayLanes()}<button className="secondary" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
     }
 
     if (activeScreen === "S08") {
       return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body={`${dashboardPeriodName}에서 종류와 날짜로 기록을 찾아요.`} tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
-        <div className="scene-toolbar"><span className="utility-label">조회 기간</span><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>
+        <div className="scene-toolbar">
+          <span className="utility-label">조회 기간</span>
+          {presentation.journey ? (
+            <div className="journey-continuation-actions journey-continuation-actions--compact" aria-label="기록 탐색 다음 행동">
+              <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
+              <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
+            </div>
+          ) : (
+            <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button>
+          )}
+        </div>
         {renderWindowNavigation()}
         <RecordExplorer
           items={recordBrowseItems}
@@ -1969,6 +1982,9 @@ function App() {
         {!evidenceMode && session && (
           <StructuredRecapFeedback session={session} disabled={controlsDisabled} onSessionError={handleStructuredFeedbackSessionError} />
         )}
+        <div className="journey-recap-return" aria-label="7일 돌아보기 마무리">
+          <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
+        </div>
       </Scene>;
       return <Scene id="S10" {...journeyCopy.S10} tone="water">{renderCycleActions()}{!evidenceMode && session && <StructuredRecapFeedback session={session} disabled={controlsDisabled} onSessionError={handleStructuredFeedbackSessionError} />}<div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} companionSpecies={s10CompanionSpecies} productionS10Enabled={s10SceneOwnsDecoration} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{renderReportAction()}{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : `${dashboardPeriodName} 내보내기`}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
     }
