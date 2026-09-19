@@ -61,20 +61,24 @@ DEFAULT_BROWSER_SUITE_COST = "MODERATE"
 MODEL_B_TEST = "tests/model/test_model_v2_reference_distribution.py"
 MODEL_B2_TEST = "tests/model/test_model_v2_reference_uncertainty.py"
 MODEL_B3_TEST = "tests/model/test_model_v2_finite_reference_comprehension.py"
+MODEL_B4_TEST = "tests/model/test_model_v2_comprehension_study.py"
 MODEL_TEST_FILES = sorted(
     {
         MODEL_B_TEST,
         MODEL_B2_TEST,
         MODEL_B3_TEST,
+        MODEL_B4_TEST,
     }
 )
 MODEL_SPECIFIC_TESTS: dict[str, tuple[str, ...]] = {
     "scripts/model/analyze_model_v2_reference_distribution.py": (MODEL_B_TEST,),
     "scripts/model/analyze_model_v2_reference_uncertainty.py": (MODEL_B2_TEST,),
     "scripts/model/analyze_model_v2_finite_reference_comprehension.py": (MODEL_B3_TEST,),
+    "scripts/model/analyze_model_v2_comprehension_study.py": (MODEL_B4_TEST,),
     MODEL_B_TEST: (MODEL_B_TEST,),
     MODEL_B2_TEST: (MODEL_B2_TEST,),
     MODEL_B3_TEST: (MODEL_B3_TEST,),
+    MODEL_B4_TEST: (MODEL_B4_TEST,),
 }
 # B3 imports the B reference distribution, so changes to B must also exercise B3.
 MODEL_SHARED_TESTS: dict[str, tuple[str, ...]] = {
