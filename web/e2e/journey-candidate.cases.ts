@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const companionOff = process.env.SK7_UI_TEST_COMPANION === 'off';
+
 async function candidate(page: Page, hasMeasurement = false, hasChallenge = false) {
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   let posts = 0;
@@ -295,6 +297,14 @@ test('review companion identity preference persists without health semantics', a
 
   await page.goto('/?e2e=signed-in&screen=S14');
   const select = page.getByLabel('캐릭터 선택');
+
+  if (companionOff) {
+    await expect(select).toHaveCount(0);
+    await expect(page.locator('.companion-identity-settings')).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    return;
+  }
+
   await expect(select).toBeVisible();
   await expect(select.locator('option')).toHaveCount(11);
   await expect(select).toHaveValue('bear');
