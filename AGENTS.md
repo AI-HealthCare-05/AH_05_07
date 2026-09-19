@@ -71,6 +71,16 @@ or a new dependency/topology:
 - For AI-assisted local verification, redirect verbose passing test/build logs to
   `/tmp` and surface only result summaries or focused failure excerpts. Do not feed
   line-by-line passing Playwright output into model context.
+- Generated mutation/recovery must preflight the reviewed ref/SHA, dirty-path
+  ownership, detached-vs-attached worktree state, and every required
+  textual/structural anchor **before the first write**. A failed preflight makes
+  zero writes; recovery restores only task-owned paths from the reviewed source.
+- Match publish-time CI exactly: lint and formatter checks are separate gates
+  (for example `ruff check` and `ruff format --check`); one passing does not imply
+  the other.
+- Create Markdown-rich PR bodies through `--body-file` or stdin. Do not place
+  Markdown/backticks inside a double-quoted shell argument where command
+  substitution can alter the body.
 - Required PR/core CI owns merge-time regression. Do not replay the complete
   browser matrix after every `main` merge; scheduled nightly or explicit manual
   Browser E2E owns broad browser confidence. Classify a red scheduled/manual run
