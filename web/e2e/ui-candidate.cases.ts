@@ -1075,8 +1075,8 @@ test('past-dated BP confirmation points to record history instead of today', asy
   await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
 
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
-  await expect(page.locator('.save-next-step')).toContainText('최근 기록에서 방금 저장한 혈압을 확인해요');
-  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜와 시간대별로');
+  await expect(page.locator('.save-next-step')).toContainText('방금 저장한 이전 날짜 혈압 기록');
+  await expect(page.locator('.save-next-step')).toContainText('기록 찾아보기에서 날짜·시간대별로');
   const savedScene = page.locator('[data-scene="S05"]');
   await expect(savedScene.getByRole('button', { name: '기록 찾아보기', exact: true })).toBeVisible();
   await expect(savedScene.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toHaveCount(0);

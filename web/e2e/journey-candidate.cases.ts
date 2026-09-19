@@ -97,9 +97,9 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.locator('.journey-saved')).toBeVisible();
     const nextStep = page.locator('.save-next-step');
     const savedActions = page.locator('.journey-saved .split-actions');
-    await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
-    await expect(nextStep).toContainText('기록이 반영됐는지 확인');
-    await expect(nextStep).toContainText('한 건부터 최근 7일에 모아볼 수 있어요');
+    await expect(nextStep).toContainText('방금 저장한 혈압 기록');
+    await expect(nextStep).toContainText('오늘 화면에서 확인할 수 있고');
+    await expect(nextStep).toContainText('최근 7일에도 함께 보여요');
     await expect(savedActions.getByRole('button')).toHaveCount(2);
     const nextStepBox = await nextStep.boundingBox();
     const actionsBox = await savedActions.boundingBox();

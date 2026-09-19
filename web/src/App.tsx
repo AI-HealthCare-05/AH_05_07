@@ -1780,20 +1780,20 @@ function App() {
 
     if (activeScreen === "S05") {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
-      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
+      return <Scene id="S05" {...journeyCopy.S05} body={presentation.journey ? undefined : journeyCopy.S05.body} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
           <strong>{savedFactKind === "challenge-checkin"
-            ? "오늘의 기록에서 방금 저장한 챌린지 상태를 확인해요"
+            ? "방금 저장한 챌린지 상태"
             : savedBloodPressureIsToday
-              ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
-              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</strong>
+              ? "방금 저장한 혈압 기록"
+              : "방금 저장한 이전 날짜 혈압 기록"}</strong>
           <p>{savedFactKind === "challenge-checkin"
-            ? "저장이 끝났어요. 챌린지 상태는 혈압 기록과 별도로 남고, 오늘의 기록과 최근 7일에서 다시 확인할 수 있어요."
+            ? "혈압 기록과 별도로 남았어요. 오늘 화면과 최근 7일에서 다시 확인할 수 있어요."
             : savedBloodPressureIsToday
-              ? "저장이 끝났어요. 오늘 화면으로 돌아가 기록이 반영됐는지 확인할 수 있어요. 한 건부터 최근 7일에 모아볼 수 있어요."
-              : "저장이 끝났어요. 기록 찾아보기에서 날짜와 시간대별로 다시 확인할 수 있어요."}</p>
+              ? "오늘 화면에서 확인할 수 있고, 최근 7일에도 함께 보여요."
+              : "기록 찾아보기에서 날짜·시간대별로 확인할 수 있어요."}</p>
         </div>}
         <div className="split-actions journey-continuation-actions journey-continuation-actions--saved">
           <button type="button" onClick={() => {
