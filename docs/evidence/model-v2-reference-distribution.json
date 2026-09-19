@@ -1,0 +1,2208 @@
+{
+  "payload": {
+    "cohorts": {
+      "development_2024": {
+        "complete_n_fraction": 0.896079,
+        "complete_weight_fraction": 0.904058,
+        "full_vs_product_complete": {
+          "mapping": {
+            "anchor_abs_pp": {
+              "p01": 0.107791,
+              "p05": 0.263488,
+              "p95": 0.206372,
+              "p99": 0.041226
+            },
+            "exact_max_pp": 1.66197,
+            "lower_5pct_tail_max_pp": 0.263488,
+            "max_score_bin_lower": 0.44,
+            "max_score_bin_upper": 0.45,
+            "uniform_score_grid_median_pp": 1.235415,
+            "uniform_score_grid_p90_pp": 1.574556,
+            "uniform_score_grid_p95_pp": 1.607276,
+            "upper_5pct_tail_max_pp": 0.210423
+          },
+          "weighted_quantile_shift_second_minus_first": {
+            "p01": -0.000475,
+            "p05": -0.000526,
+            "p10": -0.000965,
+            "p25": -0.004131,
+            "p50": -0.010739,
+            "p75": -0.021615,
+            "p90": -0.019482,
+            "p95": -0.00332,
+            "p99": -0.001571
+          }
+        },
+        "subsets": {
+          "full": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 372,
+                    "weight_share": 0.114861
+                  },
+                  "1_2_drinks": {
+                    "n": 1071,
+                    "weight_share": 0.248555
+                  },
+                  "3_4_drinks": {
+                    "n": 600,
+                    "weight_share": 0.148852
+                  },
+                  "5_6_drinks": {
+                    "n": 320,
+                    "weight_share": 0.086741
+                  },
+                  "7_9_drinks": {
+                    "n": 494,
+                    "weight_share": 0.134984
+                  },
+                  "none": {
+                    "n": 1157,
+                    "weight_share": 0.235936
+                  }
+                },
+                "missing_n": 143,
+                "missing_weight_share": 0.030072,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 392,
+                    "weight_share": 0.071262
+                  },
+                  "lt_monthly": {
+                    "n": 780,
+                    "weight_share": 0.188645
+                  },
+                  "monthly_2_4": {
+                    "n": 830,
+                    "weight_share": 0.220117
+                  },
+                  "monthly_once": {
+                    "n": 493,
+                    "weight_share": 0.121976
+                  },
+                  "none_past_year": {
+                    "n": 765,
+                    "weight_share": 0.164673
+                  },
+                  "weekly_2_3": {
+                    "n": 556,
+                    "weight_share": 0.149559
+                  },
+                  "weekly_4_plus": {
+                    "n": 198,
+                    "weight_share": 0.053695
+                  }
+                },
+                "missing_n": 143,
+                "missing_weight_share": 0.030072,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 468,
+                    "weight_share": 0.132915
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 954,
+                    "weight_share": 0.24513
+                  },
+                  "never_smoked": {
+                    "n": 2510,
+                    "weight_share": 0.5691
+                  },
+                  "occasional_current": {
+                    "n": 82,
+                    "weight_share": 0.022784
+                  }
+                },
+                "missing_n": 143,
+                "missing_weight_share": 0.030072,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 1802,
+                    "weight_share": 0.505323
+                  },
+                  "2": {
+                    "n": 2355,
+                    "weight_share": 0.494677
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 2658,
+                    "weight_share": 0.618076
+                  },
+                  "1_day": {
+                    "n": 140,
+                    "weight_share": 0.041433
+                  },
+                  "2_days": {
+                    "n": 232,
+                    "weight_share": 0.061367
+                  },
+                  "3_days": {
+                    "n": 278,
+                    "weight_share": 0.073603
+                  },
+                  "4_days": {
+                    "n": 141,
+                    "weight_share": 0.03821
+                  },
+                  "5_plus_days": {
+                    "n": 357,
+                    "weight_share": 0.085978
+                  }
+                },
+                "missing_n": 351,
+                "missing_weight_share": 0.081332,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 134,
+              "psus_per_stratum": {
+                "1": 3,
+                "2": 6,
+                "3": 3,
+                "4": 4,
+                "5_plus": 10
+              },
+              "singleton_strata": 3,
+              "strata": 26
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 20.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 48.683874,
+                "min": 13.133958,
+                "missing_n": 54,
+                "missing_share": 0.01299,
+                "missing_weight_share": 0.009441,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 16.910748,
+                "weighted_p99": 36.435471
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 352,
+                "missing_share": 0.084676,
+                "missing_weight_share": 0.081434,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 480.0,
+                "min": 0.0,
+                "missing_n": 353,
+                "missing_share": 0.084917,
+                "missing_weight_share": 0.081543,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 1260.0,
+                "min": 60.0,
+                "missing_n": 149,
+                "missing_share": 0.035843,
+                "missing_weight_share": 0.03095,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 630.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 1290.0,
+                "min": 150.0,
+                "missing_n": 149,
+                "missing_share": 0.035843,
+                "missing_weight_share": 0.03095,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 270.0,
+                "weighted_p99": 720.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.351813,
+              "unweighted_quantiles": {
+                "p01": 0.00619,
+                "p05": 0.01503,
+                "p10": 0.027745,
+                "p25": 0.101382,
+                "p50": 0.312958,
+                "p75": 0.57999,
+                "p90": 0.746527,
+                "p95": 0.809411,
+                "p99": 0.886895
+              },
+              "unweighted_sd": 0.267386,
+              "weighted_mean": 0.300406,
+              "weighted_quantiles": {
+                "p01": 0.006098,
+                "p05": 0.013922,
+                "p10": 0.023345,
+                "p25": 0.06884,
+                "p50": 0.228578,
+                "p75": 0.498987,
+                "p90": 0.704171,
+                "p95": 0.775952,
+                "p99": 0.875498
+              },
+              "weighted_sd": 0.255161
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.006098,
+                "kish_neff": 34.215512,
+                "n": 41,
+                "psu": 27,
+                "strata": 13,
+                "weight_share": 0.010157
+              },
+              "p05": {
+                "cutoff": 0.013922,
+                "kish_neff": 151.869869,
+                "n": 185,
+                "psu": 83,
+                "strata": 19,
+                "weight_share": 0.050078
+              },
+              "p95": {
+                "cutoff": 0.775952,
+                "kish_neff": 243.976724,
+                "n": 297,
+                "psu": 109,
+                "strata": 26,
+                "weight_share": 0.050155
+              },
+              "p99": {
+                "cutoff": 0.875498,
+                "kish_neff": 51.457803,
+                "n": 64,
+                "psu": 47,
+                "strata": 23,
+                "weight_share": 0.010106
+              }
+            },
+            "ties": {
+              "duplicate_groups": 4,
+              "max_duplicate_group_weight_pp": 0.101117,
+              "max_multiplicity": 4,
+              "right_minus_left_max_pp": 0.101117,
+              "right_minus_mid_max_pp": 0.050559,
+              "rows_in_duplicate_groups": 10,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.053508,
+                "p05": 0.075493,
+                "p95": 0.048019,
+                "p99": 0.048019
+              },
+              "unweighted_right_minus_left_max_pp": 0.096223
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.02942,
+                "p05": 0.557485,
+                "p95": 2.123504,
+                "p99": 0.516896
+              },
+              "exact_max_pp": 8.742135,
+              "lower_5pct_tail_max_pp": 0.564502,
+              "max_score_bin_lower": 0.28,
+              "max_score_bin_upper": 0.29,
+              "uniform_score_grid_median_pp": 6.248096,
+              "uniform_score_grid_p90_pp": 8.417095,
+              "uniform_score_grid_p95_pp": 8.546999,
+              "upper_5pct_tail_max_pp": 2.12911
+            },
+            "weights": {
+              "cv": 0.539133,
+              "kish_neff": 3220.821314,
+              "max": 30575.037524,
+              "max_share": 0.000997,
+              "min": 314.853524,
+              "n": 4157,
+              "sum": 30672793.19847,
+              "top_one_percent_share": 0.031166
+            }
+          },
+          "product_complete": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 352,
+                    "weight_share": 0.1214
+                  },
+                  "1_2_drinks": {
+                    "n": 1005,
+                    "weight_share": 0.257271
+                  },
+                  "3_4_drinks": {
+                    "n": 566,
+                    "weight_share": 0.155216
+                  },
+                  "5_6_drinks": {
+                    "n": 297,
+                    "weight_share": 0.088443
+                  },
+                  "7_9_drinks": {
+                    "n": 460,
+                    "weight_share": 0.139788
+                  },
+                  "none": {
+                    "n": 1045,
+                    "weight_share": 0.237882
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 337,
+                    "weight_share": 0.067761
+                  },
+                  "lt_monthly": {
+                    "n": 736,
+                    "weight_share": 0.195712
+                  },
+                  "monthly_2_4": {
+                    "n": 777,
+                    "weight_share": 0.229535
+                  },
+                  "monthly_once": {
+                    "n": 465,
+                    "weight_share": 0.127189
+                  },
+                  "none_past_year": {
+                    "n": 708,
+                    "weight_share": 0.170122
+                  },
+                  "weekly_2_3": {
+                    "n": 523,
+                    "weight_share": 0.155889
+                  },
+                  "weekly_4_plus": {
+                    "n": 179,
+                    "weight_share": 0.053792
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 437,
+                    "weight_share": 0.136933
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 884,
+                    "weight_share": 0.25292
+                  },
+                  "never_smoked": {
+                    "n": 2328,
+                    "weight_share": 0.586759
+                  },
+                  "occasional_current": {
+                    "n": 76,
+                    "weight_share": 0.023388
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 1625,
+                    "weight_share": 0.511103
+                  },
+                  "2": {
+                    "n": 2100,
+                    "weight_share": 0.488897
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 2583,
+                    "weight_share": 0.66858
+                  },
+                  "1_day": {
+                    "n": 140,
+                    "weight_share": 0.04583
+                  },
+                  "2_days": {
+                    "n": 230,
+                    "weight_share": 0.067576
+                  },
+                  "3_days": {
+                    "n": 278,
+                    "weight_share": 0.081414
+                  },
+                  "4_days": {
+                    "n": 140,
+                    "weight_share": 0.042102
+                  },
+                  "5_plus_days": {
+                    "n": 354,
+                    "weight_share": 0.094497
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 133,
+              "psus_per_stratum": {
+                "1": 3,
+                "2": 6,
+                "3": 3,
+                "4": 4,
+                "5_plus": 10
+              },
+              "singleton_strata": 3,
+              "strata": 26
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 20.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 48.054904,
+                "min": 13.133958,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 16.881393,
+                "weighted_p99": 35.987841
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 480.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 1260.0,
+                "min": 60.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 630.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 1290.0,
+                "min": 150.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 270.0,
+                "weighted_p99": 720.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.340267,
+              "unweighted_quantiles": {
+                "p01": 0.005623,
+                "p05": 0.014366,
+                "p10": 0.026653,
+                "p25": 0.095064,
+                "p50": 0.297119,
+                "p75": 0.557288,
+                "p90": 0.734543,
+                "p95": 0.808898,
+                "p99": 0.884981
+              },
+              "unweighted_sd": 0.264049,
+              "weighted_mean": 0.29075,
+              "weighted_quantiles": {
+                "p01": 0.005623,
+                "p05": 0.013396,
+                "p10": 0.02238,
+                "p25": 0.064709,
+                "p50": 0.21784,
+                "p75": 0.477372,
+                "p90": 0.684689,
+                "p95": 0.772633,
+                "p99": 0.873927
+              },
+              "weighted_sd": 0.250956
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.005623,
+                "kish_neff": 31.432536,
+                "n": 38,
+                "psu": 27,
+                "strata": 13,
+                "weight_share": 0.010112
+              },
+              "p05": {
+                "cutoff": 0.013396,
+                "kish_neff": 137.4428,
+                "n": 168,
+                "psu": 80,
+                "strata": 18,
+                "weight_share": 0.050588
+              },
+              "p95": {
+                "cutoff": 0.772633,
+                "kish_neff": 219.791452,
+                "n": 270,
+                "psu": 106,
+                "strata": 26,
+                "weight_share": 0.050046
+              },
+              "p99": {
+                "cutoff": 0.873927,
+                "kish_neff": 45.650128,
+                "n": 57,
+                "psu": 45,
+                "strata": 23,
+                "weight_share": 0.010126
+              }
+            },
+            "ties": {
+              "duplicate_groups": 0,
+              "max_duplicate_group_weight_pp": 0.0,
+              "max_multiplicity": 1,
+              "right_minus_left_max_pp": 0.11026,
+              "right_minus_mid_max_pp": 0.05513,
+              "rows_in_duplicate_groups": 0,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.059186,
+                "p05": 0.083505,
+                "p95": 0.053115,
+                "p99": 0.053115
+              },
+              "unweighted_right_minus_left_max_pp": 0.026846
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.008957,
+                "p05": 0.54869,
+                "p95": 2.232602,
+                "p99": 0.507258
+              },
+              "exact_max_pp": 8.585688,
+              "lower_5pct_tail_max_pp": 0.54869,
+              "max_score_bin_lower": 0.28,
+              "max_score_bin_upper": 0.29,
+              "uniform_score_grid_median_pp": 5.984093,
+              "uniform_score_grid_p90_pp": 8.245391,
+              "uniform_score_grid_p95_pp": 8.360068,
+              "upper_5pct_tail_max_pp": 2.243681
+            },
+            "weights": {
+              "cv": 0.536265,
+              "kish_neff": 2893.022672,
+              "max": 30575.037524,
+              "max_share": 0.001103,
+              "min": 314.853524,
+              "n": 3725,
+              "sum": 27729971.691199,
+              "top_one_percent_share": 0.030842
+            }
+          }
+        }
+      },
+      "temporal_2023": {
+        "complete_n_fraction": 0.900155,
+        "complete_weight_fraction": 0.905124,
+        "full_vs_product_complete": {
+          "mapping": {
+            "anchor_abs_pp": {
+              "p01": 0.043065,
+              "p05": 0.138132,
+              "p95": 0.596301,
+              "p99": 0.114925
+            },
+            "exact_max_pp": 1.706741,
+            "lower_5pct_tail_max_pp": 0.138132,
+            "max_score_bin_lower": 0.25,
+            "max_score_bin_upper": 0.26,
+            "uniform_score_grid_median_pp": 1.418144,
+            "uniform_score_grid_p90_pp": 1.624288,
+            "uniform_score_grid_p95_pp": 1.659779,
+            "upper_5pct_tail_max_pp": 0.636828
+          },
+          "weighted_quantile_shift_second_minus_first": {
+            "p01": 7.2e-05,
+            "p05": -0.000169,
+            "p10": -0.001074,
+            "p25": -0.004003,
+            "p50": -0.010864,
+            "p75": -0.023929,
+            "p90": -0.017102,
+            "p95": -0.012308,
+            "p99": -0.003142
+          }
+        },
+        "subsets": {
+          "full": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 517,
+                    "weight_share": 0.112971
+                  },
+                  "1_2_drinks": {
+                    "n": 1465,
+                    "weight_share": 0.241239
+                  },
+                  "3_4_drinks": {
+                    "n": 812,
+                    "weight_share": 0.143844
+                  },
+                  "5_6_drinks": {
+                    "n": 455,
+                    "weight_share": 0.089321
+                  },
+                  "7_9_drinks": {
+                    "n": 706,
+                    "weight_share": 0.141449
+                  },
+                  "none": {
+                    "n": 1724,
+                    "weight_share": 0.254928
+                  }
+                },
+                "missing_n": 110,
+                "missing_weight_share": 0.016249,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 685,
+                    "weight_share": 0.092318
+                  },
+                  "lt_monthly": {
+                    "n": 1055,
+                    "weight_share": 0.185449
+                  },
+                  "monthly_2_4": {
+                    "n": 1192,
+                    "weight_share": 0.22356
+                  },
+                  "monthly_once": {
+                    "n": 652,
+                    "weight_share": 0.121334
+                  },
+                  "none_past_year": {
+                    "n": 1039,
+                    "weight_share": 0.162609
+                  },
+                  "weekly_2_3": {
+                    "n": 739,
+                    "weight_share": 0.141035
+                  },
+                  "weekly_4_plus": {
+                    "n": 317,
+                    "weight_share": 0.057446
+                  }
+                },
+                "missing_n": 110,
+                "missing_weight_share": 0.016249,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 763,
+                    "weight_share": 0.155375
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 1313,
+                    "weight_share": 0.229702
+                  },
+                  "never_smoked": {
+                    "n": 3465,
+                    "weight_share": 0.570753
+                  },
+                  "occasional_current": {
+                    "n": 129,
+                    "weight_share": 0.026742
+                  }
+                },
+                "missing_n": 119,
+                "missing_weight_share": 0.017428,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 2526,
+                    "weight_share": 0.497739
+                  },
+                  "2": {
+                    "n": 3263,
+                    "weight_share": 0.502261
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 3786,
+                    "weight_share": 0.636788
+                  },
+                  "1_day": {
+                    "n": 202,
+                    "weight_share": 0.039623
+                  },
+                  "2_days": {
+                    "n": 321,
+                    "weight_share": 0.0609
+                  },
+                  "3_days": {
+                    "n": 345,
+                    "weight_share": 0.067142
+                  },
+                  "4_days": {
+                    "n": 148,
+                    "weight_share": 0.027213
+                  },
+                  "5_plus_days": {
+                    "n": 528,
+                    "weight_share": 0.090941
+                  }
+                },
+                "missing_n": 459,
+                "missing_weight_share": 0.077394,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 192,
+              "psus_per_stratum": {
+                "1": 0,
+                "2": 4,
+                "3": 3,
+                "4": 4,
+                "5_plus": 16
+              },
+              "singleton_strata": 0,
+              "strata": 27
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 20.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 44.33913,
+                "min": 12.461876,
+                "missing_n": 78,
+                "missing_share": 0.013474,
+                "missing_weight_share": 0.011623,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 16.976962,
+                "weighted_p99": 35.403664
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 465,
+                "missing_share": 0.080325,
+                "missing_weight_share": 0.078185,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 360.0,
+                "min": 0.0,
+                "missing_n": 477,
+                "missing_share": 0.082398,
+                "missing_weight_share": 0.07933,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 720.0,
+                "min": 60.0,
+                "missing_n": 130,
+                "missing_share": 0.022456,
+                "missing_weight_share": 0.018797,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 600.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 840.0,
+                "min": 60.0,
+                "missing_n": 130,
+                "missing_share": 0.022456,
+                "missing_weight_share": 0.018797,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 720.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.349167,
+              "unweighted_quantiles": {
+                "p01": 0.007068,
+                "p05": 0.017049,
+                "p10": 0.033168,
+                "p25": 0.104034,
+                "p50": 0.305742,
+                "p75": 0.565896,
+                "p90": 0.736849,
+                "p95": 0.797852,
+                "p99": 0.884307
+              },
+              "unweighted_sd": 0.261395,
+              "weighted_mean": 0.296091,
+              "weighted_quantiles": {
+                "p01": 0.006363,
+                "p05": 0.013603,
+                "p10": 0.024865,
+                "p25": 0.067841,
+                "p50": 0.226287,
+                "p75": 0.49043,
+                "p90": 0.693668,
+                "p95": 0.774205,
+                "p99": 0.871627
+              },
+              "weighted_sd": 0.252158
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.006363,
+                "kish_neff": 34.261929,
+                "n": 43,
+                "psu": 34,
+                "strata": 12,
+                "weight_share": 0.010174
+              },
+              "p05": {
+                "cutoff": 0.013603,
+                "kish_neff": 174.851368,
+                "n": 212,
+                "psu": 114,
+                "strata": 24,
+                "weight_share": 0.050159
+              },
+              "p95": {
+                "cutoff": 0.774205,
+                "kish_neff": 320.426265,
+                "n": 396,
+                "psu": 148,
+                "strata": 27,
+                "weight_share": 0.050144
+              },
+              "p99": {
+                "cutoff": 0.871627,
+                "kish_neff": 69.088208,
+                "n": 80,
+                "psu": 63,
+                "strata": 25,
+                "weight_share": 0.010078
+              }
+            },
+            "ties": {
+              "duplicate_groups": 4,
+              "max_duplicate_group_weight_pp": 0.044501,
+              "max_multiplicity": 3,
+              "right_minus_left_max_pp": 0.071645,
+              "right_minus_mid_max_pp": 0.035823,
+              "rows_in_duplicate_groups": 10,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.052272,
+                "p05": 0.066082,
+                "p95": 0.044799,
+                "p99": 0.023954
+              },
+              "unweighted_right_minus_left_max_pp": 0.051822
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.274588,
+                "p05": 1.353796,
+                "p95": 1.814817,
+                "p99": 0.372263
+              },
+              "exact_max_pp": 9.393871,
+              "lower_5pct_tail_max_pp": 1.353796,
+              "max_score_bin_lower": 0.26,
+              "max_score_bin_upper": 0.27,
+              "uniform_score_grid_median_pp": 6.128972,
+              "uniform_score_grid_p90_pp": 9.149094,
+              "uniform_score_grid_p95_pp": 9.264838,
+              "upper_5pct_tail_max_pp": 1.826113
+            },
+            "weights": {
+              "cv": 0.52825,
+              "kish_neff": 4526.021821,
+              "max": 30883.428571,
+              "max_share": 0.000716,
+              "min": 483.7611,
+              "n": 5789,
+              "sum": 43106055.515019,
+              "top_one_percent_share": 0.030898
+            }
+          },
+          "product_complete": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 482,
+                    "weight_share": 0.115695
+                  },
+                  "1_2_drinks": {
+                    "n": 1370,
+                    "weight_share": 0.249022
+                  },
+                  "3_4_drinks": {
+                    "n": 760,
+                    "weight_share": 0.147207
+                  },
+                  "5_6_drinks": {
+                    "n": 437,
+                    "weight_share": 0.09587
+                  },
+                  "7_9_drinks": {
+                    "n": 636,
+                    "weight_share": 0.140458
+                  },
+                  "none": {
+                    "n": 1526,
+                    "weight_share": 0.251749
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 582,
+                    "weight_share": 0.087223
+                  },
+                  "lt_monthly": {
+                    "n": 989,
+                    "weight_share": 0.19298
+                  },
+                  "monthly_2_4": {
+                    "n": 1120,
+                    "weight_share": 0.231573
+                  },
+                  "monthly_once": {
+                    "n": 612,
+                    "weight_share": 0.124868
+                  },
+                  "none_past_year": {
+                    "n": 944,
+                    "weight_share": 0.164526
+                  },
+                  "weekly_2_3": {
+                    "n": 680,
+                    "weight_share": 0.142609
+                  },
+                  "weekly_4_plus": {
+                    "n": 284,
+                    "weight_share": 0.056222
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 692,
+                    "weight_share": 0.155028
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 1210,
+                    "weight_share": 0.234582
+                  },
+                  "never_smoked": {
+                    "n": 3189,
+                    "weight_share": 0.582146
+                  },
+                  "occasional_current": {
+                    "n": 120,
+                    "weight_share": 0.028244
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 2268,
+                    "weight_share": 0.49692
+                  },
+                  "2": {
+                    "n": 2943,
+                    "weight_share": 0.50308
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 3680,
+                    "weight_share": 0.686677
+                  },
+                  "1_day": {
+                    "n": 202,
+                    "weight_share": 0.043776
+                  },
+                  "2_days": {
+                    "n": 319,
+                    "weight_share": 0.067009
+                  },
+                  "3_days": {
+                    "n": 343,
+                    "weight_share": 0.073653
+                  },
+                  "4_days": {
+                    "n": 147,
+                    "weight_share": 0.029941
+                  },
+                  "5_plus_days": {
+                    "n": 520,
+                    "weight_share": 0.098944
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 192,
+              "psus_per_stratum": {
+                "1": 0,
+                "2": 4,
+                "3": 3,
+                "4": 4,
+                "5_plus": 16
+              },
+              "singleton_strata": 0,
+              "strata": 27
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 20.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 44.33913,
+                "min": 12.461876,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 17.024497,
+                "weighted_p99": 35.403664
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 360.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 720.0,
+                "min": 60.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 600.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 840.0,
+                "min": 60.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 720.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.336532,
+              "unweighted_quantiles": {
+                "p01": 0.007068,
+                "p05": 0.01666,
+                "p10": 0.031844,
+                "p25": 0.095573,
+                "p50": 0.291156,
+                "p75": 0.546527,
+                "p90": 0.71754,
+                "p95": 0.792473,
+                "p99": 0.883834
+              },
+              "unweighted_sd": 0.257431,
+              "weighted_mean": 0.28517,
+              "weighted_quantiles": {
+                "p01": 0.006435,
+                "p05": 0.013434,
+                "p10": 0.023792,
+                "p25": 0.063838,
+                "p50": 0.215423,
+                "p75": 0.466502,
+                "p90": 0.676566,
+                "p95": 0.761897,
+                "p99": 0.868485
+              },
+              "weighted_sd": 0.247096
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.006435,
+                "kish_neff": 34.167299,
+                "n": 42,
+                "psu": 35,
+                "strata": 12,
+                "weight_share": 0.010134
+              },
+              "p05": {
+                "cutoff": 0.013434,
+                "kish_neff": 161.370491,
+                "n": 195,
+                "psu": 107,
+                "strata": 24,
+                "weight_share": 0.050016
+              },
+              "p95": {
+                "cutoff": 0.761897,
+                "kish_neff": 289.13572,
+                "n": 360,
+                "psu": 147,
+                "strata": 27,
+                "weight_share": 0.050041
+              },
+              "p99": {
+                "cutoff": 0.868485,
+                "kish_neff": 61.215741,
+                "n": 73,
+                "psu": 58,
+                "strata": 23,
+                "weight_share": 0.010025
+              }
+            },
+            "ties": {
+              "duplicate_groups": 0,
+              "max_duplicate_group_weight_pp": 0.0,
+              "max_multiplicity": 1,
+              "right_minus_left_max_pp": 0.079155,
+              "right_minus_mid_max_pp": 0.039578,
+              "rows_in_duplicate_groups": 0,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.057751,
+                "p05": 0.073009,
+                "p95": 0.049495,
+                "p99": 0.026465
+              },
+              "unweighted_right_minus_left_max_pp": 0.01919
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.207456,
+                "p05": 1.259484,
+                "p95": 1.889398,
+                "p99": 0.397061
+              },
+              "exact_max_pp": 9.230404,
+              "lower_5pct_tail_max_pp": 1.261155,
+              "max_score_bin_lower": 0.26,
+              "max_score_bin_upper": 0.27,
+              "uniform_score_grid_median_pp": 5.868798,
+              "uniform_score_grid_p90_pp": 8.926459,
+              "uniform_score_grid_p95_pp": 9.106666,
+              "upper_5pct_tail_max_pp": 1.904385
+            },
+            "weights": {
+              "cv": 0.525448,
+              "kish_neff": 4083.549394,
+              "max": 30883.428571,
+              "max_share": 0.000792,
+              "min": 483.7611,
+              "n": 5211,
+              "sum": 39016318.119054,
+              "top_one_percent_share": 0.031406
+            }
+          }
+        }
+      },
+      "validation_2024": {
+        "complete_n_fraction": 0.888548,
+        "complete_weight_fraction": 0.900228,
+        "full_vs_product_complete": {
+          "mapping": {
+            "anchor_abs_pp": {
+              "p01": 0.039888,
+              "p05": 0.071371,
+              "p95": 0.087479,
+              "p99": 0.108358
+            },
+            "exact_max_pp": 2.094699,
+            "lower_5pct_tail_max_pp": 0.166264,
+            "max_score_bin_lower": 0.54,
+            "max_score_bin_upper": 0.55,
+            "uniform_score_grid_median_pp": 1.100535,
+            "uniform_score_grid_p90_pp": 1.862673,
+            "uniform_score_grid_p95_pp": 1.964004,
+            "upper_5pct_tail_max_pp": 0.199954
+          },
+          "weighted_quantile_shift_second_minus_first": {
+            "p01": 0.0,
+            "p05": 5.6e-05,
+            "p10": -0.000678,
+            "p25": -0.001324,
+            "p50": -0.007387,
+            "p75": -0.025574,
+            "p90": -0.009991,
+            "p95": -0.000365,
+            "p99": 0.000833
+          }
+        },
+        "subsets": {
+          "full": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 71,
+                    "weight_share": 0.089359
+                  },
+                  "1_2_drinks": {
+                    "n": 262,
+                    "weight_share": 0.251533
+                  },
+                  "3_4_drinks": {
+                    "n": 132,
+                    "weight_share": 0.138852
+                  },
+                  "5_6_drinks": {
+                    "n": 92,
+                    "weight_share": 0.116777
+                  },
+                  "7_9_drinks": {
+                    "n": 109,
+                    "weight_share": 0.128274
+                  },
+                  "none": {
+                    "n": 273,
+                    "weight_share": 0.240194
+                  }
+                },
+                "missing_n": 39,
+                "missing_weight_share": 0.035011,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 107,
+                    "weight_share": 0.08513
+                  },
+                  "lt_monthly": {
+                    "n": 200,
+                    "weight_share": 0.201914
+                  },
+                  "monthly_2_4": {
+                    "n": 183,
+                    "weight_share": 0.2028
+                  },
+                  "monthly_once": {
+                    "n": 99,
+                    "weight_share": 0.10432
+                  },
+                  "none_past_year": {
+                    "n": 166,
+                    "weight_share": 0.155064
+                  },
+                  "weekly_2_3": {
+                    "n": 139,
+                    "weight_share": 0.165836
+                  },
+                  "weekly_4_plus": {
+                    "n": 45,
+                    "weight_share": 0.049925
+                  }
+                },
+                "missing_n": 39,
+                "missing_weight_share": 0.035011,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 116,
+                    "weight_share": 0.138608
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 222,
+                    "weight_share": 0.235161
+                  },
+                  "never_smoked": {
+                    "n": 589,
+                    "weight_share": 0.574626
+                  },
+                  "occasional_current": {
+                    "n": 11,
+                    "weight_share": 0.015291
+                  }
+                },
+                "missing_n": 40,
+                "missing_weight_share": 0.036314,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 423,
+                    "weight_share": 0.492428
+                  },
+                  "2": {
+                    "n": 555,
+                    "weight_share": 0.507572
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 670,
+                    "weight_share": 0.670808
+                  },
+                  "1_day": {
+                    "n": 32,
+                    "weight_share": 0.037101
+                  },
+                  "2_days": {
+                    "n": 45,
+                    "weight_share": 0.047639
+                  },
+                  "3_days": {
+                    "n": 55,
+                    "weight_share": 0.065219
+                  },
+                  "4_days": {
+                    "n": 25,
+                    "weight_share": 0.029877
+                  },
+                  "5_plus_days": {
+                    "n": 79,
+                    "weight_share": 0.080864
+                  }
+                },
+                "missing_n": 72,
+                "missing_weight_share": 0.068491,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 31,
+              "psus_per_stratum": {
+                "1": 5,
+                "2": 5,
+                "3": 3,
+                "4": 0,
+                "5_plus": 1
+              },
+              "singleton_strata": 5,
+              "strata": 14
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 19.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 45.256113,
+                "min": 15.430926,
+                "missing_n": 22,
+                "missing_share": 0.022495,
+                "missing_weight_share": 0.01739,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 17.156262,
+                "weighted_p99": 35.975694
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 72,
+                "missing_share": 0.07362,
+                "missing_weight_share": 0.068491,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 300.0,
+                "min": 0.0,
+                "missing_n": 72,
+                "missing_share": 0.07362,
+                "missing_weight_share": 0.068491,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 780.0,
+                "min": 150.0,
+                "missing_n": 41,
+                "missing_share": 0.041922,
+                "missing_weight_share": 0.037431,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 600.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 840.0,
+                "min": 120.0,
+                "missing_n": 40,
+                "missing_share": 0.0409,
+                "missing_weight_share": 0.036314,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 660.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.376624,
+              "unweighted_quantiles": {
+                "p01": 0.007124,
+                "p05": 0.016309,
+                "p10": 0.034556,
+                "p25": 0.116417,
+                "p50": 0.340189,
+                "p75": 0.625823,
+                "p90": 0.774205,
+                "p95": 0.826045,
+                "p99": 0.89634
+              },
+              "unweighted_sd": 0.277699,
+              "weighted_mean": 0.330427,
+              "weighted_quantiles": {
+                "p01": 0.006406,
+                "p05": 0.015295,
+                "p10": 0.028374,
+                "p25": 0.083946,
+                "p50": 0.261764,
+                "p75": 0.55782,
+                "p90": 0.752404,
+                "p95": 0.807386,
+                "p99": 0.892319
+              },
+              "weighted_sd": 0.26992
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.006406,
+                "kish_neff": 6.225535,
+                "n": 8,
+                "psu": 7,
+                "strata": 5,
+                "weight_share": 0.01127
+              },
+              "p05": {
+                "cutoff": 0.015295,
+                "kish_neff": 36.572935,
+                "n": 43,
+                "psu": 22,
+                "strata": 12,
+                "weight_share": 0.050246
+              },
+              "p95": {
+                "cutoff": 0.807386,
+                "kish_neff": 54.96268,
+                "n": 63,
+                "psu": 26,
+                "strata": 14,
+                "weight_share": 0.050958
+              },
+              "p99": {
+                "cutoff": 0.892319,
+                "kish_neff": 11.121704,
+                "n": 13,
+                "psu": 9,
+                "strata": 6,
+                "weight_share": 0.011006
+              }
+            },
+            "ties": {
+              "duplicate_groups": 1,
+              "max_duplicate_group_weight_pp": 0.114094,
+              "max_multiplicity": 2,
+              "right_minus_left_max_pp": 0.330687,
+              "right_minus_mid_max_pp": 0.165343,
+              "rows_in_duplicate_groups": 2,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.284561,
+                "p05": 0.284561,
+                "p95": 0.137208,
+                "p99": 0.12288
+              },
+              "unweighted_right_minus_left_max_pp": 0.204499
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.308967,
+                "p05": 0.627881,
+                "p95": 1.356138,
+                "p99": 0.249296
+              },
+              "exact_max_pp": 8.248869,
+              "lower_5pct_tail_max_pp": 0.627881,
+              "max_score_bin_lower": 0.4,
+              "max_score_bin_upper": 0.41,
+              "uniform_score_grid_median_pp": 5.289913,
+              "uniform_score_grid_p90_pp": 7.869392,
+              "uniform_score_grid_p95_pp": 8.043285,
+              "upper_5pct_tail_max_pp": 1.391096
+            },
+            "weights": {
+              "cv": 0.439913,
+              "kish_neff": 819.422642,
+              "max": 23155.934996,
+              "max_share": 0.003307,
+              "min": 1709.502021,
+              "n": 978,
+              "sum": 7002377.013281,
+              "top_one_percent_share": 0.027717
+            }
+          },
+          "product_complete": {
+            "categorical_support": {
+              "alcohol_amount_category": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "10_plus_drinks": {
+                    "n": 66,
+                    "weight_share": 0.093798
+                  },
+                  "1_2_drinks": {
+                    "n": 242,
+                    "weight_share": 0.261949
+                  },
+                  "3_4_drinks": {
+                    "n": 125,
+                    "weight_share": 0.14541
+                  },
+                  "5_6_drinks": {
+                    "n": 88,
+                    "weight_share": 0.123436
+                  },
+                  "7_9_drinks": {
+                    "n": 101,
+                    "weight_share": 0.133544
+                  },
+                  "none": {
+                    "n": 247,
+                    "weight_share": 0.241864
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "alcohol_frequency": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "lifetime_nonapplicable": {
+                    "n": 94,
+                    "weight_share": 0.081798
+                  },
+                  "lt_monthly": {
+                    "n": 190,
+                    "weight_share": 0.215228
+                  },
+                  "monthly_2_4": {
+                    "n": 169,
+                    "weight_share": 0.209734
+                  },
+                  "monthly_once": {
+                    "n": 94,
+                    "weight_share": 0.111129
+                  },
+                  "none_past_year": {
+                    "n": 153,
+                    "weight_share": 0.160067
+                  },
+                  "weekly_2_3": {
+                    "n": 127,
+                    "weight_share": 0.170212
+                  },
+                  "weekly_4_plus": {
+                    "n": 42,
+                    "weight_share": 0.051832
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "cigarette_smoking_state": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "daily_current": {
+                    "n": 107,
+                    "weight_share": 0.144046
+                  },
+                  "former_currently_not_smoking": {
+                    "n": 203,
+                    "weight_share": 0.241209
+                  },
+                  "never_smoked": {
+                    "n": 548,
+                    "weight_share": 0.59776
+                  },
+                  "occasional_current": {
+                    "n": 11,
+                    "weight_share": 0.016985
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "sex_knhanes": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "1": {
+                    "n": 378,
+                    "weight_share": 0.497837
+                  },
+                  "2": {
+                    "n": 491,
+                    "weight_share": 0.502163
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              },
+              "strength_days_7d": {
+                "absent_categories_n": 0,
+                "categories": {
+                  "0_days": {
+                    "n": 638,
+                    "weight_share": 0.715497
+                  },
+                  "1_day": {
+                    "n": 30,
+                    "weight_share": 0.039116
+                  },
+                  "2_days": {
+                    "n": 44,
+                    "weight_share": 0.051553
+                  },
+                  "3_days": {
+                    "n": 55,
+                    "weight_share": 0.072448
+                  },
+                  "4_days": {
+                    "n": 24,
+                    "weight_share": 0.032189
+                  },
+                  "5_plus_days": {
+                    "n": 78,
+                    "weight_share": 0.089197
+                  }
+                },
+                "missing_n": 0,
+                "missing_weight_share": 0.0,
+                "noncanonical_n": 0,
+                "rare_category_weight_share": 0
+              }
+            },
+            "design": {
+              "psu": 31,
+              "psus_per_stratum": {
+                "1": 5,
+                "2": 5,
+                "3": 3,
+                "4": 0,
+                "5_plus": 1
+              },
+              "singleton_strata": 5,
+              "strata": 14
+            },
+            "numeric_support": {
+              "age_years": {
+                "max": 80.0,
+                "min": 19.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 19.0,
+                "weighted_p99": 80.0
+              },
+              "bmi_from_height_weight": {
+                "max": 45.256113,
+                "min": 15.430926,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 17.156262,
+                "weighted_p99": 36.55355
+              },
+              "walking_days_7d": {
+                "max": 7.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 7.0
+              },
+              "walking_minutes_per_active_day": {
+                "max": 300.0,
+                "min": 0.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 0.0,
+                "weighted_p99": 180.0
+              },
+              "weekday_sleep_minutes": {
+                "max": 690.0,
+                "min": 180.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 240.0,
+                "weighted_p99": 600.0
+              },
+              "weekend_sleep_minutes": {
+                "max": 840.0,
+                "min": 120.0,
+                "missing_n": 0,
+                "missing_share": 0.0,
+                "missing_weight_share": 0.0,
+                "outside_product_domain_n": 0,
+                "weighted_p01": 270.0,
+                "weighted_p99": 660.0
+              }
+            },
+            "score": {
+              "unweighted_mean": 0.365619,
+              "unweighted_quantiles": {
+                "p01": 0.007124,
+                "p05": 0.016309,
+                "p10": 0.034047,
+                "p25": 0.111274,
+                "p50": 0.326666,
+                "p75": 0.600459,
+                "p90": 0.762129,
+                "p95": 0.825275,
+                "p99": 0.897574
+              },
+              "unweighted_sd": 0.274276,
+              "weighted_mean": 0.320675,
+              "weighted_quantiles": {
+                "p01": 0.006406,
+                "p05": 0.015351,
+                "p10": 0.027696,
+                "p25": 0.082623,
+                "p50": 0.254377,
+                "p75": 0.532246,
+                "p90": 0.742414,
+                "p95": 0.807021,
+                "p99": 0.893153
+              },
+              "weighted_sd": 0.26586
+            },
+            "tails": {
+              "p01": {
+                "cutoff": 0.006406,
+                "kish_neff": 5.262056,
+                "n": 7,
+                "psu": 6,
+                "strata": 4,
+                "weight_share": 0.010871
+              },
+              "p05": {
+                "cutoff": 0.015351,
+                "kish_neff": 32.906878,
+                "n": 39,
+                "psu": 19,
+                "strata": 11,
+                "weight_share": 0.051339
+              },
+              "p95": {
+                "cutoff": 0.807021,
+                "kish_neff": 47.982236,
+                "n": 55,
+                "psu": 26,
+                "strata": 14,
+                "weight_share": 0.050161
+              },
+              "p99": {
+                "cutoff": 0.893153,
+                "kish_neff": 10.189551,
+                "n": 12,
+                "psu": 9,
+                "strata": 6,
+                "weight_share": 0.010861
+              }
+            },
+            "ties": {
+              "duplicate_groups": 0,
+              "max_duplicate_group_weight_pp": 0.0,
+              "max_multiplicity": 1,
+              "right_minus_left_max_pp": 0.367337,
+              "right_minus_mid_max_pp": 0.183668,
+              "rows_in_duplicate_groups": 0,
+              "tail_right_minus_left_max_pp": {
+                "p01": 0.316099,
+                "p05": 0.316099,
+                "p95": 0.152414,
+                "p99": 0.136499
+              },
+              "unweighted_right_minus_left_max_pp": 0.115075
+            },
+            "weight_normalization_max_abs_cdf_difference": 0.0,
+            "weighted_vs_unweighted": {
+              "anchor_abs_pp": {
+                "p01": 0.281552,
+                "p05": 0.646003,
+                "p95": 1.318188,
+                "p99": 0.285529
+              },
+              "exact_max_pp": 8.141403,
+              "lower_5pct_tail_max_pp": 0.646003,
+              "max_score_bin_lower": 0.4,
+              "max_score_bin_upper": 0.41,
+              "uniform_score_grid_median_pp": 5.126241,
+              "uniform_score_grid_p90_pp": 7.778593,
+              "uniform_score_grid_p95_pp": 7.952008,
+              "upper_5pct_tail_max_pp": 1.355527
+            },
+            "weights": {
+              "cv": 0.439672,
+              "kish_neff": 728.225785,
+              "max": 23155.934996,
+              "max_share": 0.003673,
+              "min": 1709.502021,
+              "n": 869,
+              "sum": 6303733.087247,
+              "top_one_percent_share": 0.027991
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "authorized_development_validation_strata_union": 27,
+      "development_validation_psu_overlap": 0,
+      "validation_missing_from_authorized_union": 13
+    },
+    "identity": {
+      "adapter_version": "model-v2-product-input-adapter-v2",
+      "analysis_script_sha256": "37e9c69ec8e377b834212a12402bcd7d28df1b085b414fe8ddf611ca59278645",
+      "analysis_source_commit": "947d4917ad2adb28d5c4a1bec162f3e94eaf6003",
+      "cdf": "right_inclusive_research_point_estimate",
+      "cohort_contract_sha256": {
+        "g3": "c057f5ae5827dd36a79dc436c28a5a10f93f41a8448a0ee044dcf41871c6953d",
+        "g7": "f2ea84c1d8fd8b758d61661dd79e43be69a20fe56b74f943e284626cda224225"
+      },
+      "contract_sha256": "d315b1001b22f51093bc3301b6f77169b12a2602784e08f3deec0d428a182be1",
+      "created_at_utc": "2026-09-19T00:12:34Z",
+      "eligibility": "frozen_G3_G7_age19plus_target_design_present_positive_weight_not_explicitly_pregnant",
+      "feature_order": {
+        "1": "age_years",
+        "10": "weekday_sleep_minutes",
+        "11": "weekend_sleep_minutes",
+        "2": "sex_knhanes",
+        "3": "bmi_from_height_weight",
+        "4": "cigarette_smoking_state",
+        "5": "alcohol_frequency",
+        "6": "alcohol_amount_category",
+        "7": "walking_days_7d",
+        "8": "walking_minutes_per_active_day",
+        "9": "strength_days_7d"
+      },
+      "model_sha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
+      "product_source_sha256": {
+        "browser_adapter": "34b06a9e009730ff15f0cb80842d848e4ef1c0b8fdf78fe4e330c3b1017432ec",
+        "browser_steps": "17e9520250c2a21d38045737a5204909b9c9d054fe80b1e0fdf81a894a6aa04f",
+        "python_adapter": "b1902e6eef13556b09668d6cff6a688d4a6dfdf5652504268cdffbbb856b2b8c"
+      },
+      "quantile": "inverse_ecdf_no_interpolation",
+      "runtime_versions": {
+        "joblib": "1.5.3",
+        "numpy": "2.4.1",
+        "pandas": "3.0.5",
+        "pyarrow": "25.0.1",
+        "python": "3.13.14",
+        "scikit_learn": "1.8.0"
+      },
+      "schema_version": "model-v2-r1-schema-v1",
+      "source_sha256": {
+        "development_2024": "e56089bcd6dfce076cd41e58e708e44af4dc4281e161c6bacf4115bc9a332adb",
+        "temporal_2023": "0741896ea09257b7a2a49aa8f2afafbec6e70995324fa49f5f2b5703bdc10334",
+        "validation_2024": "71774e13e7b994e023253d78f8310a1374610c652644a7a87aeabe88f1c00fd7"
+      },
+      "source_year": {
+        "development_2024": 2024,
+        "temporal_2023": 2023,
+        "validation_2024": 2024
+      },
+      "subset_policy": "full_and_all_11_semantic_features_observed_before_imputation",
+      "tie_policy": "left_right_mid_compared_product_unapproved",
+      "validity": "research_snapshot_only_no_product_authorization_recheck_identity_before_reuse",
+      "weight": "wt_itvex",
+      "weight_policy": "raw_survey_weight_and_unweighted_sensitivity"
+    },
+    "safety": {
+      "final_test_opened": false,
+      "participant_output_written": false,
+      "production_semantics_changed": false,
+      "recalibrated": false,
+      "retrained": false,
+      "threshold_selected": false
+    },
+    "uncertainty": {
+      "confidence_intervals_computed": false,
+      "status": "HOLD_pending_split_aware_survey_variance_review"
+    },
+    "validation_vs_temporal": {
+      "full": {
+        "mapping": {
+          "anchor_abs_pp": {
+            "p01": 0.094803,
+            "p05": 0.963763,
+            "p95": 1.806069,
+            "p99": 0.427738
+          },
+          "exact_max_pp": 6.30731,
+          "lower_5pct_tail_max_pp": 1.297385,
+          "max_score_bin_lower": 0.57,
+          "max_score_bin_upper": 0.58,
+          "uniform_score_grid_median_pp": 4.08482,
+          "uniform_score_grid_p90_pp": 5.494499,
+          "uniform_score_grid_p95_pp": 5.769273,
+          "upper_5pct_tail_max_pp": 1.918544
+        },
+        "weighted_quantile_shift_second_minus_first": {
+          "p01": -4.3e-05,
+          "p05": -0.001692,
+          "p10": -0.003509,
+          "p25": -0.016106,
+          "p50": -0.035477,
+          "p75": -0.06739,
+          "p90": -0.058736,
+          "p95": -0.03318,
+          "p99": -0.020692
+        }
+      },
+      "product_complete": {
+        "mapping": {
+          "anchor_abs_pp": {
+            "p01": 0.096431,
+            "p05": 1.033425,
+            "p95": 2.046259,
+            "p99": 0.458402
+          },
+          "exact_max_pp": 6.2302,
+          "lower_5pct_tail_max_pp": 1.626076,
+          "max_score_bin_lower": 0.57,
+          "max_score_bin_upper": 0.58,
+          "uniform_score_grid_median_pp": 4.224884,
+          "uniform_score_grid_p90_pp": 5.388204,
+          "uniform_score_grid_p95_pp": 5.606877,
+          "upper_5pct_tail_max_pp": 2.166535
+        },
+        "weighted_quantile_shift_second_minus_first": {
+          "p01": 2.9e-05,
+          "p05": -0.001916,
+          "p10": -0.003905,
+          "p25": -0.018785,
+          "p50": -0.038954,
+          "p75": -0.065745,
+          "p90": -0.065848,
+          "p95": -0.045123,
+          "p99": -0.024668
+        }
+      }
+    }
+  },
+  "payload_sha256": "91f073359507e2934dd58cea354c8acaac3fed49ede5924bba2405e2a16445ab"
+}
