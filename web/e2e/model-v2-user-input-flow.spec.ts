@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
 import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./model-v2-privacy";
@@ -12,6 +13,7 @@ const emptyWindow = {
   challenge_checkins: [],
 };
 const modelPath = "/api/v1/model-v2/product-score";
+const modelFixturePath = fileURLToPath(new URL("../public/models/model-v2.json", import.meta.url));
 const timeInputs = [
   ["model-weekday-bed", "23:30"],
   ["model-weekday-wake", "07:00"],
@@ -57,7 +59,7 @@ async function routeModel(page: Page, options: { statuses?: number[]; holdFirst?
     if (options.holdFirst && index === 0) await firstPending;
     try {
       const status = statuses[Math.min(index, statuses.length - 1)];
-      if (status === 200) await route.fulfill({ response: await route.fetch() });
+      if (status === 200) await route.fulfill({ path: modelFixturePath });
       else await route.fulfill({ status, body: "unavailable" });
     } finally { settled += 1; }
   });
