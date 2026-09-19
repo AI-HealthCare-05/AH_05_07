@@ -62,8 +62,8 @@ test("S03 saves an existing action request once without premature selection", as
   await page.goto("/?e2e=signed-in&screen=S03");
   await expect(page.getByRole("heading", { name: "원하면 이어갈 행동을 골라요" })).toBeVisible();
   const choiceContext = page.locator('[data-challenge-choice-state="optional"]');
-  await expect(choiceContext).toContainText("참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요.");
-  await expect(choiceContext).toContainText("원할 때 하나를 골라 오늘부터 시작해요.");
+  await expect(choiceContext).toContainText("참여하지 않아도 혈압 기록은 그대로예요.");
+  await expect(choiceContext).toContainText("하나를 고르면 오늘부터 시작해요.");
   await page.locator("html").evaluate((html) => { html.style.fontSize = "200%"; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole("button", { name: /10분 걷기/ }).click();
@@ -106,8 +106,8 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   await page.goto("/?e2e=signed-in&screen=S03");
   await expect(page.getByText("선택됨 · 변경 불가", { exact: true })).toBeVisible();
   const lockedContext = page.locator('[data-challenge-choice-state="locked"]');
-  await expect(lockedContext).toContainText("첫 상태 기록 후에는 행동을 바꿀 수 없어요.");
-  await expect(lockedContext).toContainText("현재 선택을 확인하고 오늘 상태를 별도로 기록해요.");
+  await expect(lockedContext).toContainText("첫 상태를 기록해 선택이 고정됐어요.");
+  await expect(lockedContext).toContainText("오늘 상태는 별도로 기록해요.");
   await page.getByRole("button", { name: "오늘 상태 확인·기록하기" }).click();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   expect(nonGetRequests).toEqual([]);

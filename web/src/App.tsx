@@ -1616,11 +1616,11 @@ function App() {
 
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
-      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} body={activeChallengeEnded ? "원할 때만 다시 시작해요. 행동을 누르면 오늘부터 새 챌린지가 시작되고 이전 기록은 그대로 남아요." : "혈압 기록과는 별도예요. 처음 상태를 저장하기 전까지 행동을 바꿀 수 있어요."} tone="sage" className="journey-candidate journey-challenge-choice">
+      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} body={activeChallengeEnded ? "원할 때 다시 시작해요. 새 챌린지를 시작해도 이전 기록은 그대로 남아요." : "혈압 기록과 별도예요. 첫 상태를 남기기 전까지만 행동을 바꿀 수 있어요."} tone="sage" className="journey-candidate journey-challenge-choice">
         <div className="challenge-choice-context" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
           <p className="eyebrow">선택 기능</p>
-          <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
-          <p>{locked ? "현재 선택을 확인하고 오늘 상태를 별도로 기록해요." : activeChallenge && !activeChallengeEnded ? "첫 상태를 기록하기 전까지 다른 행동으로 바꿀 수 있어요." : "원할 때 하나를 골라 오늘부터 시작해요."}</p>
+          <strong>{locked ? "첫 상태를 기록해 선택이 고정됐어요." : "참여하지 않아도 혈압 기록은 그대로예요."}</strong>
+          <p>{locked ? "오늘 상태는 별도로 기록해요." : activeChallenge && !activeChallengeEnded ? "첫 상태 전에는 행동을 바꿀 수 있어요." : "하나를 고르면 오늘부터 시작해요."}</p>
         </div>
         <div className="choice-grid" aria-busy={pendingAction === "challenge-selection"}>
           {challengeActions.map((action) => {
@@ -1634,13 +1634,13 @@ function App() {
           })}
         </div>
         {challengeNeedsReload && <button type="button" className="secondary" disabled={windowState === "refreshing"} onClick={() => void refreshWindow()}>선택 상태 다시 확인하기</button>}
-        <div className="notice journey-challenge-state" role="status">
+        {(pendingAction === "challenge-selection" || locked || challengeNeedsReload) && <div className="notice journey-challenge-state" role="status">
           {pendingAction === "challenge-selection"
             ? "선택한 행동을 저장하고 있어요."
             : locked
-              ? "첫 체크인 이후에는 선택한 행동을 바꿀 수 없어요."
-              : challengeNeedsReload ? "저장 결과를 확인한 뒤 행동을 선택할 수 있어요." : "행동을 누르면 선택한 내용이 저장돼요."}
-        </div>
+              ? "선택이 고정됐어요."
+              : "저장 결과를 확인한 뒤 행동을 선택할 수 있어요."}
+        </div>}
         {activeChallenge && !activeChallengeEnded && !isPriorDashboard && <button className="secondary" type="button" onClick={() => navigate("S07")} disabled={controlsDisabled}>오늘 상태 확인·기록하기</button>}
         <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
       </Scene>;
