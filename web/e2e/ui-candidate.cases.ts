@@ -1030,7 +1030,7 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await deleteControl.focus();
   await expect(deleteControl).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-  await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200-viewport.png') });
 });
 
 test('past-dated BP confirmation points to record history instead of today', async ({ page }) => {
