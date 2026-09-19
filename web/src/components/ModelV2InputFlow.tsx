@@ -672,7 +672,7 @@ export function ModelV2InputFlow({
   }
 
   return (
-    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="이번 이용에만 생활정보를 살펴봐요" tone="lavender" className="signal-scene model-v2-flow">
+    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="이번 이용에만 생활정보를 살펴봐요" tone="secondary" className="signal-scene model-v2-flow">
       <div className="model-v2-layout" data-model-v2-processed={processed ? "true" : undefined}>
         <aside className="model-v2-progress" aria-label="입력 진행 단계">
           <p className="model-v2-progress-caption">{processed ? "입력 과정 완료" : step === "intro" ? "시작 전 · 5단계" : `${progressIndex + 1} / 5 단계`}</p>

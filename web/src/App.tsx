@@ -1550,7 +1550,7 @@ function App() {
 
     if (activeScreen === "S13") {
       if (presentation.journey) return (
-        <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="coral" className="journey-load-error">
+        <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="critical" className="journey-load-error">
           <div className="journey-load-error-card" role="alert">
             <p>아직 기록이 없다는 뜻은 아니에요.</p>
             <p>연결을 확인한 뒤 다시 불러와 주세요.</p>
@@ -1558,7 +1558,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="coral" className="state-scene"><div className="mist-shape" aria-hidden="true" /><div className="state-message" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
+      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="critical" className="state-scene"><div className="mist-shape" aria-hidden="true" /><div className="state-message" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
     }
 
     if (activeScreen === "S12") {
@@ -1566,7 +1566,7 @@ function App() {
         <Scene id="S12" eyebrow={isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}
           title={isPriorDashboard ? "이 기간에는 기록이 없어요." : "측정한 혈압부터 기록해요"}
           body={isPriorDashboard ? "이전 구간에는 기록이 없으며, 새 기록은 현재 7일에서 시작할 수 있어요." : undefined}
-          tone="sage" className="journey-empty">
+          tone="subtle" className="journey-empty">
           <p className="journey-empty-period" aria-label="조회 기간"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
           {isPriorDashboard ? (
             <div className="journey-empty-return">
@@ -1599,7 +1599,7 @@ function App() {
           <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
         </Scene>
       );
-      return <Scene id="S12" {...journeyCopy.S12} tone="sage" className="state-scene"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
+      return <Scene id="S12" {...journeyCopy.S12} tone="subtle" className="state-scene"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
     }
 
     if (activeScreen === "S02") {
@@ -1607,12 +1607,12 @@ function App() {
         {renderCycleActions()}
         {previousCycleEnd && !activeChallengeEnded && <button type="button" className="secondary" onClick={() => openCycleReview(previousCycleEnd)}>종료된 7일 돌아보기</button>}
       </JourneyToday>;
-      return <Scene id="S02" {...journeyCopy.S02} tone="cream" className="home-scene">{renderCycleActions()}<div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayBloodPressureStatus}</strong><strong>{activeChallengeEnded ? "챌린지 종료" : activeChallenge ? challengeLabel(activeChallenge.action_id) : "챌린지 미선택"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} companionSpecies={s02CompanionSpecies} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
+      return <Scene id="S02" {...journeyCopy.S02} tone="base" className="home-scene">{renderCycleActions()}<div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayBloodPressureStatus}</strong><strong>{activeChallengeEnded ? "챌린지 종료" : activeChallenge ? challengeLabel(activeChallenge.action_id) : "챌린지 미선택"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} companionSpecies={s02CompanionSpecies} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
 
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
-      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} tone="sage" className="journey-candidate journey-challenge-choice">
+      if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} tone="subtle" className="journey-candidate journey-challenge-choice">
         <div className="challenge-choice-context" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
           <p className="eyebrow">선택 기능</p>
           <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
@@ -1640,7 +1640,7 @@ function App() {
         {activeChallenge && !activeChallengeEnded && !isPriorDashboard && <button className="secondary" type="button" onClick={() => navigate("S07")} disabled={controlsDisabled}>오늘 상태 확인·기록하기</button>}
         <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
       </Scene>;
-      return <Scene id="S03" {...journeyCopy.S03} tone="sage"><div className="choice-grid">{challengeActions.map((action) => { const selected = activeChallenge?.action_id === action.id && !activeChallengeEnded; return <button className={`choice-tile ${selected ? "is-selected" : ""}`} type="button" key={action.id} onClick={() => void selectChallenge(action.id)} disabled={controlsDisabled || locked || challengeNeedsReload || windowState !== "ready"}><span className="choice-icon" aria-hidden="true" data-choice={action.id} /><strong>{action.label}</strong><small>{action.note}</small><span className="choice-state">{selected ? "선택됨" : "선택하기"}</span></button>; })}</div>{locked && <p className="notice notice-warning" role="status">첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.</p>}<button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
+      return <Scene id="S03" {...journeyCopy.S03} tone="subtle"><div className="choice-grid">{challengeActions.map((action) => { const selected = activeChallenge?.action_id === action.id && !activeChallengeEnded; return <button className={`choice-tile ${selected ? "is-selected" : ""}`} type="button" key={action.id} onClick={() => void selectChallenge(action.id)} disabled={controlsDisabled || locked || challengeNeedsReload || windowState !== "ready"}><span className="choice-icon" aria-hidden="true" data-choice={action.id} /><strong>{action.label}</strong><small>{action.note}</small><span className="choice-state">{selected ? "선택됨" : "선택하기"}</span></button>; })}</div>{locked && <p className="notice notice-warning" role="status">첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.</p>}<button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
     }
 
     if (activeScreen === "S04") {
@@ -1650,7 +1650,7 @@ function App() {
           eyebrow={journeyCopy.S04.eyebrow}
           title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title}
           body={journeyCopy.S04.body}
-          tone="water"
+          tone="emphasis"
           className={presentation.journey ? "journey-candidate journey-entry journey-sheet" : ""}
         >
           <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
@@ -1776,7 +1776,7 @@ function App() {
 
     if (activeScreen === "S05") {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
-      return <Scene id="S05" {...journeyCopy.S05} tone="sage" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
+      return <Scene id="S05" {...journeyCopy.S05} tone="subtle" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <div className="save-next-step">
           <p className="eyebrow">다음 확인</p>
@@ -1807,7 +1807,7 @@ function App() {
     }
 
     if (activeScreen === "S06") {
-      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} tone="sage" className="journey-candidate journey-challenge-summary">
+      if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} tone="subtle" className="journey-candidate journey-challenge-summary">
         <section className="locked-challenge journey-challenge-summary-card" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
           <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
@@ -1834,11 +1834,11 @@ function App() {
           <button className="secondary" type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>
         </div>
       </Scene>;
-      return <Scene id="S06" {...journeyCopy.S06} tone="sage">{renderCycleActions()}<div className="locked-challenge" data-challenge-period="active"><p className="eyebrow">7일 챌린지 기간</p><span>선택한 행동</span><strong>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</strong>{activeChallenge && <small>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</small>}<p>챌린지 체크인 진행은 최근 7일 기록과 별도로 표시합니다.</p></div><div className="marker-row"><span className="settle-marker" aria-hidden="true" /><div><span>오늘의 상태</span><strong>{todayCheckin ? checkinLabel(todayCheckin.status) : "아직 기록하지 않음"}</strong></div></div><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button></Scene>;
+      return <Scene id="S06" {...journeyCopy.S06} tone="subtle">{renderCycleActions()}<div className="locked-challenge" data-challenge-period="active"><p className="eyebrow">7일 챌린지 기간</p><span>선택한 행동</span><strong>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</strong>{activeChallenge && <small>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</small>}<p>챌린지 체크인 진행은 최근 7일 기록과 별도로 표시합니다.</p></div><div className="marker-row"><span className="settle-marker" aria-hidden="true" /><div><span>오늘의 상태</span><strong>{todayCheckin ? checkinLabel(todayCheckin.status) : "아직 기록하지 않음"}</strong></div></div><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button></Scene>;
     }
 
     if (activeScreen === "S07") {
-      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="cream" className="journey-candidate journey-today-review">
+      if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="base" className="journey-candidate journey-today-review">
         <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
           ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
           : "혈압·챌린지·이전 기록을 따로 확인해요."}</span></div>
@@ -1848,11 +1848,11 @@ function App() {
           <button type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
         </div>
       </Scene>;
-      return <Scene id="S07" {...journeyCopy.S07} tone="cream"><div className="today-date"><strong>{dateLabel(today)}</strong></div>{todayLanes()}<button className="secondary" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
+      return <Scene id="S07" {...journeyCopy.S07} tone="base"><div className="today-date"><strong>{dateLabel(today)}</strong></div>{todayLanes()}<button className="secondary" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></Scene>;
     }
 
     if (activeScreen === "S08") {
-      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
+      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="secondary" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
         <div className="scene-toolbar">
           <span className="utility-label">조회 기간</span>
           {presentation.journey ? (
@@ -1884,7 +1884,7 @@ function App() {
 
     if (activeScreen === "S09") {
       return (
-        <Scene id="S09" {...journeyCopy.S09} tone="lavender" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
+        <Scene id="S09" {...journeyCopy.S09} tone="secondary" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
           <button
             className="text-button record-explorer-detail-return"
             type="button"
@@ -1945,7 +1945,7 @@ function App() {
     }
 
     if (activeScreen === "S10") {
-      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" tone="water" className="journey-recap">
+      if (presentation.journey) return <Scene id="S10" eyebrow="최근 기록" title="7일 돌아보기" tone="emphasis" className="journey-recap">
         {renderCycleActions()}
         <JourneyRecap key={endOn} staticLandscape={presentation.staticLandscape && !s10SceneOwnsDecoration} companionSpecies={s10CompanionSpecies} productionSceneEnabled={s10SceneOwnsDecoration} today={today} days={trailDays} year={startOn.slice(0, 4) === endOn.slice(0, 4) ? startOn.slice(0, 4) : `${startOn.slice(0, 4)}–${endOn.slice(0, 4)}`} period={isCycleReview ? "completed-cycle" : isPriorDashboard ? "prior" : "current"} freshness={windowState}
           navigation={renderWindowNavigation()}
@@ -1976,12 +1976,12 @@ function App() {
           <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
         </div>
       </Scene>;
-      return <Scene id="S10" {...journeyCopy.S10} tone="water">{renderCycleActions()}{!evidenceMode && session && <StructuredRecapFeedback session={session} disabled={controlsDisabled} onSessionError={handleStructuredFeedbackSessionError} />}<div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} companionSpecies={s10CompanionSpecies} productionS10Enabled={s10SceneOwnsDecoration} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{renderReportAction()}{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : `${dashboardPeriodName} 내보내기`}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
+      return <Scene id="S10" {...journeyCopy.S10} tone="emphasis">{renderCycleActions()}{!evidenceMode && session && <StructuredRecapFeedback session={session} disabled={controlsDisabled} onSessionError={handleStructuredFeedbackSessionError} />}<div className="recap-period">{renderWindowNavigation()}</div><div className="recap-summary" data-main-section="seven-day-dashboard" aria-label="최근 7일 기록 요약"><div data-dashboard-lane="blood-pressure"><span>혈압 관찰</span><strong>{windowData?.blood_pressure_observations.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="challenge"><span>최근 7일 챌린지 체크인 기록</span><strong>{windowData?.challenge_checkins.length ?? 0}</strong><small>기록</small></div><div data-dashboard-lane="legacy"><span>이전 방식의 기록</span><strong>{windowData?.challenge_events.length ?? 0}</strong><small>읽기 전용</small></div></div><section className="challenge-progress-card" data-challenge-progress aria-labelledby="challenge-progress-title"><p className="eyebrow">챌린지 진행</p>{activeChallenge && !activeChallengeEnded ? <><h2 id="challenge-progress-title">7일 챌린지 · {challengeLabel(activeChallenge.action_id)}</h2><p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on}</p><strong>체크인 기록 {activeChallengeCheckins.length}개</strong></> : <><h2 id="challenge-progress-title">진행 중인 7일 챌린지 없음</h2><p>최근 7일 기록과는 별도로 표시합니다.</p></>}</section><VisualStage screen="S10" calendarDate={today} companionSpecies={s10CompanionSpecies} productionS10Enabled={s10SceneOwnsDecoration} /><div className="record-groups recap-record-groups" aria-label="최근 7일 기록 목록">{renderRecordLane("blood-pressure", "혈압 관찰", "아직 혈압 관찰 기록이 없습니다.")}{renderRecordLane("challenge-checkin", "챌린지 참여", "아직 챌린지 참여 기록이 없습니다.")}{renderRecordLane("legacy", "이전 방식의 기록", "이전 방식의 기록이 없습니다.")}</div><div className="scene-actions utility-actions">{renderReportAction()}{!evidenceMode && <button type="button" onClick={() => void exportRecentRecords()} disabled={controlsDisabled}>{pendingAction === "export" ? "내보내는 중" : `${dashboardPeriodName} 내보내기`}</button>}<button className="secondary" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>{windowState === "refreshing" ? "새로고침 중" : "새로고침"}</button></div></Scene>;
     }
 
     if (activeScreen === "S11") {
       if (evidenceMode || !session) {
-        return <Scene id="S11" {...journeyCopy.S11} tone="lavender" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={syntheticModelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{syntheticModelV2ResultView.status}</span><h2>{syntheticModelV2ResultView.heading}</h2><p>{syntheticModelV2ResultView.body}</p></div><p className="signal-disclaimer">{syntheticModelV2ResultView.disclaimer}</p></Scene>;
+        return <Scene id="S11" {...journeyCopy.S11} tone="secondary" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={syntheticModelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{syntheticModelV2ResultView.status}</span><h2>{syntheticModelV2ResultView.heading}</h2><p>{syntheticModelV2ResultView.body}</p></div><p className="signal-disclaimer">{syntheticModelV2ResultView.disclaimer}</p></Scene>;
       }
       return (
         <ModelV2InputFlow
@@ -2001,7 +2001,7 @@ function App() {
     }
 
       if (presentation.journey) return (
-        <Scene id="S14" {...journeyCopy.S14} tone="cream" className="journey-settings">
+        <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings">
           <div className="journey-settings-list">
             {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
               <div>
@@ -2065,7 +2065,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="cream"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="base"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={controlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={controlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;
