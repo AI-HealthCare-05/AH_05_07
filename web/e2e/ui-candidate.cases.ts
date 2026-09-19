@@ -334,7 +334,7 @@ for (const retainedEmpty of [false, true]) test(`S11 continuation H: retained ${
     for (const freshness of ['refreshing', 'refresh-error']) {
       if (freshness === 'refresh-error') {
         held.release();
-        await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
+        await expect(page.getByText('최신 여부 미확인', { exact: true })).toHaveCount(0);
       }
       await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
       await expect(result.locator('[data-model-v2-continuation]')).toHaveAttribute('data-model-v2-continuation', 'confirm-today');
@@ -1125,7 +1125,7 @@ test('Journey S13 follows the bounded bootstrap retry and keeps manual read reco
     }) });
   });
 
-  await page.goto('/?e2e=signed-in&screen=S14');
+  await page.goto('/?e2e=signed-in&screen=S02');
   const error = page.locator('.journey-load-error');
   await expect(error).toContainText('기록을 불러오지 못했어요');
   await expect(error).toContainText('아직 기록이 없다는 뜻은 아니에요.');
@@ -1138,8 +1138,131 @@ test('Journey S13 follows the bounded bootstrap retry and keeps manual read reco
   await expect(page.getByRole('button', { name: '다시 불러오기', exact: true })).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole('button', { name: '다시 불러오기', exact: true }).click();
-  await expect(page.locator('.journey-settings')).toBeVisible();
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   expect(methods).toEqual(['GET', 'GET', 'GET']);
+});
+
+test('S11 and S14 remain available while the observation window is loading, and S02 still shows loading', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  const held = deferred();
+  let loads = 0;
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+    loads++;
+    await held.promise;
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: '2026-09-05', end_on: '2026-09-11', blood_pressure_observations: [], challenge_checkins: [], challenge_events: [], active_challenge: null,
+    }) });
+  });
+
+  try {
+    await page.goto('/?e2e=signed-in&screen=S14');
+    await expect.poll(() => loads).toBe(1);
+    await expect(page.locator('.journey-settings')).toBeVisible();
+    await expect(page.getByRole('group', { name: '화면 테마' })).toBeVisible();
+    await expect(page.getByRole('radio', { name: /^Cloud/ })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true })).toBeEnabled();
+    await expect(page.locator('[data-scene="S12"], [data-scene="S13"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: '입력 시작하기', exact: true })).toBeEnabled();
+    await expect(page.locator('[data-scene="S12"], [data-scene="S13"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+    await expect(page.locator('.loading-scene')).toBeVisible();
+    await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+  } finally {
+    held.release();
+  }
+});
+
+test('initial observation failure keeps S11 and S14 usable but S02 fails closed', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+    return route.fulfill({ status: 403, headers, contentType: 'application/json', body: JSON.stringify({ detail: { code: 'observation_unavailable' } }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S14');
+  await expect(page.locator('.journey-settings')).toBeVisible();
+  await expect(page.locator('[data-scene="S13"]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await completeS11LifestyleSurvey(page);
+  const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result.locator('[data-model-v2-continuation]')).toHaveAttribute('data-model-v2-continuation', 'confirm-today');
+  await expect(result.locator('[data-model-v2-continuity="blood-pressure"] strong')).toHaveText('오늘 혈압 상태 · 최신 여부 미확인');
+  await expect(result.locator('[data-model-v2-continuity="challenge"] strong')).toHaveText('오늘 챌린지 상태 · 최신 여부 미확인');
+
+  await result.getByRole('button', { name: '오늘 화면에서 확인하기', exact: true }).click();
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+});
+
+test('S14 hides observation refresh failure while dependent screens retain the freshness warning', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  const held = deferred();
+  let loads = 0;
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+    loads++;
+    if (loads > 1) {
+      await held.promise;
+      return route.fulfill({ status: 503, headers, contentType: 'application/json', body: JSON.stringify({ detail: { code: 'temporarily_unavailable' } }) });
+    }
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: '2026-09-05', end_on: '2026-09-11', blood_pressure_observations: [], challenge_checkins: [],
+      challenge_events: [{ id: 'retained-record', observed_on: '2026-09-10', action_id: 'walk-10-minutes', status: 'completed' }], active_challenge: null,
+    }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S10');
+  await page.getByRole('button', { name: '새로고침', exact: true }).click();
+  await expect.poll(() => loads).toBe(2);
+  await page.getByRole('button', { name: '설정', exact: true }).click();
+  await expect(page.locator('.journey-settings')).toBeVisible();
+  await expect(page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true })).toBeEnabled();
+  held.release();
+  await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+  await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '설정', exact: true }).click();
+  await expect(page.getByText('최신 여부 미확인', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true })).toBeEnabled();
+});
+
+test('S14 keeps independent controls enabled without clearing a selected prior window', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+    const url = new URL(request.url());
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'), blood_pressure_observations: [], challenge_checkins: [],
+      challenge_events: [{ id: 'prior-record', observed_on: url.searchParams.get('end_on'), action_id: 'walk-10-minutes', status: 'completed' }], active_challenge: null,
+    }) });
+  });
+
+  await page.goto('/?e2e=signed-in&screen=S14&dashboard_window=prior');
+  await expect(page.locator('.journey-settings')).toBeVisible();
+  await expect(page.locator('[data-read-only-window]')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /^Warm/ })).toBeEnabled();
+  await page.getByRole('radio', { name: /^Warm/ }).check();
+  await expect(page).toHaveURL(/dashboard_window=prior/);
+  const companion = page.getByLabel('캐릭터 선택');
+  if (await companion.count()) await expect(companion).toBeEnabled();
+  await expect(page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '계정 삭제', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '7일 기록 보기', exact: true })).toBeEnabled();
 });
 
 test('Journey S14 groups guidance without writes and keeps account deletion behind its confirmation', async ({ page }, testInfo) => {
