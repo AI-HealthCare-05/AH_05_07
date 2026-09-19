@@ -272,10 +272,11 @@ def test_local_finite_reference_lookup_without_g8_fit_or_row_output(monkeypatch,
 
     # B3 must resolve only the frozen artifact and the G6 validation parquet.
     assert set(approved_accesses) == {b.ARTIFACT, b.ROLES["validation_2024"]["path"]}
-    assert len(parquet_reads) == 1
-    read_path = str(parquet_reads[0])
-    assert read_path.endswith(b.ROLES["validation_2024"]["path"])
-    assert "development" not in read_path
-    assert "temporal" not in read_path
-    assert "final-test" not in read_path
-    assert "final_test" not in read_path
+    assert len(parquet_reads) == 2  # one validation parquet read per run
+    for read_path in parquet_reads:
+        read_path = str(read_path)
+        assert read_path.endswith(b.ROLES["validation_2024"]["path"])
+        assert "development" not in read_path
+        assert "temporal" not in read_path
+        assert "final-test" not in read_path
+        assert "final_test" not in read_path
