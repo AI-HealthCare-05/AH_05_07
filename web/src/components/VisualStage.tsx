@@ -1,5 +1,7 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
+import "./scene/scene-stage.css";
+
 import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
 import { resolveS02CharacterRecipe, resolveS10CharacterRecipe, sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
