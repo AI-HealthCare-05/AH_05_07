@@ -175,13 +175,14 @@ test("prior S03/S07 keep read navigation but Home return resets to current witho
   await expect(page.getByRole("button", { name: "기록함", exact: true })).toHaveCount(0);
   await expect(page.getByText("선택한 7일의 이전 방식 기록 · 읽기 전용.", { exact: false })).toBeVisible();
   await expect(s07.getByRole("button", { name: "기록 찾아보기", exact: true })).toBeEnabled();
-  await expect(s07.getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true })).toBeEnabled();
+  await expect(s07.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true })).toBeEnabled();
+  await expect(s07.getByRole("button", { name: "최근 7일 돌아보기", exact: true })).toBeEnabled();
   await s07.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
   await expect(page).toHaveURL(/screen=S08/);
   await expect(page).toHaveURL(/dashboard_window=prior/);
   await page.goBack();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
-  await page.locator('[data-scene="S07"]').getByRole("button", { name: "오늘의 기록으로 돌아가기", exact: true }).click();
+  await page.locator('[data-scene="S07"]').getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true }).click();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page).not.toHaveURL(/dashboard_window=prior/);
   await expect.poll(() => windowRequests.length).toBe(2);

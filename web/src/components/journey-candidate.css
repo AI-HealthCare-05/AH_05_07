@@ -1894,3 +1894,117 @@
     padding: .95rem;
   }
 }
+
+/* SK7 FINAL JOURNEY CONTINUITY — S04-S09
+   Existing routes remain authoritative. These controls only make the
+   record -> confirmation -> review loop explicit inside each screen. */
+
+.journey-continuation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin-top: .4rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dce7e3;
+}
+
+.journey-continuation-actions > button {
+  min-height: 2.9rem;
+}
+
+.journey-entry .journey-back {
+  min-height: 2.75rem;
+  padding: .45rem .15rem;
+  color: #365f57;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .28em;
+}
+
+.journey-entry .journey-back:hover:not(:disabled) {
+  background: transparent;
+  color: #173f3b;
+  box-shadow: none;
+  transform: none;
+}
+
+.journey-saved .journey-continuation-actions--saved {
+  width: min(100%, 32rem);
+  margin-top: 0;
+  padding-top: .25rem;
+  border-top: 0;
+}
+
+.journey-today-review .journey-continuation-actions {
+  margin-top: .25rem;
+}
+
+.journey-today-review .journey-continuation-actions > button:last-child {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3920;
+}
+
+.journey-records .scene-toolbar {
+  align-items: center;
+}
+
+.journey-records .journey-continuation-actions--compact {
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.journey-records .journey-continuation-actions--compact > button {
+  min-height: 2.75rem;
+  padding: .5rem .7rem;
+}
+
+.journey-records .journey-continuation-actions--compact > button.secondary {
+  border-color: #cbdcd5;
+  background: #f7faf8;
+}
+
+.journey-record-detail .record-explorer-detail-return {
+  width: fit-content;
+  min-height: 2.75rem;
+  padding: .45rem .15rem;
+  border: 0;
+  color: #365f57;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .28em;
+}
+
+.journey-record-detail .record-explorer-detail-return:hover:not(:disabled) {
+  background: transparent;
+  color: #173f3b;
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 580px) {
+  .journey-continuation-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .journey-continuation-actions > button {
+    width: 100%;
+  }
+
+  .journey-records .scene-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .journey-records .journey-continuation-actions--compact {
+    display: grid;
+    width: 100%;
+  }
+}

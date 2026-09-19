@@ -352,3 +352,43 @@
       inset 0 1px 0 #fff;
   }
 }
+
+/* SK7 FINAL JOURNEY CONTINUITY — S10
+   Week review closes back to the current Today surface without creating
+   another navigation model. */
+
+.journey-recap .journey-recap-return {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: .4rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dce7e3;
+}
+
+.journey-recap .journey-recap-return button {
+  min-height: 2.75rem;
+  padding: .45rem .15rem;
+  border: 0;
+  color: #365f57;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .28em;
+}
+
+.journey-recap .journey-recap-return button:hover:not(:disabled) {
+  background: transparent;
+  color: #173f3b;
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 580px) {
+  .journey-recap .journey-recap-return {
+    justify-content: stretch;
+  }
+
+  .journey-recap .journey-recap-return button {
+    width: 100%;
+    text-align: left;
+  }
+}

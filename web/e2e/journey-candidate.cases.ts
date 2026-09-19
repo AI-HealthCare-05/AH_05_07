@@ -257,6 +257,7 @@ test('core record loop reaches detail and seven-day review after one confirmed s
 
   await page.locator('.home-lead button').click();
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S04"]').getByRole('button', { name: /오늘 화면으로 돌아가기/ })).toBeVisible();
   await page.getByLabel(/수축기/).fill('120');
   await page.getByLabel(/이완기/).fill('80');
   await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).click();
@@ -279,10 +280,13 @@ test('core record loop reaches detail and seven-day review after one confirmed s
   await page.locator('[data-scene="S09"]').getByRole('button', { name: '목록으로 돌아가기', exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
 
-  await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+  await page.locator('[data-scene="S08"]').getByRole('button', { name: '최근 7일 돌아보기', exact: true }).click();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
   await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('1건');
   await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 1일');
+
+  await page.locator('[data-scene="S10"]').getByRole('button', { name: '오늘 화면으로 돌아가기', exact: true }).click();
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
 
   expect(posts()).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
