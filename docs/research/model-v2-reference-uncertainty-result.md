@@ -45,15 +45,20 @@ B2 start was `e96803fbd77f59947465365634b90e66a76d247c` (#620), incorporating #6
 New branch: `research/model-v2-reference-uncertainty`; worktree:
 `/Users/gom/Projects/AH_05_07-model-v2-reference-uncertainty`.
 Analysis contract/code/tests were committed before cohort analysis at
-`83c25af36666824d5f1f1eeb41f813930fccb46c`.
+`83c25af36666824d5f1f1eeb41f813930fccb46c`. The final execution used
+`21682bfbae3186516b7c6071ffdca3d5b86cac3d`, which adds only checkout-newline
+portability and its regression tests. An external branch update incorporated
+main `13ce50cf3502a968d525861cd88f719c15bc190f` through merge `dc5d117`; it
+was preserved by fast-forward. The PR diff against main remains these five B2
+files, with no change to the independent #616/#621 work.
 
-- Analysis timestamp: `2026-09-19T01:04:34Z` (10:04:34 KST), held fixed for the
+- Analysis timestamp: `2026-09-19T01:25:53Z` (10:25:53 KST), held fixed for the
   two byte-identical integration executions.
 - Frozen model SHA: `d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84`.
 - Schema: `model-v2-r1-schema-v1`; adapter: `model-v2-product-input-adapter-v2`.
 - B evidence file SHA: `52e93da3762b6357b65d8977238c5b74d0878e78d40cb19c60659a2ff4189fe2`.
-- B2 evidence file SHA: `827d75c802ad0748cc2a5b45df299cd93d7344a0f1f2b39c75aa104b31c68784`.
-- B2 canonical payload SHA: `39d8fce1bd92729a45db141d5adcfb3871e94501ca5b04445698df663193e87a`.
+- B2 evidence file SHA: `92bf83569d893f7519d2441f5e1e6c65ee1e6a2541d5f43a9ce73d00a9682ca3`.
+- B2 canonical payload SHA: `051e7f9e0c1c8302f275ecf0e5c55664c9299fa39e6ecfc802fc3287c1d136b6`.
 
 The B2 payload hash covers sorted compact JSON excluding its own envelope hash.
 It also records code/contract/test/B-code/split-code/committed-manifest hashes,
@@ -439,10 +444,16 @@ A statistical PASS would not be a user-facing PASS.
 
 ## Verification, sanitization and scope
 
-Synthetic B+B2 verification: **60 passed, 2 opt-in tests skipped**. B2 with approved
-local inputs: **31 passed**. Final timestamped integration executed twice with
+Synthetic B+B2 verification: **62 passed, 2 opt-in tests skipped**. B2 with approved
+local inputs: **33 passed**. Final timestamped integration executed twice with
 identical aggregate bytes and reproduced every B cohort/comparison/coverage
 statistic; provenance envelopes correctly remain distinct between B and B2.
+The initial Windows CI exposed Git's CRLF conversion of B's otherwise unchanged
+JSON. B2 now verifies the pinned LF bytes after only CRLF-to-LF conversion in
+memory, then verifies the unchanged payload hash; other byte changes still fail.
+Regression tests cover CRLF acceptance without rewriting B and binary LF output
+whose returned hash matches the actual file. The new execution's entire
+non-identity payload equals the prior B2 result; no statistical value changed.
 
 ```bash
 uv run --frozen --group ai python -m pytest \
@@ -450,13 +461,13 @@ uv run --frozen --group ai python -m pytest \
   tests/model/test_model_v2_reference_distribution.py -q
 
 SK7_REFERENCE_DATA_ROOT=/Users/gom/Projects/sk7-rnd-data \
-SK7_REFERENCE_CREATED_AT=2026-09-19T01:04:34Z \
+SK7_REFERENCE_CREATED_AT=2026-09-19T01:25:53Z \
 uv run --frozen --group ai python -m pytest \
   tests/model/test_model_v2_reference_uncertainty.py -q
 ```
 
 Exact snapshot reproduction uses source commit
-`83c25af36666824d5f1f1eeb41f813930fccb46c`; a later source commit changes provenance.
+`21682bfbae3186516b7c6071ffdca3d5b86cac3d`; a later source commit changes provenance.
 Use a fresh output path. The existing locked environment supplied Python 3.13.14,
 NumPy 2.4.1, pandas 3.0.5, scikit-learn 1.8.0 and joblib 1.5.3; JSON records all
 versions. No new package or lockfile change.

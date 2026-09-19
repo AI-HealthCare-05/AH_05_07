@@ -1300,12 +1300,13 @@
     },
     "identity": {
       "adapter_version": "model-v2-product-input-adapter-v2",
-      "analysis_source_commit": "83c25af36666824d5f1f1eeb41f813930fccb46c",
+      "analysis_source_commit": "21682bfbae3186516b7c6071ffdca3d5b86cac3d",
       "b_evidence_file_sha256": "52e93da3762b6357b65d8977238c5b74d0878e78d40cb19c60659a2ff4189fe2",
+      "b_evidence_newline_policy": "verify_pinned_LF_bytes_accept_checkout_CRLF_only",
       "b_evidence_payload_sha256": "91f073359507e2934dd58cea354c8acaac3fed49ede5924bba2405e2a16445ab",
       "baseline_commit": "e96803fbd77f59947465365634b90e66a76d247c",
       "cdf": "right_inclusive",
-      "created_at_utc": "2026-09-19T01:04:34Z",
+      "created_at_utc": "2026-09-19T01:25:53Z",
       "model_sha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
       "quantile": "inverse_ecdf_no_interpolation",
       "reviewed_local_kdca_guide_sha256": "921818c62267bd2949dd08e7d0143ef8cd30eb3086722e696481aa162ba42ce3",
@@ -1320,11 +1321,11 @@
       "schema_version": "model-v2-r1-schema-v1",
       "source_file_sha256": {
         "b_script": "37e9c69ec8e377b834212a12402bcd7d28df1b085b414fe8ddf611ca59278645",
-        "contract": "19dfca77451da4384b0a8f70cfc93882afb880420f2008a4db8f6f9032e2e53d",
+        "contract": "85a4db7e933f2821ba2bbebd10ecbcc85e24679f4d835bba82cf483bcc6e5994",
         "g3_manifest": "4da05f3712306b3424ecb7b9910d8be064030cd843d314b9b453059914a875ec",
-        "script": "dae4e50fa64b31d6baf5057f2f2218249d4972d9e3414de7d41e3daad5232657",
+        "script": "7e84bd34eccab908487ce81b3ef53ee4027984086471fa2c73c8413674191aeb",
         "split_script": "64bc9025ca864c40a9f6ea537331ea27200b920d5fb05099714093bb43eec4f0",
-        "tests": "c3604f6a95ddb4704310eac4065d77d51abe33c688e54d6de9b9f64b6f109cd5"
+        "tests": "a1e942bf33a9182e281c43fdc96457f5e961d05e0ca391412117ed9438e3e69f"
       },
       "source_sha256": {
         "development_2024": "e56089bcd6dfce076cd41e58e708e44af4dc4281e161c6bacf4115bc9a332adb",
@@ -1635,5 +1636,5 @@
       }
     }
   },
-  "payload_sha256": "39d8fce1bd92729a45db141d5adcfb3871e94501ca5b04445698df663193e87a"
+  "payload_sha256": "051e7f9e0c1c8302f275ecf0e5c55664c9299fa39e6ecfc802fc3287c1d136b6"
 }
