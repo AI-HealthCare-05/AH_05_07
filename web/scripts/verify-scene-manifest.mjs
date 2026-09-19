@@ -266,10 +266,13 @@ function verifyMeasurement(item) {
 export function verifySceneManifest(manifest, inputs = loadInputs()) {
   assertSupportedSchema(inputs.schema);
   validateStructure(manifest, inputs.schema);
-  equal(inputs.stageContract, scenePosterStageContract(manifest, inputs.stageCss), "current scene stage contract");
-  verifyCompanionEvidence(inputs.companion);
   const assets = uniqueById(manifest.assets, "assets");
   const recipes = uniqueById(manifest.recipes, "recipes");
+  for (const recipe of recipes.values()) {
+    requireValue(recipe.screens.length === 1 && sceneRegistrations[recipe.screens[0]], `${recipe.id}: screen boundary`);
+  }
+  equal(inputs.stageContract, scenePosterStageContract(manifest, inputs.stageCss), "current scene stage contract");
+  verifyCompanionEvidence(inputs.companion);
   const characterAssets = manifest.assets.filter(asset => asset.kind === "character");
   requireValue(assets.size === 55 && characterAssets.length === 11
     && manifest.assets.filter(asset => asset.kind === "environment").length === 2
@@ -358,7 +361,6 @@ export function verifySceneManifest(manifest, inputs = loadInputs()) {
   for (const recipe of recipes.values()) {
     verifyMeasurement(recipe);
     const screen = recipe.screens[0], registration = sceneRegistrations[screen];
-    requireValue(recipe.screens.length === 1 && registration, `${recipe.id}: screen boundary`);
     const selected = recipe.assetIds.map(id => { requireValue(assets.has(id), `${recipe.id}: missing asset ${id}`); return assets.get(id); });
     requireValue(selected.every(asset => asset.status !== "reference-only" && (recipe.status !== "approved" || asset.status === "approved")), `${recipe.id}: ineligible asset status`);
     if (recipe.mode === "realtime") {
