@@ -119,11 +119,13 @@ type SceneProps = {
   body?: string;
   children?: ReactNode;
   actions?: ReactNode;
-  tone?: "cream" | "sage" | "lavender" | "water" | "coral";
+  tone?: SceneTone;
   className?: string;
 };
 
-export function Scene({ id, eyebrow, title, body, children, actions, tone = "cream", className = "" }: SceneProps) {
+export type SceneTone = "base" | "subtle" | "secondary" | "emphasis" | "critical";
+
+export function Scene({ id, eyebrow, title, body, children, actions, tone = "base", className = "" }: SceneProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const visuals = resolveSceneVisuals(id);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [id]);
