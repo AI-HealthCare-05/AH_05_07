@@ -1862,9 +1862,9 @@ function App() {
     }
 
     if (activeScreen === "S08") {
-      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body={`${dashboardPeriodName}에서 종류와 날짜로 기록을 찾아요.`} tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
+      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} body="날짜와 종류로 기록을 찾아요." tone="lavender" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
         <div className="scene-toolbar">
-          <span className="utility-label">조회 기간</span>
+          <span className="utility-label">빠른 이동</span>
           {presentation.journey ? (
             <div className="journey-continuation-actions journey-continuation-actions--compact" aria-label="기록 탐색 다음 행동">
               <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>

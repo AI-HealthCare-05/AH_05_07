@@ -1412,10 +1412,12 @@
 }
 
 .app-shell[data-screen="S08"] .journey-records .window-nav {
-  border: 1px solid #dce7e3;
-  border-radius: .85rem;
-  background: #ffffffe8;
-  box-shadow: inset 0 1px 0 #fff;
+  border: 0;
+  border-bottom: 1px solid #dce7e3;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-bottom: .65rem;
 }
 
 .app-shell[data-screen="S08"] .journey-records .record-explorer {
@@ -1426,8 +1428,8 @@
 
 .app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button {
   border-color: #cadbd4;
-  border-radius: .65rem;
-  background: #ffffffbc;
+  border-radius: .45rem;
+  background: transparent;
 }
 
 .app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button[aria-pressed="true"] {
@@ -1445,7 +1447,7 @@
 }
 
 .app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row {
-  border-radius: .75rem;
+  border-radius: .4rem;
 }
 
 .app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row:hover:not(:disabled) {
