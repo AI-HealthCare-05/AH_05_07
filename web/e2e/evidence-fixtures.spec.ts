@@ -15,8 +15,7 @@ test("record dashboard fixture masks measurements and does not invent a model re
   await expect(page.getByRole("heading", { name: "최근 7일 기록" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "혈압 관찰" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "챌린지 참여" })).toBeVisible();
-  await page.getByRole("button", { name: "설정과 도움말" }).click();
-  await page.getByRole("button", { name: "선별 신호 도구 열기" }).click();
+  await page.getByRole("button", { name: "AI 분석", exact: true }).click();
   await expect(page.getByText("현재는 점수, 확률, 등급을 표시하지 않습니다.")).toBeVisible();
 });
 

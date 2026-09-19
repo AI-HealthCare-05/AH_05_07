@@ -1,5 +1,79 @@
 import { expect, test } from "@playwright/test";
 
+const navigationLabels = ["오늘의 기록", "AI 분석", "기록 찾아보기", "7일 돌아보기", "설정"];
+const primaryScreens = ["S02", "S11", "S08", "S10", "S14"];
+
+test("AI primary navigation reaches S11 in one action from every primary screen", async ({ page }) => {
+  for (const screen of primaryScreens) {
+    await page.goto(`/?fixture=VP-10&screen=${screen}`);
+    await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+    const nav = page.getByRole("navigation", { name: "주요 화면" });
+    await expect(nav.getByRole("button")).toHaveCount(5);
+    expect(await nav.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(navigationLabels);
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+    await expect(nav.locator('[aria-current="page"]')).toHaveAttribute("aria-label", navigationLabels[primaryScreens.indexOf(screen)]);
+    await nav.getByRole("button", { name: "AI 분석", exact: true }).click();
+    await expect(page).toHaveURL(/screen=S11/);
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+    await expect(nav.getByRole("button", { name: "AI 분석" })).toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("button", { name: "설정", exact: true })).not.toHaveAttribute("aria-current", "page");
+  }
+  await page.reload();
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(page.getByRole("button", { name: "AI 분석" })).toHaveAttribute("aria-current", "page");
+});
+
+for (const width of [320, 390, 1366]) {
+  test(`AI primary navigation fits and retains keyboard focus at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    for (const screen of primaryScreens) {
+      await page.goto(`/?fixture=VP-10&screen=${screen}`);
+      await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+      const nav = page.getByRole("navigation", { name: "주요 화면" });
+      const labels = nav.locator(width < 768 ? ".nav-label-short" : ".nav-label-wide");
+      await expect(labels).toHaveText(width < 768 ? ["오늘", "AI", "기록", "7일", "설정"] : navigationLabels);
+      const geometry = await nav.evaluate(element => {
+        const navBox = element.getBoundingClientRect();
+        return {
+          overflow: document.documentElement.scrollWidth > innerWidth || element.scrollWidth > element.clientWidth,
+          left: navBox.left, right: navBox.right,
+          buttons: Array.from(element.querySelectorAll("button"), button => {
+            const box = button.getBoundingClientRect();
+            const label = Array.from(button.querySelectorAll("span")).find(span => getComputedStyle(span).display !== "none")!;
+            const labelBox = label.getBoundingClientRect();
+            return { width: box.width, height: box.height, left: box.left, right: box.right, labelLeft: labelBox.left, labelRight: labelBox.right, clipped: label.scrollWidth > label.clientWidth };
+          }),
+        };
+      });
+      expect(geometry.overflow).toBe(false);
+      expect(geometry.left).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(width);
+      for (const button of geometry.buttons) {
+        expect(button.width).toBeGreaterThanOrEqual(44);
+        expect(button.height).toBeGreaterThanOrEqual(44);
+        expect(button.labelLeft).toBeGreaterThanOrEqual(button.left);
+        expect(button.labelRight).toBeLessThanOrEqual(button.right);
+        expect(button.clipped).toBe(false);
+      }
+      const buttons = nav.getByRole("button");
+      await buttons.first().focus();
+      for (let index = 1; index < navigationLabels.length; index += 1) {
+        await page.keyboard.press("Tab");
+        await expect(buttons.nth(index)).toBeFocused();
+        expect(await buttons.nth(index).evaluate(button => {
+          const css = getComputedStyle(button);
+          return button.matches(":focus-visible") && css.outlineStyle !== "none" && parseFloat(css.outlineWidth) >= 3;
+        })).toBe(true);
+      }
+      for (let index = 0; index < 3; index += 1) await page.keyboard.press("Shift+Tab");
+      await expect(nav.getByRole("button", { name: "AI 분석" })).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+      await expect(nav.getByRole("button", { name: "AI 분석" })).toHaveAttribute("aria-current", "page");
+    }
+  });
+}
+
 const headers = {
   "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
   "Access-Control-Allow-Headers": "authorization,content-type",
@@ -64,23 +138,31 @@ test("primary journey navigation updates the URL and supports browser history", 
   await expect(page).toHaveURL(/screen=S08/);
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
 
-  await page.getByRole("button", { name: "7일 돌아보기" }).click();
+  await page.getByRole("navigation", { name: "주요 화면" }).getByRole("button", { name: "7일 돌아보기", exact: true }).click();
   await expect(page).toHaveURL(/screen=S10/);
   await page.goBack();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
   await page.goForward();
   await expect(page.locator('[data-scene="S10"]')).toBeVisible();
 
-  await expect(page.locator(".primary-nav button")).toHaveCount(4);
-  await expect(page.getByRole("button", { name: "생활정보 기반 고혈압 선별 참고" })).toHaveCount(0);
-  await page.getByRole("button", { name: "설정과 도움말" }).click();
+  const nav = page.getByRole("navigation", { name: "주요 화면" });
+  await expect(nav.getByRole("button")).toHaveCount(5);
+  await nav.getByRole("button", { name: "설정", exact: true }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
-  await expect(page.locator('[data-scene="S14"]')).toContainText(
-    "활동·수면·생활습관을 입력하면 이번 이용에만 보이는 ‘오늘의 시작점’으로 정리해요.",
-  );
-  await page.getByRole("button", { name: "선별 신호 도구 열기" }).click();
+  await expect(nav.getByRole("button", { name: "설정", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator('[data-scene="S14"]')).not.toContainText("추가 도구");
+  await expect(page.getByRole("button", { name: "선별 신호 도구 열기" })).toHaveCount(0);
+  await nav.getByRole("button", { name: "AI 분석", exact: true }).click();
+  await expect(page).toHaveURL(/screen=S11/);
   await expect(page.locator('[data-scene="S11"]')).toContainText("아직 준비 중이에요");
-  await expect(page.getByRole("button", { name: "설정과 도움말" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("button", { name: "AI 분석" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("button", { name: "설정", exact: true })).not.toHaveAttribute("aria-current", "page");
+  await page.goBack();
+  await expect(page.locator('[data-scene="S14"]')).toBeVisible();
+  await expect(nav.getByRole("button", { name: "설정", exact: true })).toHaveAttribute("aria-current", "page");
+  await page.goForward();
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(nav.getByRole("button", { name: "AI 분석" })).toHaveAttribute("aria-current", "page");
 });
 
 test("record detail return follows browser history without adding a navigation loop", async ({ page }) => {

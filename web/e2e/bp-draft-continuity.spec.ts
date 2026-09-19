@@ -223,12 +223,12 @@ for (const boundary of ["logout", "signed-out", "different-user", "account-delet
     await enter(page);
     await fillDraft(page);
     if (boundary === "logout") {
-      await page.getByRole("button", { name: "설정과 도움말" }).click();
+      await page.getByRole("button", { name: "설정" }).click();
       await page.getByRole("button", { name: "이 기기에서 로그아웃", exact: true }).click();
     }
     if (boundary === "signed-out") await dispatchSession(page, null);
     if (boundary === "account-deletion") {
-      await page.getByRole("button", { name: "설정과 도움말" }).click();
+      await page.getByRole("button", { name: "설정" }).click();
       await page.getByRole("button", { name: "계정 삭제", exact: true }).click();
       await page.getByRole("dialog").getByRole("button", { name: "계속", exact: true }).click();
       await page.getByRole("dialog").getByRole("button", { name: "최종 삭제", exact: true }).click();

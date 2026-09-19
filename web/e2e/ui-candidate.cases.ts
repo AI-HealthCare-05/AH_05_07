@@ -327,8 +327,7 @@ for (const retainedEmpty of [false, true]) test(`S11 continuation H: retained ${
   try {
     await page.getByRole('button', { name: '새로고침', exact: true }).click();
     await expect.poll(() => refreshing).toBe(true);
-    await page.getByRole('button', { name: '설정과 도움말', exact: true }).click();
-    await page.getByRole('button', { name: '선별 신호 도구 열기', exact: true }).click();
+    await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
     await completeS11LifestyleSurvey(page);
     const result = page.locator('[data-model-v2-user-result="processed"]');
     const next = result.locator('.model-v2-result-next');

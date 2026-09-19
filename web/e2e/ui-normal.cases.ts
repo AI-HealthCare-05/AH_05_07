@@ -148,8 +148,22 @@ for (const preview of [false, true]) test(`normal mocked auth keeps S11 transien
   await expect(page.locator('.journey-today')).toBeVisible();
   await expect(page.locator('[data-static-landscape="S02"]')).toBeVisible();
   await expect(page.locator('[data-login-companion]')).toHaveCount(0);
-  await page.getByRole('button', { name: '설정과 도움말', exact: true }).click();
-  await page.getByRole('button', { name: '선별 신호 도구 열기', exact: true }).click();
+  const nav = page.getByRole('navigation', { name: '주요 화면' });
+  await expect(nav.getByRole('button')).toHaveCount(5);
+  for (const [label, screen] of [['오늘의 기록', 'S02'], ['기록 찾아보기', 'S08'], ['7일 돌아보기', 'S10'], ['설정', 'S14']]) {
+    await nav.getByRole('button', { name: label, exact: true }).click();
+    await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+    if (screen === 'S14') {
+      await expect(nav.getByRole('button', { name: '설정', exact: true })).toHaveAttribute('aria-current', 'page');
+      await expect(page.locator('[data-scene="S14"]')).not.toContainText('추가 도구');
+      await expect(page.getByRole('button', { name: '선별 신호 도구 열기' })).toHaveCount(0);
+    }
+    await nav.getByRole('button', { name: 'AI 분석', exact: true }).click();
+    await expect(page).toHaveURL(/screen=S11/);
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+    await expect(nav.getByRole('button', { name: 'AI 분석' })).toHaveAttribute('aria-current', 'page');
+    await expect(nav.getByRole('button', { name: '설정', exact: true })).not.toHaveAttribute('aria-current', 'page');
+  }
   await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
   await page.getByLabel('만 나이', { exact: true }).fill('35'); await page.getByLabel('성별', { exact: true }).selectOption('1');
   await page.locator('#model-height').fill('170'); await page.locator('#model-weight').fill('68');
