@@ -1513,3 +1513,384 @@
     box-shadow: inset 0 1px 0 #fff;
   }
 }
+
+/* SK7 JOURNEY EDGE COHESION — S01/S12-S14
+   Complete the visual path around the S02-S10 Living Journey baseline.
+   S01 is entry, S12 is a truthful empty state, S13 is bounded recovery,
+   and S14 is utility/settings. No Model V2 or domain semantics live here. */
+
+/* S01 — entry should already feel like the same product users meet at S02. */
+
+.journey-login.welcome-shell {
+  --sk7-ink: #142f38;
+  --sk7-ink-muted: #61747a;
+  --sk7-focus: #164a47;
+  --sk7-border: #dce7e3;
+  color: #142f38;
+  background:
+    radial-gradient(circle at 18% 12%, #f9f2dc 0, transparent 22rem),
+    radial-gradient(circle at 82% 10%, #e4f0e9 0, transparent 27rem),
+    linear-gradient(180deg, #eef4f5 0%, #f7faf9 58%, #fbfcfb 100%);
+}
+
+.journey-login .journey-login-intro {
+  position: relative;
+  align-content: center;
+}
+
+.journey-login .journey-login-intro h1 {
+  color: #102f38;
+}
+
+.journey-login .journey-login-intro .scene-body {
+  color: #586c72;
+}
+
+.journey-login .welcome-card {
+  border: 1px solid #d8e5df;
+  border-radius: 1.15rem;
+  background: #fffffff2;
+  box-shadow:
+    0 20px 46px #173e3914,
+    inset 0 1px 0 #fff;
+  backdrop-filter: blur(8px);
+}
+
+.journey-login .welcome-card input {
+  border-color: #cbdcd5;
+  background: #fff;
+}
+
+.journey-login .entry-auth-button {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow:
+    0 8px 20px #173e3925,
+    inset 0 1px 0 #ffffff26;
+}
+
+.journey-login .journey-demo-entry-button {
+  border: 1px solid #c9dad2;
+  background: linear-gradient(155deg, #f8fbf9, #e9f3ed);
+  color: #234c45;
+  box-shadow:
+    0 7px 18px #173e390c,
+    inset 0 1px 0 #fff;
+}
+
+.journey-login .journey-demo-entry-button:hover:not(:disabled) {
+  border-color: #9fbeaf;
+  background: linear-gradient(155deg, #ffffff, #e2f0e8);
+  color: #173f3b;
+}
+
+.journey-login .login-companion-bubble {
+  border-color: #d3e1da;
+  background: #fffffff1;
+  box-shadow:
+    0 10px 24px #173e390d,
+    inset 0 1px 0 #fff;
+}
+
+.journey-login .login-companion-bubble::before {
+  border-left-color: #d3e1da;
+  border-bottom-color: #d3e1da;
+  background: #fff;
+}
+
+.journey-login .login-companion-bubble strong {
+  color: #23493f;
+}
+
+.journey-login .companion-identity-control select {
+  border-color: #cbdcd5;
+  background: #fffffff0;
+}
+
+.journey-demo-preview-shell {
+  background:
+    radial-gradient(circle at 82% 5%, #e8f2ec 0, transparent 28rem),
+    linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
+}
+
+.journey-demo-preview-bar {
+  border-bottom-color: #dce7e3;
+  background: #f8fbf9f2;
+  box-shadow: 0 8px 24px #173e3907;
+}
+
+.journey-demo-login-gate {
+  border-color: #d7e4de;
+  background: #fffffff7;
+  box-shadow:
+    0 24px 64px -28px #173e395c,
+    inset 0 1px 0 #fff;
+}
+
+
+/* S12-S14 share the signed-in environment without becoming scene-heavy. */
+
+.app-shell:is(
+  [data-screen="S12"],
+  [data-screen="S13"],
+  [data-screen="S14"]
+) {
+  --sk7-ink: #142f38;
+  --sk7-ink-muted: #61747a;
+  --sk7-focus: #164a47;
+  --sk7-border: #dce7e3;
+
+  background:
+    radial-gradient(circle at 82% 5%, #e8f2ec 0, transparent 29rem),
+    linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
+}
+
+.app-shell:is(
+  [data-screen="S12"],
+  [data-screen="S13"],
+  [data-screen="S14"]
+) .primary-nav {
+  border-color: #dfe8e5;
+  background: #ffffff82;
+  backdrop-filter: blur(9px);
+}
+
+.app-shell:is(
+  [data-screen="S12"],
+  [data-screen="S13"],
+  [data-screen="S14"]
+) .primary-nav button.is-active {
+  background: #e2f0e9;
+  color: #153f3d;
+}
+
+
+/* S12 — empty means a calm beginning, not failure. */
+
+.app-shell[data-screen="S12"] .journey-empty.scene {
+  border: 1px solid #dce7e2;
+  background:
+    radial-gradient(circle at 88% 22%, #f8f3dd 0, transparent 17rem),
+    linear-gradient(155deg, #fbfdfb 0%, #f2f7f4 100%);
+  box-shadow:
+    0 18px 42px #173e3911,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .scene-copy h1 {
+  color: #102f38;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-period {
+  width: fit-content;
+  max-width: 100%;
+  padding: .5rem .75rem;
+  border: 1px solid #d7e4de;
+  border-radius: 999px;
+  background: #ffffffc9;
+  color: #526b67;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-action {
+  border-color: #dce7e2;
+  border-radius: 1rem;
+  background: #ffffffe8;
+  box-shadow:
+    0 9px 22px #173e390b,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-action:first-child {
+  border-color: #cfe0d8;
+  background: linear-gradient(155deg, #ffffff 0%, #edf7f1 100%);
+  box-shadow:
+    0 13px 30px #173e3911,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-action:first-child button {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3923;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-action:nth-child(2) {
+  background: linear-gradient(155deg, #fbfcfb, #f1f6f3);
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-signal {
+  border: 1px solid #dfe8e4;
+  border-radius: .9rem;
+  background: #ffffffb8;
+  padding: .9rem 1rem;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .journey-empty-return button {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+}
+
+.app-shell[data-screen="S12"] .journey-empty .empty-garden {
+  border-bottom-color: #d7e5dd;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .empty-garden i:nth-child(1) {
+  background: #dbe6df;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .empty-garden i:nth-child(2) {
+  background: #bdd3c3;
+}
+
+.app-shell[data-screen="S12"] .journey-empty .empty-garden i:nth-child(3) {
+  background: #dce7df;
+}
+
+
+/* S13 — recovery is bounded, readable and calm. */
+
+.app-shell[data-screen="S13"] {
+  background:
+    radial-gradient(circle at 78% 10%, #f5e9e4 0, transparent 24rem),
+    linear-gradient(180deg, #f1f5f4 0%, #f8faf9 62%, #fbfcfb 100%);
+}
+
+.app-shell[data-screen="S13"] .journey-load-error.scene {
+  border: 1px solid #e2e5df;
+  background: linear-gradient(155deg, #fbfdfb, #f6f8f6);
+  box-shadow:
+    0 18px 42px #173e3910,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S13"] .journey-load-error .scene-copy h1 {
+  color: #243c3f;
+}
+
+.app-shell[data-screen="S13"] .journey-load-error-card {
+  border: 1px solid #ead7d1;
+  border-top: 4px solid #c98673;
+  border-radius: .7rem .7rem 1rem 1rem;
+  background: #fffffff2;
+  box-shadow:
+    0 14px 32px #5f3d3510,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S13"] .journey-load-error-card button {
+  border-color: #ffffff4d;
+  background: linear-gradient(135deg, #19534f, #10363b);
+  box-shadow: 0 7px 18px #173e3920;
+}
+
+
+/* S14 — settings is a utility destination in the same product world. */
+
+.app-shell[data-screen="S14"] .journey-settings.scene {
+  border: 1px solid #dce7e2;
+  background: linear-gradient(180deg, #fbfdfb 0%, #f6f9f7 100%);
+  box-shadow:
+    0 18px 42px #173e3910,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S14"] .journey-settings .scene-copy h1 {
+  color: #102f38;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-list {
+  gap: 1rem;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section {
+  border: 1px solid #dce7e2;
+  border-radius: 1rem;
+  background: #ffffffe5;
+  padding: 1.05rem 1.15rem;
+  box-shadow:
+    0 7px 18px #173e3908,
+    inset 0 1px 0 #fff;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section.companion-identity-settings {
+  border-color: #cfe0d8;
+  background: linear-gradient(155deg, #ffffff, #eef7f2);
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section > div h2 {
+  color: #173b40;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-note {
+  border-left-color: #75a48f;
+  border-radius: 0 .55rem .55rem 0;
+  background: #f2f7f4;
+  padding: .65rem .8rem;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-facts div {
+  border-color: #dce7e2;
+  border-radius: .65rem;
+  background: #f8fbf9;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-help {
+  border-color: #dce7e2;
+  border-radius: .65rem;
+  background: #f8fbf9;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-help p {
+  border-top-color: #dfe8e4;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) {
+  border-color: #ead1cc;
+  background: #fff9f7;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) .eyebrow {
+  color: #9b5d54;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-account:not(:has(> .danger)) {
+  background: #f8faf9;
+}
+
+@media (max-width: 760px) {
+  .journey-login .welcome-card {
+    box-shadow:
+      0 10px 26px #173e390f,
+      inset 0 1px 0 #fff;
+  }
+}
+
+@media (max-width: 580px) {
+  .app-shell:is(
+    [data-screen="S12"],
+    [data-screen="S13"],
+    [data-screen="S14"]
+  ) {
+    background:
+      linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
+  }
+
+  .app-shell[data-screen="S12"] .journey-empty.scene,
+  .app-shell[data-screen="S13"] .journey-load-error.scene,
+  .app-shell[data-screen="S14"] .journey-settings.scene {
+    box-shadow:
+      0 9px 24px #173e390c,
+      inset 0 1px 0 #fff;
+  }
+
+  .app-shell[data-screen="S12"] .journey-empty .journey-empty-action,
+  .app-shell[data-screen="S14"] .journey-settings-section {
+    box-shadow:
+      0 6px 16px #173e3908,
+      inset 0 1px 0 #fff;
+  }
+
+  .app-shell[data-screen="S14"] .journey-settings-section {
+    padding: .95rem;
+  }
+}

@@ -21,6 +21,12 @@ authoritative only for their own boundaries.
   remain separate scopes. They do not gate unrelated UI, copy, or record-flow work.
 - Old `Next`, `PENDING`, `DISABLED`, and W/M checkpoints below are dated evidence,
   not a live queue or an instruction to resume work.
+- Current Living Journey presentation baseline: S02 is the signed-in visual north
+  star for calm depth and surface hierarchy; S03–S10 carry that language through
+  the core record/save/review loop, while S01 and S12–S14 use the same grammar at
+  entry, empty, recovery, and settings boundaries. S11 remains a separate
+  Model V2 product-contract surface. Restyling must not reopen completed screen
+  semantics, data meanings, scene ownership, or Model V2 contracts.
 
 ### Read only the affected authority
 
