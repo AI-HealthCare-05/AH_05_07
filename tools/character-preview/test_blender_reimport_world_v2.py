@@ -1,6 +1,4 @@
-import tempfile
 import unittest
-from pathlib import Path
 
 from blender_reimport_world_v2 import (
     EXPECTED_ACTIONS,
@@ -10,16 +8,9 @@ from blender_reimport_world_v2 import (
 )
 
 
-class BlenderReimportBoundaryTests(
-    unittest.TestCase
-):
+class BlenderReimportBoundaryTests(unittest.TestCase):
     def test_archive_member_requires_unique_world_path(self):
-        names = [
-            "root/02_World_Factory/"
-            "SK7_World_Factory_v2/"
-            "assets/companions/"
-            "koala-world-v2-001-lite.glb"
-        ]
+        names = ["root/02_World_Factory/SK7_World_Factory_v2/assets/companions/koala-world-v2-001-lite.glb"]
 
         member = archive_member(
             names,
@@ -32,12 +23,7 @@ class BlenderReimportBoundaryTests(
         )
 
     def test_archive_member_rejects_duplicates(self):
-        suffix = (
-            "02_World_Factory/"
-            "SK7_World_Factory_v2/"
-            "assets/companions/"
-            "koala-world-v2-001-lite.glb"
-        )
+        suffix = "02_World_Factory/SK7_World_Factory_v2/assets/companions/koala-world-v2-001-lite.glb"
 
         with self.assertRaisesRegex(
             ValueError,
@@ -57,9 +43,7 @@ class BlenderReimportBoundaryTests(
             "meshes": 1,
             "armatures": 1,
             "bones": 12,
-            "actions": sorted(
-                EXPECTED_ACTIONS
-            ),
+            "actions": sorted(EXPECTED_ACTIONS),
             "materials": [
                 "body",
             ],
@@ -67,9 +51,7 @@ class BlenderReimportBoundaryTests(
             "meshPolygons": 80,
         }
 
-        validate_report(
-            report
-        )
+        validate_report(report)
 
         broken = {
             **report,
@@ -80,9 +62,7 @@ class BlenderReimportBoundaryTests(
             ValueError,
             "one armature",
         ):
-            validate_report(
-                broken
-            )
+            validate_report(broken)
 
     def test_structural_key_ignores_mode_metadata(self):
         base = {
@@ -90,9 +70,7 @@ class BlenderReimportBoundaryTests(
             "meshes": 1,
             "armatures": 1,
             "bones": 12,
-            "actions": sorted(
-                EXPECTED_ACTIONS
-            ),
+            "actions": sorted(EXPECTED_ACTIONS),
             "materials": [
                 "body",
             ],

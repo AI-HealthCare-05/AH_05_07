@@ -134,19 +134,13 @@ def archive_member(zf: zipfile.ZipFile, source_file: str) -> str:
 
         name = raw.strip("/")
 
-        if any(
-            name == suffix or name.endswith("/" + suffix)
-            for suffix in suffixes
-        ):
+        if any(name == suffix or name.endswith("/" + suffix) for suffix in suffixes):
             matches.append(raw)
 
     matches = sorted(set(matches))
 
     if len(matches) != 1:
-        raise ValueError(
-            f"expected exactly one archive member for "
-            f"{source_file}, got {matches}"
-        )
+        raise ValueError(f"expected exactly one archive member for {source_file}, got {matches}")
 
     return matches[0]
 
@@ -166,7 +160,7 @@ def load_inventory(path: Path) -> dict:
     return data
 
 
-def prepare(
+def prepare(  # noqa: C901
     inventory_path: Path,
     archive_path: Path,
     output: Path,
@@ -181,46 +175,29 @@ def prepare(
         raise ValueError("review output already exists")
 
     if output == ROOT or is_inside(output, ROOT):
-        raise ValueError(
-            "candidate review assets must stay outside the repository"
-        )
+        raise ValueError("candidate review assets must stay outside the repository")
 
     partial = output.with_name(output.name + ".partial")
 
     if partial.exists():
-        raise ValueError(
-            "partial candidate review output already exists"
-        )
+        raise ValueError("partial candidate review output already exists")
 
     inventory = load_inventory(inventory_path)
 
     inventory_sha256 = sha256_file(inventory_path)
     archive_sha256 = sha256_file(archive_path)
 
-    if (
-        expected_archive_sha256 is not None
-        and archive_sha256 != expected_archive_sha256
-    ):
+    if expected_archive_sha256 is not None and archive_sha256 != expected_archive_sha256:
         raise ValueError("archive SHA-256 mismatch")
 
-    selected = [
-        candidate
-        for candidate in inventory["candidates"]
-        if candidate_family(candidate, family)
-    ]
+    selected = [candidate for candidate in inventory["candidates"] if candidate_family(candidate, family)]
 
     if not selected:
         raise ValueError("candidate family is empty")
 
-    candidate_ids = [
-        candidate.get("candidateId")
-        for candidate in selected
-    ]
+    candidate_ids = [candidate.get("candidateId") for candidate in selected]
 
-    candidate_sha = [
-        candidate.get("sha256")
-        for candidate in selected
-    ]
+    candidate_sha = [candidate.get("sha256") for candidate in selected]
 
     if len(candidate_ids) != len(set(candidate_ids)):
         raise ValueError("duplicate candidateId in selected family")
@@ -233,18 +210,13 @@ def prepare(
     for candidate in selected:
         species = candidate.get("speciesKey")
 
-        if (
-            not isinstance(species, str)
-            or not re.fullmatch(
-                r"[a-z][a-z0-9_]{1,47}",
-                species,
-            )
+        if not isinstance(species, str) or not re.fullmatch(
+            r"[a-z][a-z0-9_]{1,47}",
+            species,
         ):
             raise ValueError("invalid species key")
 
-        role = viewer_variant(
-            candidate.get("variantKey", "")
-        )
+        role = viewer_variant(candidate.get("variantKey", ""))
 
         variants = grouped.setdefault(
             species,
@@ -252,26 +224,19 @@ def prepare(
         )
 
         if role in variants:
-            raise ValueError(
-                f"duplicate {species}/{role} candidate"
-            )
+            raise ValueError(f"duplicate {species}/{role} candidate")
 
         variants[role] = candidate
 
     if len(grouped) > CATALOG_SIZE:
-        raise ValueError(
-            "viewer supports at most 12 candidate species"
-        )
+        raise ValueError("viewer supports at most 12 candidate species")
 
     for species, variants in grouped.items():
         if set(variants) != {
             "standard",
             "light",
         }:
-            raise ValueError(
-                f"{species} does not have both "
-                "standard/light review variants"
-            )
+            raise ValueError(f"{species} does not have both standard/light review variants")
 
     partial.mkdir(
         parents=True,
@@ -290,13 +255,9 @@ def prepare(
                     "standard",
                     "light",
                 ):
-                    candidate = grouped[
-                        species
-                    ][role]
+                    candidate = grouped[species][role]
 
-                    source_file = safe_relative(
-                        candidate["sourceFile"]
-                    )
+                    source_file = safe_relative(candidate["sourceFile"])
 
                     member = archive_member(
                         zf,
@@ -309,70 +270,33 @@ def prepare(
 
                     actual_sha = sha256_bytes(data)
 
-                    if (
-                        actual_sha
-                        != candidate["sha256"]
-                    ):
-                        raise ValueError(
-                            f"{candidate['candidateId']} "
-                            "SHA-256 mismatch"
-                        )
+                    if actual_sha != candidate["sha256"]:
+                        raise ValueError(f"{candidate['candidateId']} SHA-256 mismatch")
 
-                    if (
-                        len(data)
-                        != candidate["bytes"]
-                    ):
-                        raise ValueError(
-                            f"{candidate['candidateId']} "
-                            "byte-size mismatch"
-                        )
+                    if len(data) != candidate["bytes"]:
+                        raise ValueError(f"{candidate['candidateId']} byte-size mismatch")
 
-                    relative = (
-                        f"{species}/{role}.glb"
+                    relative = f"{species}/{role}.glb"
+
+                    destination = partial / relative
+
+                    destination.write_bytes(data)
+
+                    mappings.append(
+                        {
+                            "candidateId": candidate["candidateId"],
+                            "speciesKey": species,
+                            "candidateVersion": candidate["version"],
+                            "candidateVariantKey": candidate["variantKey"],
+                            "viewerVariant": role,
+                            "sourceRevision": candidate["provenance"].get("sourceRevision"),
+                            "sourceFile": source_file,
+                            "archiveMember": member,
+                            "sha256": actual_sha,
+                            "bytes": len(data),
+                            "reviewFile": relative,
+                        }
                     )
-
-                    destination = (
-                        partial / relative
-                    )
-
-                    destination.write_bytes(
-                        data
-                    )
-
-                    mappings.append({
-                        "candidateId":
-                            candidate[
-                                "candidateId"
-                            ],
-                        "speciesKey":
-                            species,
-                        "candidateVersion":
-                            candidate[
-                                "version"
-                            ],
-                        "candidateVariantKey":
-                            candidate[
-                                "variantKey"
-                            ],
-                        "viewerVariant":
-                            role,
-                        "sourceRevision":
-                            candidate[
-                                "provenance"
-                            ].get(
-                                "sourceRevision"
-                            ),
-                        "sourceFile":
-                            source_file,
-                        "archiveMember":
-                            member,
-                        "sha256":
-                            actual_sha,
-                        "bytes":
-                            len(data),
-                        "reviewFile":
-                            relative,
-                    })
 
         by_species = {}
 
@@ -380,122 +304,68 @@ def prepare(
             by_species.setdefault(
                 mapping["speciesKey"],
                 {},
-            )[
-                mapping["viewerVariant"]
-            ] = mapping
+            )[mapping["viewerVariant"]] = mapping
 
         animals = []
 
-        for species in sorted(
-            by_species
-        ):
-            pair = by_species[
-                species
-            ]
+        for species in sorted(by_species):
+            pair = by_species[species]
 
-            animals.append({
-                "id":
-                    species,
-                "name":
-                    NAME_MAP.get(
+            animals.append(
+                {
+                    "id": species,
+                    "name": NAME_MAP.get(
                         species,
-                        species
-                        .replace("_", " ")
-                        .title(),
+                        species.replace("_", " ").title(),
                     ),
-                "status":
-                    "review_candidate",
-                "motion":
-                    "in_place",
-                "hero":
-                    None,
-                "standard":
-                    pair[
-                        "standard"
-                    ][
-                        "reviewFile"
-                    ],
-                "light":
-                    pair[
-                        "light"
-                    ][
-                        "reviewFile"
-                    ],
-                "note":
-                    (
-                        "Review-only #594 "
-                        "candidate. This "
-                        "viewer does not "
-                        "activate a production "
-                        "companion."
-                    ),
-            })
+                    "status": "review_candidate",
+                    "motion": "in_place",
+                    "hero": None,
+                    "standard": pair["standard"]["reviewFile"],
+                    "light": pair["light"]["reviewFile"],
+                    "note": ("Review-only #594 candidate. This viewer does not activate a production companion."),
+                }
+            )
 
         slot = 1
 
         while len(animals) < CATALOG_SIZE:
-            animals.append({
-                "id":
-                    f"pending-{slot:02d}",
-                "name":
-                    f"Unused review slot "
-                    f"{slot}",
-                "status":
-                    "pending",
-                "motion":
-                    "in_place",
-                "hero":
-                    None,
-                "standard":
-                    None,
-                "light":
-                    None,
-                "note":
-                    "Unused review slot; "
-                    "not an asset.",
-            })
+            animals.append(
+                {
+                    "id": f"pending-{slot:02d}",
+                    "name": f"Unused review slot {slot}",
+                    "status": "pending",
+                    "motion": "in_place",
+                    "hero": None,
+                    "standard": None,
+                    "light": None,
+                    "note": "Unused review slot; not an asset.",
+                }
+            )
 
             slot += 1
 
         catalog = {
             "schema_version": 1,
-            "source_commit": (
-                "candidate-inventory-sha256:"
-                + inventory_sha256
-            ),
+            "source_commit": ("candidate-inventory-sha256:" + inventory_sha256),
             "animals": animals,
         }
 
         evidence = {
-            "documentType":
-                "COMPANION_CANDIDATE_"
-                "BROWSER_REVIEW_INPUT",
-            "status":
-                "prepared-not-qualified",
-            "family":
-                family,
-            "candidateInventorySha256":
-                inventory_sha256,
-            "sourceArchiveSha256":
-                archive_sha256,
-            "speciesCount":
-                len(grouped),
-            "candidateCount":
-                len(mappings),
-            "candidates":
-                mappings,
-            "runtimeActivation":
-                False,
-            "r2Mutation":
-                False,
-            "productionQualified":
-                False,
+            "documentType": "COMPANION_CANDIDATE_BROWSER_REVIEW_INPUT",
+            "status": "prepared-not-qualified",
+            "family": family,
+            "candidateInventorySha256": inventory_sha256,
+            "sourceArchiveSha256": archive_sha256,
+            "speciesCount": len(grouped),
+            "candidateCount": len(mappings),
+            "candidates": mappings,
+            "runtimeActivation": False,
+            "r2Mutation": False,
+            "productionQualified": False,
         }
 
-        (
-            partial
-            / "catalog.json"
-        ).write_text(
+        (partial / "catalog.json").write_text(
             json.dumps(
                 catalog,
                 ensure_ascii=False,
@@ -505,10 +375,7 @@ def prepare(
             encoding="utf-8",
         )
 
-        (
-            partial
-            / "candidate-review-input.json"
-        ).write_text(
+        (partial / "candidate-review-input.json").write_text(
             json.dumps(
                 evidence,
                 ensure_ascii=False,
@@ -531,9 +398,7 @@ def prepare(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument(
         "--inventory",
@@ -577,20 +442,15 @@ def main() -> int:
     )
 
     print(
-        json.dumps({
-            "status":
-                "prepared",
-            "family":
-                result["family"],
-            "speciesCount":
-                result["speciesCount"],
-            "candidateCount":
-                result["candidateCount"],
-            "output":
-                str(
-                    args.output.resolve()
-                ),
-        })
+        json.dumps(
+            {
+                "status": "prepared",
+                "family": result["family"],
+                "speciesCount": result["speciesCount"],
+                "candidateCount": result["candidateCount"],
+                "output": str(args.output.resolve()),
+            }
+        )
     )
 
     return 0

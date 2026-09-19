@@ -106,10 +106,22 @@ analytics product.
   lost record or as proof that no measurement occurred.
 - The seven-day report explicitly shows BP observation count, dates with BP
   observations, dates without BP observation records, and challenge participation
-  separately.
+  separately. Morning/evening counts use the stored period selection, not a
+  measured clock time. With two or more loaded observations, the report shows
+  their simple arithmetic mean (equal weight per observation, no missing-date
+  zeroes or daily-average weighting); only the display rounds to one decimal.
+  Zero or one observation has no separate mean display. Date-ascending raw
+  observations remain visible, morning before evening, and each check-in shows
+  its own stored action and status even after a new challenge starts.
 - The report remains a human-readable record summary for review, printing, or
-  PDF saving. It does not classify measurements or infer diagnosis, treatment
-  effect, adherence success, or improvement.
+  PDF saving; users may directly show their copy during a consultation. The
+  scope is the displayed current or completed seven-day range of saved records
+  currently loaded, not proof of measurement or of why a record is absent.
+  It does not classify measurements or infer diagnosis, treatment effect,
+  adherence success, or improvement. Print retains raw facts, scope, freshness
+  warnings, and the non-diagnostic/user-managed-copy footer while hiding app
+  controls and decorative landmark names. No new persistence, sharing service,
+  or Model V2 data is involved.
 - S05 is reserved for confirmed new saves and describes the fact that was
   actually saved. A past-dated BP save directs the user to record history
   instead of claiming it is today's record; a challenge check-in is described

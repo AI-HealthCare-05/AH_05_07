@@ -61,6 +61,14 @@ const selectorFiles = new Set([
   'web/scripts/select-pr-browser-suites.test.mjs',
 ]);
 
+const modelV2TestFiles = new Set([
+  'web/playwright.model-v2.config.ts',
+]);
+
+const modelV2TestPrefixes = [
+  'web/e2e/model-v2-',
+];
+
 const browserScopeIgnoredFiles = new Set([
   'web/README.md',
 ]);
@@ -207,6 +215,11 @@ const journeyUISuite = Object.freeze({
   command: 'npm run test:e2e:ui:pr',
 });
 
+const modelV2CrossBrowserSuite = Object.freeze({
+  name: 'model-v2 firefox and webkit',
+  command: 'npm run test:e2e:model-v2 -- --project=firefox --project=webkit',
+});
+
 const selectorPolicySuite = Object.freeze({
   name: 'selector policy unit test',
   command: 'node --test scripts/select-pr-browser-suites.test.mjs',
@@ -234,10 +247,7 @@ const completePrBrowserGate = Object.freeze([
       'node --check ../tools/submission-slides.mjs',
     ].join(' && '),
   },
-  {
-    name: 'model-v2 firefox and webkit',
-    command: 'npm run test:e2e:model-v2 -- --project=firefox --project=webkit',
-  },
+  modelV2CrossBrowserSuite,
   journeyUISuite,
 ]);
 
@@ -265,6 +275,11 @@ function touches(files, set) {
 
 function cloneSuites(suites) {
   return suites.map(suite => ({ ...suite }));
+}
+
+function isModelV2TestOnlyPath(file) {
+  return modelV2TestFiles.has(file)
+    || modelV2TestPrefixes.some(prefix => file.startsWith(prefix));
 }
 
 function isProtectedBrowserPath(file) {
@@ -313,6 +328,13 @@ export function selectPrBrowserSuites(files) {
   // Selector implementation/test-only changes run a tiny policy unit-test lane.
   if (relevant.every(file => selectorFiles.has(file))) {
     return cloneSuites([selectorPolicySuite]);
+  }
+
+  // Model V2 browser test/config-only changes stay on their exact cross-browser
+  // contract. Mixed runtime/auth/dependency changes still fall through to the
+  // protected complete gate below.
+  if (relevant.every(file => isModelV2TestOnlyPath(file))) {
+    return cloneSuites([modelV2CrossBrowserSuite]);
   }
 
   // Protected auth/API/model/dependency/deployment paths fall back to the full PR gate.
