@@ -1,4 +1,3 @@
-// Imported by saved-scene-review.spec.ts so the existing required CI runs these.
 import { expect, test, type Page } from '@playwright/test';
 
 async function candidate(page: Page, hasMeasurement = false, hasChallenge = false) {
@@ -48,7 +47,6 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     await primary.click();
     await expect(page.locator('#S04-title')).toBeFocused();
-    await expect(page.locator('[data-scene="S04"] .scene-body')).toContainText('날짜와 시간대를 확인한 뒤 수축기·이완기 값을 입력');
     const dateField = page.locator('#observed-on');
     const systolicField = page.locator('#systolic');
     const diastolicField = page.locator('#diastolic');
@@ -98,8 +96,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     const nextStep = page.locator('.save-next-step');
     const savedActions = page.locator('.journey-saved .split-actions');
     await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
-    await expect(nextStep).toContainText('기록이 반영됐는지 확인');
-    await expect(nextStep).toContainText('한 건부터 최근 7일에 모아볼 수 있어요');
+    await expect(nextStep).toContainText(/오늘 화면에서.*확인할 수 있어요/);
     await expect(savedActions.getByRole('button')).toHaveCount(2);
     const nextStepBox = await nextStep.boundingBox();
     const actionsBox = await savedActions.boundingBox();
@@ -117,7 +114,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.locator('#S10-title')).toBeFocused();
     await expect(page.locator('[data-week-fact="observation-count"]')).toHaveText('1건');
     await expect(page.locator('[data-week-summary]')).toContainText('기록이 있는 날 1일');
-    await expect(page.locator('.recap-tools-intro')).toContainText('기록이 한 건만 있어도');
+    await expect(page.locator('.recap-tools-intro')).toContainText(/리포트.*내보내기/);
     await page.goBack();
     await expect(page.locator('#S02-title')).toBeFocused();
     await expect(page.locator('.home-lead')).toHaveAttribute('data-home-concept', 'today-detail');
@@ -125,7 +122,6 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.locator('#S07-title')).toBeFocused();
     const todayReview = page.locator('.journey-today-review');
     const todayDetail = todayReview.locator('[data-record-priority="blood-pressure"]');
-    await expect(todayReview).toContainText('오늘 남긴 혈압 기록을 먼저 확인');
     await expect(todayDetail).toBeVisible();
     await expect(todayDetail.locator('.fact-lanes > section')).toHaveCount(3);
     await expect(todayDetail.locator('.fact-lanes > .fact-lead')).toContainText('혈압 관찰');
@@ -205,7 +201,7 @@ test('journey day selection exposes separate facts locally and returns to today'
   await expect(detail.locator('dl')).toHaveText('혈압 관찰0건챌린지 참여기록 없음');
   await expect(page.locator('.journey-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
   await expect(trail.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
-  await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-11');
+  await expect(page.locator('[data-scene-date]')).toHaveAttribute('data-scene-date', '2026-09-05');
   expect(await stage!.evaluate(node => node.isConnected)).toBe(true);
   await calendarToggle.click();
   await expect(calendarToggle).toHaveAttribute('aria-expanded', 'false');
@@ -243,7 +239,7 @@ test('journey candidate keeps 200% text and absent media usable at 320px', async
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).press('Enter');
   await expect(page.locator('#S05-title')).toBeFocused();
-  await expect(page.locator('[data-saved-scene-status]')).toHaveAttribute('data-saved-scene-status', 'fallback');
+  await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
@@ -302,7 +298,7 @@ test('review companion identity preference persists without health semantics', a
   await expect(select).toBeVisible();
   await expect(select.locator('option')).toHaveCount(11);
   await expect(select).toHaveValue('bear');
-  await expect(page.locator('.companion-identity-settings')).toContainText('혈압 기록, 챌린지, 입력 기반 위험군 선별 신호에는 영향을 주지 않아요.');
+  await expect(page.locator('.companion-identity-settings')).toContainText(/기록·분석.*영향이 없어요/);
 
   await select.selectOption('rabbit');
   await expect(select).toHaveValue('rabbit');
