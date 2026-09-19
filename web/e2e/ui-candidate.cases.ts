@@ -150,25 +150,82 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
   expect(errors).toEqual([]);
 });
 
-test('S11 outcome continues to blood-pressure entry when today has no BP record', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 });
-  await setup(page);
+const s11ContinuationCases = [
+  { name: 'A: no BP, no challenge', bp: false, challenge: 'none', key: 'record-blood-pressure', action: '혈압 기록 남기기', destination: 'S04' },
+  { name: 'B: no BP, pending challenge', bp: false, challenge: 'pending', key: 'record-blood-pressure', action: '혈압 기록 남기기', destination: 'S04' },
+  { name: 'C: BP, pending challenge', bp: true, challenge: 'pending', key: 'record-challenge', action: '오늘 상태 확인·기록하기', destination: 'S07' },
+  { name: 'D: BP, completed challenge check-in', bp: true, challenge: 'completed', key: 'review-today', action: '오늘 기록 확인하기', destination: 'S07' },
+  { name: 'E: BP, skipped challenge check-in', bp: true, challenge: 'skipped', key: 'review-today', action: '오늘 기록 확인하기', destination: 'S07' },
+  { name: 'F: BP, no challenge', bp: true, challenge: 'none', key: 'review-today', action: '오늘 기록 확인하기', destination: 'S07' },
+  { name: 'G: BP, ended challenge', bp: true, challenge: 'ended', key: 'review-today', action: '오늘 기록 확인하기', destination: 'S07' },
+] as const;
+
+async function setupS11Continuation(page: Page, state: typeof s11ContinuationCases[number]) {
+  const requests = await setup(page);
   await page.clock.setFixedTime(new Date('2026-09-17T03:00:00Z'));
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    return route.fulfill({
+      status: 200, headers, contentType: 'application/json',
+      body: JSON.stringify({
+        start_on: '2026-09-11', end_on: '2026-09-17',
+        blood_pressure_observations: state.bp ? [{
+          id: 'synthetic-s11-morning', observed_on: '2026-09-17', period: 'morning', systolic: 120, diastolic: 80,
+        }] : [],
+        active_challenge: state.challenge === 'none' ? null : {
+          id: 'synthetic-s11-challenge', action_id: 'walk-10-minutes',
+          starts_on: state.challenge === 'ended' ? '2026-09-10' : '2026-09-11',
+          ends_on: state.challenge === 'ended' ? '2026-09-16' : '2026-09-17',
+          first_checkin_on: ['completed', 'skipped'].includes(state.challenge) ? '2026-09-17' : null,
+          status: 'active',
+        },
+        challenge_checkins: state.challenge === 'completed' || state.challenge === 'skipped' ? [{
+          id: 'synthetic-s11-checkin', challenge_id: 'synthetic-s11-challenge', observed_on: '2026-09-17',
+          action_id: 'walk-10-minutes', status: state.challenge,
+        }] : [],
+        challenge_events: [],
+      }),
+    });
+  });
+  return requests;
+}
+
+for (const state of s11ContinuationCases) test(`S11 continuation ${state.name}`, async ({ page }) => {
+  const requests = await setupS11Continuation(page, state);
   await page.goto('/?e2e=signed-in&screen=S11');
   await completeS11LifestyleSurvey(page);
 
   const result = page.locator('[data-model-v2-user-result="processed"]');
-  await expect(result.locator('[data-model-v2-preview-value]')).toBeVisible();
+  await expect(page.locator('#model-v2-result-title')).toBeFocused();
   await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
-  const bp = result.locator('[data-model-v2-continuity="blood-pressure"]');
-  const challenge = result.locator('[data-model-v2-continuity="challenge"]');
-
   await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
-  await expect(bp).toContainText('오늘 혈압 기록 전');
-  await expect(challenge).toContainText('진행 중인 7일 챌린지가 없어요.');
-  await expect(result).toContainText('설문 답을 평가해 추천하는 것이 아니라');
-  await page.getByRole('button', { name: '혈압 기록 남기기', exact: true }).click();
-  await expect(page.locator('#S04-title')).toBeFocused();
+  await expect(result.getByRole('heading', { name: '다음 한 걸음', exact: true })).toBeVisible();
+  const continuation = result.locator('[data-model-v2-continuation]');
+  await expect(continuation).toHaveAttribute('data-model-v2-continuation', state.key);
+  await expect(continuation.getByRole('button')).toHaveCount(1);
+  await expect(result).toContainText('다음 행동은 분석값이 아니라, 현재 앱에 남아 있는 오늘 기록 상태만 보고 정해요.');
+  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText(state.bp ? '오늘 아침 기록 있음' : '오늘 혈압 기록 전');
+  const challenge = result.locator('[data-model-v2-continuity="challenge"]');
+  await expect(challenge).toContainText(state.challenge === 'none' ? '진행 중인 7일 챌린지가 없어요.'
+    : state.challenge === 'ended' ? '기간이 끝났어요.'
+      : state.challenge === 'completed' ? '오늘 상태 기록함'
+        : state.challenge === 'skipped' ? '오늘 상태 건너뜀' : '오늘 상태는 아직 기록하지 않았어요.');
+  await expect(result.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true })).toHaveCount(1);
+  await expect(result.getByRole('button', { name: /^(기록함|건너뜀)$/ })).toHaveCount(0);
+  await page.keyboard.press('Tab');
+  await expect(continuation.getByRole('button', { name: state.action, exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator(`#${state.destination}-title`)).toBeFocused();
+  await expect(result).toHaveCount(0);
+  if (state.destination === 'S07') {
+    await expect(page.locator('.journey-today-bp-records')).toContainText('120/80 mmHg');
+    for (const action of ['기록함', '건너뜀']) {
+      const control = page.getByRole('button', { name: action, exact: true });
+      if (state.challenge === 'pending') await expect(control).toBeEnabled();
+      else await expect(control).toHaveCount(0);
+    }
+  }
+  expect(requests.posts()).toBe(0);
 });
 
 test('S11 post-survey journey closes through BP save, saved confirmation, today, and a fresh S11', async ({ page }) => {
@@ -211,53 +268,142 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await expect(page.locator('#model-weight')).toHaveValue('');
 });
 
-test('S11 outcome opens today detail when a BP record already exists', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await setup(page);
-  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
-    const request = route.request();
-    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
-    return route.fulfill({
-      status: 200,
-      headers,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        start_on: '2026-09-05',
-        end_on: '2026-09-11',
-        blood_pressure_observations: [{
-          id: 'synthetic-s11-morning',
-          observed_on: '2026-09-11',
-          period: 'morning',
-          systolic: 120,
-          diastolic: 80,
-        }],
-        active_challenge: {
-          id: 'synthetic-s11-challenge',
-          action_id: 'walk-10-minutes',
-          starts_on: '2026-09-05',
-          ends_on: '2026-09-11',
-          first_checkin_on: null,
-          status: 'active',
-        },
-        challenge_checkins: [],
-        challenge_events: [],
-      }),
+for (const screen of ['S02', 'S12', 'S05', 'S06']) {
+  test(`empty routing truthfulness for ${screen} across ready, refreshing and refresh-error`, async ({ page }) => {
+    await setupS11Continuation(page, s11ContinuationCases[0]);
+    await page.goto(`/?e2e=signed-in&screen=${screen}`);
+    await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    await expect(page.locator('#S10-title')).toBeVisible();
+    const held = deferred();
+    let refreshing = false;
+    await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      refreshing = true;
+      await held.promise;
+      return route.fulfill({ status: 503, headers, contentType: 'application/json', body: JSON.stringify({ detail: { code: 'temporarily_unavailable' } }) });
     });
+    try {
+      await page.getByRole('button', { name: '새로고침', exact: true }).click();
+      await expect.poll(() => refreshing).toBe(true);
+      // Restore the original requested route without reloading the retained window.
+      await page.goBack();
+      await expect(page).toHaveURL(new RegExp(`screen=${screen}`));
+      for (const freshness of ['refreshing', 'refresh-error']) {
+        if (freshness === 'refresh-error') {
+          held.release();
+          await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
+        }
+        await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+        await expect(page.locator('[data-scene="S12"], [data-scene="S05"], [data-scene="S06"]')).toHaveCount(0);
+      }
+    } finally {
+      held.release();
+    }
   });
+}
 
-  await page.goto('/?e2e=signed-in&screen=S11');
-  await completeS11LifestyleSurvey(page);
-
-  const result = page.locator('[data-model-v2-user-result="processed"]');
-  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText('오늘 아침 기록 있음');
-  await expect(result.locator('[data-model-v2-continuity="challenge"]')).toContainText(
-    '10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.',
-  );
-
-  await page.getByRole('button', { name: '오늘 혈압 기록 보기', exact: true }).click();
-  await expect(page.locator('#S07-title')).toBeFocused();
-  await expect(page.locator('.journey-today-bp-records')).toContainText('120/80 mmHg');
+test('empty routing truthfulness preserves confirmed prior-window empty copy', async ({ page }) => {
+  await setupS11Continuation(page, s11ContinuationCases[0]);
+  await page.goto('/?e2e=signed-in&screen=S12&dashboard_window=prior');
+  const empty = page.locator('[data-scene="S12"]');
+  await expect(empty).toBeVisible();
+  await expect(empty).toContainText('이전 7일 · 읽기 전용');
+  await expect(empty).toContainText('이 기간에는 기록이 없어요.');
 });
+
+for (const retainedEmpty of [false, true]) test(`S11 continuation H: retained ${retainedEmpty ? 'empty' : 'BP/challenge'} refreshing and refresh-error facts return to Today without duplicate actions`, async ({ page }) => {
+  await setupS11Continuation(page, s11ContinuationCases[retainedEmpty ? 0 : 2]);
+  await page.goto('/?e2e=signed-in&screen=S10');
+  await expect(page.locator('#S10-title')).toBeVisible();
+  const held = deferred();
+  let refreshing = false;
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    refreshing = true;
+    await held.promise;
+    return route.fulfill({ status: 503, headers, contentType: 'application/json', body: JSON.stringify({ detail: { code: 'temporarily_unavailable' } }) });
+  });
+  try {
+    await page.getByRole('button', { name: '새로고침', exact: true }).click();
+    await expect.poll(() => refreshing).toBe(true);
+    await page.getByRole('button', { name: '설정과 도움말', exact: true }).click();
+    await page.getByRole('button', { name: '선별 신호 도구 열기', exact: true }).click();
+    await completeS11LifestyleSurvey(page);
+    const result = page.locator('[data-model-v2-user-result="processed"]');
+    const next = result.locator('.model-v2-result-next');
+    for (const freshness of ['refreshing', 'refresh-error']) {
+      if (freshness === 'refresh-error') {
+        held.release();
+        await expect(page.getByText('최신 여부 미확인', { exact: true })).toBeVisible();
+      }
+      await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
+      await expect(result.locator('[data-model-v2-continuation]')).toHaveAttribute('data-model-v2-continuation', 'confirm-today');
+      await expect(next.getByRole('heading', { name: '오늘 기록 상태를 먼저 확인해요', exact: true })).toBeVisible();
+      await expect(next.getByRole('button')).toHaveCount(1);
+      await expect(next.getByRole('button')).toHaveText('오늘 화면에서 확인하기');
+      const context = result.locator('.model-v2-next-context');
+      await expect(context.locator('[data-model-v2-continuity="blood-pressure"] strong')).toHaveText('오늘 혈압 상태 · 최신 여부 미확인');
+      await expect(context.locator('[data-model-v2-continuity="challenge"] strong')).toHaveText('오늘 챌린지 상태 · 최신 여부 미확인');
+      await expect(context).not.toContainText(/오늘 아침 기록 있음|오늘 혈압 기록 전|오늘 상태는 아직 기록하지 않았어요|진행 중인 7일 챌린지가 없어요/);
+    }
+    await next.getByRole('button').click();
+    await expect(page.locator('#S02-title')).toBeFocused();
+    await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+    await expect(result).toHaveCount(0);
+  } finally {
+    held.release();
+  }
+});
+
+test('S11 continuation treats a prior-window view as unconfirmed current facts', async ({ page }) => {
+  await setup(page);
+  await page.clock.setFixedTime(new Date('2026-09-17T03:00:00Z'));
+  await page.goto('/?e2e=signed-in&screen=S11&dashboard_window=prior');
+  await completeS11LifestyleSurvey(page);
+  const result = page.locator('[data-model-v2-user-result="processed"]');
+  await expect(result.locator('[data-model-v2-continuation]')).toHaveAttribute('data-model-v2-continuation', 'confirm-today');
+  await expect(result.locator('[data-model-v2-continuity="blood-pressure"]')).toContainText('오늘 혈압 상태 · 최신 여부 미확인');
+  await expect(result.locator('[data-model-v2-continuity="challenge"]')).toContainText('오늘 챌린지 상태 · 최신 여부 미확인');
+  await expect(result.getByRole('button')).toHaveCount(1);
+  await result.getByRole('button', { name: '오늘 화면에서 확인하기', exact: true }).click();
+  await expect(page.locator('#S02-title')).toBeFocused();
+  await expect(page).not.toHaveURL(/dashboard_window=/);
+});
+
+for (const viewport of [{ width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`S11 continuation hierarchy and reachability at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await setupS11Continuation(page, s11ContinuationCases[2]);
+    await page.goto('/?e2e=signed-in&screen=S11');
+    await completeS11LifestyleSurvey(page);
+    const result = page.locator('[data-model-v2-user-result="processed"]');
+    await expect(result.locator('[data-model-v2-preview-value]')).toBeInViewport();
+    await expect(result.locator('.model-v2-local-privacy')).toBeVisible();
+    expect(await result.evaluate(element => {
+      const ordered = ['.model-v2-outcome-heading', '.model-v2-summary-heading', '.model-v2-result-summary', '.model-v2-continuation', '.model-v2-next-context', '.model-v2-result-model-note'];
+      return ordered.slice(1).every((selector, index) => Boolean(element.querySelector(ordered[index])!.compareDocumentPosition(element.querySelector(selector)!) & Node.DOCUMENT_POSITION_FOLLOWING));
+    })).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`s11-result-${viewport.width}.png`), fullPage: true });
+    await page.keyboard.press('Tab');
+    const primary = result.locator('[data-model-v2-continuation] button');
+    await expect(primary).toBeFocused();
+    await expect(primary).toBeInViewport({ ratio: 1 });
+    expect(await primary.evaluate(element => {
+      const box = element.getBoundingClientRect();
+      return box.width >= 44 && box.height >= 44
+        && element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+    })).toBe(true);
+    if (viewport.width === 390) {
+      const buttonBox = (await primary.boundingBox())!;
+      const navBox = (await page.locator('.primary-nav').boundingBox())!;
+      expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`s11-continuation-${viewport.width}.png`) });
+  });
+}
 
 test('heejoo feedback closeout keeps S02 mobile compact and the starting-point tool reachable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

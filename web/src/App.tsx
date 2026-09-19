@@ -9,6 +9,7 @@ import { StructuredRecapFeedback } from "./components/StructuredRecapFeedback";
 import { LivingWeekReport } from "./components/LivingWeekReport";
 
 import { JourneyToday } from "./components/JourneyToday";
+import { resolveModelV2Continuation } from "./components/modelV2Continuation";
 import { LoginCompanionNarrator } from "./components/LoginCompanionNarrator";
 
 import { VisualStage } from "./components/VisualStage";
@@ -1249,17 +1250,14 @@ function App() {
   const reportAvailable = !evidenceMode && Boolean(session) && (!isPriorDashboard || isCycleReview) && ready
     && windowData?.start_on === startOn && windowData?.end_on === endOn;
   const reportVisible = reportCreatedAt !== null && reportAvailable && requestedScreen === "S10";
-  const automaticallyEmpty =
-    ready &&
-    requestedScreen === "S02" &&
-    isWindowEmpty(windowData) &&
-    !confirmedSave;
-  const truthfulFallback: ScreenId = isWindowEmpty(windowData) ? "S12" : "S02";
+  const confirmedWindowEmpty = windowState === "ready" && isWindowEmpty(windowData);
+  const automaticallyEmpty = confirmedWindowEmpty && requestedScreen === "S02" && !confirmedSave;
+  const truthfulFallback: ScreenId = confirmedWindowEmpty ? "S12" : "S02";
   const activeScreen: ScreenId = windowState === "error"
     ? "S13"
     : requestedScreen === "S05" && !confirmedSave
       ? truthfulFallback
-      : requestedScreen === "S13" || (requestedScreen === "S12" && !isWindowEmpty(windowData))
+      : requestedScreen === "S13" || (requestedScreen === "S12" && !confirmedWindowEmpty)
         ? truthfulFallback
         : requestedScreen === "S06" && !activeChallenge
           ? truthfulFallback
@@ -1362,12 +1360,17 @@ function App() {
     },
   ] as HomeAction[]).filter((item) => item.key !== homeLead.key);
 
-  const modelV2BloodPressureAction = {
-    status: todayBloodPressureStatus,
-    support: todayBloodPressureSupport,
-    label: todayMeasurement ? "오늘 혈압 기록 보기" : "혈압 기록 남기기",
-    screen: todayMeasurement ? "S07" as const : "S04" as const,
-  };
+  const modelV2Continuation = resolveModelV2Continuation(
+    windowState !== "ready" || isPriorDashboard
+      ? { freshness: "retained_or_unconfirmed" }
+      : {
+        freshness: "confirmed",
+        bloodPressure: todayMeasurement ? "exists" : "missing",
+        challenge: !activeChallenge ? "none"
+          : activeChallengeEnded ? "ended"
+            : todayCheckin ? "active_recorded" : "active_pending",
+      },
+  );
   const modelV2ChallengeStatus = activeChallengeEnded && activeChallenge
     ? `${challengeLabel(activeChallenge.action_id)} · 기간이 끝났어요.`
     : activeChallenge
@@ -1998,12 +2001,12 @@ function App() {
           key={session.user.id}
           session={session}
           captureRequestContext={captureRequestContext}
-          bloodPressureStatus={modelV2BloodPressureAction.status}
-          bloodPressureSupport={modelV2BloodPressureAction.support}
-          bloodPressureActionLabel={modelV2BloodPressureAction.label}
-          challengeStatus={modelV2ChallengeStatus}
-          challengeSupport={modelV2ChallengeSupport}
-          onStartBloodPressure={() => navigate(modelV2BloodPressureAction.screen)}
+          bloodPressureStatus={modelV2Continuation.key === "confirm-today" ? "오늘 혈압 상태 · 최신 여부 미확인" : todayBloodPressureStatus}
+          bloodPressureSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 기록을 확인해요." : todayBloodPressureSupport}
+          continuation={modelV2Continuation}
+          challengeStatus={modelV2Continuation.key === "confirm-today" ? "오늘 챌린지 상태 · 최신 여부 미확인" : modelV2ChallengeStatus}
+          challengeSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 챌린지 상태를 확인해요." : modelV2ChallengeSupport}
+          onContinue={() => navigate(modelV2Continuation.destination)}
           onReturnToToday={() => navigate("S02")}
           isCurrentRequestContext={isCurrentRequestContext}
         />

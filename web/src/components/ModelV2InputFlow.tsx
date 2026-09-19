@@ -11,6 +11,7 @@ import { Scene } from "./SceneShell";
 import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
+import type { ModelV2Continuation } from "./modelV2Continuation";
 import "./ModelV2InputFlow.css";
 
 type Props = {
@@ -19,10 +20,10 @@ type Props = {
   isCurrentRequestContext: (requestContext: ModelV2RequestContext) => boolean;
   bloodPressureStatus: string;
   bloodPressureSupport: string;
-  bloodPressureActionLabel: string;
+  continuation: ModelV2Continuation;
   challengeStatus: string;
   challengeSupport: string;
-  onStartBloodPressure: () => void;
+  onContinue: () => void;
   onReturnToToday: () => void;
 };
 
@@ -472,10 +473,10 @@ export function ModelV2InputFlow({
   isCurrentRequestContext,
   bloodPressureStatus,
   bloodPressureSupport,
-  bloodPressureActionLabel,
+  continuation,
   challengeStatus,
   challengeSupport,
-  onStartBloodPressure,
+  onContinue,
   onReturnToToday,
 }: Props) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -700,10 +701,10 @@ export function ModelV2InputFlow({
               previewOutput={previewOpen ? previewOutput : null}
               bloodPressureStatus={bloodPressureStatus}
               bloodPressureSupport={bloodPressureSupport}
-              bloodPressureActionLabel={bloodPressureActionLabel}
+              continuation={continuation}
               challengeStatus={challengeStatus}
               challengeSupport={challengeSupport}
-              onStartBloodPressure={onStartBloodPressure}
+              onContinue={onContinue}
               onReturnToToday={onReturnToToday}
             />
           ) : (
