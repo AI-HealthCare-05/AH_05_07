@@ -11,7 +11,7 @@
 .journey-today.scene[data-scene="S02"] { display: block; padding: 0 0 1rem; --sk7-focus: #103e3e; }
 .today-journey { min-width: 0; display: grid; gap: .75rem; }
 .today-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); min-height: 310px; padding: 1.5rem 3rem; border-radius: 1.25rem 1.25rem .8rem .8rem; background: #f0f4ef url('/assets/home-window-garden-v2.webp') center 58% / cover no-repeat; }
-.today-hero::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(90deg, #f7fcf3eb, #f7fcf3a8 36%, #fffdf21a 56%, transparent 70%); }
+.today-hero::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(90deg, #f7fcf3eb 0%, #f7fcf3c7 30%, #fffdf252 46%, transparent 62%); }
 .today-desk { min-width: 0; display: grid; align-content: center; gap: 1.1rem; z-index: 2; }
 .journey-today .scene-copy { gap: .6rem; }
 .journey-today .scene-copy .eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; color: #475e61; font-size: .75rem; font-weight: 550; letter-spacing: 0; }
@@ -213,7 +213,7 @@
  .journey-today .living-week-heading > .living-week-title { gap: .4rem; }
  .journey-today .living-week-heading p { display: none; }
  .today-leaf { flex-basis: 1.5rem; width: 1.5rem; }
- .today-hero::before { background: linear-gradient(180deg, #f5fcf2ec, #f5fcf2d4 35%, #f5fcf21a 75%); }
+ .today-hero::before { background: linear-gradient(180deg, #f5fcf2ec 0%, #f5fcf2c9 28%, #f5fcf25c 48%, transparent 70%); }
   .today-companion-greeting { top: 2.25rem; right: 5%; }
 }
 @media (max-width: 350px) and (max-height: 650px) {
