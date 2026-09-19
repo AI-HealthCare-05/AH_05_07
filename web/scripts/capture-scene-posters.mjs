@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
@@ -11,7 +12,9 @@ import { sceneCaptureProfiles, sceneRegistrations } from "./scene-asset-inputs.m
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const web = path.join(root, "web");
+const require = createRequire(import.meta.url);
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
+const playwrightVersion = require("@playwright/test/package.json").version;
 const manifest = JSON.parse(await fs.readFile(path.join(web, "src/ui/scene-manifest.v2.json"), "utf8"));
 const selectedScreen = process.argv.find(arg => arg.startsWith("--screen="))?.slice(9);
 if (selectedScreen && !Object.hasOwn(sceneRegistrations, selectedScreen)) throw new Error("Only S02 or S10 capture is registered");
@@ -28,10 +31,18 @@ try {
   });
   server = await preview({ root: web, build: { outDir: temporary }, preview: { host: "127.0.0.1", port: 4173, strictPort: true } });
   browser = await chromium.launch();
+  const captureEnvironment = {
+    platform: process.platform,
+    arch: process.arch,
+    node: process.version,
+    playwright: playwrightVersion,
+    chromium: browser.version(),
+    webgl: { vendor: null, renderer: null },
+  };
   for (const screen of screens) {
   const registration = sceneRegistrations[screen];
   const { directory } = registration;
-  const sourceHashes = Object.fromEntries(await Promise.all(registration.sources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
+  const sourceHashes = Object.fromEntries(await Promise.all(registration.captureSources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
   const recipes = manifest.recipes.filter(recipe => recipe.mode === "realtime" && recipe.screens.includes(screen));
   await fs.mkdir(path.join(web, "public", directory), { recursive: true });
   const posters = [];
@@ -62,6 +73,21 @@ try {
       }, { width: stageWidth, height: stageHeight });
       await stage.scrollIntoViewIfNeeded();
       await page.locator('[data-living-scene-status="ready"]').waitFor({ timeout: 20000 });
+      const webgl = await page.locator(".living-three-scene canvas").evaluate(canvas => {
+        const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+        if (!context) return { vendor: null, renderer: null };
+        const debug = context.getExtension("WEBGL_debug_renderer_info");
+        const readString = parameter => {
+          const value = context.getParameter(parameter);
+          return typeof value === "string" && value.trim() ? value : null;
+        };
+        return {
+          vendor: readString(debug?.UNMASKED_VENDOR_WEBGL ?? context.VENDOR),
+          renderer: readString(debug?.UNMASKED_RENDERER_WEBGL ?? context.RENDERER),
+        };
+      });
+      captureEnvironment.webgl.vendor ??= webgl.vendor;
+      captureEnvironment.webgl.renderer ??= webgl.renderer;
       const metrics = await stage.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight, background: getComputedStyle(element).backgroundColor }));
       if (metrics.width !== stageWidth || metrics.height !== stageHeight) {
         throw new Error(`${screen} ${landmarkId} ${profile}: stage geometry ${metrics.width}x${metrics.height} does not match capture contract ${stageWidth}x${stageHeight}`);
@@ -89,6 +115,7 @@ try {
   }
   const evidence = { status: "review-only", deliveryStatus: "local capture originals; public delivery requires separate evidence", intendedR2Bucket: "sk7-assets-prod", intendedPublicOrigin: "https://sk7-companion.gkrry.com",
     source: "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching", sourceHashes,
+    captureEnvironment,
     characterSha256: character.delivery.sha256, characterRightsReference: character.provenance.reviewReference,
     visualDirectionReferences: ["DAHUPjn8shI", "DAHUPjDn-Rw"], visualDirectionUse: "Canva reference contract only; these posters are not Canva exports",
     renderer: { three: "0.185.1", chromium: browser.version(), deviceScaleFactor: 2, rendererDprCap: 1.25, webpQuality: 0.9 },
