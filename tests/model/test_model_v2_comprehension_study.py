@@ -29,8 +29,8 @@ def test_clopper_pearson_lower_monotonic():
 
 def test_clopper_pearson_lower_all_success():
     # When all n are successes, LB = alpha^(1/n).
-    assert study.clopper_pearson_lower(10, 10) == pytest.approx(0.05 ** 0.1)
-    assert study.clopper_pearson_lower(100, 100) == pytest.approx(0.05 ** 0.01)
+    assert study.clopper_pearson_lower(10, 10) == pytest.approx(0.05**0.1)
+    assert study.clopper_pearson_lower(100, 100) == pytest.approx(0.05**0.01)
 
 
 def test_clopper_pearson_lower_all_failure():
@@ -43,6 +43,32 @@ def test_clopper_pearson_matches_beta_quantile_for_small_n():
         lb = study.clopper_pearson_lower(k, n)
         sf = study.binomial_sf(k, n, lb)
         assert sf == pytest.approx(0.05, abs=1e-6)
+
+
+def test_arm_specific_question_wording_preserves_constructs_without_unseen_82():
+    for arm in study.ARMS:
+        assert set(study.QUESTION_TEXT_BY_ARM[arm]) == {item["id"] for item in study.CRITICAL_ITEMS}
+        for item in study.CRITICAL_ITEMS:
+            assert study.question_text(arm, item["id"])
+    assert "82" not in study.question_text("A", "q1")
+    assert "82" in study.question_text("B", "q1")
+    assert "82" not in study.question_text("C", "q1")
+    assert "82" in study.question_text("D", "q1")
+    assert "82" not in study.question_text("E", "q1")
+
+
+def test_missing_responses_remain_in_primary_denominator_and_count_incorrect():
+    correct = {item["id"]: item["correct"] for item in study.CRITICAL_ITEMS}
+    rows = [
+        {"participant_id": "p1", "arm": "A", "responses": dict(correct)},
+        {"participant_id": "p2", "arm": "A", "responses": dict(correct)},
+    ]
+    rows[1]["responses"]["q1"] = None
+    summary = study.arm_summary(study.score_rows(rows))
+    assert summary["n"] == 2
+    assert summary["missing_responses"] == 1
+    assert summary["item_stats"]["q1"]["correct"] == 1
+    assert summary["item_stats"]["q1"]["rate"] == pytest.approx(0.5)
 
 
 def test_generate_synthetic_responses_is_deterministic():
@@ -165,7 +191,16 @@ def test_render_markdown_contains_all_arms():
     assert "SYNTHETIC DRY-RUN ONLY" in markdown
 
 
-def test_report_determinism():
+def test_report_determinism_has_no_hidden_wall_clock():
     first = study.deterministic_report(seed=99)
     second = study.deterministic_report(seed=99)
     assert first == second
+    assert first["created_at_utc"] == study.DEFAULT_CREATED_AT_UTC
+
+
+def test_explicit_report_timestamp_changes_metadata_not_scientific_payload():
+    first = study.deterministic_report(seed=99, created_at_utc="2026-09-19T04:00:00Z")
+    second = study.deterministic_report(seed=99, created_at_utc="2030-01-01T00:00:00Z")
+    assert first["created_at_utc"] != second["created_at_utc"]
+    for key in ("synthetic", "note", "n_total", "by_arm", "sample_size_table"):
+        assert first[key] == second[key]

@@ -19,13 +19,13 @@ Done:
 
 - Preserved the five B3 presentation arms (A–E) and the six critical comprehension
   questions.
-- Defined a future real-study protocol: eligibility, consent, randomization,
-  blinding, one-arm-per-participant design, neutral wording, primary/secondary
-  endpoints, exclusions, missing-response handling, stopping rules, analysis plan,
-  and exploratory-only subgroup analysis.
+- Defined a future real-study protocol: eligibility, consent, balanced blocked
+  randomization, one-arm-per-participant design, arm-specific neutral wording,
+  primary item-level safety gates, missing-response handling, quality flags,
+  stopping rules, analysis plan, and exploratory-only subgroup analysis.
 - Chose the exact Clopper-Pearson one-sided 95% lower confidence bound for
   binomial proportions before any recruitment.
-- Documented a reproducible sample-size / operating-characteristic table.
+- Documented a reproducible **per-critical-item** sample-size / operating-characteristic table without treating it as joint six-item arm power.
 - Designed an arm-comparison plan that uses critical-item gating and explicitly
   rejects "absence of significance = equal comprehension".
 - Generated synthetic response data, ran scoring, gating, and report generation.
@@ -61,7 +61,8 @@ users.**
 
 The dry-run used seed `20260919`, 60 synthetic participants per arm, 3% missing
 responses, and 2% invalid responses. Missing and invalid answers were scored as
-incorrect.
+incorrect. Report metadata uses an explicit timestamp, so the scientific payload
+has no hidden wall-clock dependency.
 
 ### Arm-level summary
 
@@ -178,13 +179,18 @@ sample sizes.
 
 Interpretation:
 
-- At a true correctness rate of 0.90, the observed-rate gate is the binding
-  constraint. Even with `n = 1000`, power to pass both gates is only about 53%.
-- At a true correctness rate of 0.95, `n = 200` per arm gives >99% power.
-- The criteria are therefore stringent. A real study would need either a large
-  per-arm sample or a true correctness rate well above 90% to have high power.
-  If the true rate is near 90%, the required sample size is large enough that
-  the study should be considered carefully for feasibility before recruitment.
+- These probabilities apply to **one critical item**, not to an entire arm
+  passing all six items.
+- At a true per-item correctness rate of 0.90, the observed-rate gate is the
+  binding constraint. Even with `n = 1000`, single-item power to pass both gates
+  is only about 53%.
+- At a true per-item correctness rate of 0.95, `n = 200` gives >99% single-item
+  power.
+- B4 does not infer joint arm power by assuming independence across the six
+  within-participant item responses and does not freeze a final `n` per arm.
+  Final sample size requires separate pre-recruitment scientific/statistical
+  review of the joint decision rule, dependence, attrition/technical
+  non-exposure, and feasibility.
 
 ## Privacy and data minimization
 
@@ -196,7 +202,7 @@ No participant-level data storage is implemented in this increment.
 
 ## Verification and scope audit
 
-Synthetic tests: **18 passed**.
+Synthetic tests: **21 passed** after supervisor hardening.
 
 Local execution used Python 3.13.14.
 

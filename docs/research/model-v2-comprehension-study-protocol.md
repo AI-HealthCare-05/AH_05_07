@@ -36,33 +36,47 @@ Do not redesign production S11. Research materials only.
 
 | Arm | Label | What is shown |
 | --- | --- | --- |
-| A | Raw output | `연구/개발 미리보기 · 낮은 연속 출력 0.635` |
-| B | Named finite-reference percentile | `연구 참조 데이터에서의 모델 출력 위치 · 82백분위` with explicit `not probability/diagnosis/peer-match` clarification |
-| C | Distribution marker without percentile number | Marker on the frozen reference output distribution; text label, not color-only |
-| D | 100-position explanation | `참조 데이터의 모델 출력 분포를 100개의 위치로 나누면 약 82번째 지점입니다.` |
+| A | Raw output | `연구/개발 미리보기 · 내부 연속 출력 0.635` |
+| B | Named finite-reference percentile | `조사 가중치를 적용한 연구 위치 · 약 82백분위`; the same synthetic score has unweighted finite rank about 77.56 |
+| C | Distribution marker without percentile number | Marker for the survey-weighted research-position example; text label, not color-only |
+| D | 100-position explanation | Survey-weighted research-position example described as `약 82번째 지점`; no population claim |
 | E | No comparison | Raw output origin and limitation only |
 
-## Critical comprehension items
+Arms B–D use the same **survey-weighted research-position example** for study
+consistency. The same synthetic score has an unweighted finite rank of about
+77.56. The weighting policy remains unresolved for product use; neither position
+is a Korean-population percentile or a disease probability.
 
-Preserve the six B3 questions. "Unsure / 모르겠다" does **not** count as correct.
+## Critical comprehension constructs
 
-| # | Question | Correct answer |
+Preserve the six B3 misconception constructs. "Unsure / 모르겠다" does **not**
+count as correct.
+
+| # | Construct | Correct concept |
 | --- | --- | --- |
-| 1 | Does `82백분위` mean an 82% chance of disease? | No |
-| 2 | Is this an age/sex-matched peer comparison? | No |
-| 3 | Does it mean "among people in poor health, top 18%"? | No |
-| 4 | Is this number a diagnosis? | No |
-| 5 | If the number goes down after a lifestyle change, does that prove health improvement caused by the change? | No |
-| 6 | What is actually being compared? | Frozen reference records scored by the same frozen model |
+| 1 | Disease-probability confusion | The displayed model output/reference position is not a disease probability |
+| 2 | Peer-match confusion | It is not an age/sex-matched peer comparison |
+| 3 | Health-severity confusion | It does not rank overall health or disease severity |
+| 4 | Diagnosis confusion | It is not a diagnosis |
+| 5 | Causal-improvement confusion | A lower later value/position does not prove lifestyle-caused improvement |
+| 6 | Actual comparator | Frozen research-reference records scored by the same frozen model |
+
+The **constructs and scoring key are fixed**, but the surface wording is
+arm-specific so participants are never asked about a stimulus they did not see.
+Arms A/E refer to the shown internal continuous output; B refers to the shown
+weighted percentile example; C refers to the distribution marker; D refers to
+the shown 100-position explanation. Primary scoring uses fixed-choice responses,
+including item #6, so no free-text health information or subjective rater
+adjudication is required.
 
 Question wording must remain neutral. Avoid leading phrases such as "this is just
-a position" or "do not worry." The answer key is fixed before recruitment.
+a position" or "do not worry."
 
 ## Study structure
 
 ### Eligibility
 
-- Adults aged 19–70 who can read Korean.
+- Adults aged 19+ who can read Korean.
 - General population sample; no hypertension diagnosis or clinical expertise
   required.
 - Participants must use a device and browser that can render the research
@@ -75,14 +89,16 @@ a position" or "do not worry." The answer key is fixed before recruitment.
   no follow-up health monitoring.
 - Participants may withdraw at any time without penalty.
 
-### Randomization and blinding
+### Randomization and masking
 
 - Participants are randomized 1:1:1:1:1 to one of the five arms.
-- Randomization uses a pre-generated blocked randomization list (block size 10,
-  stratified by self-reported age group and sex if collected).
-- Investigators who score open-text responses for item #6 are blinded to arm
-  assignment. Automated scoring of fixed-format items is not blinded by
-  necessity, but the scoring key is fixed before data collection.
+- Randomization uses a pre-generated balanced blocked list (block size 10).
+- Primary allocation is **not stratified by optional demographic variables**.
+  Optional age group, sex, education, or health-literacy items are collected only
+  for separately approved exploratory analysis.
+- All six primary comprehension items use a frozen fixed-choice scoring key.
+  Participants are not shown the other study arms before completing their
+  assigned arm.
 
 ### One presentation arm per participant
 
@@ -93,14 +109,13 @@ carry-over between arms.
 
 ### Comprehension questions
 
-- Six critical items: five true/false and one free-text/selected open response
-  for item #6.
-- Item #6 is scored against the exact concept: *frozen research-reference records
-  scored by the same frozen model*. Synonyms that capture the same concept are
-  acceptable if two independent raters agree; the pre-specified coding rubric is
-  the authority.
+- Six critical fixed-choice items implement the six frozen constructs with
+  arm-specific neutral wording.
+- Item #6 includes `frozen research-reference records scored by the same frozen
+  model` as the correct concept and plausible misconception distractors.
 - Optional demographic questions (age group, sex, education, self-rated health
-  literacy) may be collected for exploratory subgroup analysis only.
+  literacy) may be collected for exploratory subgroup analysis only and are not
+  required for randomization.
 
 ### Neutral wording
 
@@ -109,26 +124,36 @@ carry-over between arms.
 - Avoid: "obviously", "simply", "just a position", "do not confuse".
 - Use: "What does this number mean?", "Is the statement true or false?".
 
-### Primary endpoint
+### Primary decision rule
 
-For each arm, the proportion of participants who answer **all six critical items
-correctly**.
+For each arm, **every one of the six critical misconception items independently**
+must satisfy:
 
-### Secondary endpoints
+- observed correctness rate >= 90%; and
+- one-sided 95% lower confidence bound >= 80%.
 
-- Per-item correctness rate within each arm.
+The arm must also have mean overall understanding >= 80%. A failed critical item
+blocks that arm even when its average score is high.
+
+### Secondary/descriptive endpoints
+
+- Proportion answering all six critical items correctly.
+- Per-item correctness rate and confidence bound within each arm.
 - Time spent on the presentation screen.
 - Self-reported confidence (1–5) for each item.
-- Overall understanding, defined as the proportion of the six items answered
-correctly.
+- Mean overall understanding across the six items.
 
-### Exclusions
+### Primary analysis population and quality flags
 
-- Participants who do not complete all six critical items.
-- Participants who admit to having seen the study materials before the session.
-- Participants who fail an attention-check item embedded in the questionnaire.
-- Responses collected outside the approved field period or from unapproved
-  recruitment channels.
+After valid consent and successful exposure to the randomized arm, a participant
+remains in the primary analysis even if one or more critical responses are
+missing, invalid, or `unsure`; those responses count as incorrect.
+
+Pre-randomization ineligibility, duplicate/fraudulent enrollment, or failure to
+receive/render the assigned stimulus may be excluded only under rules frozen
+before recruitment. An attention-check failure is a **quality flag**, not an
+automatic primary-analysis exclusion; a secondary sensitivity analysis may
+report results with flagged records removed.
 
 ### Missing-response handling
 
@@ -151,18 +176,18 @@ correctly.
 
 ### Analysis plan
 
-1. **Primary analysis**: per-arm proportion of participants with all six critical
-   items correct.
-2. **Critical-item gating**: each arm must independently satisfy, for every
-   critical item:
-   - Observed correctness rate >= 90%.
-   - One-sided 95% lower confidence bound >= 80%.
-3. **Overall understanding**: each arm must show >= 80% mean overall
-   understanding.
+1. **Primary decision**: apply the per-item observed-rate and confidence-bound
+   gates independently to all six critical items within each arm.
+2. **Overall understanding gate**: each arm must show >= 80% mean overall
+   understanding; this never overrides a failed critical item.
+3. **Secondary all-correct endpoint**: report the proportion answering all six
+   critical items correctly, without using it to rescue a failed item-level gate.
 4. **Arm comparison**: descriptive only; no formal hypothesis test for "best
    arm". Multiplicity concerns preclude declaring a winner from multiple items.
-5. **Missing data**: single-value imputation = incorrect for primary analysis;
-   sensitivity analysis excludes missing responses.
+5. **Missing data**: missing/invalid/unsure critical responses count as incorrect
+   in the primary analysis; complete-case results are sensitivity analysis only.
+6. **Quality flags**: report attention-check/technical quality flags separately
+   and provide a sensitivity analysis if exclusions are scientifically justified.
 
 ### Subgroup analysis
 
@@ -222,14 +247,24 @@ The columns are:
 - `p_lb_ge_80`: probability one-sided 95% lower bound >= 0.80.
 - `p_pass`: probability both hold.
 
-Because every critical item in every arm must pass independently, the study is
-stringent. The table shows that even when the true rate is 0.90, modest samples
-have limited power to demonstrate the bound. At `n = 300` and true rate 0.95,
-power is already high; at `n = 100` and true rate 0.90`, power is only moderate.
+This table is a **per-critical-item operating characteristic only**. It is not
+the probability that an entire arm passes all six items, because responses to
+the six items from the same participant are dependent and no independence
+assumption is made.
 
-If the required criteria make the study impractical, the recommended action is to
-hold the study and revisit either the communication design or the criteria, not
-to relax the criteria after seeing data.
+The table shows that even when the true per-item rate is 0.90, the observed-rate
+gate remains difficult to pass with high probability. At `n = 300` and a true
+per-item rate of 0.95, single-item power is already high; at `n = 100` and a true
+rate of 0.90, it is only moderate.
+
+B4 therefore does **not** freeze a final `n` per arm. Before any recruitment, a
+separate scientific/statistical review must freeze the final sample size after
+considering the six-item joint decision rule, within-participant dependence,
+expected attrition/technical non-exposure, and feasibility.
+
+If the required criteria make the study impractical, the recommended action is
+to hold the study and revisit either the communication design or the criteria,
+not to relax the criteria after seeing data.
 
 ## Arm comparison
 
@@ -255,7 +290,7 @@ Collect only study-response data needed to evaluate comprehension.
 - Clinical records, medical histories, or BP measurements.
 - Model V2 inputs or raw model outputs from production accounts.
 - Production account identifiers, JWTs, or session tokens.
-- Free-text health information beyond the item #6 response.
+- Free-text health information; primary item #6 uses fixed-choice responses.
 
 **Allowed with consent:**
 
@@ -280,7 +315,7 @@ B4 creates only synthetic response data. The dry-run tests:
 - deterministic report generation.
 
 Synthetic results are prominently labeled synthetic and are never presented as
-.evidence from real users.
+evidence from real users.
 
 ## Decision options
 

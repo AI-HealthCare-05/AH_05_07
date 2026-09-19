@@ -9,7 +9,6 @@ report generation. No real participants.
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import json
 import math
 import random
@@ -35,13 +34,69 @@ ARM_LABELS = {
 }
 
 CRITICAL_ITEMS = [
-    {"id": "q1", "text_ko": "82백분위는 질환이 있을 확률 82%를 뜻하는가?", "correct": False},
-    {"id": "q2", "text_ko": "나이·성별이 비슷한 사람만 비교한 것인가?", "correct": False},
-    {"id": "q3", "text_ko": "건강상태가 나쁜 사람 중 상위 18%를 뜻하는가?", "correct": False},
-    {"id": "q4", "text_ko": "이 숫자는 진단인가?", "correct": False},
-    {"id": "q5", "text_ko": "숫자가 낮아지면 생활습관 때문에 건강이 좋아졌다는 뜻인가?", "correct": False},
-    {"id": "q6", "text_ko": "실제 비교되는 것은 무엇인가?", "correct": "frozen_reference"},
+    {"id": "q1", "construct": "disease_probability", "correct": False},
+    {"id": "q2", "construct": "peer_match", "correct": False},
+    {"id": "q3", "construct": "health_severity", "correct": False},
+    {"id": "q4", "construct": "diagnosis", "correct": False},
+    {"id": "q5", "construct": "causal_improvement", "correct": False},
+    {"id": "q6", "construct": "actual_comparator", "correct": "frozen_reference"},
 ]
+
+QUESTION_TEXT_BY_ARM = {
+    "A": {
+        "q1": "표시된 내부 연속 출력은 질환이 있을 확률을 뜻하는가?",
+        "q2": "표시된 내부 연속 출력은 나이·성별이 비슷한 사람만 비교한 값인가?",
+        "q3": "표시된 내부 연속 출력은 건강상태의 좋고 나쁨이나 심각도를 뜻하는가?",
+        "q4": "표시된 내부 연속 출력은 진단인가?",
+        "q5": "나중에 내부 연속 출력이 낮아지면 생활습관 때문에 건강이 좋아졌다고 증명되는가?",
+        "q6": "이 화면에서 실제로 보여주는 값은 무엇인가?",
+    },
+    "B": {
+        "q1": "표시된 약 82백분위는 질환이 있을 확률 82%를 뜻하는가?",
+        "q2": "표시된 약 82백분위는 나이·성별이 비슷한 사람만 비교한 값인가?",
+        "q3": "표시된 약 82백분위는 건강상태가 나쁜 사람 중 상위 18%를 뜻하는가?",
+        "q4": "표시된 약 82백분위는 진단인가?",
+        "q5": "나중에 이 위치가 낮아지면 생활습관 때문에 건강이 좋아졌다고 증명되는가?",
+        "q6": "이 위치를 계산할 때 실제로 비교되는 대상은 무엇인가?",
+    },
+    "C": {
+        "q1": "분포 위의 표시 위치는 질환이 있을 확률을 뜻하는가?",
+        "q2": "분포 위의 표시 위치는 나이·성별이 비슷한 사람만 비교한 값인가?",
+        "q3": "분포 위의 표시 위치는 건강상태의 좋고 나쁨이나 심각도를 뜻하는가?",
+        "q4": "분포 위의 표시 위치는 진단인가?",
+        "q5": "나중에 표시 위치가 낮아지면 생활습관 때문에 건강이 좋아졌다고 증명되는가?",
+        "q6": "이 분포 위치를 계산할 때 실제로 비교되는 대상은 무엇인가?",
+    },
+    "D": {
+        "q1": "표시된 약 82번째 지점은 질환이 있을 확률 82%를 뜻하는가?",
+        "q2": "표시된 약 82번째 지점은 나이·성별이 비슷한 사람만 비교한 값인가?",
+        "q3": "표시된 약 82번째 지점은 건강상태가 나쁜 사람 중 상위 18%를 뜻하는가?",
+        "q4": "표시된 약 82번째 지점은 진단인가?",
+        "q5": "나중에 이 위치가 낮아지면 생활습관 때문에 건강이 좋아졌다고 증명되는가?",
+        "q6": "이 위치를 계산할 때 실제로 비교되는 대상은 무엇인가?",
+    },
+    "E": {
+        "q1": "표시된 내부 연속 출력은 질환이 있을 확률을 뜻하는가?",
+        "q2": "표시된 내부 연속 출력은 나이·성별이 비슷한 사람만 비교한 값인가?",
+        "q3": "표시된 내부 연속 출력은 건강상태의 좋고 나쁨이나 심각도를 뜻하는가?",
+        "q4": "표시된 내부 연속 출력은 진단인가?",
+        "q5": "나중에 내부 연속 출력이 낮아지면 생활습관 때문에 건강이 좋아졌다고 증명되는가?",
+        "q6": "이 화면에서 실제로 보여주는 값은 무엇인가?",
+    },
+}
+
+DEFAULT_CREATED_AT_UTC = "2026-09-19T04:00:00Z"
+
+
+def question_text(arm: str, item_id: str) -> str:
+    # Return neutral arm-specific wording for one fixed comprehension construct.
+    if arm not in QUESTION_TEXT_BY_ARM:
+        raise ValueError("unknown arm")
+    try:
+        return QUESTION_TEXT_BY_ARM[arm][item_id]
+    except KeyError as exc:
+        raise ValueError("unknown critical item") from exc
+
 
 # Synthetic correctness probabilities per arm and item for the dry-run.
 SYNTHETIC_PROBABILITIES: dict[str, list[float]] = {
@@ -158,12 +213,8 @@ def score_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def arm_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Summarize one arm's scored responses."""
     n = len(rows)
-    missing = sum(
-        1 for row in rows for item in CRITICAL_ITEMS if row["responses"].get(item["id"]) is None
-    )
-    invalid = sum(
-        1 for row in rows for item in CRITICAL_ITEMS if row["responses"].get(item["id"]) == "invalid"
-    )
+    missing = sum(1 for row in rows for item in CRITICAL_ITEMS if row["responses"].get(item["id"]) is None)
+    invalid = sum(1 for row in rows for item in CRITICAL_ITEMS if row["responses"].get(item["id"]) == "invalid")
     item_stats = {}
     for item in CRITICAL_ITEMS:
         correct = sum(row["item_scores"][item["id"]] for row in rows)
@@ -185,7 +236,10 @@ def arm_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "overall_understanding": overall_correct / (n * len(CRITICAL_ITEMS)) if n else 0.0,
         "all_correct_rate": all_correct_count / n if n else 0.0,
         "all_correct_lower_bound": clopper_pearson_lower(all_correct_count, n),
-        "passes_gating": all(stats["pass_observed"] and stats["pass_bound"] for stats in item_stats.values()) and (overall_correct / (n * len(CRITICAL_ITEMS)) >= 0.80 if n else False),
+        "passes_gating": (
+            all(stats["pass_observed"] and stats["pass_bound"] for stats in item_stats.values())
+            and (overall_correct / (n * len(CRITICAL_ITEMS)) >= 0.80 if n else False)
+        ),
     }
 
 
@@ -233,15 +287,18 @@ def sample_size_table(
     return table
 
 
-def deterministic_report(seed: int = 20260919) -> dict[str, Any]:
-    """Run the full synthetic dry-run and return a deterministic report."""
+def deterministic_report(
+    seed: int = 20260919,
+    created_at_utc: str = DEFAULT_CREATED_AT_UTC,
+) -> dict[str, Any]:
+    """Run the full synthetic dry-run with no hidden wall-clock dependency."""
     rows = generate_synthetic_responses(seed=seed)
     scored = score_rows(rows)
     by_arm = summarize_by_arm(scored)
     table = sample_size_table()
     return {
         "protocol_baseline": B3_BASELINE,
-        "created_at_utc": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "created_at_utc": created_at_utc,
         "synthetic": True,
         "note": "SYNTHETIC DRY-RUN ONLY; NOT EVIDENCE FROM REAL USERS",
         "n_total": len(scored),
@@ -283,7 +340,10 @@ def render_markdown(report: dict[str, Any]) -> str:
             )
         lines.append("")
     lines.extend(["## Sample-size / operating-characteristic table", ""])
-    lines.append("Probability that a single critical item passes both the observed-rate (>=90%) and one-sided 95% lower-bound (>=80%) gates.")
+    lines.append(
+        "Probability that one critical item passes both the observed-rate (>=90%) "
+        "and one-sided 95% lower-bound (>=80%) gates. This is not arm-level joint power."
+    )
     lines.append("")
     lines.append("| n | true_rate | P(obs>=90%) | P(LB>=80%) | P(pass both) |")
     lines.append("| --- | --- | --- | --- | --- |")
@@ -299,12 +359,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=20260919)
     parser.add_argument("--output", type=Path, help="optional JSON output path")
+    parser.add_argument(
+        "--created-at",
+        default=DEFAULT_CREATED_AT_UTC,
+        help="explicit metadata timestamp; defaults to the frozen B4 protocol timestamp",
+    )
     args = parser.parse_args()
-    report = deterministic_report(seed=args.seed)
+    report = deterministic_report(seed=args.seed, created_at_utc=args.created_at)
     print(render_markdown(report))
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, sort_keys=True, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(report, sort_keys=True, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     return 0
 
 
