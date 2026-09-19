@@ -67,7 +67,7 @@ The database permits at most one row per user, surface, and Korea submission dat
 
 | Method | Path | Auth | Success | Current behavior |
 |---|---|---|---:|---|
-| POST | `/api/v1/model-v2/product-score` | Supabase JWT | `200` | S11 product path; response is exactly the two fields below. |
+| POST | `/api/v1/model-v2/product-score` | Supabase JWT | `200` | Authenticated server contract; response is exactly the two fields below. Normal signed-in S11 computes browser-locally and does not send a feature-bearing inference POST. |
 | POST | `/api/v1/model-v2/score` | Supabase JWT | `200` | Authenticated semantic route present in generated OpenAPI; uses the same two-field response projection. |
 | POST | `/api/v1/risk-signal` | Not product-connected | `503` | Legacy scaffold; not the current Model V2 product surface. |
 
