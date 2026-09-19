@@ -152,7 +152,9 @@ answer the six critical questions.
 
 Synthetic tests: **15 passed, 1 local integration skipped** (without data).  
 Approved local integration: **16 passed** with byte-identical aggregate output
-across two runs.
+across two runs. The integration test asserts that B3 resolves only the frozen
+R1 artifact and the G6 validation 2024 parquet; development, temporal, and
+final-test sources are not opened.
 
 Commands:
 
@@ -169,9 +171,9 @@ uv run --frozen --group ai python -m pytest \
 Local execution used Python 3.13.14, NumPy 2.4.1, pandas 3.0.5,
 scikit-learn 1.8.0, joblib 1.5.3, PyArrow 25.0.1.
 
-- Aggregate evidence SHA-256: `ca1d771d5d0a305544ddfd0b247026224f35ad8de7a2a8d6ff16dbc5cd36d6ac`.
-- Payload SHA-256: `a4c7cc64b5446e0f698111b4e0da812e323369e4fdb16770d8a179a32f52f7fb`.
-- Analysis source commit: `5087838fedf2267f2e0694473944c8e494d819b9`.
+- Aggregate evidence SHA-256: `35901943cef65ca8ac906a5caedd94a2cf05e12c9e9514a5decbb37c78507287`.
+- Payload SHA-256: `03b942d8cfb65a9d1753ce6d2d698a1ddbc9bb74ef34e2c4016c79ce0f31c63c`.
+- Analysis source commit: `602c8a041935fe8671e28b4cd9bb759f029ff4e0`.
 - Baseline: `8381743932c4353b2c7d2d207cdc9659b94fbf67` (#624).
 
 Only the aggregate JSON, contract, result, runner, tests, and research-only
