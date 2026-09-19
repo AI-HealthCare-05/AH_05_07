@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext, type Request } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page, type Request } from '@playwright/test';
 import type { ActiveChallenge, ObservationWindow } from '../src/lib/api';
 import { e2eSessionEventName } from '../src/lib/e2eHarness';
 
@@ -52,6 +52,15 @@ async function api(context: BrowserContext, options: { active?: ActiveChallenge;
   return state;
 }
 
+async function expectCurrentRecentHistory(page: Page) {
+  const recentHistory = page.locator('[data-window-kind="recent-history"]');
+  await expect(recentHistory).toBeVisible();
+  await expect(recentHistory.getByRole('heading', { name: '최근 7일 기록', exact: true })).toBeVisible();
+  await expect(recentHistory.locator(`[data-trail-date="${today}"]`)).toBeVisible();
+  await expect(recentHistory.getByRole('link', { name: '7일 돌아보기', exact: true })).toBeVisible();
+  await expect(recentHistory.locator('button[aria-controls="today-journey-details"]')).toHaveAttribute('aria-expanded', 'false');
+}
+
 test.use({ reducedMotion: 'reduce', timezoneId: 'America/Los_Angeles' });
 test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(`${today}T03:00:00Z`)); });
 
@@ -94,7 +103,7 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: /수면 시간 지키기/ }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
+  await expectCurrentRecentHistory(page);
   await expect(page.locator('[data-trail-date]')).toHaveCount(7);
   await expect(page.locator('[data-trail-date="2026-09-05"]')).toHaveCount(0);
   await expect(page.locator('[data-trail-date="2026-09-12"]')).toContainText('1건');
@@ -165,7 +174,7 @@ test('Living Cycle uncertain creation requires a read and never automatically re
   await expect(page.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
   expect(state.writes).toHaveLength(1);
   await page.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true }).click();
-  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
+  await expectCurrentRecentHistory(page);
 });
 
 test('Living Cycle keeps a challenge lock conflict distinct from an observation duplicate', async ({ page, context }) => {
@@ -189,7 +198,7 @@ test('Living Cycle two tabs reconcile a losing creation response through a read'
   await other.getByRole('button', { name: /수면 시간 지키기/ }).click();
   await expect.poll(() => state.writes.length).toBe(2);
   delay.release();
-  await expect(page.locator('[data-window-kind="recent-history"]')).toContainText('오늘을 포함한 최근 7일');
+  await expectCurrentRecentHistory(page);
   await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toBeDisabled();
   await other.getByRole('button', { name: '선택 상태 다시 확인하기', exact: true }).click();
   await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
