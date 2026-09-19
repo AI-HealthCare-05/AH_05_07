@@ -1,0 +1,251 @@
+/* Cloud / Graphite / Iris: default product chrome only. Visual assets keep their authored colors. */
+html,
+body,
+.app-shell,
+.app-shell:has(.journey-candidate) {
+  background: var(--sk7-canvas);
+  color: var(--sk7-text);
+}
+
+.app-shell:has(.journey-candidate) .primary-nav,
+.primary-nav {
+  border-color: var(--sk7-border);
+  background: color-mix(in srgb, var(--sk7-surface) 92%, transparent);
+  box-shadow: none;
+}
+
+.primary-nav button,
+.app-shell:has(.journey-candidate) .primary-nav button {
+  color: var(--sk7-text-muted);
+}
+
+.primary-nav button:hover:not(:disabled),
+.app-shell:has(.journey-candidate) .primary-nav button:hover:not(:disabled) {
+  background: var(--sk7-accent-soft);
+  color: var(--sk7-accent-hover);
+}
+
+.primary-nav button.is-active,
+.app-shell:has(.journey-candidate) .primary-nav button.is-active {
+  background: var(--sk7-accent);
+  color: var(--sk7-text-on-accent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--sk7-accent) 18%, transparent);
+}
+
+.brand-mark,
+.welcome-orb,
+.loading-stones i,
+.choice-icon,
+.signal-orbit::after {
+  background: var(--sk7-accent-soft);
+}
+
+.brand-mark i,
+.welcome-orb i,
+.choice-icon::before,
+.choice-icon::after {
+  background: var(--sk7-accent);
+}
+
+.brand-mark,
+.choice-icon {
+  box-shadow: inset -7px -6px 0 color-mix(in srgb, var(--sk7-accent) 10%, transparent);
+}
+
+.clay-horizon::before { background: color-mix(in srgb, var(--sk7-border) 55%, transparent); }
+.clay-horizon::after { background: color-mix(in srgb, var(--sk7-accent-soft) 65%, transparent); }
+.clay-horizon span:nth-child(1) { background: color-mix(in srgb, var(--sk7-border) 44%, transparent); }
+.clay-horizon span:nth-child(2) { background: color-mix(in srgb, var(--sk7-accent-soft) 58%, transparent); }
+.clay-horizon span:nth-child(3) { background: rgb(255 255 255 / .58); box-shadow: 0 0 0 2rem rgb(238 242 255 / .34); }
+
+.scene,
+.journey-candidate.scene {
+  --sk7-focus: var(--sk7-accent);
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface);
+  color: var(--sk7-text);
+  box-shadow: var(--sk7-shadow-soft);
+}
+
+.scene-subtle { background: var(--sk7-surface-subtle); }
+.scene-secondary { background: var(--sk7-surface-accent); }
+.scene-emphasis { background: var(--sk7-surface); box-shadow: inset 0 3px 0 var(--sk7-accent), var(--sk7-shadow-soft); }
+.scene-critical { background: var(--sk7-surface); }
+.scene-critical .scene-copy { border-left: 3px solid var(--sk7-danger); padding-left: 1rem; }
+
+.scene::after { background: rgb(238 242 255 / .32); box-shadow: -13rem 4rem 0 rgb(241 243 248 / .52); }
+.scene .eyebrow,
+.journey-candidate .eyebrow { color: var(--sk7-accent); }
+.scene .scene-body,
+.journey-candidate .scene-body { color: var(--sk7-text-muted); }
+
+.journey-entry .measurement-panel,
+.journey-load-error-card,
+.journey-records .window-nav,
+.journey-records .journey-record-list li,
+.journey-settings-facts div,
+.journey-settings-help,
+.record-detail,
+.state-card,
+.signal-card,
+.model-v2-card,
+.model-v2-panel {
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface);
+  color: var(--sk7-text);
+  box-shadow: var(--sk7-shadow-soft);
+}
+
+.journey-entry .measurement-panel,
+.journey-load-error-card { border-top-color: var(--sk7-accent); }
+.journey-load-error-card { border-top-color: var(--sk7-danger); }
+
+.journey-candidate input,
+.journey-candidate select,
+.model-v2-flow input,
+.model-v2-flow select {
+  border-color: var(--sk7-border-strong);
+  background: var(--sk7-surface);
+  color: var(--sk7-text);
+}
+
+.journey-candidate input:focus,
+.journey-candidate select:focus,
+.model-v2-flow input:focus,
+.model-v2-flow select:focus {
+  border-color: var(--sk7-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sk7-focus) 18%, transparent);
+}
+
+.journey-candidate input[aria-invalid="true"],
+.model-v2-flow input[aria-invalid="true"] { border-color: var(--sk7-danger); }
+
+.home-lead,
+.challenge-progress-card,
+.signal-card { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); }
+
+.home-links button,
+.journey-today .home-links button,
+.journey-today .home-links button[data-home-concept],
+.journey-today .home-links .today-starting-point-entry {
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface-subtle);
+  color: var(--sk7-text);
+}
+
+.home-links button:hover:not(:disabled),
+.journey-today .home-links button:hover,
+.journey-today .home-links .today-starting-point-entry:hover {
+  background: var(--sk7-accent-soft);
+}
+
+.home-links strong,
+.journey-today .home-links strong,
+.journey-today .home-links .today-starting-point-entry strong { color: var(--sk7-text); }
+.home-links small,
+.journey-today .home-links small,
+.journey-today .home-links .today-starting-point-entry small { color: var(--sk7-text-muted); }
+.home-links button > span:last-child,
+.journey-today .home-links button > span:last-child { color: var(--sk7-accent); }
+
+.choice-tile,
+.feature-card,
+.record-list li,
+.trail-day-detail,
+.recap-summary,
+.journey-facts,
+.living-week-report,
+.living-week-card {
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface);
+  color: var(--sk7-text);
+}
+
+.choice-tile:hover:not(:disabled),
+.choice-tile.is-selected { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); }
+.choice-tile.is-selected { box-shadow: inset 0 0 0 2px var(--sk7-accent); }
+.choice-state { color: var(--sk7-accent); }
+
+.today-cycle-progress meter,
+.today-cycle-progress meter::-webkit-meter-bar { background: var(--sk7-surface-subtle); }
+.today-cycle-progress meter::-webkit-meter-optimum-value,
+.today-cycle-progress meter::-moz-meter-bar { background: var(--sk7-accent); }
+
+.week-path li,
+.trail-day,
+.recap-day {
+  border-color: var(--sk7-border);
+  background: var(--sk7-surface-subtle);
+  color: var(--sk7-text-muted);
+}
+.week-path .is-past { background: var(--sk7-accent-soft); }
+.week-path .is-today,
+.trail-day.is-today,
+.recap-day.is-today { border-color: var(--sk7-accent); background: var(--sk7-accent); color: var(--sk7-text-on-accent); }
+
+.fixture-label,
+.status-pill,
+.notice { border-color: var(--sk7-border-accent); background: var(--sk7-accent-soft); color: var(--sk7-text-on-surface-accent); }
+.notice-success { border-color: var(--sk7-success-border); background: var(--sk7-success-soft); color: var(--sk7-success-text); }
+.notice-warning { border-color: var(--sk7-warning-border); background: var(--sk7-warning-soft); color: var(--sk7-warning-text); }
+.notice-error,
+.state-error { border-color: var(--sk7-danger-border); background: var(--sk7-danger-soft); color: var(--sk7-danger-text); }
+
+.confirmation { border-color: var(--sk7-border-accent); background: var(--sk7-accent-soft); color: var(--sk7-text-on-surface-accent); }
+.journey-settings-account { border-color: var(--sk7-danger-border); }
+.journey-settings-account > button { background: var(--sk7-danger); color: var(--sk7-text-on-accent); }
+
+.signal-orbit { border-color: color-mix(in srgb, var(--sk7-accent) 28%, transparent); }
+.signal-orbit::before { border-color: color-mix(in srgb, var(--sk7-accent) 45%, transparent); }
+.signal-orbit span:nth-child(1),
+.signal-orbit span:nth-child(2) { background: var(--sk7-accent); }
+.signal-disclaimer { border-color: var(--sk7-border-strong); color: var(--sk7-text-muted); }
+
+.model-v2-flow,
+.model-v2-flow h1,
+.model-v2-flow h2,
+.model-v2-flow h3,
+.model-v2-result,
+.model-v2-result strong { color: var(--sk7-text); }
+.model-v2-flow p,
+.model-v2-flow small,
+.model-v2-disclaimer { color: var(--sk7-text-muted); }
+.model-v2-progress,
+.model-v2-progress-bar { background: var(--sk7-surface-subtle); }
+.model-v2-progress-bar > span { background: var(--sk7-accent); }
+
+.empty-garden { border-color: var(--sk7-border); }
+.empty-garden i { background: var(--sk7-border-strong); }
+.empty-garden i:nth-child(2) { background: var(--sk7-accent-soft); }
+.empty-garden i:nth-child(3) { background: var(--sk7-surface-subtle); }
+.mist-shape { background: rgb(241 243 248 / .72); box-shadow: 5rem 1rem 0 rgb(238 242 255 / .48), -4rem .5rem 0 rgb(241 243 248 / .56); }
+
+.living-week-report,
+.living-week-report-page,
+.living-week-report section {
+  background: #fff;
+  color: var(--sk7-text);
+}
+.living-week-report h1,
+.living-week-report h2,
+.living-week-report h3,
+.living-week-report strong { color: var(--sk7-text); }
+.living-week-report p,
+.living-week-report small,
+.living-week-report dt { color: var(--sk7-text-muted); }
+.living-week-report a { color: var(--sk7-accent); }
+
+@media (max-width: 580px) {
+  .primary-nav,
+  .app-shell:has(.journey-candidate) .primary-nav {
+    border-color: var(--sk7-border);
+    background: var(--sk7-surface);
+    box-shadow: 0 -8px 24px rgb(32 35 42 / .08);
+  }
+}
+
+@media print {
+  .living-week-report,
+  .living-week-report-page,
+  .living-week-report section { background: #fff; color: #20232a; box-shadow: none; }
+}

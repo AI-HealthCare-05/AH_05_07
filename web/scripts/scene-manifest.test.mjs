@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery, S02_RENDERER_LOADER_RESERVE_BYTES } from "./verify-scene-manifest.mjs";
+import { buildPosterCompatibilityEvidence, loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery, verifyPosterSourceCompatibility, S02_RENDERER_LOADER_RESERVE_BYTES } from "./verify-scene-manifest.mjs";
 
 const original = JSON.parse(fs.readFileSync(new URL("../src/ui/scene-manifest.v2.json", import.meta.url), "utf8"));
 const inputs = loadInputs();
@@ -63,7 +63,9 @@ test("budget includes the reachable fallback and renderer allowance", () => {
   const objectKey = asset.delivery.objectKey.replace(/[a-f0-9]{16}\.webp$/, `${sha256.slice(0, 16)}.webp`);
   asset.delivery = { ...asset.delivery, sha256, byteLength: bytes.length, objectKey, url: `/${objectKey}` };
   asset.provenance.sourceHash = sha256; evidence.delivery = asset.delivery; posterBytes.set(asset.id, bytes);
-  assert.throws(() => verifySceneManifest(manifest, { ...inputs, posters, posterBytes }), /activation exceeds/);
+  const changedInputs = { ...inputs, posters, posterBytes };
+  changedInputs.compatibility = buildPosterCompatibilityEvidence(manifest, changedInputs);
+  assert.throws(() => verifySceneManifest(manifest, changedInputs), /activation exceeds/);
 });
 
 test("one activation budgets the largest poster variant, not three downloads", () => {
@@ -95,9 +97,68 @@ test("poster dimensions are read from the WebP frame", () => {
   const posters = structuredClone(inputs.posters); posters.posters[0].width += 1;
   assert.throws(() => verifySceneManifest(original, { ...inputs, posters }), /dimensions/);
 });
-test("renderer changes require a fresh capture", () => {
-  const sourceHashes = { ...inputs.sourceHashes, "web/src/components/scene/ThreeSceneRenderer.tsx": "a".repeat(64) };
-  assert.throws(() => verifySceneManifest(original, { ...inputs, sourceHashes }), /render source hashes/);
+test("reviewed compatibility bridges historical capture source hashes", () => {
+  assert.doesNotThrow(() => verifySceneManifest(original, inputs));
+});
+test("missing compatibility fails closed when historical capture sources differ", () => {
+  assert.throws(() => verifySceneManifest(original, { ...inputs, compatibility: null }), /requires current runtime compatibility/);
+});
+test("exact-current-capture remains valid without compatibility", () => {
+  const posters = { ...structuredClone(inputs.posters), captureEnvironment: { platform: "test" } };
+  const dioramaPosters = { ...structuredClone(inputs.dioramaPosters), captureEnvironment: { platform: "test" } };
+  assert.doesNotThrow(() => verifySceneManifest(original, {
+    ...inputs,
+    compatibility: null,
+    posters,
+    dioramaPosters,
+    sourceHashes: structuredClone(posters.sourceHashes),
+    dioramaSourceHashes: structuredClone(dioramaPosters.sourceHashes),
+  }));
+});
+test("capture-only source drift does not invalidate reviewed runtime compatibility", () => {
+  const sourceHashes = { ...inputs.sourceHashes, "web/scripts/capture-scene-posters.mjs": "a".repeat(64) };
+  assert.doesNotThrow(() => verifySceneManifest(original, { ...inputs, sourceHashes }));
+});
+test("runtime visual source drift invalidates compatibility", () => {
+  const runtimeVisualSourceHashes = { ...inputs.runtimeVisualSourceHashes, "web/src/components/scene/ThreeSceneRenderer.tsx": "a".repeat(64) };
+  assert.throws(() => verifySceneManifest(original, { ...inputs, runtimeVisualSourceHashes }), /runtime compatibility/);
+});
+test("stale compatibility status fails closed", () => {
+  const compatibility = structuredClone(inputs.compatibility);
+  compatibility.status = "stale";
+  assert.throws(() => verifySceneManifest(original, { ...inputs, compatibility }), /runtime compatibility/);
+});
+test("canonical poster-set identity change invalidates compatibility", () => {
+  const posters = structuredClone(inputs.posters);
+  posters.posters[0].delivery.sha256 = "a".repeat(64);
+  assert.throws(() => verifyPosterSourceCompatibility(original, { ...inputs, posters }, [
+    { evidence: posters, sourceHashes: inputs.sourceHashes },
+    { evidence: inputs.dioramaPosters, sourceHashes: inputs.dioramaSourceHashes },
+  ]), /runtime compatibility/);
+});
+test("historical capture provenance hashes remain bound by compatibility", () => {
+  const posters = structuredClone(inputs.posters);
+  posters.sourceHashes[Object.keys(posters.sourceHashes)[0]] = "a".repeat(64);
+  assert.throws(() => verifyPosterSourceCompatibility(original, { ...inputs, posters }, [
+    { evidence: posters, sourceHashes: inputs.sourceHashes },
+    { evidence: inputs.dioramaPosters, sourceHashes: inputs.dioramaSourceHashes },
+  ]), /runtime compatibility/);
+});
+test("stage background change invalidates compatibility", () => {
+  const stageContract = structuredClone(inputs.stageContract);
+  stageContract.background = "#ffffff";
+  assert.throws(() => verifyPosterSourceCompatibility(original, { ...inputs, stageContract }, [
+    { evidence: inputs.posters, sourceHashes: inputs.sourceHashes },
+    { evidence: inputs.dioramaPosters, sourceHashes: inputs.dioramaSourceHashes },
+  ]), /stage contract/);
+});
+test("stage geometry change invalidates compatibility", () => {
+  const stageContract = structuredClone(inputs.stageContract);
+  stageContract.stageHeights.S10.desktop += 1;
+  assert.throws(() => verifyPosterSourceCompatibility(original, { ...inputs, stageContract }, [
+    { evidence: inputs.posters, sourceHashes: inputs.sourceHashes },
+    { evidence: inputs.dioramaPosters, sourceHashes: inputs.dioramaSourceHashes },
+  ]), /stage contract/);
 });
 test("matching metadata cannot authorize an arbitrary delivery URL", () => {
   const manifest = structuredClone(original), posters = structuredClone(inputs.posters);
@@ -191,9 +252,21 @@ test("S10 budgets both its composition module and shared landmark geometry", () 
 test("S10 source geometry cannot change without registration", () => {
   assert.throws(() => verifySceneManifest(original, { ...inputs, dioramaModuleBytes: Buffer.from("changed diorama") }), /module/);
 });
-for (const source of ["web/src/styles.css", "web/src/components/VisualStage.tsx", "web/src/ui/sceneRecipes.ts", "web/src/components/scene/disposeScene.ts"]) test(`poster capture pins ${source}`, () => {
-  const sourceHashes = { ...inputs.sourceHashes, [source]: "a".repeat(64) };
-  assert.throws(() => verifySceneManifest(original, { ...inputs, sourceHashes }), /render source hashes/);
+test("compatibility cannot bypass character, composition, or poster binary checks", () => {
+  const characterEvidence = structuredClone(inputs.posters);
+  characterEvidence.characterSha256 = "a".repeat(64);
+  assert.throws(() => verifySceneManifest(original, { ...inputs, posters: characterEvidence }), /character identity/);
+
+  const changedComposition = structuredClone(original);
+  changedComposition.recipes.find(recipe => recipe.mode === "realtime").compositions.desktop.camera.verticalSpan += 0.1;
+  assert.throws(() => verifySceneManifest(changedComposition, inputs), /capture composition/);
+
+  const posterBytes = new Map(inputs.posterBytes);
+  const id = original.assets.find(asset => asset.kind === "poster").id;
+  const changedBytes = Buffer.from(posterBytes.get(id));
+  changedBytes[changedBytes.length - 1] ^= 1;
+  posterBytes.set(id, changedBytes);
+  assert.throws(() => verifySceneManifest(original, { ...inputs, posterBytes }), /binary identity/);
 });
 
 test("S02 selectable allowlist covers exactly the 11 approved lite species", () => {

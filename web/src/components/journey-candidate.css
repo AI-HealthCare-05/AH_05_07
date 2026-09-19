@@ -3,7 +3,7 @@
 .app-shell:has(.journey-candidate) .clay-horizon { display: none; }
 .app-shell:has(.journey-candidate) .primary-nav { background: #f8f5ed; box-shadow: none; }
 .app-shell:has(.journey-candidate) .primary-nav button.is-active { background: #3f594a; box-shadow: none; }
-.journey-candidate.scene { --sk7-focus: #3f594a; background: transparent; box-shadow: none; border: 0; border-radius: 0; overflow: visible; padding: 1.5rem 0 2rem; gap: 1.5rem; animation: none; }
+.journey-candidate.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; background: transparent; box-shadow: none; border: 0; border-radius: 0; overflow: visible; padding: 1.5rem 0 2rem; gap: 1.5rem; animation: none; }
 .journey-candidate > .scene-visual-background, .journey-candidate > .scene-visual-character, .journey-candidate::after { display: none; }
 .journey-candidate h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); font-weight: 700; letter-spacing: -.06em; line-height: 1.2; }
 .journey-candidate .scene-copy { gap: .85rem; }
@@ -408,7 +408,7 @@
 }
 
 /* S13/S14: Journey-only load recovery and settings composition. */
-.journey-load-error.scene, .journey-settings.scene { --sk7-focus: #3f594a; max-width: 54rem; margin-inline: auto; }
+.journey-load-error.scene, .journey-settings.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; max-width: 54rem; margin-inline: auto; }
 .journey-load-error > .scene-visual-background, .journey-load-error > .scene-visual-character, .journey-load-error::after,
 .journey-settings > .scene-visual-background, .journey-settings > .scene-visual-character, .journey-settings::after { display: none; }
 .journey-load-error .scene-copy, .journey-settings .scene-copy { max-width: 39rem; }
@@ -735,7 +735,7 @@
 .app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 7.5rem); bottom: auto; width: 15rem; height: calc(100% - 1.5rem); }
 
 /* S01/S12 only: preserve the shared scenes and normal presentation. */
-.journey-login.welcome-shell { --sk7-focus: #3f594a; min-height: 100svh; overflow: visible; padding: clamp(1.25rem, 5vw, 4rem); }
+.journey-login.welcome-shell { --sk7-accent: #3f594a; --sk7-focus: #3f594a; min-height: 100svh; overflow: visible; padding: clamp(1.25rem, 5vw, 4rem); }
 .journey-login .journey-login-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); width: min(100%, 64rem); }
 .journey-login .journey-login-intro { display: grid; gap: 1.25rem; }
 .journey-login h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); line-height: 1.25; letter-spacing: -.06em; }
@@ -744,20 +744,20 @@
 .journey-login .welcome-card { width: 100%; padding: clamp(1.25rem, 3vw, 2rem); box-shadow: var(--sk7-shadow-soft); animation: none; }
 .journey-login form { margin: 0; }
 .journey-login input { font-size: max(16px, 1rem); }
-.journey-login .journey-login-help, .journey-login .journey-login-steps, .journey-login .journey-login-demo, .journey-login .welcome-footnote { font-size: .875rem; line-height: 1.65; color: var(--sk7-ink-muted); }
+.journey-login .journey-login-help, .journey-login .journey-login-steps, .journey-login .journey-login-demo, .journey-login .welcome-footnote { font-size: .875rem; line-height: 1.65; color: var(--sk7-text-muted); }
 .journey-login .journey-login-steps { border-top: 1px solid var(--sk7-border); padding-top: 1rem; }
-.journey-login .journey-login-demo { color: var(--sk7-ink); }
+.journey-login .journey-login-demo { color: var(--sk7-text); }
 .journey-login .notice { margin: 0; }
-.journey-empty.scene { --sk7-focus: #3f594a; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.journey-empty.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
 .journey-empty > .scene-visual-background, .journey-empty > .scene-visual-character, .journey-empty::after { display: none; }
 .journey-empty .scene-copy { gap: .85rem; }
 .journey-empty h1 { font-size: clamp(1.75rem, 3.2vw, 2.8rem); }
 .journey-empty .scene-body { font-size: 1rem; }
-.journey-empty .journey-empty-period { color: var(--sk7-ink-muted); line-height: 1.65; }
+.journey-empty .journey-empty-period { color: var(--sk7-text-muted); line-height: 1.65; }
 .journey-empty .journey-empty-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
 .journey-empty .journey-empty-action { display: grid; grid-template-rows: auto 1fr auto; gap: 1rem; border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-md); background: var(--sk7-surface); padding: 1.25rem; }
 .journey-empty .journey-empty-action h2 { font-size: 1.125rem; }
-.journey-empty .journey-empty-action p { color: var(--sk7-ink-muted); line-height: 1.65; }
+.journey-empty .journey-empty-action p { color: var(--sk7-text-muted); line-height: 1.65; }
 
 .journey-empty .journey-empty-signal {
   display: grid;
@@ -778,7 +778,7 @@
 }
 
 .journey-empty .journey-empty-signal p:not(.eyebrow) {
-  color: var(--sk7-ink-muted);
+  color: var(--sk7-text-muted);
   font-size: .875rem;
   line-height: 1.6;
 }
@@ -827,7 +827,7 @@
 }
 
 .journey-today-bp-records dt {
-  color: var(--sk7-ink-muted);
+  color: var(--sk7-text-muted);
   font-size: .82rem;
   font-weight: 600;
 }
@@ -843,7 +843,7 @@
 
 /* Review-only companion identity preference. Medical/domain facts never drive this control. */
 .companion-identity-settings { align-items: center; }
-.companion-identity-settings h2 { margin: .15rem 0 .35rem; font-size: 1.1rem; color: var(--sk7-ink, #23363a); }
+.companion-identity-settings h2 { margin: .15rem 0 .35rem; font-size: 1.1rem; color: var(--sk7-text, #23363a); }
 .companion-identity-settings p:not(.eyebrow) { max-width: 42rem; color: #66777a; font-size: .78rem; line-height: 1.6; }
 .companion-identity-control { display: grid; gap: .4rem; min-width: 13rem; color: #435b5f; font-size: .72rem; font-weight: 650; }
 .companion-identity-control select { min-height: 2.75rem; padding: .6rem .75rem; border: 1px solid #cfdcda; border-radius: .6rem; background: #fff; color: #16383d; font: inherit; }
@@ -854,7 +854,7 @@
 
 /* S01 demo-day entry: a read-only product preview before authentication. */
 .journey-login-preview-entry { display: grid; grid-template-columns: minmax(8rem, auto) minmax(0, 1fr); align-items: center; gap: .75rem 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--sk7-border); }
-.journey-login-preview-entry p { margin: 0; color: var(--sk7-ink-muted); font-size: .8rem; line-height: 1.55; }
+.journey-login-preview-entry p { margin: 0; color: var(--sk7-text-muted); font-size: .8rem; line-height: 1.55; }
 .entry-preview-button { min-height: 2.75rem; }
 .entry-auth-wrap { position: relative; }
 .entry-auth-wrap .entry-auth-button { width: 100%; }
@@ -987,7 +987,7 @@
   min-height: 100svh;
   overflow-x: clip;
   background: #f8f5ed;
-  color: var(--sk7-ink);
+  color: var(--sk7-text);
 }
 .journey-demo-preview-bar {
   position: sticky;
@@ -1016,7 +1016,7 @@
   line-height: 1.35;
 }
 .journey-demo-preview-guide {
-  color: var(--sk7-ink-muted);
+  color: var(--sk7-text-muted);
   font-size: .78rem;
   line-height: 1.45;
 }
@@ -1057,7 +1057,7 @@
   letter-spacing: -.04em;
 }
 .journey-demo-login-gate > p:last-of-type {
-  color: var(--sk7-ink-muted);
+  color: var(--sk7-text-muted);
   line-height: 1.6;
 }
 .journey-demo-login-gate-actions {
@@ -1156,8 +1156,9 @@
   [data-screen="S08"],
   [data-screen="S09"]
 ):has(.journey-candidate) {
-  --sk7-ink: #142f38;
-  --sk7-ink-muted: #61747a;
+  --sk7-text: #142f38;
+  --sk7-text-muted: #61747a;
+  --sk7-accent: #164a47;
   --sk7-focus: #164a47;
   --sk7-border: #dce7e3;
   --journey-surface: #fffffff2;
@@ -1206,6 +1207,7 @@
   [data-screen="S08"],
   [data-screen="S09"]
 ) .journey-candidate {
+  --sk7-accent: #164a47;
   --sk7-focus: #164a47;
 }
 
@@ -1522,8 +1524,9 @@
 /* S01 — entry should already feel like the same product users meet at S02. */
 
 .journey-login.welcome-shell {
-  --sk7-ink: #142f38;
-  --sk7-ink-muted: #61747a;
+  --sk7-text: #142f38;
+  --sk7-text-muted: #61747a;
+  --sk7-accent: #164a47;
   --sk7-focus: #164a47;
   --sk7-border: #dce7e3;
   color: #142f38;
@@ -1635,8 +1638,9 @@
   [data-screen="S13"],
   [data-screen="S14"]
 ) {
-  --sk7-ink: #142f38;
-  --sk7-ink-muted: #61747a;
+  --sk7-text: #142f38;
+  --sk7-text-muted: #61747a;
+  --sk7-accent: #164a47;
   --sk7-focus: #164a47;
   --sk7-border: #dce7e3;
 
