@@ -28,6 +28,17 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const posts = await candidate(page);
     const primary = page.locator('.home-lead button');
+    const secondaryLink = page.locator('.home-links button').first();
+    const visualWeight = await page.evaluate(() => {
+      const lead = document.querySelector('.home-lead') as HTMLElement;
+      const secondary = document.querySelector('.home-links button') as HTMLElement;
+      return {
+        leadShadow: getComputedStyle(lead).boxShadow,
+        secondaryShadow: getComputedStyle(secondary).boxShadow,
+      };
+    });
+    expect(visualWeight.leadShadow).not.toBe('none');
+    expect(visualWeight.secondaryShadow).toBe('none');
     const buttonBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
     if (width <= 580) {

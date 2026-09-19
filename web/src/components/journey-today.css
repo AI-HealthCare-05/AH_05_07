@@ -295,26 +295,24 @@
 }
 
 .journey-today .home-links button {
-  border-color: #dde9e4;
-  background: linear-gradient(155deg, #f4f9f5 0%, #eaf3ed 100%);
-  box-shadow:
-    0 7px 18px #213f4e09,
-    inset 0 1px 0 #ffffffd9;
+  border-color: #dfe9e5;
+  background: #ffffff8f;
+  box-shadow: none;
 }
 
 .journey-today .home-links button[data-home-concept="challenge"] {
   border-color: #e2e8eb;
-  background: linear-gradient(155deg, #f7f9fa, #eef3f5);
+  background: #f7f9faad;
 }
 
 .journey-today .home-links button[data-home-concept="today-detail"] {
   border-color: #e1e8e4;
-  background: linear-gradient(155deg, #f8faf8, #eef4f0);
+  background: #f8faf8b5;
 }
 
 .journey-today .home-links .today-starting-point-entry {
   border-color: #e9e2d4;
-  background: linear-gradient(155deg, #fbf9f1, #f3efe3);
+  background: #faf7edb5;
 }
 
 @media (max-width: 580px) {
@@ -344,8 +342,6 @@
   }
 
   .journey-today .home-links button {
-    box-shadow:
-      0 5px 14px #213f4e08,
-      inset 0 1px 0 #ffffffd9;
+    box-shadow: none;
   }
 }
