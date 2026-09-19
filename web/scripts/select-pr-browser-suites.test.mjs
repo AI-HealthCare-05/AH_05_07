@@ -112,6 +112,21 @@ test('selector-only lane uses a web-working-directory-safe command', () => {
   );
 });
 
+test('Model V2 E2E test-only changes run only the exact cross-browser suite', () => {
+  assert.deepEqual(names([
+    'web/e2e/model-v2-user-input-flow.spec.ts',
+    'web/e2e/model-v2-result-state.spec.ts',
+    'web/playwright.model-v2.config.ts',
+  ]), ['model-v2 firefox and webkit']);
+});
+
+test('Model V2 E2E tests mixed with Model V2 runtime still fail closed to the complete gate', () => {
+  assert.deepEqual(names([
+    'web/e2e/model-v2-user-input-flow.spec.ts',
+    'web/src/lib/model-v2/runtime.ts',
+  ]), fullGate);
+});
+
 test('browser-neutral web README does not widen an App shell diff', () => {
   assert.deepEqual(names([
     'web/README.md',

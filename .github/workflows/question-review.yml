@@ -6,8 +6,9 @@ on:
       - 'tools/question-review/**'
       - 'docs/input-question-review.md'
       - 'web/src/components/ModelV2InputFlow.tsx'
+      - 'web/src/components/modelV2Steps.ts'
+      - 'web/src/components/modelV2Draft.ts'
       - 'web/src/ui/modelV2ResultState.ts'
-      - 'web/e2e/model-v2-*.spec.ts'
       - 'web/package.json'
       - 'web/package-lock.json'
       - '.github/workflows/question-review.yml'
@@ -17,8 +18,9 @@ on:
       - 'tools/question-review/**'
       - 'docs/input-question-review.md'
       - 'web/src/components/ModelV2InputFlow.tsx'
+      - 'web/src/components/modelV2Steps.ts'
+      - 'web/src/components/modelV2Draft.ts'
       - 'web/src/ui/modelV2ResultState.ts'
-      - 'web/e2e/model-v2-*.spec.ts'
       - 'web/package.json'
       - 'web/package-lock.json'
       - '.github/workflows/question-review.yml'
@@ -33,13 +35,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Normalize scene evidence sources on Windows
+      - name: Restore exact scene evidence source bytes on Windows
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          git -c core.autocrlf=false checkout --force HEAD -- \
+          for path in \
             web/src/ui/companionSceneRegistry.ts \
             web/src/ui/companionPresentationProfiles.ts
+          do
+            git show "HEAD:$path" > "$path"
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 24
