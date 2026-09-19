@@ -39,7 +39,7 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
     </div>
     <article className="week-report-document" data-living-week-report>
       <header className="week-report-header">
-        <p className="week-report-brand">SK7 <span>상균7데이즈</span></p>
+        <p className="week-report-brand">SK7</p>
         <h1 id="living-week-report-title" ref={headingRef} tabIndex={-1}>7일 기록 리포트</h1>
         <p className="week-report-range"><time dateTime={days[0].date}>{formatTrailDate(days[0].date)}</time> ~ <time dateTime={days[6].date}>{formatTrailDate(days[6].date)}</time></p>
         <p className="week-report-generated">리포트 열람 시각 · <time dateTime={createdAt.toISOString()}>{generatedTime}</time> (서울)</p>

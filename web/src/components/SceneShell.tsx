@@ -73,9 +73,9 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")}
-          aria-label={`${staticJourneyUi && activeScreen === "S02" ? "SK7" : "상균7데이즈"} · 하루의 사실을 차분하게 · 오늘의 기록으로 이동`}>
+          aria-label="SK7 · 하루의 사실을 차분하게 · 오늘의 기록으로 이동">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span><strong>{staticJourneyUi && activeScreen === "S02" ? "SK7" : "상균7데이즈"}</strong><small>하루의 사실을 차분하게</small></span>
+          <span><strong>SK7</strong><small>하루의 사실을 차분하게</small></span>
         </button>
         <div className="header-actions">
           {evidenceLabel && <span className="fixture-label">검토 상태 · {evidenceLabel}</span>}
