@@ -1,5 +1,6 @@
 /* S10: the week is the protagonist — compact summary, dominant trail, tertiary landscape, then journal. */
 .journey-recap.scene {
+  --sk7-accent: #3f594a;
   --sk7-focus: #3f594a;
   --recap-rule: #dcdccd;
   grid-template-columns: minmax(0, 1fr);
@@ -19,14 +20,14 @@
   width: fit-content;
   max-width: 100%;
 }
-.journey-recap .scene-body { font-size: 1rem; font-weight: 450; color: var(--sk7-ink-muted); }
+.journey-recap .scene-body { font-size: 1rem; font-weight: 450; color: var(--sk7-text-muted); }
 .journey-recap .eyebrow { color: #65745e; letter-spacing: .04em; }
 .journey-recap button { border-radius: .55rem; }
 .journey-recap .recap-period { padding-block: .35rem .9rem; gap: .55rem; border-bottom: 1px solid var(--recap-rule); }
 .journey-recap .recap-period-label { color: #52664e; font-size: .75rem; font-weight: 650; letter-spacing: .025em; }
 .journey-recap .window-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; border: 0; padding: 0; gap: .7rem; }
 .journey-recap .window-nav p { align-self: center; gap: .3rem; }
-.journey-recap .window-nav p strong { color: var(--sk7-ink); font-size: 1.1rem; }
+.journey-recap .window-nav p strong { color: var(--sk7-text); font-size: 1.1rem; }
 .journey-recap .window-nav p span { display: none; }
 .journey-recap .window-nav p small { font-size: .72rem; }
 .journey-recap .window-nav button { min-height: 2.8rem; padding: .65rem .9rem; font-size: .82rem; }
@@ -115,7 +116,7 @@
 .journey-recap .recap-journal-intro > div { display: grid; gap: .4rem; }
 .journey-recap .recap-journal-intro h2 { font-size: 1.45rem; line-height: 1.4; letter-spacing: -.045em; }
 .journey-recap .recap-journal-scope { justify-items: end; max-width: 32rem; }
-.journey-recap .recap-journal-scope > p { color: var(--sk7-ink-muted); font-size: .78rem; line-height: 1.65; text-align: right; }
+.journey-recap .recap-journal-scope > p { color: var(--sk7-text-muted); font-size: .78rem; line-height: 1.65; text-align: right; }
 .journey-recap .recap-clear-day { min-height: 2.75rem; padding: .45rem .15rem; border: 0; background: transparent; color: #3f594a; box-shadow: none; font-size: .76rem; font-weight: 650; text-decoration: underline; text-underline-offset: .25em; }
 .journey-recap .recap-clear-day:hover { background: transparent; color: #253b2c; transform: none; }
 .journey-recap .recap-journal-intro > .recap-journal-freshness { flex-basis: 100%; color: #78613d; }
@@ -128,27 +129,27 @@
 .journey-recap .record-lane[data-record-lane="challenge"] { margin-top: .7rem; }
 .journey-recap .recap-lane-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .35rem 1rem; }
 .journey-recap .recap-lane-heading h3 { font-size: 1.1rem; letter-spacing: -.04em; }
-.journey-recap .recap-lane-heading > span { font-size: .78rem; color: var(--sk7-ink-muted); }
-.journey-recap .recap-lane-heading strong { color: var(--sk7-ink); font-weight: 650; }
-.journey-recap .recap-lane-note { color: var(--sk7-ink-muted); font-size: .75rem; line-height: 1.6; }
+.journey-recap .recap-lane-heading > span { font-size: .78rem; color: var(--sk7-text-muted); }
+.journey-recap .recap-lane-heading strong { color: var(--sk7-text); font-weight: 650; }
+.journey-recap .recap-lane-note { color: var(--sk7-text-muted); font-size: .75rem; line-height: 1.6; }
 .journey-recap.scene .record-list { gap: 0; }
 .journey-recap.scene .record-list li { padding: .85rem 0; gap: .75rem; border-top-style: dashed; }
 .journey-recap .recap-record-facts { display: grid; gap: .35rem; }
 .journey-recap .recap-record-date { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: baseline; }
 .journey-recap .recap-record-date strong { font-size: .85rem; font-weight: 600; }
-.journey-recap .recap-record-date small { color: var(--sk7-ink-muted); font-size: .75rem; }
-.journey-recap .recap-record-value { font-size: 1rem; color: var(--sk7-ink); font-variant-numeric: tabular-nums; }
+.journey-recap .recap-record-date small { color: var(--sk7-text-muted); font-size: .75rem; }
+.journey-recap .recap-record-value { font-size: 1rem; color: var(--sk7-text); font-variant-numeric: tabular-nums; }
 .journey-recap [data-record-lane="blood-pressure"] .recap-record-value { font-size: 1.12rem; font-weight: 650; letter-spacing: -.02em; }
 .journey-recap .recap-record-status { font-size: .8rem; color: #3f594a; }
-.journey-recap .recap-record-status[data-checkin-status="skipped"] { color: var(--sk7-ink-muted); }
+.journey-recap .recap-record-status[data-checkin-status="skipped"] { color: var(--sk7-text-muted); }
 .journey-recap .record-action { min-height: 2.75rem; white-space: normal; font-size: .8rem; background: transparent; }
-.journey-recap .record-action:hover:not(:disabled) { background: #e9eddf; color: var(--sk7-focus); }
+.journey-recap .record-action:hover:not(:disabled) { background: #e9eddf; color: var(--sk7-accent); }
 .journey-recap.scene .empty-record { display: block; padding: .8rem 0; font-size: .82rem; }
 .journey-recap .recap-tools { display: grid; gap: .55rem; padding-block: 1rem .6rem; border-top: 1px solid var(--recap-rule); }
 .journey-recap .recap-tools-intro { display: grid; gap: .15rem; max-width: 44rem; }
 .journey-recap .recap-tools-intro .eyebrow { margin: 0; font-size: .66rem; }
-.journey-recap .recap-tools-intro h3 { margin: 0; color: var(--sk7-ink); font-size: .95rem; line-height: 1.4; letter-spacing: -.02em; }
-.journey-recap .recap-tools-intro > p:not(.eyebrow), .journey-recap .recap-tools-state, .journey-recap .recap-export-scope { color: var(--sk7-ink-muted); font-size: .74rem; line-height: 1.55; }
+.journey-recap .recap-tools-intro h3 { margin: 0; color: var(--sk7-text); font-size: .95rem; line-height: 1.4; letter-spacing: -.02em; }
+.journey-recap .recap-tools-intro > p:not(.eyebrow), .journey-recap .recap-tools-state, .journey-recap .recap-export-scope { color: var(--sk7-text-muted); font-size: .74rem; line-height: 1.55; }
 .journey-recap .recap-tools-state { margin: 0; }
 .journey-recap .recap-export-scope { color: #52664e; }
 .journey-recap .utility-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: .55rem; margin: .15rem 0 0; }
@@ -240,8 +241,9 @@
    remain unchanged. */
 
 .app-shell[data-screen="S10"]:has(.journey-recap) {
-  --sk7-ink: #142f38;
-  --sk7-ink-muted: #61747a;
+  --sk7-text: #142f38;
+  --sk7-text-muted: #61747a;
+  --sk7-accent: #164a47;
   --sk7-focus: #164a47;
 
   background:

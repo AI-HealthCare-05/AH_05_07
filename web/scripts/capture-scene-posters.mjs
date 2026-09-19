@@ -3,15 +3,18 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import { build, preview } from "vite";
-import { sceneRegistrations } from "./scene-asset-inputs.mjs";
+import { sceneCaptureProfiles, sceneRegistrations } from "./scene-asset-inputs.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const web = path.join(root, "web");
+const require = createRequire(import.meta.url);
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
+const playwrightVersion = require("@playwright/test/package.json").version;
 const manifest = JSON.parse(await fs.readFile(path.join(web, "src/ui/scene-manifest.v2.json"), "utf8"));
 const selectedScreen = process.argv.find(arg => arg.startsWith("--screen="))?.slice(9);
 if (selectedScreen && !Object.hasOwn(sceneRegistrations, selectedScreen)) throw new Error("Only S02 or S10 capture is registered");
@@ -28,15 +31,24 @@ try {
   });
   server = await preview({ root: web, build: { outDir: temporary }, preview: { host: "127.0.0.1", port: 4173, strictPort: true } });
   browser = await chromium.launch();
+  const captureEnvironment = {
+    platform: process.platform,
+    arch: process.arch,
+    node: process.version,
+    playwright: playwrightVersion,
+    chromium: browser.version(),
+    webgl: { vendor: null, renderer: null },
+  };
   for (const screen of screens) {
   const registration = sceneRegistrations[screen];
   const { directory } = registration;
-  const sourceHashes = Object.fromEntries(await Promise.all(registration.sources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
+  const sourceHashes = Object.fromEntries(await Promise.all(registration.captureSources.map(async source => [source, hash(await fs.readFile(path.join(root, source)))])));
   const recipes = manifest.recipes.filter(recipe => recipe.mode === "realtime" && recipe.screens.includes(screen));
   await fs.mkdir(path.join(web, "public", directory), { recursive: true });
   const posters = [];
-  for (const [profile, width, height] of [["mobile320", 320, 844], ["mobile390", 390, 844], ["desktop", 1366, 900]]) {
-    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2 });
+  for (const [profile, captureProfile] of Object.entries(sceneCaptureProfiles)) {
+    const { viewportWidth, viewportHeight, stageWidth } = captureProfile;
+    const context = await browser.newContext({ viewport: { width: viewportWidth, height: viewportHeight }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.route("http://e2e.invalid/**", route => {
       const url = new URL(route.request().url());
@@ -49,13 +61,37 @@ try {
     const landmarks = ["garden-gate", "herb-garden", "shade-tree", "footbridge", "reading-shelter", "pavilion", "sunset-overlook"];
     for (const [index, landmarkId] of landmarks.entries()) {
       const recipe = recipes.find(entry => entry.landmarkId === landmarkId);
+      if (!recipe) throw new Error(`${screen} ${landmarkId}: realtime recipe is not registered`);
+      const stageHeight = recipe.compositions[profile].stageHeight;
       await page.clock.setFixedTime(new Date(`2026-09-${String(index + 7).padStart(2, "0")}T03:00:00Z`));
       await page.goto(`http://127.0.0.1:4173/?e2e=signed-in&screen=${screen}`);
       const stage = page.locator(`.living-visual-stage[data-scene-recipe="${recipe.id}"]`);
+      await stage.evaluate((element, dimensions) => {
+        element.style.setProperty("border-radius", "0", "important");
+        element.style.setProperty("width", `${dimensions.width}px`, "important");
+        element.style.setProperty("height", `${dimensions.height}px`, "important");
+      }, { width: stageWidth, height: stageHeight });
       await stage.scrollIntoViewIfNeeded();
       await page.locator('[data-living-scene-status="ready"]').waitFor({ timeout: 20000 });
+      const webgl = await page.locator(".living-three-scene canvas").evaluate(canvas => {
+        const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+        if (!context) return { vendor: null, renderer: null };
+        const debug = context.getExtension("WEBGL_debug_renderer_info");
+        const readString = parameter => {
+          const value = context.getParameter(parameter);
+          return typeof value === "string" && value.trim() ? value : null;
+        };
+        return {
+          vendor: readString(debug?.UNMASKED_VENDOR_WEBGL ?? context.VENDOR),
+          renderer: readString(debug?.UNMASKED_RENDERER_WEBGL ?? context.RENDERER),
+        };
+      });
+      captureEnvironment.webgl.vendor ??= webgl.vendor;
+      captureEnvironment.webgl.renderer ??= webgl.renderer;
       const metrics = await stage.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight, background: getComputedStyle(element).backgroundColor }));
-      await page.addStyleTag({ content: `.living-visual-stage{border-radius:0!important;width:${metrics.width}px!important;height:${metrics.height}px!important}` });
+      if (metrics.width !== stageWidth || metrics.height !== stageHeight) {
+        throw new Error(`${screen} ${landmarkId} ${profile}: stage geometry ${metrics.width}x${metrics.height} does not match capture contract ${stageWidth}x${stageHeight}`);
+      }
       const png = await stage.screenshot();
       const encoded = await page.evaluate(async base64 => {
         const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob());
@@ -69,7 +105,7 @@ try {
       const objectKey = `${directory}/${landmarkId}-${profile}-${sha256.slice(0, 16)}.webp`;
       await fs.writeFile(path.join(web, "public", objectKey), bytes);
       const stats = await page.locator(".living-three-scene").evaluate(element => ({ drawCalls: Number(element.dataset.drawCalls), triangles: Number(element.dataset.triangles), subjectBounds: JSON.parse(element.dataset.subjectBounds) }));
-      posters.push({ id: `${registration.posterPrefix}${landmarkId}-${profile}`, landmarkId, profile, width: encoded.width, height: encoded.height, viewport: { width, height }, stage: metrics, ...stats,
+      posters.push({ id: `${registration.posterPrefix}${landmarkId}-${profile}`, landmarkId, profile, width: encoded.width, height: encoded.height, viewport: { width: viewportWidth, height: viewportHeight }, stage: metrics, ...stats,
         compositionHash: hash(JSON.stringify(recipe.compositions[profile])),
         delivery: { url: `/${objectKey}`, objectKey, sha256, byteLength: bytes.length, mime: "image/webp" },
       });
@@ -79,6 +115,7 @@ try {
   }
   const evidence = { status: "review-only", deliveryStatus: "local capture originals; public delivery requires separate evidence", intendedR2Bucket: "sk7-assets-prod", intendedPublicOrigin: "https://sk7-companion.gkrry.com",
     source: "Repository-authored Three.js scene captured with Chromium; PNG to WebP encoding only, no image generation or retouching", sourceHashes,
+    captureEnvironment,
     characterSha256: character.delivery.sha256, characterRightsReference: character.provenance.reviewReference,
     visualDirectionReferences: ["DAHUPjn8shI", "DAHUPjDn-Rw"], visualDirectionUse: "Canva reference contract only; these posters are not Canva exports",
     renderer: { three: "0.185.1", chromium: browser.version(), deviceScaleFactor: 2, rendererDprCap: 1.25, webpQuality: 0.9 },

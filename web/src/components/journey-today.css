@@ -1,5 +1,5 @@
 /* Home composition only: data, navigation and scene policy stay upstream. */
-.app-shell[data-screen="S02"]:has(.journey-today) { --sk7-ink: #142f38; --sk7-ink-muted: #64747b; --sk7-focus: #103e3e; --sk7-border: #e3ebec; --sk7-content-max: 1200px; background: linear-gradient(180deg, #f5f9fb, #f8faf9 75%); }
+.app-shell[data-screen="S02"]:has(.journey-today) { --sk7-text: #142f38; --sk7-text-muted: #64747b; --sk7-focus: #103e3e; --sk7-border: #e3ebec; --sk7-content-max: 1200px; background: linear-gradient(180deg, #f5f9fb, #f8faf9 75%); }
 .app-shell[data-screen="S02"]:has(.journey-today) .app-header { padding-block: .65rem; }
 .app-shell[data-screen="S02"]:has(.journey-today) .brand-button { gap: .6rem; }
 .app-shell[data-screen="S02"]:has(.journey-today) .brand-button strong { font-size: 1.9rem; letter-spacing: -.07em; font-weight: 800; }
