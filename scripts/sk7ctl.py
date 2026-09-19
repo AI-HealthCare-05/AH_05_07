@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
@@ -40,17 +42,66 @@ TASK_KEYS = {
 ATTEMPT_KEYS = {"approach", "hypothesis"}
 VERIFICATION_KEYS = {"lane", "files", "out_of_scope_files", "results"}
 RESULT_KEYS = {"command", "result", "scope"}
-E2E_SUITE_BY_SPEC = {
-    "saved-scene-review.spec.ts": "npm run test:e2e:saved-scene",
-    "diorama-scene-review.spec.ts": "npm run test:e2e:scene",
-    "living-scene-review.spec.ts": "npm run test:e2e:scene",
-    "companion-review.spec.ts": "npm run test:e2e:review",
+PROFILES = {"focused", "pr", "full"}
+
+# Browser suites from the repository-owned Node selector are tagged by cost for
+# local profile routing. The selector itself remains the single source of truth
+# for which suites are relevant; this table only controls *when* they execute.
+BROWSER_SUITE_COSTS = {
+    "selector policy unit test": "CHEAP",
+    "S02 focused UI": "MODERATE",
+    "S10 focused UI": "MODERATE",
+    "browser regression": "EXPENSIVE",
+    "model-v2 firefox and webkit": "EXPENSIVE",
 }
-BROWSER_SUITE_COMMANDS = (
-    "npm run test:e2e:saved-scene",
-    "npm run test:e2e:scene",
-    "npm run test:e2e:review",
+DEFAULT_BROWSER_SUITE_COST = "MODERATE"
+
+# Model V2 research files map to the smallest directly affected test. Shared
+# helpers/contracts widen coverage only when they actually change.
+MODEL_B_TEST = "tests/model/test_model_v2_reference_distribution.py"
+MODEL_B2_TEST = "tests/model/test_model_v2_reference_uncertainty.py"
+MODEL_B3_TEST = "tests/model/test_model_v2_finite_reference_comprehension.py"
+MODEL_TEST_FILES = sorted(
+    {
+        MODEL_B_TEST,
+        MODEL_B2_TEST,
+        MODEL_B3_TEST,
+    }
 )
+MODEL_SPECIFIC_TESTS: dict[str, tuple[str, ...]] = {
+    "scripts/model/analyze_model_v2_reference_distribution.py": (MODEL_B_TEST,),
+    "scripts/model/analyze_model_v2_reference_uncertainty.py": (MODEL_B2_TEST,),
+    "scripts/model/analyze_model_v2_finite_reference_comprehension.py": (MODEL_B3_TEST,),
+    MODEL_B_TEST: (MODEL_B_TEST,),
+    MODEL_B2_TEST: (MODEL_B2_TEST,),
+    MODEL_B3_TEST: (MODEL_B3_TEST,),
+}
+# B3 imports the B reference distribution, so changes to B must also exercise B3.
+MODEL_SHARED_TESTS: dict[str, tuple[str, ...]] = {
+    "scripts/model/analyze_model_v2_reference_distribution.py": (MODEL_B_TEST, MODEL_B3_TEST),
+}
+MODEL_GLOBAL_SHARED_PREFIXES = (
+    "scripts/model/preprocessing",
+    "scripts/model/evaluation_rules",
+    "scripts/model/evaluate_predictions",
+    "scripts/model/comparison_inputs",
+    "scripts/model/comparison_evidence",
+    "scripts/model/paired_bootstrap",
+    "scripts/model/uncertainty_rules",
+    "scripts/model/uncertainty_evidence",
+    "scripts/model/validation_uncertainty",
+    "scripts/model/build_model_v2_r1_artifact",
+    "scripts/model/export_model_v2_browser",
+    "scripts/model/train_artifact",
+    "scripts/model/verify_model_v2_",
+    "scripts/model/run_model_v2_",
+    "scripts/model/finalize_model_v2_",
+    "tests/model/conftest.py",
+    "tests/model/browser_oracle.py",
+    "tests/model/browser_fixtures.py",
+)
+
+DATA_TEST_FILES = ("tests/data/test_preparation.py",)
 
 
 class Sk7Error(RuntimeError):
@@ -488,12 +539,6 @@ def cmd_plan(args: argparse.Namespace, root: Path, store: StateStore) -> int:  #
     return 0
 
 
-def _mapped_e2e_suites(paths: Sequence[str]) -> tuple[set[str], list[str]]:
-    selected = {E2E_SUITE_BY_SPEC[Path(path).name] for path in paths if Path(path).name in E2E_SUITE_BY_SPEC}
-    unknown = [path for path in paths if Path(path).name not in E2E_SUITE_BY_SPEC]
-    return selected, unknown
-
-
 def _scene_runtime_suites(paths: Sequence[str]) -> set[str]:
     selected: set[str] = set()
     for path in paths:
@@ -507,19 +552,128 @@ def _scene_runtime_suites(paths: Sequence[str]) -> set[str]:
     return selected
 
 
-def _browser_suite_plan(commands: set[str]) -> list[dict[str, Any]]:
-    return [
-        {
-            "cost": "EXPENSIVE",
-            "display": f"cd web && {command}",
-            "cwd": "web",
-            "argv": command.split(),
-            "run": False,
-            "scope": "directly affected browser behavior",
-        }
-        for command in BROWSER_SUITE_COMMANDS
-        if command in commands
-    ]
+def _select_browser_suites(paths: Sequence[str], root: Path) -> list[dict[str, Any]]:
+    """Call the repository-owned browser selector and return tagged suites.
+
+    The Node selector is the single source of truth for which browser suites
+    match a set of changed files. This function only annotates each suite with
+    a local cost and shell-ready argv so ``sk7ctl`` can decide when to run it.
+    """
+    if not paths:
+        return []
+    selector = root / "web" / "scripts" / "select-pr-browser-suites.mjs"
+    if not selector.exists():
+        return [
+            {
+                "cost": "EXPENSIVE",
+                "name": "browser selector unavailable",
+                "display": "browser suite selector missing",
+                "cwd": "web",
+                "argv": [],
+                "run": False,
+                "scope": "web/scripts/select-pr-browser-suites.mjs not found; defer to GitHub CI",
+                "profiles": {"pr", "full"},
+            }
+        ]
+
+    # The selector exports selectPrBrowserSuites(files). Import it directly so
+    # we can pass the current changed-file set without needing a temporary commit.
+    selector_abs = selector.resolve().as_posix()
+    script = (
+        f"import('{selector_abs}').then(m => "
+        "console.log(JSON.stringify(m.selectPrBrowserSuites(JSON.parse(process.argv[1])))))"
+    )
+    proc = subprocess.run(
+        ["node", "-e", script, json.dumps(list(paths))],
+        cwd=root / "web",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return [
+            {
+                "cost": "EXPENSIVE",
+                "name": "browser selector failed",
+                "display": f"browser selector failed: {proc.stderr.strip() or proc.stdout.strip()}",
+                "cwd": "web",
+                "argv": [],
+                "run": False,
+                "scope": "browser selector could not run; defer to GitHub CI",
+                "profiles": {"pr", "full"},
+            }
+        ]
+
+    try:
+        suites = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        return [
+            {
+                "cost": "EXPENSIVE",
+                "name": "browser selector json",
+                "display": f"browser selector JSON error: {exc}",
+                "cwd": "web",
+                "argv": [],
+                "run": False,
+                "scope": "browser selector output was not valid JSON; defer to GitHub CI",
+                "profiles": {"pr", "full"},
+            }
+        ]
+
+    plan: list[dict[str, Any]] = []
+    for suite in suites:
+        name = suite.get("name", "unknown")
+        command = suite.get("command", "")
+        cost = BROWSER_SUITE_COSTS.get(name, DEFAULT_BROWSER_SUITE_COST)
+        plan.append(
+            {
+                "cost": cost,
+                "name": name,
+                "display": f"cd web && {command}",
+                "cwd": "web",
+                "shell": command,
+                "argv": [],
+                "run": True,
+                "scope": f"browser suite '{name}' selected by web/scripts/select-pr-browser-suites.mjs",
+                "profiles": {"focused", "pr", "full"} if cost in {"CHEAP", "MODERATE"} else {"pr", "full"},
+            }
+        )
+    return plan
+
+
+def _model_test_targets(paths: Sequence[str]) -> tuple[list[str], str]:
+    """Return the smallest set of model tests for the changed paths and why."""
+    targets: set[str] = set()
+    has_global_shared = False
+    for path in paths:
+        if not path.startswith(("scripts/model/", "tests/model/")):
+            continue
+        if any(path.startswith(prefix) for prefix in MODEL_GLOBAL_SHARED_PREFIXES) or path in {
+            "tests/model/conftest.py",
+            "tests/model/browser_oracle.py",
+            "tests/model/browser_fixtures.py",
+        }:
+            has_global_shared = True
+            continue
+        specific = MODEL_SPECIFIC_TESTS.get(path)
+        if specific:
+            targets.update(specific)
+            shared = MODEL_SHARED_TESTS.get(path)
+            if shared:
+                targets.update(shared)
+    if has_global_shared:
+        return MODEL_TEST_FILES, "shared Model V2 helper/contract changed; running all model tests"
+    if not targets:
+        return [], ""
+    return sorted(targets), "directly affected Model V2 research files"
+
+
+def _data_test_targets(paths: Sequence[str]) -> tuple[list[str], str]:
+    """Return the smallest set of data tests for the changed paths and why."""
+    data_changed = [path for path in paths if path.startswith(("scripts/data/", "data/"))]
+    if not data_changed:
+        return [], ""
+    return list(DATA_TEST_FILES), "directly affected data-preparation files"
 
 
 def _skip_plan(docs_only: bool, e2e_only: bool, scene_runtime: bool) -> list[dict[str, Any]]:
@@ -534,6 +688,7 @@ def _skip_plan(docs_only: bool, e2e_only: bool, scene_runtime: bool) -> list[dic
                 "argv": [],
                 "run": False,
                 "scope": build_reason,
+                "profiles": PROFILES,
             }
         )
     plan.append(
@@ -544,6 +699,7 @@ def _skip_plan(docs_only: bool, e2e_only: bool, scene_runtime: bool) -> list[dic
             "argv": [],
             "run": False,
             "scope": "PR policy; release/main gate only",
+            "profiles": PROFILES,
         }
     )
     if not scene_runtime:
@@ -555,12 +711,40 @@ def _skip_plan(docs_only: bool, e2e_only: bool, scene_runtime: bool) -> list[dic
                 "argv": [],
                 "run": False,
                 "scope": "no task-specific manual gate",
+                "profiles": PROFILES,
             }
         )
     return plan
 
 
-def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
+def _check(
+    cost: str,
+    display: str,
+    cwd: str,
+    argv: list[str],
+    scope: str,
+    profiles: set[str],
+    run: bool = True,
+    shell: str = "",
+    name: str = "",
+) -> dict[str, Any]:
+    return {
+        "cost": cost,
+        "display": display,
+        "cwd": cwd,
+        "argv": argv,
+        "shell": shell,
+        "run": run,
+        "scope": scope,
+        "profiles": profiles,
+        "name": name,
+    }
+
+
+def verification_plan(paths: Sequence[str], lane: str, profile: str, root: Path) -> list[dict[str, Any]]:
+    if profile not in PROFILES:
+        raise Sk7Error(f"unknown profile: {profile}")
+
     plan: list[dict[str, Any]] = []
     docs_only = bool(paths) and all(path.startswith("docs/") or path in {"README.md", "AGENTS.md"} for path in paths)
     e2e_paths = [path for path in paths if path.startswith("web/e2e/")]
@@ -571,105 +755,243 @@ def verification_plan(paths: Sequence[str], lane: str) -> list[dict[str, Any]]:
     scene_runtime = any(
         any(word in path.lower() for word in ("scene", "companion", "manifest")) for path in web_runtime_paths
     )
+
     if paths:
         plan.append(
-            {
-                "cost": "CHEAP",
-                "display": "git diff --check -- <task paths>",
-                "cwd": ".",
-                "argv": ["git", "diff", "--check", "--", *paths],
-                "run": True,
-                "scope": "task-scope working-tree whitespace errors",
-            },
+            _check(
+                cost="CHEAP",
+                display="git diff --check -- <task paths>",
+                cwd=".",
+                argv=["git", "diff", "--check", "--", *paths],
+                scope="task-scope working-tree whitespace errors",
+                profiles=PROFILES,
+            )
         )
+
     if any(path in {"scripts/sk7ctl.py", "scripts/test_sk7ctl.py"} for path in paths):
         plan.extend(
             [
-                {
-                    "cost": "CHEAP",
-                    "display": "python3 -m unittest scripts/test_sk7ctl.py",
-                    "cwd": ".",
-                    "argv": [sys.executable, "-m", "unittest", "scripts/test_sk7ctl.py"],
-                    "run": True,
-                    "scope": "sk7ctl unit behavior",
-                },
-                {
-                    "cost": "CHEAP",
-                    "display": "python3 -c <AST parse scripts/sk7ctl.py>",
-                    "cwd": ".",
-                    "argv": [
+                _check(
+                    cost="CHEAP",
+                    display="python3 -m unittest scripts/test_sk7ctl.py",
+                    cwd=".",
+                    argv=[sys.executable, "-m", "unittest", "scripts/test_sk7ctl.py"],
+                    scope="sk7ctl unit behavior",
+                    profiles=PROFILES,
+                ),
+                _check(
+                    cost="CHEAP",
+                    display="python3 -c <AST parse scripts/sk7ctl.py>",
+                    cwd=".",
+                    argv=[
                         sys.executable,
                         "-c",
                         "import ast,pathlib; ast.parse(pathlib.Path('scripts/sk7ctl.py').read_text())",
                     ],
-                    "run": True,
-                    "scope": "sk7ctl Python syntax",
-                },
+                    scope="sk7ctl Python syntax",
+                    profiles=PROFILES,
+                ),
             ]
         )
-    if scene_runtime:
+
+    model_tests, model_reason = _model_test_targets(paths)
+    if model_tests:
+        display = f"python3 -m pytest {' '.join(model_tests)}"
         plan.append(
-            {
-                "cost": "MODERATE",
-                "display": "cd web && npm run verify:scene-manifest",
-                "cwd": "web",
-                "argv": ["npm", "run", "verify:scene-manifest"],
-                "run": True,
-                "scope": "scene manifest consistency",
-            }
-        )
-    if web_runtime_paths:
-        plan.append(
-            {
-                "cost": "MODERATE",
-                "display": "cd web && npm run build",
-                "cwd": "web",
-                "argv": ["npm", "run", "build"],
-                "run": True,
-                "scope": "web TypeScript/CSS build",
-            }
+            _check(
+                cost="MODERATE",
+                display=display,
+                cwd=".",
+                argv=[sys.executable, "-m", "pytest", *model_tests],
+                scope=model_reason,
+                profiles={"focused", "pr", "full"},
+            )
         )
 
-    selected_suites, unknown_e2e = _mapped_e2e_suites(e2e_paths)
-    selected_suites.update(_scene_runtime_suites(web_runtime_paths))
-    plan.extend(_browser_suite_plan(selected_suites))
-    if unknown_e2e:
+    data_tests, data_reason = _data_test_targets(paths)
+    if data_tests:
+        display = f"python3 -m pytest {' '.join(data_tests)}"
         plan.append(
-            {
-                "cost": "EXPENSIVE",
-                "display": "targeted Playwright selection required",
-                "cwd": "web",
-                "argv": [],
-                "run": False,
-                "scope": f"no deterministic suite mapping for {', '.join(unknown_e2e)}",
-            }
+            _check(
+                cost="MODERATE",
+                display=display,
+                cwd=".",
+                argv=[sys.executable, "-m", "pytest", *data_tests],
+                scope=data_reason,
+                profiles={"focused", "pr", "full"},
+            )
         )
 
     if scene_runtime:
         plan.append(
-            {
-                "cost": "EXPENSIVE",
-                "display": "representative Android/iOS spot-check when required",
-                "cwd": ".",
-                "argv": [],
-                "run": False,
-                "scope": "manual gate for affected visual/device behavior; never automatic PASS",
-            }
+            _check(
+                cost="MODERATE",
+                display="cd web && npm run verify:scene-manifest",
+                cwd="web",
+                argv=["npm", "run", "verify:scene-manifest"],
+                scope="scene manifest consistency",
+                profiles={"focused", "pr", "full"},
+            )
+        )
+    if web_runtime_paths and not docs_only:
+        plan.append(
+            _check(
+                cost="MODERATE",
+                display="cd web && npm run build",
+                cwd="web",
+                argv=["npm", "run", "build"],
+                scope="web TypeScript/CSS build",
+                profiles={"focused", "pr", "full"},
+            )
+        )
+
+    # Browser tests are only relevant when the diff touches web code. Reuse the
+    # repository-owned selector for the web subset so we do not duplicate rules.
+    web_paths = [path for path in paths if path.startswith("web/")]
+    if web_paths:
+        browser_suites = _select_browser_suites(web_paths, root)
+        plan.extend(browser_suites)
+    else:
+        browser_suites = []
+
+    # Fallback for scene/companion runtime paths that are not recognized by the
+    # dedicated selector: keep the historical deterministic mapping so local
+    # iteration still runs a targeted suite instead of the broad matrix.
+    selected_fallback = _scene_runtime_suites(web_runtime_paths)
+    existing_commands = {item.get("shell", "") for item in browser_suites if item.get("shell")}
+    for command in selected_fallback:
+        if command in existing_commands:
+            continue
+        plan.append(
+            _check(
+                cost="MODERATE",
+                name=command,
+                display=f"cd web && {command}",
+                cwd="web",
+                argv=command.split(),
+                shell=command,
+                scope="directly affected scene/companion runtime (fallback mapping)",
+                profiles={"focused", "pr", "full"},
+            )
+        )
+
+    if scene_runtime:
+        plan.append(
+            _check(
+                cost="EXPENSIVE",
+                display="representative Android/iOS spot-check when required",
+                cwd=".",
+                argv=[],
+                scope="manual gate for affected visual/device behavior; never automatic PASS",
+                profiles=set(),
+                run=False,
+            )
         )
 
     if lane == "protected":
         plan.append(
-            {
-                "cost": "EXPENSIVE",
-                "display": "select the directly relevant protected-boundary contract tests",
-                "cwd": ".",
-                "argv": [],
-                "run": False,
-                "scope": "protected boundary; routine checks cannot establish PASS",
-            }
+            _check(
+                cost="EXPENSIVE",
+                display="select the directly relevant protected-boundary contract tests",
+                cwd=".",
+                argv=[],
+                scope="protected boundary; routine checks cannot establish PASS",
+                profiles={"pr", "full"},
+                run=False,
+            )
         )
     plan.extend(_skip_plan(docs_only, e2e_only, scene_runtime))
     return plan
+
+
+def _format_duration(seconds: float) -> str:
+    if seconds < 1:
+        return f"{seconds * 1000:.0f}ms"
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes = int(seconds // 60)
+    secs = seconds % 60
+    return f"{minutes}m{secs:.1f}s"
+
+
+def _log_slug(display: str) -> str:
+    return "".join(c if c.isalnum() else "_" for c in display)[:50]
+
+
+def _bounded_excerpt(text: str, max_lines: int = 80) -> str:
+    lines = text.splitlines()
+    if len(lines) <= max_lines:
+        return text
+    prefix = f"... ({len(lines) - max_lines} earlier lines omitted) ..."
+    return "\n".join([prefix, *lines[-max_lines:]])
+
+
+def _extract_test_count(text: str) -> str:
+    """Best-effort test count from pytest/unittest/playwright output."""
+    for line in reversed(text.splitlines()):
+        # pytest: "X passed in Ys"
+        if " passed" in line or " failed" in line or " skipped" in line:
+            parts = line.split(" in ")[0].split(",")
+            return ",".join(p.strip() for p in parts if any(k in p for k in ("passed", "failed", "skipped", "error")))
+        # unittest: "Ran X tests in Ys"
+        if line.strip().startswith("Ran ") and " tests" in line:
+            return line.strip().split(" in ")[0]
+    return ""
+
+
+def _format_result(item: dict[str, Any], returncode: int, output: str, duration: float, log_path: Path) -> str:
+    """Return a concise PASS/FAIL summary plus a bounded failure excerpt."""
+    result = "PASS" if returncode == 0 else "FAIL"
+    count = _extract_test_count(output)
+    summary = f"{result} — {item['display']} — {count} — {_format_duration(duration)} — full log: {log_path}"
+    if returncode != 0:
+        excerpt = _bounded_excerpt(output, max_lines=80)
+        if excerpt:
+            return f"{summary}\n--- failure excerpt ---\n{excerpt}\n--- end excerpt ---"
+    return summary
+
+
+def _run_check(item: dict[str, Any], root: Path, env: dict[str, str]) -> tuple[int, str, float, Path]:
+    """Run a single check, capturing output to /tmp, and return (rc, output, duration, log_path)."""
+    started = time.monotonic()
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    log_path = Path("/tmp") / f"sk7ctl_{timestamp}_{_log_slug(item['display'])}.log"
+
+    if item.get("shell"):
+        # Browser suites use && pipelines; run via shell so we do not re-parse them.
+        completed = subprocess.run(
+            item["shell"],
+            cwd=root / item["cwd"],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
+    else:
+        completed = subprocess.run(
+            item["argv"],
+            cwd=root / item["cwd"],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+    duration = time.monotonic() - started
+    output = completed.stdout or ""
+    try:
+        log_path.write_text(output, encoding="utf-8")
+    except OSError:
+        pass
+
+    return completed.returncode, output, duration, log_path
+
+
+def _render_plan_item(item: dict[str, Any], selected: bool) -> str:
+    mark = "[x]" if selected else "[ ]"
+    manual = " [manual]" if not item["run"] and item["cost"] != "SKIP" else ""
+    return f"- {mark} {item['cost']}: {item['display']} — {item['scope']}{manual}"
 
 
 def cmd_verify(args: argparse.Namespace, root: Path, store: StateStore) -> int:
@@ -678,32 +1000,52 @@ def cmd_verify(args: argparse.Namespace, root: Path, store: StateStore) -> int:
     dirty = dirty_files(root)
     paths, preexisting, out_of_scope = classify_changes(dirty, changed_files(root), task)
     lane = infer_lane(paths)
-    plan = verification_plan(paths, lane)
+    profile = args.profile
+    plan = verification_plan(paths, lane, profile, root)
+
     print_dirty_sections(paths, preexisting, out_of_scope)
     print(f"LANE: {lane}")
+    print(f"PROFILE: {profile}")
     print("VERIFICATION PLAN:")
+
+    selected = [item for item in plan if profile in item["profiles"] and item["run"]]
+    skipped = [item for item in plan if item not in selected]
+
     for item in plan:
-        suffix = " [manual]" if not item["run"] and item["cost"] != "SKIP" else ""
-        print(f"- {item['cost']}: {item['display']} — {item['scope']}{suffix}")
+        print(_render_plan_item(item, item in selected))
+
     if not args.run:
-        print("PLAN ONLY: no commands executed (use --run for CHEAP/MODERATE commands).")
+        print("PLAN ONLY: no commands executed (use --run to execute the selected checks).")
+        if skipped:
+            print("SKIPPED / DELEGATED TO GITHUB CI:")
+            for item in skipped:
+                print(f"- {item['cost']}: {item['display']} — {item['scope']}")
         if out_of_scope:
             print("RESULT: OUT-OF-SCOPE DIRTY REQUIRES REVIEW; it is not part of routine PASS.")
         if lane == "protected":
             print("RESULT: PROTECTED REVIEW REQUIRED; routine verification cannot be PASS.")
         return 0
 
+    if not selected:
+        print("No automatic checks selected for this profile.")
+        if out_of_scope:
+            print("RESULT: OUT-OF-SCOPE DIRTY REQUIRES REVIEW; it is not part of routine PASS.")
+            return 2
+        if lane == "protected":
+            print("RESULT: PROTECTED REVIEW REQUIRED; routine verification cannot be PASS.")
+            return 2
+        return 0
+
     results: list[dict[str, str]] = []
     failed = False
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
-    for item in plan:
-        if not item["run"]:
-            continue
-        completed = subprocess.run(item["argv"], cwd=root / item["cwd"], env=env, text=True)
-        result = "PASS" if completed.returncode == 0 else "FAIL"
-        failed = failed or completed.returncode != 0
+    for item in selected:
+        returncode, output, duration, log_path = _run_check(item, root, env)
+        result = "PASS" if returncode == 0 else "FAIL"
+        failed = failed or returncode != 0
         results.append({"command": item["display"], "result": result, "scope": item["scope"]})
-        print(f"{item['display']} -> {result}")
+        print(_format_result(item, returncode, output, duration, log_path))
+
     state["last_verification"] = {
         "lane": lane,
         "files": paths,
@@ -711,6 +1053,7 @@ def cmd_verify(args: argparse.Namespace, root: Path, store: StateStore) -> int:
         "results": results,
     }
     store.save(state)
+
     blocked = False
     if out_of_scope:
         print("RESULT: OUT-OF-SCOPE DIRTY REQUIRES REVIEW; it is not part of routine PASS.")
@@ -779,7 +1122,7 @@ def cmd_handoff(_args: argparse.Namespace, root: Path, store: StateStore) -> int
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sk7ctl", description="Deterministic SK7 workflow kernel v0.2")
+    parser = argparse.ArgumentParser(prog="sk7ctl", description="Deterministic SK7 workflow kernel v0.3")
     commands = parser.add_subparsers(dest="command", required=True)
     status = commands.add_parser("status", help="show repository and loop status without network access")
     status.add_argument("--refresh", action="store_true", help="fetch origin main before reporting")
@@ -814,7 +1157,13 @@ def build_parser() -> argparse.ArgumentParser:
     close = plan_commands.add_parser("close", help="close the active task")
     close.add_argument("--next", required=True, help="the single next action")
     verify = commands.add_parser("verify", help="plan proportional verification")
-    verify.add_argument("--run", action="store_true", help="run planned CHEAP/MODERATE commands")
+    verify.add_argument("--run", action="store_true", help="run selected checks for the active profile")
+    verify.add_argument(
+        "--profile",
+        choices=("focused", "pr", "full"),
+        default="focused",
+        help="local verification profile (default: focused)",
+    )
     commands.add_parser("handoff", help="print a concise Markdown handoff")
     return parser
 
