@@ -1012,6 +1012,37 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await expect(settings).toContainText('화면에서는 최근 7일을 탐색해요.');
   await expect(settings).toContainText('내보낸 JSON·PDF와 인쇄물은 계정과 별개로 직접 관리해요.');
   await expect(settings).toContainText('이메일 링크로 로그인한 계정의 기록을 확인해요.');
+
+  const ordinarySettings = settings.locator('.journey-settings-section').filter({
+    hasText: '기록을 찾아보고 파일을 관리해요',
+  });
+  const ordinarySurface = await ordinarySettings.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      borderTop: style.borderTopWidth,
+      borderBottom: style.borderBottomWidth,
+      radius: style.borderRadius,
+      shadow: style.boxShadow,
+    };
+  });
+  expect(ordinarySurface.borderTop).toBe('0px');
+  expect(ordinarySurface.borderBottom).not.toBe('0px');
+  expect(ordinarySurface.radius).toBe('0px');
+  expect(ordinarySurface.shadow).toBe('none');
+
+  const deleteSection = settings.locator('.journey-settings-section').filter({
+    has: page.getByRole('button', { name: '계정 삭제', exact: true }),
+  });
+  const deleteSurface = await deleteSection.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      borderTop: style.borderTopWidth,
+      radius: style.borderRadius,
+    };
+  });
+  expect(deleteSurface.borderTop).not.toBe('0px');
+  expect(deleteSurface.radius).not.toBe('0px');
+
   await settings.locator('summary').click();
   await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록을 새로고침해 반영 여부를 확인해 주세요.');
   await page.screenshot({ path: testInfo.outputPath('s14-desktop-1440-help-open.png'), fullPage: true });

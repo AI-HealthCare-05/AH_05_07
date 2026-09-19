@@ -1801,26 +1801,34 @@
 }
 
 .app-shell[data-screen="S14"] .journey-settings-list {
-  gap: 1rem;
+  gap: .25rem;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section {
-  border: 1px solid #dce7e2;
-  border-radius: 1rem;
-  background: #ffffffe5;
-  padding: 1.05rem 1.15rem;
-  box-shadow:
-    0 7px 18px #173e3908,
-    inset 0 1px 0 #fff;
+  border: 0;
+  border-bottom: 1px solid #dce7e2;
+  border-radius: 0;
+  background: transparent;
+  padding: .9rem .15rem 1rem;
+  box-shadow: none;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section.companion-identity-settings {
-  border-color: #cfe0d8;
+  border: 1px solid #cfe0d8;
+  border-radius: .85rem;
   background: linear-gradient(155deg, #ffffff, #eef7f2);
+  padding: 1rem 1.05rem;
+  box-shadow:
+    0 8px 20px #173e3909,
+    inset 0 1px 0 #fff;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section > div h2 {
   color: #173b40;
+}
+
+.app-shell[data-screen="S14"] .journey-settings-section:last-child {
+  border-bottom: 0;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-note {
@@ -1847,8 +1855,11 @@
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) {
-  border-color: #ead1cc;
+  margin-top: .25rem;
+  border: 1px solid #ead1cc;
+  border-radius: .75rem;
   background: #fff9f7;
+  padding: .95rem 1rem;
 }
 
 .app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) .eyebrow {
@@ -1856,7 +1867,7 @@
 }
 
 .app-shell[data-screen="S14"] .journey-settings-account:not(:has(> .danger)) {
-  background: #f8faf9;
+  background: transparent;
 }
 
 @media (max-width: 760px) {
@@ -1885,15 +1896,26 @@
       inset 0 1px 0 #fff;
   }
 
-  .app-shell[data-screen="S12"] .journey-empty .journey-empty-action,
-  .app-shell[data-screen="S14"] .journey-settings-section {
+  .app-shell[data-screen="S12"] .journey-empty .journey-empty-action {
     box-shadow:
       0 6px 16px #173e3908,
       inset 0 1px 0 #fff;
   }
 
   .app-shell[data-screen="S14"] .journey-settings-section {
-    padding: .95rem;
+    padding: .8rem .1rem .9rem;
+    box-shadow: none;
+  }
+
+  .app-shell[data-screen="S14"] .journey-settings-section.companion-identity-settings,
+  .app-shell[data-screen="S14"] .journey-settings-section:has(> .danger) {
+    padding: .85rem .9rem;
+  }
+
+  .app-shell[data-screen="S14"] .journey-settings-section.companion-identity-settings {
+    box-shadow:
+      0 6px 16px #173e3908,
+      inset 0 1px 0 #fff;
   }
 }
 
