@@ -1,8 +1,17 @@
 # Model V2 / S11 visible local result reconciliation
 
+> EVIDENCE — NOT CURRENT AUTHORITY
+>
+> Records the #642 reconciliation at its recorded source baseline.
+> Current Model V2 behavior is owned by
+> [the current product contract](../model-v2-product-contract.md).
+
+Some paths inventoried below were later removed from HEAD by the documentation
+lifecycle cleanup; they remain recoverable at the recorded source baseline.
+
 Task record for [Issue #396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396).
 This is a scoped source audit and restart record, not policy or runtime attestation.
-The [product contract](model-v2-product-contract.md) owns current display policy.
+The [product contract](../model-v2-product-contract.md) owns current display policy.
 
 ## Phase A — read-only findings at the starting base
 

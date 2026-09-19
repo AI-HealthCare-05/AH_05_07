@@ -3,8 +3,9 @@
 > **개발·문서 원본:** `AI-HealthCare-05/AH_05_07`
 >
 > `emotigom/ah-05-07-pages`의 파일은 배포용 동기화 사본입니다. 수정은 원본에서만 합니다.
-> 개발 절차는 [AGENTS.md](AGENTS.md), 시작 맥락은 [짧은 인계](docs/project-handoff.md#fast-start),
-> 운영 판단은 [배포 SSOT](docs/deployment-ssot.md)를 따릅니다. `main` 병합, 미러 동기화,
+> [AGENTS.md](AGENTS.md) → [문서 authority map](docs/README.md) →
+> [짧은 인계](docs/project-handoff.md#fast-start) → [배포 SSOT](docs/deployment-ssot.md)
+> 순서로 현재 작업의 기준을 찾습니다. `main` 병합, 미러 동기화,
 > 운영 배포, scene 활성화는 서로 다른 단계입니다.
 
 **상균7데이즈**는 혈압 관찰값을 날짜와 시간대별로 이어서 남기고, 최근 7일을 다시 보는
@@ -27,7 +28,7 @@ _합성 fixture로 캡처한 SK7 Living Journey 화면입니다._
 | 혈압 관찰 | 측정 전 체크리스트를 확인하고 아침·저녁 관찰값을 작성·조회·수정·삭제합니다. |
 | 7일 챌린지 | 걷기·수면 루틴·저염 식사 중 하나를 선택하고 매일 `완료` 또는 `건너뜀`을 기록합니다. 첫 체크인 뒤에는 행동 선택이 고정됩니다. |
 | 기록과 회고 | 오늘, 기록 찾아보기, 현재·이전 7일 회고를 오가며 본인 기록을 확인합니다. 최근 7일은 읽기 좋은 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있고, JSON으로도 내보낼 수 있습니다. |
-| 선택형 생활정보 도구 | 원할 때 생활정보를 동결된 11개 의미 특성 계약에 맞춰 browser-local Model V2 경로에서 처리하고, 입력한 활동·수면·생활습관을 이번 이용에만 보이는 `오늘의 시작점` 요약으로 정리합니다. 영구 제품 의미로 개인별 확률·백분율·등급을 표시하지 않으며 입력과 내부 결과를 저장하지 않습니다. 단, 2026-09-17~2026-10-17 KST의 한시적 연구/개발 미리보기에서는 이미 계산된 browser-local 연속 출력을 평문 소수로만 보여줄 수 있습니다. |
+| 선택형 생활정보 도구 | 원할 때 생활정보를 동결된 11개 의미 특성 계약에 맞춰 browser-local Model V2 경로에서 처리하고, 입력한 활동·수면·생활습관을 이번 이용에만 보이는 `오늘의 시작점` 요약으로 정리합니다. [현재 제품 계약](docs/model-v2-product-contract.md#current-authority)의 한시적 연구/개발 미리보기 동안 로그인한 S11에서 계산이 성공하면 연속 출력을 소수점 셋째 자리의 평문 소수로 바로 표시합니다. 별도 펼치기는 필요하지 않으며 확률·백분율·등급 의미를 부여하거나 입력·결과를 저장하지 않습니다. |
 | 데이터 관리 | PostgreSQL RLS로 소유권을 제한하고, 제품 기록은 30일 뒤 접근을 차단한 다음 매일 물리 삭제합니다. 설정에서 2단계 확인 후 계정을 삭제할 수 있습니다. |
 
 화면은 semantic HTML을 기본으로 동작합니다. 정적 clay poster와 선택적으로 로드되는
@@ -42,7 +43,7 @@ Three.js companion은 표현 계층일 뿐, 기록·인증·모델 의미를 바
 
 - 제품 용어는 **입력 기반 위험군 선별 신호**로 고정합니다.
 - 모델 처리, 측정한 혈압, 챌린지 참여는 서로 다른 사실이며 인과관계나 개선 효과로 합치지 않습니다.
-- 개인별 확률·백분율·등급과 영구 점수 의미를 공개하지 않습니다. 2026-09-17~2026-10-17 KST의 한시적 예외는 기존 browser-local 연속 출력의 연구/개발 미리보기뿐이며 확률·백분율·등급·진단 의미로 해석하지 않습니다.
+- 개인별 확률·백분율·등급과 영구 점수 의미를 공개하지 않습니다. [현재 제품 계약](docs/model-v2-product-contract.md#current-authority)이 정한 기간에만 기존 browser-local 연속 출력을 연구/개발 미리보기로 표시하며, 확률·백분율·등급·진단 의미로 해석하지 않습니다. 기간 종료 시 숫자 표시를 중단합니다.
 - 진단·처방·치료·예방 또는 응급 판단을 제공하지 않습니다.
 - Model V2 입력과 내부 결과는 일시적으로만 처리하며 저장하거나 혈압·챌린지 기록과 결합하지 않습니다.
 
@@ -60,7 +61,7 @@ Three.js companion은 표현 계층일 뿐, 기록·인증·모델 의미를 바
 | Model V2 | 동결된 11개 의미 특성 계산을 검증된 browser-local 자산으로 실행합니다. 정상 S11 제출은 feature-bearing inference POST를 보내지 않으며, 인증된 서버 endpoint는 두 필드 비수치 계약으로 구조적으로 유지됩니다. 한시적 연구/개발 미리보기의 연속 출력은 브라우저에서만 표시되고 저장·API 숫자 응답으로 확장되지 않습니다. |
 | Visual assets | 승인된 공개 companion·poster 자산만 Cloudflare R2에서 불변 manifest와 함께 제공합니다. 앱 배포 경계와는 분리됩니다. |
 
-자세한 구성과 ERD는 [Architecture](docs/architecture.md), 실제 운영 토폴로지와 최신 기록은
+자세한 구성과 ERD는 [Architecture](docs/architecture.md), 운영 토폴로지와 배포 시점 확인 절차는
 [Deployment SSOT](docs/deployment-ssot.md)를 기준으로 합니다.
 
 ## 로컬 web 실행
@@ -102,13 +103,6 @@ npm run build
 
 ## 문서 안내
 
-시작할 때 아래 문서를 모두 읽지 않습니다. 현재 작업의 경계에 해당하는 문서만 선택합니다.
-
-| 목적 | 문서 |
-| --- | --- |
-| 개발 시작과 위험 기반 절차 | [AGENTS.md](AGENTS.md) · [Project handoff](docs/project-handoff.md#fast-start) |
-| 제품과 Model V2 경계 | [Requirements](docs/requirements.md) · [Model V2 product contract](docs/model-v2-product-contract.md) |
-| 시스템·데이터·API | [Architecture and ERD](docs/architecture.md) · [Data contract](docs/data-contract.md) · [API contract](docs/api-contract.md) |
-| 사용자 여정과 시각 계층 | [UX flow](docs/ux-flow.md) · [Visual production contract](docs/visual-production-contract.md) · [Scene architecture](docs/scene-architecture.md) |
-| 자산 | [Asset register](docs/asset-register.md) · [Companion runtime](docs/companion-runtime.md) |
-| 배포와 운영 | [Deployment SSOT](docs/deployment-ssot.md) · [Release contract](docs/architecture/RELEASE_CONTRACT.md) |
+문서 소유권과 lifecycle은 [docs/README.md](docs/README.md)에서 확인합니다.
+현재 작업의 authority만 읽고, 역사 기록은 필요할 때 Git history와 evidence/research/ADR에서
+찾습니다. 검색 결과에 나타난 오래된 상태를 현재 제품이나 운영 상태로 해석하지 않습니다.
