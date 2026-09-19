@@ -111,6 +111,31 @@ async def list_owned_records(
     return response.json()
 
 
+async def get_owned_challenge_window(
+    start_on: date,
+    end_on: date,
+    session: SupabaseSession,
+    client: httpx.AsyncClient | None = None,
+) -> dict[str, object]:
+    """Read active challenge and check-ins through one database snapshot boundary."""
+    if client is None:
+        async with httpx.AsyncClient(timeout=5) as owned_client:
+            return await get_owned_challenge_window(start_on, end_on, session, owned_client)
+    response = await client.post(
+        f"{config.SUPABASE_URL}/rest/v1/rpc/get_owned_challenge_window",
+        headers={
+            "apikey": config.SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": f"Bearer {session.access_token}",
+        },
+        json={
+            "p_start_on": start_on.isoformat(),
+            "p_end_on": end_on.isoformat(),
+        },
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 async def delete_owned_record(table: str, record_id: UUID, session: SupabaseSession) -> bool:
     async with httpx.AsyncClient(timeout=5) as client:
         response = await client.delete(

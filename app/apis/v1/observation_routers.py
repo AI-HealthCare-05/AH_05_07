@@ -30,6 +30,7 @@ from app.services.observation_store import (
     delete_owned_record,
     get_owned_active_challenge,
     get_owned_challenge_checkin,
+    get_owned_challenge_window,
     insert_owned_record,
     list_owned_records,
     select_owned_active_challenge,
@@ -304,7 +305,11 @@ async def get_observation_window(
     try:
         session = await observation_session(authorization)
         async with httpx.AsyncClient(timeout=5) as client:
-            blood_pressure_observations, challenge_events, active_challenge, challenge_checkins = await asyncio.gather(
+            (
+                blood_pressure_observations,
+                challenge_events,
+                challenge_window,
+            ) = await asyncio.gather(
                 list_owned_records(
                     "blood_pressure_observations",
                     "id,observed_on,period,systolic,diastolic,created_at,expires_at",
@@ -321,16 +326,10 @@ async def get_observation_window(
                     session,
                     client,
                 ),
-                get_owned_active_challenge(session, client),
-                list_owned_records(
-                    "challenge_checkins",
-                    "id,challenge_id,action_id,observed_on,status,created_at,expires_at",
-                    start_on,
-                    end_on,
-                    session,
-                    client,
-                ),
+                get_owned_challenge_window(start_on, end_on, session, client),
             )
+        active_challenge = challenge_window["active_challenge"]
+        challenge_checkins = challenge_window["challenge_checkins"]
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
 
@@ -367,14 +366,9 @@ async def export_observations(
             end_on,
             session,
         )
-        active_challenge = await get_owned_active_challenge(session)
-        challenge_checkins = await list_owned_records(
-            "challenge_checkins",
-            "id,challenge_id,action_id,observed_on,status,created_at,expires_at",
-            start_on,
-            end_on,
-            session,
-        )
+        challenge_window = await get_owned_challenge_window(start_on, end_on, session)
+        active_challenge = challenge_window["active_challenge"]
+        challenge_checkins = challenge_window["challenge_checkins"]
     except httpx.HTTPError as error:
         raise storage_not_ready() from error
 
