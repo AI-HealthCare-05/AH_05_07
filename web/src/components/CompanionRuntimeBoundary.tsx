@@ -1,6 +1,8 @@
 import { lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react";
 
 import { resolveCompanionRuntimeConfig, type CompanionSelection } from "../ui/companion";
+import { getCompanionAsset } from "../ui/companionAssets.generated";
+import { getActiveCompanionAsset } from "../ui/companionActiveAsset";
 
 export type CompanionFraming = "default" | "journey-s05" | "login-narrator";
 export type CompanionInteractionActivation = "disabled" | "immediate" | "after-idle";
@@ -55,6 +57,9 @@ class RendererErrorBoundary extends Component<{ children: ReactNode }, { failed:
 export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = false, framing = "default" }: CompanionRuntimeBoundaryProps) {
   const config = resolveCompanionRuntimeConfig(mode, { reducedMotion });
   if (!config.enabled || !selection) return null;
+  const asset = config.mode === "review"
+    ? getCompanionAsset(selection.species, selection.variant)
+    : getActiveCompanionAsset(selection.species);
   const interactionActivation: CompanionInteractionActivation = config.reducedMotion
     ? "disabled"
     : config.mode === "review"
@@ -92,6 +97,7 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
         <Suspense fallback={null}>
           <CompanionReviewRenderer
             selection={selection}
+            asset={asset}
             reducedMotion={config.reducedMotion}
             framing={framing}
             interactionActivation={interactionActivation}

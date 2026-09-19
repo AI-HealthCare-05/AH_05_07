@@ -1,9 +1,27 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { allScreenIds } from "../src/ui/journey";
-import { companionSpecies } from "../src/ui/companion";
+import { companionSpecies, companionVariants, type CompanionSpecies } from "../src/ui/companion";
+import { getActiveCompanionAsset } from "../src/ui/companionActiveAsset";
+import { companionAssetManifest, getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { activeSceneCompanionSpecies, getActiveSceneCharacter } from "../src/ui/companionSceneRegistry";
 import { getSceneCharacterPresentationProfile } from "../src/ui/companionPresentationProfiles";
+import { findSceneRecipe, resolveS02CharacterRecipe, resolveS10CharacterRecipe } from "../src/ui/sceneRecipes";
+import { sceneManifest } from "../src/ui/sceneManifest.generated";
 import { landmarkForCalendarDate, resolveSceneGate, resolveScenePlan, sceneLandmarks, screenVisualModes, seoulCalendarDate, type ScenePresentation } from "../src/ui/scenePolicy";
+
+type CandidateRecord = Readonly<{
+  candidateId: string;
+  speciesKey: string;
+  variantKey: string;
+  sha256: string;
+  bytes: number;
+  status: "candidate" | "review";
+}>;
+
+const candidateInventory = JSON.parse(
+  readFileSync(new URL("../asset-candidates/companion-candidates.v1.json", import.meta.url), "utf8"),
+) as Readonly<{ candidates: readonly CandidateRecord[] }>;
 
 const presentation: ScenePresentation = { screen: "S02", calendarDate: "2026-09-09", reducedMotion: false, visualDisabled: false, webglAvailable: true, gate: "review" };
 
@@ -52,22 +70,78 @@ test("untrusted extra domain properties cannot affect scene selection", () => {
 });
 
 
-test("candidate asset intake cannot expand the active 11-species scene registry", () => {
+test("active scene registry resolves every species to its generated lite delivery identity", () => {
   expect([...activeSceneCompanionSpecies]).toEqual([...companionSpecies]);
   expect(activeSceneCompanionSpecies).toHaveLength(11);
 
   for (const species of companionSpecies) {
     const active = getActiveSceneCharacter(species);
-    expect(active.species).toBe(species);
-    expect(active.url).toMatch(/^https:\/\/sk7-companion\.gkrry\.com\/companion\/v1\//);
-    expect(active.sha256).toMatch(/^[a-f0-9]{64}$/);
+    const generatedLite = getCompanionAsset(species, "lite");
+    expect(getActiveCompanionAsset(species)).toBe(generatedLite);
+    const registeredAsset = sceneManifest.assets.find((asset) => asset.id === active.id);
 
-    const s02 = getSceneCharacterPresentationProfile("S02", species);
-    const s10 = getSceneCharacterPresentationProfile("S10", species);
-    expect(s02.scale).toBeGreaterThan(0);
-    expect(s10.scale).toBeGreaterThan(0);
+    if (!registeredAsset || registeredAsset.kind !== "character" || !("delivery" in registeredAsset)) {
+      throw new Error(`missing active scene character registration for ${species}`);
+    }
+
+    expect({
+      species: active.species,
+      assetId: registeredAsset.provenance.sourceAssetId,
+      variant: generatedLite.variant,
+      url: active.url,
+      bytes: registeredAsset.delivery.byteLength,
+      sha256: active.sha256,
+    }).toEqual({
+      species,
+      assetId: generatedLite.assetId,
+      variant: "lite",
+      url: generatedLite.url,
+      bytes: generatedLite.bytes,
+      sha256: generatedLite.sha256,
+    });
+
+    const s02 = resolveS02CharacterRecipe(findSceneRecipe("S02", "sunset-overlook")!, species);
+    const s10 = resolveS10CharacterRecipe(findSceneRecipe("S10", "sunset-overlook")!, species);
+    expect(s02.characterUrl).toBe(generatedLite.url);
+    expect(s10.characterUrl).toBe(generatedLite.url);
+    expect(s02.characterScale).toBe(getSceneCharacterPresentationProfile("S02", species).scale);
+    expect(s10.characterScale).toBe(getSceneCharacterPresentationProfile("S10", species).scale);
   }
+});
 
-  expect(getSceneCharacterPresentationProfile("S02", "hedgehog").scale).toBe(0.95);
-  expect(getSceneCharacterPresentationProfile("S10", "hedgehog").scale).toBe(0.86);
+test("candidate metadata cannot expand active resolution", () => {
+  expect(candidateInventory.candidates.length).toBeGreaterThan(0);
+
+  for (const candidate of candidateInventory.candidates) {
+    expect(candidate.status).toMatch(/^(candidate|review)$/);
+    expect(Object.keys(candidate)).not.toContain("active");
+    expect(Object.keys(candidate)).not.toContain("url");
+
+    if ((activeSceneCompanionSpecies as readonly string[]).includes(candidate.speciesKey)) {
+      const active = getActiveSceneCharacter(candidate.speciesKey as CompanionSpecies);
+      const generatedLite = getCompanionAsset(candidate.speciesKey as CompanionSpecies, "lite");
+      expect({ sha256: active.sha256, bytes: generatedLite.bytes }).not.toEqual({
+        sha256: candidate.sha256,
+        bytes: candidate.bytes,
+      });
+    } else {
+      expect(() => getActiveSceneCharacter(candidate.speciesKey as CompanionSpecies))
+        .toThrow(`inactive scene companion species: ${candidate.speciesKey}`);
+    }
+  }
+});
+
+test("review inventory retains explicit lite and standard delivery descriptors", () => {
+  expect(Object.keys(companionAssetManifest)).toEqual([...companionSpecies]);
+
+  for (const species of companionSpecies) {
+    for (const variant of companionVariants) {
+      const descriptor = getCompanionAsset(species, variant);
+      expect(descriptor).toBe(companionAssetManifest[species][variant]);
+      expect(descriptor).toMatchObject({ species, variant });
+      expect(descriptor.url).toMatch(/^https:\/\/sk7-companion\.gkrry\.com\/companion\/v1\/.+\.glb$/);
+      expect(descriptor.bytes).toBeGreaterThan(0);
+      expect(descriptor.sha256).toMatch(/^[a-f0-9]{64}$/);
+    }
+  }
 });
