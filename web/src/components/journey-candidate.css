@@ -646,20 +646,7 @@
    Only the inline journey S05 canvas changes; landscape and actions keep their size. */
 .app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 7.5rem); bottom: auto; width: 15rem; height: calc(100% - 1.5rem); }
 
-/* S01/S12 only: preserve the shared scenes and normal presentation. */
-.journey-login.welcome-shell { --sk7-accent: #3f594a; --sk7-focus: #3f594a; min-height: 100svh; overflow: visible; padding: clamp(1.25rem, 5vw, 4rem); }
-.journey-login .journey-login-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); width: min(100%, 64rem); }
-.journey-login .journey-login-intro { display: grid; gap: 1.25rem; }
-.journey-login h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); line-height: 1.25; letter-spacing: -.06em; }
-.journey-login .eyebrow { letter-spacing: .04em; }
-.journey-login .scene-body { font-size: 1rem; }
-.journey-login .welcome-card { width: 100%; padding: clamp(1.25rem, 3vw, 2rem); box-shadow: var(--sk7-shadow-soft); animation: none; }
-.journey-login form { margin: 0; }
-.journey-login input { font-size: max(16px, 1rem); }
-.journey-login .journey-login-help, .journey-login .journey-login-steps, .journey-login .journey-login-demo, .journey-login .welcome-footnote { font-size: .875rem; line-height: 1.65; color: var(--sk7-text-muted); }
-.journey-login .journey-login-steps { border-top: 1px solid var(--sk7-border); padding-top: 1rem; }
-.journey-login .journey-login-demo { color: var(--sk7-text); }
-.journey-login .notice { margin: 0; }
+/* S12 only: preserve the shared scenes and normal presentation. */
 .journey-empty.scene { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-lg); }
 .journey-empty > .scene-visual-background, .journey-empty > .scene-visual-character, .journey-empty::after { display: none; }
 .journey-empty .scene-body { font-size: var(--sk7-type-body); }
@@ -702,9 +689,6 @@
 .journey-empty .empty-garden i { width: 2rem; height: 1.4rem; }
 .journey-empty .empty-garden i:nth-child(2) { width: 2.2rem; height: 2rem; }
 @media (max-width: 760px) {
-  .journey-login.welcome-shell { align-items: safe center; padding-block: clamp(1.5rem, 5vh, 2.5rem); }
-  .journey-login .journey-login-layout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; max-width: 32rem; }
-  .journey-login .journey-login-intro { gap: .75rem; }
   .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
   .journey-empty .journey-empty-action { padding: var(--sk7-space-md) 0; gap: var(--sk7-space-sm); }
   .journey-empty .journey-empty-action + .journey-empty-action { border-top: 1px solid var(--sk7-border); border-left: 0; padding-left: 0; }
@@ -766,45 +750,148 @@
 }
 
 
-/* S01 demo-day entry: a read-only product preview before authentication. */
-.journey-login-preview-entry { display: grid; grid-template-columns: minmax(8rem, auto) minmax(0, 1fr); align-items: center; gap: .75rem 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--sk7-border); }
-.journey-login-preview-entry p { margin: 0; color: var(--sk7-text-muted); font-size: .8rem; line-height: 1.55; }
-.entry-preview-button { min-height: 2.75rem; }
-.entry-auth-wrap { position: relative; }
-.entry-auth-wrap .entry-auth-button { width: 100%; }
-
-/* S01 200%-text containment for the read-only preview entry. */
-@media (max-width: 580px) {
-  .journey-login-preview-entry {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .journey-login-preview-entry > * {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .journey-login-preview-entry .entry-preview-button {
-    width: 100%;
-    min-width: 0;
-    white-space: normal;
-  }
-  .journey-login-preview-entry p {
-    overflow-wrap: anywhere;
-  }
+/* S01 entry/login: shared foundation with its own signed-out composition. */
+.journey-login.welcome-shell {
+  min-height: 100svh;
+  overflow: visible;
+  place-items: center;
+  background: var(--sk7-canvas);
+  color: var(--sk7-text);
+  padding: clamp(var(--sk7-space-lg), 5vw, var(--sk7-space-4xl));
 }
 
-/* S01 narrator: decorative 3D identity with an HTML speech bubble. */
+.journey-login .journey-login-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(20rem, .92fr);
+  align-items: center;
+  gap: clamp(var(--sk7-space-2xl), 6vw, var(--sk7-space-4xl));
+  width: min(100%, 64rem);
+}
+
+.journey-login .journey-login-intro {
+  display: grid;
+  align-content: center;
+  gap: var(--sk7-space-xl);
+  min-width: 0;
+}
+
+.journey-login .screen-header h1 {
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-display);
+  line-height: var(--sk7-leading-tight);
+}
+
+.journey-login .scene-body {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-body);
+}
+
+.journey-login-companion {
+  gap: var(--sk7-space-sm);
+}
+
+.journey-login .companion-identity-control {
+  width: min(100%, var(--sk7-form-max));
+  min-width: 0;
+  gap: var(--sk7-space-xs);
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-label);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.journey-login .companion-identity-control select {
+  min-height: var(--sk7-target-min);
+  border-color: var(--sk7-border-strong);
+  border-radius: var(--sk7-radius-control);
+  background: var(--sk7-surface-control);
+  color: var(--sk7-text);
+  box-shadow: none;
+  padding: var(--sk7-space-sm) var(--sk7-space-md);
+}
+
+.journey-login-preview-entry {
+  width: min(100%, var(--sk7-form-max));
+  min-width: 0;
+  gap: var(--sk7-space-xs);
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-lg);
+}
+
+.journey-login-preview-entry .action-group,
+.journey-login-preview-entry .entry-preview-button {
+  width: 100%;
+  min-width: 0;
+}
+
+.journey-login-preview-entry p {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+}
+
+.journey-login .journey-login-auth {
+  width: 100%;
+  gap: var(--sk7-space-lg);
+  border-color: var(--sk7-border);
+  border-radius: var(--sk7-radius-screen);
+  background: var(--sk7-surface);
+  box-shadow: var(--sk7-shadow-surface);
+  padding: clamp(var(--sk7-space-lg), 3vw, var(--sk7-space-2xl));
+  animation: none;
+}
+
+.journey-login-auth-header h2 {
+  font-size: var(--sk7-type-title);
+}
+
+.journey-login .journey-login-form {
+  gap: var(--sk7-space-sm);
+  margin: 0;
+}
+
+.journey-login input {
+  border-color: var(--sk7-border-strong);
+  background: var(--sk7-surface-control);
+  font-size: max(16px, var(--sk7-type-body));
+}
+
+.entry-auth-wrap,
+.entry-auth-wrap .entry-auth-button {
+  width: 100%;
+}
+
+.journey-login .journey-login-help,
+.journey-login .journey-login-steps,
+.journey-login .journey-login-demo,
+.journey-login .welcome-footnote {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+}
+
+.journey-login .journey-login-demo {
+  color: var(--sk7-text);
+}
+
+.journey-login-policy {
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-md);
+}
+
+.journey-login .notice {
+  margin: 0;
+}
+
+/* S01 narrator: decorative runtime identity beside an HTML speech bubble. */
 .login-companion-narrator {
   display: grid;
   grid-template-columns: clamp(4.25rem, 7vw, 5.75rem) minmax(0, 1fr);
   align-items: end;
-  gap: .8rem;
+  gap: var(--sk7-space-sm);
   width: min(100%, 28rem);
   min-width: 0;
-  margin-top: .2rem;
 }
+
 .login-companion-character {
   position: relative;
   width: clamp(4.25rem, 7vw, 5.75rem);
@@ -812,6 +899,7 @@
   min-width: 0;
   isolation: isolate;
 }
+
 .login-companion-character .companion-runtime-slot {
   position: absolute;
   inset: 0;
@@ -819,90 +907,38 @@
   height: 100%;
   pointer-events: none;
 }
+
 .login-companion-bubble {
   position: relative;
   display: grid;
-  gap: .12rem;
+  gap: var(--sk7-space-2xs);
   min-width: 0;
   max-width: 100%;
-  margin: 0 0 .4rem;
-  padding: .7rem .9rem;
-  border: 1px solid rgb(90 111 87 / .18);
-  border-radius: 1rem 1rem 1rem .38rem;
-  background: rgb(255 253 247 / .92);
-  box-shadow: 0 .75rem 1.8rem -1.55rem rgb(49 66 54 / .38);
-  color: #58645a;
-  font-size: .86rem;
-  line-height: 1.45;
+  margin: 0 0 var(--sk7-space-2xs);
+  border: 1px solid var(--sk7-border);
+  border-radius: var(--sk7-radius-surface);
+  background: var(--sk7-surface-subtle);
+  color: var(--sk7-text-muted);
+  box-shadow: none;
+  padding: var(--sk7-space-sm) var(--sk7-space-md);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-tight);
   overflow-wrap: anywhere;
 }
-.login-companion-bubble::before {
-  content: "";
-  position: absolute;
-  left: -.42rem;
-  bottom: .72rem;
-  width: .72rem;
-  height: .72rem;
-  border-left: 1px solid rgb(90 111 87 / .18);
-  border-bottom: 1px solid rgb(90 111 87 / .18);
-  background: rgb(255 253 247 / .92);
-  transform: rotate(45deg);
-}
+
 .login-companion-bubble strong {
-  color: #334b3c;
-  font-weight: 720;
-}
-@media (max-width: 760px) {
-  .login-companion-narrator {
-    grid-template-columns: clamp(3.75rem, 17vw, 5rem) minmax(0, 1fr);
-    gap: .65rem;
-    width: 100%;
-  }
-  .login-companion-character {
-    width: clamp(3.75rem, 17vw, 5rem);
-    height: clamp(4.6rem, 21vw, 6rem);
-  }
-  .login-companion-bubble {
-    padding: .62rem .76rem;
-    font-size: .82rem;
-  }
-}
-@media (max-width: 360px) {
-  .login-companion-narrator {
-    grid-template-columns: minmax(0, 3.6rem) minmax(0, 1fr);
-    gap: .55rem;
-  }
-  .login-companion-character {
-    width: 3.6rem;
-    height: 4.5rem;
-  }
+  color: var(--sk7-text);
+  font-weight: var(--sk7-weight-bold);
 }
 
-
-/* S01 demo-day companion preview v1 */
-.journey-login-preview-entry--primary {
-  grid-template-columns: minmax(0, 1fr);
-  align-items: stretch;
-  gap: .45rem;
-  margin-top: .15rem;
-  padding-top: 0;
-  border-top: 0;
-}
-.journey-login-preview-entry--primary p {
-  max-width: 32rem;
-}
-.journey-demo-entry-button {
-  width: 100%;
-  min-height: 3.25rem;
-  border-radius: .65rem;
-  font-weight: 720;
-}
+/* S01 demo preview framing; JourneyToday remains untouched. */
 .journey-demo-preview-shell {
   min-height: 100svh;
   overflow-x: clip;
-  background: #f8f5ed;
+  background: var(--sk7-canvas);
   color: var(--sk7-text);
 }
+
 .journey-demo-preview-bar {
   position: sticky;
   top: 0;
@@ -910,99 +946,106 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding: .8rem clamp(1rem, 4vw, 2.5rem);
+  gap: var(--sk7-space-md);
   border-bottom: 1px solid var(--sk7-border);
-  background: rgb(248 245 237 / .96);
+  background: color-mix(in srgb, var(--sk7-surface) 96%, transparent);
+  padding: var(--sk7-space-sm) clamp(var(--sk7-space-md), 4vw, var(--sk7-space-3xl));
   backdrop-filter: blur(12px);
 }
-.journey-demo-preview-bar > div {
-  min-width: 0;
-  display: grid;
-  gap: .16rem;
+
+.journey-demo-preview-heading {
+  max-width: var(--sk7-copy-max);
+  gap: var(--sk7-space-2xs);
 }
-.journey-demo-preview-bar .eyebrow,
-.journey-demo-preview-guide {
-  margin: 0;
-}
+
 .journey-demo-preview-bar strong {
-  color: #334b3c;
-  line-height: 1.35;
+  color: var(--sk7-text);
+  line-height: var(--sk7-leading-tight);
 }
+
 .journey-demo-preview-guide {
   color: var(--sk7-text-muted);
-  font-size: .78rem;
-  line-height: 1.45;
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-tight);
 }
+
 .journey-demo-preview-bar > button {
   flex: 0 0 auto;
-  min-height: 2.75rem;
 }
+
 .journey-demo-login-gate-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: grid;
   place-items: center;
-  padding: 1rem;
-  background: rgb(34 43 37 / .36);
-}
-.journey-demo-login-gate {
-  display: grid;
-  gap: .85rem;
-  width: min(100%, 30rem);
-  max-height: calc(100svh - 2rem);
-  overflow: auto;
-  padding: clamp(1.25rem, 4vw, 1.75rem);
-  border: 1px solid #d7d9cd;
-  border-radius: 1rem;
-  background: #fffdf7;
-  box-shadow: 0 24px 64px -28px rgb(38 52 43 / .55);
-}
-.journey-demo-login-gate .eyebrow,
-.journey-demo-login-gate h2,
-.journey-demo-login-gate p {
-  margin: 0;
-}
-.journey-demo-login-gate h2 {
-  color: #31483a;
-  font-size: clamp(1.4rem, 5vw, 1.8rem);
-  line-height: 1.3;
-  letter-spacing: -.04em;
-}
-.journey-demo-login-gate > p:last-of-type {
-  color: var(--sk7-text-muted);
-  line-height: 1.6;
-}
-.journey-demo-login-gate-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: .65rem;
-}
-.journey-demo-login-gate-actions button {
-  min-height: 3rem;
+  background: color-mix(in srgb, var(--sk7-text) 42%, transparent);
+  padding: var(--sk7-space-md);
 }
 
-@media (max-width: 760px) {
+.journey-demo-login-gate {
+  display: grid;
+  gap: var(--sk7-space-lg);
+  width: min(100%, 30rem);
+  max-height: calc(100svh - (2 * var(--sk7-space-md)));
+  overflow: auto;
+  border-radius: var(--sk7-radius-panel);
+  background: var(--sk7-surface);
+  box-shadow: var(--sk7-shadow-overlay);
+  padding: clamp(var(--sk7-space-lg), 4vw, var(--sk7-space-2xl));
+}
+
+.journey-demo-login-gate .screen-header {
+  gap: var(--sk7-space-sm);
+}
+
+.journey-demo-login-gate h2 {
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-heading);
+}
+
+.journey-demo-login-gate .screen-header > p:last-child {
+  color: var(--sk7-text-muted);
+  line-height: var(--sk7-leading-body);
+}
+
+.journey-demo-login-gate-actions {
+  align-items: stretch;
+}
+
+@media (max-width: 820px) {
   .journey-login.welcome-shell {
-    align-items: start;
-    padding: 1rem;
+    place-items: start center;
+    padding: var(--sk7-space-md) var(--sk7-gutter-mobile) var(--sk7-space-2xl);
   }
+
   .journey-login .journey-login-layout {
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sk7-space-xl);
+    width: min(100%, var(--sk7-form-max));
   }
+
   .journey-login .journey-login-intro {
-    gap: .65rem;
+    gap: var(--sk7-space-md);
   }
-  .journey-login-preview-entry--primary {
-    gap: .35rem;
+
+  .journey-login .journey-login-auth {
+    gap: var(--sk7-space-sm);
+    padding: var(--sk7-space-md);
   }
-  .journey-demo-preview-bar {
-    align-items: flex-start;
-    padding-block: .65rem;
+
+  .journey-login-auth-header {
+    gap: var(--sk7-space-2xs);
   }
-  .journey-demo-preview-guide {
-    max-width: 27rem;
+
+  .login-companion-narrator {
+    grid-template-columns: clamp(3.75rem, 17vw, 5rem) minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .login-companion-character {
+    width: clamp(3.75rem, 17vw, 5rem);
+    height: clamp(4.6rem, 21vw, 6rem);
   }
 }
 
@@ -1010,47 +1053,43 @@
   .journey-demo-preview-bar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
   }
+
   .journey-demo-preview-guide {
     grid-column: 1 / -1;
   }
+
   .journey-demo-login-gate-actions {
+    display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
+
   .journey-demo-login-gate-actions button {
     width: 100%;
   }
 }
 
-@media (max-width: 360px) and (max-height: 650px) {
+@media (max-width: 360px) {
   .journey-login.welcome-shell {
-    padding: .75rem 1rem 1rem;
+    padding-inline: var(--sk7-space-md);
   }
-  .journey-login .journey-login-layout {
-    gap: .75rem;
+
+  .login-companion-narrator {
+    grid-template-columns: minmax(0, 3.75rem) minmax(0, 1fr);
+    gap: var(--sk7-space-xs);
   }
-  .journey-login .journey-login-intro {
-    gap: .48rem;
+
+  .login-companion-character {
+    width: 3.75rem;
+    height: 4.75rem;
   }
-  .journey-login h1 {
-    font-size: 1.65rem;
-    line-height: 1.18;
-  }
-  .journey-login .scene-body {
-    font-size: .86rem;
-    line-height: 1.4;
-  }
-  .journey-demo-entry-button {
-    min-height: 3rem;
-  }
-  .journey-login-preview-entry--primary p {
-    font-size: .74rem;
-    line-height: 1.4;
-  }
+
   .journey-demo-preview-bar {
     position: relative;
     grid-template-columns: minmax(0, 1fr);
   }
+
   .journey-demo-preview-bar > button {
     width: 100%;
   }
@@ -1158,122 +1197,7 @@
   }
 }
 
-/* SK7 JOURNEY EDGE COHESION — S01/S12-S14
-   Complete the visual path around the S02-S10 Living Journey baseline.
-   S01 is entry, S12 is a truthful empty state, S13 is bounded recovery,
-   and S14 is utility/settings. No Model V2 or domain semantics live here. */
-
-/* S01 — entry should already feel like the same product users meet at S02. */
-
-.journey-login.welcome-shell {
-  --sk7-text: #142f38;
-  --sk7-text-muted: #61747a;
-  --sk7-accent: #164a47;
-  --sk7-focus: #164a47;
-  --sk7-border: #dce7e3;
-  color: #142f38;
-  background:
-    radial-gradient(circle at 18% 12%, #f9f2dc 0, transparent 22rem),
-    radial-gradient(circle at 82% 10%, #e4f0e9 0, transparent 27rem),
-    linear-gradient(180deg, #eef4f5 0%, #f7faf9 58%, #fbfcfb 100%);
-}
-
-.journey-login .journey-login-intro {
-  position: relative;
-  align-content: center;
-}
-
-.journey-login .journey-login-intro h1 {
-  color: #102f38;
-}
-
-.journey-login .journey-login-intro .scene-body {
-  color: #586c72;
-}
-
-.journey-login .welcome-card {
-  border: 1px solid #d8e5df;
-  border-radius: 1.15rem;
-  background: #fffffff2;
-  box-shadow:
-    0 20px 46px #173e3914,
-    inset 0 1px 0 #fff;
-  backdrop-filter: blur(8px);
-}
-
-.journey-login .welcome-card input {
-  border-color: #cbdcd5;
-  background: #fff;
-}
-
-.journey-login .entry-auth-button {
-  border-color: #ffffff4d;
-  background: linear-gradient(135deg, #19534f, #10363b);
-  box-shadow:
-    0 8px 20px #173e3925,
-    inset 0 1px 0 #ffffff26;
-}
-
-.journey-login .journey-demo-entry-button {
-  border: 1px solid #c9dad2;
-  background: linear-gradient(155deg, #f8fbf9, #e9f3ed);
-  color: #234c45;
-  box-shadow:
-    0 7px 18px #173e390c,
-    inset 0 1px 0 #fff;
-}
-
-.journey-login .journey-demo-entry-button:hover:not(:disabled) {
-  border-color: #9fbeaf;
-  background: linear-gradient(155deg, #ffffff, #e2f0e8);
-  color: #173f3b;
-}
-
-.journey-login .login-companion-bubble {
-  border-color: #d3e1da;
-  background: #fffffff1;
-  box-shadow:
-    0 10px 24px #173e390d,
-    inset 0 1px 0 #fff;
-}
-
-.journey-login .login-companion-bubble::before {
-  border-left-color: #d3e1da;
-  border-bottom-color: #d3e1da;
-  background: #fff;
-}
-
-.journey-login .login-companion-bubble strong {
-  color: #23493f;
-}
-
-.journey-login .companion-identity-control select {
-  border-color: #cbdcd5;
-  background: #fffffff0;
-}
-
-.journey-demo-preview-shell {
-  background:
-    radial-gradient(circle at 82% 5%, #e8f2ec 0, transparent 28rem),
-    linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
-}
-
-.journey-demo-preview-bar {
-  border-bottom-color: #dce7e3;
-  background: #f8fbf9f2;
-  box-shadow: 0 8px 24px #173e3907;
-}
-
-.journey-demo-login-gate {
-  border-color: #d7e4de;
-  background: #fffffff7;
-  box-shadow:
-    0 24px 64px -28px #173e395c,
-    inset 0 1px 0 #fff;
-}
-
-
-/* S12-S14 now inherit the same semantic palette and one-surface hierarchy. */
+/* S12-S14 inherit the same semantic palette and one-surface hierarchy. */
 .app-shell:is([data-screen="S12"], [data-screen="S13"], [data-screen="S14"]) .surface {
   box-shadow: var(--sk7-shadow-surface);
 }
