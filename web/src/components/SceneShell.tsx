@@ -153,7 +153,7 @@ export type SceneTone = "base" | "subtle" | "secondary" | "emphasis" | "critical
 export function Scene({ id, eyebrow, title, body, children, actions, tone = "base", className = "" }: SceneProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const visuals = resolveSceneVisuals(id);
-  const usesSharedFoundation = id === "S12" || id === "S13" || id === "S14";
+  const usesSharedFoundation = id === "S03" || id === "S06" || id === "S07" || id === "S12" || id === "S13" || id === "S14";
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [id]);
   return (
     <section className={`scene scene-${tone} ${className}`.trim()} data-scene={id} aria-labelledby={`${id}-title`}>
