@@ -33,6 +33,7 @@ export type {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const apiRequestTimeoutMs = 8_000;
+export const observationWindowReadBudgetMs = apiRequestTimeoutMs;
 
 export function scoreModelV2ProductInput(
   session: Session,
@@ -63,14 +64,18 @@ async function boundedFetch<T>(
   input: RequestInfo | URL,
   init: RequestInit,
   consume: (response: Response, signal: AbortSignal) => Promise<T>,
+  timeoutMs = apiRequestTimeoutMs,
 ): Promise<T> {
+  if (timeoutMs <= 0) {
+    throw requestTimeoutError();
+  }
   const controller = new AbortController();
   let timedOut = false;
   let responseStatus: number | undefined;
   const timeout = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, apiRequestTimeoutMs);
+  }, timeoutMs);
   try {
     const response = await fetch(input, { ...init, signal: controller.signal }).catch((error: unknown) => {
       // Classify fetch rejection only, never JSON/body decoding errors. This
@@ -101,7 +106,12 @@ async function readApiError(response: Response, signal: AbortSignal): Promise<un
   }
 }
 
-async function apiFetch<T>(path: string, session: Session, init: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  session: Session,
+  init: RequestInit = {},
+  timeoutMs = apiRequestTimeoutMs,
+): Promise<T> {
   if (!apiBaseUrl) {
     throw new Error("VITE_API_BASE_URL is not configured.");
   }
@@ -125,6 +135,7 @@ async function apiFetch<T>(path: string, session: Session, init: RequestInit = {
       }
       return (await response.json()) as T;
     },
+    timeoutMs,
   );
 }
 
@@ -198,9 +209,14 @@ export function deleteChallengeCheckin(session: Session, recordId: string): Prom
   return apiFetch<void>(`/api/v1/observations/challenges/checkins/${recordId}`, session, { method: "DELETE" });
 }
 
-export function getObservationWindow(session: Session, startOn: string, endOn: string): Promise<ObservationWindow> {
+export function getObservationWindow(
+  session: Session,
+  startOn: string,
+  endOn: string,
+  timeoutMs = observationWindowReadBudgetMs,
+): Promise<ObservationWindow> {
   const query = new URLSearchParams({ start_on: startOn, end_on: endOn });
-  return apiFetch<ObservationWindow>(`/api/v1/observations/window?${query}`, session);
+  return apiFetch<ObservationWindow>(`/api/v1/observations/window?${query}`, session, {}, timeoutMs);
 }
 
 function exportFilename(contentDisposition: string | null, fallback: string): string {

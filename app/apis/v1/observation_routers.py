@@ -1,4 +1,5 @@
 import asyncio
+import time
 from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
@@ -11,6 +12,7 @@ from fastapi.responses import JSONResponse
 from app.core import config
 from app.dependencies.supabase_auth import (
     SupabaseSession,
+    auth_unavailable,
     ensure_supabase_auth_configured,
     validate_supabase_access_token,
 )
@@ -39,6 +41,9 @@ from app.services.observation_store import (
 )
 
 observation_router = APIRouter(prefix="/observations", tags=["observations"])
+
+OBSERVATION_WINDOW_READ_BUDGET_SECONDS = 7.0
+UPSTREAM_HOP_TIMEOUT_SECONDS = 5.0
 
 
 def storage_not_ready() -> HTTPException:
@@ -102,6 +107,30 @@ def bearer_token_from_header(authorization: str | None) -> str:
 async def observation_session(authorization: str | None) -> SupabaseSession:
     ensure_supabase_auth_configured()
     return await validate_supabase_access_token(bearer_token_from_header(authorization))
+
+
+def remaining_observation_read_budget(deadline: float) -> float:
+    return max(0.0, deadline - time.monotonic())
+
+
+async def observation_window_session(
+    authorization: str | None,
+    deadline: float,
+) -> SupabaseSession:
+    remaining = min(
+        UPSTREAM_HOP_TIMEOUT_SECONDS,
+        remaining_observation_read_budget(deadline),
+    )
+    if remaining <= 0:
+        raise auth_unavailable()
+
+    try:
+        return await asyncio.wait_for(
+            observation_session(authorization),
+            timeout=remaining,
+        )
+    except TimeoutError as error:
+        raise auth_unavailable() from error
 
 
 def korea_today() -> date:
@@ -302,35 +331,45 @@ async def get_observation_window(
     authorization: Annotated[str | None, Header()] = None,
 ) -> dict[str, object]:
     validate_observation_window(start_on, end_on)
+    deadline = time.monotonic() + OBSERVATION_WINDOW_READ_BUDGET_SECONDS
+
+    session = await observation_window_session(authorization, deadline)
+
+    data_remaining = remaining_observation_read_budget(deadline)
+    if data_remaining <= 0:
+        raise storage_not_ready()
+
     try:
-        session = await observation_session(authorization)
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with httpx.AsyncClient(timeout=min(UPSTREAM_HOP_TIMEOUT_SECONDS, data_remaining)) as client:
             (
                 blood_pressure_observations,
                 challenge_events,
                 challenge_window,
-            ) = await asyncio.gather(
-                list_owned_records(
-                    "blood_pressure_observations",
-                    "id,observed_on,period,systolic,diastolic,created_at,expires_at",
-                    start_on,
-                    end_on,
-                    session,
-                    client,
+            ) = await asyncio.wait_for(
+                asyncio.gather(
+                    list_owned_records(
+                        "blood_pressure_observations",
+                        "id,observed_on,period,systolic,diastolic,created_at,expires_at",
+                        start_on,
+                        end_on,
+                        session,
+                        client,
+                    ),
+                    list_owned_records(
+                        "challenge_events",
+                        "id,observed_on,action_id,status,created_at,expires_at",
+                        start_on,
+                        end_on,
+                        session,
+                        client,
+                    ),
+                    get_owned_challenge_window(start_on, end_on, session, client),
                 ),
-                list_owned_records(
-                    "challenge_events",
-                    "id,observed_on,action_id,status,created_at,expires_at",
-                    start_on,
-                    end_on,
-                    session,
-                    client,
-                ),
-                get_owned_challenge_window(start_on, end_on, session, client),
+                timeout=data_remaining,
             )
         active_challenge = challenge_window["active_challenge"]
         challenge_checkins = challenge_window["challenge_checkins"]
-    except httpx.HTTPError as error:
+    except (TimeoutError, httpx.HTTPError) as error:
         raise storage_not_ready() from error
 
     return {

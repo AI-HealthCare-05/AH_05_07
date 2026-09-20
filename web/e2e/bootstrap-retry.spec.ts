@@ -76,17 +76,17 @@ async function finishTimeout(page: Page, index: number) {
 }
 const timed = (failure: Failure) => failure === "timeout" || failure === "body-timeout";
 const transient: Failure[] = ["network", "timeout", "body-timeout", 502, 503, 504];
+const quickTransient: Failure[] = ["network", 502, 503, 504];
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date("2026-09-14T03:00:00Z") });
   await page.clock.pauseAt(new Date("2026-09-14T03:00:00Z"));
 });
-for (const failure of transient) {
+for (const failure of quickTransient) {
   for (const measurement of [undefined, 123]) {
     test(`${failure}: initial failure then success reaches ${measurement ? "ready" : "empty"}`, async ({ page }) => {
       await mockTransport(page, [{ failure }, { measurement }]);
       await page.goto("/");
       await changeSession(page, "synthetic-a");
-      if (timed(failure)) await finishTimeout(page, 0);
       await expect(page.locator(`[data-scene="${measurement ? "S02" : "S12"}"]`)).toBeVisible();
       await page.clock.runFor(20_000);
       const requests = await calls(page);
@@ -99,7 +99,6 @@ for (const failure of transient) {
   test(`${failure}: second failure ends in S13 with no third request; manual recovery stays available`, async ({ page }) => {
     await mockTransport(page, [{ failure }, { failure }, {}]);
     await page.goto("/?e2e=signed-in");
-    if (timed(failure)) { await finishTimeout(page, 0); await finishTimeout(page, 1); }
     await expect(page.locator('[data-scene="S13"]')).toBeVisible();
     await expect(page.getByRole("alert")).toContainText("아직 기록이 없다는 뜻은 아니에요.");
     await page.clock.runFor(20_000);
@@ -109,6 +108,31 @@ for (const failure of transient) {
     await expectCount(page, 3);
   });
 }
+for (const failure of ["timeout", "body-timeout"] as Failure[]) {
+  test(`${failure}: a full first attempt exhausts the logical budget without a retry`, async ({ page }) => {
+    await mockTransport(page, [{ failure }, {}]);
+    await page.goto("/?e2e=signed-in");
+    await finishTimeout(page, 0);
+    await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+    await page.clock.runFor(20_000);
+    await expectCount(page, 1);
+  });
+}
+test("a retry is aborted at the original logical deadline", async ({ page }) => {
+  await mockTransport(page, [{ failure: 503, hold: true }, { failure: "timeout" }, {}]);
+  await page.goto("/?e2e=signed-in");
+  await expectCount(page, 1);
+  await page.clock.runFor(3_000);
+  await release(page, 0);
+  await expectCount(page, 2);
+  await page.clock.runFor(4_949);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).not.toContain(1);
+  await page.clock.runFor(1);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).toContain(1);
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expectCount(page, 2);
+});
 for (const failure of [400, 401, 403, 404, 409, 422, 429, 500, "invalid-json", "body-type-error"] as Failure[]) {
   test(`${failure}: non-transient initial failure is not retried`, async ({ page }) => {
     await mockTransport(page, [{ failure }, {}]);
@@ -134,6 +158,23 @@ for (const first of [401, 503]) {
     await expectCount(page, 2);
   });
 }
+test("newer-token retry uses only the remaining logical budget", async ({ page }) => {
+  await mockTransport(page, [{ failure: 401, hold: true }, { failure: "timeout" }, {}]);
+  await page.goto("/?e2e=signed-in");
+  await expectCount(page, 1);
+  await changeSession(page, "e2e-synthetic-user", "synthetic-token-2");
+  await page.clock.runFor(3_000);
+  await release(page, 0);
+  await expectCount(page, 2);
+  expect((await calls(page))[1].token).toBe("Bearer synthetic-token-2");
+  await page.clock.runFor(4_949);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).not.toContain(1);
+  await page.clock.runFor(1);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).toContain(1);
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expectCount(page, 2);
+});
 for (const replacement of ["account-b", "same-user-new-generation"]) {
   for (const failure of [undefined, 503, 401]) {
     test(`${replacement}: pending retry ${failure ?? "success"} cannot commit or retry after session replacement`, async ({ page }) => {
@@ -188,6 +229,21 @@ test("manual recovery from S13 does not gain transient automatic retries", async
   await expect(page.locator('[data-scene="S13"]')).toBeVisible();
   await page.clock.runFor(20_000);
   await expectCount(page, 3);
+});
+test("manual recovery starts a fresh logical deadline", async ({ page }) => {
+  await mockTransport(page, [{ failure: "timeout" }, { failure: "timeout" }, {}]);
+  await page.goto("/?e2e=signed-in");
+  await finishTimeout(page, 0);
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await page.getByRole("button", { name: "다시 불러오기", exact: true }).click();
+  await expectCount(page, 2);
+  await page.clock.runFor(7_999);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).not.toContain(1);
+  await page.clock.runFor(1);
+  expect(await page.evaluate(() => (window as unknown as { bootstrapHarness: Harness }).bootstrapHarness.aborted)).toContain(1);
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expectCount(page, 2);
 });
 for (const failure of transient) {
   test(`${failure}: observation write still executes once after bootstrap recovery`, async ({ page }) => {
@@ -275,10 +331,11 @@ for (const responseStatus of [400, 401, 403, 404, 409, 422, 429, 500]) {
     await expectCount(page, 1);
   });
 }
-test("503 with a stalled error body retains its bounded transient recovery", async ({ page }) => {
+test("503 with a stalled error body exhausts the logical budget without a retry", async ({ page }) => {
   await mockTransport(page, [{ failure: "body-timeout", responseStatus: 503 }, {}]);
   await page.goto("/?e2e=signed-in");
   await finishTimeout(page, 0);
-  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
-  await expectCount(page, 2);
+  await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+  await page.clock.runFor(20_000);
+  await expectCount(page, 1);
 });

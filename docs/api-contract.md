@@ -147,17 +147,28 @@ rejection is classified separately from JSON/body decoding failures. This shares
 one retry allowance with the existing stale-token `401` retry when a newer token
 exists for the same session generation: at most two GET attempts total.
 
-Each attempt retains its own 8-second full-response deadline. Session generation
-and window request invalidation must pass before retrying or committing either
-attempt, and the retry uses the latest session token. A second failure reaches
-the existing S13 recovery UI (or existing session-expiry handling for a current
-invalid session). Ordinary `4xx`, other HTTP errors and malformed successful
-responses receive no transient retry. A timeout preserves an already received
-HTTP status as `responseStatus` so a stalled error body cannot make an ordinary
-HTTP failure retryable. Manual recovery and subsequent window
-loads receive no new transient retries. Writes, deletes, challenge mutations,
-account deletion, export and Model V2 receive no automatic retries from this
-policy. Source/test coverage does not establish the production failure class.
+One top-level observation-window load owns one 8-second logical full-response
+budget. The first attempt and its one eligible retry share that deadline, and
+each fetch receives only the remaining time. A retry does not begin when the
+first attempt has consumed the budget. A later manual recovery, explicit
+refresh, or different window load starts a new logical budget without gaining
+new automatic-retry eligibility.
+
+On the server, `GET /api/v1/observations/window` uses one 7-second logical read
+budget shared by Auth verification and the concurrent Data API fan-out. No
+individual upstream hop receives more than 5 seconds. Auth rejection remains
+distinct from Auth unavailability, and Data deadline expiry retains the
+`observation_storage_not_ready` contract.
+
+Session generation and window request invalidation must pass before retrying or
+committing either attempt, and the retry uses the latest session token. A second
+failure reaches the existing S13 recovery UI (or existing session-expiry
+handling for a current invalid session). Ordinary `4xx`, other HTTP errors and
+malformed successful responses receive no transient retry. A timeout preserves
+an already received HTTP status as `responseStatus` so a stalled error body
+cannot make an ordinary HTTP failure retryable. Mutations, account deletion,
+export and Model V2 retain their existing timeout and single-attempt behavior.
+Source/test coverage does not establish the production failure class.
 
 ## Documentation endpoints
 

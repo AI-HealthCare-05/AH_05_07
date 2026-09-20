@@ -32,6 +32,7 @@ import {
   deleteChallengeCheckin,
   exportObservations,
   getObservationWindow,
+  observationWindowReadBudgetMs,
   selectActiveChallenge,
   updateBloodPressureObservation,
   updateChallengeCheckin,
@@ -772,26 +773,39 @@ function App() {
     presentRequestError(error, "save", requestContext);
   }
 
-  async function refreshWindow({ allowRetry = true, initialLoad = false } = {}) {
+  async function refreshWindow({
+    allowRetry = true,
+    initialLoad = false,
+    logicalDeadline,
+  }: {
+    allowRetry?: boolean;
+    initialLoad?: boolean;
+    logicalDeadline?: number;
+  } = {}) {
     // A pre-midnight mutation may call this old function after the date changes.
     // Read committed presentation bounds and the latest session at invocation.
     const activeSession = sessionRef.current;
     const snapshot = presentationRef.current;
     const requestContext = captureRequestContext(activeSession);
     if (!activeSession || !requestContext || evidenceMode || snapshot.accountDeletionPending) return;
+    const readDeadline = logicalDeadline ?? performance.now() + observationWindowReadBudgetMs;
     const requestId = ++windowRequestId.current;
     setWindowState(snapshot.windowData ? "refreshing" : "loading");
     try {
-      const nextData = await getObservationWindow(activeSession, snapshot.startOn, snapshot.endOn);
+      const nextData = await getObservationWindow(
+        activeSession,
+        snapshot.startOn,
+        snapshot.endOn,
+        readDeadline - performance.now(),
+      );
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       setWindowData(nextData);
       setWindowState("ready");
       setChallengeNeedsReload(false);
     } catch (error) {
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
-      // One shared retry budget: a transient bootstrap failure and a stale
-      // token must never combine into a third GET. Manual/subsequent loads
-      // retain only the existing newer-token 401 behavior from #399.
+      // One retry allowance and one logical deadline are shared by a transient
+      // bootstrap failure and the existing newer-token 401 recovery.
       const transientInitialRead = initialLoad && snapshot.windowData === null
         && error instanceof ApiRequestError
         // A stalled error body must not turn a known ordinary HTTP failure
@@ -800,8 +814,9 @@ function App() {
           || [502, 503, 504].includes(error.responseStatus))
         && ((error.status === 0 && (error.code === "network_error" || error.code === "request_timeout"))
           || error.status === 502 || error.status === 503 || error.status === 504);
-      if (allowRetry && (transientInitialRead || (isSessionError(error) && hasNewerToken(requestContext)))) {
-        await refreshWindow({ allowRetry: false });
+      const retryable = transientInitialRead || (isSessionError(error) && hasNewerToken(requestContext));
+      if (allowRetry && retryable && readDeadline > performance.now()) {
+        await refreshWindow({ allowRetry: false, logicalDeadline: readDeadline });
         return;
       }
       presentRequestError(error, "load", requestContext);
