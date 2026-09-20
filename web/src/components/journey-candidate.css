@@ -395,17 +395,20 @@
 
 /* S13/S14: Journey-only load recovery and settings composition. */
 .journey-load-error.scene, .journey-settings.scene { max-width: 54rem; margin-inline: auto; }
+.journey-settings.scene.surface[data-scene="S14"] { gap: var(--sk7-space-lg); border: 0; border-radius: 0; background: transparent; padding: var(--sk7-space-md) 0 var(--sk7-space-2xl); box-shadow: none; }
 .journey-load-error.scene { align-content: start; }
 .journey-load-error > .scene-visual-background, .journey-load-error > .scene-visual-character, .journey-load-error::after,
 .journey-settings > .scene-visual-background, .journey-settings > .scene-visual-character, .journey-settings::after { display: none; }
+.journey-settings .scene-copy h1 { font-size: var(--sk7-type-display); line-height: var(--sk7-leading-tight); }
 .journey-load-error .scene-copy, .journey-settings .scene-copy { max-width: 39rem; }
 .journey-load-error-card { display: grid; justify-items: start; gap: var(--sk7-space-sm); border-color: var(--sk7-danger); color: var(--sk7-danger-text); padding: clamp(var(--sk7-space-lg), 3vw, var(--sk7-space-2xl)); }
 .journey-load-error-card p:first-child { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); font-weight: 650; }
 .journey-load-error-card button { min-height: 3rem; }
 .journey-settings-list { display: grid; gap: 0; }
-.journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--sk7-space-md) var(--sk7-space-2xl); border-top: 1px solid var(--sk7-border); padding: var(--sk7-space-xl) 0; }
-.journey-settings-section h2 { font-size: var(--sk7-type-title); letter-spacing: -.04em; }
-.journey-settings-section p:not(.eyebrow) { color: var(--sk7-text-muted); line-height: 1.65; }
+.journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--sk7-space-sm) var(--sk7-space-2xl); border-top: 1px solid var(--sk7-border); padding: var(--sk7-space-lg) 0; }
+.journey-settings-section h2 { font-size: var(--sk7-type-title); line-height: var(--sk7-leading-tight); letter-spacing: -.035em; }
+.journey-settings-section h3 { font-size: var(--sk7-type-body); line-height: var(--sk7-leading-tight); }
+.journey-settings-section p:not(.eyebrow) { color: var(--sk7-text-muted); font-size: var(--sk7-type-body); line-height: var(--sk7-leading-body); }
 .journey-settings-section > button { min-height: 2.9rem; white-space: nowrap; }
 .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: 1 / -1; margin: 0; }
 .journey-settings-note { border-left: 3px solid var(--sk7-border-strong); padding-left: var(--sk7-space-sm); font-size: var(--sk7-type-label); }
@@ -417,7 +420,7 @@
 .journey-settings-help { border-block: 1px solid var(--sk7-border); }
 .journey-settings-help summary { min-height: 3rem; display: list-item; align-content: center; cursor: pointer; color: var(--sk7-text); font-weight: 650; }
 .journey-settings-help p { border-top: 1px solid var(--sk7-border); padding: var(--sk7-space-sm) 0 var(--sk7-space-md); font-size: var(--sk7-type-label); }
-.journey-settings-account { align-items: start; border-bottom: 1px solid var(--sk7-border); }
+.journey-settings-account { align-items: start; border-top-color: var(--sk7-border); border-bottom: 1px solid var(--sk7-danger-border); }
 .journey-settings-account-actions { grid-column: 1 / -1; }
 .journey-settings-account-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sk7-space-md) var(--sk7-space-2xl); padding: var(--sk7-space-md) 0; border-top: 1px solid var(--sk7-border); }
 .journey-settings-account-row h3 { color: var(--sk7-text); }
@@ -436,6 +439,7 @@
 @media (max-width: 580px) {
   .journey-load-error.scene, .journey-settings.scene { max-width: none; }
   .journey-load-error-card { padding: var(--sk7-space-md); }
+  .journey-settings.scene { padding: var(--sk7-space-md) 0 var(--sk7-space-2xl); }
   .journey-settings-section { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-sm); padding-block: var(--sk7-space-lg); }
   .journey-settings-section > button { width: 100%; }
   .journey-settings-note, .journey-settings-facts, .journey-settings-help { grid-column: auto; }
