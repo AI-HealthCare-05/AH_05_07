@@ -12,7 +12,9 @@ const challengeFactScreens = [
   { id: "S07", url: "/?fixture=VP-07a&screen=S07" },
 ] as const;
 
-type FoundationScreenId = (typeof screens)[number]["id"] | (typeof challengeFactScreens)[number]["id"];
+const bloodPressureScreen = { id: "S04", url: "/?fixture=VP-10&screen=S04" } as const;
+
+type FoundationScreenId = (typeof screens)[number]["id"] | (typeof challengeFactScreens)[number]["id"] | typeof bloodPressureScreen.id;
 
 async function expectFoundation(page: Page, id: FoundationScreenId) {
   const scene = page.locator(`[data-scene="${id}"]`);
@@ -24,6 +26,81 @@ async function expectFoundation(page: Page, id: FoundationScreenId) {
   if (id === "S14") expect(await scene.locator(".section-header").count()).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
+
+for (const viewport of [
+  { name: "320-short", width: 320, height: 568 },
+  { name: "390", width: 390, height: 844 },
+  { name: "tablet", width: 768, height: 1024 },
+  { name: "desktop", width: 1366, height: 768 },
+]) {
+  test(`S04 shared foundation preserves the measurement form at ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(bloodPressureScreen.url);
+    await expectFoundation(page, bloodPressureScreen.id);
+
+    const scene = page.locator('[data-scene="S04"]');
+    const form = scene.locator(".measurement-panel");
+    await expect(form.locator(".form-actions.action-group")).toHaveCount(1);
+    await expect(form.locator(".measurement-guide.section-header")).toHaveCount(1);
+
+    const formPresentation = await form.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { backgroundColor: style.backgroundColor, borderTopStyle: style.borderTopStyle, boxShadow: style.boxShadow };
+    });
+    expect(formPresentation).toEqual({ backgroundColor: "rgba(0, 0, 0, 0)", borderTopStyle: "solid", boxShadow: "none" });
+
+    const systolicBox = await scene.locator("#systolic").boundingBox();
+    const diastolicBox = await scene.locator("#diastolic").boundingBox();
+    expect(systolicBox).not.toBeNull();
+    expect(diastolicBox).not.toBeNull();
+    expect(Math.abs(systolicBox!.y - diastolicBox!.y)).toBeLessThanOrEqual(1);
+
+    if (viewport.name === "320-short") {
+      const pairBox = await scene.locator(".bp-measurement-pair").boundingBox();
+      const saveBox = await scene.getByRole("button", { name: "혈압 기록 저장" }).boundingBox();
+      const navBox = await page.locator(".primary-nav").boundingBox();
+      expect(pairBox).not.toBeNull();
+      expect(saveBox).not.toBeNull();
+      expect(navBox).not.toBeNull();
+      expect(pairBox!.y + pairBox!.height).toBeLessThanOrEqual(navBox!.y);
+      expect(saveBox!.y + saveBox!.height).toBeLessThanOrEqual(navBox!.y);
+    }
+  });
+}
+
+test("S04 help and validation reuse shared notice hierarchy", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    };
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify({
+        start_on: "2026-09-14",
+        end_on: "2026-09-20",
+        blood_pressure_observations: [],
+        active_challenge: null,
+        challenge_checkins: [],
+        challenge_events: [],
+      }),
+    });
+  });
+  await page.goto("/?e2e=signed-in&screen=S04");
+
+  await page.locator("#observed-on").fill("2026-09-11");
+  await expect(page.locator(".bp-draft-note.status-notice")).toBeVisible();
+  await page.locator("#systolic").fill("59");
+  await page.locator("#diastolic").fill("70");
+  await page.getByRole("button", { name: "혈압 기록 저장" }).click();
+  await expect(page.locator("#blood-pressure-error.field-error.status-notice")).toBeVisible();
+});
 
 for (const viewport of [
   { name: "320", width: 320, height: 568 },

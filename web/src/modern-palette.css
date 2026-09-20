@@ -78,7 +78,6 @@ body,
 .scene .scene-body,
 .journey-candidate .scene-body { color: var(--sk7-text-muted); }
 
-.journey-entry .measurement-panel,
 .journey-records .window-nav,
 .journey-records .journey-record-list li,
 .record-detail,
@@ -91,8 +90,6 @@ body,
   color: var(--sk7-text);
   box-shadow: var(--sk7-shadow-soft);
 }
-
-.journey-entry .measurement-panel { border-top-color: var(--sk7-accent); }
 
 .journey-candidate input,
 .journey-candidate select,
