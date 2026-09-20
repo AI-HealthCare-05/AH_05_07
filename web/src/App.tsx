@@ -1673,7 +1673,7 @@ function App() {
           title={editingBloodPressureId ? "혈압 기록 수정" : journeyCopy.S04.title}
           body={journeyCopy.S04.body}
           tone="emphasis"
-          className={presentation.journey ? "journey-candidate journey-entry journey-sheet" : ""}
+          className={presentation.journey ? "journey-candidate journey-entry journey-sheet surface" : ""}
         >
           <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
             <div className="bp-sheet-fields">
@@ -1755,14 +1755,14 @@ function App() {
                 </label>
               </div>
             </div>
-            {bloodPressureError && <p id="blood-pressure-error" className="field-error" role="alert">{bloodPressureError.message}</p>}
-            <div className="form-actions">
+            {bloodPressureError && <p id="blood-pressure-error" className="field-error status-notice" role="alert">{bloodPressureError.message}</p>}
+            <div className="form-actions action-group">
               <button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>
               {editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}
             </div>
             <div className="bp-sheet-secondary">
               {!editingBloodPressureId && <BloodPressureDraftNote restored={newBloodPressure.restored} observedOn={bloodPressureDraft.observedOn} today={today} />}
-              <details className="measurement-guide">
+              <details className="measurement-guide section-header">
                 <summary>측정 전 확인하기</summary>
                 <ul>
                   <li>조용히 앉아 몸과 호흡을 편하게 해요.</li>
