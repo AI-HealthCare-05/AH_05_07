@@ -6,6 +6,11 @@
   margin-inline: auto;
   gap: var(--sk7-space-lg);
   overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+  box-shadow: none;
 }
 
 .scene.record-explorer-scene > .scene-visual-background,
@@ -17,6 +22,8 @@
 .scene.record-explorer-scene[data-scene="S08"] .scene-copy h1 {
   width: fit-content;
   max-width: 100%;
+  font-size: var(--sk7-type-display);
+  line-height: var(--sk7-leading-tight);
 }
 
 .scene.record-explorer-scene .scene-toolbar {
@@ -83,15 +90,19 @@
 .scene.record-explorer-scene .window-nav button {
   min-width: 0;
   min-height: var(--sk7-target-min);
+  border-color: transparent;
+  background: transparent;
+  color: var(--sk7-accent);
   padding: var(--sk7-space-xs) var(--sk7-space-sm);
   font-size: var(--sk7-type-body);
   line-height: var(--sk7-leading-body);
   white-space: normal;
+  box-shadow: none;
 }
 
 .scene.record-explorer-scene .window-nav button:disabled {
   border-color: transparent;
-  background: var(--sk7-surface-subtle);
+  background: transparent;
   color: var(--sk7-text-muted);
   opacity: 1;
 }
@@ -99,7 +110,7 @@
 .record-explorer {
   display: grid;
   min-width: 0;
-  gap: var(--sk7-space-lg);
+  gap: var(--sk7-space-xl);
   color: var(--sk7-text);
 }
 
@@ -166,10 +177,10 @@
   max-width: 100%;
   border: 1px solid var(--sk7-border-strong);
   border-radius: var(--sk7-radius-control);
-  background: transparent;
+  background: var(--sk7-surface-control);
   color: var(--sk7-text);
   padding: var(--sk7-space-xs) var(--sk7-space-sm);
-  font-size: var(--sk7-type-body);
+  font-size: var(--sk7-type-label);
   line-height: var(--sk7-leading-body);
   white-space: normal;
   box-shadow: none;
@@ -177,9 +188,10 @@
 }
 
 .record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
-  border-color: var(--sk7-accent-active);
-  background: var(--sk7-accent-active);
-  color: var(--sk7-text-on-accent);
+  border-color: var(--sk7-accent);
+  background: var(--sk7-accent-soft);
+  color: var(--sk7-accent-hover);
+  box-shadow: inset 0 0 0 1px var(--sk7-accent);
 }
 
 .record-explorer .record-explorer-buttons > button:hover:not(:disabled) {
@@ -191,8 +203,8 @@
 }
 
 .record-explorer .record-explorer-buttons > button[aria-pressed="true"]:hover:not(:disabled) {
-  background: var(--sk7-accent-hover);
-  color: var(--sk7-text-on-accent);
+  background: var(--sk7-accent-soft);
+  color: var(--sk7-accent-hover);
 }
 
 .record-explorer-summary {
@@ -251,7 +263,7 @@
 
 .record-explorer-groups {
   display: grid;
-  gap: var(--sk7-space-xl);
+  gap: var(--sk7-space-2xl);
   min-width: 0;
 }
 
@@ -285,7 +297,7 @@
   width: var(--sk7-space-xs);
   height: var(--sk7-space-xs);
   border-radius: 50%;
-  background: var(--sk7-accent-muted);
+  background: var(--sk7-success);
   content: "";
 }
 
@@ -318,7 +330,7 @@
   gap: var(--sk7-space-xs) var(--sk7-space-md);
   width: 100%;
   min-width: 0;
-  min-height: calc(var(--sk7-target-min) + var(--sk7-space-lg));
+  min-height: calc(var(--sk7-target-min) + var(--sk7-space-sm));
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -339,12 +351,12 @@
 }
 
 .record-explorer-row > span { min-width: 0; }
-.record-explorer-type { font-size: var(--sk7-type-body); font-weight: var(--sk7-weight-bold); }
+.record-explorer-type { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
 .record-explorer-facts { display: grid; gap: var(--sk7-space-2xs); }
-.record-explorer-facts > strong { font-size: var(--sk7-type-subtitle); font-weight: var(--sk7-weight-bold); font-variant-numeric: tabular-nums; }
+.record-explorer-facts > strong { font-size: var(--sk7-type-body); font-weight: var(--sk7-weight-bold); font-variant-numeric: tabular-nums; }
 .record-explorer-facts > span,
 .record-explorer-access { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
-.record-explorer-open { color: var(--sk7-accent); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
+.record-explorer-open { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
 
 .record-explorer-empty,
 .record-detail-empty {
@@ -417,6 +429,11 @@
   margin-inline: auto;
   gap: var(--sk7-space-lg);
   overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+  box-shadow: none;
 }
 
 .scene.journey-record-detail > .scene-visual-background,
@@ -529,6 +546,7 @@
   .record-explorer-day > h2 {
     margin-bottom: var(--sk7-space-xs);
     padding: 0;
+    font-size: var(--sk7-type-subtitle);
   }
 
   .record-explorer-day > h2::before {
@@ -554,20 +572,26 @@
 
   .record-explorer-row .record-explorer-type { grid-column: 1; grid-row: 1; }
   .record-explorer-row .record-explorer-access { grid-column: 2; grid-row: 1; text-align: right; }
-  .record-explorer-row .record-explorer-facts { grid-column: 1 / -1; grid-row: 2; }
-  .record-explorer-row .record-explorer-open { grid-column: 1 / -1; grid-row: 3; justify-self: end; }
+  .record-explorer-row .record-explorer-facts { grid-column: 1; grid-row: 2; }
+  .record-explorer-row .record-explorer-open { grid-column: 2; grid-row: 2; align-self: end; justify-self: end; }
 }
 
 @media (max-width: 42rem) {
   .scene.record-explorer-scene .scene-toolbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
   }
 
   .scene.record-explorer-scene .journey-continuation-actions--compact {
     display: grid;
     width: 100%;
+  }
+
+  .scene.record-explorer-scene .scene-toolbar > button,
+  .scene.record-explorer-scene .journey-continuation-actions--compact > button {
+    width: 100%;
+    height: 100%;
   }
 
   .scene.record-explorer-scene .window-nav {

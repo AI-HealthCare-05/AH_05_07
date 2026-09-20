@@ -2,10 +2,14 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   align-content: start;
-  gap: var(--sk7-space-2xl);
+  gap: var(--sk7-space-lg);
   min-height: 0;
   overflow: visible;
-  background: var(--sk7-surface-solid);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+  box-shadow: none;
   animation: none;
 }
 
@@ -46,8 +50,9 @@
 .model-v2-flow .model-v2-progress {
   display: grid;
   align-content: start;
-  gap: var(--sk7-space-lg);
+  gap: var(--sk7-space-md);
   padding-top: var(--sk7-space-2xs);
+  background: transparent;
 }
 
 .model-v2-flow .model-v2-progress-caption {
@@ -120,11 +125,11 @@
 
 .model-v2-flow .model-v2-panel.measurement-panel {
   align-content: start;
-  gap: var(--sk7-space-2xl);
+  gap: var(--sk7-space-xl);
   width: 100%;
   min-width: 0;
   padding-top: var(--sk7-space-xl);
-  border-top: 3px solid var(--sk7-secondary);
+  border-top: 2px solid var(--sk7-accent);
   background: transparent;
   box-shadow: none;
 }
@@ -491,7 +496,7 @@
   display: grid;
   justify-items: start;
   align-content: start;
-  gap: var(--sk7-space-lg);
+  gap: var(--sk7-space-md);
 }
 
 .model-v2-flow .model-v2-intro {
@@ -913,6 +918,9 @@
 
   .model-v2-flow .model-v2-progress {
     gap: var(--sk7-space-sm);
+    padding-block: var(--sk7-space-sm);
+    border-top: 1px solid var(--sk7-border);
+    border-bottom: 1px solid var(--sk7-border);
   }
 
   .model-v2-flow .model-v2-progress ol {
@@ -939,7 +947,7 @@
 
   .model-v2-flow .model-v2-privacy-note {
     max-width: none;
-    padding-top: 0;
+    padding-top: var(--sk7-space-xs);
     border: 0;
     font-size: var(--sk7-type-caption);
   }
@@ -947,8 +955,8 @@
 
 @media (max-width: 38rem) {
   .model-v2-flow.signal-scene {
-    gap: var(--sk7-space-xl);
-    padding: var(--sk7-space-lg);
+    gap: var(--sk7-space-lg);
+    padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
   }
 
   .model-v2-flow .field-grid {
@@ -957,8 +965,8 @@
   }
 
   .model-v2-flow .model-v2-panel.measurement-panel {
-    gap: var(--sk7-space-xl);
-    padding-top: var(--sk7-space-lg);
+    gap: var(--sk7-space-lg);
+    padding-top: var(--sk7-space-md);
   }
 
   .model-v2-flow .model-v2-review-group dl > div,
@@ -1007,11 +1015,6 @@
     background: color-mix(in srgb, var(--sk7-surface-solid) 94%, transparent);
     box-shadow: var(--sk7-shadow-surface);
     backdrop-filter: blur(.45rem);
-  }
-
-  .model-v2-flow .model-v2-intro,
-  .model-v2-flow .model-v2-outcome {
-    gap: var(--sk7-space-md);
   }
 }
 
