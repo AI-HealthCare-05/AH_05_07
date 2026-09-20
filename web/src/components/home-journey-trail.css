@@ -18,9 +18,9 @@
   left: -50%;
   width: 100%;
   height: 2px;
-  background: #c8e7d9;
+  background: color-mix(in srgb, var(--sk7-accent) 24%, var(--sk7-border));
 }
-.home-trail-dates > li[data-temporal="future"]::before { background: #e7eceb; }
+.home-trail-dates > li[data-temporal="future"]::before { background: var(--sk7-border); }
 .home-trail-dates .home-trail-date {
   position: relative;
   display: grid;
@@ -32,10 +32,10 @@
   min-height: 60px;
   padding: 3px 0 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--sk7-radius-control);
   background: transparent;
   box-shadow: none;
-  color: #657c78;
+  color: var(--sk7-text-muted);
   transition: none;
 }
 .home-trail-node {
@@ -43,25 +43,25 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  border: 1px solid #b9decc;
+  border: 1px solid color-mix(in srgb, var(--sk7-accent) 34%, var(--sk7-border));
   border-radius: 50%;
-  background: #edf7f1;
-  color: #386d5e;
+  background: var(--sk7-accent-soft);
+  color: var(--sk7-accent);
   font-size: 10px;
   font-weight: 650;
   line-height: 1;
 }
 .home-trail-date time { font-size: 11px; font-weight: 600; line-height: 15px; font-variant-numeric: tabular-nums; }
-.home-trail-dates [data-temporal="future"] .home-trail-node { border-color: #d3ddda; background: #fff; color: #657972; }
-.home-trail-dates [data-temporal="today"] .home-trail-node { border-color: #57b48e; background: #57b48e; color: #10372e; }
-.home-trail-dates [data-temporal="today"] time { color: #163b36; font-weight: 800; }
-.home-trail-date[aria-pressed="true"] .home-trail-node { outline: 2px solid #badfd0; outline-offset: 3px; }
+.home-trail-dates [data-temporal="future"] .home-trail-node { border-color: var(--sk7-border); background: var(--sk7-surface-solid); color: var(--sk7-text-muted); }
+.home-trail-dates [data-temporal="today"] .home-trail-node { border-color: var(--sk7-accent); background: var(--sk7-accent); color: var(--sk7-text-on-accent); }
+.home-trail-dates [data-temporal="today"] time { color: var(--sk7-text); font-weight: 800; }
+.home-trail-date[aria-pressed="true"] .home-trail-node { outline: 2px solid color-mix(in srgb, var(--sk7-accent) 35%, transparent); outline-offset: 3px; }
 .home-trail-presence { display: flex; justify-content: center; align-items: center; gap: 5px; min-height: 7px; }
-.home-trail-mark { display: inline-block; flex: 0 0 auto; width: 5px; height: 5px; border: 1px solid #d6e0dc; background: #fff; }
+.home-trail-mark { display: inline-block; flex: 0 0 auto; width: 5px; height: 5px; border: 1px solid var(--sk7-border); background: var(--sk7-surface-solid); }
 .home-trail-mark--observation { border-radius: 50%; }
 .home-trail-mark--participation { border-radius: 1px; }
-.home-trail-mark[data-present="true"] { border-color: #57a98a; background: #57a98a; }
-.home-trail-legend { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; color: #5d756b; font-size: .625rem; line-height: 1.4; }
+.home-trail-mark[data-present="true"] { border-color: var(--sk7-accent); background: var(--sk7-accent); }
+.home-trail-legend { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--sk7-space-2xs) var(--sk7-space-md); margin: var(--sk7-space-2xs) 0 0; color: var(--sk7-text-muted); font-size: .625rem; line-height: 1.4; }
 .home-trail-legend > span { display: inline-flex; align-items: center; gap: 5px; }
 .home-trail-dates .home-trail-accessible-facts { position: absolute; width: 1px; height: 1px; min-height: 0; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .home-trail-dates .home-trail-date:focus-visible { z-index: 1; outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
@@ -69,8 +69,8 @@
 @media (hover: hover) and (pointer: fine) {
   .home-trail-dates .home-trail-date { transition: background var(--sk7-motion-fast) var(--sk7-ease-standard); }
   .home-trail-date .home-trail-node { transition: border-color var(--sk7-motion-fast) var(--sk7-ease-standard), background var(--sk7-motion-fast) var(--sk7-ease-standard); }
-  .home-trail-dates .home-trail-date:hover:not(:disabled) { transform: none; background: #eaf5ef70; box-shadow: none; }
-  .home-trail-date:hover .home-trail-node { border-color: #76b79c; }
+  .home-trail-dates .home-trail-date:hover:not(:disabled) { transform: none; background: color-mix(in srgb, var(--sk7-accent-soft) 70%, transparent); box-shadow: none; }
+  .home-trail-date:hover .home-trail-node { border-color: var(--sk7-accent); }
 }
 @media (max-width: 580px) {
   .home-trail-dates {
