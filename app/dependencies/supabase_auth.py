@@ -46,11 +46,14 @@ def auth_unavailable() -> HTTPException:
     )
 
 
-async def validate_supabase_access_token(access_token: str) -> SupabaseSession:
+async def validate_supabase_access_token(
+    access_token: str,
+    timeout_seconds: float = 5.0,
+) -> SupabaseSession:
     ensure_supabase_auth_configured()
 
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.get(
                 f"{config.SUPABASE_URL}/auth/v1/user",
                 headers={"apikey": config.SUPABASE_PUBLISHABLE_KEY, "Authorization": f"Bearer {access_token}"},
