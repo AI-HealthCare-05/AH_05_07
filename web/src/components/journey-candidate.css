@@ -1,23 +1,14 @@
 /* Approved screen-scoped composition, selected by the build presentation policy. */
-.app-shell:has(.journey-candidate) { background: #f8f5ed; }
 .app-shell:has(.journey-candidate) .clay-horizon { display: none; }
-.app-shell:has(.journey-candidate) .primary-nav { background: #f8f5ed; box-shadow: none; }
-.app-shell:has(.journey-candidate) .primary-nav button.is-active { background: #3f594a; box-shadow: none; }
-.journey-candidate.scene { --sk7-accent: #3f594a; --sk7-focus: #3f594a; background: transparent; box-shadow: none; border: 0; border-radius: 0; overflow: visible; padding: 1.5rem 0 2rem; gap: 1.5rem; animation: none; }
+.journey-candidate.scene { --sk7-accent: #3f594a; border: 0; border-radius: 0; overflow: visible; padding: 1.5rem 0 2rem; gap: 1.5rem; animation: none; }
 .journey-candidate > .scene-visual-background, .journey-candidate > .scene-visual-character, .journey-candidate::after { display: none; }
 .journey-candidate h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); font-weight: 700; letter-spacing: -.06em; line-height: 1.2; }
 .journey-candidate .scene-copy { gap: .85rem; }
-.journey-candidate .scene-body { font-weight: 450; font-size: 1rem; color: #696960; }
-.journey-candidate .eyebrow { color: #65745e; letter-spacing: .04em; }
+.journey-candidate .scene-body { font-weight: 450; font-size: 1rem; }
+.journey-candidate .eyebrow { letter-spacing: .04em; }
 .journey-note { grid-column: 1; grid-row: 2; display: grid; gap: 1rem; color: #62675a; align-self: end; }
 .journey-note p { font-size: 1.4rem; font-weight: 550; letter-spacing: -.04em; line-height: 1.5; }
 .journey-note small { font-size: .8rem; line-height: 1.7; }
-.journey-landscape { position: relative; width: min(100%, 22rem); height: 10rem; overflow: hidden; border-radius: 50% 50% 1rem 1rem; background: #ede9d8; }
-.journey-landscape i, .journey-landscape span { position: absolute; display: block; }
-.journey-landscape i:nth-child(1) { width: 3rem; height: 3rem; background: #fbf7e9; border-radius: 50%; top: 1.25rem; right: 25%; }
-.journey-landscape i:nth-child(2) { width: 100%; height: 6rem; background: #c3cbae; border-radius: 50% 70% 0 0; bottom: -1rem; left: -15%; transform: rotate(-10deg); }
-.journey-landscape i:nth-child(3) { width: 90%; height: 6rem; background: #a4b395; border-radius: 80% 55% 0 0; bottom: -2rem; right: -20%; transform: rotate(12deg); }
-.journey-landscape span { width: 7rem; height: 5rem; border: 1rem solid #e8debf; border-top: 0; border-bottom: 0; border-radius: 50%; bottom: -1rem; left: 45%; transform: rotate(30deg); }
 .journey-saved.scene {
   --sk7-accent: inherit;
   --sk7-focus: var(--sk7-accent);

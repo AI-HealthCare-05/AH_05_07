@@ -372,7 +372,6 @@
 }
 
 .journey-recap .recap-overview-note,
-.journey-recap .recap-week-payoff,
 .journey-recap .recap-week-coverage {
   max-width: var(--sk7-copy-max);
   color: var(--sk7-text-muted);
