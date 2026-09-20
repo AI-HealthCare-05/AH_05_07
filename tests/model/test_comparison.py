@@ -36,6 +36,7 @@ def commit(repo):
         "-m",
         "synthetic fixture",
     )
+    return git(repo, "rev-parse", "HEAD").decode().strip()
 
 
 @pytest.fixture
@@ -46,6 +47,8 @@ def workspace(tmp_path):
         shutil.copytree(ROOT / name, repo / name, ignore=shutil.ignore_patterns("__pycache__"))
     for name in (".python-version", "uv.lock", ".gitattributes"):
         shutil.copyfile(ROOT / name, repo / name)
+    git(repo, "init")
+    gate_execution_commit = commit(repo)
     manifest = load_manifest()
     table = derive_table(synthetic_modules(manifest, count=400), manifest)
     partitions, fills = split_table(table, manifest)
@@ -56,6 +59,7 @@ def workspace(tmp_path):
     gate = json.loads((repo / "docs/evidence/model-gate-1b.json").read_text())
     gate.update(
         {
+            "repository_commit": gate_execution_commit,
             "row_counts": {"total": len(table), **metadata["row_counts"]},
             "partition_sha256": metadata["partition_sha256"],
             "split_digest": metadata["split_digest"],
@@ -64,7 +68,6 @@ def workspace(tmp_path):
         }
     )
     (repo / "docs/evidence/model-gate-1b.json").write_text(json.dumps(gate), encoding="utf-8")
-    git(repo, "init")
     commit(repo)
     return repo, splits, tmp_path / "new output"
 
@@ -97,6 +100,13 @@ def test_real_cli_reproducibility_verifier_and_preservation(workspace):
     assert original == (second_dir / "comparison-evidence.json").read_bytes()
     assert invoke(workspace).returncode == 1
     assert original == (output / "comparison-evidence.json").read_bytes()
+    with (repo / "uv.lock").open("a", encoding="utf-8") as stream:
+        stream.write("# unrelated future dependency change\n")
+    commit(repo)
+    changed_toolchain_output = output.parent / "changed toolchain output"
+    changed_toolchain = invoke(workspace, changed_toolchain_output)
+    assert changed_toolchain.returncode == 1
+    assert json.loads((changed_toolchain_output / "failure.json").read_text())["stage"] == "evidence_validation"
     assert not (splits / "test.parquet").exists()
     result = subprocess.run(
         [

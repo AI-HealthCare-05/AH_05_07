@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -178,9 +179,32 @@ def contract_findings(root: Path) -> list[str]:
     return _manifest_findings(manifest) + _runbook_findings(runbook) + _freeze_script_findings(freeze_script)
 
 
+def historical_toolchain_lock_sha256(evidence: dict[str, Any], root: Path) -> str | None:
+    commit = evidence.get("repository_commit")
+    if COMMIT.fullmatch(str(commit)) is None:
+        return None
+    try:
+        commit_check = subprocess.run(
+            ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
+            capture_output=True,
+            check=False,
+        )
+        if commit_check.returncode != 0:
+            return None
+        lock = subprocess.run(
+            ["git", "-C", str(root), "cat-file", "blob", f"{commit}:uv.lock"],
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return None
+    if lock.returncode != 0:
+        return None
+    return hashlib.sha256(lock.stdout).hexdigest()
+
+
 def repository_alignment_findings(evidence: dict[str, Any], root: Path) -> list[str]:
     manifest_path = root / "data/manifest/nhanes_2017_2020.json"
-    lock_path = root / "uv.lock"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     expected = {
         "dataset_id": manifest["dataset_id"],
@@ -188,13 +212,18 @@ def repository_alignment_findings(evidence: dict[str, Any], root: Path) -> list[
         "label": manifest["label"]["name"],
         "seed": manifest["split"]["seed"],
         "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-        "toolchain_lock_sha256": hashlib.sha256(lock_path.read_bytes()).hexdigest(),
     }
-    return [
+    issues = [
         f"evidence {field} does not match the repository contract"
         for field, value in expected.items()
         if evidence.get(field) != value
     ]
+    lock_digest = historical_toolchain_lock_sha256(evidence, root)
+    if lock_digest is None:
+        issues.append("evidence repository commit or historical uv.lock is unavailable")
+    elif evidence.get("toolchain_lock_sha256") != lock_digest:
+        issues.append("evidence toolchain_lock_sha256 does not match the repository contract")
+    return issues
 
 
 def self_test() -> None:
