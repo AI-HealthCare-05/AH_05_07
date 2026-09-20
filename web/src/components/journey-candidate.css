@@ -642,62 +642,6 @@
   padding-top: var(--sk7-space-md);
 }
 
-/* S08/S09: Journey-only record reading composition. Shared S10 lanes retain
-   their existing markup and layout. */
-.journey-records.scene, .journey-record-detail.scene { max-width: 58rem; margin-inline: auto; }
-.journey-records .scene-copy, .journey-record-detail .scene-copy { max-width: 42rem; }
-.journey-records .scene-toolbar { border-color: #d8d7c9; padding-bottom: .8rem; }
-.journey-records .window-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: stretch; gap: 1rem; border: 1px solid #dedbcf; border-radius: .55rem; background: #fffdf7; padding: .8rem; }
-.journey-records .window-nav p { display: grid; align-content: center; text-align: left; gap: .18rem; }
-.journey-records .window-nav p strong { color: #414c40; font-size: 1rem; }
-.journey-records .window-nav p small { font-size: .75rem; }
-.journey-records .window-nav button { align-self: center; min-height: 2.8rem; white-space: nowrap; }
-.journey-records .record-groups { gap: 1.5rem; }
-.journey-records .record-groups .record-lane + .record-lane { border-top: 1px solid #d8d7c9; }
-.journey-records .record-lane { gap: .65rem; padding: 1.25rem 0 0; }
-.journey-record-lane-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
-.journey-record-lane-heading > div { display: grid; gap: .2rem; }
-.journey-record-lane-heading .eyebrow { font-size: .7rem; }
-.journey-record-lane-heading h2 { font-size: 1.35rem; letter-spacing: -.04em; }
-.journey-record-lane-heading > span { color: #62675a; font-size: .8rem; }
-.journey-record-lane-note { color: #696960; font-size: .83rem; line-height: 1.55; }
-.journey-records .journey-record-list { gap: .55rem; }
-.journey-records .journey-record-list li { grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; border: 1px solid #e1dfd3; border-radius: .45rem; background: #fffdf7; padding: .85rem 1rem; }
-.journey-records .journey-record-list .empty-record { display: block; border-style: dashed; color: #696960; }
-.journey-record-facts { display: grid; grid-template-columns: minmax(9rem, .85fr) minmax(0, 1.15fr); align-items: center; gap: .5rem 1rem; min-width: 0; }
-.journey-record-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .6rem; color: #62675a; font-size: .83rem; }
-.journey-record-date time { color: #414c40; font-weight: 650; }
-.journey-record-date small { color: #696960; }
-.journey-record-facts > strong { color: #303a31; font-size: .98rem; overflow-wrap: anywhere; }
-.journey-record-status { grid-column: 2; color: #62675a; font-size: .82rem; }
-.journey-records .record-action { min-width: 6.4rem; }
-.journey-record-detail .record-detail { gap: 1.4rem; border: 1px solid #dedbcf; border-top: 4px solid #879678; border-radius: .35rem .35rem .8rem .8rem; background: #fffdf7; box-shadow: 0 8px 0 -4px #e8e5d9; padding: clamp(1.25rem, 3vw, 2rem); }
-.journey-record-detail .record-detail > h2 { font-size: 1.45rem; letter-spacing: -.04em; }
-.journey-record-detail .record-detail-facts { gap: 0; border-top: 1px solid #e5e1d7; }
-.journey-record-detail .record-detail-facts div { display: grid; grid-template-columns: minmax(5rem, .6fr) minmax(0, 1.4fr); gap: 1rem; border: 0; border-bottom: 1px solid #e5e1d7; padding: .85rem 0; }
-.journey-record-detail .record-detail-facts dt { align-self: center; font-size: .78rem; }
-.journey-record-detail .record-detail-facts dd { margin: 0; overflow-wrap: anywhere; }
-.journey-record-detail .notice { margin: 0; }
-.journey-record-detail .inline-actions { gap: .65rem; }
-.journey-record-detail .record-detail > .inline-actions:last-child { justify-content: space-between; border-top: 1px solid #e5e1d7; padding-top: 1rem; }
-.journey-record-detail .danger { margin-left: auto; }
-
-@media (max-width: 580px) {
-  .journey-records.scene, .journey-record-detail.scene { max-width: none; }
-  .journey-records .window-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
-  .journey-records .window-nav p { grid-column: 1 / -1; grid-row: 1; }
-  .journey-records .window-nav button { width: 100%; padding-inline: .45rem; font-size: .82rem; }
-  .journey-records .journey-record-list li { grid-template-columns: minmax(0, 1fr); align-items: stretch; padding: .85rem; }
-  .journey-record-facts { grid-template-columns: minmax(0, 1fr); gap: .38rem; }
-  .journey-record-status { grid-column: auto; }
-  .journey-records .record-action { width: 100%; }
-  .journey-record-detail .record-detail { padding: 1.1rem; }
-  .journey-record-detail .record-detail-facts div { grid-template-columns: minmax(4.25rem, .55fr) minmax(0, 1.45fr); }
-  .journey-record-detail .record-detail > .inline-actions:last-child { align-items: stretch; flex-direction: column; }
-  .journey-record-detail .record-detail > .inline-actions:last-child button { width: 100%; }
-  .journey-record-detail .danger { margin-left: 0; }
-}
-
 /* Room for outstretched celebrate hands without shrinking the whole character.
    Only the inline journey S05 canvas changes; landscape and actions keep their size. */
 .app-shell[data-screen="S05"] .journey-saved .save-ripple > .companion-runtime-slot { top: 1rem; right: calc(50% - 7.5rem); bottom: auto; width: 15rem; height: calc(100% - 1.5rem); }
@@ -1112,14 +1056,8 @@
   }
 }
 
-/* Legacy journey cohesion retained only for untouched S05/S08/S09.
-   Migrated screens use the canonical shared foundation above. */
-
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-):has(.journey-candidate) {
+/* Legacy journey cohesion is retained only for untouched S05. */
+.app-shell[data-screen="S05"]:has(.journey-candidate) {
   --sk7-text: #142f38;
   --sk7-text-muted: #61747a;
   --sk7-accent: #164a47;
@@ -1136,54 +1074,30 @@
     linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-):has(.journey-candidate) .primary-nav {
+.app-shell[data-screen="S05"]:has(.journey-candidate) .primary-nav {
   border-color: #dfe8e5;
   background: #ffffff7d;
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-):has(.journey-candidate) .primary-nav button.is-active {
+.app-shell[data-screen="S05"]:has(.journey-candidate) .primary-nav button.is-active {
   background: #e2f0e9;
   color: #153f3d;
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-) .journey-candidate {
+.app-shell[data-screen="S05"] .journey-candidate {
   --sk7-accent: #164a47;
   --sk7-focus: #164a47;
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-) .journey-candidate h1 {
+.app-shell[data-screen="S05"] .journey-candidate h1 {
   color: #102f38;
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-) .journey-candidate .scene-body {
+.app-shell[data-screen="S05"] .journey-candidate .scene-body {
   color: #586c72;
 }
 
-.app-shell:is(
-  [data-screen="S05"],
-  [data-screen="S08"],
-  [data-screen="S09"]
-) .journey-candidate .eyebrow {
+.app-shell[data-screen="S05"] .journey-candidate .eyebrow {
   color: #55746d;
 }
 
@@ -1231,100 +1145,16 @@
 }
 
 
-/* S08 — records remain a utility view, but use the same surface system. */
-
-.app-shell[data-screen="S08"] .scene.record-explorer-scene[data-scene="S08"] {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-
-.app-shell[data-screen="S08"] .journey-records .window-nav {
-  border: 1px solid #dce7e3;
-  border-radius: .85rem;
-  background: #ffffffe8;
-  box-shadow: inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer {
-  --record-explorer-ink: #173b40;
-  --record-explorer-muted: #607378;
-  --record-explorer-rule: #dce7e3;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button {
-  border-color: #cadbd4;
-  border-radius: .65rem;
-  background: #ffffffbc;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-buttons > button[aria-pressed="true"] {
-  border-color: #164a47;
-  background: #164a47;
-  color: #fff;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-list {
-  border-left-color: #d8e4df;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-list > li {
-  border-bottom-color: #dfe8e4;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row {
-  border-radius: .75rem;
-}
-
-.app-shell[data-screen="S08"] .journey-records .record-explorer-list button.record-explorer-row:hover:not(:disabled) {
-  background: #edf5f1;
-}
-
-
-/* S09 — one selected fact gets one strong readable sheet. */
-
-.app-shell[data-screen="S09"] .journey-record-detail .record-detail {
-  border: 1px solid #d7e4de;
-  border-top: 4px solid #4f806e;
-  border-radius: .7rem .7rem 1rem 1rem;
-  background: #fffffff4;
-  box-shadow:
-    0 16px 36px #173e3912,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S09"] .journey-record-detail .record-detail-facts {
-  border-top-color: #dfe9e4;
-}
-
-.app-shell[data-screen="S09"] .journey-record-detail .record-detail-facts div {
-  border-bottom-color: #dfe9e4;
-}
-
-.app-shell[data-screen="S09"] .journey-record-detail .record-detail > .inline-actions:last-child {
-  border-top-color: #dfe9e4;
-}
-
-
 @media (max-width: 580px) {
-  .app-shell:is(
-    [data-screen="S05"],
-    [data-screen="S08"],
-    [data-screen="S09"]
-  ):has(.journey-candidate) {
+  .app-shell[data-screen="S05"]:has(.journey-candidate) {
     background:
       linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
   }
 
-  .app-shell[data-screen="S05"] .journey-saved .save-next-step,
-  .app-shell[data-screen="S09"] .journey-record-detail .record-detail {
+  .app-shell[data-screen="S05"] .journey-saved .save-next-step {
     box-shadow:
       0 7px 18px #173e390d,
       inset 0 1px 0 #fff;
-  }
-
-  .app-shell[data-screen="S08"] .journey-records .window-nav {
-    box-shadow: inset 0 1px 0 #fff;
   }
 }
 
@@ -1469,7 +1299,7 @@
   color: var(--sk7-text);
 }
 
-/* SK7 FINAL JOURNEY CONTINUITY — S04-S09
+/* SK7 FINAL JOURNEY CONTINUITY — S04-S07
    Existing routes remain authoritative. These controls only make the
    record -> confirmation -> review loop explicit inside each screen. */
 
@@ -1511,45 +1341,6 @@
   border-top: 0;
 }
 
-.journey-records .scene-toolbar {
-  align-items: center;
-}
-
-.journey-records .journey-continuation-actions--compact {
-  justify-content: flex-end;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.journey-records .journey-continuation-actions--compact > button {
-  min-height: 2.75rem;
-  padding: .5rem .7rem;
-}
-
-.journey-records .journey-continuation-actions--compact > button.secondary {
-  border-color: #cbdcd5;
-  background: #f7faf8;
-}
-
-.journey-record-detail .record-explorer-detail-return {
-  width: fit-content;
-  min-height: 2.75rem;
-  padding: .45rem .15rem;
-  border: 0;
-  color: #365f57;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .28em;
-}
-
-.journey-record-detail .record-explorer-detail-return:hover:not(:disabled) {
-  background: transparent;
-  color: #173f3b;
-  box-shadow: none;
-  transform: none;
-}
-
 @media (max-width: 580px) {
   .journey-continuation-actions {
     display: grid;
@@ -1561,14 +1352,4 @@
     width: 100%;
   }
 
-  .journey-records .scene-toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .journey-records .journey-continuation-actions--compact {
-    display: grid;
-    width: 100%;
-  }
 }

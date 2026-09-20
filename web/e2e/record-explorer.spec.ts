@@ -65,11 +65,17 @@ test("S08 chronologically groups separate facts and combines local type and date
   const requests = await mockWindow(page);
   await openExplorer(page);
   const explorer = page.locator(".record-explorer");
+  const scene = page.locator('[data-scene="S08"]');
+  await expect(scene).toHaveClass(/\bsurface\b/);
+  await expect(scene.locator(":scope > .screen-header")).toHaveCount(1);
+  await expect(scene.locator(":scope > .scene-toolbar.action-group")).toHaveCount(1);
+  await expect(explorer.locator(".record-explorer-overview.section-header")).toHaveCount(1);
   await expect(rows(page)).toHaveCount(6);
   expect(await rows(page).evaluateAll(elements => elements.map(element => element.getAttribute("data-record-date"))))
     .toEqual(["2026-09-11", "2026-09-10", "2026-09-10", "2026-09-10", "2026-09-09", "2026-09-08"]);
   await expect(explorer).toContainText("최신 날짜순");
   for (const day of await explorer.locator(".record-explorer-day").all()) {
+    await expect(day).toHaveClass(/\bsection-header\b/);
     const heading = await day.locator("h2").boundingBox();
     const list = await day.locator(".record-explorer-list").boundingBox();
     expect(heading).not.toBeNull();
@@ -131,7 +137,9 @@ test("S08 supports a zero-count record class and distinguishes an entirely empty
   await page.unroute("http://e2e.invalid/**");
   await mockWindow(page, emptyWindow);
   await page.reload();
-  await expect(page.locator(".record-explorer")).toContainText("이 7일에는 기록이 없어요.");
+  const explorer = page.locator(".record-explorer");
+  await expect(explorer).toContainText("이 7일에는 기록이 없어요.");
+  await expect(explorer.locator(".record-explorer-empty.status-notice")).toBeVisible();
   await expect(page.getByRole("button", { name: "전체 기록 보기", exact: true })).toHaveCount(0);
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
   await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
@@ -173,12 +181,22 @@ test("S09 keeps a blood-pressure record readable and actionable on a narrow view
   await dateFilter(page, 10).click();
   await eveningDetail(page).click();
   const detail = page.locator('[data-record-detail-kind="blood-pressure"]');
+  const scene = page.locator('[data-scene="S09"]');
+  await expect(scene).toHaveClass(/\bsurface\b/);
+  await expect(scene.locator(":scope > .screen-header")).toHaveCount(1);
+  await expect(scene.locator(":scope > .record-explorer-detail-context.section-header")).toHaveCount(1);
+  await expect(detail.locator(":scope > .record-detail-heading.section-header")).toHaveCount(1);
+  await expect(detail.locator(":scope > .record-detail-primary-actions.action-group")).toHaveCount(1);
   await expect(detail).toBeVisible();
   await expect(detail).toContainText("121/79 mmHg");
   await expect(detail).toContainText("저녁");
   await expect(page.getByRole("button", { name: "수정", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "삭제", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "목록으로 돌아가기", exact: true })).toBeVisible();
+  expect(await detail.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, borderRadius: style.borderRadius, boxShadow: style.boxShadow };
+  })).toEqual({ backgroundColor: "rgba(0, 0, 0, 0)", borderRadius: "0px", boxShadow: "none" });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 
@@ -195,6 +213,7 @@ test("S08 range changes reset discovery filters and keep prior and legacy detail
   await eveningDetail(page).click();
   await expect(page).toHaveURL(/dashboard_window=prior/);
   await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("이전 7일의 기록은 읽기 전용입니다.");
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"] .status-notice')).toBeVisible();
   await expect(page.getByRole("button", { name: "수정", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "삭제", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
@@ -260,7 +279,9 @@ test("S08 return falls back to the heading if the opened record disappears", asy
   await openExplorer(page);
   await eveningDetail(page).click();
   await page.getByRole("button", { name: "새로고침", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("선택한 기록을 찾을 수 없습니다.");
+  const missingRecord = page.getByRole("alert");
+  await expect(missingRecord).toContainText("선택한 기록을 찾을 수 없습니다.");
+  await expect(missingRecord).toHaveClass(/\bstatus-notice\b/);
   await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
@@ -318,7 +339,7 @@ test("S08 retains the loaded filtered rows after an S09 refresh failure", async 
   expect(writes).toBe(0);
 });
 
-for (const width of [320, 360, 390, 430]) {
+for (const width of [320, 390, 768, 1366]) {
   test(`S08/S09 reflow with keyboard-accessible controls at ${width}px and 200% text`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 844 });
     await mockWindow(page);
@@ -341,8 +362,11 @@ for (const width of [320, 360, 390, 430]) {
         const list = await day.locator(".record-explorer-list").boundingBox();
         expect(heading).not.toBeNull();
         expect(list).not.toBeNull();
-        expect(heading!.y + heading!.height)
-          .toBeLessThanOrEqual(list!.y + 2);
+        if (Math.abs(heading!.x - list!.x) <= 2) {
+          expect(heading!.y + heading!.height).toBeLessThanOrEqual(list!.y + 2);
+        } else {
+          expect(heading!.x + heading!.width).toBeLessThanOrEqual(list!.x + 2);
+        }
       }
       if (width === 390 && !enlarged) await page.screenshot({ path: testInfo.outputPath("s08-mobile-390.png"), fullPage: true });
       await page.getByRole("heading", { level: 1 }).focus();

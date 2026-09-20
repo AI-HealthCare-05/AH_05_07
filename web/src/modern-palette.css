@@ -78,9 +78,6 @@ body,
 .scene .scene-body,
 .journey-candidate .scene-body { color: var(--sk7-text-muted); }
 
-.journey-records .window-nav,
-.journey-records .journey-record-list li,
-.record-detail,
 .state-card,
 .signal-card,
 .model-v2-card,
