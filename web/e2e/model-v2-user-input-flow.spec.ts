@@ -1288,7 +1288,7 @@ test("S11 account switch discards a completed visible preview and blank draft", 
   expect(routed.requests).toHaveLength(1);
 });
 
-for (const width of [320, 390, 430]) {
+for (const width of [320, 390, 430, 768, 1366]) {
   test(`S11 every input step, review and result remains usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await routeModel(page);

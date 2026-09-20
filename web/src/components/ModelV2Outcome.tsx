@@ -63,10 +63,10 @@ export function ModelV2Outcome({
   const hasPreview = previewOutput !== null && Number.isFinite(previewOutput);
 
   return <div className="model-v2-outcome" data-model-v2-user-result="processed">
-    <header className="model-v2-outcome-heading">
+    <header className="model-v2-outcome-heading section-header">
       <h2 id="model-v2-result-title" tabIndex={-1}>{hasPreview ? "연구 모델 분석 결과" : "생활정보 처리를 완료했어요"}</h2>
       {hasPreview ? (
-        <div data-model-v2-preview>
+        <div className="model-v2-preview status-notice" data-model-v2-preview>
           <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
           <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
           <p>입력한 생활정보를 이 기기에서 Model V2가 처리해 만든 연속 출력입니다.</p>
@@ -75,19 +75,19 @@ export function ModelV2Outcome({
       ) : (
         <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
       )}
-      <p className="model-v2-local-privacy">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
-      {Number(draft.age) >= 80 && <p className="notice notice-warning">
+      <p className="model-v2-local-privacy status-notice">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
+      {Number(draft.age) >= 80 && <p className="notice-warning status-notice">
         만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
       </p>}
     </header>
 
-    <div className="model-v2-summary-heading">
+    <div className="model-v2-summary-heading section-header">
       <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
       <h3>오늘의 생활 패턴을 정리했어요</h3>
     </div>
 
     <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">
-      <section className="model-v2-result-section" aria-labelledby="model-v2-activity-title">
+      <section className="model-v2-result-section section-header" aria-labelledby="model-v2-activity-title">
         <h3 id="model-v2-activity-title">활동</h3>
         <dl>
           <div><dt>최근 7일 걷기</dt><dd>{walkingDays}일</dd></div>
@@ -98,7 +98,7 @@ export function ModelV2Outcome({
         <p className="model-v2-result-explanation">입력한 걷기 일수에 걷는 날 하루 평균 시간을 곱한 단순 계산값이에요.</p>
       </section>
 
-      <section className="model-v2-result-section" aria-labelledby="model-v2-sleep-title">
+      <section className="model-v2-result-section section-header" aria-labelledby="model-v2-sleep-title">
         <h3 id="model-v2-sleep-title">수면</h3>
         <dl>
           <div>
@@ -116,7 +116,7 @@ export function ModelV2Outcome({
         <p className="model-v2-result-explanation">입력한 취침·기상 시각 사이의 간격이에요.</p>
       </section>
 
-      <section className="model-v2-result-section" aria-labelledby="model-v2-habits-title">
+      <section className="model-v2-result-section section-header" aria-labelledby="model-v2-habits-title">
         <h3 id="model-v2-habits-title">생활 습관</h3>
         <dl>
           <div><dt>일반담배</dt><dd>{reviewValue("smoking", draft)}</dd></div>
@@ -124,7 +124,7 @@ export function ModelV2Outcome({
         </dl>
       </section>
 
-      <section className="model-v2-result-section" aria-labelledby="model-v2-body-title">
+      <section className="model-v2-result-section section-header" aria-labelledby="model-v2-body-title">
         <h3 id="model-v2-body-title">체격 참고</h3>
         <dl>
           <div><dt>키</dt><dd>{reviewValue("height", draft)}</dd></div>
@@ -135,13 +135,13 @@ export function ModelV2Outcome({
       </section>
     </div>
 
-    <section className="model-v2-result-next" aria-labelledby="model-v2-next-title">
+    <section className="model-v2-result-next section-header status-notice" aria-labelledby="model-v2-next-title">
       <p className="eyebrow">현재 기록 기준</p>
       <h3 id="model-v2-next-title">다음 한 걸음</h3>
-      <div className="model-v2-continuation" data-model-v2-continuation={continuation.key}>
+      <div className="model-v2-continuation section-header" data-model-v2-continuation={continuation.key}>
         <h4>{continuation.title}</h4>
         <p>{continuation.support}</p>
-        <div className="model-v2-actions">
+        <div className="model-v2-actions action-group">
           <button type="button" onClick={onContinue}>{continuation.actionLabel}</button>
         </div>
       </div>
@@ -161,13 +161,15 @@ export function ModelV2Outcome({
       {continuation.destination !== "S02" && <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>}
     </section>
 
-    <p className="model-v2-result-disclaimer">
-      이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
-      특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
-    </p>
-    <p className="model-v2-result-explanation">이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+    <div className="model-v2-result-guardrails status-notice">
+      <p className="model-v2-result-disclaimer">
+        이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
+        특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
+      </p>
+      <p className="model-v2-result-explanation">이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+    </div>
 
-    <section className="model-v2-result-model-note" aria-labelledby="model-v2-research-title">
+    <section className="model-v2-result-model-note section-header" aria-labelledby="model-v2-research-title">
       <h3 id="model-v2-research-title">처리 방식과 입력 상세</h3>
       <details className="model-v2-notice-details" data-model-v2-research>
         <summary>Model V2 처리 안내</summary>
