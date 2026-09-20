@@ -56,12 +56,12 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
     <div className="today-journey">
       <div className="today-hero">
         <div className="today-desk">
-          <div className="scene-copy">
+          <div className="scene-copy screen-header">
             <p className="eyebrow"><UiIcon name="morning" className="today-sun" size={18} /><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
             <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 혈압 기록을,<br />날짜별로 이어봐요.<UiIcon name="leaf" className="today-wave" size={24} /></h1>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
-            <div className="home-lead-copy">
+            <div className="home-lead-copy section-header">
               <p className="home-lead-kicker">{leadKicker}</p>
               <h2 id="home-lead-title">{lead.title}</h2>
               <p id="home-lead-support">{lead.support}</p>
@@ -83,7 +83,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
       </div>
       <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
         <header className="living-week-heading">
-          <div className="living-week-title"><UiIcon name="leaf" className="today-leaf" size={28} /><div><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘 포함 · 날짜별 혈압 기록' : '선택한 기간 · 날짜별 혈압 기록'}</p></div></div>
+          <div className="living-week-title"><UiIcon name="leaf" className="today-leaf" size={28} /><div className="section-header"><h2 id="living-week-title">최근 7일 기록</h2><p>{todayDay ? '오늘 포함 · 날짜별 혈압 기록' : '선택한 기간 · 날짜별 혈압 기록'}</p></div></div>
           <a href="?screen=S10" onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onNavigate('S10'); } }}>7일 돌아보기<span aria-hidden="true"> →</span></a>
         </header>
         <button className="today-calendar-toggle" type="button" aria-expanded={calendarOpen} aria-controls="today-journey-details" onClick={() => setCalendarOpen(open => { const next = !open; if (next && selectedDay) setDetailOpen(true); return next; })}>{calendarOpen ? "날짜별 기록 자세히 접기" : "날짜별 기록 자세히 보기"}<span aria-hidden="true">{calendarOpen ? "−" : "+"}</span></button>
@@ -105,7 +105,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
         </div>
       </section>
       <section className="today-records" aria-labelledby="today-records-title">
-        <header className="today-records-heading"><h2 id="today-records-title">오늘, 한눈에</h2><time dateTime={today}>{formatTrailDate(today)}</time></header>
+        <header className="today-records-heading section-header"><h2 id="today-records-title">오늘, 한눈에</h2><time dateTime={today}>{formatTrailDate(today)}</time></header>
         {retained && <p className="today-freshness">{freshness === 'refreshing' ? '새로고침 중 · 마지막으로 불러온 기록을 보여드려요.' : '최신 여부 미확인 · 마지막으로 불러온 기록을 보여드려요. 최근 변경이 반영되지 않았을 수 있어요.'}</p>}
         <div className="today-records-grid">
           <dl className="journey-facts" aria-label="오늘의 별도 기록 상태" aria-live="polite" aria-atomic="true">
@@ -114,7 +114,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
           </dl>
         </div>
         <p className="today-records-note">혈압 관찰과 챌린지 참여는 서로 다른 사실로 남아요.</p>
-        <nav className="home-links" aria-label="오늘 기록 바로가기">
+        <nav className="home-links action-group" aria-label="오늘 기록 바로가기">
           {secondary.map(item => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} onClick={() => onNavigate(item.screen)}>
             <span><strong>{item.title}</strong><small>{item.support}</small></span><UiIcon name="arrow-up-right" size={20} />
           </button>)}
