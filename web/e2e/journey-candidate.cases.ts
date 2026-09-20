@@ -168,29 +168,16 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
     const s02ReturnFrames = await page.evaluate(() => new Promise<Array<{
       backgroundImage: string;
-      posterComplete: boolean;
-      posterWidth: number;
-      posterSource: string;
-      posterLoading: string;
     }>>((resolve) => {
       history.back();
       const frames: Array<{
         backgroundImage: string;
-        posterComplete: boolean;
-        posterWidth: number;
-        posterSource: string;
-        posterLoading: string;
       }> = [];
       const sample = () => {
         const hero = document.querySelector<HTMLElement>('.today-hero');
         if (!hero) { requestAnimationFrame(sample); return; }
-        const poster = hero.querySelector<HTMLImageElement>('.living-scene-fallback img');
         frames.push({
           backgroundImage: getComputedStyle(hero).backgroundImage,
-          posterComplete: Boolean(poster?.complete),
-          posterWidth: poster?.naturalWidth ?? 0,
-          posterSource: poster?.currentSrc ?? '',
-          posterLoading: poster?.loading ?? '',
         });
         if (frames.length === 3) resolve(frames);
         else requestAnimationFrame(sample);
@@ -200,10 +187,11 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.locator('#S02-title')).toBeFocused();
     expect(s02ReturnFrames[0].backgroundImage).toContain('home-window-garden-v2.webp');
     expect(s02ReturnFrames.every(frame => frame.backgroundImage.includes('home-window-garden-v2.webp'))).toBe(true);
-    expect(s02ReturnFrames.at(-1)?.posterComplete).toBe(true);
-    expect(s02ReturnFrames.at(-1)?.posterWidth).toBeGreaterThan(0);
-    expect(s02ReturnFrames.at(-1)?.posterSource).not.toBe('');
-    expect(s02ReturnFrames.at(-1)?.posterLoading).toBe('eager');
+    const returnedPoster = page.locator('.today-hero .living-scene-fallback img');
+    await expect(returnedPoster).toHaveCount(1);
+    await expect(page.locator('.today-hero .living-scene-fallback')).toHaveAttribute('data-poster-asset', /^poster-/);
+    await expect(returnedPoster).toHaveAttribute('src', /\/scene-review\/s02\/v1\//);
+    await expect(returnedPoster).toHaveAttribute('loading', 'eager');
     // A changed domain fact changes the CTA, never the scenery recipe.
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
