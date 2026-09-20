@@ -465,90 +465,87 @@
 
 /* S03: make challenge participation clearly optional and explain the lock boundary. */
 .journey-challenge-choice.scene {
-  max-width: 58rem;
   margin-inline: auto;
   align-content: start;
 }
 
 .journey-challenge-choice .challenge-choice-context {
   display: grid;
-  gap: .3rem;
-  max-width: 42rem;
-  border-left: 3px solid #9aaa88;
-  padding: .15rem 0 .15rem .85rem;
+  gap: var(--sk7-space-xs);
+  max-width: var(--sk7-copy-max);
 }
 
 .journey-challenge-choice .challenge-choice-context .eyebrow {
   margin: 0;
-  font-size: .7rem;
+  font-size: var(--sk7-type-caption);
 }
 
 .journey-challenge-choice .challenge-choice-context strong {
-  color: #3d503f;
-  font-size: .98rem;
-  line-height: 1.5;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-body);
+  line-height: var(--sk7-leading-body);
 }
 
 .journey-challenge-choice .challenge-choice-context > p:not(.eyebrow) {
-  color: #6a6d63;
-  font-size: .82rem;
-  line-height: 1.55;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
 }
 
 .journey-challenge-choice .challenge-choice-context[data-challenge-choice-state="locked"] {
-  border-left-color: #b08c69;
+  border-inline-start-color: var(--sk7-warning);
 }
 
 .journey-challenge-choice .choice-grid {
-  margin-top: .2rem;
+  gap: var(--sk7-space-md);
 }
 
 @media (max-width: 580px) {
   .journey-challenge-choice .challenge-choice-context {
     max-width: none;
-    padding-left: .7rem;
   }
+
+  .journey-challenge-choice .journey-challenge-actions { display: grid; }
+  .journey-challenge-choice .journey-challenge-actions > button { width: 100%; }
 }
 
 /* S06: explain challenge check-in states without competing with blood pressure. */
 .journey-challenge-summary.scene {
-  max-width: 54rem;
   margin-inline: auto;
   align-content: start;
 }
 
 .journey-challenge-summary .journey-challenge-summary-card {
   display: grid;
-  gap: .5rem;
-  border: 1px solid #dedfd5;
-  border-radius: .65rem;
-  background: #fffdf7;
-  padding: 1rem 1.1rem;
+  gap: var(--sk7-space-xs);
+  width: min(100%, var(--sk7-copy-max));
+  border: 0;
+  border-top: 1px solid var(--sk7-border);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-lg) 0;
 }
 
 .journey-challenge-summary .journey-challenge-checkin-card {
-  border-top: 4px solid #91a083;
-}
-
-.journey-challenge-summary .journey-challenge-checkin-card[data-challenge-checkin-state="completed"],
-.journey-challenge-summary .journey-challenge-checkin-card[data-challenge-checkin-state="skipped"] {
-  background: #fbfdf8;
+  border-top: 3px solid var(--sk7-accent);
+  border-bottom: 1px solid var(--sk7-border);
 }
 
 .journey-challenge-summary .journey-challenge-checkin-card h2 {
-  color: #3a4d3d;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-title);
 }
 
 .journey-challenge-summary .journey-challenge-checkin-card > p:not(.eyebrow) {
-  color: #646a60;
-  line-height: 1.6;
+  color: var(--sk7-text-muted);
+  line-height: var(--sk7-leading-body);
 }
 
 .journey-challenge-summary .journey-challenge-checkin-note {
-  margin-top: .15rem;
-  border-top: 1px solid #e3e4da;
-  padding-top: .7rem;
-  font-size: .8rem;
+  margin-top: var(--sk7-space-2xs);
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-sm);
+  font-size: var(--sk7-type-label);
 }
 
 .journey-challenge-summary .journey-challenge-next-actions {
@@ -556,10 +553,6 @@
 }
 
 @media (max-width: 580px) {
-  .journey-challenge-summary .journey-challenge-summary-card {
-    padding: .9rem;
-  }
-
   .journey-challenge-summary .journey-challenge-next-actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -572,74 +565,75 @@
 
 /* S07: keep today's blood-pressure record visually primary. */
 .journey-today-review.scene {
-  max-width: 58rem;
   margin-inline: auto;
   align-content: start;
 }
 
 .journey-today-review .today-date {
   align-items: flex-start;
-  gap: .65rem 1.25rem;
+  gap: var(--sk7-space-sm) var(--sk7-space-lg);
 }
 
 .journey-today-review .today-date span {
-  color: #657061;
-  font-size: .82rem;
-  line-height: 1.55;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
   text-align: right;
 }
 
 .journey-today-review .journey-today-detail {
   display: grid;
-  gap: .9rem;
+  gap: var(--sk7-space-sm);
 }
 
 .journey-today-review .journey-today-scope {
   margin: 0;
-  color: #697066;
-  font-size: .82rem;
-  line-height: 1.6;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
 }
 
 .journey-today-review .fact-lanes {
   grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr) minmax(0, .85fr);
-  gap: 1rem;
+  gap: var(--sk7-space-md);
 }
 
 .journey-today-review .fact-lanes > section {
-  gap: .55rem;
-  padding: 1rem .2rem;
+  gap: var(--sk7-space-xs);
+  border-color: var(--sk7-border);
+  background: transparent;
+  padding: var(--sk7-space-md) 0;
 }
 
 .journey-today-review .fact-lanes > .fact-lead {
-  padding: 1rem 1.05rem 1.15rem;
-  border: 1px solid #d9e3d6;
-  border-top: 4px solid #637c5c;
-  border-radius: .65rem;
-  background: #fbfdf8;
+  border: 0;
+  border-top: 3px solid var(--sk7-accent);
+  border-bottom: 1px solid var(--sk7-border);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-md) 0 var(--sk7-space-lg);
 }
 
 .journey-today-review .fact-lanes > .fact-lead h2 {
-  color: #304438;
-  font-size: 1.25rem;
-  letter-spacing: -.025em;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-title);
 }
 
 .journey-today-review .fact-lanes > .fact-lead > p:not(.eyebrow) {
   min-height: 0;
-  color: #35473c;
-  font-size: 1rem;
-  font-weight: 650;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-body);
+  font-weight: var(--sk7-weight-bold);
 }
 
 .journey-today-review .fact-lanes > section:not(.fact-lead) h2 {
-  color: #52624f;
-  font-size: 1.05rem;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-subtitle);
 }
 
 .journey-today-review .fact-lanes > section:not(.fact-lead) > p:not(.eyebrow) {
   min-height: 0;
-  font-size: .8rem;
+  font-size: var(--sk7-type-label);
 }
 
 @media (max-width: 820px) {
@@ -655,42 +649,38 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .journey-today-review .fact-lanes > .fact-lead {
-    padding: .95rem 1rem 1.05rem;
-  }
 }
 
 /* S07: keep the optional challenge lane secondary to the BP record. */
 .journey-today-review .journey-today-challenge {
-  border-top-color: #c8cec1;
-  padding-inline: .2rem;
+  border-top-color: var(--sk7-border-strong);
 }
 
 .journey-today-review .journey-today-challenge .eyebrow {
-  color: #788170;
+  color: var(--sk7-text-muted);
 }
 
-.journey-today-review .journey-today-challenge-note {
-  min-height: 0 !important;
-  margin-top: .15rem;
-  border-top: 1px solid #e1e3da;
-  padding-top: .55rem;
-  color: #74786f !important;
-  font-size: .76rem !important;
-  line-height: 1.55 !important;
+.journey-today-review .fact-lanes .journey-today-challenge-note {
+  min-height: 0;
+  margin-top: var(--sk7-space-2xs);
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-xs);
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  line-height: var(--sk7-leading-body);
 }
 
 .journey-today-review .journey-today-challenge > button {
-  border-color: #d7d9cf;
+  border-color: var(--sk7-border-strong);
   background: transparent;
-  color: #536653;
+  color: var(--sk7-accent);
   box-shadow: none;
 }
 
-@media (max-width: 820px) {
-  .journey-today-review .journey-today-challenge {
-    padding-inline: 0;
-  }
+.journey-today-review .journey-today-actions {
+  justify-content: space-between;
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-md);
 }
 
 /* S08/S09: Journey-only record reading composition. Shared S10 lanes retain
@@ -1163,17 +1153,12 @@
   }
 }
 
-/* SK7 JOURNEY COHESION — S03-S09
-   Carry S02's calm depth and surface hierarchy through the core journey.
-   These selectors are screen-scoped so recovery/settings/Model V2 remain
-   outside this presentation pass. */
+/* Legacy journey cohesion retained only for untouched S04/S05/S08/S09.
+   Migrated screens use the canonical shared foundation above. */
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ):has(.journey-candidate) {
@@ -1194,11 +1179,8 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ):has(.journey-candidate) .primary-nav {
@@ -1207,11 +1189,8 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ):has(.journey-candidate) .primary-nav button.is-active {
@@ -1220,11 +1199,8 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ) .journey-candidate {
@@ -1233,11 +1209,8 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ) .journey-candidate h1 {
@@ -1245,11 +1218,8 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ) .journey-candidate .scene-body {
@@ -1257,49 +1227,12 @@
 }
 
 .app-shell:is(
-  [data-screen="S03"],
   [data-screen="S04"],
   [data-screen="S05"],
-  [data-screen="S06"],
-  [data-screen="S07"],
   [data-screen="S08"],
   [data-screen="S09"]
 ) .journey-candidate .eyebrow {
   color: #55746d;
-}
-
-
-/* S03 — optional challenge: selectable objects, not flat beige cards. */
-
-.app-shell[data-screen="S03"] .journey-challenge-choice .challenge-choice-context {
-  border: 1px solid #dce7e3;
-  border-radius: 1rem;
-  background: #fffffff0;
-  box-shadow:
-    0 10px 26px #173e390d,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile {
-  border-color: #dae6e0;
-  border-radius: 1rem;
-  background: linear-gradient(155deg, #ffffff 0%, #f1f7f3 100%);
-  box-shadow:
-    0 8px 20px #173e390c,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile:hover:not(:disabled) {
-  border-color: #9dbbab;
-  background: linear-gradient(155deg, #ffffff, #e8f3ed);
-}
-
-.app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile.is-selected {
-  border-color: #5f907d;
-  background: linear-gradient(155deg, #f3fbf6, #dfeee6);
-  box-shadow:
-    0 10px 24px #173e3912,
-    inset 0 0 0 1px #ffffffb8;
 }
 
 
@@ -1372,57 +1305,6 @@
 .app-shell[data-screen="S05"] .journey-saved .split-actions > button.secondary {
   border-color: #cfded7;
   background: #ffffffba;
-}
-
-
-/* S06 — challenge remains visibly optional and below BP hierarchy. */
-
-.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-summary-card {
-  border-color: #dce7e2;
-  border-radius: 1rem;
-  background: #fffffff0;
-  box-shadow:
-    0 9px 22px #173e390b,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-checkin-card {
-  border-color: #d7e5df;
-  background: linear-gradient(155deg, #f7fbf8, #edf5f0);
-}
-
-.app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-next-actions > button:first-child {
-  border-color: #ffffff4f;
-  background: linear-gradient(135deg, #19534f, #10363b);
-  box-shadow: 0 7px 18px #173e3920;
-}
-
-
-/* S07 — today's measured fact leads; optional participation stays secondary. */
-
-.app-shell[data-screen="S07"] .journey-today-review .today-date {
-  border: 1px solid #dce7e3;
-  border-radius: .9rem;
-  background: #ffffffd9;
-  box-shadow: inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S07"] .journey-today-review .fact-lanes > section {
-  border-color: #e0e9e5;
-  background: #ffffffc9;
-}
-
-.app-shell[data-screen="S07"] .journey-today-review .fact-lanes > .fact-lead {
-  border-color: #cfe0d8;
-  background: linear-gradient(155deg, #ffffff 0%, #eef7f2 100%);
-  box-shadow:
-    0 12px 28px #173e3910,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S07"] .journey-today-review .journey-today-challenge {
-  border-color: #e0e7e4;
-  background: #f7faf8;
 }
 
 
@@ -1503,11 +1385,8 @@
 
 @media (max-width: 580px) {
   .app-shell:is(
-    [data-screen="S03"],
     [data-screen="S04"],
     [data-screen="S05"],
-    [data-screen="S06"],
-    [data-screen="S07"],
     [data-screen="S08"],
     [data-screen="S09"]
   ):has(.journey-candidate) {
@@ -1515,11 +1394,7 @@
       linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
   }
 
-  .app-shell[data-screen="S03"] .journey-challenge-choice .challenge-choice-context,
-  .app-shell[data-screen="S03"] .journey-challenge-choice .choice-tile,
   .app-shell[data-screen="S05"] .journey-saved .save-next-step,
-  .app-shell[data-screen="S06"] .journey-challenge-summary .journey-challenge-summary-card,
-  .app-shell[data-screen="S07"] .journey-today-review .fact-lanes > .fact-lead,
   .app-shell[data-screen="S09"] .journey-record-detail .record-detail {
     box-shadow:
       0 7px 18px #173e390d,
@@ -1718,16 +1593,6 @@
   margin-top: 20px;
   padding-top: 0;
   border-top: 0;
-}
-
-.journey-today-review .journey-continuation-actions {
-  margin-top: .25rem;
-}
-
-.journey-today-review .journey-continuation-actions > button:last-child {
-  border-color: #ffffff4d;
-  background: linear-gradient(135deg, #19534f, #10363b);
-  box-shadow: 0 7px 18px #173e3920;
 }
 
 .journey-records .scene-toolbar {
