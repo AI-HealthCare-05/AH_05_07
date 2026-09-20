@@ -1,13 +1,4 @@
 /* Home composition only: data, navigation and scene policy stay upstream. */
-.app-shell[data-screen="S02"]:has(.journey-today) { background: linear-gradient(180deg, var(--sk7-canvas), color-mix(in srgb, var(--sk7-surface) 72%, var(--sk7-canvas)) 75%); }
-.app-shell[data-screen="S02"]:has(.journey-today) .app-header { padding-block: var(--sk7-space-sm); }
-.app-shell[data-screen="S02"]:has(.journey-today) .brand-button { gap: var(--sk7-space-sm); }
-.app-shell[data-screen="S02"]:has(.journey-today) .brand-button strong { font-size: 1.9rem; letter-spacing: -.07em; font-weight: 800; }
-.app-shell[data-screen="S02"]:has(.journey-today) .brand-button small { display: none; }
-.app-shell[data-screen="S02"]:has(.journey-today) .brand-mark { background: var(--sk7-accent-soft); transform: scale(.8); }
-.app-shell[data-screen="S02"]:has(.journey-today) .scene-viewport { margin-top: var(--sk7-space-2xs); }
-.app-shell[data-screen="S02"]:has(.journey-today) .primary-nav { background: transparent; border-color: var(--sk7-border); }
-.app-shell[data-screen="S02"]:has(.journey-today) .primary-nav button.is-active { background: var(--sk7-accent-soft); color: var(--sk7-accent); box-shadow: none; }
 .journey-today.scene[data-scene="S02"] { display: block; padding: 0 0 var(--sk7-space-md); --sk7-focus: var(--sk7-accent); }
 .today-journey { min-width: 0; display: grid; gap: var(--sk7-space-xl); }
 .today-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); min-height: 310px; padding: var(--sk7-space-xl) var(--sk7-space-4xl); border-radius: var(--sk7-radius-panel) var(--sk7-radius-panel) var(--sk7-radius-control) var(--sk7-radius-control); background: var(--sk7-surface-subtle) url('/assets/home-window-garden-v2.webp') center 58% / cover no-repeat; }
@@ -100,25 +91,12 @@
 .journey-today .home-links .today-starting-point-entry:hover { background: var(--sk7-accent-soft); }
 .today-cycle-actions { display: grid; gap: var(--sk7-space-sm); }
 .today-cycle-actions:empty { display: none; }
-@media (min-width: 901px) {
-  .app-shell[data-screen="S02"]:has(.journey-today) .primary-nav { top: var(--sk7-space-sm); left: calc(50% + var(--sk7-space-md)); width: min(57%, 43rem); border: 0; gap: var(--sk7-space-2xs); }
-  .app-shell[data-screen="S02"]:has(.journey-today) .primary-nav button { padding-inline: var(--sk7-space-xs); font-size: var(--sk7-type-caption); border-radius: var(--sk7-radius-control); }
-}
 @media (min-width: 581px) and (max-width: 900px) {
-  .app-shell[data-screen="S02"]:has(.journey-today) .scene-viewport { margin-top: 4rem; }
   .today-hero { padding-inline: var(--sk7-space-xl); }
   .today-companion-greeting { right: -2%; }
   .journey-today .living-week-heading { gap: var(--sk7-space-sm); }
 }
 @media (max-width: 580px) {
-  .app-shell[data-screen="S02"]:has(.journey-today) { padding-inline: var(--sk7-space-sm); padding-bottom: calc(var(--sk7-mobile-nav-height) + var(--sk7-space-sm) + env(safe-area-inset-bottom)); }
-  .app-shell[data-screen="S02"]:has(.journey-today) .app-header { padding-block: var(--sk7-space-xs); }
-  .app-shell[data-screen="S02"]:has(.journey-today) .brand-button { flex-direction: row-reverse; gap: var(--sk7-space-2xs); }
-  .app-shell[data-screen="S02"]:has(.journey-today) .brand-button strong { font-size: 1.7rem; }
-  .app-shell[data-screen="S02"]:has(.journey-today) .header-actions button { font-size: .72rem; }
-  .app-shell[data-screen="S02"]:has(.journey-today) .scene-viewport { margin-top: 0; }
-  .app-shell[data-screen="S02"]:has(.journey-today) .primary-nav { background: color-mix(in srgb, var(--sk7-surface-solid) 96%, transparent); border-top: 1px solid var(--sk7-border); box-shadow: none; }
-  .app-shell[data-screen="S02"]:has(.journey-today) .primary-nav button.is-active { border-radius: var(--sk7-radius-control); }
   .today-journey { gap: var(--sk7-space-md); }
   .today-hero { display: flex; flex-direction: column; padding: var(--sk7-space-lg) var(--sk7-gutter-mobile) var(--sk7-space-sm); min-height: 355px; border-radius: var(--sk7-radius-surface); background-image: linear-gradient(180deg, color-mix(in srgb, var(--sk7-surface-solid) 42%, transparent), transparent 70%), url('/assets/home-window-garden-v2.webp'); background-position: 58% center; }
   .today-hero::before { background: linear-gradient(90deg, color-mix(in srgb, var(--sk7-surface-solid) 42%, transparent), transparent 85%); }
@@ -176,7 +154,7 @@
   .journey-today .living-week { padding-inline: .5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .app-shell[data-screen="S02"]:has(.journey-today) *, .app-shell[data-screen="S02"]:has(.journey-today) *::before, .app-shell[data-screen="S02"]:has(.journey-today) *::after { animation: none !important; transition: none !important; }
+  .journey-today, .journey-today *, .journey-today *::before, .journey-today *::after { animation: none !important; transition: none !important; }
 }
 
 .today-leaf svg { width: 100%; fill: var(--sk7-accent-soft); stroke: var(--sk7-accent); stroke-width: .7; }

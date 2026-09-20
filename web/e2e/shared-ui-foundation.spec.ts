@@ -1,5 +1,103 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const primaryTabs = ["S02", "S11", "S08", "S10", "S14"] as const;
+
+async function shellPresentation(page: Page) {
+  return page.evaluate(() => {
+    const element = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+    const rect = (selector: string) => {
+      const bounds = element(selector).getBoundingClientRect();
+      return [bounds.x, bounds.y, bounds.width, bounds.height].map(value => Math.round(value * 100) / 100);
+    };
+    const styles = (selector: string, properties: string[]) => {
+      const computed = getComputedStyle(element(selector));
+      return properties.map(property => computed.getPropertyValue(property));
+    };
+    const brand = element(".brand-button");
+
+    return {
+      shell: styles(".app-shell", ["padding-inline", "background-color", "background-image"]),
+      header: rect(".app-header"),
+      brand: {
+        rect: rect(".brand-button"),
+        styles: styles(".brand-button", ["flex-direction", "gap"]),
+        markRect: rect(".brand-mark"),
+        nameRect: rect(".brand-button > span:last-child"),
+        nameStyles: styles(".brand-button strong", ["font-size", "font-weight", "letter-spacing"]),
+        markFirst: brand.firstElementChild?.classList.contains("brand-mark") === true,
+      },
+      contentStart: rect(".scene-viewport").slice(0, 3),
+      navigation: {
+        rect: rect(".primary-nav"),
+        styles: styles(".primary-nav", ["position", "padding", "background-color", "border-radius", "box-shadow"]),
+        cells: Array.from(document.querySelectorAll<HTMLElement>(".primary-nav button"), button => {
+          const bounds = button.getBoundingClientRect();
+          return [bounds.width, bounds.height].map(value => Math.round(value * 100) / 100);
+        }),
+        active: styles(".primary-nav .is-active", ["background-color", "color", "border-radius", "box-shadow"]),
+      },
+    };
+  });
+}
+
+for (const viewport of [
+  { name: "320-short", width: 320, height: 568 },
+  { name: "390", width: 390, height: 844 },
+]) {
+  test(`primary tabs share one outer shell at ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    let reference: Awaited<ReturnType<typeof shellPresentation>> | undefined;
+
+    for (const screen of primaryTabs) {
+      await page.goto(`/?fixture=VP-10&screen=${screen}`);
+      await expect(page.locator(`[data-scene="${screen}"]`)).toBeVisible();
+      const presentation = await shellPresentation(page);
+
+      expect(presentation.brand.markFirst).toBe(true);
+      expect(presentation.brand.markRect[0] + presentation.brand.markRect[2]).toBeLessThanOrEqual(presentation.brand.nameRect[0]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (reference) expect(presentation).toEqual(reference);
+      else reference = presentation;
+    }
+  });
+}
+
+test("loading and ready states keep the same outer shell", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
+  let release!: () => void;
+  const heldWindow = new Promise<void>(resolve => { release = resolve; });
+  const headers = {
+    "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+    "Access-Control-Allow-Headers": "authorization,content-type",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  };
+  await page.route("http://e2e.invalid/**", async route => {
+    if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    await heldWindow;
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify({
+        start_on: "2026-09-05",
+        end_on: "2026-09-11",
+        blood_pressure_observations: [{ id: "shell-observation", observed_on: "2026-09-11", period: "morning", systolic: 120, diastolic: 80 }],
+        challenge_events: [],
+        active_challenge: null,
+        challenge_checkins: [],
+      }),
+    });
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S02");
+  await expect(page.locator('[data-journey-skeleton-family="today"]')).toBeVisible();
+  const loading = await shellPresentation(page);
+  release();
+  await expect(page.locator(".journey-today")).toBeVisible();
+  expect(await shellPresentation(page)).toEqual(loading);
+});
+
 const screens = [
   { id: "S12", url: "/?fixture=VP-04" },
   { id: "S13", url: "/?fixture=VP-11a" },
