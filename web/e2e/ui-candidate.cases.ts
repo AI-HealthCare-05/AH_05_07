@@ -127,6 +127,23 @@ for (const [width, height] of [[1366, 768], [1440, 900], [390, 844], [320, 568]]
     const primaryBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
     expect(primaryBox.y + primaryBox.height).toBeLessThanOrEqual(navBox.y);
+    await home.locator('.today-calendar-toggle').click();
+    await expect(home.locator('.today-calendar')).toHaveAttribute('data-open', 'true');
+    const secondaryTouchTargets = home.locator(
+      '.today-trail-disclosure summary, .today-return, .living-week-guide summary',
+    );
+    await expect(secondaryTouchTargets).toHaveCount(3);
+    for (let index = 0; index < await secondaryTouchTargets.count(); index += 1) {
+      const target = secondaryTouchTargets.nth(index);
+      await target.evaluate(element => element.scrollIntoView({ block: 'center' }));
+      const box = await target.boundingBox();
+      const currentNavBox = (await page.locator('.primary-nav').boundingBox())!;
+      expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.y ?? -1).toBeGreaterThanOrEqual(0);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(currentNavBox.y);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (width <= 350) {
       const touchTargets = home.locator(
         '.home-trail-date, .living-week-heading a, .today-calendar-toggle',
