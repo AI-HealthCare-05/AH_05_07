@@ -163,6 +163,17 @@ analytics product.
 
 The [visual production contract](visual-production-contract.md) defines the concern-specific authorities, canonical synthetic fixtures, responsive baselines, accessibility requirements, and G0–G4 approval evidence for this flow. On mobile, the stable order is today's context, measurement action, challenge action, then recap and history. A loading or failed request must not be rendered as a confirmed empty window.
 
+Initial observation loading uses a presentation-only skeleton derived from the
+existing blocking-load condition. It may preview the Today, records, or neutral
+workspace layout, but never record values, completion, success, or empty facts.
+Ready content replaces it immediately without a minimum display time. Journey
+route enter and loading reveal feedback target only the existing heading/copy
+DOM; they never delay navigation, remount a screen, retain old content, move
+focus, or gate interaction. Refreshing keeps already-loaded facts visible, while
+errors, session changes, dialogs, reports, hidden documents, reduced motion, and
+forced colors take precedence over decorative motion. S05 keeps its independent
+confirmed-save feedback, and S11/S14 remain independent of observation loading.
+
 ## Measurement checklist contract
 
 - The BP form shows the checklist before the date, period, and numeric fields.

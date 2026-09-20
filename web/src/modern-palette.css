@@ -34,7 +34,6 @@ body,
 
 .brand-mark,
 .welcome-orb,
-.loading-stones i,
 .choice-icon,
 .signal-orbit::after {
   background: var(--sk7-accent-soft);

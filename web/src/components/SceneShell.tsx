@@ -17,6 +17,7 @@ import {
   type CompanionSelection,
 } from "../ui/companion";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
+import { useJourneyTransition, type JourneyFeedbackPhase } from "./useJourneyTransition";
 
 const SceneCompanionContext = createContext<ReactNode>(null);
 
@@ -25,6 +26,10 @@ export function SceneCompanion() { return useContext(SceneCompanionContext); }
 
 type SceneShellProps = {
   staticJourneyUi?: boolean;
+  journeyPresentation: boolean;
+  feedbackPhase: JourneyFeedbackPhase;
+  feedbackSuspended: boolean;
+  sessionGeneration: number;
   activeScreen: ScreenId;
   children: ReactNode;
   evidenceLabel?: string;
@@ -35,13 +40,33 @@ type SceneShellProps = {
   savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ staticJourneyUi = false, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
+export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [forcedColors, setForcedColors] = useState(() => window.matchMedia("(forced-colors: active)").matches);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const activeNavigationScreen = primaryNavigationScreen(activeScreen);
+
+  useJourneyTransition({
+    viewportRef,
+    activeScreen,
+    phase: feedbackPhase,
+    sessionGeneration,
+    journeyPresentation,
+    suspended: feedbackSuspended,
+    reducedMotion: reducedMotion || forcedColors,
+  });
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(forced-colors: active)");
+    const update = () => setForcedColors(media.matches);
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
@@ -69,7 +94,7 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
     : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
 
   return (
-    <main className="app-shell" data-screen={activeScreen}>
+    <main className="app-shell" data-screen={activeScreen} data-journey-presentation={journeyPresentation || undefined}>
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")}
@@ -85,7 +110,7 @@ export function SceneShell({ staticJourneyUi = false, activeScreen, children, ev
 
       <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
 
-      <div id="scene-content" className="scene-viewport" tabIndex={-1}>
+      <div ref={viewportRef} id="scene-content" className="scene-viewport" tabIndex={-1}>
         {!inlineCompanion && companion}
         <SceneCompanionContext.Provider value={inlineCompanion ? companion : null}>
           {children}
