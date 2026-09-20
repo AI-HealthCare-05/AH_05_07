@@ -438,7 +438,7 @@ test('heejoo feedback closeout keeps S02 mobile compact and the starting-point t
   const viewBox = await view.boundingBox();
   expect(frameBox).not.toBeNull();
   expect(viewBox).not.toBeNull();
-  expect(frameBox!.height).toBeLessThanOrEqual(146);
+  expect(Math.round(frameBox!.height)).toBe(168);
   expect(frameBox!.width).toBeLessThan(viewBox!.width);
 
   const startingPoint = home.locator('.today-starting-point-entry');

@@ -37,8 +37,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(page.locator('.recap-tools-intro')).toContainText('JSON으로 내보낼 수 있어요');
     await expect(tools.locator('.living-week-report-action')).toBeVisible();
     await expect(tools.getByRole('button')).toHaveCount(3);
-    await expect(page.locator('.recap-optional-intro')).toContainText('선택 기능');
     await expect(page.locator('.recap-optional-intro')).toContainText('생활 챌린지는 별도 기록이에요');
+    await expect(page.locator('.recap-optional-intro')).not.toContainText('선택 기능');
     if (width <= 680) {
       const totalsBox = await page.locator('.recap-week-totals').boundingBox();
       const landscapeBox = await page.locator('.recap-landscape').boundingBox();
@@ -992,6 +992,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
       expect(notesBox.y + notesBox.height).toBeLessThanOrEqual(landscapeBox!.y + tolerance);
     }
     expect(landscapeBox!.y + landscapeBox!.height).toBeLessThanOrEqual(journalBox!.y + tolerance);
+    expect(journalBox!.y - (landscapeBox!.y + landscapeBox!.height)).toBeGreaterThanOrEqual(19);
     await page.locator('[data-trail-date="2026-09-11"] > button').click();
     const detail = page.locator('.trail-day-detail');
     await expect(detail).toBeVisible();

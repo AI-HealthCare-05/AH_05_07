@@ -41,8 +41,8 @@
 .journey-entry .form-actions { align-items: stretch; flex-direction: column; }
 .journey-entry .form-actions button { min-height: 3.2rem; border-radius: .5rem; }
 .journey-entry .journey-back { grid-column: 1; grid-row: 3; width: fit-content; padding-left: 0; }
-.journey-saved.scene { min-height: 32rem; padding: 1.5rem 0; gap: 1rem; }
-.journey-saved .scene-copy { max-width: 38rem; }
+.journey-saved.scene { min-height: 32rem; padding: 1.5rem 0; gap: 0; }
+.journey-saved .scene-copy { max-width: 38rem; margin-bottom: 16px; }
 .journey-saved .save-ripple { width: min(100%, 28rem); height: 14rem; border-radius: 50% 50% 42% 42%; overflow: visible; }
 .journey-saved .save-ripple-landscape { position: absolute; inset: 0; display: grid; overflow: hidden; place-items: center; border-radius: inherit; background: #e8e9d7; }
 .journey-saved .save-ripple-landscape::before { content: ''; position: absolute; width: 120%; height: 6rem; bottom: -1.5rem; border-radius: 50%; background: #c0caaa; }
@@ -51,21 +51,23 @@
 .scene-viewport:has(.journey-saved) > [data-saved-scene-status] { right: calc(50% - 5rem); width: 10rem; height: 12rem; }
 .journey-saved .save-next-step {
   display: grid;
-  gap: .3rem;
+  gap: 0;
   width: min(100%, 32rem);
+  margin-top: 24px;
   border-top: 1px solid #d8dccf;
   border-bottom: 1px solid #d8dccf;
-  padding: .9rem 0;
+  padding: 16px 0;
 }
-.journey-saved .save-next-step .eyebrow { margin: 0; font-size: .7rem; }
+.journey-saved .save-next-step .eyebrow { margin: 0 0 4px; font-size: .7rem; }
 .journey-saved .save-next-step strong { color: #35473c; font-size: 1rem; line-height: 1.5; }
-.journey-saved .save-next-step > p:not(.eyebrow) { color: #696960; font-size: .82rem; line-height: 1.6; }
+.journey-saved .save-next-step > p:not(.eyebrow) { margin-top: 12px; color: #696960; font-size: .82rem; line-height: 1.6; }
 .journey-saved .split-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
   gap: .65rem;
   width: min(100%, 32rem);
+  margin-top: 20px;
 }
 .journey-saved .split-actions button { min-height: 3rem; border-radius: .5rem; }
 .journey-saved .split-actions > button:first-child { width: 100%; }
@@ -87,7 +89,7 @@
   .journey-entry .field-grid label[for="diastolic"] { padding-top: .8rem; }
   .journey-entry .journey-note { display: none; }
   .journey-entry .journey-back { grid-column: 1; grid-row: 3; }
-  .journey-saved.scene { min-height: 32rem; gap: 1rem; padding-top: 1.5rem; }
+  .journey-saved.scene { min-height: 32rem; gap: 0; padding-top: 1.5rem; }
   .journey-saved .save-ripple { height: 12rem; }
   .journey-saved .save-next-step { width: 100%; }
   /* S05 migration runtime: keep the decorative boundary above the fixed mobile nav.
@@ -1964,8 +1966,8 @@
 
 .journey-saved .journey-continuation-actions--saved {
   width: min(100%, 32rem);
-  margin-top: 0;
-  padding-top: .25rem;
+  margin-top: 20px;
+  padding-top: 0;
   border-top: 0;
 }
 

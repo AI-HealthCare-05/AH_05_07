@@ -17,12 +17,21 @@ class SceneFailureBoundary extends Component<{ children: ReactNode; onFailure: (
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-function PosterImage({ url }: { url: string }) {
+function PosterImage({ url, eager = false }: { url: string; eager?: boolean }) {
   const [failed, setFailed] = useState(false);
-  return failed ? null : <img src={url} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />;
+  return failed ? null : (
+    <img
+      src={url}
+      alt=""
+      draggable={false}
+      decoding="async"
+      loading={eager ? "eager" : "lazy"}
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
-export function StaticSceneFallback({ recipe }: { recipe: SceneRecipe }) {
+export function StaticSceneFallback({ recipe, eager = false }: { recipe: SceneRecipe; eager?: boolean }) {
   const [profile, setProfile] = useState(() => sceneProfile(window.innerWidth));
   useEffect(() => {
     const queries = [window.matchMedia("(max-width: 350px)"), window.matchMedia("(max-width: 580px)")];
@@ -33,7 +42,7 @@ export function StaticSceneFallback({ recipe }: { recipe: SceneRecipe }) {
   }, []);
   const poster = recipe.posters[profile];
   return <div className="living-scene-fallback" aria-hidden="true" data-poster-asset={poster.id}>
-    <PosterImage key={poster.url} url={poster.url} />
+    <PosterImage key={poster.url} url={poster.url} eager={eager} />
   </div>;
 }
 
@@ -66,7 +75,7 @@ function SceneTierBoundary({ plan, failed, onFailure }: { plan: ScenePlan; faile
     return () => window.clearTimeout(timeout);
   }, [active, ready, failed, plan.tier, onFailure]);
 
-  const fallback = <StaticSceneFallback recipe={plan.recipe} />;
+  const fallback = <StaticSceneFallback recipe={plan.recipe} eager={plan.screen === "S02"} />;
   return <div ref={host} className="living-scene-runtime" aria-hidden="true" data-living-scene-status={failed ? "fallback" : ready ? "ready" : "poster"}>
     {(!ready || failed || plan.tier === 1) && fallback}
     {active && !failed && plan.tier === 2 && <SceneFailureBoundary onFailure={onFailure}>

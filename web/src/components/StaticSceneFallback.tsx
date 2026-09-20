@@ -2,13 +2,22 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { sceneProfile } from "../ui/sceneRecipes";
 import { resolveJourneyPoster, type PosterRecipe } from "../ui/presentationPolicy";
 
-function PosterImage({ url }: { url: string }) {
+function PosterImage({ url, eager = false }: { url: string; eager?: boolean }) {
   const [failed, setFailed] = useState(false);
-  return failed ? null : <img src={url} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setFailed(true)} />;
+  return failed ? null : (
+    <img
+      src={url}
+      alt=""
+      draggable={false}
+      decoding="async"
+      loading={eager ? "eager" : "lazy"}
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 /** Same approved poster mapping as VisualStage; keep its pinned review source intact. */
-function StaticSceneFallback({ recipe }: { recipe: PosterRecipe }) {
+function StaticSceneFallback({ recipe, eager = false }: { recipe: PosterRecipe; eager?: boolean }) {
   const [profile, setProfile] = useState(() => sceneProfile(window.innerWidth));
   useEffect(() => {
     const queries = [window.matchMedia("(max-width: 350px)"), window.matchMedia("(max-width: 580px)")];
@@ -19,7 +28,7 @@ function StaticSceneFallback({ recipe }: { recipe: PosterRecipe }) {
   }, []);
   const poster = recipe.posters[profile];
   return <div className="living-scene-fallback" aria-hidden="true" data-poster-asset={poster.id}>
-    <PosterImage key={poster.url} url={poster.url} />
+    <PosterImage key={poster.url} url={poster.url} eager={eager} />
   </div>;
 }
 
@@ -32,6 +41,6 @@ export function StaticJourneyLandscape({ screen, calendarDate }: { screen: "S02"
     "--scene-height-390": `${recipe.compositions.mobile390.stageHeight}px`,
     "--scene-height-desktop": `${recipe.compositions.desktop.stageHeight}px`,
   } as CSSProperties}>
-    <StaticSceneFallback recipe={recipe} />
+    <StaticSceneFallback recipe={recipe} eager={screen === "S02"} />
   </div>;
 }
