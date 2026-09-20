@@ -36,6 +36,11 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
         return { width: box.width, height: box.height };
       }));
       expect(trailTouchBoxes.every(box => box.width >= 44 && box.height >= 44)).toBe(true);
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      const mobileNavBox = (await page.locator('.primary-nav').boundingBox())!;
+      const finalDestinationBox = (await page.locator('.home-links button').last().boundingBox())!;
+      expect(finalDestinationBox.y + finalDestinationBox.height).toBeLessThanOrEqual(mobileNavBox.y);
+      await page.evaluate(() => window.scrollTo(0, 0));
     }
     if (width === 320 && height === 568) {
       const legendBox = await page.locator('.home-trail-legend').boundingBox();
@@ -228,6 +233,56 @@ for (const [bp, challenge, lead, state] of [
     }
   });
 }
+
+test('journey candidate uses the shared hierarchy without a nested surface stack', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await candidate(page);
+
+  await expect(page.locator('.journey-today .scene-copy')).toHaveClass(/screen-header/);
+  await expect(page.locator('.journey-today .home-lead-copy')).toHaveClass(/section-header/);
+  await expect(page.locator('.journey-today .living-week-title > div')).toHaveClass(/section-header/);
+  await expect(page.locator('.journey-today .today-records-heading')).toHaveClass(/section-header/);
+  await expect(page.locator('.journey-today .home-links')).toHaveClass(/action-group/);
+
+  const hierarchy = await page.evaluate(() => {
+    const hero = document.querySelector<HTMLElement>('.today-hero')!.getBoundingClientRect();
+    const weekElement = document.querySelector<HTMLElement>('.journey-today .living-week')!;
+    const factsElement = document.querySelector<HTMLElement>('.journey-today .journey-facts')!;
+    const lead = getComputedStyle(document.querySelector<HTMLElement>('.journey-today .home-lead')!);
+    const week = getComputedStyle(weekElement);
+    const facts = getComputedStyle(factsElement);
+    const secondary = Array.from(document.querySelectorAll<HTMLElement>('.journey-today .home-links button')).map(button => {
+      const styles = getComputedStyle(button);
+      return { background: styles.backgroundColor, borderRadius: styles.borderRadius, boxShadow: styles.boxShadow };
+    });
+    return {
+      stageToWeekGap: weekElement.getBoundingClientRect().top - hero.bottom,
+      leadBackground: lead.backgroundColor,
+      leadShadow: lead.boxShadow,
+      weekBorders: [week.borderTopWidth, week.borderRightWidth, week.borderBottomWidth, week.borderLeftWidth],
+      weekBackground: week.backgroundColor,
+      weekShadow: week.boxShadow,
+      factBorders: [facts.borderTopWidth, facts.borderRightWidth, facts.borderBottomWidth, facts.borderLeftWidth],
+      factRadius: facts.borderRadius,
+      factBackground: facts.backgroundColor,
+      factShadow: facts.boxShadow,
+      secondary,
+    };
+  });
+
+  expect(hierarchy.stageToWeekGap).toBeGreaterThanOrEqual(23);
+  expect(hierarchy.leadBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(hierarchy.leadShadow).toBe('none');
+  expect(hierarchy.weekBorders).toEqual(['1px', '0px', '1px', '0px']);
+  expect(hierarchy.weekBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(hierarchy.weekShadow).toBe('none');
+  expect(hierarchy.factBorders).toEqual(['1px', '0px', '1px', '0px']);
+  expect(hierarchy.factRadius).toBe('0px');
+  expect(hierarchy.factBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(hierarchy.factShadow).toBe('none');
+  expect(hierarchy.secondary.every(item => item.background === 'rgba(0, 0, 0, 0)' && item.borderRadius === '0px' && item.boxShadow === 'none')).toBe(true);
+});
 
 test('journey day selection exposes separate facts locally and returns to today', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
