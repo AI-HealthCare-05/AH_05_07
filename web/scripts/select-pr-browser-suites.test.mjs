@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { browserModuleCommands } from './browser-ci-modules.mjs';
 import {
+  describePrBrowserProfile,
+  fastJourneyCoverage,
   selectPrBrowserModules,
   selectPrEvidenceModules,
 } from './select-pr-browser-suites.mjs';
@@ -14,16 +16,35 @@ test('documentation-only changes use only the tiny policy lane', () => {
   assert.deepEqual(browser(['docs/project-handoff.md']), ['policy']);
 });
 
-test('global product styles stay in Journey and never widen to scene or model', () => {
-  assert.deepEqual(browser(['web/src/styles.css']), ['journey']);
+test('every fast-routed Journey path names focused protection selected by the fast config', () => {
+  const config = source('../playwright.journey.config.ts');
+  for (const [file, coverage] of Object.entries(fastJourneyCoverage)) {
+    assert.deepEqual(browser([file]), ['journey'], file);
+    assert.ok(config.includes(coverage.spec), `${file}: ${coverage.spec}`);
+    for (const contract of coverage.tests) assert.ok(config.includes(contract), `${file}: ${contract}`);
+  }
 });
 
-test('ordinary Journey components stay in Journey', () => {
-  assert.deepEqual(browser(['web/src/components/JourneyToday.tsx']), ['journey']);
+test('broad Journey owners and unfocused record/report paths use journey-full', () => {
+  for (const file of [
+    'web/src/components/journey-candidate.css',
+    'web/src/components/record-explorer.css',
+    'web/src/components/living-week-report.css',
+    'web/src/components/JourneySkeleton.tsx',
+    'web/src/ui/journey.ts',
+    'web/e2e/ui-candidate.cases.ts',
+    'web/e2e/recap-candidate.cases.ts',
+    'web/e2e/journey-candidate.cases.ts',
+  ]) assert.deepEqual(browser([file]), ['journey-full'], file);
 });
 
-test('App shell selects core and Journey without Model V2 or scene', () => {
-  assert.deepEqual(browser(['web/src/App.tsx']), ['core', 'journey']);
+test('shared app shell and global styles fail safe to broad Journey confidence', () => {
+  assert.deepEqual(browser(['web/src/App.tsx']), ['core', 'journey-full']);
+  assert.deepEqual(browser(['web/src/main.tsx']), ['core', 'journey-full']);
+  assert.deepEqual(browser(['web/src/styles.css']), ['journey-full']);
+  assert.deepEqual(browser(['web/src/components/SceneShell.tsx']), ['journey-full', 'scene']);
+  assert.deepEqual(browser(['web/playwright.ui-candidate.config.ts']), ['journey-full']);
+  assert.deepEqual(browser(['web/playwright.journey.config.ts']), ['journey-full']);
 });
 
 test('scene-owned CSS and runtime select only scene', () => {
@@ -61,7 +82,7 @@ test('auth and API browser paths select core without model', () => {
 test('dependency graph changes retain broad browser confidence', () => {
   assert.deepEqual(browser(['web/package-lock.json']), [
     'core',
-    'journey',
+    'journey-full',
     'scene',
     'model',
     'assets',
@@ -98,6 +119,13 @@ test('frontend and character assets select the assets module', () => {
 
 test('empty diff remains fail-safe at core browser confidence', () => {
   assert.deepEqual(browser([]), ['core']);
+});
+
+test('browser profile describes policy, focused, fast and broad selections', () => {
+  assert.equal(describePrBrowserProfile(['policy']), 'policy');
+  assert.equal(describePrBrowserProfile(['model']), 'focused');
+  assert.equal(describePrBrowserProfile(['journey']), 'fast');
+  assert.equal(describePrBrowserProfile(['core', 'journey-full']), 'broad');
 });
 
 test('model and data evidence paths select model-data', () => {
@@ -139,14 +167,46 @@ test('browser module commands are owned outside the path selector', () => {
     'policy',
     'core',
     'journey',
+    'journey-full',
     'scene',
     'model',
     'assets',
   ]);
   assert.ok(browserModuleCommands.core.includes('npm run test:e2e'));
+  assert.deepEqual(browserModuleCommands.journey, [
+    'npx playwright test --config=playwright.journey.config.ts',
+    'npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "review renders at 390x844|S10 renders and measures its scene at 390x844|S10 responsive environment rebuild keeps one character load and bounded framing"',
+  ]);
+  assert.ok(browserModuleCommands['journey-full'].includes('SK7_UI_TEST_COMPANION=off npm run test:e2e:ui:pr'));
+  assert.ok(browserModuleCommands['journey-full'].includes('node scripts/verify-ui-build-matrix.mjs'));
   assert.ok(browserModuleCommands.model.includes('npm run test:e2e:model-v2'));
   assert.ok(browserModuleCommands.scene.includes('npm run test:e2e:saved-scene'));
   assert.ok(browserModuleCommands.assets.includes('npx playwright test --config=playwright.companion-asset.config.ts'));
+});
+
+test('fast Journey config reuses focused Journey, B9 and S11 assertions in one build', () => {
+  const config = source('../playwright.journey.config.ts');
+  for (const contract of [
+    'journey candidate primary action, input identity and navigation at 390x844',
+    'recap week reflection map order at 390x844',
+    'route enter reuses the viewport and does not repeat for typing, theme, or refresh',
+    'reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion',
+    'S11 retained synthetic fixture defaults to not_ready and exposes no result value',
+    'S11 remains usable at 390px',
+  ]) assert.ok(config.includes(contract), contract);
+  assert.match(config, /VITE_SK7_SCENE_MODE:\s*'off'/);
+  assert.match(config, /VITE_SK7_COMPANION_MODE:\s*'production'/);
+});
+
+test('fast Journey scene invocation keeps the three representative real-scene regressions', () => {
+  const [sceneCommand] = browserModuleCommands.journey.filter(command => command.includes('playwright.scene.config.ts'));
+  assert.ok(sceneCommand);
+  for (const contract of [
+    'review renders at 390x844',
+    'S10 renders and measures its scene at 390x844',
+    'S10 responsive environment rebuild keeps one character load and bounded framing',
+  ]) assert.ok(sceneCommand.includes(contract), contract);
+  assert.equal(browserModuleCommands.journey.filter(command => command.includes('playwright.scene.config.ts')).length, 1);
 });
 
 const source = path => readFileSync(new URL(path, import.meta.url), 'utf8');

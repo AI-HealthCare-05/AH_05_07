@@ -50,6 +50,7 @@ PROFILES = {"focused", "pr", "full"}
 BROWSER_MODULE_COSTS = {
     "policy": "CHEAP",
     "journey": "MODERATE",
+    "journey-full": "EXPENSIVE",
     "scene": "MODERATE",
     "assets": "MODERATE",
     "core": "EXPENSIVE",

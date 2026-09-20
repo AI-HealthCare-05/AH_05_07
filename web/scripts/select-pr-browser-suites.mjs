@@ -11,22 +11,64 @@ const selectorFiles = new Set([
 const dependencyFiles = new Set(['web/package.json', 'web/package-lock.json']);
 const appShellFiles = new Set(['web/src/App.tsx', 'web/src/main.tsx']);
 
-const journeyFiles = new Set([
+const broadJourneyFiles = new Set([
   'web/src/styles.css',
-  'web/src/components/JourneyToday.tsx',
-  'web/src/components/journey-today.css',
-  'web/src/components/JourneyRecap.tsx',
-  'web/src/components/journey-recap.css',
+  'web/src/components/SceneShell.tsx',
+  'web/src/components/JourneySkeleton.tsx',
+  'web/src/components/journey-candidate.css',
+  'web/src/components/living-week-report.css',
+  'web/src/components/record-explorer.css',
+  'web/src/ui/journey.ts',
   'web/e2e/ui-candidate.cases.ts',
   'web/e2e/recap-candidate.cases.ts',
   'web/e2e/journey-candidate.cases.ts',
+  'web/playwright.journey.config.ts',
   'web/playwright.ui-candidate.config.ts',
   'web/scripts/verify-ui-build-matrix.mjs',
 ]);
 
+export const fastJourneyCoverage = Object.freeze({
+  'web/src/components/JourneyToday.tsx': {
+    spec: 'journey-candidate.cases.ts',
+    tests: ['journey candidate primary action, input identity and navigation at 390x844'],
+  },
+  'web/src/components/journey-today.css': {
+    spec: 'journey-candidate.cases.ts',
+    tests: ['journey candidate primary action, input identity and navigation at 390x844'],
+  },
+  'web/src/components/HomeJourneyTrail.tsx': {
+    spec: 'journey-candidate.cases.ts',
+    tests: ['journey candidate primary action, input identity and navigation at 390x844'],
+  },
+  'web/src/components/home-journey-trail.css': {
+    spec: 'journey-candidate.cases.ts',
+    tests: ['journey candidate primary action, input identity and navigation at 390x844'],
+  },
+  'web/src/components/JourneyRecap.tsx': {
+    spec: 'recap-candidate.cases.ts',
+    tests: ['recap week reflection map order at 390x844'],
+  },
+  'web/src/components/journey-recap.css': {
+    spec: 'recap-candidate.cases.ts',
+    tests: ['recap week reflection map order at 390x844'],
+  },
+  'web/src/components/seven-day-trail.css': {
+    spec: 'recap-candidate.cases.ts',
+    tests: ['recap week reflection map order at 390x844'],
+  },
+  'web/src/components/journey-feedback.css': {
+    spec: 'ui-candidate.cases.ts',
+    tests: [
+      'route enter reuses the viewport and does not repeat for typing, theme, or refresh',
+      'reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion',
+    ],
+  },
+});
+
+const journeyFiles = new Set(Object.keys(fastJourneyCoverage));
+
 const sceneFiles = new Set([
   'web/src/components/VisualStage.tsx',
-  'web/src/components/SceneShell.tsx',
   'web/src/components/SavedSceneBoundary.tsx',
   'web/src/components/CompanionReviewRenderer.tsx',
   'web/src/components/CompanionRuntimeBoundary.tsx',
@@ -35,7 +77,6 @@ const sceneFiles = new Set([
   'web/src/components/companionReactionRelease.ts',
   'web/src/components/SceneVisualAsset.tsx',
   'web/src/components/StaticSceneFallback.tsx',
-  'web/src/components/journey-candidate.css',
   'web/src/lib/seoulDate.ts',
   'web/src/lib/useSeoulDate.ts',
   'web/src/lib/useSavedSceneEvent.ts',
@@ -217,30 +258,42 @@ export function selectPrBrowserModules(files) {
 
   const relevant = unique.filter(file => !file.startsWith('docs/') || modelFiles.has(file) || assetFiles.has(file));
   if (relevant.length === 0) return ['policy'];
-  if (relevant.some(file => dependencyFiles.has(file))) return ['core', 'journey', 'scene', 'model', 'assets'];
+  if (relevant.some(file => dependencyFiles.has(file))) return ['core', 'journey-full', 'scene', 'model', 'assets'];
 
   const modules = [];
   for (const file of relevant) {
     if (selectorFiles.has(file)) continue;
     if (appShellFiles.has(file)) {
       add(modules, 'core');
-      add(modules, 'journey');
+      add(modules, 'journey-full');
       continue;
     }
     let matched = false;
+    if (broadJourneyFiles.has(file)) { add(modules, 'journey-full'); matched = true; }
     if (matches(file, modelFiles, modelPrefixes)) { add(modules, 'model'); matched = true; }
     if (matches(file, assetFiles, assetPrefixes)) { add(modules, 'assets'); matched = true; }
     if (matches(file, sceneFiles, scenePrefixes)) { add(modules, 'scene'); matched = true; }
-    if (matches(file, journeyFiles) || /^web\/src\/components\/(Home)?Journey/.test(file) || file === 'web/src/components/home-journey-trail.css' || file === 'web/src/ui/journey.ts') {
+    if (matches(file, journeyFiles)) {
       add(modules, 'journey');
       matched = true;
     }
     if (matches(file, authCoreFiles, corePrefixes)) { add(modules, 'core'); matched = true; }
     if (!matched && (file.startsWith('web/') || file.startsWith('tools/'))) add(modules, 'core');
   }
+  if (modules.includes('journey-full')) {
+    const fastJourney = modules.indexOf('journey');
+    if (fastJourney !== -1) modules.splice(fastJourney, 1);
+  }
   return modules.length > 0
-    ? ['core', 'journey', 'scene', 'model', 'assets'].filter(module => modules.includes(module))
+    ? ['core', 'journey', 'journey-full', 'scene', 'model', 'assets'].filter(module => modules.includes(module))
     : ['policy'];
+}
+
+export function describePrBrowserProfile(modules) {
+  if (modules.includes('journey-full')) return 'broad';
+  if (modules.includes('journey')) return 'fast';
+  if (modules.length === 1 && modules[0] === 'policy') return 'policy';
+  return 'focused';
 }
 
 export function selectPrEvidenceModules(files) {
@@ -276,10 +329,13 @@ if (invokedDirectly) {
   }
   const files = changedFiles(base, head);
   const browserModules = selectPrBrowserModules(files);
+  const browserProfile = describePrBrowserProfile(browserModules);
   const evidenceModules = selectPrEvidenceModules(files);
   console.error(`browser modules: ${browserModules.join(', ')}`);
+  console.error(`browser profile: ${browserProfile}`);
   console.error(`evidence modules: ${evidenceModules.join(', ')}`);
   console.error(`changed files: ${files.join(', ') || '(none)'}`);
   process.stdout.write(`browser_modules=${JSON.stringify(browserModules)}\n`);
+  process.stdout.write(`browser_profile=${browserProfile}\n`);
   process.stdout.write(`evidence_modules=${JSON.stringify(evidenceModules)}\n`);
 }

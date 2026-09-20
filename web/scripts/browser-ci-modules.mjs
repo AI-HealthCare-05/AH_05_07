@@ -12,6 +12,10 @@ export const browserModuleCommands = Object.freeze({
     'node --check ../tools/mvp1-capture.cjs && node --check ../tools/submission-record.cjs && node --check ../tools/submission-video-check.cjs && node --check ../tools/submission-slides.mjs',
   ],
   journey: [
+    'npx playwright test --config=playwright.journey.config.ts',
+    'npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "review renders at 390x844|S10 renders and measures its scene at 390x844|S10 responsive environment rebuild keeps one character load and bounded framing"',
+  ],
+  'journey-full': [
     'npm run test:e2e:ui:pr',
     'SK7_UI_TEST_COMPANION=off npm run test:e2e:ui:pr',
     'node scripts/verify-ui-build-matrix.mjs',
