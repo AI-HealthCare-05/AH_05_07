@@ -80,31 +80,6 @@
 .journey-skeleton-workspace-panel .journey-skeleton-workspace-wide { width: 100%; min-height: 5rem; }
 
 .app-shell[data-journey-presentation="true"] .scene { animation: none; }
-.app-shell:has([data-journey-skeleton]) .clay-horizon { display: none; }
-.app-shell[data-screen="S02"]:has([data-journey-skeleton]) .app-header { padding-block: .65rem; }
-.app-shell[data-screen="S02"]:has([data-journey-skeleton]) .brand-button { gap: .6rem; }
-.app-shell[data-screen="S02"]:has([data-journey-skeleton]) .brand-button strong { font-size: 1.9rem; letter-spacing: -.07em; font-weight: 800; }
-.app-shell[data-screen="S02"]:has([data-journey-skeleton]) .brand-button small { display: none; }
-.app-shell[data-screen="S02"]:has([data-journey-skeleton]) .scene-viewport { margin-top: .25rem; }
-
-@media (min-width: 901px) {
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .primary-nav {
-    top: .75rem;
-    left: calc(50% + 1rem);
-    width: min(57%, 43rem);
-    border: 0;
-    gap: .3rem;
-  }
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .primary-nav button {
-    padding-inline: .5rem;
-    font-size: .75rem;
-    border-radius: .5rem;
-  }
-}
-
-@media (min-width: 581px) and (max-width: 900px) {
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .scene-viewport { margin-top: 4rem; }
-}
 
 @keyframes journey-skeleton-pulse {
   0%, 100% { opacity: 1; }
@@ -112,11 +87,6 @@
 }
 
 @media (max-width: 580px) {
-  .app-shell:has([data-journey-skeleton]) { padding-inline: .75rem; }
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .app-header { padding-block: .4rem; }
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .brand-button { flex-direction: row-reverse; gap: .3rem; }
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .brand-button strong { font-size: 1.7rem; }
-  .app-shell[data-screen="S02"]:has([data-journey-skeleton]) .scene-viewport { margin-top: 0; }
   .journey-loading-status { margin-bottom: var(--sk7-space-3); }
   .journey-skeleton.loading-scene { min-height: calc(100vh - 10rem); border-radius: var(--sk7-radius-lg); padding: 1rem; }
   .journey-skeleton-layout { gap: 1rem; }

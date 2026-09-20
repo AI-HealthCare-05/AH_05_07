@@ -1,32 +1,27 @@
 /* Cloud / Graphite / Iris: default product chrome only. Visual assets keep their authored colors. */
 html,
 body,
-.app-shell,
-.app-shell:has(.journey-candidate) {
+.app-shell {
   background: var(--sk7-canvas);
   color: var(--sk7-text);
 }
 
-.app-shell:has(.journey-candidate) .primary-nav,
 .primary-nav {
   border-color: var(--sk7-border);
   background: color-mix(in srgb, var(--sk7-surface) 92%, transparent);
   box-shadow: none;
 }
 
-.primary-nav button,
-.app-shell:has(.journey-candidate) .primary-nav button {
+.primary-nav button {
   color: var(--sk7-text-muted);
 }
 
-.primary-nav button:hover:not(:disabled),
-.app-shell:has(.journey-candidate) .primary-nav button:hover:not(:disabled) {
+.primary-nav button:hover:not(:disabled) {
   background: var(--sk7-accent-soft);
   color: var(--sk7-accent-hover);
 }
 
-.primary-nav button.is-active,
-.app-shell:has(.journey-candidate) .primary-nav button.is-active {
+.primary-nav button.is-active {
   background: var(--sk7-accent);
   color: var(--sk7-text-on-accent);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--sk7-accent) 18%, transparent);
@@ -187,8 +182,7 @@ body,
 .living-week-report a { color: var(--sk7-accent); }
 
 @media (max-width: 580px) {
-  .primary-nav,
-  .app-shell:has(.journey-candidate) .primary-nav {
+  .primary-nav {
     border-color: var(--sk7-border);
     background: var(--sk7-surface);
     box-shadow: 0 -8px 24px rgb(32 35 42 / .08);

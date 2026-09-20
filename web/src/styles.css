@@ -386,7 +386,7 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 @media (max-width: 580px) {
-  .app-shell { padding-inline: .7rem; padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); scroll-padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); }
+  .app-shell { padding-inline: var(--sk7-gutter-mobile); padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); scroll-padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); }
   html { scroll-padding-bottom: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem); }
   .app-header { padding: .7rem .2rem; }
   .brand-button small, .fixture-label { display: none; }
@@ -422,6 +422,11 @@ ul, ol { margin: 0; padding: 0; }
   .record-list li { grid-template-columns: minmax(0, 1fr) auto; }
   .record-action { width: auto; }
   .settings-list section { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 350px) {
+  /* Preserve the shared gutter while leaving the seven-date rail room for 44px targets. */
+  .app-shell { padding-inline: var(--sk7-space-md); }
 }
 
 @media (prefers-reduced-motion: reduce) {

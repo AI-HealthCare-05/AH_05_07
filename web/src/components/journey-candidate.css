@@ -1,5 +1,4 @@
 /* Approved screen-scoped composition, selected by the build presentation policy. */
-.app-shell:has(.journey-candidate) .clay-horizon { display: none; }
 .journey-candidate.scene { --sk7-accent: #3f594a; border: 0; border-radius: 0; overflow: visible; padding: 1.5rem 0 2rem; gap: 1.5rem; animation: none; }
 .journey-candidate > .scene-visual-background, .journey-candidate > .scene-visual-character, .journey-candidate::after { display: none; }
 .journey-candidate h1 { font-size: clamp(2rem, 3.2vw, 2.8rem); font-weight: 700; letter-spacing: -.06em; line-height: 1.2; }
@@ -78,7 +77,6 @@
 .journey-saved .split-actions > button:first-child { width: 100%; }
 .journey-saved .split-actions > button.secondary { border-color: var(--sk7-border-strong); background: transparent; color: var(--sk7-accent); box-shadow: none; }
 @media (max-width: 580px) {
-  .app-shell:has(.journey-candidate) { padding-inline: 1.25rem; }
   .journey-candidate.scene { padding-top: 1rem; gap: 1.25rem; }
   .journey-candidate h1 { font-size: 2rem; }
   .journey-candidate .scene-copy { gap: .65rem; }
@@ -99,7 +97,6 @@
   .journey-saved .split-actions > button.secondary { width: 100%; min-width: 0; }
 }
 @media (max-width: 350px) {
-  .app-shell:has(.journey-candidate) { padding-inline: 1rem; }
   .journey-candidate.scene { gap: 1rem; }
   .journey-candidate h1 { font-size: 1.8rem; }
 }
