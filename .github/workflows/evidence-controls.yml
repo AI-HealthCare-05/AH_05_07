@@ -115,6 +115,25 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
+      - name: Fetch Gate 1B provenance commit
+        if: matrix.module == 'model-data'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          import subprocess
+          from pathlib import Path
+
+          evidence = json.loads(Path("docs/evidence/model-gate-1b.json").read_text(encoding="utf-8"))
+          commit = evidence.get("repository_commit", "")
+          if re.fullmatch(r"[0-9a-f]{40}", str(commit)) is None:
+              raise SystemExit("Gate 1B repository_commit is invalid")
+          subprocess.run(
+              ["git", "fetch", "--no-tags", "--depth=1", "origin", commit],
+              check=True,
+          )
+          PY
       - name: Set up Node
         if: matrix.module == 'companion-assets' || matrix.module == 'browser-compatibility'
         uses: actions/setup-node@v4

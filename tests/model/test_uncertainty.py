@@ -189,6 +189,8 @@ def test_real_cli_only_aggregates_and_verifier(completed_uncertainty):
     assert evidence["execution_commit"] != reference["execution_commit"]
     assert {p.name for p in output.iterdir()} == {"uncertainty-evidence.json"}
     assert not (splits / "test.parquet").exists()
+    (repo / "uv.lock").write_text("version = 2\n", encoding="utf-8")
+    commit(repo)
     result = subprocess.run(
         [
             sys.executable,

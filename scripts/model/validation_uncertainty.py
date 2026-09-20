@@ -7,7 +7,11 @@ from pathlib import Path
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.ci.verify_model_gate_1b_contract import evidence_findings, repository_alignment_findings
+from scripts.ci.verify_model_gate_1b_contract import (
+    evidence_findings,
+    historical_toolchain_lock_sha256,
+    repository_alignment_findings,
+)
 from scripts.data.contract import load_manifest, outside_repository
 from scripts.data.preparation import sha256
 from scripts.model.compare_baselines import fit_predictions
@@ -20,12 +24,15 @@ from scripts.model.uncertainty_evidence import same_result, validate_uncertainty
 from scripts.model.uncertainty_rules import UNCERTAINTY_CONFIG, uncertainty_digest
 
 
-def load_reference():
+def load_reference(*, historical: bool = False):
     reference = json.loads((ROOT / "docs/evidence/model-comparison.json").read_text(encoding="utf-8"))
     gate = json.loads((ROOT / "docs/evidence/model-gate-1b.json").read_text(encoding="utf-8"))
     if evidence_findings(gate) or repository_alignment_findings(gate, ROOT):
         raise ValueError("gate_mismatch")
-    validate_evidence(reference, gate, load_manifest(), sha256(ROOT / "uv.lock"))
+    lock_digest = historical_toolchain_lock_sha256(gate, ROOT) if historical else sha256(ROOT / "uv.lock")
+    if lock_digest is None:
+        raise ValueError("gate_mismatch")
+    validate_evidence(reference, gate, load_manifest(), lock_digest)
     return reference
 
 
