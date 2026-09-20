@@ -34,30 +34,31 @@ export function AccountDeletionConfirmation({ pending, recovery, onCancel, onCon
   return (
     <dialog
       ref={dialogRef}
-      className="delete-dialog account-delete-dialog"
+      className="delete-dialog account-delete-dialog surface"
       aria-labelledby="account-delete-title"
       aria-describedby="account-delete-description"
       onCancel={(event) => { event.preventDefault(); if (!pending) onCancel(); }}
     >
-      <h2 id="account-delete-title">{step === 1 ? "계정을 삭제할까요?" : "계정을 영구 삭제할까요?"}</h2>
+      <div className="screen-header">
+        <h2 id="account-delete-title">{step === 1 ? "계정을 삭제할까요?" : "계정을 영구 삭제할까요?"}</h2>
+        <p id="account-delete-description">{step === 1 ? "이 작업은 되돌릴 수 없어요." : "계정과 저장된 제품 기록을 영구 삭제합니다. 삭제 후 되돌릴 수 없습니다."}</p>
+      </div>
       {step === 1 ? (
         <>
-          <p id="account-delete-description">이 작업은 되돌릴 수 없어요.</p>
           <ul>
             <li>계정이 삭제됩니다.</li>
             <li>저장된 혈압 관찰과 챌린지 기록이 삭제됩니다.</li>
             <li>이미 내보낸 JSON, 저장한 PDF, 인쇄물은 계정 삭제로 없어지지 않으므로 직접 관리해야 합니다.</li>
           </ul>
-          <div className="form-actions">
+          <div className="form-actions action-group">
             <button className="secondary" type="button" onClick={onCancel}>취소</button>
             <button type="button" onClick={() => setStep(2)}>계속</button>
           </div>
         </>
       ) : (
         <>
-          <p id="account-delete-description">계정과 저장된 제품 기록을 영구 삭제합니다. 삭제 후 되돌릴 수 없습니다.</p>
-          {recoveryMessage && <p className="notice notice-warning" role="status">{recoveryMessage}</p>}
-          <div className="form-actions">
+          {recoveryMessage && <p className="notice notice-warning status-notice" role="status">{recoveryMessage}</p>}
+          <div className="form-actions action-group">
             <button className="secondary" type="button" onClick={onCancel} disabled={pending}>취소</button>
             <button className="danger" type="button" onClick={onConfirm} disabled={pending} aria-busy={pending}>
               {pending ? "삭제 처리 중" : "최종 삭제"}

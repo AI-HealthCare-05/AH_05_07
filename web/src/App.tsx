@@ -1570,15 +1570,15 @@ function App() {
 
     if (activeScreen === "S13") {
       if (presentation.journey) return (
-        <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="critical" className="journey-load-error">
-          <div className="journey-load-error-card" role="alert">
+        <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="critical" className="journey-load-error surface">
+          <div className="journey-load-error-card status-notice" role="alert">
             <p>아직 기록이 없다는 뜻은 아니에요.</p>
             <p>연결을 확인한 뒤 다시 불러와 주세요.</p>
-            <button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button>
+            <div className="action-group"><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>
           </div>
         </Scene>
       );
-      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="critical" className="state-scene"><div className="mist-shape" aria-hidden="true" /><div className="state-message" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
+      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="critical" className="state-scene surface"><div className="mist-shape" aria-hidden="true" /><div className="state-message status-notice" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
     }
 
     if (activeScreen === "S12") {
@@ -1586,7 +1586,7 @@ function App() {
         <Scene id="S12" eyebrow={isPriorDashboard ? "이전 7일 · 읽기 전용" : "현재 7일 · 오늘 포함"}
           title={isPriorDashboard ? "이 기간에는 기록이 없어요." : "측정한 혈압부터 기록해요"}
           body={isPriorDashboard ? "이전 구간에는 기록이 없으며, 새 기록은 현재 7일에서 시작할 수 있어요." : undefined}
-          tone="subtle" className="journey-empty">
+          tone="subtle" className="journey-empty surface">
           <p className="journey-empty-period" aria-label="조회 기간"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
           {isPriorDashboard ? (
             <div className="journey-empty-return">
@@ -1594,7 +1594,7 @@ function App() {
             </div>
           ) : (
             <>
-              <div className="journey-empty-actions">
+              <div className="journey-empty-actions action-group">
                 <section className="journey-empty-action">
                   <h2>혈압 기록</h2>
                   <button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button>
@@ -1619,7 +1619,7 @@ function App() {
           <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
         </Scene>
       );
-      return <Scene id="S12" {...journeyCopy.S12} tone="subtle" className="state-scene"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
+      return <Scene id="S12" {...journeyCopy.S12} tone="subtle" className="state-scene surface"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions action-group"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
     }
 
     if (activeScreen === "S02") {
@@ -2021,10 +2021,10 @@ function App() {
     }
 
       if (presentation.journey) return (
-        <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings">
+        <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings surface">
           <div className="journey-settings-list">
             <section className="journey-settings-section journey-settings-display">
-              <div>
+              <div className="section-header">
                 <p className="eyebrow">화면</p>
                 <h2>화면 테마</h2>
                 <p>이 브라우저의 화면에만 적용돼요. 기록·분석에는 영향이 없어요.</p>
@@ -2053,7 +2053,7 @@ function App() {
               <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
             </section>
             {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
-              <div>
+              <div className="section-header">
                 <p className="eyebrow">동반자</p>
                 <h2>내 동반자</h2>
                 <p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p>
@@ -2073,7 +2073,7 @@ function App() {
               </label>
             </section>}
             <section className="journey-settings-section">
-              <div>
+              <div className="section-header">
                 <p className="eyebrow">기록과 데이터</p>
                 <h2>30일 보관과 내보낸 파일</h2>
                 <p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
@@ -2086,21 +2086,21 @@ function App() {
               </details>
             </section>
             <section className="journey-settings-section journey-settings-account">
-              <div>
+              <div className="section-header">
                 <p className="eyebrow">계정</p>
                 <h2>이메일 로그인 계정</h2>
                 <p>기기 연결과 계정 삭제를 여기에서 관리해요.</p>
               </div>
               <div className="journey-settings-account-actions">
                 {!evidenceMode && <div className="journey-settings-account-row">
-                  <div>
+                  <div className="section-header">
                     <h3>이 기기에서 로그아웃</h3>
                     <p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p>
                   </div>
                   <button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button>
                 </div>}
                 <div className="journey-settings-account-row journey-settings-account-danger">
-                  <div>
+                  <div className="section-header">
                     <h3>계정 삭제</h3>
                     <p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p>
                   </div>
@@ -2111,7 +2111,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="base"><div className="settings-list"><section><div><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button></section><section><div><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section><section><div><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="base" className="surface"><div className="settings-list"><section><div className="section-header"><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div className="section-header"><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div className="section-header"><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div className="section-header"><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button></section><section><div className="section-header"><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section><section><div className="section-header"><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div className="section-header"><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;

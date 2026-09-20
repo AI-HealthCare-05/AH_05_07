@@ -79,11 +79,8 @@ body,
 .journey-candidate .scene-body { color: var(--sk7-text-muted); }
 
 .journey-entry .measurement-panel,
-.journey-load-error-card,
 .journey-records .window-nav,
 .journey-records .journey-record-list li,
-.journey-settings-facts div,
-.journey-settings-help,
 .record-detail,
 .state-card,
 .signal-card,
@@ -95,9 +92,7 @@ body,
   box-shadow: var(--sk7-shadow-soft);
 }
 
-.journey-entry .measurement-panel,
-.journey-load-error-card { border-top-color: var(--sk7-accent); }
-.journey-load-error-card { border-top-color: var(--sk7-danger); }
+.journey-entry .measurement-panel { border-top-color: var(--sk7-accent); }
 
 .journey-candidate input,
 .journey-candidate select,
