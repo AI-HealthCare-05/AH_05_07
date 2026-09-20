@@ -48,8 +48,42 @@ def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def load_json_unique(data: str | bytes) -> Any:
-    """Parse JSON while rejecting duplicate object keys."""
-    return json.loads(data, object_pairs_hook=_reject_duplicate_keys)
+    """Parse JSON while rejecting duplicate keys and non-JSON constants."""
+
+    def reject_constant(value: str) -> Any:
+        raise ValueError(f"non-standard JSON numeric constant: {value}")
+
+    return json.loads(data, object_pairs_hook=_reject_duplicate_keys, parse_constant=reject_constant)
+
+
+IJSON_MAX_SAFE_INTEGER = 9_007_199_254_740_991
+
+
+def validate_ijson_value(value: Any) -> None:  # noqa: C901
+    """Reject values outside the I-JSON/JCS interoperable value domain."""
+    import math
+
+    if value is None or isinstance(value, (str, bool)):
+        return
+    if isinstance(value, int):
+        if not -IJSON_MAX_SAFE_INTEGER <= value <= IJSON_MAX_SAFE_INTEGER:
+            raise ValueError(f"integer is outside the I-JSON safe range: {value!r}")
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(f"numeric value must be finite, got {value!r}")
+        return
+    if isinstance(value, list):
+        for item in value:
+            validate_ijson_value(item)
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError("JSON object keys must be strings")
+            validate_ijson_value(item)
+        return
+    raise ValueError(f"value is not JSON-compatible: {type(value).__name__}")
 
 
 TOKEN_RE = r"^[a-z0-9]+(-[a-z0-9]+)*$"

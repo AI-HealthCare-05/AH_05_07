@@ -3,10 +3,10 @@
     "Appearance": {
       "additionalProperties": false,
       "properties": {
-        "visualStyle": {
+        "palette": {
           "anyOf": [
             {
-              "$ref": "#/$defs/VisualStyle"
+              "$ref": "#/$defs/Palette"
             },
             {
               "type": "null"
@@ -25,10 +25,10 @@
           ],
           "default": null
         },
-        "palette": {
+        "surface": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Palette"
+              "$ref": "#/$defs/Surface"
             },
             {
               "type": "null"
@@ -36,10 +36,10 @@
           ],
           "default": null
         },
-        "surface": {
+        "visualStyle": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Surface"
+              "$ref": "#/$defs/VisualStyle"
             },
             {
               "type": "null"
@@ -54,17 +54,6 @@
     "Behavior": {
       "additionalProperties": false,
       "properties": {
-        "motionIntents": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SetLikeMotionIntents"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "interactions": {
           "anyOf": [
             {
@@ -79,6 +68,17 @@
           ],
           "default": null,
           "title": "Interactions"
+        },
+        "motionIntents": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeMotionIntents"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "Behavior",
@@ -87,7 +87,7 @@
     "Constraints": {
       "additionalProperties": false,
       "properties": {
-        "must": {
+        "avoid": {
           "anyOf": [
             {
               "$ref": "#/$defs/SetLikeSemanticTokens"
@@ -98,7 +98,7 @@
           ],
           "default": null
         },
-        "avoid": {
+        "must": {
           "anyOf": [
             {
               "$ref": "#/$defs/SetLikeSemanticTokens"
@@ -133,17 +133,6 @@
           "default": null,
           "title": "Qualitytier"
         },
-        "targets": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SetLikeSemanticTokens"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "smallDisplayPriority": {
           "anyOf": [
             {
@@ -155,6 +144,17 @@
           ],
           "default": null,
           "title": "Smalldisplaypriority"
+        },
+        "targets": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "Delivery",
@@ -198,10 +198,10 @@
         "archetype": {
           "$ref": "#/$defs/SemanticToken"
         },
-        "variant": {
+        "characterTags": {
           "anyOf": [
             {
-              "$ref": "#/$defs/SemanticToken"
+              "$ref": "#/$defs/SetLikeSemanticTokens"
             },
             {
               "type": "null"
@@ -209,10 +209,10 @@
           ],
           "default": null
         },
-        "characterTags": {
+        "variant": {
           "anyOf": [
             {
-              "$ref": "#/$defs/SetLikeSemanticTokens"
+              "$ref": "#/$defs/SemanticToken"
             },
             {
               "type": "null"
@@ -230,14 +230,14 @@
     "Interaction": {
       "additionalProperties": false,
       "properties": {
-        "trigger": {
-          "$ref": "#/$defs/NamespacedToken"
+        "response": {
+          "$ref": "#/$defs/MotionIntentToken"
         },
         "target": {
           "$ref": "#/$defs/SemanticRegionToken"
         },
-        "response": {
-          "$ref": "#/$defs/MotionIntentToken"
+        "trigger": {
+          "$ref": "#/$defs/NamespacedToken"
         }
       },
       "required": [
@@ -257,11 +257,24 @@
       "type": "string"
     },
     "NormalizedFloat": {
+      "maximum": 1,
+      "minimum": 0,
       "type": "number"
     },
     "Palette": {
       "additionalProperties": false,
       "properties": {
+        "accent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "primary": {
           "anyOf": [
             {
@@ -283,17 +296,6 @@
             }
           ],
           "default": null
-        },
-        "accent": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SemanticToken"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
         }
       },
       "title": "Palette",
@@ -302,29 +304,7 @@
     "Proportions": {
       "additionalProperties": false,
       "properties": {
-        "headScale": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/FiniteFloat"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "bodyScale": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/FiniteFloat"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "eyeScale": {
           "anyOf": [
             {
               "$ref": "#/$defs/FiniteFloat"
@@ -357,7 +337,18 @@
           ],
           "default": null
         },
-        "snoutScale": {
+        "eyeScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headScale": {
           "anyOf": [
             {
               "$ref": "#/$defs/FiniteFloat"
@@ -390,7 +381,18 @@
           ],
           "default": null
         },
-        "tailScale": {
+        "roundness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NormalizedFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "snoutScale": {
           "anyOf": [
             {
               "$ref": "#/$defs/FiniteFloat"
@@ -401,10 +403,10 @@
           ],
           "default": null
         },
-        "roundness": {
+        "tailScale": {
           "anyOf": [
             {
-              "$ref": "#/$defs/NormalizedFloat"
+              "$ref": "#/$defs/FiniteFloat"
             },
             {
               "type": "null"
@@ -497,41 +499,13 @@
       "type": "object"
     }
   },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "schema": {
-      "const": "sk7.dollspec",
-      "title": "Schema",
-      "type": "string"
-    },
-    "schemaVersion": {
-      "const": "0.1",
-      "title": "Schemaversion",
-      "type": "string"
-    },
-    "kind": {
-      "const": "companion",
-      "title": "Kind",
-      "type": "string"
-    },
-    "identity": {
-      "$ref": "#/$defs/Identity"
-    },
     "appearance": {
       "anyOf": [
         {
           "$ref": "#/$defs/Appearance"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "expression": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/Expression"
         },
         {
           "type": "null"
@@ -550,6 +524,17 @@
       ],
       "default": null
     },
+    "constraints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Constraints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "delivery": {
       "anyOf": [
         {
@@ -561,10 +546,10 @@
       ],
       "default": null
     },
-    "constraints": {
+    "expression": {
       "anyOf": [
         {
-          "$ref": "#/$defs/Constraints"
+          "$ref": "#/$defs/Expression"
         },
         {
           "type": "null"
@@ -584,6 +569,24 @@
       ],
       "default": null,
       "title": "Extensions"
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "kind": {
+      "const": "companion",
+      "title": "Kind",
+      "type": "string"
+    },
+    "schema": {
+      "const": "sk7.dollspec",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "0.1",
+      "title": "Schemaversion",
+      "type": "string"
     }
   },
   "required": [
@@ -592,7 +595,6 @@
     "kind",
     "identity"
   ],
-  "title": "SK7 Dollspec v0.1",
-  "type": "object",
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "title": "DollSpec",
+  "type": "object"
 }

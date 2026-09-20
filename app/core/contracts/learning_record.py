@@ -39,29 +39,13 @@ class ExternalContentRef(_CoreModel):
 class InternalRef(_CoreModel):
     """Reference to an immutable entity inside the Learning Corpus."""
 
-    kind: str = Field(min_length=1)
+    kind: Literal[
+        "learning-record", "artifact", "presentation", "evidence", "evaluation", "decision", "comparison", "input"
+    ]
     id: str = Field(min_length=1)
 
 
-class Reference(_CoreModel):
-    """Closed reference union: exactly one of internal-id or external-content modes."""
-
-    kind: str | None = Field(default=None, min_length=1)
-    id: str | None = Field(default=None, min_length=1)
-    contentHash: ContentHash | None = None
-    locator: str | None = Field(default=None, min_length=1)
-
-    @model_validator(mode="after")
-    def _exactly_one_mode(self) -> Reference:
-        has_internal = self.kind is not None and self.id is not None
-        has_external = self.contentHash is not None or self.locator is not None
-        if has_internal and has_external:
-            msg = "reference must use exactly one mode: internal id or external content"
-            raise ValueError(msg)
-        if not has_internal and not has_external:
-            msg = "reference must provide internal (kind, id) or external (contentHash/locator) data"
-            raise ValueError(msg)
-        return self
+type Reference = InternalRef | ExternalContentRef
 
 
 class RequestGoal(_CoreModel):
@@ -85,7 +69,7 @@ class Input(_CoreModel):
         "scene-component",
         "tool-input",
     ]
-    ref: ExternalContentRef | Reference
+    ref: Reference
 
 
 class Build(_CoreModel):
@@ -99,7 +83,7 @@ class Build(_CoreModel):
 class Artifact(_CoreModel):
     artifactId: str = Field(min_length=1)
     kind: Literal["mesh", "composition", "animation", "material", "image", "other"]
-    ref: ExternalContentRef | Reference
+    ref: Reference
 
 
 class Presentation(_CoreModel):
@@ -119,7 +103,7 @@ class Evidence(_CoreModel):
         "human-note",
         "comparison-image",
     ]
-    ref: ExternalContentRef | Reference
+    ref: Reference
 
 
 class Evaluation(_CoreModel):
@@ -270,7 +254,11 @@ class LearningRecord(_CoreModel):
             if self.artifact is None:
                 msg = "recordState=complete requires a primary artifact"
                 raise ValueError(msg)
-        elif self.artifact is None and not self.limitations and not self.build:
+        elif (
+            self.artifact is None
+            and not self.limitations
+            and not any(value is not None for value in (self.build.model_dump().values() if self.build else []))
+        ):
             msg = (
                 f"recordState={self.recordState} without an artifact requires "
                 "limitations and/or build to explain the absence"
@@ -296,7 +284,7 @@ class LearningRecord(_CoreModel):
         if self.inputs:
             for inp in self.inputs:
                 ref = inp.ref
-                if isinstance(ref, Reference):
+                if isinstance(ref, InternalRef):
                     if ref.kind == "artifact" and ref.id:
                         valid_ids.add(ref.id)
         for presentation in self.presentations:
@@ -328,6 +316,42 @@ class LearningRecord(_CoreModel):
         return self
 
     @model_validator(mode="after")
+    def _typed_subjects_and_lineage(self) -> LearningRecord:  # noqa: C901
+        for evaluation in self.evaluations or []:
+            if evaluation.subjectRef.kind not in {"artifact", "presentation"}:
+                raise ValueError("evaluation subjectRef must target artifact or presentation")
+        for decision in self.decisions or []:
+            if decision.subjectRef.kind not in {"artifact", "presentation"}:
+                raise ValueError("decision subjectRef must target artifact or presentation")
+        for comparison in self.comparisons or []:
+            for target in (comparison.leftSubjectRef, comparison.rightSubjectRef):
+                if isinstance(target, InternalRef) and target.kind not in {
+                    "learning-record",
+                    "artifact",
+                    "presentation",
+                }:
+                    raise ValueError(
+                        "comparison internal operands must target learning-record, artifact, or presentation"
+                    )
+        for relation in self.lineage.relations if self.lineage and self.lineage.relations else []:
+            target = relation.target
+            if relation.type in {"repair-of", "supersedes"}:
+                if not isinstance(target, InternalRef) or target.kind != "learning-record":
+                    raise ValueError(f"{relation.type} target must be a learning-record")
+            elif relation.type == "reuses-geometry-from":
+                if isinstance(target, InternalRef) and target.kind != "artifact":
+                    raise ValueError("reuses-geometry-from target must be artifact or external content")
+            elif relation.type == "derivative-of":
+                if isinstance(target, InternalRef) and target.kind not in {"learning-record", "artifact"}:
+                    raise ValueError("derivative-of target must be learning-record, artifact, or external content")
+            elif relation.type == "composition-contains":
+                if not isinstance(target, InternalRef) or target.kind != "input":
+                    raise ValueError("composition-contains target must reference an input by inputId")
+                if self.artifact is None or self.artifact.kind != "composition":
+                    raise ValueError("composition-contains requires a composition source artifact")
+        return self
+
+    @model_validator(mode="after")
     def _composition_contains_inputs(self) -> LearningRecord:
         if not self.lineage or not self.lineage.relations:
             return self
@@ -336,7 +360,7 @@ class LearningRecord(_CoreModel):
             if relation.type != "composition-contains":
                 continue
             target = relation.target
-            if target.kind != "input" or not target.id:
+            if not isinstance(target, InternalRef) or target.kind != "input":
                 msg = "composition-contains target must reference an input by inputId"
                 raise ValueError(msg)
             inp = input_ids.get(target.id)

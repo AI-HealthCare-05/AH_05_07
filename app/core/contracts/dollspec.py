@@ -19,13 +19,14 @@ from app.core.contracts.common import (
     SetLikeMotionIntents,
     SetLikeSemanticTokens,
     load_json_unique,
+    validate_ijson_value,
 )
 
 warnings.filterwarnings("ignore", message='Field name "schema"')
 
 
 class _CoreModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+    model_config = ConfigDict(extra="forbid", protected_namespaces=(), strict=True)
 
 
 class Identity(_CoreModel):
@@ -173,8 +174,11 @@ def canonicalize_dollspec(data: Any) -> bytes:
     else:
         raw = data
 
-    spec = validate_dollspec(raw)
-    document = spec.model_dump(mode="json", exclude_none=True)
+    validate_ijson_value(raw)
+    validate_dollspec(raw)
+    # Canonical identity is the supplied semantic document.  In particular,
+    # an explicitly supplied null is not silently made identical to omission.
+    document = raw
     document = _sort_setlike_arrays(document)
     return jcs.canonicalize(document)
 

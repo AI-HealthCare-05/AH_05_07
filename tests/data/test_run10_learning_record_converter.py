@@ -10,7 +10,15 @@ from pathlib import Path
 import pytest
 
 from app.core.contracts.learning_record import validate_learning_record
-from scripts.data.convert_run10_learning_records import convert_run10, write_evidence
+from scripts.data.convert_run10_learning_records import (
+    ConversionError,
+    Run10Archive,
+    _load_inputs,
+    _opaque_id,
+    convert_run10,
+    validate_run10_corpus,
+    write_evidence,
+)
 
 SOURCE_ZIP = Path(
     os.environ.get(
@@ -166,3 +174,25 @@ def test_source_archive_sha256_unchanged(conversion: tuple[list[dict], dict, str
     _, _, recorded_hash = conversion
     assert recorded_hash == "17c1f792c73ab29f1fda725166b48c4fb5806567820e167e08af7f01d95d71ff"
     assert _sha256(SOURCE_ZIP) == recorded_hash
+
+
+def test_identical_bytes_do_not_collapse_distinct_attempt_ids() -> None:
+    content_hash = "a" * 64
+    first = _opaque_id("lr", "run", "attempt-a", "source/a.glb", content_hash)
+    second = _opaque_id("lr", "run", "attempt-b", "source/b.glb", content_hash)
+    assert first != second
+
+
+@pytest.mark.parametrize("section", ["run_summary", "source_manifest", "decision_ledger"])
+def test_production_activation_contradictions_fail(section: str, conversion: tuple[list[dict], dict, str]) -> None:
+    records, _, _ = conversion
+    with Run10Archive(SOURCE_ZIP) as archive:
+        inputs = _load_inputs(archive)
+    if section == "run_summary":
+        inputs[section]["productionActivation"] = True
+    elif section == "source_manifest":
+        inputs[section]["sources"][0]["productionActivation"] = True
+    else:
+        inputs[section]["items"][0]["productionActivation"] = True
+    with pytest.raises(ConversionError, match="productionActivation"):
+        validate_run10_corpus(records, inputs)

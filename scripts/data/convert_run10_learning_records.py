@@ -187,8 +187,9 @@ def _group_sources(sources: list[dict[str, Any]]) -> tuple[dict[str, str], dict[
     attempt_indexes: dict[str, int] = {}
     for group_sources in groups.values():
         ordered = sorted(group_sources, key=lambda item: (_source_version(item), item["sha256"]))
-        root_hash = ordered[0]["sha256"]
-        episode_id = _opaque_id("ep", SOURCE_RUN, root_hash)
+        # The normalized source ID is immutable source metadata and distinguishes
+        # episodes even when their first emitted bytes happen to be identical.
+        episode_id = _opaque_id("ep", SOURCE_RUN, _episode_key(ordered[0]))
         for attempt_index, source in enumerate(ordered, start=1):
             episode_ids[source["sourceId"]] = episode_id
             attempt_indexes[source["sourceId"]] = attempt_index
@@ -566,8 +567,10 @@ def convert_run10(archive_path: Path) -> tuple[list[dict[str, Any]], dict[str, A
         sources_by_path = {source["path"]: source for source in sources}
         ids_by_path = {
             source["path"]: {
-                "recordId": _opaque_id("lr", source["sha256"]),
-                "artifactId": _opaque_id("art", source["sha256"]),
+                # A sourceId/path is the immutable recorded attempt identity;
+                # source bytes alone are content identity and may repeat.
+                "recordId": _opaque_id("lr", SOURCE_RUN, source["sourceId"], source["path"], source["sha256"]),
+                "artifactId": _opaque_id("art", SOURCE_RUN, source["sourceId"], source["path"], source["sha256"]),
             }
             for source in sources
         }
@@ -843,6 +846,8 @@ def _validate_run_summary(source: dict[str, int], summary: dict[str, Any]) -> di
     }
     if any(source[key] != value for key, value in summary_facts.items()):
         raise ConversionError(f"independently discovered source facts disagree with RUN_SUMMARY: {summary_facts}")
+    if summary.get("productionActivation") is not False:
+        raise ConversionError("RUN_SUMMARY.productionActivation must be false")
     return {"valid": True, "productionActivation": summary["productionActivation"], **summary_facts}
 
 
@@ -857,6 +862,10 @@ def validate_run10_corpus(records: list[dict[str, Any]], inputs: dict[str, Any])
         raise ConversionError(f"Run10 source facts do not match the frozen mapping: {source}")
     if converted != required or converted != {key: source[key] for key in required}:
         raise ConversionError(f"converted facts do not preserve source facts: {converted} != {source}")
+    if any(item.get("productionActivation") is not False for item in inputs["source_manifest"]["sources"]):
+        raise ConversionError("every source-manifest productionActivation must be false")
+    if any(item.get("productionActivation") is not False for item in inputs["decision_ledger"]["items"]):
+        raise ConversionError("every candidate productionActivation must be false")
     record_ids = [record["recordId"] for record in records]
     artifact_ids = [record["artifact"]["artifactId"] for record in records]
     episode_attempts = [(record["episodeId"], record["attemptIndex"]) for record in records]

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 from pydantic import ValidationError
 
 from app.core.contracts.dollspec import (
@@ -112,3 +113,56 @@ def test_non_finite_numeric_rejected() -> None:
     with pytest.raises(ValidationError) as exc_info:
         validate_dollspec(spec)
     assert "finite" in str(exc_info.value).lower()
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_raw_nonstandard_constants_are_rejected(constant: str) -> None:
+    raw = (
+        '{"schema":"sk7.dollspec","schemaVersion":"0.1","kind":"companion",'
+        '"identity":{"archetype":"rabbit"},"extensions":{"x":{"n":' + constant + "}}}"
+    ).encode()
+    with pytest.raises(ValueError, match="non-standard"):
+        canonicalize_dollspec(raw)
+
+
+def test_nested_extension_nonfinite_and_unsafe_integers_are_rejected() -> None:
+    spec = _load("dollspec_minimal_valid.json")
+    spec["extensions"] = {"x": {"n": float("nan")}}
+    with pytest.raises(ValueError, match="finite"):
+        canonicalize_dollspec(spec)
+    spec["extensions"] = {"x": {"n": 9_007_199_254_740_992}}
+    with pytest.raises(ValueError, match="safe range"):
+        canonicalize_dollspec(spec)
+
+
+@pytest.mark.parametrize(
+    "path,value", [(("expression", "intensity"), "0.5"), (("appearance", "proportions", "headScale"), True)]
+)
+def test_numeric_strings_and_booleans_are_not_coerced(path: tuple[str, ...], value: object) -> None:
+    spec = _load("dollspec_minimal_valid.json")
+    current = spec
+    for key in path[:-1]:
+        current = current.setdefault(key, {})
+    current[path[-1]] = value
+    with pytest.raises(ValidationError):
+        validate_dollspec(spec)
+
+
+def test_explicit_null_is_distinct_from_absence() -> None:
+    absent = _load("dollspec_minimal_valid.json")
+    present = _load("dollspec_minimal_valid.json")
+    present["expression"] = None
+    assert canonicalize_dollspec(absent) != canonicalize_dollspec(present)
+
+
+def test_dollspec_schema_uses_draft_validator_and_matches_generator() -> None:
+    from scripts.data.generate_sk7_contract_schemas import dollspec_schema
+
+    schema_path = Path(__file__).parent.parent.parent / "docs" / "sk7.dollspec.v0.1.schema.json"
+    schema = json.loads(schema_path.read_text())
+    Draft202012Validator.check_schema(schema)
+    assert schema == dollspec_schema()
+    assert not list(Draft202012Validator(schema).iter_errors(_load("dollspec_rich_valid.json")))
+    invalid = _load("dollspec_minimal_valid.json")
+    invalid["expression"] = {"intensity": 2}
+    assert list(Draft202012Validator(schema).iter_errors(invalid))

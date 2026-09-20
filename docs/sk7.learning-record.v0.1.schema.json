@@ -21,15 +21,7 @@
           "type": "string"
         },
         "ref": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ExternalContentRef"
-            },
-            {
-              "$ref": "#/$defs/Reference"
-            }
-          ],
-          "title": "Ref"
+          "$ref": "#/$defs/Reference"
         }
       },
       "required": [
@@ -43,56 +35,6 @@
     "Build": {
       "additionalProperties": false,
       "properties": {
-        "operationId": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Operationid"
-        },
-        "type": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SemanticToken"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "target": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Target"
-        },
-        "intent": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Intent"
-        },
         "basis": {
           "anyOf": [
             {
@@ -109,6 +51,56 @@
           ],
           "default": null,
           "title": "Basis"
+        },
+        "intent": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intent"
+        },
+        "operationId": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operationid"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "Build",
@@ -117,25 +109,6 @@
     "Comparison": {
       "additionalProperties": false,
       "properties": {
-        "comparisonId": {
-          "minLength": 1,
-          "title": "Comparisonid",
-          "type": "string"
-        },
-        "leftSubjectRef": {
-          "$ref": "#/$defs/Reference"
-        },
-        "rightSubjectRef": {
-          "$ref": "#/$defs/Reference"
-        },
-        "dimensionResults": {
-          "items": {
-            "$ref": "#/$defs/DimensionResult"
-          },
-          "minItems": 1,
-          "title": "Dimensionresults",
-          "type": "array"
-        },
         "aggregateOutcome": {
           "anyOf": [
             {
@@ -154,6 +127,25 @@
           ],
           "default": null,
           "title": "Aggregateoutcome"
+        },
+        "comparisonId": {
+          "minLength": 1,
+          "title": "Comparisonid",
+          "type": "string"
+        },
+        "dimensionResults": {
+          "items": {
+            "$ref": "#/$defs/DimensionResult"
+          },
+          "minItems": 1,
+          "title": "Dimensionresults",
+          "type": "array"
+        },
+        "leftSubjectRef": {
+          "$ref": "#/$defs/Reference"
+        },
+        "rightSubjectRef": {
+          "$ref": "#/$defs/Reference"
         }
       },
       "required": [
@@ -187,13 +179,21 @@
     "Decision": {
       "additionalProperties": false,
       "properties": {
+        "authority": {
+          "enum": [
+            "automated",
+            "assistant",
+            "human-reviewer",
+            "human-owner",
+            "external-tool"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
         "decisionId": {
           "minLength": 1,
           "title": "Decisionid",
           "type": "string"
-        },
-        "subjectRef": {
-          "$ref": "#/$defs/InternalRef"
         },
         "disposition": {
           "enum": [
@@ -204,17 +204,6 @@
             "study-only"
           ],
           "title": "Disposition",
-          "type": "string"
-        },
-        "authority": {
-          "enum": [
-            "automated",
-            "assistant",
-            "human-reviewer",
-            "human-owner",
-            "external-tool"
-          ],
-          "title": "Authority",
           "type": "string"
         },
         "observation": {
@@ -253,6 +242,9 @@
           ],
           "default": null,
           "title": "Rationale"
+        },
+        "subjectRef": {
+          "$ref": "#/$defs/InternalRef"
         }
       },
       "required": [
@@ -292,17 +284,6 @@
         "dimension": {
           "$ref": "#/$defs/SemanticToken"
         },
-        "outcome": {
-          "enum": [
-            "prefer-left",
-            "prefer-right",
-            "tie",
-            "inconclusive",
-            "different-tradeoff"
-          ],
-          "title": "Outcome",
-          "type": "string"
-        },
         "finding": {
           "anyOf": [
             {
@@ -314,6 +295,17 @@
           ],
           "default": null,
           "title": "Finding"
+        },
+        "outcome": {
+          "enum": [
+            "prefer-left",
+            "prefer-right",
+            "tie",
+            "inconclusive",
+            "different-tradeoff"
+          ],
+          "title": "Outcome",
+          "type": "string"
         },
         "rationale": {
           "anyOf": [
@@ -338,13 +330,21 @@
     "Evaluation": {
       "additionalProperties": false,
       "properties": {
+        "authority": {
+          "enum": [
+            "automated",
+            "assistant",
+            "human-reviewer",
+            "human-owner",
+            "external-tool"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
         "evaluationId": {
           "minLength": 1,
           "title": "Evaluationid",
           "type": "string"
-        },
-        "subjectRef": {
-          "$ref": "#/$defs/InternalRef"
         },
         "evidenceRefs": {
           "anyOf": [
@@ -381,29 +381,6 @@
           "title": "Kind",
           "type": "string"
         },
-        "verdict": {
-          "enum": [
-            "pass",
-            "fail",
-            "mixed",
-            "unknown",
-            "not-tested",
-            "not-applicable"
-          ],
-          "title": "Verdict",
-          "type": "string"
-        },
-        "authority": {
-          "enum": [
-            "automated",
-            "assistant",
-            "human-reviewer",
-            "human-owner",
-            "external-tool"
-          ],
-          "title": "Authority",
-          "type": "string"
-        },
         "notes": {
           "anyOf": [
             {
@@ -415,6 +392,21 @@
           ],
           "default": null,
           "title": "Notes"
+        },
+        "subjectRef": {
+          "$ref": "#/$defs/InternalRef"
+        },
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail",
+            "mixed",
+            "unknown",
+            "not-tested",
+            "not-applicable"
+          ],
+          "title": "Verdict",
+          "type": "string"
         }
       },
       "required": [
@@ -449,15 +441,7 @@
           "type": "string"
         },
         "ref": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ExternalContentRef"
-            },
-            {
-              "$ref": "#/$defs/Reference"
-            }
-          ],
-          "title": "Ref"
+          "$ref": "#/$defs/Reference"
         }
       },
       "required": [
@@ -470,6 +454,18 @@
     },
     "ExternalContentRef": {
       "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "contentHash"
+          ]
+        },
+        {
+          "required": [
+            "locator"
+          ]
+        }
+      ],
       "description": "Reference to legacy/external immutable content by hash and/or locator.",
       "properties": {
         "contentHash": {
@@ -512,6 +508,9 @@
           "title": "Inputid",
           "type": "string"
         },
+        "ref": {
+          "$ref": "#/$defs/Reference"
+        },
         "role": {
           "enum": [
             "parent-artifact",
@@ -524,17 +523,6 @@
           ],
           "title": "Role",
           "type": "string"
-        },
-        "ref": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ExternalContentRef"
-            },
-            {
-              "$ref": "#/$defs/Reference"
-            }
-          ],
-          "title": "Ref"
         }
       },
       "required": [
@@ -549,14 +537,23 @@
       "additionalProperties": false,
       "description": "Reference to an immutable entity inside the Learning Corpus.",
       "properties": {
-        "kind": {
-          "minLength": 1,
-          "title": "Kind",
-          "type": "string"
-        },
         "id": {
           "minLength": 1,
           "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "learning-record",
+            "artifact",
+            "presentation",
+            "evidence",
+            "evaluation",
+            "decision",
+            "comparison",
+            "input"
+          ],
+          "title": "Kind",
           "type": "string"
         }
       },
@@ -570,18 +567,6 @@
     "Limitation": {
       "additionalProperties": false,
       "properties": {
-        "scope": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Scope"
-        },
         "description": {
           "minLength": 1,
           "title": "Description",
@@ -598,6 +583,18 @@
           ],
           "default": null,
           "title": "Reason"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scope"
         }
       },
       "required": [
@@ -631,6 +628,9 @@
     "LineageRelation": {
       "additionalProperties": false,
       "properties": {
+        "target": {
+          "$ref": "#/$defs/Reference"
+        },
         "type": {
           "enum": [
             "repair-of",
@@ -641,9 +641,6 @@
           ],
           "title": "Type",
           "type": "string"
-        },
-        "target": {
-          "$ref": "#/$defs/Reference"
         }
       },
       "required": [
@@ -656,9 +653,6 @@
     "ObservationSnapshot": {
       "additionalProperties": false,
       "properties": {
-        "value": {
-          "title": "Value"
-        },
         "observedAt": {
           "format": "date-time",
           "title": "Observedat",
@@ -668,6 +662,9 @@
           "minLength": 1,
           "title": "Source",
           "type": "string"
+        },
+        "value": {
+          "title": "Value"
         }
       },
       "required": [
@@ -681,14 +678,14 @@
     "Presentation": {
       "additionalProperties": false,
       "properties": {
-        "presentationId": {
-          "minLength": 1,
-          "title": "Presentationid",
-          "type": "string"
-        },
         "artifactId": {
           "minLength": 1,
           "title": "Artifactid",
+          "type": "string"
+        },
+        "presentationId": {
+          "minLength": 1,
+          "title": "Presentationid",
           "type": "string"
         },
         "view": {
@@ -715,6 +712,18 @@
     "Provenance": {
       "additionalProperties": false,
       "properties": {
+        "migrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Migrationversion"
+        },
         "origin": {
           "anyOf": [
             {
@@ -738,93 +747,24 @@
           ],
           "default": null,
           "title": "Sourcerun"
-        },
-        "migrationVersion": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Migrationversion"
         }
       },
       "title": "Provenance",
       "type": "object"
     },
     "Reference": {
-      "additionalProperties": false,
-      "description": "Closed reference union: exactly one of internal-id or external-content modes.",
-      "properties": {
-        "kind": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Kind"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/InternalRef"
         },
-        "id": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Id"
-        },
-        "contentHash": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ContentHash"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "locator": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Locator"
+        {
+          "$ref": "#/$defs/ExternalContentRef"
         }
-      },
-      "title": "Reference",
-      "type": "object"
+      ]
     },
     "Request": {
       "additionalProperties": false,
       "properties": {
-        "originalTextStatus": {
-          "enum": [
-            "recorded",
-            "not-recorded",
-            "not-applicable"
-          ],
-          "title": "Originaltextstatus",
-          "type": "string"
-        },
         "goal": {
           "anyOf": [
             {
@@ -835,6 +775,15 @@
             }
           ],
           "default": null
+        },
+        "originalTextStatus": {
+          "enum": [
+            "recorded",
+            "not-recorded",
+            "not-applicable"
+          ],
+          "title": "Originaltextstatus",
+          "type": "string"
         }
       },
       "required": [
@@ -846,11 +795,6 @@
     "RequestGoal": {
       "additionalProperties": false,
       "properties": {
-        "text": {
-          "minLength": 1,
-          "title": "Text",
-          "type": "string"
-        },
         "basis": {
           "enum": [
             "recorded",
@@ -858,6 +802,11 @@
             "derived-from-recorded-metadata"
           ],
           "title": "Basis",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
           "type": "string"
         }
       },
@@ -873,51 +822,201 @@
       "type": "string"
     }
   },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "recordState": {
+            "const": "complete"
+          }
+        },
+        "required": [
+          "recordState"
+        ]
+      },
+      "then": {
+        "required": [
+          "artifact"
+        ]
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "required": [
+            "artifact"
+          ]
+        },
+        "properties": {
+          "recordState": {
+            "enum": [
+              "partial",
+              "aborted"
+            ]
+          }
+        },
+        "required": [
+          "recordState"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "limitations": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "limitations"
+            ]
+          },
+          {
+            "properties": {
+              "build": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "operationId"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "target"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "intent"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "basis"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "build"
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "properties": {
-    "schema": {
-      "const": "sk7.learning-record",
-      "title": "Schema",
-      "type": "string"
-    },
-    "schemaVersion": {
-      "const": "0.1",
-      "title": "Schemaversion",
-      "type": "string"
-    },
-    "recordId": {
-      "minLength": 1,
-      "title": "Recordid",
-      "type": "string"
-    },
-    "episodeId": {
-      "minLength": 1,
-      "title": "Episodeid",
-      "type": "string"
-    },
-    "attemptIndex": {
-      "title": "Attemptindex",
-      "type": "integer"
-    },
-    "recordState": {
-      "enum": [
-        "complete",
-        "partial",
-        "aborted"
-      ],
-      "title": "Recordstate",
-      "type": "string"
-    },
-    "request": {
+    "artifact": {
       "anyOf": [
         {
-          "$ref": "#/$defs/Request"
+          "$ref": "#/$defs/Artifact"
         },
         {
           "type": "null"
         }
       ],
       "default": null
+    },
+    "attemptIndex": {
+      "title": "Attemptindex",
+      "type": "integer"
+    },
+    "build": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Build"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "comparisons": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Comparison"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comparisons"
+    },
+    "decisions": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Decision"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Decisions"
+    },
+    "episodeId": {
+      "minLength": 1,
+      "title": "Episodeid",
+      "type": "string"
+    },
+    "evaluations": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Evaluation"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evaluations"
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence"
+    },
+    "extensions": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extensions"
     },
     "inputs": {
       "anyOf": [
@@ -934,21 +1033,25 @@
       "default": null,
       "title": "Inputs"
     },
-    "build": {
+    "limitations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/Build"
+          "items": {
+            "$ref": "#/$defs/Limitation"
+          },
+          "type": "array"
         },
         {
           "type": "null"
         }
       ],
-      "default": null
+      "default": null,
+      "title": "Limitations"
     },
-    "artifact": {
+    "lineage": {
       "anyOf": [
         {
-          "$ref": "#/$defs/Artifact"
+          "$ref": "#/$defs/Lineage"
         },
         {
           "type": "null"
@@ -971,92 +1074,6 @@
       "default": null,
       "title": "Presentations"
     },
-    "evidence": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/Evidence"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Evidence"
-    },
-    "evaluations": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/Evaluation"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Evaluations"
-    },
-    "decisions": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/Decision"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Decisions"
-    },
-    "comparisons": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/Comparison"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Comparisons"
-    },
-    "lineage": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/Lineage"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "limitations": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/Limitation"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Limitations"
-    },
     "provenance": {
       "anyOf": [
         {
@@ -1068,18 +1085,40 @@
       ],
       "default": null
     },
-    "extensions": {
+    "recordId": {
+      "minLength": 1,
+      "title": "Recordid",
+      "type": "string"
+    },
+    "recordState": {
+      "enum": [
+        "complete",
+        "partial",
+        "aborted"
+      ],
+      "title": "Recordstate",
+      "type": "string"
+    },
+    "request": {
       "anyOf": [
         {
-          "additionalProperties": true,
-          "type": "object"
+          "$ref": "#/$defs/Request"
         },
         {
           "type": "null"
         }
       ],
-      "default": null,
-      "title": "Extensions"
+      "default": null
+    },
+    "schema": {
+      "const": "sk7.learning-record",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "0.1",
+      "title": "Schemaversion",
+      "type": "string"
     }
   },
   "required": [
@@ -1090,7 +1129,6 @@
     "attemptIndex",
     "recordState"
   ],
-  "title": "SK7 Learning Record v0.1",
-  "type": "object",
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "title": "LearningRecord",
+  "type": "object"
 }
