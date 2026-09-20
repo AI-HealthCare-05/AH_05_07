@@ -246,7 +246,9 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
     await expect.poll(() => api.reads.length).toBe(2);
     await expect(field).toHaveAttribute("data-draft-node", "original");
     await finishRequest(page, api.reads[1].request, gate.release);
-    await expect(page.getByText("최신 여부 미확인", { exact: true })).toBeVisible();
+    const freshnessNotice = page.getByText("최신 여부 미확인", { exact: true });
+    if (draft === "blood-pressure") await expect(freshnessNotice).toBeVisible();
+    else await expect(freshnessNotice).toHaveCount(0);
     await expect(field).toHaveAttribute("data-draft-node", "original");
     if (draft === "blood-pressure") {
       await expect(page.getByLabel("날짜", { exact: true })).toHaveValue("2026-09-12");

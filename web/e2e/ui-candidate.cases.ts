@@ -1575,7 +1575,7 @@ test.describe('B9 journey feedback', () => {
         const duration = typeof options === 'number' ? options : Number(options?.duration ?? 0);
         state.calls.push({
           screen: document.querySelector('.app-shell')?.getAttribute('data-screen') ?? null,
-          target: (this as HTMLElement).className,
+          target: this.classList.contains('scene-copy') ? 'scene-copy' : (this as HTMLElement).className,
           duration: Number.isFinite(duration) ? duration : null,
         });
         if (!hold) return nativeAnimate.call(this, keyframes, options);

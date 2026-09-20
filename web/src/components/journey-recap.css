@@ -885,7 +885,7 @@
 
   .journey-recap .recap-view { grid-template-columns: minmax(0, 5rem) minmax(0, 1fr); }
 
-  .journey-recap .living-visual-stage { height: 5rem; }
+  .journey-recap .living-visual-stage { height: 4.5rem; }
 
   .journey-recap .recap-journal-intro {
     display: grid;
@@ -921,6 +921,11 @@
   }
 }
 
+@media (max-width: 36.25rem) {
+  /* Keep the stage geometry transition aligned with sceneProfile's 580px boundary. */
+  .journey-recap .living-visual-stage { height: 4rem; }
+}
+
 @media (max-width: 36rem) {
   .journey-recap.scene {
     gap: var(--sk7-space-lg);
@@ -940,7 +945,7 @@
     gap: var(--sk7-space-sm);
   }
 
-  .journey-recap .living-visual-stage { height: 4.5rem; }
+  .journey-recap .living-visual-stage { height: 4rem; }
 
   .journey-recap.scene .record-list li { grid-template-columns: minmax(0, 1fr) auto; }
 }
@@ -949,6 +954,8 @@
   .journey-recap .recap-week-summary dt { font-size: var(--sk7-type-caption); }
 
   .journey-recap .recap-view { grid-template-columns: minmax(0, 4rem) minmax(0, 1fr); }
+
+  .journey-recap .living-visual-stage { height: 3.75rem; }
 
   .journey-recap.scene .record-list li { grid-template-columns: minmax(0, 1fr); }
 

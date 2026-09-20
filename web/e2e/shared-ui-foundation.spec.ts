@@ -57,13 +57,20 @@ for (const viewport of [
 
     if (viewport.name === "320-short") {
       const pairBox = await scene.locator(".bp-measurement-pair").boundingBox();
-      const saveBox = await scene.getByRole("button", { name: "혈압 기록 저장" }).boundingBox();
-      const navBox = await page.locator(".primary-nav").boundingBox();
+      const saveButton = scene.getByRole("button", { name: "혈압 기록 저장" });
+      const nav = page.locator(".primary-nav");
+      const navBox = await nav.boundingBox();
       expect(pairBox).not.toBeNull();
-      expect(saveBox).not.toBeNull();
       expect(navBox).not.toBeNull();
       expect(pairBox!.y + pairBox!.height).toBeLessThanOrEqual(navBox!.y);
-      expect(saveBox!.y + saveBox!.height).toBeLessThanOrEqual(navBox!.y);
+
+      await saveButton.evaluate((element) => element.scrollIntoView({ block: "center" }));
+      await expect(saveButton).toBeInViewport();
+      const scrolledSaveBox = await saveButton.boundingBox();
+      const scrolledNavBox = await nav.boundingBox();
+      expect(scrolledSaveBox).not.toBeNull();
+      expect(scrolledNavBox).not.toBeNull();
+      expect(scrolledSaveBox!.y + scrolledSaveBox!.height).toBeLessThanOrEqual(scrolledNavBox!.y);
     }
   });
 }
