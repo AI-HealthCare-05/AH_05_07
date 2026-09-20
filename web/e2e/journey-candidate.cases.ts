@@ -21,7 +21,7 @@ async function candidate(page: Page, hasMeasurement = false, hasChallenge = fals
   return () => posts;
 }
 
-for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
+for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]) {
   test(`journey candidate primary action, input identity and navigation at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -96,6 +96,10 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     const nextStep = page.locator('.save-next-step');
     const savedActions = page.locator('.journey-saved .split-actions');
     const savedVisual = page.locator('.journey-saved .save-ripple');
+    await expect(page.locator('.journey-saved .scene-copy')).toHaveClass(/screen-header/);
+    await expect(nextStep).toHaveClass(/section-header/);
+    await expect(nextStep.getByRole('heading', { level: 2 })).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
+    await expect(savedActions).toHaveClass(/action-group/);
     await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
     await expect(nextStep).toContainText(/오늘 화면에서.*확인할 수 있어요/);
     await expect(savedActions.getByRole('button')).toHaveCount(2);
@@ -108,6 +112,26 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     expect(nextStepBox!.y).toBeLessThan(actionsBox!.y);
     expect(nextStepBox!.y - (visualBox!.y + visualBox!.height)).toBeGreaterThanOrEqual(23);
     expect(actionsBox!.y - (nextStepBox!.y + nextStepBox!.height)).toBeGreaterThanOrEqual(19);
+    const presentationStyles = await page.evaluate(() => {
+      const next = getComputedStyle(document.querySelector<HTMLElement>('.save-next-step')!);
+      const primary = getComputedStyle(document.querySelector<HTMLButtonElement>('.journey-saved .split-actions > button:first-child')!);
+      const secondary = getComputedStyle(document.querySelector<HTMLButtonElement>('.journey-saved .split-actions > button.secondary')!);
+      const root = getComputedStyle(document.documentElement);
+      const saved = getComputedStyle(document.querySelector<HTMLElement>('.journey-saved')!);
+      return {
+        nextBorderBlock: [next.borderTopWidth, next.borderBottomWidth],
+        nextBorderInline: [next.borderLeftWidth, next.borderRightWidth],
+        primaryBackground: primary.backgroundColor,
+        secondaryBackground: secondary.backgroundColor,
+        rootAccent: root.getPropertyValue('--sk7-accent').trim(),
+        savedAccent: saved.getPropertyValue('--sk7-accent').trim(),
+      };
+    });
+    expect(presentationStyles.nextBorderBlock).toEqual(['1px', '1px']);
+    expect(presentationStyles.nextBorderInline).toEqual(['0px', '0px']);
+    expect(presentationStyles.primaryBackground).not.toBe('rgba(0, 0, 0, 0)');
+    expect(presentationStyles.secondaryBackground).toBe('rgba(0, 0, 0, 0)');
+    expect(presentationStyles.savedAccent).toBe(presentationStyles.rootAccent);
     expect(posts()).toBe(1);
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeFocused();
