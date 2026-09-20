@@ -16,7 +16,7 @@ def main():
     parser.add_argument("--evidence", type=Path, required=True)
     args = parser.parse_args()
     try:
-        validate_uncertainty(json.loads(args.evidence.read_text(encoding="utf-8")), load_reference())
+        validate_uncertainty(json.loads(args.evidence.read_text(encoding="utf-8")), load_reference(historical=True))
     except Exception:
         print("Uncertainty evidence validation failed")
         return 1
