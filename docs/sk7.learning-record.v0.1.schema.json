@@ -1,0 +1,1096 @@
+{
+  "$defs": {
+    "Artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactId": {
+          "minLength": 1,
+          "title": "Artifactid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "mesh",
+            "composition",
+            "animation",
+            "material",
+            "image",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExternalContentRef"
+            },
+            {
+              "$ref": "#/$defs/Reference"
+            }
+          ],
+          "title": "Ref"
+        }
+      },
+      "required": [
+        "artifactId",
+        "kind",
+        "ref"
+      ],
+      "title": "Artifact",
+      "type": "object"
+    },
+    "Build": {
+      "additionalProperties": false,
+      "properties": {
+        "operationId": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operationid"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "target": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "intent": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intent"
+        },
+        "basis": {
+          "anyOf": [
+            {
+              "enum": [
+                "recorded",
+                "recorded-source-metadata",
+                "derived-from-recorded-metadata"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Basis"
+        }
+      },
+      "title": "Build",
+      "type": "object"
+    },
+    "Comparison": {
+      "additionalProperties": false,
+      "properties": {
+        "comparisonId": {
+          "minLength": 1,
+          "title": "Comparisonid",
+          "type": "string"
+        },
+        "leftSubjectRef": {
+          "$ref": "#/$defs/Reference"
+        },
+        "rightSubjectRef": {
+          "$ref": "#/$defs/Reference"
+        },
+        "dimensionResults": {
+          "items": {
+            "$ref": "#/$defs/DimensionResult"
+          },
+          "minItems": 1,
+          "title": "Dimensionresults",
+          "type": "array"
+        },
+        "aggregateOutcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "prefer-left",
+                "prefer-right",
+                "tie",
+                "inconclusive",
+                "different-tradeoff"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregateoutcome"
+        }
+      },
+      "required": [
+        "comparisonId",
+        "leftSubjectRef",
+        "rightSubjectRef",
+        "dimensionResults"
+      ],
+      "title": "Comparison",
+      "type": "object"
+    },
+    "ContentHash": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "const": "sha-256",
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Hex64"
+        }
+      },
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "title": "ContentHash",
+      "type": "object"
+    },
+    "Decision": {
+      "additionalProperties": false,
+      "properties": {
+        "decisionId": {
+          "minLength": 1,
+          "title": "Decisionid",
+          "type": "string"
+        },
+        "subjectRef": {
+          "$ref": "#/$defs/InternalRef"
+        },
+        "disposition": {
+          "enum": [
+            "retain",
+            "reject",
+            "pending",
+            "superseded",
+            "study-only"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "authority": {
+          "enum": [
+            "automated",
+            "assistant",
+            "human-reviewer",
+            "human-owner",
+            "external-tool"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
+        "observation": {
+          "$ref": "#/$defs/DecisionObservation"
+        },
+        "ownerApproval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObservationSnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "productionActivation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObservationSnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rationale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rationale"
+        }
+      },
+      "required": [
+        "decisionId",
+        "subjectRef",
+        "disposition",
+        "authority",
+        "observation"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "DecisionObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "observedAt": {
+          "format": "date-time",
+          "title": "Observedat",
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "observedAt",
+        "source"
+      ],
+      "title": "DecisionObservation",
+      "type": "object"
+    },
+    "DimensionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "dimension": {
+          "$ref": "#/$defs/SemanticToken"
+        },
+        "outcome": {
+          "enum": [
+            "prefer-left",
+            "prefer-right",
+            "tie",
+            "inconclusive",
+            "different-tradeoff"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "finding": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finding"
+        },
+        "rationale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rationale"
+        }
+      },
+      "required": [
+        "dimension",
+        "outcome"
+      ],
+      "title": "DimensionResult",
+      "type": "object"
+    },
+    "Evaluation": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluationId": {
+          "minLength": 1,
+          "title": "Evaluationid",
+          "type": "string"
+        },
+        "subjectRef": {
+          "$ref": "#/$defs/InternalRef"
+        },
+        "evidenceRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/InternalRef"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidencerefs"
+        },
+        "kind": {
+          "enum": [
+            "static-source",
+            "topology",
+            "pixel-integrity",
+            "performance-budget",
+            "small-slot-readability",
+            "semantic-readability",
+            "material-readability",
+            "composition-readability",
+            "animation-runtime",
+            "interaction-runtime",
+            "native-runtime",
+            "human-preference",
+            "safety",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail",
+            "mixed",
+            "unknown",
+            "not-tested",
+            "not-applicable"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "authority": {
+          "enum": [
+            "automated",
+            "assistant",
+            "human-reviewer",
+            "human-owner",
+            "external-tool"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "evaluationId",
+        "subjectRef",
+        "kind",
+        "verdict",
+        "authority"
+      ],
+      "title": "Evaluation",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "evidenceId": {
+          "minLength": 1,
+          "title": "Evidenceid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "render",
+            "screenshot",
+            "metric-report",
+            "qa-json",
+            "runtime-log",
+            "human-note",
+            "comparison-image"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExternalContentRef"
+            },
+            {
+              "$ref": "#/$defs/Reference"
+            }
+          ],
+          "title": "Ref"
+        }
+      },
+      "required": [
+        "evidenceId",
+        "kind",
+        "ref"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "ExternalContentRef": {
+      "additionalProperties": false,
+      "description": "Reference to legacy/external immutable content by hash and/or locator.",
+      "properties": {
+        "contentHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContentHash"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        }
+      },
+      "title": "ExternalContentRef",
+      "type": "object"
+    },
+    "Hex64": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "Input": {
+      "additionalProperties": false,
+      "properties": {
+        "inputId": {
+          "minLength": 1,
+          "title": "Inputid",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "parent-artifact",
+            "reference-artifact",
+            "geometry-source",
+            "material-source",
+            "motion-source",
+            "scene-component",
+            "tool-input"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExternalContentRef"
+            },
+            {
+              "$ref": "#/$defs/Reference"
+            }
+          ],
+          "title": "Ref"
+        }
+      },
+      "required": [
+        "inputId",
+        "role",
+        "ref"
+      ],
+      "title": "Input",
+      "type": "object"
+    },
+    "InternalRef": {
+      "additionalProperties": false,
+      "description": "Reference to an immutable entity inside the Learning Corpus.",
+      "properties": {
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ],
+      "title": "InternalRef",
+      "type": "object"
+    },
+    "Limitation": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scope"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "title": "Limitation",
+      "type": "object"
+    },
+    "Lineage": {
+      "additionalProperties": false,
+      "properties": {
+        "relations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/LineageRelation"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Relations"
+        }
+      },
+      "title": "Lineage",
+      "type": "object"
+    },
+    "LineageRelation": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "repair-of",
+            "reuses-geometry-from",
+            "supersedes",
+            "composition-contains",
+            "derivative-of"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Reference"
+        }
+      },
+      "required": [
+        "type",
+        "target"
+      ],
+      "title": "LineageRelation",
+      "type": "object"
+    },
+    "ObservationSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "title": "Value"
+        },
+        "observedAt": {
+          "format": "date-time",
+          "title": "Observedat",
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "observedAt",
+        "source"
+      ],
+      "title": "ObservationSnapshot",
+      "type": "object"
+    },
+    "Presentation": {
+      "additionalProperties": false,
+      "properties": {
+        "presentationId": {
+          "minLength": 1,
+          "title": "Presentationid",
+          "type": "string"
+        },
+        "artifactId": {
+          "minLength": 1,
+          "title": "Artifactid",
+          "type": "string"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "required": [
+        "presentationId",
+        "artifactId"
+      ],
+      "title": "Presentation",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin"
+        },
+        "sourceRun": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcerun"
+        },
+        "migrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Migrationversion"
+        }
+      },
+      "title": "Provenance",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "description": "Closed reference union: exactly one of internal-id or external-content modes.",
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "contentHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContentHash"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        }
+      },
+      "title": "Reference",
+      "type": "object"
+    },
+    "Request": {
+      "additionalProperties": false,
+      "properties": {
+        "originalTextStatus": {
+          "enum": [
+            "recorded",
+            "not-recorded",
+            "not-applicable"
+          ],
+          "title": "Originaltextstatus",
+          "type": "string"
+        },
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RequestGoal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "originalTextStatus"
+      ],
+      "title": "Request",
+      "type": "object"
+    },
+    "RequestGoal": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "basis": {
+          "enum": [
+            "recorded",
+            "recorded-source-metadata",
+            "derived-from-recorded-metadata"
+          ],
+          "title": "Basis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "basis"
+      ],
+      "title": "RequestGoal",
+      "type": "object"
+    },
+    "SemanticToken": {
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "sk7.learning-record",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "0.1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "recordId": {
+      "minLength": 1,
+      "title": "Recordid",
+      "type": "string"
+    },
+    "episodeId": {
+      "minLength": 1,
+      "title": "Episodeid",
+      "type": "string"
+    },
+    "attemptIndex": {
+      "title": "Attemptindex",
+      "type": "integer"
+    },
+    "recordState": {
+      "enum": [
+        "complete",
+        "partial",
+        "aborted"
+      ],
+      "title": "Recordstate",
+      "type": "string"
+    },
+    "request": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Request"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "inputs": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Input"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Inputs"
+    },
+    "build": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Build"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "artifact": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "presentations": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Presentation"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Presentations"
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence"
+    },
+    "evaluations": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Evaluation"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evaluations"
+    },
+    "decisions": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Decision"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Decisions"
+    },
+    "comparisons": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Comparison"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comparisons"
+    },
+    "lineage": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Lineage"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "limitations": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Limitation"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Limitations"
+    },
+    "provenance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Provenance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "extensions": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extensions"
+    }
+  },
+  "required": [
+    "schema",
+    "schemaVersion",
+    "recordId",
+    "episodeId",
+    "attemptIndex",
+    "recordState"
+  ],
+  "title": "SK7 Learning Record v0.1",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

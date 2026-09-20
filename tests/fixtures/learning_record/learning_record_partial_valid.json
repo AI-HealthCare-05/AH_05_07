@@ -1,0 +1,40 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-folded-cloth-v2",
+  "episodeId": "ep-folded-cloth",
+  "attemptIndex": 2,
+  "recordState": "partial",
+  "request": {
+    "originalTextStatus": "not-recorded",
+    "goal": {
+      "text": "folded cloth napkin",
+      "basis": "recorded-source-metadata"
+    }
+  },
+  "inputs": [
+    {
+      "inputId": "in-fabric-texture",
+      "role": "material-source",
+      "ref": {
+        "locator": "source/fabric.png"
+      }
+    }
+  ],
+  "build": {
+    "operationId": "op-simulate-fold",
+    "type": "cloth-sim",
+    "target": "napkin",
+    "intent": "generate folded geometry",
+    "basis": "recorded-source-metadata"
+  },
+  "limitations": [
+    {
+      "description": "cloth solver did not converge; no mesh was emitted"
+    }
+  ],
+  "provenance": {
+    "origin": "legacy-visual-factory",
+    "sourceRun": "SK7_Visual_Factory_Run_20260919_10"
+  }
+}

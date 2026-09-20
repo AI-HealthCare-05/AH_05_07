@@ -1,0 +1,50 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-comparison",
+  "episodeId": "ep-comparison",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-rice-v2",
+    "kind": "mesh",
+    "ref": {
+      "locator": "build/rice-v2.glb"
+    }
+  },
+  "presentations": [
+    {
+      "presentationId": "pres-rice-v2",
+      "artifactId": "art-rice-v2"
+    }
+  ],
+  "comparisons": [
+    {
+      "comparisonId": "cmp-rice-v2-vs-run06",
+      "leftSubjectRef": {
+        "kind": "presentation",
+        "id": "pres-rice-v2"
+      },
+      "rightSubjectRef": {
+        "contentHash": {
+          "algorithm": "sha-256",
+          "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        },
+        "locator": "source/rice-run06-parent.glb"
+      },
+      "dimensionResults": [
+        {
+          "dimension": "performance-budget",
+          "outcome": "prefer-left",
+          "finding": "9024 triangles vs 11264 triangles"
+        },
+        {
+          "dimension": "small-slot-readability",
+          "outcome": "inconclusive",
+          "finding": "no demonstrated rice-specificity gain at 80px"
+        }
+      ],
+      "aggregateOutcome": "different-tradeoff"
+    }
+  ]
+}

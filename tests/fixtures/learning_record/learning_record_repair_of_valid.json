@@ -1,0 +1,26 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-watering-can-v2",
+  "episodeId": "ep-watering-can",
+  "attemptIndex": 2,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-watering-can-v2",
+    "kind": "mesh",
+    "ref": {
+      "locator": "build/watering-can-v2.glb"
+    }
+  },
+  "lineage": {
+    "relations": [
+      {
+        "type": "repair-of",
+        "target": {
+          "kind": "learning-record",
+          "id": "lr-watering-can-v1"
+        }
+      }
+    ]
+  }
+}

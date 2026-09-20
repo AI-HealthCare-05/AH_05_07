@@ -1,0 +1,15 @@
+{
+  "schema": "sk7.dollspec",
+  "schemaVersion": "0.1",
+  "kind": "companion",
+  "identity": {
+    "archetype": "rabbit",
+    "characterTags": ["curious", "gentle"]
+  },
+  "behavior": {
+    "motionIntents": ["idle.relaxed", "emotion.happy"]
+  },
+  "constraints": {
+    "must": ["a", "b"]
+  }
+}

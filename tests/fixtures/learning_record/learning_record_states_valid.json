@@ -1,0 +1,47 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-states",
+  "episodeId": "ep-states",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-1",
+    "kind": "mesh",
+    "ref": {
+      "locator": "art.glb"
+    }
+  },
+  "evaluations": [
+    {
+      "evaluationId": "eval-unknown",
+      "subjectRef": {
+        "kind": "artifact",
+        "id": "art-1"
+      },
+      "kind": "human-preference",
+      "verdict": "unknown",
+      "authority": "human-owner"
+    },
+    {
+      "evaluationId": "eval-not-tested",
+      "subjectRef": {
+        "kind": "artifact",
+        "id": "art-1"
+      },
+      "kind": "native-runtime",
+      "verdict": "not-tested",
+      "authority": "automated"
+    },
+    {
+      "evaluationId": "eval-not-applicable",
+      "subjectRef": {
+        "kind": "artifact",
+        "id": "art-1"
+      },
+      "kind": "animation-runtime",
+      "verdict": "not-applicable",
+      "authority": "automated"
+    }
+  ]
+}

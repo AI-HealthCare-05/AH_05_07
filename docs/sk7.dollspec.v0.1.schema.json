@@ -1,0 +1,598 @@
+{
+  "$defs": {
+    "Appearance": {
+      "additionalProperties": false,
+      "properties": {
+        "visualStyle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VisualStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "proportions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Proportions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "palette": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Palette"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "surface": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Surface"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Appearance",
+      "type": "object"
+    },
+    "Behavior": {
+      "additionalProperties": false,
+      "properties": {
+        "motionIntents": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeMotionIntents"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "interactions": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Interaction"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Interactions"
+        }
+      },
+      "title": "Behavior",
+      "type": "object"
+    },
+    "Constraints": {
+      "additionalProperties": false,
+      "properties": {
+        "must": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "avoid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Constraints",
+      "type": "object"
+    },
+    "Delivery": {
+      "additionalProperties": false,
+      "properties": {
+        "qualityTier": {
+          "anyOf": [
+            {
+              "enum": [
+                "auto",
+                "lite",
+                "standard"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Qualitytier"
+        },
+        "targets": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "smallDisplayPriority": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Smalldisplaypriority"
+        }
+      },
+      "title": "Delivery",
+      "type": "object"
+    },
+    "Expression": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "intensity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NormalizedFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Expression",
+      "type": "object"
+    },
+    "FiniteFloat": {
+      "type": "number"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "archetype": {
+          "$ref": "#/$defs/SemanticToken"
+        },
+        "variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "characterTags": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "archetype"
+      ],
+      "title": "Identity",
+      "type": "object"
+    },
+    "Interaction": {
+      "additionalProperties": false,
+      "properties": {
+        "trigger": {
+          "$ref": "#/$defs/NamespacedToken"
+        },
+        "target": {
+          "$ref": "#/$defs/SemanticRegionToken"
+        },
+        "response": {
+          "$ref": "#/$defs/MotionIntentToken"
+        }
+      },
+      "required": [
+        "trigger",
+        "target",
+        "response"
+      ],
+      "title": "Interaction",
+      "type": "object"
+    },
+    "MotionIntentToken": {
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)*$",
+      "type": "string"
+    },
+    "NamespacedToken": {
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)*$",
+      "type": "string"
+    },
+    "NormalizedFloat": {
+      "type": "number"
+    },
+    "Palette": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "accent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Palette",
+      "type": "object"
+    },
+    "Proportions": {
+      "additionalProperties": false,
+      "properties": {
+        "headScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "bodyScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "eyeScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "earLength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "earWidth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "snoutScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "limbLength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pawScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tailScale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FiniteFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "roundness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NormalizedFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Proportions",
+      "type": "object"
+    },
+    "SemanticRegionToken": {
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "type": "string"
+    },
+    "SemanticToken": {
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "type": "string"
+    },
+    "SetLikeMotionIntents": {
+      "items": {
+        "$ref": "#/$defs/MotionIntentToken"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "SetLikeSemanticTokens": {
+      "items": {
+        "$ref": "#/$defs/SemanticToken"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "Surface": {
+      "additionalProperties": false,
+      "properties": {
+        "feel": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "softness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NormalizedFloat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Surface",
+      "type": "object"
+    },
+    "VisualStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SemanticToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLikeSemanticTokens"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "VisualStyle",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "sk7.dollspec",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "0.1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "kind": {
+      "const": "companion",
+      "title": "Kind",
+      "type": "string"
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "appearance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Appearance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "expression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Expression"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "behavior": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Behavior"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "delivery": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Delivery"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "constraints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Constraints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "extensions": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extensions"
+    }
+  },
+  "required": [
+    "schema",
+    "schemaVersion",
+    "kind",
+    "identity"
+  ],
+  "title": "SK7 Dollspec v0.1",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
