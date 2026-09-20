@@ -153,12 +153,13 @@ export type SceneTone = "base" | "subtle" | "secondary" | "emphasis" | "critical
 export function Scene({ id, eyebrow, title, body, children, actions, tone = "base", className = "" }: SceneProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const visuals = resolveSceneVisuals(id);
+  const usesSharedFoundation = id === "S12" || id === "S13" || id === "S14";
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [id]);
   return (
     <section className={`scene scene-${tone} ${className}`.trim()} data-scene={id} aria-labelledby={`${id}-title`}>
       <SceneVisualBackground desktop={visuals.background.desktop} mobile={visuals.background.mobile} />
       {visuals.illustration && <SceneVisualAsset asset={visuals.illustration} className={`scene-visual-character scene-visual-character--${id}`} />}
-      <div className="scene-copy">
+      <div className={`scene-copy${usesSharedFoundation ? " screen-header" : ""}`}>
         <p className="eyebrow">{eyebrow}</p>
         <h1 ref={headingRef} tabIndex={-1} id={`${id}-title`}>{title}</h1>
         {body && <p className="scene-body">{body}</p>}

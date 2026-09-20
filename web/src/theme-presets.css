@@ -12,8 +12,8 @@ html[data-sk7-theme="warm"] {
   --sk7-text-muted: #756a61;
   --sk7-border: #e1d6cb;
   --sk7-border-strong: #c8b8aa;
-  --sk7-shadow-soft: 0 8px 24px rgb(79 62 48 / .09);
-  --sk7-shadow-raised: 0 16px 40px rgb(79 62 48 / .13);
+  --sk7-shadow-surface: 0 8px 24px rgb(79 62 48 / .09);
+  --sk7-shadow-overlay: 0 16px 40px rgb(79 62 48 / .13);
 }
 
 html[data-sk7-theme="high-contrast"] {
@@ -27,6 +27,6 @@ html[data-sk7-theme="high-contrast"] {
   --sk7-text-muted: #414752;
   --sk7-border: #aeb4bf;
   --sk7-border-strong: #737b88;
-  --sk7-shadow-soft: 0 8px 24px rgb(17 19 24 / .13);
-  --sk7-shadow-raised: 0 16px 40px rgb(17 19 24 / .18);
+  --sk7-shadow-surface: 0 8px 24px rgb(17 19 24 / .13);
+  --sk7-shadow-overlay: 0 16px 40px rgb(17 19 24 / .18);
 }
