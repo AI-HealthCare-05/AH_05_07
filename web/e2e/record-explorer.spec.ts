@@ -276,7 +276,8 @@ test("S08 loading and initial failure do not claim a zero-record window", async 
     return reply(route, {}, 503);
   });
   await page.goto("/?e2e=signed-in&screen=S08");
-  await expect(page.getByRole("heading", { name: "선택한 7일을 불러오는 중이에요" })).toBeVisible();
+  await expect(page.locator('[data-journey-skeleton-family="records"]')).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "선택한 7일의 기록을 불러오는 중이에요." })).toBeVisible();
   await expect(page.locator(".record-explorer")).toHaveCount(0);
   await expect(page.getByText(/전체 0개|이 7일에는 기록이 없어요/)).toHaveCount(0);
   release?.();

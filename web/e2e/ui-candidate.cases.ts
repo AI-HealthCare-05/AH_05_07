@@ -1017,7 +1017,8 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
     }) });
   });
   await page.goto(`/?e2e=signed-in${prior ? '&dashboard_window=prior' : ''}`);
-  await expect(page.getByRole('heading', { name: '선택한 7일을 불러오는 중이에요' })).toBeVisible();
+  await expect(page.locator('[data-journey-skeleton-family="today"]')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: '선택한 7일의 기록을 불러오는 중이에요.' })).toBeVisible();
   await expect(page.locator('[data-scene="S12"]')).toHaveCount(0); held.release();
   await expect(page.getByRole('heading', { name: prior ? '이 기간에는 기록이 없어요.' : '측정한 혈압부터 기록해요', exact: true })).toBeFocused();
   await expect(page.locator('.journey-empty-period time').first()).toHaveAttribute('datetime', prior ? '2026-08-29' : '2026-09-05');
@@ -1484,4 +1485,368 @@ test('S01 demo-day preview contains decorative S02 width at desktop', async ({ p
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth,
   }))).toEqual({ fits: true, scrollWidth: 1440, innerWidth: 1440 });
+});
+
+test.describe('B9 journey feedback', () => {
+  const windowBody = (withRecord = true) => ({
+    start_on: '2026-09-05',
+    end_on: '2026-09-11',
+    blood_pressure_observations: withRecord ? [{
+      id: 'b9-bp', observed_on: '2026-09-10', period: 'morning', systolic: 120, diastolic: 80,
+    }] : [],
+    challenge_checkins: [],
+    challenge_events: [],
+    active_challenge: null,
+  });
+
+  async function routeWindow(page: Page, reply: () => Promise<void> | void, withRecord = true) {
+    let loads = 0;
+    await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+    await page.route('http://e2e.invalid/**', async route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+      loads += 1;
+      await reply();
+      return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify(windowBody(withRecord)) });
+    });
+    return () => loads;
+  }
+
+  async function installTransitionProbe(page: Page, holdAnimations = false) {
+    await page.addInitScript((hold) => {
+      const nativeAnimate = Element.prototype.animate;
+      const state = { calls: [] as { screen: string | null; target: string; duration: number | null }[], cancels: 0 };
+      let baseline = 0;
+      Element.prototype.animate = function (keyframes, options) {
+        const animationBaseline = baseline;
+        const duration = typeof options === 'number' ? options : Number(options?.duration ?? 0);
+        state.calls.push({
+          screen: document.querySelector('.app-shell')?.getAttribute('data-screen') ?? null,
+          target: (this as HTMLElement).className,
+          duration: Number.isFinite(duration) ? duration : null,
+        });
+        if (!hold) return nativeAnimate.call(this, keyframes, options);
+        let rejectFinished!: (reason?: unknown) => void;
+        const finished = new Promise<void>((_resolve, reject) => { rejectFinished = reject; });
+        return {
+          finished,
+          cancel() {
+            if (animationBaseline === baseline) state.cancels += 1;
+            rejectFinished(new DOMException('cancelled', 'AbortError'));
+          },
+        } as Animation;
+      };
+      Object.defineProperty(state, 'reset', { value: () => {
+        state.calls.length = 0;
+        state.cancels = 0;
+        baseline += 1;
+      } });
+      Object.defineProperty(window, '__b9TransitionProbe', { value: state });
+    }, holdAnimations);
+  }
+
+  const transitionProbe = (page: Page) => page.evaluate(() => (
+    window as unknown as { __b9TransitionProbe: { calls: { screen: string | null; target: string; duration: number | null }[]; cancels: number } }
+  ).__b9TransitionProbe);
+
+  const resetTransitionProbe = (page: Page) => page.evaluate(() => (
+    window as unknown as { __b9TransitionProbe: { reset: () => void } }
+  ).__b9TransitionProbe.reset());
+
+  test('held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time', async ({ page }) => {
+    let gate = deferred();
+    const loads = await routeWindow(page, () => gate.promise);
+
+    await page.goto('/?e2e=signed-in&screen=S02');
+    const today = page.locator('[data-journey-skeleton-family="today"]');
+    await expect(today).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: '선택한 7일의 기록을 불러오는 중이에요.' })).toHaveCount(1);
+    await expect(today.locator('.journey-skeleton-day')).toHaveCount(7);
+    await expect(today.locator('button, input, select, a[href], [tabindex="0"]')).toHaveCount(0);
+    await expect(page.locator('[data-scene="S05"], [data-scene="S12"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    const records = page.locator('[data-journey-skeleton-family="records"]');
+    await expect(records).toBeVisible();
+    await expect(records.locator('.journey-skeleton-record')).toHaveCount(3);
+    await expect(records).not.toContainText(/mmHg|기록함|완료|%/);
+    expect(loads()).toBe(1);
+
+    gate.release();
+    await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+    await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
+
+    gate = deferred();
+    gate.release();
+    await page.goto('/?e2e=signed-in&screen=S02');
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await expect(page.locator('[data-journey-skeleton], [aria-busy="true"]')).toHaveCount(0);
+    expect(loads()).toBe(2);
+  });
+
+  test('initial error, confirmed empty, retained refresh, and refresh-error remain distinct', async ({ page }) => {
+    let mode: 'error' | 'empty' | 'records' | 'refresh-error' = 'error';
+    let refreshGate = deferred();
+    await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+    await page.route('http://e2e.invalid/**', async route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+      if (mode === 'error') return route.fulfill({ status: 403, headers, contentType: 'application/json', body: '{}' });
+      if (mode === 'refresh-error') {
+        await refreshGate.promise;
+        return route.fulfill({ status: 503, headers, contentType: 'application/json', body: '{}' });
+      }
+      return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify(windowBody(mode === 'records')) });
+    });
+
+    await page.goto('/?e2e=signed-in&screen=S02');
+    await expect(page.locator('[data-scene="S13"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S12"], [aria-busy="true"]')).toHaveCount(0);
+
+    mode = 'empty';
+    await page.reload();
+    await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S13"], [aria-busy="true"]')).toHaveCount(0);
+
+    mode = 'records';
+    await page.goto('/?e2e=signed-in&screen=S10');
+    await expect(page.locator('[data-scene="S10"]')).toContainText('120/80 mmHg');
+    mode = 'refresh-error';
+    await page.getByRole('button', { name: '새로고침', exact: true }).click();
+    await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
+    await expect(page.locator('[data-scene="S10"]')).toContainText('120/80 mmHg');
+    refreshGate.release();
+    await expect(page.getByText('최신 여부 미확인', { exact: true }).first()).toBeVisible();
+    await expect(page.locator('[data-scene="S10"]')).toContainText('120/80 mmHg');
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  });
+
+  test('S11 draft and S14 preferences survive their independent background read', async ({ page }) => {
+    let gate = deferred();
+    await routeWindow(page, () => gate.promise);
+
+    await page.goto('/?e2e=signed-in&screen=S11');
+    await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+    await page.getByLabel('만 나이', { exact: true }).fill('35');
+    gate.release();
+    await expect(page.getByLabel('만 나이', { exact: true })).toHaveValue('35');
+    await expect(page.locator('[data-model-v2-step="basics"]')).toBeVisible();
+    await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
+
+    gate = deferred();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    await page.getByRole('radio', { name: /^Warm/ }).check();
+    const companion = page.getByLabel('캐릭터 선택');
+    if (await companion.count()) await companion.selectOption('fox');
+    gate.release();
+    await expect(page.getByRole('radio', { name: /^Warm/ })).toBeChecked();
+    if (await companion.count()) await expect(companion).toHaveValue('fox');
+    await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
+  });
+
+  test('route enter reuses the viewport and does not repeat for typing, theme, or refresh', async ({ page }) => {
+    await installTransitionProbe(page);
+    await routeWindow(page, () => undefined);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/?e2e=signed-in&screen=S02');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 120, screen: 'S02', target: 'scene-copy' },
+    ]);
+    await resetTransitionProbe(page);
+    await page.locator('#scene-content').evaluate(element => element.setAttribute('data-b9-node', 'preserved'));
+    expect((await transitionProbe(page)).calls).toHaveLength(0);
+
+    await page.locator('.home-lead button').click();
+    await expect(page.locator('#S04-title')).toBeFocused();
+    await page.getByLabel(/수축기/).fill('120');
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 160, screen: 'S04', target: 'scene-copy' },
+    ]);
+
+    await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+    await expect(page.locator('#S08-title')).toBeFocused();
+    await expect(page.locator('#scene-content')).toHaveAttribute('data-b9-node', 'preserved');
+    await expect(page.locator('#scene-content > section[data-scene]')).toHaveCount(1);
+    expect((await transitionProbe(page)).calls).toHaveLength(2);
+
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    await page.getByRole('button', { name: '새로고침', exact: true }).click();
+    await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls).toHaveLength(3);
+
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    await page.getByRole('radio', { name: /^Cloud/ }).check();
+    expect((await transitionProbe(page)).calls).toHaveLength(4);
+    await page.goBack();
+    await expect(page.locator('#S10-title')).toBeFocused();
+    await expect(page.locator('#scene-content > section[data-scene]')).toHaveCount(1);
+    expect((await transitionProbe(page)).calls).toHaveLength(5);
+
+    await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    await expect(page.locator('#scene-content > section[data-scene]')).toHaveCount(1);
+    await expect(page.locator('[data-scene="S14"]')).toBeVisible();
+    await expect(page.getByRole('radio', { name: /^Cloud/ })).toBeEnabled();
+  });
+
+  test('reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion', async ({ page }) => {
+    await installTransitionProbe(page, true);
+    await routeWindow(page, () => undefined);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/?e2e=signed-in&screen=S02');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 120, screen: 'S02', target: 'scene-copy' },
+    ]);
+    await resetTransitionProbe(page);
+
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 160, screen: 'S10', target: 'scene-copy' },
+    ]);
+    await page.getByRole('button', { name: '7일 리포트 보기', exact: true }).click();
+    await expect(page.locator('[data-living-week-report]')).toBeVisible();
+    expect((await transitionProbe(page)).cancels).toBe(1);
+    await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(1);
+
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(2);
+    await page.getByRole('button', { name: '계정 삭제', exact: true }).click();
+    expect((await transitionProbe(page)).cancels).toBe(2);
+    await page.getByRole('dialog').getByRole('button', { name: '취소', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(2);
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(2);
+    await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'active' });
+    await page.locator('.home-lead button').click();
+    expect((await transitionProbe(page)).calls).toHaveLength(2);
+    await page.emulateMedia({ forcedColors: 'none' });
+    await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(3);
+
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect((await transitionProbe(page)).cancels).toBe(3);
+    await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(3);
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect((await transitionProbe(page)).calls).toHaveLength(3);
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    expect((await transitionProbe(page)).calls).toHaveLength(4);
+  });
+
+  test('WAAPI absence leaves the current screen visible and interactive', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(Element.prototype, 'animate', { configurable: true, value: undefined });
+    });
+    await routeWindow(page, () => undefined);
+    await page.goto('/?e2e=signed-in&screen=S02');
+    await page.locator('.home-lead button').click();
+    const entry = page.locator('[data-scene="S04"]');
+    await expect(entry).toBeVisible();
+    await expect(entry.locator('.scene-copy')).toHaveCSS('opacity', '1');
+    await expect(page.getByLabel(/수축기/)).toBeEnabled();
+    await page.getByLabel(/수축기/).fill('120');
+    await expect(page.getByLabel(/수축기/)).toHaveValue('120');
+  });
+
+  test('pending save never predicts S05 and confirmed S05 keeps its one-shot owner', async ({ page }) => {
+    await installTransitionProbe(page);
+    const state = await setup(page, 'pending');
+    await page.goto('/?e2e=signed-in&screen=S04');
+    await save(page);
+    await expect.poll(state.posts).toBe(1);
+    await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S05"], [data-journey-skeleton]')).toHaveCount(0);
+    state.held.release();
+    await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls.filter(call => call.screen === 'S05')).toHaveLength(0);
+    if (!companionOff) await expect(page.locator('[data-companion-celebrate-count="1"]')).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('account generation and logout remove old content without retaining transition targets', async ({ page }) => {
+    await installTransitionProbe(page, true);
+    let gate = deferred();
+    let account = 'old';
+    await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+    await page.route('http://e2e.invalid/**', async route => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+      if (!new URL(request.url()).pathname.endsWith('/window')) return route.abort();
+      if (account === 'new') await gate.promise;
+      const body = windowBody(true);
+      body.blood_pressure_observations[0].id = `${account}-account-record`;
+      body.blood_pressure_observations[0].systolic = account === 'old' ? 121 : 118;
+      return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify(body) });
+    });
+
+    await page.goto('/?e2e=signed-in&screen=S08');
+    const oldRecord = page.getByText('121/80 mmHg', { exact: true }).first();
+    await expect(oldRecord).toBeVisible();
+    const oldHandle = await oldRecord.elementHandle();
+    account = 'new';
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('sk7:e2e-session-change', { detail: {
+      access_token: 'synthetic-account-b-token', refresh_token: 'synthetic-account-b-refresh', expires_in: 3600, expires_at: 1800000000, token_type: 'bearer',
+      user: { id: 'synthetic-account-b', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '2026-09-11T00:00:00Z' },
+    } })));
+    await expect(page.locator('[data-journey-skeleton-family="today"]')).toBeVisible();
+    await expect(page.getByText('121/80 mmHg', { exact: true })).toHaveCount(0);
+    expect(await oldHandle!.evaluate(node => node.isConnected)).toBe(false);
+    gate.release();
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
+    await expect(page.locator('[data-scene="S08"]')).toContainText('118/80 mmHg');
+    await expect(page.getByText('121/80 mmHg', { exact: true })).toHaveCount(0);
+
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('sk7:e2e-session-change', { detail: null })));
+    await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S02"], [data-journey-skeleton]')).toHaveCount(0);
+  });
+
+  for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
+    test(`skeleton and loaded CSS stay visible without overflow or fixed-nav overlap at ${width}x${height} and 200% text`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      const gate = deferred();
+      await routeWindow(page, () => gate.promise);
+      await page.goto('/?e2e=signed-in&screen=S02');
+      await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+      await expect(page.locator('[data-journey-skeleton-family="today"]')).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (width <= 580) {
+        const nav = (await page.locator('.primary-nav').boundingBox())!;
+        const skeleton = (await page.locator('[data-journey-skeleton]').boundingBox())!;
+        expect(skeleton.x + skeleton.width).toBeLessThanOrEqual(width);
+        expect(nav.y + nav.height).toBeLessThanOrEqual(height);
+      }
+      gate.release();
+      await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+      await expect(page.locator('.scene-copy')).toHaveCSS('opacity', '1');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+      if (width <= 580) {
+        await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
+        await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+        const actions = page.locator('[data-model-v2-step="basics"] .model-v2-actions');
+        await actions.scrollIntoViewIfNeeded();
+        const actionsBox = (await actions.boundingBox())!;
+        const navBox = (await page.locator('.primary-nav').boundingBox())!;
+        expect(actionsBox.y + actionsBox.height).toBeLessThanOrEqual(navBox.y);
+      }
+    });
+  }
 });

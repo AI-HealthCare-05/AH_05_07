@@ -9,6 +9,7 @@ import { StructuredRecapFeedback } from "./components/StructuredRecapFeedback";
 import { LivingWeekReport } from "./components/LivingWeekReport";
 
 import { JourneyToday } from "./components/JourneyToday";
+import { JourneySkeleton } from "./components/JourneySkeleton";
 import { resolveModelV2Continuation } from "./components/modelV2Continuation";
 import { LoginCompanionNarrator } from "./components/LoginCompanionNarrator";
 
@@ -730,8 +731,7 @@ function App() {
     window.history[replace ? "replaceState" : "pushState"]({ ...(window.history.state ?? {}), sk7UserId: sessionIdentityRef.current.userId }, "", url);
     setRequestedScreen(screen);
     setSelectedRecordKey(recordKey ?? null);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export", requestContext?: RequestContext) {
@@ -1281,6 +1281,7 @@ function App() {
         : requestedScreen === "S06" && !activeChallenge
           ? truthfulFallback
         : automaticallyEmpty ? "S12" : requestedScreen;
+  const blockingLoading = windowState === "loading" && requiresObservationWindow(activeScreen);
   const companionContext: CompanionSelectionContext | undefined = activeScreen === "S05" && confirmedSave
     ? "save_success"
     : initialSearch.get("companion_context") === "non_semantic"
@@ -1563,8 +1564,8 @@ function App() {
   }
 
   function renderScene() {
-    if (windowState === "loading" && requiresObservationWindow(activeScreen)) {
-      return <section className="loading-scene" aria-busy="true" aria-live="polite"><span className="loading-stones" aria-hidden="true"><i /><i /><i /></span><p className="eyebrow">불러오는 중</p><h1>선택한 7일을 불러오는 중이에요</h1><p>불러오기가 끝나면 선택한 기간의 기록을 보여드려요.</p></section>;
+    if (blockingLoading) {
+      return <JourneySkeleton screen={activeScreen} />;
     }
 
     if (activeScreen === "S13") {
@@ -2118,7 +2119,18 @@ function App() {
   return (
     <>
     <div data-living-week-app hidden={reportVisible}>
-    <SceneShell staticJourneyUi={presentation.staticLandscape} activeScreen={activeScreen} evidenceLabel={fixture?.name} onNavigate={navigate} companionSelection={companionSelection} savedSceneEvent={confirmedSave ? savedScene.event : null}>
+    <SceneShell
+      staticJourneyUi={presentation.staticLandscape}
+      journeyPresentation={presentation.journey}
+      feedbackPhase={blockingLoading ? "loading" : activeScreen === "S13" ? "error" : "content"}
+      feedbackSuspended={reportVisible || accountDeletionOpen || Boolean(pendingBloodPressureDeletion) || Boolean(pendingChallengeCheckinDeletion)}
+      sessionGeneration={sessionIdentityRef.current.generation}
+      activeScreen={activeScreen}
+      evidenceLabel={fixture?.name}
+      onNavigate={navigate}
+      companionSelection={companionSelection}
+      savedSceneEvent={confirmedSave ? savedScene.event : null}
+    >
       {visibleNotice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${visibleNotice.kind}`} role="status"><div>{visibleNotice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{visibleNotice.message}</span>{visibleNotice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
       {windowState === "refresh-error" && requiresObservationWindow(activeScreen) && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부 미확인</strong><span>마지막으로 불러온 기록을 보여드리고 있어요.</span><p>최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
       {isPriorDashboard && activeScreen !== "S12" && requiresObservationWindow(activeScreen) && <div className="notice notice-warning" data-read-only-window><span>{dashboardPeriodName} 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 7일 보기</button></div>}

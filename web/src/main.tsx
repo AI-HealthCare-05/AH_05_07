@@ -5,6 +5,7 @@ import App from "./App";
 import "./styles.css";
 import "./components/journey-candidate.css";
 import "./components/journey-today.css";
+import "./components/journey-feedback.css";
 import "./components/frontend-assets.css";
 import "./modern-palette.css";
 import "./theme-presets.css";
