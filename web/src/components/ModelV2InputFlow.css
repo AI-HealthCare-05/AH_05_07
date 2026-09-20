@@ -1054,6 +1054,40 @@
     flex: 1 1 7rem;
   }
 
+  .model-v2-flow :is(
+    [data-model-v2-step="basics"],
+    [data-model-v2-step="activity"],
+    [data-model-v2-step="sleep"],
+    [data-model-v2-step="habits"]
+  ) :is(input, select, button, .model-v2-time-picker) {
+    scroll-margin-bottom: calc(
+      var(--sk7-mobile-nav-height)
+      + env(safe-area-inset-bottom)
+      + 7rem
+    );
+  }
+
+  .model-v2-flow :is(
+    [data-model-v2-step="basics"],
+    [data-model-v2-step="activity"],
+    [data-model-v2-step="sleep"],
+    [data-model-v2-step="habits"]
+  ) .model-v2-actions {
+    position: sticky;
+    z-index: 5;
+    bottom: calc(
+      var(--sk7-mobile-nav-height)
+      + env(safe-area-inset-bottom)
+      + .4rem
+    );
+    padding: .75rem;
+    border: 1px solid var(--sk7-border);
+    border-radius: .75rem;
+    background: color-mix(in srgb, var(--sk7-surface-solid) 94%, transparent);
+    box-shadow: 0 .35rem .9rem rgb(42 37 31 / .08);
+    backdrop-filter: blur(.45rem);
+  }
+
   .model-v2-flow .model-v2-intro,
   .model-v2-flow .model-v2-outcome {
     gap: 1rem;

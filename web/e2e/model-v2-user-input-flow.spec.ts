@@ -295,6 +295,30 @@ async function assertFitsViewport(page: Page) {
   }
 }
 
+async function expectMobileActionDock(page: Page, primaryAction: string) {
+  const currentStep = page.locator('[data-model-v2-step]');
+  const actions = currentStep.locator(".model-v2-actions");
+  const primary = actions.getByRole("button", { name: primaryAction, exact: true });
+  const nav = page.getByRole("navigation", { name: "주요 화면" });
+  await expect(actions).toHaveCSS("position", "sticky");
+  await expect(primary).toBeInViewport();
+  const geometry = await actions.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const navBox = document.querySelector(".primary-nav")!.getBoundingClientRect();
+    return {
+      left: box.left,
+      right: box.right,
+      bottom: box.bottom,
+      navTop: navBox.top,
+      viewportWidth: innerWidth,
+    };
+  });
+  await expect(nav).toBeVisible();
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.navTop + 1);
+}
+
 async function assertResultKeyboardAccess(page: Page) {
   // macOS WebKit's native Tab skips buttons; Option+Tab includes all controls.
   // Keep the same ordered focus/viewport assertions on every platform.
@@ -1292,6 +1316,64 @@ for (const width of [320, 390, 430]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   });
 }
+
+for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }]) {
+  test(`S11 mobile step actions remain above primary navigation at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await routeModel(page);
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await expect(step(page, "intro").locator(".model-v2-actions")).toHaveCSS("position", "static");
+
+    await begin(page);
+    await expectMobileActionDock(page, "다음");
+    await assertFitsViewport(page);
+    await fillBasics(page);
+    await next(page).click();
+
+    await expectStep(page, "activity");
+    await expect(previous(page)).toBeVisible();
+    await expectMobileActionDock(page, "다음");
+    await fillActivity(page);
+    await next(page).click();
+
+    await expectStep(page, "sleep");
+    await page.locator("#model-weekday-bed").click();
+    const picker = page.locator("#model-weekday-bed-picker");
+    await expect(picker).toBeVisible();
+    await picker.evaluate(element => element.scrollIntoView({ block: "center" }));
+    const sleepGeometry = await picker.evaluate((element) => {
+      const pickerBox = element.getBoundingClientRect();
+      const dockBox = element.closest("form")!.querySelector(".model-v2-actions")!.getBoundingClientRect();
+      return { pickerBottom: pickerBox.bottom, dockTop: dockBox.top };
+    });
+    expect(sleepGeometry.pickerBottom).toBeLessThanOrEqual(sleepGeometry.dockTop + 1);
+    await expectMobileActionDock(page, "다음");
+    await fillSleep(page);
+    await next(page).click();
+
+    await expectStep(page, "habits");
+    await expectMobileActionDock(page, "입력 확인하기");
+    await assertFitsViewport(page);
+    await fillHabits(page);
+    await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+    await expectStep(page, "review");
+    await expect(step(page, "review").locator(".model-v2-actions")).toHaveCSS("position", "static");
+  });
+}
+
+test("S11 mobile action dock grows without clipping at 320px and 200% text", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  await begin(page);
+  await expectMobileActionDock(page, "다음");
+  const buttons = step(page, "basics").locator(".model-v2-actions > button");
+  expect(await buttons.evaluateAll(elements => elements.every((element) =>
+    element.scrollWidth <= element.clientWidth + 1 && element.scrollHeight <= element.clientHeight + 1,
+  ))).toBe(true);
+  await assertFitsViewport(page);
+});
 
 test("S11 supports 200% text and reduced motion through keyboard navigation, review and completion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
