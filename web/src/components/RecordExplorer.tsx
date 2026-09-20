@@ -67,7 +67,7 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
   }, [returnPoint, onRestored]);
 
   return <section className="record-explorer" aria-label="기록 탐색">
-    {counts.all > 0 && <div className="record-explorer-overview" role="group" aria-label="이 7일 기록 구성">
+    {counts.all > 0 && <div className="record-explorer-overview section-header" role="group" aria-label="이 7일 기록 구성">
       <div>
         <strong>기록이 있는 날 {recordedDayCount}일</strong>
         <span>총 {counts.all}개</span>
@@ -100,7 +100,7 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
       </div>
     </div>
     {groups.length > 0 ? <div className="record-explorer-groups">
-      {groups.map(([date, records]) => <section className="record-explorer-day" key={date} aria-labelledby={`records-${date}`}>
+      {groups.map(([date, records]) => <section className="record-explorer-day section-header" key={date} aria-labelledby={`records-${date}`}>
         <h2 id={`records-${date}`}><time dateTime={date}>{dateLabel(date)}</time><span>{records.length}개</span></h2>
         <ul className="record-explorer-list">
           {records.map((item, index) => <li key={item.key} data-record-kind={item.kind} data-record-date={date}>
@@ -120,7 +120,7 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
           </li>)}
         </ul>
       </section>)}
-    </div> : <div className="record-explorer-empty">
+    </div> : <div className="record-explorer-empty status-notice">
       <UiObject name="notebook" className="record-explorer-empty-object" />
       <h2>{counts.all === 0 ? "이 7일에는 기록이 없어요." : "선택한 조건에 맞는 기록이 없어요."}</h2>
       {selection.date && !dates.includes(selection.date) && <p>선택한 날짜: {dateLabel(selection.date)}</p>}

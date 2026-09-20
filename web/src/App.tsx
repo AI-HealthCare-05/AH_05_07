@@ -1874,8 +1874,8 @@ function App() {
     }
 
     if (activeScreen === "S08") {
-      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="secondary" className={`record-explorer-scene${presentation.journey ? " journey-candidate journey-records" : ""}`}>
-        <div className="scene-toolbar">
+      return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="secondary" className={`record-explorer-scene surface${presentation.journey ? " journey-candidate journey-records" : ""}`}>
+        <div className="scene-toolbar action-group">
           <span className="utility-label">조회 기간</span>
           {presentation.journey ? (
             <div className="journey-continuation-actions journey-continuation-actions--compact" aria-label="기록 탐색 다음 행동">
@@ -1906,7 +1906,7 @@ function App() {
 
     if (activeScreen === "S09") {
       return (
-        <Scene id="S09" {...journeyCopy.S09} tone="secondary" className={presentation.journey ? "journey-candidate journey-record-detail" : undefined}>
+        <Scene id="S09" {...journeyCopy.S09} tone="secondary" className={`journey-record-detail surface${presentation.journey ? " journey-candidate" : ""}`}>
           <button
             className="text-button record-explorer-detail-return"
             type="button"
@@ -1914,19 +1914,23 @@ function App() {
           >
             {window.history.state?.recordReturnScreen === "S10" ? "7일 돌아보기로 돌아가기" : "목록으로 돌아가기"}
           </button>
-          {selectedRecord && <p className="record-explorer-detail-selection">
-            선택한 기록 · {dateLabel(selectedRecord.record.observed_on)}
-            {selectedRecord.kind === "blood-pressure" ? ` · ${periodLabel(selectedRecord.record.period)}` : ""}
-          </p>}
-          <p className="record-explorer-detail-period">{dashboardPeriodName}{isPriorDashboard ? " · 읽기 전용" : ""} · {dateLabel(startOn)} ~ {dateLabel(endOn)}</p>
+          <div className="record-explorer-detail-context section-header">
+            {selectedRecord && <p className="record-explorer-detail-selection">
+              선택한 기록 · {dateLabel(selectedRecord.record.observed_on)}
+              {selectedRecord.kind === "blood-pressure" ? ` · ${periodLabel(selectedRecord.record.period)}` : ""}
+            </p>}
+            <p className="record-explorer-detail-period">{dashboardPeriodName}{isPriorDashboard ? " · 읽기 전용" : ""} · {dateLabel(startOn)} ~ {dateLabel(endOn)}</p>
+          </div>
           {selectedRecordMissing ? (
-            <div className="state-card state-error" role="alert">
+            <div className="record-detail-empty state-error status-notice" role="alert">
               <h2>선택한 기록을 찾을 수 없습니다.</h2>
               <p>목록이 바뀌었을 수 있어요. 현재 표시 구간의 기록을 다시 확인해 주세요.</p>
             </div>
           ) : selectedRecord ? (
             <article className="record-detail" data-record-detail-kind={selectedRecord.kind}>
-              <h2>{selectedRecord.kind === "blood-pressure" ? "혈압 관찰" : selectedRecord.kind === "challenge-checkin" ? "챌린지 참여" : "이전 기록"}</h2>
+              <div className="record-detail-heading section-header">
+                <h2>{selectedRecord.kind === "blood-pressure" ? "혈압 관찰" : selectedRecord.kind === "challenge-checkin" ? "챌린지 참여" : "이전 기록"}</h2>
+              </div>
               <dl className="record-detail-facts">
                 <div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div>
                 {selectedRecord.kind === "blood-pressure" ? (
@@ -1936,31 +1940,31 @@ function App() {
                 )}
               </dl>
               {isPriorDashboard || selectedRecord.kind === "legacy" ? (
-                <p className="notice notice-warning">{selectedRecord.kind === "legacy" ? "이전 방식으로 남긴 기록은 읽기 전용입니다. 날짜가 현재 7일에 포함되어도 수정하거나 삭제할 수 없어요." : `${dashboardPeriodName}의 기록은 읽기 전용입니다.`}</p>
+                <p className="notice notice-warning status-notice">{selectedRecord.kind === "legacy" ? "이전 방식으로 남긴 기록은 읽기 전용입니다. 날짜가 현재 7일에 포함되어도 수정하거나 삭제할 수 없어요." : `${dashboardPeriodName}의 기록은 읽기 전용입니다.`}</p>
               ) : selectedRecord.kind === "challenge-checkin" && (selectedRecord.record.challenge_id !== activeChallenge?.id || activeChallengeEnded) ? (
-                <p className="notice notice-warning">현재 활성 챌린지에 속하지 않은 기록은 읽기 전용입니다.</p>
+                <p className="notice notice-warning status-notice">현재 활성 챌린지에 속하지 않은 기록은 읽기 전용입니다.</p>
               ) : !evidenceMode && (
-                <div className="inline-actions">
+                <div className="inline-actions action-group record-detail-primary-actions">
                   <button type="button" disabled={controlsDisabled} onClick={() => selectedRecord.kind === "blood-pressure" ? beginBloodPressureEdit(selectedRecord.record) : setEditingChallengeCheckin(selectedRecord.record)}>수정</button>
                   <button className="danger" type="button" disabled={controlsDisabled} onClick={() => { setNotice(null); return selectedRecord.kind === "blood-pressure" ? setPendingBloodPressureDeletion(selectedRecord.record) : setPendingChallengeCheckinDeletion(selectedRecord.record); }}>삭제</button>
                 </div>
               )}
               {editingChallengeCheckin && (
-                <div className="confirmation" role="status">
+                <div className="confirmation status-notice" role="status">
                   <span>{dateLabel(editingChallengeCheckin.observed_on)} · {challengeLabel(editingChallengeCheckin.action_id)} 상태</span>
-                  <div className="inline-actions">
+                  <div className="inline-actions action-group">
                     <button type="button" onClick={() => void updateOwnedChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button>
                     <button className="secondary" type="button" onClick={() => void updateOwnedChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button>
                     <button className="text-button" type="button" onClick={() => setEditingChallengeCheckin(null)}>취소</button>
                   </div>
                 </div>
               )}
-              <div className="inline-actions">
+              <div className="inline-actions action-group record-detail-utility-actions">
                 {!evidenceMode && <button className="text-button" type="button" onClick={() => void refreshWindow()} disabled={windowState === "refreshing" || controlsDisabled}>새로고침</button>}
               </div>
             </article>
           ) : (
-            <div className="state-card"><h2>선택한 기록이 없어요.</h2></div>
+            <div className="record-detail-empty status-notice"><h2>선택한 기록이 없어요.</h2></div>
           )}
         </Scene>
       );
