@@ -1517,7 +1517,9 @@ test.describe('B9 journey feedback', () => {
     await page.addInitScript((hold) => {
       const nativeAnimate = Element.prototype.animate;
       const state = { calls: [] as { screen: string | null; target: string; duration: number | null }[], cancels: 0 };
+      let baseline = 0;
       Element.prototype.animate = function (keyframes, options) {
+        const animationBaseline = baseline;
         const duration = typeof options === 'number' ? options : Number(options?.duration ?? 0);
         state.calls.push({
           screen: document.querySelector('.app-shell')?.getAttribute('data-screen') ?? null,
@@ -1530,11 +1532,16 @@ test.describe('B9 journey feedback', () => {
         return {
           finished,
           cancel() {
-            state.cancels += 1;
+            if (animationBaseline === baseline) state.cancels += 1;
             rejectFinished(new DOMException('cancelled', 'AbortError'));
           },
         } as Animation;
       };
+      Object.defineProperty(state, 'reset', { value: () => {
+        state.calls.length = 0;
+        state.cancels = 0;
+        baseline += 1;
+      } });
       Object.defineProperty(window, '__b9TransitionProbe', { value: state });
     }, holdAnimations);
   }
@@ -1542,6 +1549,10 @@ test.describe('B9 journey feedback', () => {
   const transitionProbe = (page: Page) => page.evaluate(() => (
     window as unknown as { __b9TransitionProbe: { calls: { screen: string | null; target: string; duration: number | null }[]; cancels: number } }
   ).__b9TransitionProbe);
+
+  const resetTransitionProbe = (page: Page) => page.evaluate(() => (
+    window as unknown as { __b9TransitionProbe: { reset: () => void } }
+  ).__b9TransitionProbe.reset());
 
   test('held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time', async ({ page }) => {
     let gate = deferred();
@@ -1642,13 +1653,20 @@ test.describe('B9 journey feedback', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/?e2e=signed-in&screen=S02');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 120, screen: 'S02', target: 'scene-copy' },
+    ]);
+    await resetTransitionProbe(page);
     await page.locator('#scene-content').evaluate(element => element.setAttribute('data-b9-node', 'preserved'));
     expect((await transitionProbe(page)).calls).toHaveLength(0);
 
     await page.locator('.home-lead button').click();
     await expect(page.locator('#S04-title')).toBeFocused();
     await page.getByLabel(/수축기/).fill('120');
-    expect((await transitionProbe(page)).calls).toHaveLength(1);
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 160, screen: 'S04', target: 'scene-copy' },
+    ]);
 
     await page.getByRole('button', { name: '기록 찾아보기', exact: true }).click();
     await expect(page.locator('#S08-title')).toBeFocused();
@@ -1682,9 +1700,16 @@ test.describe('B9 journey feedback', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/?e2e=signed-in&screen=S02');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 120, screen: 'S02', target: 'scene-copy' },
+    ]);
+    await resetTransitionProbe(page);
 
     await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
-    expect((await transitionProbe(page)).calls).toHaveLength(1);
+    expect((await transitionProbe(page)).calls).toEqual([
+      { duration: 160, screen: 'S10', target: 'scene-copy' },
+    ]);
     await page.getByRole('button', { name: '7일 리포트 보기', exact: true }).click();
     await expect(page.locator('[data-living-week-report]')).toBeVisible();
     expect((await transitionProbe(page)).cancels).toBe(1);
