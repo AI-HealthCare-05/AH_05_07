@@ -78,7 +78,11 @@ The database permits at most one row per user, surface, and Korea submission dat
 }
 ```
 
-Model V2 `422` is a generic `model_v2_input_invalid` response and does not echo raw input. When Model V2 is disabled, unavailable, or its artifact boundary cannot be used, it returns `503 model_not_ready` without numeric output.
+Model V2 adapter/semantic validation failures return `422 model_v2_input_invalid`.
+Malformed JSON or a non-object request body uses the application's normalized
+`422 validation_error` response. Neither echoes raw input. When Model V2 is
+disabled, unavailable, or its artifact boundary cannot be used, it returns
+`503 model_not_ready` without numeric output.
 
 ## Accepted P0 additions
 
@@ -101,7 +105,9 @@ Health endpoints are unauthenticated, public operational checks. They never quer
 
 ## Error contract
 
-Current application errors use:
+Application errors have a stable `detail.code`. `detail.message` is optional;
+missing and invalid session responses currently contain only the code. Clients
+must not require a message or echo raw provider errors. For example:
 
 ```json
 {
@@ -125,12 +131,15 @@ Request validation errors use a normalized response that never returns the submi
 
 | Condition | Status | Contract |
 |---|---:|---|
-| Invalid body or date window | `422` | Stable `validation_error` code and generic message; no submitted input values are returned. |
+| Request body, field, path, or query parsing/validation failure | `422` | Stable `validation_error` code and generic message; no submitted input values are returned. |
+| Parsed observation dates are reversed or span more than seven days | `422` | `observation_window_invalid`; the inclusive range permits one to seven dates. |
+| Parsed export dates are reversed or span more than thirty days | `422` | `observation_export_window_invalid`; the inclusive range permits one to thirty dates. |
 | Missing Supabase session | `401` | `supabase_session_required`; the web clears the local session and asks the user to sign in again. |
 | Supabase positively rejects the presented session (the current user-verification endpoint returns provider `401` or `403`) | `401` | `supabase_session_invalid`; the web clears the local session and asks the user to sign in again. |
 | Supabase Auth cannot reliably determine session validity | `503` | `auth_unavailable` with a generic message; no upstream body, token, header, URL, key, or exception detail is returned. Timeout, transport failure, `429`, `5xx`, other unclassified responses, and malformed successful responses use this contract. |
 | Missing or cross-user record | `404` | Do not disclose whether another user's row exists. |
 | Duplicate date and period | `409` | Stable `observation_conflict` code; no row is changed. |
+| Active challenge disappears during selection update or closure of an ended challenge | `409` | Existing `active_challenge_required`; stop the selection attempt without inserting a replacement or automatically retrying. Re-read state before another explicit choice. |
 | Same-day S10 feedback duplicate | `409` | Stable `feedback_already_submitted`; no second feedback row is created. |
 | Model artifact not ready | `503` | No provisional signal. |
 | Storage dependency unavailable | `503` | The web states that persistence was not confirmed, offers a fresh read, and never claims the write succeeded. |
@@ -169,6 +178,28 @@ an already received HTTP status as `responseStatus` so a stalled error body
 cannot make an ordinary HTTP failure retryable. Mutations, account deletion,
 export and Model V2 retain their existing timeout and single-attempt behavior.
 Source/test coverage does not establish the production failure class.
+
+## Contract regression coverage
+
+[Product API contract tests](../tests/api/test_product_api_contract.py) check the
+18 documented product operations, declared methods/statuses, UUID path and date
+query parameters, typed input fields, Model V2's two-field response, and feedback
+receipt. Runtime cases separately check missing-session rejection, provider
+rejection versus unavailability, normalized invalid-UUID errors, date-window
+bounds, legacy model unavailability, and the emitted check-in upsert request.
+These are not the total set of inherited application routes.
+
+OpenAPI does not express every behavior above: observation success objects and
+Model V2 request objects remain generic in the generated schema. The store and
+frozen input validators are still needed to interpret their fields and behavior.
+A schema assertion or mocked upsert response does not prove live database RLS,
+uniqueness, or deployed-runtime behavior. Do not add response filtering merely
+to make those generic schemas look more complete.
+
+[Selection race tests](../tests/api/test_active_challenge_selection_race.py)
+exercise both disappearing-row branches through the actual router and store with
+a synthetic provider. They preserve storage-error classification and the
+no-automatic-write-retry boundary.
 
 ## Documentation endpoints
 
