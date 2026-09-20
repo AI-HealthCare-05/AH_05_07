@@ -142,7 +142,7 @@
   .journey-today .home-lead p { font-size: .6rem; line-height: 1.35; }
   .journey-today .home-lead button { width: 100%; min-width: 0; min-height: 2.75rem; padding: .58rem .8rem; font-size: .75rem; }
   .journey-today .journey-view { position: absolute; inset: 8rem .25rem 3.5rem; }
-  .journey-view-frame { width: 94%; left: 3%; bottom: -.75rem; height: 145px; }
+  .journey-view-frame { width: 94%; left: 3%; bottom: -.75rem; height: 168px; }
   .journey-today [data-static-landscape] .living-scene-fallback img { top: -14%; height: 130%; object-fit: cover; }
   .today-companion-greeting { top: 1.1rem; right: 5%; font-size: .74rem; }
   .journey-view-caption { left: auto; right: .65rem; bottom: .1rem; font-size: .56rem; }
@@ -183,7 +183,7 @@
 @media (max-width: 350px) {
   .today-hero { min-height: 325px; padding-inline: 1rem; }
   .journey-today .scene-copy h1 { font-size: 1.85rem; }
-  .journey-view-frame { bottom: -.7rem; height: 150px; }
+  .journey-view-frame { bottom: -.7rem; height: 172px; }
   .today-companion-greeting { top: .9rem; right: 3%; font-size: .65rem; }
   .journey-today .journey-facts > div { padding-inline: .55rem; }
   .journey-today .living-week { padding-inline: .5rem; }

@@ -95,14 +95,19 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     await expect(page.locator('.journey-saved')).toBeVisible();
     const nextStep = page.locator('.save-next-step');
     const savedActions = page.locator('.journey-saved .split-actions');
+    const savedVisual = page.locator('.journey-saved .save-ripple');
     await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
     await expect(nextStep).toContainText(/오늘 화면에서.*확인할 수 있어요/);
     await expect(savedActions.getByRole('button')).toHaveCount(2);
     const nextStepBox = await nextStep.boundingBox();
     const actionsBox = await savedActions.boundingBox();
+    const visualBox = await savedVisual.boundingBox();
     expect(nextStepBox).not.toBeNull();
     expect(actionsBox).not.toBeNull();
+    expect(visualBox).not.toBeNull();
     expect(nextStepBox!.y).toBeLessThan(actionsBox!.y);
+    expect(nextStepBox!.y - (visualBox!.y + visualBox!.height)).toBeGreaterThanOrEqual(23);
+    expect(actionsBox!.y - (nextStepBox!.y + nextStepBox!.height)).toBeGreaterThanOrEqual(19);
     expect(posts()).toBe(1);
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeFocused();
@@ -132,8 +137,44 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) {
     expect(secondaryBox).not.toBeNull();
     if (width > 820) expect(leadBox!.width).toBeGreaterThan(secondaryBox!.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-    await page.goBack();
+    const s02ReturnFrames = await page.evaluate(() => new Promise<Array<{
+      backgroundImage: string;
+      posterComplete: boolean;
+      posterWidth: number;
+      posterSource: string;
+      posterLoading: string;
+    }>>((resolve) => {
+      history.back();
+      const frames: Array<{
+        backgroundImage: string;
+        posterComplete: boolean;
+        posterWidth: number;
+        posterSource: string;
+        posterLoading: string;
+      }> = [];
+      const sample = () => {
+        const hero = document.querySelector<HTMLElement>('.today-hero');
+        if (!hero) { requestAnimationFrame(sample); return; }
+        const poster = hero.querySelector<HTMLImageElement>('.living-scene-fallback img');
+        frames.push({
+          backgroundImage: getComputedStyle(hero).backgroundImage,
+          posterComplete: Boolean(poster?.complete),
+          posterWidth: poster?.naturalWidth ?? 0,
+          posterSource: poster?.currentSrc ?? '',
+          posterLoading: poster?.loading ?? '',
+        });
+        if (frames.length === 3) resolve(frames);
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    }));
     await expect(page.locator('#S02-title')).toBeFocused();
+    expect(s02ReturnFrames[0].backgroundImage).toContain('home-window-garden-v2.webp');
+    expect(s02ReturnFrames.every(frame => frame.backgroundImage.includes('home-window-garden-v2.webp'))).toBe(true);
+    expect(s02ReturnFrames.at(-1)?.posterComplete).toBe(true);
+    expect(s02ReturnFrames.at(-1)?.posterWidth).toBeGreaterThan(0);
+    expect(s02ReturnFrames.at(-1)?.posterSource).not.toBe('');
+    expect(s02ReturnFrames.at(-1)?.posterLoading).toBe('eager');
     // A changed domain fact changes the CTA, never the scenery recipe.
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);

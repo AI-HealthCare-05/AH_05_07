@@ -149,7 +149,6 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <footer className="recap-tools">
         <div className="recap-tools-intro">
           <UiObject name="book" className="recap-tools-object" />
-          <p className="eyebrow">기록 활용</p>
           <h3>리포트와 내보내기</h3>
           <p>혈압 기록을 인쇄·PDF로 정리하고, 현재 7일은 JSON으로 내보낼 수 있어요.</p>
         </div>
@@ -162,7 +161,6 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
     </div>
     <div className="recap-current-challenge">
       <div className="recap-optional-intro">
-        <p className="eyebrow">선택 기능</p>
         <strong>생활 챌린지는 별도 기록이에요</strong>
       </div>
       {challenge}
