@@ -1813,20 +1813,20 @@ function App() {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
       return <Scene id="S05" {...journeyCopy.S05} tone="subtle" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
-        {presentation.journey && <div className="save-next-step">
+        {presentation.journey && <section className="save-next-step section-header" aria-labelledby="save-next-step-title">
           <p className="eyebrow">다음 확인</p>
-          <strong>{savedFactKind === "challenge-checkin"
+          <h2 id="save-next-step-title">{savedFactKind === "challenge-checkin"
             ? "오늘의 기록에서 방금 저장한 챌린지 상태를 확인해요"
             : savedBloodPressureIsToday
               ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
-              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</strong>
+              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</h2>
           <p>{savedFactKind === "challenge-checkin"
             ? "챌린지 상태는 혈압 기록과 별도로 남아요."
             : savedBloodPressureIsToday
               ? "오늘 화면에서 바로 확인할 수 있어요."
               : "기록 찾아보기에서 날짜·시간대별로 확인할 수 있어요."}</p>
-        </div>}
-        <div className="split-actions journey-continuation-actions journey-continuation-actions--saved">
+        </section>}
+        <div className="split-actions action-group journey-continuation-actions journey-continuation-actions--saved">
           <button type="button" onClick={() => {
             setConfirmedSave(false);
             savedScene.clear();

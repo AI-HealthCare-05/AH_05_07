@@ -18,43 +18,80 @@
 .journey-landscape i:nth-child(2) { width: 100%; height: 6rem; background: #c3cbae; border-radius: 50% 70% 0 0; bottom: -1rem; left: -15%; transform: rotate(-10deg); }
 .journey-landscape i:nth-child(3) { width: 90%; height: 6rem; background: #a4b395; border-radius: 80% 55% 0 0; bottom: -2rem; right: -20%; transform: rotate(12deg); }
 .journey-landscape span { width: 7rem; height: 5rem; border: 1rem solid #e8debf; border-top: 0; border-bottom: 0; border-radius: 50%; bottom: -1rem; left: 45%; transform: rotate(30deg); }
-.journey-saved.scene { min-height: 32rem; padding: 1.5rem 0; gap: 0; }
-.journey-saved .scene-copy { max-width: 38rem; margin-bottom: 16px; }
+.journey-saved.scene {
+  --sk7-accent: inherit;
+  --sk7-focus: var(--sk7-accent);
+
+  min-height: 32rem;
+  gap: 0;
+  padding: var(--sk7-space-xl) 0;
+}
+.journey-saved .scene-copy {
+  gap: var(--sk7-space-sm);
+  max-width: var(--sk7-copy-max);
+  margin-bottom: var(--sk7-space-md);
+}
+.journey-saved .screen-header h1 {
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-display);
+  font-weight: var(--sk7-weight-bold);
+  line-height: var(--sk7-leading-tight);
+}
+.journey-saved .eyebrow { color: var(--sk7-success-text); }
 .journey-saved .save-ripple { width: min(100%, 28rem); height: 14rem; border-radius: 50% 50% 42% 42%; overflow: visible; }
-.journey-saved .save-ripple-landscape { position: absolute; inset: 0; display: grid; overflow: hidden; place-items: center; border-radius: inherit; background: #e8e9d7; }
-.journey-saved .save-ripple-landscape::before { content: ''; position: absolute; width: 120%; height: 6rem; bottom: -1.5rem; border-radius: 50%; background: #c0caaa; }
+.journey-saved .save-ripple-landscape {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--sk7-success-border);
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 65% 24%, var(--sk7-surface) 0 2.2rem, transparent 2.25rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--sk7-success-soft) 72%, var(--sk7-surface)), var(--sk7-success-soft));
+  box-shadow: var(--sk7-shadow-surface);
+}
+.journey-saved .save-ripple-landscape::before {
+  position: absolute;
+  bottom: -1.5rem;
+  width: 120%;
+  height: 6rem;
+  border-radius: 50%;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sk7-success) 22%, var(--sk7-success-soft)), color-mix(in srgb, var(--sk7-success) 34%, var(--sk7-success-soft)));
+  content: '';
+}
 .journey-saved .save-ripple i { display: none; animation: none; }
-.journey-saved .save-ripple span { position: absolute; bottom: 1.2rem; right: 1.6rem; width: 2.4rem; height: 2.4rem; font-size: 1.2rem; box-shadow: none; background: #3f594a; }
+.journey-saved .save-ripple span { position: absolute; bottom: 1.2rem; right: 1.6rem; width: 2.4rem; height: 2.4rem; background: var(--sk7-success); color: var(--sk7-text-on-accent); font-size: 1.2rem; box-shadow: var(--sk7-shadow-surface); }
 .scene-viewport:has(.journey-saved) > [data-saved-scene-status] { right: calc(50% - 5rem); width: 10rem; height: 12rem; }
 .journey-saved .save-next-step {
   display: grid;
   gap: 0;
-  width: min(100%, 32rem);
-  margin-top: 24px;
-  border-top: 1px solid #d8dccf;
-  border-bottom: 1px solid #d8dccf;
-  padding: 16px 0;
+  width: min(100%, var(--sk7-form-max));
+  margin-top: var(--sk7-space-xl);
+  border-block: 1px solid var(--sk7-border);
+  padding: var(--sk7-space-md) 0;
 }
-.journey-saved .save-next-step .eyebrow { margin: 0 0 4px; font-size: .7rem; }
-.journey-saved .save-next-step strong { color: #35473c; font-size: 1rem; line-height: 1.5; }
-.journey-saved .save-next-step > p:not(.eyebrow) { margin-top: 12px; color: #696960; font-size: .82rem; line-height: 1.6; }
+.journey-saved .save-next-step .eyebrow { margin-bottom: var(--sk7-space-2xs); font-size: var(--sk7-type-caption); }
+.journey-saved .save-next-step h2 { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); line-height: var(--sk7-leading-tight); }
+.journey-saved .save-next-step > p:not(.eyebrow) { margin-top: var(--sk7-space-sm); color: var(--sk7-text-muted); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
 .journey-saved .split-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
-  gap: .65rem;
-  width: min(100%, 32rem);
-  margin-top: 20px;
+  gap: var(--sk7-space-sm);
+  width: min(100%, var(--sk7-form-max));
+  margin-top: var(--sk7-space-lg);
 }
-.journey-saved .split-actions button { min-height: 3rem; border-radius: .5rem; }
+.journey-saved .split-actions button { min-height: calc(var(--sk7-target-min) + var(--sk7-space-2xs)); border-radius: var(--sk7-radius-control); }
 .journey-saved .split-actions > button:first-child { width: 100%; }
-.journey-saved .split-actions > button.secondary { min-width: 8.5rem; background: transparent; color: #48604f; box-shadow: none; }
+.journey-saved .split-actions > button.secondary { border-color: var(--sk7-border-strong); background: transparent; color: var(--sk7-accent); box-shadow: none; }
 @media (max-width: 580px) {
   .app-shell:has(.journey-candidate) { padding-inline: 1.25rem; }
   .journey-candidate.scene { padding-top: 1rem; gap: 1.25rem; }
   .journey-candidate h1 { font-size: 2rem; }
   .journey-candidate .scene-copy { gap: .65rem; }
-  .journey-saved.scene { min-height: 32rem; gap: 0; padding-top: 1.5rem; }
+  .journey-saved.scene { min-height: 32rem; gap: 0; padding-top: var(--sk7-space-xl); }
   .journey-saved .save-ripple { height: 12rem; }
   .journey-saved .save-next-step { width: 100%; }
   /* S05 migration runtime: keep the decorative boundary above the fixed mobile nav.
@@ -1095,108 +1132,6 @@
   }
 }
 
-/* Legacy journey cohesion is retained only for untouched S05. */
-.app-shell[data-screen="S05"]:has(.journey-candidate) {
-  --sk7-text: #142f38;
-  --sk7-text-muted: #61747a;
-  --sk7-accent: #164a47;
-  --sk7-focus: #164a47;
-  --sk7-border: #dce7e3;
-  --journey-surface: #fffffff2;
-  --journey-surface-soft: #f6faf8ef;
-  --journey-accent: #477d69;
-  --journey-accent-deep: #164a47;
-  --journey-shadow: #173e3912;
-
-  background:
-    radial-gradient(circle at 82% 4%, #e8f2ec 0, transparent 28rem),
-    linear-gradient(180deg, #eef4f5 0%, #f7faf9 60%, #fbfcfb 100%);
-}
-
-.app-shell[data-screen="S05"]:has(.journey-candidate) .primary-nav {
-  border-color: #dfe8e5;
-  background: #ffffff7d;
-}
-
-.app-shell[data-screen="S05"]:has(.journey-candidate) .primary-nav button.is-active {
-  background: #e2f0e9;
-  color: #153f3d;
-}
-
-.app-shell[data-screen="S05"] .journey-candidate {
-  --sk7-accent: #164a47;
-  --sk7-focus: #164a47;
-}
-
-.app-shell[data-screen="S05"] .journey-candidate h1 {
-  color: #102f38;
-}
-
-.app-shell[data-screen="S05"] .journey-candidate .scene-body {
-  color: #586c72;
-}
-
-.app-shell[data-screen="S05"] .journey-candidate .eyebrow {
-  color: #55746d;
-}
-
-/* S05 — confirmation: saved fact settles into the landscape, next step is clear. */
-
-.app-shell[data-screen="S05"] .journey-saved .save-ripple-landscape {
-  border: 1px solid #dce7df;
-  background:
-    radial-gradient(circle at 65% 24%, #fff9dc 0 2.2rem, transparent 2.25rem),
-    linear-gradient(180deg, #edf6ef 0%, #dfeade 100%);
-  box-shadow:
-    inset 0 1px 0 #ffffffcf,
-    0 12px 28px #173e390b;
-}
-
-.app-shell[data-screen="S05"] .journey-saved .save-ripple-landscape::before {
-  background: linear-gradient(180deg, #b9ceb9, #a7bea8);
-}
-
-.app-shell[data-screen="S05"] .journey-saved .save-ripple > span {
-  background: #164a47;
-  box-shadow:
-    0 6px 16px #173e3921,
-    inset 0 1px 0 #ffffff38;
-}
-
-.app-shell[data-screen="S05"] .journey-saved .save-next-step {
-  border: 1px solid #dbe7e1;
-  border-radius: 1rem;
-  background: #fffffff2;
-  box-shadow:
-    0 12px 28px #173e3911,
-    inset 0 1px 0 #fff;
-}
-
-.app-shell[data-screen="S05"] .journey-saved .split-actions > button:first-child {
-  border-color: #ffffff4f;
-  background: linear-gradient(135deg, #19534f, #10363b);
-  box-shadow: 0 7px 18px #173e3924;
-}
-
-.app-shell[data-screen="S05"] .journey-saved .split-actions > button.secondary {
-  border-color: #cfded7;
-  background: #ffffffba;
-}
-
-
-@media (max-width: 580px) {
-  .app-shell[data-screen="S05"]:has(.journey-candidate) {
-    background:
-      linear-gradient(180deg, #eef4f4 0%, #f8faf9 64%, #fbfcfb 100%);
-  }
-
-  .app-shell[data-screen="S05"] .journey-saved .save-next-step {
-    box-shadow:
-      0 7px 18px #173e390d,
-      inset 0 1px 0 #fff;
-  }
-}
-
 /* S12-S14 inherit the same semantic palette and one-surface hierarchy. */
 .app-shell:is([data-screen="S12"], [data-screen="S13"], [data-screen="S14"]) .surface {
   box-shadow: var(--sk7-shadow-surface);
@@ -1259,8 +1194,9 @@
 }
 
 .journey-saved .journey-continuation-actions--saved {
-  width: min(100%, 32rem);
-  margin-top: 20px;
+  gap: var(--sk7-space-sm);
+  width: min(100%, var(--sk7-form-max));
+  margin-top: var(--sk7-space-lg);
   padding-top: 0;
   border-top: 0;
 }
