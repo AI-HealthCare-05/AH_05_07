@@ -43,7 +43,17 @@ def learning_record_schema() -> dict[str, Any]:
         [
             {
                 "if": {"properties": {"recordState": {"const": "complete"}}, "required": ["recordState"]},
-                "then": {"required": ["artifact"]},
+                "then": {
+                    "required": ["artifact"],
+                    "properties": {"artifact": {"$ref": "#/$defs/Artifact"}},
+                },
+            },
+            {
+                "if": {
+                    "properties": {"recordState": {"enum": ["partial", "aborted"]}},
+                    "required": ["recordState", "artifact"],
+                },
+                "then": {"properties": {"artifact": {"$ref": "#/$defs/Artifact"}}},
             },
             {
                 "if": {
@@ -59,12 +69,27 @@ def learning_record_schema() -> dict[str, Any]:
                             "properties": {
                                 "build": {
                                     "anyOf": [
-                                        {"required": ["operationId"]},
-                                        {"required": ["type"]},
-                                        {"required": ["target"]},
-                                        {"required": ["intent"]},
-                                        {"required": ["basis"]},
-                                    ]
+                                        {
+                                            "required": ["operationId"],
+                                            "properties": {"operationId": {"not": {"type": "null"}}},
+                                        },
+                                        {
+                                            "required": ["type"],
+                                            "properties": {"type": {"not": {"type": "null"}}},
+                                        },
+                                        {
+                                            "required": ["target"],
+                                            "properties": {"target": {"not": {"type": "null"}}},
+                                        },
+                                        {
+                                            "required": ["intent"],
+                                            "properties": {"intent": {"not": {"type": "null"}}},
+                                        },
+                                        {
+                                            "required": ["basis"],
+                                            "properties": {"basis": {"not": {"type": "null"}}},
+                                        },
+                                    ],
                                 }
                             },
                         },

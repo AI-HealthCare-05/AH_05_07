@@ -837,9 +837,37 @@
         ]
       },
       "then": {
+        "properties": {
+          "artifact": {
+            "$ref": "#/$defs/Artifact"
+          }
+        },
         "required": [
           "artifact"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recordState": {
+            "enum": [
+              "partial",
+              "aborted"
+            ]
+          }
+        },
+        "required": [
+          "recordState",
+          "artifact"
+        ]
+      },
+      "then": {
+        "properties": {
+          "artifact": {
+            "$ref": "#/$defs/Artifact"
+          }
+        }
       }
     },
     {
@@ -878,26 +906,61 @@
               "build": {
                 "anyOf": [
                   {
+                    "properties": {
+                      "operationId": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    },
                     "required": [
                       "operationId"
                     ]
                   },
                   {
+                    "properties": {
+                      "type": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    },
                     "required": [
                       "type"
                     ]
                   },
                   {
+                    "properties": {
+                      "target": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    },
                     "required": [
                       "target"
                     ]
                   },
                   {
+                    "properties": {
+                      "intent": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    },
                     "required": [
                       "intent"
                     ]
                   },
                   {
+                    "properties": {
+                      "basis": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    },
                     "required": [
                       "basis"
                     ]

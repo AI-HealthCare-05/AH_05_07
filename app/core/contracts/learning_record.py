@@ -298,9 +298,9 @@ class LearningRecord(_CoreModel):
 
     @model_validator(mode="after")
     def _evidence_ref_targets(self) -> LearningRecord:
-        if not self.evaluations or not self.evidence:
+        if not self.evaluations:
             return self
-        evidence_ids = {e.evidenceId for e in self.evidence}
+        evidence_ids = {e.evidenceId for e in self.evidence or []}
         for evaluation in self.evaluations:
             if not evaluation.evidenceRefs:
                 continue

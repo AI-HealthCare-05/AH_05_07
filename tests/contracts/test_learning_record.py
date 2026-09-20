@@ -133,6 +133,32 @@ def test_authority_observations_are_structurally_separate() -> None:
 
 
 @pytest.mark.parametrize(
+    ("omit_evidence", "ref", "message"),
+    [
+        (True, {"kind": "artifact", "id": "art-hand-trowel-v1"}, "evidenceRef kind"),
+        (True, {"kind": "evidence", "id": "missing"}, "unknown evidenceId"),
+        (False, {"kind": "artifact", "id": "art-hand-trowel-v1"}, "evidenceRef kind"),
+        (False, {"kind": "evidence", "id": "missing"}, "unknown evidenceId"),
+    ],
+)
+def test_evidence_refs_are_always_evidence_only_and_local(
+    omit_evidence: bool, ref: dict[str, str], message: str
+) -> None:
+    rec = _load("learning_record_complete_valid.json")
+    if omit_evidence:
+        rec.pop("evidence")
+    rec["evaluations"][0]["evidenceRefs"] = [ref]
+    with pytest.raises(ValidationError, match=message):
+        validate_learning_record(rec)
+
+
+def test_evidence_refs_resolve_to_local_evidence() -> None:
+    rec = _load("learning_record_complete_valid.json")
+    result = validate_learning_record(rec)
+    assert result.evaluations[0].evidenceRefs[0].id == result.evidence[0].evidenceId
+
+
+@pytest.mark.parametrize(
     ("mutate", "message"),
     [
         (lambda rec: rec["evaluations"][0]["subjectRef"].update(kind="evidence"), "evaluation subjectRef"),
@@ -180,6 +206,34 @@ def test_artifactless_empty_build_requires_explanation(state: str) -> None:
     rec.update(recordState=state, build={}, limitations=[])
     with pytest.raises(ValidationError, match="requires"):
         validate_learning_record(rec)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda rec: rec.update(artifact=None), "requires a primary artifact"),
+        (
+            lambda rec: rec.update(artifact=None, build=None, limitations=[]),
+            "requires limitations and/or build",
+        ),
+        (
+            lambda rec: (rec.pop("artifact", None), rec.update(build={"operationId": None}, limitations=[])),
+            "requires limitations and/or build",
+        ),
+    ],
+    ids=["complete-null-artifact", "partial-null-artifact", "partial-null-only-build"],
+)
+def test_state_condition_null_cases_fail_in_model_and_schema(mutate: object, message: str) -> None:
+    from scripts.data.generate_sk7_contract_schemas import learning_record_schema
+
+    rec = _load("learning_record_complete_valid.json")
+    if message != "requires a primary artifact":
+        rec = _load("learning_record_partial_valid.json")
+    mutate(rec)
+
+    with pytest.raises(ValidationError, match=message):
+        validate_learning_record(rec)
+    assert list(Draft202012Validator(learning_record_schema()).iter_errors(rec))
 
 
 def test_learning_record_schema_uses_draft_validator_and_matches_generator() -> None:
