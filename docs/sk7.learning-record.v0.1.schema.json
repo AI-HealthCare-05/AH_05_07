@@ -965,7 +965,8 @@
                       "basis"
                     ]
                   }
-                ]
+                ],
+                "type": "object"
               }
             },
             "required": [

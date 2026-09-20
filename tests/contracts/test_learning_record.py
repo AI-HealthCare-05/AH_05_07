@@ -217,11 +217,20 @@ def test_artifactless_empty_build_requires_explanation(state: str) -> None:
             "requires limitations and/or build",
         ),
         (
+            lambda rec: (rec.pop("artifact", None), rec.update(build=None, limitations=[])),
+            "requires limitations and/or build",
+        ),
+        (
             lambda rec: (rec.pop("artifact", None), rec.update(build={"operationId": None}, limitations=[])),
             "requires limitations and/or build",
         ),
     ],
-    ids=["complete-null-artifact", "partial-null-artifact", "partial-null-only-build"],
+    ids=[
+        "complete-null-artifact",
+        "partial-null-artifact",
+        "partial-omitted-artifact-null-build",
+        "partial-null-only-build",
+    ],
 )
 def test_state_condition_null_cases_fail_in_model_and_schema(mutate: object, message: str) -> None:
     from scripts.data.generate_sk7_contract_schemas import learning_record_schema

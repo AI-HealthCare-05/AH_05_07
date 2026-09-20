@@ -68,6 +68,7 @@ def learning_record_schema() -> dict[str, Any]:
                             "required": ["build"],
                             "properties": {
                                 "build": {
+                                    "type": "object",
                                     "anyOf": [
                                         {
                                             "required": ["operationId"],
