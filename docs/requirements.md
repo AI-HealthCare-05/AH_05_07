@@ -38,7 +38,7 @@ product-requirements authority after review and merge.
 | ID | Priority | Status | Contract | Acceptance evidence |
 |---|---|---|---|---|
 | NFR-01 | P0 | Partial | Publish a versioned latency and load baseline before freezing a P95 target. | Sanitized pre/post-index initial and warm measurements in [observation-load-baseline.md](observation-load-baseline.md); expand the sample before setting a target. |
-| NFR-02 | P0 | Planned | Equal normalized input plus model version returns equal output. | Repeated-input test against the immutable artifact. |
+| NFR-02 | P0 | Planned | Equal normalized input plus model version returns equal output. | Repeated-input test against the immutable artifact. Historical [R1](research/model-v2-r1-artifact-result.md) and [R2](research/model-v2-r2-inference-result.md) evidence records byte-identical serialization, reload equivalence, and identical repeated inference for the frozen artifact. The current browser parity verifier covers product-adapter and runtime parity, but this change did not execute a current end-to-end repeated-input acceptance run with the external artifact; the status therefore remains Planned. |
 | NFR-03 | P0 | Partial | Training and validation remain disjoint; compare at least two models and multiple metrics. | Split digest, experiment manifest, model card, and leakage audit. |
 | NFR-04 | P0 | Implemented | Supabase JWT and RLS isolate every user's rows. | Issue #149 Phase B passed approved synthetic two-user owner CRUD/export, cross-user non-disclosure, anonymous denial, and cleanup without retaining identifiers or values. |
 | NFR-05 | P0 | Implemented boundary | Real PHI and identifying content are out of scope. | Synthetic demo data; request bodies and health values absent from logs. |

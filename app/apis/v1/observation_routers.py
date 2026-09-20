@@ -218,6 +218,8 @@ async def select_active_challenge(
             korea_today(),
             await observation_session(authorization),
         )
+    except ActiveChallengeMissingError as error:
+        raise active_challenge_not_found() from error
     except ChallengeSelectionLockedError as error:
         raise challenge_selection_locked() from error
     except httpx.HTTPError as error:
