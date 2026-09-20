@@ -988,6 +988,7 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   await expect(page.getByRole('status')).toHaveCount(0);
   expect(posts).toBe(1); held.release();
   await expect(page.getByRole('status')).toContainText('로그인 링크를 보냈어요.');
+  await expect(page.getByRole('status')).toHaveClass(/\bstatus-notice\b/);
   fail = true;
   await page.getByRole('button', { name: '로그인 링크 받기', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('로그인 링크를 보내지 못했습니다.');
@@ -999,6 +1000,57 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   await expect(button).toBeFocused(); await expect(button).toBeInViewport({ ratio: 1 });
   expect(await button.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+for (const viewport of [
+  { name: '320', width: 320, height: 568 },
+  { name: '390', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'desktop', width: 1366, height: 768 },
+] as const) test(`S01 shared UI foundation reflows at ${viewport.name}`, async ({ page }) => {
+  await page.setViewportSize(viewport);
+  await page.goto('/');
+
+  const login = page.locator('[data-scene="S01"].journey-login');
+  const intro = login.locator('.journey-login-intro');
+  const auth = login.locator('.journey-login-auth.surface');
+  await expect(login).toBeVisible();
+  await expect(intro.locator(':scope > .screen-header')).toHaveCount(1);
+  await expect(intro.locator('.journey-login-companion.section-header')).toHaveCount(1);
+  await expect(intro.locator('.journey-login-preview-entry.section-header .action-group')).toHaveCount(1);
+  await expect(auth.locator('.journey-login-auth-header.section-header')).toHaveCount(1);
+  await expect(auth.locator('.journey-login-form.section-header .entry-auth-wrap.action-group')).toHaveCount(1);
+  await expect(auth.locator('.journey-login-policy.section-header')).toHaveCount(1);
+
+  const introBox = await intro.boundingBox();
+  const authBox = await auth.boundingBox();
+  expect(introBox).not.toBeNull();
+  expect(authBox).not.toBeNull();
+  if (viewport.width > 820) {
+    expect(introBox!.x + introBox!.width).toBeLessThan(authBox!.x);
+  } else {
+    expect(Math.abs(introBox!.x - authBox!.x)).toBeLessThanOrEqual(1);
+    expect(introBox!.y + introBox!.height).toBeLessThan(authBox!.y);
+  }
+
+  const actionStyles = await Promise.all([
+    login.getByRole('button', { name: '로그인 링크 받기', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor),
+    login.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor),
+  ]);
+  expect(actionStyles[0]).not.toBe(actionStyles[1]);
+
+  const controls = login.locator('button, input, select');
+  const controlCount = await controls.count();
+  for (let index = 0; index < controlCount; index += 1) {
+    const box = await controls.nth(index).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(await login.locator('#email').evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(32);
 });
 
 for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current actions'} keeps empty-window semantics`, async ({ page }) => {

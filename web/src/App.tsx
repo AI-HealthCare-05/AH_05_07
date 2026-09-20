@@ -239,7 +239,7 @@ function Login({
       data-demo-companion-species={companionSpecies}
     >
       <header className="journey-demo-preview-bar">
-        <div>
+        <div className="journey-demo-preview-heading section-header">
           <p className="eyebrow">30초 맛보기</p>
           <strong>예시 데이터 · 저장되지 않아요</strong>
           <p className="journey-demo-preview-guide">여기가 로그인 후 만나는 첫 화면이에요. 지금 보이는 기록은 모두 예시예요.</p>
@@ -249,15 +249,17 @@ function Login({
 
       {previewGateOpen && <div className="journey-demo-login-gate-backdrop">
         <section
-          className="journey-demo-login-gate"
+          className="journey-demo-login-gate surface"
           role="dialog"
           aria-modal="true"
           aria-labelledby="journey-demo-login-gate-title"
         >
-          <p className="eyebrow">맛보기는 여기까지</p>
-          <h2 id="journey-demo-login-gate-title">여기부터는 실제 기록이에요.</h2>
-          <p>로그인하면 내 혈압 기록과 7일 흐름을 이어서 남길 수 있어요. 맛보기의 예시 데이터는 저장되지 않아요.</p>
-          <div className="journey-demo-login-gate-actions">
+          <div className="screen-header">
+            <p className="eyebrow">맛보기는 여기까지</p>
+            <h2 id="journey-demo-login-gate-title">여기부터는 실제 기록이에요.</h2>
+            <p>로그인하면 내 혈압 기록과 7일 흐름을 이어서 남길 수 있어요. 맛보기의 예시 데이터는 저장되지 않아요.</p>
+          </div>
+          <div className="journey-demo-login-gate-actions action-group">
             <button type="button" onClick={() => returnToLogin(true)}>로그인하고 기록 시작</button>
             <button type="button" className="secondary" onClick={() => setPreviewGateOpen(false)}>계속 둘러보기</button>
           </div>
@@ -302,38 +304,49 @@ function Login({
     <main className="welcome-shell journey-login" data-scene="S01">
       <div className="journey-login-layout">
         <section className="journey-login-intro" aria-labelledby="login-title">
-          <p className="eyebrow">SK7</p>
-          <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
-          <p className="scene-body">혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요. 한 건부터 바로 시작할 수 있어요.</p>
-          <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
-          {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
-            <span>함께할 캐릭터</span>
-            <select
-              id="login-companion-species"
-              value={companionSpecies}
-              onChange={(event) => onCompanionSpeciesChange(event.target.value as CompanionSpecies)}
-            >
-              {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
-            </select>
-          </label>}
-          <div className="journey-login-preview-entry journey-login-preview-entry--primary">
-            <button type="button" className="entry-preview-button journey-demo-entry-button" onClick={openPreview}>로그인 없이 30초 맛보기</button>
+          <div className="screen-header">
+            <p className="eyebrow">SK7</p>
+            <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
+            <p className="scene-body">혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요. 한 건부터 바로 시작할 수 있어요.</p>
+          </div>
+          <div className="journey-login-companion section-header">
+            <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
+            {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
+              <span>함께할 캐릭터</span>
+              <select
+                id="login-companion-species"
+                value={companionSpecies}
+                onChange={(event) => onCompanionSpeciesChange(event.target.value as CompanionSpecies)}
+              >
+                {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+              </select>
+            </label>}
+          </div>
+          <div className="journey-login-preview-entry section-header">
+            <div className="action-group">
+              <button type="button" className="secondary entry-preview-button journey-demo-entry-button" onClick={openPreview}>로그인 없이 30초 맛보기</button>
+            </div>
             <p>예시 데이터만 사용해 첫 화면을 보고, 실제 기록은 로그인 후 시작해요.</p>
           </div>
         </section>
-        <section className="welcome-card" aria-label="이메일 로그인">
-          <form onSubmit={submit} aria-busy={pending}>
+        <section className="welcome-card journey-login-auth surface" aria-label="이메일 로그인">
+          <div className="journey-login-auth-header section-header">
+            <h2>이메일로 로그인</h2>
+            <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
+          </div>
+          <form className="journey-login-form section-header" onSubmit={submit} aria-busy={pending}>
             <label htmlFor="email">이메일</label>
             <input ref={emailRef} id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
-            <div className="entry-auth-wrap">
+            <div className="entry-auth-wrap action-group">
               <button type="submit" className="entry-auth-button" disabled={pending}>{pending ? "보내는 중" : "로그인 링크 받기"}</button>
             </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>
-          {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
-          <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
-          <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
-          <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
+          {(message || recoveryMessage) && <p className="notice notice-warning status-notice" role="status">{message || recoveryMessage}</p>}
+          <div className="journey-login-policy section-header">
+            <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
+            <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
+          </div>
         </section>
       </div>
     </main>
