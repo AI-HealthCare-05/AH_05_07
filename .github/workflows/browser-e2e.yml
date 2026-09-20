@@ -32,6 +32,7 @@ jobs:
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     outputs:
       modules: ${{ steps.select.outputs.browser_modules }}
+      profile: ${{ steps.select.outputs.browser_profile }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,6 +42,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - name: Verify CI concern selector
         run: node --test web/scripts/select-pr-browser-suites.test.mjs
       - name: Select affected browser modules
@@ -49,6 +52,18 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+      - name: Summarize browser selection
+        env:
+          SELECTED_MODULES: ${{ steps.select.outputs.browser_modules }}
+          SELECTED_PROFILE: ${{ steps.select.outputs.browser_profile }}
+        run: |
+          {
+            echo "### Browser E2E selection"
+            echo
+            echo "| Profile | Modules |"
+            echo "| --- | --- |"
+            echo "| $SELECTED_PROFILE | \`$SELECTED_MODULES\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   browser-e2e-pr:
     name: browser-e2e-pr (${{ matrix.module }})
@@ -73,6 +88,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - name: Set up Python for character asset checks
         if: matrix.module == 'assets'
         uses: actions/setup-python@v5
@@ -83,6 +100,14 @@ jobs:
         run: npm ci
       - name: Run ${{ matrix.module }} browser module
         run: node scripts/browser-ci-modules.mjs "${{ matrix.module }}"
+      - name: Upload failed Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-pr-${{ matrix.module }}-${{ github.run_attempt }}
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
 
   browser-e2e:
     name: browser-e2e
@@ -115,12 +140,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
       - run: npm ci
       - name: Run core, Journey and asset confidence
-        run: node scripts/browser-ci-modules.mjs core journey assets
+        run: node scripts/browser-ci-modules.mjs core journey-full assets
+      - name: Upload failed Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-nightly-core-${{ github.run_attempt }}
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
 
   nightly-scene:
     name: nightly-scene
@@ -138,9 +173,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - run: npm ci
       - name: Run scene confidence
         run: node scripts/browser-ci-modules.mjs scene
+      - name: Upload failed Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-nightly-scene-${{ github.run_attempt }}
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
 
   nightly-model:
     name: nightly-model
@@ -158,6 +203,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - run: npm ci
       - name: Run Model V2 confidence
         run: node scripts/browser-ci-modules.mjs model
+      - name: Upload failed Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-nightly-model-${{ github.run_attempt }}
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3

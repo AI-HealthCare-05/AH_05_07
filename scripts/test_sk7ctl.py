@@ -291,12 +291,15 @@ class Sk7ctlTests(unittest.TestCase):
         self.assertIn("focused", suite["profiles"])
         self.assertTrue(suite["run"])
 
-    def test_app_shell_selects_auth_and_journey_ui_not_full_matrix(self) -> None:
+    def test_app_shell_selects_auth_and_broad_journey_confidence(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/App.tsx"], "routine", "focused", self.real_root)
         names = {item.get("name") for item in plan}
         self.assertIn("core", names)
-        self.assertIn("journey", names)
+        self.assertIn("journey-full", names)
         self.assertNotIn("model", names)
+        journey = next(item for item in plan if item.get("name") == "journey-full")
+        self.assertEqual(journey["cost"], "EXPENSIVE")
+        self.assertNotIn("focused", journey["profiles"])
 
     def test_scene_companion_runtime_selects_review_scene_suite(self) -> None:
         plan = sk7ctl.verification_plan(["web/src/components/VisualStage.tsx"], "routine", "focused", self.real_root)
