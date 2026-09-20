@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Coroutine
 from datetime import date
 from types import SimpleNamespace
 
@@ -7,78 +7,84 @@ import pytest
 from fastapi import HTTPException, status
 
 from app.apis.v1 import observation_routers
-from app.core import config
-from app.dependencies import supabase_auth
 from app.dependencies.supabase_auth import SupabaseSession
 
 
-class SuccessfulAuthResponse:
-    status_code = status.HTTP_200_OK
-
-    @staticmethod
-    def json() -> dict[str, str]:
-        return {"id": "11111111-1111-4111-8111-111111111111"}
-
-
 @pytest.mark.asyncio
-async def test_auth_validator_keeps_five_second_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    observed_timeouts: list[float] = []
-
-    class AuthClient:
-        def __init__(self, timeout: float) -> None:
-            observed_timeouts.append(timeout)
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_args: object) -> None:
-            return None
-
-        async def get(self, *_args: object, **_kwargs: object) -> SuccessfulAuthResponse:
-            return SuccessfulAuthResponse()
-
-    monkeypatch.setattr(config, "SUPABASE_URL", "https://supabase.test")
-    monkeypatch.setattr(config, "SUPABASE_PUBLISHABLE_KEY", "publishable-test-key")
-    monkeypatch.setattr(supabase_auth.httpx, "AsyncClient", AuthClient)
-
-    session = await supabase_auth.validate_supabase_access_token("access-token")
-
-    assert observed_timeouts == [5.0]
-    assert session == SupabaseSession(
-        user_id="11111111-1111-4111-8111-111111111111",
-        access_token="access-token",
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("provider_status", [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
-async def test_bounded_auth_explicit_rejection_stays_401(
+async def test_observation_window_session_uses_remaining_outer_timeout(
     monkeypatch: pytest.MonkeyPatch,
-    provider_status: int,
 ) -> None:
-    class RejectedAuthResponse:
-        status_code = provider_status
+    observed_authorizations: list[str | None] = []
+    observed_timeouts: list[float] = []
+    session = SupabaseSession(user_id="session-user", access_token="access-token")
 
-    class AuthClient:
-        def __init__(self, timeout: float) -> None:
-            assert timeout == 2.5
+    async def observation_session(authorization: str | None) -> SupabaseSession:
+        observed_authorizations.append(authorization)
+        return session
 
-        async def __aenter__(self):
-            return self
+    async def bounded_wait(awaitable: Awaitable[SupabaseSession], timeout: float) -> SupabaseSession:
+        observed_timeouts.append(timeout)
+        return await awaitable
 
-        async def __aexit__(self, *_args: object) -> None:
-            return None
+    monkeypatch.setattr(observation_routers, "observation_session", observation_session)
+    monkeypatch.setattr(observation_routers, "remaining_observation_read_budget", lambda _deadline: 2.75)
+    monkeypatch.setattr(observation_routers.asyncio, "wait_for", bounded_wait)
 
-        async def get(self, *_args: object, **_kwargs: object) -> RejectedAuthResponse:
-            return RejectedAuthResponse()
+    result = await observation_routers.observation_window_session("Bearer access-token", 123.0)
 
-    monkeypatch.setattr(config, "SUPABASE_URL", "https://supabase.test")
-    monkeypatch.setattr(config, "SUPABASE_PUBLISHABLE_KEY", "publishable-test-key")
-    monkeypatch.setattr(supabase_auth.httpx, "AsyncClient", AuthClient)
+    assert result == session
+    assert observed_authorizations == ["Bearer access-token"]
+    assert observed_timeouts == [2.75]
+
+
+@pytest.mark.asyncio
+async def test_observation_window_session_outer_timeout_maps_to_auth_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def observation_session(_authorization: str | None) -> SupabaseSession:
+        return SupabaseSession(user_id="session-user", access_token="access-token")
+
+    async def timed_out_wait(
+        awaitable: Coroutine[object, object, SupabaseSession],
+        timeout: float,
+    ) -> SupabaseSession:
+        assert timeout == 1.5
+        awaitable.close()
+        raise TimeoutError
+
+    monkeypatch.setattr(observation_routers, "observation_session", observation_session)
+    monkeypatch.setattr(observation_routers, "remaining_observation_read_budget", lambda _deadline: 1.5)
+    monkeypatch.setattr(observation_routers.asyncio, "wait_for", timed_out_wait)
 
     with pytest.raises(HTTPException) as error:
-        await supabase_auth.validate_supabase_access_token("rejected-token", timeout_seconds=2.5)
+        await observation_routers.observation_window_session("Bearer access-token", 123.0)
 
+    assert error.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert error.value.detail == {
+        "code": "auth_unavailable",
+        "message": "Authentication provider is temporarily unavailable.",
+    }
+
+
+@pytest.mark.asyncio
+async def test_observation_window_session_preserves_explicit_auth_401(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auth_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={"code": "supabase_session_invalid"},
+    )
+
+    async def rejected_session(_authorization: str | None) -> SupabaseSession:
+        raise auth_error
+
+    monkeypatch.setattr(observation_routers, "observation_session", rejected_session)
+    monkeypatch.setattr(observation_routers, "remaining_observation_read_budget", lambda _deadline: 2.5)
+
+    with pytest.raises(HTTPException) as error:
+        await observation_routers.observation_window_session("Bearer rejected-token", 123.0)
+
+    assert error.value is auth_error
     assert error.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert error.value.detail == {"code": "supabase_session_invalid"}
 
@@ -88,7 +94,7 @@ async def test_window_auth_and_concurrent_data_share_one_server_deadline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monotonic_values = iter([100.0, 104.2, 104.5])
-    auth_timeouts: list[float] = []
+    wait_timeouts: list[float] = []
     data_timeouts: list[float] = []
     fanout_started: list[str] = []
     all_started = asyncio.Event()
@@ -100,9 +106,12 @@ async def test_window_auth_and_concurrent_data_share_one_server_deadline(
         SimpleNamespace(monotonic=lambda: next(monotonic_values)),
     )
 
-    async def observation_session(_authorization: str | None, timeout_seconds: float = 5.0) -> SupabaseSession:
-        auth_timeouts.append(timeout_seconds)
+    async def observation_session(_authorization: str | None) -> SupabaseSession:
         return session
+
+    async def bounded_wait(awaitable: Awaitable[object], timeout: float) -> object:
+        wait_timeouts.append(timeout)
+        return await awaitable
 
     class DataClient:
         def __init__(self, timeout: float) -> None:
@@ -129,6 +138,7 @@ async def test_window_auth_and_concurrent_data_share_one_server_deadline(
         return {"active_challenge": None, "challenge_checkins": []}
 
     monkeypatch.setattr(observation_routers, "observation_session", observation_session)
+    monkeypatch.setattr(observation_routers.asyncio, "wait_for", bounded_wait)
     monkeypatch.setattr(observation_routers.httpx, "AsyncClient", DataClient)
     monkeypatch.setattr(observation_routers, "list_owned_records", list_records)
     monkeypatch.setattr(observation_routers, "get_owned_challenge_window", challenge_window)
@@ -139,7 +149,7 @@ async def test_window_auth_and_concurrent_data_share_one_server_deadline(
         "Bearer access-token",
     )
 
-    assert auth_timeouts[0] == pytest.approx(2.8)
+    assert wait_timeouts == pytest.approx([2.8, 2.5])
     assert data_timeouts[0] == pytest.approx(2.5)
     assert set(fanout_started) == {
         "blood_pressure_observations",
@@ -157,27 +167,6 @@ async def test_window_auth_and_concurrent_data_share_one_server_deadline(
 
 
 @pytest.mark.asyncio
-async def test_window_auth_deadline_expiry_stays_auth_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def timed_out_session(*_args: object, **_kwargs: object) -> SupabaseSession:
-        raise TimeoutError
-
-    monkeypatch.setattr(observation_routers, "observation_session", timed_out_session)
-
-    with pytest.raises(HTTPException) as error:
-        await observation_routers.get_observation_window(
-            date(2026, 9, 14),
-            date(2026, 9, 20),
-            "Bearer access-token",
-        )
-
-    assert error.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-    assert error.value.detail == {
-        "code": "auth_unavailable",
-        "message": "Authentication provider is temporarily unavailable.",
-    }
-
-
-@pytest.mark.asyncio
 async def test_window_exhausted_after_auth_stops_before_data(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -190,8 +179,7 @@ async def test_window_exhausted_after_auth_stops_before_data(
         SimpleNamespace(monotonic=lambda: next(monotonic_values)),
     )
 
-    async def observation_session(_authorization: str | None, timeout_seconds: float = 5.0) -> SupabaseSession:
-        assert timeout_seconds == 5.0
+    async def observation_session(_authorization: str | None) -> SupabaseSession:
         return SupabaseSession(user_id="session-user", access_token="access-token")
 
     class DataClient:
@@ -234,8 +222,7 @@ async def test_window_fanout_deadline_expiry_maps_to_storage_not_ready(
             pass
         raise TimeoutError
 
-    async def observation_session(_authorization: str | None, timeout_seconds: float = 5.0) -> SupabaseSession:
-        assert timeout_seconds == 4.0
+    async def observation_session(_authorization: str | None) -> SupabaseSession:
         return SupabaseSession(user_id="session-user", access_token="access-token")
 
     class DataClient:

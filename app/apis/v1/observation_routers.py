@@ -104,19 +104,33 @@ def bearer_token_from_header(authorization: str | None) -> str:
     return access_token.strip()
 
 
-async def observation_session(
-    authorization: str | None,
-    timeout_seconds: float = UPSTREAM_HOP_TIMEOUT_SECONDS,
-) -> SupabaseSession:
+async def observation_session(authorization: str | None) -> SupabaseSession:
     ensure_supabase_auth_configured()
-    return await validate_supabase_access_token(
-        bearer_token_from_header(authorization),
-        timeout_seconds=timeout_seconds,
-    )
+    return await validate_supabase_access_token(bearer_token_from_header(authorization))
 
 
 def remaining_observation_read_budget(deadline: float) -> float:
     return max(0.0, deadline - time.monotonic())
+
+
+async def observation_window_session(
+    authorization: str | None,
+    deadline: float,
+) -> SupabaseSession:
+    remaining = min(
+        UPSTREAM_HOP_TIMEOUT_SECONDS,
+        remaining_observation_read_budget(deadline),
+    )
+    if remaining <= 0:
+        raise auth_unavailable()
+
+    try:
+        return await asyncio.wait_for(
+            observation_session(authorization),
+            timeout=remaining,
+        )
+    except TimeoutError as error:
+        raise auth_unavailable() from error
 
 
 def korea_today() -> date:
@@ -319,20 +333,7 @@ async def get_observation_window(
     validate_observation_window(start_on, end_on)
     deadline = time.monotonic() + OBSERVATION_WINDOW_READ_BUDGET_SECONDS
 
-    auth_remaining = remaining_observation_read_budget(deadline)
-    if auth_remaining <= 0:
-        raise auth_unavailable()
-
-    try:
-        session = await asyncio.wait_for(
-            observation_session(
-                authorization,
-                timeout_seconds=min(UPSTREAM_HOP_TIMEOUT_SECONDS, auth_remaining),
-            ),
-            timeout=auth_remaining,
-        )
-    except TimeoutError as error:
-        raise auth_unavailable() from error
+    session = await observation_window_session(authorization, deadline)
 
     data_remaining = remaining_observation_read_budget(deadline)
     if data_remaining <= 0:
