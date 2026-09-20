@@ -1,0 +1,157 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-hand-trowel-v1",
+  "episodeId": "ep-hand-trowel",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "request": {
+    "originalTextStatus": "not-recorded",
+    "goal": {
+      "text": "hand trowel garden tool",
+      "basis": "recorded-source-metadata"
+    }
+  },
+  "inputs": [
+    {
+      "inputId": "in-blade-geo",
+      "role": "geometry-source",
+      "ref": {
+        "contentHash": {
+          "algorithm": "sha-256",
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "locator": "source/blade-v1.glb"
+      }
+    }
+  ],
+  "build": {
+    "operationId": "op-assemble",
+    "type": "compose",
+    "target": "hand-trowel",
+    "intent": "assemble blade and handle",
+    "basis": "recorded-source-metadata"
+  },
+  "artifact": {
+    "artifactId": "art-hand-trowel-v1",
+    "kind": "mesh",
+    "ref": {
+      "contentHash": {
+        "algorithm": "sha-256",
+        "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "locator": "build/hand-trowel-v1.glb"
+    }
+  },
+  "presentations": [
+    {
+      "presentationId": "pres-hand-trowel-a",
+      "artifactId": "art-hand-trowel-v1",
+      "view": "camera-a-blade-flat"
+    },
+    {
+      "presentationId": "pres-hand-trowel-b",
+      "artifactId": "art-hand-trowel-v1",
+      "view": "camera-b-handle-grip"
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "ev-render-a",
+      "kind": "render",
+      "ref": {
+        "contentHash": {
+          "algorithm": "sha-256",
+          "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "locator": "preview/hand-trowel-a.png"
+      }
+    }
+  ],
+  "evaluations": [
+    {
+      "evaluationId": "eval-a-static",
+      "subjectRef": {
+        "kind": "presentation",
+        "id": "pres-hand-trowel-a"
+      },
+      "evidenceRefs": [
+        {
+          "kind": "evidence",
+          "id": "ev-render-a"
+        }
+      ],
+      "kind": "static-source",
+      "verdict": "pass",
+      "authority": "automated"
+    }
+  ],
+  "decisions": [
+    {
+      "decisionId": "dec-hand-trowel-a",
+      "subjectRef": {
+        "kind": "presentation",
+        "id": "pres-hand-trowel-a"
+      },
+      "disposition": "reject",
+      "authority": "assistant",
+      "observation": {
+        "observedAt": "2026-09-19T12:00:00Z",
+        "source": "assistant-visual-review"
+      },
+      "ownerApproval": {
+        "value": "pending",
+        "observedAt": "2026-09-19T12:00:00Z",
+        "source": "assistant-visual-review"
+      },
+      "productionActivation": {
+        "value": false,
+        "observedAt": "2026-09-19T12:00:00Z",
+        "source": "run-summary"
+      },
+      "rationale": "blade reads flatter"
+    }
+  ],
+  "comparisons": [
+    {
+      "comparisonId": "cmp-a-vs-b",
+      "leftSubjectRef": {
+        "kind": "presentation",
+        "id": "pres-hand-trowel-a"
+      },
+      "rightSubjectRef": {
+        "kind": "presentation",
+        "id": "pres-hand-trowel-b"
+      },
+      "dimensionResults": [
+        {
+          "dimension": "small-slot-readability",
+          "outcome": "prefer-right",
+          "finding": "camera B grip is clearer at 80px"
+        },
+        {
+          "dimension": "performance-budget",
+          "outcome": "tie"
+        }
+      ],
+      "aggregateOutcome": "different-tradeoff"
+    }
+  ],
+  "lineage": {
+    "relations": [
+      {
+        "type": "repair-of",
+        "target": {
+          "kind": "learning-record",
+          "id": "lr-hand-trowel-v0"
+        }
+      }
+    ]
+  },
+  "limitations": [],
+  "provenance": {
+    "origin": "legacy-visual-factory",
+    "sourceRun": "SK7_Visual_Factory_Run_20260919_10",
+    "migrationVersion": "0.1"
+  }
+}

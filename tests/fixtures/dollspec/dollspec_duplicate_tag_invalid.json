@@ -1,0 +1,9 @@
+{
+  "schema": "sk7.dollspec",
+  "schemaVersion": "0.1",
+  "kind": "companion",
+  "identity": {
+    "archetype": "rabbit",
+    "characterTags": ["curious", "curious"]
+  }
+}

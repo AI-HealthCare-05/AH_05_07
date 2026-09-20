@@ -1,0 +1,23 @@
+{
+  "schema": "sk7.dollspec",
+  "schemaVersion": "0.1",
+  "kind": "companion",
+  "identity": {
+    "archetype": "rabbit"
+  },
+  "behavior": {
+    "motionIntents": ["react.touch.short", "react.touch.long"],
+    "interactions": [
+      {
+        "trigger": "pointer.tap",
+        "target": "head",
+        "response": "react.touch.short"
+      },
+      {
+        "trigger": "pointer.tap",
+        "target": "ear",
+        "response": "react.touch.long"
+      }
+    ]
+  }
+}

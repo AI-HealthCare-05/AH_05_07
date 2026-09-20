@@ -1,0 +1,41 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-presentation-decision",
+  "episodeId": "ep-presentation-decision",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-1",
+    "kind": "mesh",
+    "ref": {
+      "locator": "art.glb"
+    }
+  },
+  "presentations": [
+    {
+      "presentationId": "pres-1",
+      "artifactId": "art-1"
+    }
+  ],
+  "decisions": [
+    {
+      "decisionId": "dec-1",
+      "subjectRef": {
+        "kind": "presentation",
+        "id": "pres-1"
+      },
+      "disposition": "retain",
+      "authority": "assistant",
+      "observation": {
+        "observedAt": "2026-09-19T12:00:00Z",
+        "source": "assistant-visual-review"
+      },
+      "productionActivation": {
+        "value": false,
+        "observedAt": "2026-09-19T12:00:00Z",
+        "source": "run-summary"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-comparison-empty",
+  "episodeId": "ep-comparison-empty",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-1",
+    "kind": "mesh",
+    "ref": {
+      "locator": "art.glb"
+    }
+  },
+  "comparisons": [
+    {
+      "comparisonId": "cmp-empty",
+      "leftSubjectRef": {
+        "kind": "artifact",
+        "id": "art-1"
+      },
+      "rightSubjectRef": {
+        "kind": "artifact",
+        "id": "art-2"
+      },
+      "dimensionResults": []
+    }
+  ]
+}

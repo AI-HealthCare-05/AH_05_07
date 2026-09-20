@@ -1,0 +1,28 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-ambiguous-ref",
+  "episodeId": "ep-ambiguous",
+  "attemptIndex": 1,
+  "recordState": "partial",
+  "inputs": [
+    {
+      "inputId": "in-ambiguous",
+      "role": "geometry-source",
+      "ref": {
+        "kind": "artifact",
+        "id": "art-1",
+        "locator": "source/art.glb"
+      }
+    }
+  ],
+  "build": {
+    "operationId": "op-test",
+    "basis": "recorded"
+  },
+  "limitations": [
+    {
+      "description": "ambiguous reference fixture"
+    }
+  ]
+}

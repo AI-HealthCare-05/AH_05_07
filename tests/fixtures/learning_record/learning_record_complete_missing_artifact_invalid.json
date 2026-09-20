@@ -1,0 +1,11 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-missing-artifact",
+  "episodeId": "ep-missing",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "request": {
+    "originalTextStatus": "not-applicable"
+  }
+}

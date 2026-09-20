@@ -1,0 +1,30 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-duplicate-local",
+  "episodeId": "ep-duplicate",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "artifact": {
+    "artifactId": "art-1",
+    "kind": "mesh",
+    "ref": {
+      "locator": "art.glb"
+    }
+  },
+  "presentations": [
+    {
+      "presentationId": "same-id",
+      "artifactId": "art-1"
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "same-id",
+      "kind": "render",
+      "ref": {
+        "locator": "render.png"
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "sk7.learning-record",
+  "schemaVersion": "0.1",
+  "recordId": "lr-garden-scene",
+  "episodeId": "ep-garden",
+  "attemptIndex": 1,
+  "recordState": "complete",
+  "inputs": [
+    {
+      "inputId": "in-tree-1",
+      "role": "scene-component",
+      "ref": {
+        "locator": "source/tree.glb"
+      }
+    },
+    {
+      "inputId": "in-tree-2",
+      "role": "scene-component",
+      "ref": {
+        "locator": "source/tree.glb"
+      }
+    },
+    {
+      "inputId": "in-bench",
+      "role": "scene-component",
+      "ref": {
+        "locator": "source/bench.glb"
+      }
+    }
+  ],
+  "artifact": {
+    "artifactId": "art-garden-scene",
+    "kind": "composition",
+    "ref": {
+      "locator": "build/garden-scene.glb"
+    }
+  },
+  "lineage": {
+    "relations": [
+      {
+        "type": "composition-contains",
+        "target": {
+          "kind": "input",
+          "id": "in-tree-1"
+        }
+      },
+      {
+        "type": "composition-contains",
+        "target": {
+          "kind": "input",
+          "id": "in-tree-2"
+        }
+      },
+      {
+        "type": "composition-contains",
+        "target": {
+          "kind": "input",
+          "id": "in-bench"
+        }
+      }
+    ]
+  }
+}

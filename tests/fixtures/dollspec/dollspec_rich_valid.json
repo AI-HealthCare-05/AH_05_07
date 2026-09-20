@@ -1,0 +1,60 @@
+{
+  "schema": "sk7.dollspec",
+  "schemaVersion": "0.1",
+  "kind": "companion",
+  "identity": {
+    "archetype": "rabbit",
+    "variant": "small-rounded",
+    "characterTags": ["curious", "gentle"]
+  },
+  "appearance": {
+    "visualStyle": {
+      "preset": "soft-clay",
+      "tags": ["rounded", "toy-like"]
+    },
+    "proportions": {
+      "headScale": 1.15,
+      "bodyScale": 0.94,
+      "eyeScale": 1.08,
+      "earLength": 1.12,
+      "limbLength": 0.92,
+      "roundness": 0.84
+    },
+    "palette": {
+      "primary": "warm-cream",
+      "secondary": "soft-pink",
+      "accent": "dark-brown"
+    },
+    "surface": {
+      "feel": "matte-clay",
+      "softness": 0.78
+    }
+  },
+  "expression": {
+    "default": "curious",
+    "intensity": 0.55
+  },
+  "behavior": {
+    "motionIntents": [
+      "idle.relaxed",
+      "react.touch.short",
+      "emotion.happy"
+    ],
+    "interactions": [
+      {
+        "trigger": "pointer.tap",
+        "target": "head",
+        "response": "react.touch.short"
+      }
+    ]
+  },
+  "delivery": {
+    "qualityTier": "auto",
+    "targets": ["web", "mobile"],
+    "smallDisplayPriority": true
+  },
+  "constraints": {
+    "must": ["friendly-silhouette", "recognizable-at-small-size"],
+    "avoid": ["photorealistic", "thin-fragile-details"]
+  }
+}
