@@ -3,7 +3,8 @@
 
 The guard deliberately does not execute arbitrary project commands. It only reads
 Git path state and applies repository-owned path policy. The existing AGENTS.md
-risk lane and CI remain authoritative for what checks must run.
+risk lane and CI remain authoritative for what checks must run. A successful
+classification never authorizes merge; human merge remains the final gate.
 """
 
 from __future__ import annotations
@@ -211,15 +212,17 @@ def main() -> int:
         return 1
     if result.lane == "protected":
         if args.require_routine:
-            print("autopilot decision: stop before auto-merge; human approval is required")
+            print("autopilot decision: strict routine assertion failed; protected change requires human review/merge")
             return 2
-        print("autopilot decision: PR is allowed; auto-merge is not")
+        print("autopilot decision: protected lane; PR preparation is allowed; human merge is required")
         return 0
     if result.lane == "none":
         print("autopilot decision: no change detected")
         return 0
 
-    print("autopilot decision: routine lane; existing required CI remains authoritative")
+    print(
+        "autopilot decision: routine lane; PR preparation is allowed; human merge is required; existing required CI remains authoritative"
+    )
     return 0
 
 
