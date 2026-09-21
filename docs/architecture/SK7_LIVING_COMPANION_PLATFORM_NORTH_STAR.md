@@ -1,16 +1,17 @@
 # SK7 Living Companion Platform — North Star Architecture
 
-Status: architecture candidate — Revision 1 after dual adversarial review; no production behavior or deployment authorization
+Status: architecture candidate — Revision 2 after clean-room Phase 1 gate; no production behavior or deployment authorization
 Baseline: `9e0fe2ba9434b6762167dbc349ed29860e6196f3` (resolved from actual `origin/main` when the Phase 0 branch is created)
 Program name: **SK7 Transcend**
 Platform name: **SK7 Living Companion Platform**
 
-Revision 1 narrows only the **first implementation slice**, not the North Star:
-it makes the Interaction Lab enforceably isolated, selects a tagged Phase 1
-coordinate contract, separates visual/hit envelopes, reduces Phase 1
-arbitration to one fenced world-root lease, and turns renderer A/B claims into
-measured hypotheses. Later perception/dialogue/owner-transfer capabilities
-remain North Star directions but are not Phase 1 authorization.
+Revision 2 closes the three blocking ambiguities found by the clean-room Phase 1
+gate without shrinking the North Star. It makes the Lab non-deployable by
+construction, replaces per-registration Arena revisioning with one immutable
+atomic `ArenaSnapshot`, and separates `world-root` pose-write fencing from the
+Lab renderer backend's mount/reveal authority. Phase 1 remains an isolated
+experiment; later perception/dialogue/production-owner-transfer directions are
+unchanged and are not authorized by this revision.
 
 ## 1. Purpose
 
@@ -195,14 +196,60 @@ The long-term architecture distinguishes all required spaces, but Phase 1 uses
 one explicit canonical Arena contract instead of pretending they are already
 interchangeable.
 
-For the Interaction Lab:
+For the Interaction Lab, the canonical space is the current visual viewport in
+CSS pixels. Geometry is consumed only through one immutable snapshot:
 
 ```ts
+type ArenaRevision = number;
+type RouteEpoch = number;
+
 type ArenaPoint = {
   space: "visual-viewport-css-px";
-  revision: number;
+  revision: ArenaRevision;
   x: number;
   y: number;
+};
+
+type ArenaRect = {
+  space: "visual-viewport-css-px";
+  revision: ArenaRevision;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type PlacementIntent = {
+  preferredRole: string | null;
+  preferredAnchorId?: string;
+  normalizedOffset?: { x: number; y: number }; // clamped 0..1 preference only
+  fallbackOrder: readonly ("anchor" | "dock" | "control" | "hidden")[];
+};
+
+type CompanionAnchor = {
+  id: string;
+  routeEpoch: RouteEpoch;
+  arenaRevision: ArenaRevision;
+  role: string;
+  priority: number;
+  region: ArenaRect;
+};
+
+type ResolvedPose = {
+  routeEpoch: RouteEpoch;
+  arenaRevision: ArenaRevision;
+  point: ArenaPoint;
+  anchorId: string | null;
+  source: "anchor" | "dock" | "fallback";
+};
+
+type ArenaSnapshot = {
+  space: "visual-viewport-css-px";
+  routeEpoch: RouteEpoch;
+  revision: ArenaRevision;
+  viewport: ArenaRect;
+  anchors: readonly CompanionAnchor[];
+  hardZones: readonly ArenaRect[];
 };
 ```
 
@@ -210,40 +257,59 @@ The origin is the current `VisualViewport` top-left expressed in CSS pixels.
 Adapters explicitly translate between document/layout coordinates, the tagged
 Arena coordinate, actor-local coordinates and renderer/NDC coordinates.
 
-`arenaRevision` changes whenever geometry capable of invalidating placement
-changes, including:
+#### Atomic snapshot rule
+
+Anchor/hard-zone providers expose **untagged measured geometry** to one snapshot
+builder. A geometry-invalidating event schedules a rebuild; the builder chooses
+exactly one next `ArenaRevision` and stamps the viewport, every retained Anchor,
+every hard zone and every newly resolved pose with that same revision before the
+snapshot becomes current.
+
+Registering Anchor B after Anchor A therefore does **not** make A stale by
+itself. The provider set changes, then one complete snapshot containing A and B
+is published atomically. The previous snapshot remains immutable until it is
+replaced. No consumer may combine geometry from two revisions.
+
+A snapshot rebuild is required when placement-relevant geometry changes,
+including:
 
 - visual viewport resize/scroll or virtual-keyboard geometry;
 - layout/document scroll affecting registered geometry;
-- lab synthetic route change;
-- anchor registration/unregistration;
-- hard-zone geometry changes;
+- Lab synthetic route change;
+- anchor provider registration/unregistration;
+- hard-zone provider or geometry changes;
 - explicit Lab reset.
 
-A point or placement result from a stale revision is rejected rather than
-silently re-used. Long-term production integration may choose another canonical
-space only through a separately reviewed contract and migration.
+Every world-root write and placement resolution carries `routeEpoch` plus
+`ArenaRevision`; stale epochs/revisions fail without mutation. Within one
+snapshot, Anchor selection is deterministic: higher `priority` first, then
+lexicographic `id` as the tie-breaker.
+
+The Phase 1 route transition order is explicit:
+
+```text
+revoke current world-root lease
+-> advance routeEpoch
+-> retire the old ArenaSnapshot
+-> measure the new route providers
+-> atomically publish one new ArenaSnapshot
+-> resolve carried PlacementIntent against that snapshot
+-> apply anchor -> dock -> control -> hidden fallback
+```
+
+Cross-route continuity preserves `PlacementIntent`, not raw CSS pixels or a
+stale `ResolvedPose`. Long-term production integration may choose another
+canonical space only through a separately reviewed contract and migration.
 
 ### Anchor
 
-An Anchor is a route-scoped semantic placement opportunity, not a permanent
-pixel location and not the actor's complete movement boundary.
+An Anchor is a route-scoped semantic placement opportunity contained by one
+`ArenaSnapshot`; it is not a permanent pixel location and not the actor's
+complete movement boundary.
 
-Phase 1 Anchor identity includes at least:
-
-```ts
-type CompanionAnchor = {
-  id: string;
-  routeEpoch: number;
-  arenaRevision: number;
-  role: string;
-  priority: number;
-  region: Rect;
-};
-```
-
-Route change or explicit unregister disposes the old Anchor. A preferred anchor
-role may survive as placement intent, but its old geometry does not.
+Route change or explicit unregister changes the provider set and requires a new
+snapshot. A preferred role/id/normalized preference may survive as
+`PlacementIntent`, but old Anchor geometry and old resolved pose do not.
 
 Examples:
 
@@ -444,17 +510,58 @@ Recommended intent priority remains:
 
 ### Phase 1 arbitration contract
 
-Phase 1 implements **only one fenced `world-root` lease** for Lab relocation.
-The token carries at least session epoch, route epoch, acquisition identity and
-unique token identity. A stale owner cannot acquire, renew or release the new
-owner's lease; old-token release is ABA-safe.
+Phase 1 implements **one fenced `world-root` lease only** for Lab relocation.
+It fences authoritative world-pose writes; it does **not** authorize renderer
+mounting, visibility or reveal.
 
-Route change, Lab stop/reset, hard-zone invalidation and session replacement
-revoke the applicable world-root lease. Tie-breaking is deterministic.
+Minimum lease identity:
+
+```ts
+type WorldRootLease = {
+  token: string;
+  sessionEpoch: number;
+  routeEpoch: number;
+  arenaRevision: ArenaRevision;
+  owner: string;
+  acquisitionOrder: number;
+};
+```
+
+`acquire`, `renew`, `write` and `release` are exact-token operations. A request
+with stale session/route/revision/token returns failure without mutating the
+current lease or pose. If token T2 replaces T1, `release(T1)` must not clear T2
+(ABA-safe release). Publishing a new `ArenaSnapshot` revokes the prior
+world-root lease before the new revision accepts writes; an old-revision write
+can never carry forward implicitly.
+
+Route change, Lab stop/reset, hard-zone invalidation requiring re-placement and
+session replacement revoke the applicable world-root lease. Tie-breaking for
+competing Lab relocation requests is deterministic.
+
+#### Renderer backend authority is separate
+
+Phase 1 A/B comparison uses a **Lab-local sequential backend selector**, not a
+second generic lease. The selector owns mount/reveal lifecycle only:
+
+```text
+select A or B
+-> run scenario
+-> stop and await the Lab teardown barrier
+-> assert task-owned resource counters are drained
+-> unmount old backend
+-> mount exactly one new backend
+-> run the same scenario
+```
+
+At no point may A and B both be mounted/visible. The selector has no production
+owner-transfer semantics and cannot write world pose; the `world-root` lease has
+no renderer mount/reveal semantics. Future production render-owner transfer may
+use a separately reviewed activation token as described in section 15.
 
 Do not introduce a generic behavior tree, multi-channel lease framework,
-dialogue/audio arbitration or production Behavior Director in Phase 1. Add those
-only after measured product scenarios require them.
+renderer-ownership framework, dialogue/audio arbitration or production Behavior
+Director in Phase 1. Add those only after measured product scenarios require
+them.
 
 ## 13. Dialogue and optional voice
 
@@ -676,16 +783,42 @@ as remote asset or WebGL failures.
 
 ### Phase 1 build/runtime isolation
 
-The Interaction Lab is not a query-gated product route. It has a separate
-HTML/React entry and dedicated Vite/Playwright configuration.
+The Interaction Lab is not a query-gated product route and is not part of the
+product TypeScript/Vite entry. Phase 1 uses an independent sub-root:
 
-Phase 1 automatically verifies:
+```text
+web/transcend-lab/
+  index.html
+  vite.config.ts
+  tsconfig.json
+  src/...
+```
 
-- no import from `App.tsx`, `SceneShell.tsx`, production renderers, saved-event code, product API/Supabase/Auth/Model V2 modules or product CSS;
-- default production entry/build does not emit, link or navigate to the Lab;
-- Lab synthetic routes do not modify product history/storage;
-- network requests are limited to Lab resources plus the explicitly authorized active-lite asset integration request;
-- zero API/Auth/Model V2/Supabase/storage/sensor/camera/mic traffic.
+The Lab Vite config uses `web/transcend-lab/` as its root and writes only to
+`web/.transcend-lab-dist/`. That output is ignored and must never resolve to or
+write `web/dist`, which remains the production deployment directory. The
+existing product `build` / `prebuild` commands and default `web/index.html`
+entry are not repointed to the Lab.
+
+A dedicated Lab TypeScript command type-checks the Lab project separately. Lab
+source lives outside the product `web/src` include tree; the only permitted
+imports back into current product source are the explicitly enumerated
+read-only runtime-membership seam and its static, side-effect-free dependency
+closure.
+
+Phase 1 automatically verifies all of the following:
+
+- the Lab build cannot target `web/dist` and the default product build emits no Lab HTML/chunk/navigation marker;
+- a Vite/Rollup build hook emits a Lab module-graph report and a verifier checks the **transitive** reachable source graph, not merely direct imports;
+- the module graph contains only the Lab subtree, existing package dependencies, and the explicitly enumerated membership-seam closure;
+- forbidden transitive imports include `App.tsx`, `SceneShell.tsx`, production renderers, saved-event code, product API/Supabase/Auth/Model V2 modules and product CSS;
+- Lab synthetic routes do not modify product history/storage/IndexedDB/cookies;
+- network requests are limited to Lab resources plus at most the exact admitted active-lite asset URL;
+- zero API/Auth/Model V2/Supabase/storage/sensor/camera/mic traffic occurs;
+- build scripts add Lab-specific commands only; they do not change deployment/Wrangler topology.
+
+The module-graph check must be generated from the actual Lab build graph. A
+hand-maintained list of direct imports is not sufficient evidence.
 
 ### Pure deterministic contracts
 
@@ -804,47 +937,56 @@ platform tree**.
 
 ### Phase 1 minimal files
 
+The Lab is deliberately outside `web/src` so the default product TypeScript
+project and Vite entry do not absorb it:
+
 ```text
-web/transcend-lab.html
-web/vite.transcend-lab.config.ts
+web/transcend-lab/
+  index.html
+  vite.config.ts
+  tsconfig.json
+  src/
+    main.tsx
+    CompanionInteractionLab.tsx
+    labRenderers.tsx
+    transcend-lab.css
+    platform/
+      spatial/
+        companionWorld.ts
+      behavior/
+        rootMotionLease.ts
+      embodiment/
+        labEmbodimentPort.ts
+  scripts/
+    verify-module-graph.mjs
+
 web/playwright.transcend-lab.config.ts
-
-web/src/transcend-lab/
-  main.tsx
-  CompanionInteractionLab.tsx
-  labRenderers.tsx
-  transcend-lab.css
-
-web/src/companion-platform/
-  spatial/
-    companionWorld.ts
-  behavior/
-    rootMotionLease.ts
-  embodiment/
-    labEmbodimentPort.ts
 
 web/e2e/
   transcend-presence-contract.spec.ts
   transcend-interaction-lab.spec.ts
 ```
 
-A package script may name the dedicated Lab config. Do not add
-`CompanionPresenceHost`, production adapters, sensors, workers, dialogue/AI,
-new dependencies or services in Phase 1.
+Phase 1 may add Lab-specific package scripts and one ignore entry for
+`web/.transcend-lab-dist/`. Existing product `build`, `prebuild`, Wrangler and
+deployment settings remain unchanged.
 
 Responsibilities:
 
-- `companionWorld.ts`: tagged Arena coordinates/revision, route-scoped Anchors, safe zones, placement intent and visual/hit envelopes;
-- `rootMotionLease.ts`: the single fenced `world-root` lease with session/route revocation;
-- `labEmbodimentPort.ts`: immutable pose/metrics contract shared by A/B Lab renderers;
-- `labRenderers.tsx`: movable-patch and shared-stage implementations behind the Lab-only port;
-- `CompanionInteractionLab.tsx`: two synthetic route states, controls, safe zones, stop/reset and identical scenario replay;
+- `companionWorld.ts`: atomic `ArenaSnapshot`, tagged coordinate/revision types, route-scoped Anchors, safe zones, `PlacementIntent`, resolved pose and visual/hit envelopes;
+- `rootMotionLease.ts`: the single exact-token fenced `world-root` pose-write lease with session/route/revision revocation and ABA-safe release;
+- `labEmbodimentPort.ts`: immutable pose/scenario/metrics contract shared by A/B Lab renderers;
+- `labRenderers.tsx`: movable-patch and shared-stage implementations behind the Lab-only port plus a sequential backend selector that mounts exactly one implementation at a time;
+- `CompanionInteractionLab.tsx`: two synthetic route states, controls, safe zones, stop/reset, teardown barrier and identical scenario replay;
+- `verify-module-graph.mjs`: validates the generated transitive Lab build graph against the explicit allow/deny boundary;
 - the two specs separate pure contracts from browser/input/render integration.
 
 Existing asset authority remains under current `ui/companion*` / scene registry.
-The Lab may read `getCompanionRuntimeMembership()` and use only an
-`active-runtime-member` lite identity. It does not create a second allowlist or
-common loader that changes current review/production authority.
+The Lab may read `getCompanionRuntimeMembership()` and use only one **fixed**
+asset ID that resolves to `active-runtime-member` at implementation preflight.
+The scenario fixture records that ID; there is no automatic fallback or
+substitution if it ceases to be active. The Lab does not create a second
+allowlist or common loader that changes current review/production authority.
 
 ## 23. Migration roadmap
 
@@ -910,7 +1052,7 @@ not prerequisites for the web North Star.
 
 ## 24. Phase 1 — first implementation slice
 
-The first code PR after Architecture Revision 1 is a **Transcend Interaction
+The first code PR after Architecture Revision 2 is a **Transcend Interaction
 Lab**, not a rewrite of `CompanionReviewRenderer`, `App`, `SceneShell` or
 production scenes.
 
@@ -918,32 +1060,36 @@ production scenes.
 
 Phase 1 requires:
 
-1. separate HTML/React entry plus dedicated Vite and Playwright config;
-2. default production entry/build contains no Lab navigation or runtime path;
-3. no imports from `App.tsx`, `SceneShell.tsx`, current production renderers, saved-event code, product API/Supabase/Auth/Model V2 modules or product CSS;
-4. two Lab-local synthetic route states only; no product history/storage writes;
-5. network allowlist limited to Lab resources and the one authorized active-lite integration asset;
-6. no camera, microphone, motion sensor, worker, AI/LLM, new dependency/server/topology, activation or deployment.
+1. dedicated `web/transcend-lab/` HTML/React/Vite/TypeScript sub-root plus dedicated Playwright config;
+2. Lab output only in ignored `web/.transcend-lab-dist/`; the Lab build must refuse any output resolving to `web/dist`;
+3. existing product `build`/`prebuild`, `web/index.html`, Wrangler and deployment topology remain unchanged;
+4. a generated **transitive** Lab module-graph report with an automated allow/deny verifier;
+5. no imports—direct or transitive—from `App.tsx`, `SceneShell.tsx`, current production renderers, saved-event code, product API/Supabase/Auth/Model V2 modules or product CSS, except the explicitly enumerated read-only membership-seam closure;
+6. two Lab-local synthetic route states only; no product history/storage/IndexedDB/cookie writes;
+7. network allowlist limited to Lab resources and at most the exact fixed active-lite integration asset;
+8. no camera, microphone, motion sensor, worker, AI/LLM, new dependency/server/topology, activation or deployment.
 
 ### Acceptance criteria
 
-1. one current lite asset is admitted only when `getCompanionRuntimeMembership(assetId)` returns `active-runtime-member`;
-2. tagged `visual-viewport-css-px` Arena coordinates reject stale revisions;
-3. route-scoped Anchors are disposed/re-resolved across the two synthetic routes;
-4. placement intent survives route change while raw CSS-pixel pose is revalidated/recomputed;
-5. visual/action envelope, tactile hit envelope and relocation handle are independent;
-6. actor can be relocated between at least two safe Anchors;
-7. outside the actor hit/move envelope, native page scroll/zoom remains unaffected;
-8. mouse/touch/pen cancellation, lost capture, Escape, route revoke and stop/reset release the world-root lease deterministically;
-9. a non-drag/keyboard control reaches the same placements;
-10. hard zones are never covered after drop/geometry-change resolution; no-fit uses dock/control/hidden fallback;
-11. one fenced `world-root` lease prevents stale acquire/renew/release and duplicate visible Lab owner authority;
-12. reduced-motion and forced-colors keep Lab controls/status understandable without requiring nonessential motion;
-13. renderer/WebGL failure preserves semantic Lab controls and stop/reset;
-14. stop/reset leaves no Lab listeners, timers, RAF loops or live contexts owned by the stopped Lab;
-15. A and B execute the identical scenario/asset/DPR/clock/warm-cold protocol and emit comparable metrics with no preselected winner;
-16. 100 synthetic route toggles retain one logical actor identity with bounded owner/context/resource counts;
-17. automated network audit observes zero product API/Auth/Model V2/Supabase/storage/sensor/camera/mic traffic.
+1. default product build emits no Lab HTML/chunk/navigation marker, and the Lab build cannot target/write `web/dist`;
+2. generated Lab module graph contains only Lab/platform modules, existing packages and the explicitly enumerated membership-seam dependency closure;
+3. automated network audit allows only Lab build resources and at most the exact admitted asset URL, with zero product API/Auth/Model V2/Supabase/storage/sensor/media traffic;
+4. synthetic routing performs zero writes to product history, local/session storage, IndexedDB, cookies or product state;
+5. one fixed asset ID is admitted only when `getCompanionRuntimeMembership(assetId)` returns `active-runtime-member`; catalog-only, unknown, candidate, registry mismatch or thrown authority checks make **no** asset request;
+6. one immutable `ArenaSnapshot` contains viewport, both Anchors and all hard zones stamped with the same revision; stale points/rects/poses are rejected and sequential provider registration cannot stale retained geometry individually;
+7. route change revokes the world-root lease, advances route epoch, retires the old snapshot, builds one new atomic snapshot, carries only `PlacementIntent`, and deterministically re-resolves or falls back;
+8. visual/action envelope, tactile hit envelope and relocation handle vary independently; hard-zone placement uses the conservative visual/action envelope;
+9. actor can be relocated between at least two safe Anchors;
+10. exact-token world-root lease tests cover acquire, renew, preemption, stale writes, pointer cancel/lost capture/Escape, route/reset/stop revocation, Arena-revision change and the T1-release-after-T2 ABA case;
+11. the world-root lease fences **pose writers only**; a separate sequential Lab backend selector guarantees exactly one mounted/visible A-or-B renderer at any instant;
+12. outside the actor hit/move target, native touch scroll, wheel and browser zoom remain uncancelled; no viewport-wide transparent surface uses `touch-action:none`;
+13. drag, non-drag single-pointer and keyboard controls resolve to the same target Anchors with usable focus/status;
+14. hard zones are never covered after drop or geometry-change resolution; no-fit follows anchor -> dock -> control -> hidden fallback;
+15. reduced-motion removes nonessential movement/RAF, forced-colors preserves controls/status, and forced WebGL/load failure leaves semantic controls plus stop/reset usable;
+16. `stop()` / `reset()` complete only after the Lab teardown barrier reports zero task-owned listeners, timers, RAF loops, pending-load owners and live contexts; stale callbacks cannot remount/reveal/resume work;
+17. A then B execute the identical versioned scenario fixture: same scenario ID/hash, fixed asset, viewport, DPR, clock and warm/cold protocol, and emit the same versioned metrics schema with no preselected winner;
+18. 100 synthetic route toggles retain one logical actor ID with bounded resource/context counts, one world-root writer and one mounted/visible backend;
+19. required lint/test plus dedicated Lab checks pass; the experimental PR does not weaken existing CI or require a broad production browser matrix solely because the isolated Lab exists.
 
 ### Explicit non-goals
 
@@ -963,9 +1109,10 @@ Phase 1 does not authorize:
 Stop the Phase 1 slice instead of widening scope if:
 
 - the Lab requires editing `App.tsx`, `SceneShell.tsx`, current production renderer behavior or product CSS merely to expose/run the experiment;
+- the Lab build must write `web/dist`, enter the default product module graph, or alter Wrangler/deployment configuration;
 - current active asset identity cannot be resolved through the read-only membership seam without weakening activation authority;
 - a viewport/shared overlay must disable normal page scroll/zoom to make the prototype work;
-- two visible/active Lab owners cannot be fenced to one authoritative world-root owner;
+- the sequential Lab backend selector cannot guarantee exactly one mounted/visible renderer, or the world-root lease cannot independently fence pose writers;
 - route transition requires replaying confirmed S05 effects or mutating product state;
 - the prototype requires camera/sensors/worker/AI to demonstrate basic relocation;
 - pure spatial/lease tests cannot be separated from remote GLB/network;
