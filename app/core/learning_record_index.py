@@ -243,7 +243,7 @@ def build_learning_record_index(records: Sequence[Any]) -> LearningRecordIndex:
 
 def _validated_copy(data: Any) -> LearningRecord:
     if isinstance(data, LearningRecord):
-        return data.model_copy(deep=True)
+        return validate_learning_record(data.model_dump(mode="python"))
     return validate_learning_record(data)
 
 

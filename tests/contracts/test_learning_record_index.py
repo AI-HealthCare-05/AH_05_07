@@ -7,7 +7,9 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
+from app.core.contracts.learning_record import validate_learning_record
 from app.core.learning_record_index import build_learning_record_index
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "learning_record"
@@ -48,6 +50,14 @@ def test_record_lookup_is_exact_and_returns_a_defensive_copy() -> None:
     assert index.record("lr-a").recordId == "lr-a"
     with pytest.raises(KeyError, match="unknown Learning Record"):
         index.record("missing")
+
+
+def test_mutated_learning_record_instance_is_revalidated() -> None:
+    record = validate_learning_record(_partial("lr-a", "ep-a", 1))
+    record.recordId = ""
+
+    with pytest.raises(ValidationError):
+        build_learning_record_index([record])
 
 
 def test_episode_is_ordered_by_attempt_index_without_collapsing_history() -> None:
