@@ -1960,7 +1960,7 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await expect(lastControls.picker).toHaveCount(0);
 
     for (const id of ["model-weekend-bed", "model-weekend-wake"] as const) {
-      await selectBlankMidnight(id, ["minute", "hour", "period"]);
+      await chooseTime(mobilePage, id, "00:00");
     }
     await next(mobilePage).tap();
     await expectStep(mobilePage, "habits");
