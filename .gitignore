@@ -20,6 +20,7 @@ wheels/
 /web/test-results/living-scene-review/
 
 /web/test-results/ui-release/
+/web/.transcend-lab-dist/
 
 # Cloudflare Wrangler local state
 /.wrangler/
