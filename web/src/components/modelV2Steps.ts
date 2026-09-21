@@ -89,6 +89,13 @@ export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
   if (step === "basics" && finiteNumber(draft.age)! < 19) return {
     step, fields: ["age"], message: "이 도구는 만 19세 이상부터 이용할 수 있어요.",
   };
+  if (step === "basics") {
+    for (const key of ["height", "weight"] as const) {
+      if (finiteNumber(draft[key])! <= 0) return {
+        step, fields: [key], message: `${FIELDS[key].label}는 0보다 큰 값으로 입력해 주세요.`,
+      };
+    }
+  }
   if (step === "activity") {
     for (const [key, maximum, message] of [
       ["walkingDays", 7, "걷기 일수는 0~7일 중 소수점 없이 입력해 주세요."],
@@ -98,6 +105,36 @@ export function stepProblem(step: InputStep, draft: Draft): StepProblem | null {
       const value = finiteNumber(draft[key])!;
       if (!Number.isInteger(value) || value < 0 || value > maximum) return {
         step, fields: [key], message,
+      };
+    }
+    const days = finiteNumber(draft.walkingDays)!;
+    const hours = finiteNumber(draft.walkingHours)!;
+    const minutes = finiteNumber(draft.walkingMinutes)!;
+    if (days === 0 && (hours !== 0 || minutes !== 0)) return {
+      step, fields: ["walkingHours", "walkingMinutes", "walkingDays"],
+      message: "걷기 일수가 0일이면 시간과 분도 0이어야 해요. 걸은 날이 있었다면 일수를 다시 확인해 주세요.",
+    };
+    if (hours * 60 + minutes > 1440) return {
+      step, fields: ["walkingHours", "walkingMinutes"],
+      message: "걷는 날의 하루 평균 시간은 24시간을 넘을 수 없어요. 시간과 분을 확인해 주세요.",
+    };
+  }
+  if (step === "sleep") {
+    for (const [bedKey, wakeKey, label] of [
+      ["weekdayBed", "weekdayWake", "평일"],
+      ["weekendBed", "weekendWake", "주말"],
+    ] as const) {
+      const [bedHour, bedMinute] = clockParts(draft[bedKey])!;
+      const [wakeHour, wakeMinute] = clockParts(draft[wakeKey])!;
+      // This is only the frozen rejection boundary for complete HH:mm UI input.
+      // It does not derive a feature or replace the canonical sleep calculation.
+      // Match Python/TS adapter rejection; never coerce the user's actual times.
+      const unsupported = wakeHour === 0 && (
+        (bedHour >= 1 && bedHour <= 12) || (bedHour === 0 && wakeMinute < bedMinute)
+      );
+      if (unsupported) return {
+        step, fields: [wakeKey, bedKey],
+        message: `입력한 ${label} 취침·기상 시각은 현재 분석에서 처리하지 못하는 조합이에요. 실제 시각이 맞다면 바꾸지 않아도 돼요. 분석 없이 기록과 챌린지를 이용할 수 있어요.`,
       };
     }
   }
