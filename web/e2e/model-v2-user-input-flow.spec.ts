@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { resolveModelV2Continuation, type ModelV2ContinuationState } from "../src/components/modelV2Continuation";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
 import { modelV2PresentationMode, visibleModelV2Output } from "../src/ui/modelV2VisibilityPolicy";
 import { seoulDate } from "../src/lib/seoulDate";
@@ -574,6 +574,152 @@ for (const example of [
   });
 }
 
+for (const example of [
+  {
+    name: "zero walking with non-drinking and supported midnight clocks",
+    days: "0", weekday: ["00:00", "08:00"], weekend: ["00:30", "08:30"],
+    frequency: "none_past_year", weekdayMinutes: "480", weekendMinutes: "480",
+  },
+  {
+    name: "one walking day with explicit zero duration and zero sleep",
+    days: "1", weekday: ["23:30", "00:30"], weekend: ["08:00", "08:00"],
+    frequency: "lifetime_nonapplicable", weekdayMinutes: "60", weekendMinutes: "0",
+  },
+] as const) {
+  test(`S11 real local inference accepts ${example.name}`, async ({ page }) => {
+    const routed = await routeModel(page);
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await begin(page);
+    await fillBasics(page);
+    await next(page).click();
+
+    await page.locator("#model-walking-days").fill(example.days);
+    await page.locator("#model-walking-hours").fill("0");
+    await page.locator("#model-walking-minutes").fill("0");
+    await page.locator("#model-strength").selectOption("0_days");
+    await next(page).click();
+    await expectStep(page, "sleep");
+
+    for (const [id, value] of [
+      ["model-weekday-bed", example.weekday[0]], ["model-weekday-wake", example.weekday[1]],
+      ["model-weekend-bed", example.weekend[0]], ["model-weekend-wake", example.weekend[1]],
+    ] as const) await chooseTime(page, id, value);
+    await next(page).click();
+    await expectStep(page, "habits");
+
+    await page.locator("#model-smoking").selectOption("never_smoked");
+    await page.locator("#model-alcohol-frequency").selectOption(example.frequency);
+    await expect(page.locator("#model-alcohol-amount")).toHaveValue("none");
+    await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+    await expectStep(page, "review");
+    await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
+    await submit(page).click();
+
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText(/^\d\.\d{3}$/);
+    expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+    const activity = result(page).getByRole("region", { name: "활동", exact: true });
+    await expect(activity.locator("dd")).toHaveText([`${example.days}일`, "0분", "약 0분", "0일"]);
+    await openModelInputs(page);
+    await expect(result(page).locator('[data-model-v2-feature="walking_minutes_per_active_day"] dd')).toHaveText("0");
+    await expect(result(page).locator('[data-model-v2-feature="strength_days_7d"] dd')).toHaveText("0_days");
+    await expect(result(page).locator('[data-model-v2-feature="weekday_sleep_minutes"] dd')).toHaveText(example.weekdayMinutes);
+    await expect(result(page).locator('[data-model-v2-feature="weekend_sleep_minutes"] dd')).toHaveText(example.weekendMinutes);
+  });
+}
+
+test("S11 rejects contradictory walking duration at activity, retains values, then accepts user corrections", async ({ page }) => {
+  const routed = await routeModel(page);
+  const outbound: { method: string; body: string | null }[] = [];
+  page.on("request", request => outbound.push({ method: request.method(), body: request.postData() }));
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  const consent = page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.");
+  await expect(consent).toBeChecked();
+  const returnToReview = page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true });
+
+  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
+  await page.locator("#model-walking-days").fill("0");
+  await page.locator("#model-walking-hours").fill("0");
+  await page.locator("#model-walking-minutes").fill("1");
+  await returnToReview.click();
+  await expect(step(page, "activity")).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveText("걷기 일수가 0일이면 시간과 분도 0이어야 해요. 걸은 날이 있었다면 일수를 다시 확인해 주세요.");
+  await expect(page.locator("#model-walking-hours")).toBeFocused();
+  await expect(page.locator("#model-walking-days")).toHaveValue("0");
+  await expect(page.locator("#model-walking-minutes")).toHaveValue("1");
+  expect(routed.requests).toHaveLength(0);
+  expect(outbound.filter(request => request.method === "POST" && request.body)).toEqual([]);
+
+  await page.locator("#model-walking-days").fill("1");
+  await returnToReview.click();
+  await expectStep(page, "review");
+  await expect(consent).toBeChecked();
+
+  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
+  await page.locator("#model-walking-hours").fill("24");
+  await page.locator("#model-walking-minutes").fill("1");
+  await returnToReview.click();
+  await expect(step(page, "activity")).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveText("걷는 날의 하루 평균 시간은 24시간을 넘을 수 없어요. 시간과 분을 확인해 주세요.");
+  await expect(page.locator("#model-walking-hours")).toBeFocused();
+  await expect(page.locator("#model-walking-hours")).toHaveValue("24");
+  await expect(page.locator("#model-walking-minutes")).toHaveValue("1");
+  expect(routed.requests).toHaveLength(0);
+
+  await page.locator("#model-walking-minutes").fill("0");
+  await returnToReview.click();
+  await expectStep(page, "review");
+  await expect(consent).toBeChecked();
+  await expect(step(page, "review")).toContainText("24 시간");
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+  expect(outbound.filter(request => request.method === "POST" && request.body)).toEqual([]);
+});
+
+test("S11 explains frozen midnight limits at sleep without rewriting times and succeeds after explicit edits", async ({ page }) => {
+  const routed = await routeModel(page);
+  await page.goto("/?e2e=signed-in&screen=S11");
+  await toReview(page);
+  const consent = page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.");
+  const returnToReview = page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true });
+  await page.getByRole("button", { name: "평일·주말 수면 수정", exact: true }).click();
+
+  await chooseTime(page, "model-weekday-bed", "00:59");
+  await chooseTime(page, "model-weekday-wake", "00:00");
+  await chooseTime(page, "model-weekend-bed", "01:00");
+  await chooseTime(page, "model-weekend-wake", "00:30");
+  await returnToReview.click();
+  await expect(step(page, "sleep")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("입력한 평일 취침·기상 시각은 현재 분석에서 처리하지 못하는 조합이에요.");
+  await expect(page.getByRole("alert")).toContainText("실제 시각이 맞다면 바꾸지 않아도 돼요.");
+  await expect(page.locator("#model-weekday-wake")).toBeFocused();
+  await expectTimeValue(page, "model-weekday-bed", "00:59");
+  await expectTimeValue(page, "model-weekday-wake", "00:00");
+  expect(routed.requests).toHaveLength(0);
+
+  await chooseTime(page, "model-weekday-bed", "00:00");
+  await returnToReview.click();
+  await expect(step(page, "sleep")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("입력한 주말 취침·기상 시각은 현재 분석에서 처리하지 못하는 조합이에요.");
+  await expect(page.locator("#model-weekend-wake")).toBeFocused();
+  await expectTimeValue(page, "model-weekend-bed", "01:00");
+  await expectTimeValue(page, "model-weekend-wake", "00:30");
+  expect(routed.requests).toHaveLength(0);
+
+  await chooseTime(page, "model-weekend-bed", "23:30");
+  await returnToReview.click();
+  await expectStep(page, "review");
+  await expect(consent).toBeChecked();
+  for (const text of ["35", "170", "68", "40 분", "비흡연", "오전 12:00", "오전 12:30"]) {
+    await expect(step(page, "review")).toContainText(text);
+  }
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+});
+
 test.describe("S11 preview window", () => {
   test.use({ timezoneId: "America/Los_Angeles" });
 
@@ -732,6 +878,8 @@ test("S11 review edits return directly to review and submit only the corrected v
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
+  const consent = page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.");
+  await expect(consent).toBeChecked();
   const edits = [
     { step: "basics", title: "기본 정보", id: "model-weight", value: "69", text: "69" },
     { step: "habits", title: "흡연·음주", id: "model-smoking", value: "former_currently_not_smoking", text: "과거 흡연, 현재 금연" },
@@ -747,9 +895,10 @@ test("S11 review edits return directly to review and submit only the corrected v
     await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
     await expectStep(page, "review");
     await expect(step(page, "review")).toContainText(edit.text);
+    await expect(consent).toBeChecked();
+    await expect(page.locator("#model-v2-input-error")).toHaveCount(0);
     expect(routed.requests).toHaveLength(0);
   }
-  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
@@ -1001,6 +1150,13 @@ test("S11 activity requires whole numbers in each walking range and accepts both
       await expect(page.getByRole("alert")).toHaveText(guidance);
     }
     for (const value of ["0", String(maximum)]) {
+      if (id === "model-walking-days" && value === "0") {
+        await page.locator("#model-walking-hours").fill("0");
+        await page.locator("#model-walking-minutes").fill("0");
+      }
+      if (id === "model-walking-hours" && value === "24") {
+        await page.locator("#model-walking-minutes").fill("0");
+      }
       await field.fill(value);
       await expectErrorCleanup(page);
       await expect(field).not.toHaveAttribute("aria-invalid");
@@ -1055,30 +1211,31 @@ test("S11 habits normalizes lifetime non-drinking and validates every drinking f
   expect(routed.requests).toHaveLength(0);
 });
 
-test("S11 keeps invalid combinations on review with focused safe copy, editable groups and a deliberate corrected retry", async ({ page }) => {
+test("S11 keeps contradictory walking values on activity with focused safe copy and a deliberate corrected retry", async ({ page }) => {
   const routed = await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toReview(page);
+  const consent = page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.");
+  await expect(consent).toBeChecked();
   await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
   await page.locator("#model-walking-days").fill("0");
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
-  await submit(page).click();
   const error = page.locator("#model-v2-input-error");
-  await expect(error).toContainText("입력 조합을 확인해 주세요");
-  await expect(error).toBeFocused();
+  await expect(error).toHaveText("걷기 일수가 0일이면 시간과 분도 0이어야 해요. 걸은 날이 있었다면 일수를 다시 확인해 주세요.");
   await expect(error).not.toContainText(/170|height_cm|never_smoked|model_v2_input_invalid|\/secret\/model\.joblib/);
-  await expect(step(page, "review")).toBeVisible();
-  await expect(page.locator('form.measurement-panel [aria-invalid="true"]')).toHaveCount(0);
-  for (const title of ["기본 정보", "최근 7일 활동", "평일·주말 수면", "흡연·음주"]) await expect(page.getByRole("button", { name: `${title} 수정`, exact: true })).toBeEnabled();
-  await expect(page.locator("form.measurement-panel")).toHaveAttribute("aria-describedby", /\bmodel-v2-input-error\b/);
-  expect(routed.requests).toHaveLength(0);
-  await page.getByRole("button", { name: "최근 7일 활동 수정", exact: true }).click();
+  await expect(step(page, "activity")).toBeVisible();
+  await expect(page.locator("#model-walking-hours")).toBeFocused();
+  await expect(page.locator("#model-walking-hours")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#model-walking-minutes")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#model-walking-days")).toHaveValue("0");
-  await expect(page.locator("#model-walking-days")).not.toHaveAttribute("aria-invalid");
+  await expect(page.locator("#model-walking-minutes")).toHaveValue("40");
+  await expect(submit(page)).toHaveCount(0);
+  expect(routed.requests).toHaveLength(0);
   await page.locator("#model-walking-days").fill("4");
   await expectErrorCleanup(page);
   await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
-  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
+  await expectStep(page, "review");
+  await expect(consent).toBeChecked();
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   expect(routed.requests).toHaveLength(1);
@@ -1651,4 +1808,182 @@ test("S11 minute detent uses bounded 1-2-3 acceleration and still lands exactly"
   await wheel(-40);
   await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
   await expectTimeValue(page, id, "01:00");
+});
+
+test("S11 real mobile touch preserves six explicit time orders, direct taps and empty-column drags", async ({ browser, browserName }) => {
+  test.skip(browserName !== "chromium", "Chromium CDP is required for native touch-drag input.");
+  test.slow(); // Six permutations plus the end-to-end inference path need CI headroom.
+  const context = await browser.newContext({
+    baseURL: "http://127.0.0.1:4173",
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    userAgent: "Mozilla/5.0 (Linux; Android 15; SK7-E2E) AppleWebKit/537.36 Chrome/144 Mobile Safari/537.36",
+  });
+  const mobilePage = await context.newPage();
+  const cdp = await context.newCDPSession(mobilePage);
+
+  const touchDrag = async (point: { x: number; y: number }, deltaY: number) => {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart", touchPoints: [{ x: point.x, y: point.y, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove", touchPoints: [{ x: point.x, y: point.y + deltaY, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
+  const touchTap = async (target: Locator) => {
+    const box = await target.boundingBox();
+    if (!box) throw new Error("The mobile control has no touch geometry.");
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
+  const emptyColumnPoint = async (selector: string) => mobilePage.locator(selector).evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    for (let x = Math.ceil(box.left) + 1; x < box.right; x += 1) {
+      for (let y = Math.ceil(box.top) + 1; y < box.bottom; y += 2) {
+        if (document.elementFromPoint(x, y) === element) return { x, y };
+      }
+    }
+    throw new Error("No empty wheel-column surface was available for a native touch drag.");
+  });
+
+  const selectBlankMidnight = async (id: string, order: readonly ("period" | "hour" | "minute")[]) => {
+    const trigger = mobilePage.locator(`#${id}`);
+    await trigger.click();
+    const picker = mobilePage.locator(`#${id}-picker`);
+    const period = picker.getByRole("radio", { name: "오전", exact: true });
+    const hour = picker.getByRole("spinbutton", { name: / 시$/ });
+    const minute = picker.getByRole("spinbutton", { name: / 분$/ });
+    for (const [index, part] of order.entries()) {
+      if (part === "period") await touchTap(period);
+      else if (part === "hour") await touchTap(hour.getByRole("button", { name: "12시", exact: true }));
+      else await touchTap(minute.getByRole("button", { name: "00분", exact: true }));
+      await expect(trigger).toHaveAttribute("data-time-complete", index === 2 ? "true" : "false");
+    }
+    await expectTimeValue(mobilePage, id, "00:00");
+    return { trigger, picker, period, hour, minute };
+  };
+
+  try {
+    const routed = await routeModel(mobilePage);
+    const orders = [
+      ["period", "hour", "minute"], ["period", "minute", "hour"],
+      ["hour", "period", "minute"], ["hour", "minute", "period"],
+      ["minute", "period", "hour"], ["minute", "hour", "period"],
+    ] as const;
+    let lastControls: Awaited<ReturnType<typeof selectBlankMidnight>> | null = null;
+
+    const orderBatches = [
+      [
+        ["model-weekday-bed", orders[0]],
+        ["model-weekday-wake", orders[1]],
+        ["model-weekend-bed", orders[2]],
+        ["model-weekend-wake", orders[3]],
+      ],
+      [
+        ["model-weekday-wake", orders[4]],
+        ["model-weekday-bed", orders[5]],
+      ],
+    ] as const;
+
+    for (const [batchIndex, batch] of orderBatches.entries()) {
+      await mobilePage.goto("/?e2e=signed-in&screen=S11");
+      await toSleep(mobilePage);
+      if (batchIndex === 0) {
+        expect(await mobilePage.evaluate(() => ({
+          width: innerWidth,
+          touchPoints: navigator.maxTouchPoints,
+          touchEvent: "ontouchstart" in window,
+          coarsePointer: matchMedia("(pointer: coarse)").matches,
+          hoverNone: matchMedia("(hover: none)").matches,
+        }))).toEqual({ width: 390, touchPoints: 1, touchEvent: true, coarsePointer: true, hoverNone: true });
+      }
+      for (const [id, order] of batch) {
+        lastControls = await selectBlankMidnight(id, order);
+      }
+    }
+
+    if (!lastControls) throw new Error("Mobile time controls were not created.");
+    await touchTap(lastControls.minute.getByRole("button", { name: "01분", exact: true }));
+    await expectTimeValue(mobilePage, "model-weekday-bed", "00:01");
+    await touchTap(lastControls.minute.getByRole("button", { name: "00분", exact: true }));
+    await expectTimeValue(mobilePage, "model-weekday-bed", "00:00");
+
+    await touchTap(lastControls.trigger);
+    await expect(lastControls.picker).toHaveCount(0);
+    await touchTap(lastControls.trigger);
+    await expect(mobilePage.locator("#model-weekday-bed-picker")).toBeVisible();
+    lastControls = {
+      ...lastControls,
+      picker: mobilePage.locator("#model-weekday-bed-picker"),
+      period: mobilePage.locator("#model-weekday-bed-picker").getByRole("radio", { name: "오전", exact: true }),
+      hour: mobilePage.locator("#model-weekday-bed-picker").getByRole("spinbutton", { name: / 시$/ }),
+      minute: mobilePage.locator("#model-weekday-bed-picker").getByRole("spinbutton", { name: / 분$/ }),
+    };
+
+    const zeroButton = lastControls.minute.getByRole("button", { name: "00분", exact: true });
+    const zeroBox = await zeroButton.boundingBox();
+    if (!zeroBox) throw new Error("The selected minute button has no touch geometry.");
+    await touchDrag({ x: zeroBox.x + zeroBox.width / 2, y: zeroBox.y + zeroBox.height / 2 }, -30);
+    await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "00분");
+
+    const minuteEmpty = await emptyColumnPoint("#model-weekday-bed-picker [data-wheel-part=minute]");
+    await touchDrag(minuteEmpty, -24);
+    await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "01분");
+    // Native touch assertions are complete above. Reset deterministically so
+    // synthesized post-drag gestures cannot leak into the final inference case.
+    await lastControls.minute.getByRole("button", { name: "00분", exact: true }).click();
+    await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "00분");
+
+    await touchTap(lastControls.hour.getByRole("button", { name: "11시", exact: true }));
+    await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
+    await touchTap(lastControls.hour.getByRole("button", { name: "12시", exact: true }));
+    await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
+    const hourEmpty = await emptyColumnPoint("#model-weekday-bed-picker [data-wheel-part=hour]");
+    await touchDrag(hourEmpty, 32);
+    await expect(lastControls.hour).toHaveAttribute("aria-valuetext", "11시");
+    await expect(lastControls.picker.getByRole("radio", { name: "오후", exact: true })).toHaveAttribute("aria-checked", "true");
+    await lastControls.period.click();
+    await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
+    await lastControls.hour.getByRole("button", { name: "12시", exact: true }).click();
+    await expect(lastControls.hour).toHaveAttribute("aria-valuetext", "12시");
+    await expectTimeValue(mobilePage, "model-weekday-bed", "00:00");
+
+    await lastControls.trigger.click();
+    await expect(lastControls.picker).toHaveCount(0);
+
+    for (const id of ["model-weekend-bed", "model-weekend-wake"] as const) {
+      await chooseTime(mobilePage, id, "00:00");
+    }
+    await next(mobilePage).tap();
+    await expectStep(mobilePage, "habits");
+    await fillHabits(mobilePage);
+    await mobilePage.getByRole("button", { name: "입력 확인하기", exact: true }).tap();
+    await expectStep(mobilePage, "review");
+    await mobilePage.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
+    await mobilePage.getByRole("button", { name: "평일·주말 수면 수정", exact: true }).tap();
+    for (const id of ["model-weekday-bed", "model-weekday-wake", "model-weekend-bed", "model-weekend-wake"] as const) {
+      await expectTimeValue(mobilePage, id, "00:00");
+    }
+    await mobilePage.locator("#model-weekday-bed").tap();
+    await expect(mobilePage.locator("#model-weekday-bed-picker")).toBeVisible();
+    await mobilePage.locator("#model-weekday-bed").tap();
+    await expect(mobilePage.locator("#model-weekday-bed-picker")).toHaveCount(0);
+    await mobilePage.locator("#model-weekday-bed").tap();
+    await mobilePage.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).tap();
+    await expectStep(mobilePage, "review");
+    await expect(mobilePage.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.")).toBeChecked();
+    await submit(mobilePage).tap();
+    await expect(result(mobilePage)).toBeVisible();
+    expect(routed.requests).toEqual([{ method: "GET", body: null }]);
+  } finally {
+    await context.close().catch(() => undefined);
+  }
 });
