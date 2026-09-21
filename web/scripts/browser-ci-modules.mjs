@@ -41,6 +41,9 @@ export const browserModuleCommands = Object.freeze({
     'npm run build',
     'node ../tools/character-preview/verify.cjs --synthetic --record-smoke',
   ],
+  'transcend-lab': [
+    'npm --prefix transcend-lab test',
+  ],
 });
 
 export function runBrowserModules(modules) {

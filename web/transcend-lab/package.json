@@ -1,0 +1,17 @@
+{
+  "name": "sk7-transcend-interaction-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:guards": "node --test scripts/isolation-guard.test.mjs scripts/verify-module-graph.test.mjs",
+    "verify:graph": "node scripts/verify-module-graph.mjs",
+    "build": "npm run typecheck && npm run verify:guards && vite build --config vite.config.ts && npm run verify:graph",
+    "preview": "vite preview --config vite.config.ts",
+    "verify:product-isolation": "node scripts/verify-product-isolation.mjs",
+    "test:e2e": "npm run build && playwright test --config=../playwright.transcend-lab.config.ts",
+    "test": "npm --prefix .. run build && npm run verify:product-isolation && npm run test:e2e"
+  }
+}

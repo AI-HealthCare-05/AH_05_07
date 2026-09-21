@@ -31,7 +31,6 @@ test('broad Journey owners and unfocused record/report paths use journey-full', 
     'web/src/components/record-explorer.css',
     'web/src/components/living-week-report.css',
     'web/src/components/JourneySkeleton.tsx',
-    'web/src/ui/journey.ts',
     'web/e2e/ui-candidate.cases.ts',
     'web/e2e/recap-candidate.cases.ts',
     'web/e2e/journey-candidate.cases.ts',
@@ -86,7 +85,24 @@ test('dependency graph changes retain broad browser confidence', () => {
     'scene',
     'model',
     'assets',
+    'transcend-lab',
   ]);
+});
+
+test('Transcend Lab paths select the dedicated hosted module instead of generic core', () => {
+  for (const file of [
+    'web/transcend-lab/src/labRuntime.ts',
+    'web/transcend-lab/package.json',
+    'web/playwright.transcend-lab.config.ts',
+    'web/e2e/transcend-presence-contract.spec.ts',
+    'web/e2e/transcend-interaction-lab.spec.ts',
+  ]) assert.deepEqual(browser([file]), ['transcend-lab'], file);
+});
+
+test('Transcend Lab reruns when its frozen membership seam changes', () => {
+  assert.deepEqual(browser(['web/src/ui/companionRuntimeMembership.ts']), ['scene', 'transcend-lab']);
+  assert.deepEqual(browser(['web/src/ui/companionAssets.generated.ts']), ['scene', 'assets', 'transcend-lab']);
+  assert.deepEqual(browser(['web/src/ui/journey.ts']), ['journey-full', 'transcend-lab']);
 });
 
 test('selector and browser workflow changes use policy only', () => {
@@ -171,6 +187,7 @@ test('browser module commands are owned outside the path selector', () => {
     'scene',
     'model',
     'assets',
+    'transcend-lab',
   ]);
   assert.ok(browserModuleCommands.core.includes('npm run test:e2e'));
   assert.deepEqual(browserModuleCommands.journey, [
@@ -182,6 +199,7 @@ test('browser module commands are owned outside the path selector', () => {
   assert.ok(browserModuleCommands.model.includes('npm run test:e2e:model-v2'));
   assert.ok(browserModuleCommands.scene.includes('npm run test:e2e:saved-scene'));
   assert.ok(browserModuleCommands.assets.includes('npx playwright test --config=playwright.companion-asset.config.ts'));
+  assert.deepEqual(browserModuleCommands['transcend-lab'], ['npm --prefix transcend-lab test']);
 });
 
 test('fast Journey config reuses focused Journey, B9 and S11 assertions in one build', () => {
