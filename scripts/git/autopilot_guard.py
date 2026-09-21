@@ -220,7 +220,9 @@ def main() -> int:
         print("autopilot decision: no change detected")
         return 0
 
-    print("autopilot decision: routine lane; PR preparation is allowed; human merge is required; existing required CI remains authoritative")
+    print(
+        "autopilot decision: routine lane; PR preparation is allowed; human merge is required; existing required CI remains authoritative"
+    )
     return 0
 
 
