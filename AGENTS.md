@@ -88,6 +88,11 @@ or a new dependency/topology:
   Browser E2E owns broad browser confidence. Classify a red scheduled/manual run
   as product regression, test-contract mismatch, or transient rather than
   turning every routine change into a release exercise.
+- A green aggregate proves only the payloads that were selected and actually ran.
+  A skipped, conditionally excluded, or unrouted suite is **not** a PASS. When a
+  change adds a new isolated test surface, route that surface into hosted CI in
+  the same task or state the hosted coverage gap explicitly; do not substitute an
+  unrelated broad suite merely to produce a green check.
 - Release verification may explicitly run the full browser matrix and required
   physical device gates. Do not require release evidence for a routine PR.
 - `INVARIANT` is a durable product/security/health contract. `TASK GUARD` is
@@ -124,16 +129,20 @@ new deployment service for routine autonomous work. See
   branch. Preserve unrelated worktrees and user changes.
 - Before publishing an autonomously prepared change, run
   `python3 scripts/git/autopilot_guard.py --base origin/main`. The guard is a
-  classification aid; the stricter `--require-routine` mode is required before
-  an agent enables auto-merge.
-- A `routine` result may be published as a PR and may request squash auto-merge
-  only after the existing required checks pass and review threads are resolved.
-- A `protected` result may be implemented, tested, and published as a PR, but an
-  autonomous agent must not enable auto-merge or merge it. Human approval is the
-  final gate.
-- A `deny` result must not be published from the autonomous lane. Governance,
-  workflow, credential, and guard files are intentionally outside hands-off
-  self-modification.
+  classification aid, not merge authorization. `--require-routine` is only a
+  strict assertion for an operator that expects a routine diff.
+- A `routine` result may be implemented, tested, and published as a PR. Required
+  checks still apply, and **human merge is the final gate**.
+- A `protected` result may be implemented, tested, and published as a PR. Human
+  review and merge are required; the agent does not enable auto-merge.
+- A `deny` result means the change is outside the hands-off autonomous lane.
+  Governance, workflow, credential, and guard files remain protected from
+  self-authorization. If the current user request **explicitly scopes a
+  human-governed task** to named governance/workflow/guard paths, an agent may
+  prepare, test, commit, push, and open a Draft PR limited to that approved scope
+  even though the guard continues to report `deny`. There is no bypass flag:
+  explicit human authorization comes from the current task, cannot be inferred
+  by the agent, and human review/merge remains mandatory.
 - GitHub-hosted required PR/core CI remains the merge gate. The scheduled/manual
   full Browser E2E matrix is broad confidence and release coverage, not a routine
   merge prerequisite. Persistent self-hosted runners remain manual trusted
