@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { resolveModelV2Continuation, type ModelV2ContinuationState } from "../src/components/modelV2Continuation";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
 import { modelV2PresentationMode, visibleModelV2Output } from "../src/ui/modelV2VisibilityPolicy";
 import { seoulDate } from "../src/lib/seoulDate";
@@ -1834,6 +1834,17 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };
 
+  const touchTap = async (target: Locator, scroll = false) => {
+    if (scroll) await target.scrollIntoViewIfNeeded();
+    const box = await target.boundingBox();
+    if (!box) throw new Error("The mobile control has no touch geometry.");
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
   const emptyColumnPoint = async (selector: string) => mobilePage.locator(selector).evaluate((element) => {
     const box = element.getBoundingClientRect();
     for (let x = Math.ceil(box.left) + 1; x < box.right; x += 1) {
@@ -1846,15 +1857,15 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
 
   const selectBlankMidnight = async (id: string, order: readonly ("period" | "hour" | "minute")[]) => {
     const trigger = mobilePage.locator(`#${id}`);
-    await trigger.tap();
+    await touchTap(trigger, true);
     const picker = mobilePage.locator(`#${id}-picker`);
     const period = picker.getByRole("radio", { name: "오전", exact: true });
     const hour = picker.getByRole("spinbutton", { name: / 시$/ });
     const minute = picker.getByRole("spinbutton", { name: / 분$/ });
     for (const [index, part] of order.entries()) {
-      if (part === "period") await period.tap();
-      else if (part === "hour") await hour.getByRole("button", { name: "12시", exact: true }).tap();
-      else await minute.getByRole("button", { name: "00분", exact: true }).tap();
+      if (part === "period") await touchTap(period);
+      else if (part === "hour") await touchTap(hour.getByRole("button", { name: "12시", exact: true }));
+      else await touchTap(minute.getByRole("button", { name: "00분", exact: true }));
       await expect(trigger).toHaveAttribute("data-time-complete", index === 2 ? "true" : "false");
     }
     await expectTimeValue(mobilePage, id, "00:00");
@@ -1901,14 +1912,14 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     }
 
     if (!lastControls) throw new Error("Mobile time controls were not created.");
-    await lastControls.minute.getByRole("button", { name: "01분", exact: true }).tap();
+    await touchTap(lastControls.minute.getByRole("button", { name: "01분", exact: true }));
     await expectTimeValue(mobilePage, "model-weekday-bed", "00:01");
-    await lastControls.minute.getByRole("button", { name: "00분", exact: true }).tap();
+    await touchTap(lastControls.minute.getByRole("button", { name: "00분", exact: true }));
     await expectTimeValue(mobilePage, "model-weekday-bed", "00:00");
 
-    await lastControls.trigger.tap();
+    await touchTap(lastControls.trigger);
     await expect(lastControls.picker).toHaveCount(0);
-    await lastControls.trigger.tap();
+    await touchTap(lastControls.trigger);
     await expect(mobilePage.locator("#model-weekday-bed-picker")).toBeVisible();
     lastControls = {
       ...lastControls,
@@ -1932,9 +1943,9 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await lastControls.minute.getByRole("button", { name: "00분", exact: true }).click();
     await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "00분");
 
-    await lastControls.hour.getByRole("button", { name: "11시", exact: true }).tap();
+    await touchTap(lastControls.hour.getByRole("button", { name: "11시", exact: true }));
     await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
-    await lastControls.hour.getByRole("button", { name: "12시", exact: true }).tap();
+    await touchTap(lastControls.hour.getByRole("button", { name: "12시", exact: true }));
     await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
     const hourEmpty = await emptyColumnPoint("#model-weekday-bed-picker [data-wheel-part=hour]");
     await touchDrag(hourEmpty, 32);
@@ -1971,6 +1982,6 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await expect(result(mobilePage)).toBeVisible();
     expect(routed.requests).toEqual([{ method: "GET", body: null }]);
   } finally {
-    await context.close();
+    await context.close().catch(() => undefined);
   }
 });
