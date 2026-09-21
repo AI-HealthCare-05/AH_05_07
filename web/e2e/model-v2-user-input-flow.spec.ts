@@ -1911,7 +1911,10 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     const minuteEmpty = await emptyColumnPoint("#model-weekday-bed-picker [data-wheel-part=minute]");
     await touchDrag(minuteEmpty, -24);
     await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "01분");
-    await lastControls.minute.getByRole("button", { name: "00분", exact: true }).tap();
+    // Native touch assertions are complete above. Reset deterministically so
+    // synthesized post-drag gestures cannot leak into the final inference case.
+    await lastControls.minute.getByRole("button", { name: "00분", exact: true }).click();
+    await expect(lastControls.minute).toHaveAttribute("aria-valuetext", "00분");
 
     await lastControls.hour.getByRole("button", { name: "11시", exact: true }).tap();
     await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
@@ -1921,8 +1924,10 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await touchDrag(hourEmpty, 32);
     await expect(lastControls.hour).toHaveAttribute("aria-valuetext", "11시");
     await expect(lastControls.picker.getByRole("radio", { name: "오후", exact: true })).toHaveAttribute("aria-checked", "true");
-    await lastControls.period.tap();
-    await lastControls.hour.getByRole("button", { name: "12시", exact: true }).tap();
+    await lastControls.period.click();
+    await expect(lastControls.period).toHaveAttribute("aria-checked", "true");
+    await lastControls.hour.getByRole("button", { name: "12시", exact: true }).click();
+    await expect(lastControls.hour).toHaveAttribute("aria-valuetext", "12시");
     await expectTimeValue(mobilePage, "model-weekday-bed", "00:00");
 
     for (const id of ["model-weekday-wake", "model-weekend-bed", "model-weekend-wake"] as const) {
