@@ -1812,6 +1812,7 @@ test("S11 minute detent uses bounded 1-2-3 acceleration and still lands exactly"
 
 test("S11 real mobile touch preserves six explicit time orders, direct taps and empty-column drags", async ({ browser, browserName }) => {
   test.skip(browserName !== "chromium", "Chromium CDP is required for native touch-drag input.");
+  test.slow(); // Six complete input-order passes need headroom on shared CI runners.
   const context = await browser.newContext({
     baseURL: "http://127.0.0.1:4173",
     viewport: { width: 390, height: 844 },
