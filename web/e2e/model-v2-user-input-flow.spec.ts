@@ -1834,8 +1834,7 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };
 
-  const touchTap = async (target: Locator, scroll = false) => {
-    if (scroll) await target.scrollIntoViewIfNeeded();
+  const touchTap = async (target: Locator) => {
     const box = await target.boundingBox();
     if (!box) throw new Error("The mobile control has no touch geometry.");
     const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -1857,7 +1856,7 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
 
   const selectBlankMidnight = async (id: string, order: readonly ("period" | "hour" | "minute")[]) => {
     const trigger = mobilePage.locator(`#${id}`);
-    await touchTap(trigger, true);
+    await trigger.click();
     const picker = mobilePage.locator(`#${id}-picker`);
     const period = picker.getByRole("radio", { name: "오전", exact: true });
     const hour = picker.getByRole("spinbutton", { name: / 시$/ });
@@ -1956,6 +1955,9 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await lastControls.hour.getByRole("button", { name: "12시", exact: true }).click();
     await expect(lastControls.hour).toHaveAttribute("aria-valuetext", "12시");
     await expectTimeValue(mobilePage, "model-weekday-bed", "00:00");
+
+    await lastControls.trigger.click();
+    await expect(lastControls.picker).toHaveCount(0);
 
     for (const id of ["model-weekend-bed", "model-weekend-wake"] as const) {
       await selectBlankMidnight(id, ["minute", "hour", "period"]);
