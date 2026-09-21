@@ -6,6 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
 const webDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  metadata: { transcendLab: true },
   testDir: "./e2e",
   testMatch: [
     "transcend-presence-contract.spec.ts",

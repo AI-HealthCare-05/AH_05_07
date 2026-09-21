@@ -22,6 +22,10 @@ import {
   PINNED_ACTIVE_ASSET,
 } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
 
+test.beforeEach(({}, testInfo) => {
+  test.skip(testInfo.config.metadata.transcendLab !== true, "dedicated Transcend Lab config only");
+});
+
 const envelopes: ActorEnvelopes = Object.freeze({
   visualAction: Object.freeze({ width: 100, height: 120 }),
   tactileHit: Object.freeze({ width: 72, height: 64 }),

@@ -2,6 +2,10 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 
 import { PINNED_ACTIVE_ASSET } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
 
+test.beforeEach(({}, testInfo) => {
+  test.skip(testInfo.config.metadata.transcendLab !== true, "dedicated Transcend Lab config only");
+});
+
 async function openRunningLab(page: Page, path = "/") {
   await page.goto(path);
   await expect(page.getByTestId("transcend-lab")).toHaveAttribute("data-lifecycle", "running");
