@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const primaryTabs = ["S02", "S11", "S08", "S10", "S14"] as const;
 
@@ -304,4 +304,78 @@ test("S12-S14 and account deletion dialog reflow with 200% text", async ({ page 
   expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   await dialog.getByRole("button", { name: "취소", exact: true }).click();
   await expect(trigger).toBeFocused();
+});
+
+test("desktop fine pointer still applies hover feedback to primary nav buttons", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("/?fixture=VP-10&screen=S02");
+  const button = page.locator('.primary-nav button:has([data-nav-icon="S08"])');
+  await expect(button).toBeVisible();
+
+  const inactiveStyle = await button.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, color: style.color };
+  });
+
+  await button.hover();
+  const hoverStyle = await button.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, color: style.color };
+  });
+
+  expect(hoverStyle).not.toEqual(inactiveStyle);
+});
+
+test("primary nav active tab keeps active presentation after native touch tap", async ({ browser, browserName }) => {
+  test.skip(browserName !== "chromium", "Chromium CDP is required for native touch input.");
+  const context = await browser.newContext({
+    baseURL: "http://127.0.0.1:4173",
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    userAgent: "Mozilla/5.0 (Linux; Android 15; SK7-E2E) AppleWebKit/537.36 Chrome/144 Mobile Safari/537.36",
+  });
+  const mobilePage = await context.newPage();
+  const cdp = await context.newCDPSession(mobilePage);
+
+  const touchTap = async (target: Locator) => {
+    const box = await target.boundingBox();
+    if (!box) throw new Error("The mobile control has no touch geometry.");
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
+  await mobilePage.goto("/?fixture=VP-10&screen=S02");
+  await expect(mobilePage.locator('[data-scene="S02"]')).toBeVisible();
+
+  expect(await mobilePage.evaluate(() => ({
+    hoverNone: matchMedia("(hover: none)").matches,
+    coarsePointer: matchMedia("(pointer: coarse)").matches,
+  }))).toEqual({ hoverNone: true, coarsePointer: true });
+
+  const activeStyleBefore = await mobilePage.locator(".primary-nav .is-active").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, color: style.color, boxShadow: style.boxShadow };
+  });
+
+  const s11Tab = mobilePage.locator('.primary-nav button:has([data-nav-icon="S11"])');
+  await touchTap(s11Tab);
+  await expect(mobilePage.locator('[data-scene="S11"]')).toBeVisible();
+
+  await expect.poll(async () => mobilePage.locator(".primary-nav .is-active").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, color: style.color, boxShadow: style.boxShadow };
+  })).toEqual(activeStyleBefore);
+
+  await touchTap(mobilePage.locator(".scene"));
+  await expect.poll(async () => mobilePage.locator(".primary-nav .is-active").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { backgroundColor: style.backgroundColor, color: style.color, boxShadow: style.boxShadow };
+  })).toEqual(activeStyleBefore);
+
+  await context.close();
 });

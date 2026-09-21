@@ -16,9 +16,11 @@ body,
   color: var(--sk7-text-muted);
 }
 
-.primary-nav button:hover:not(:disabled) {
-  background: var(--sk7-accent-soft);
-  color: var(--sk7-accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  .primary-nav button:hover:not(:disabled) {
+    background: var(--sk7-accent-soft);
+    color: var(--sk7-accent-hover);
+  }
 }
 
 .primary-nav button.is-active {
@@ -108,8 +110,10 @@ body,
   background: var(--sk7-surface-subtle);
 }
 
-.home-links button:hover:not(:disabled) {
-  background: var(--sk7-accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .home-links button:hover:not(:disabled) {
+    background: var(--sk7-accent-soft);
+  }
 }
 
 .home-links strong { color: var(--sk7-text); }
@@ -125,9 +129,10 @@ body,
   color: var(--sk7-text);
 }
 
-.choice-tile:hover:not(:disabled),
-.choice-tile.is-selected { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); }
-.choice-tile.is-selected { box-shadow: inset 0 0 0 2px var(--sk7-accent); }
+@media (hover: hover) and (pointer: fine) {
+  .choice-tile:hover:not(:disabled) { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); }
+}
+.choice-tile.is-selected { border-color: var(--sk7-accent); background: var(--sk7-accent-soft); box-shadow: inset 0 0 0 2px var(--sk7-accent); }
 .choice-state { color: var(--sk7-accent); }
 
 .week-path li {

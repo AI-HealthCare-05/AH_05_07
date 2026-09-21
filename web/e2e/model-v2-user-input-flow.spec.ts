@@ -1987,3 +1987,82 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     await context.close().catch(() => undefined);
   }
 });
+
+test("S11 time wheel detent keeps detent presentation after native touch tap", async ({ browser, browserName }) => {
+  test.skip(browserName !== "chromium", "Chromium CDP is required for native touch input.");
+  const context = await browser.newContext({
+    baseURL: "http://127.0.0.1:4173",
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    userAgent: "Mozilla/5.0 (Linux; Android 15; SK7-E2E) AppleWebKit/537.36 Chrome/144 Mobile Safari/537.36",
+  });
+  const mobilePage = await context.newPage();
+  const cdp = await context.newCDPSession(mobilePage);
+
+  const touchTap = async (target: Locator) => {
+    const box = await target.boundingBox();
+    if (!box) throw new Error("The mobile control has no touch geometry.");
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+
+  try {
+    await routeModel(mobilePage);
+    await mobilePage.goto("/?e2e=signed-in&screen=S11");
+    await toSleep(mobilePage);
+
+    const id = "model-weekday-bed";
+    await chooseTime(mobilePage, id, "07:00");
+    await expectTimeValue(mobilePage, id, "07:00");
+
+    const trigger = mobilePage.locator(`#${id}`);
+    await touchTap(trigger);
+    await expect(mobilePage.locator(`#${id}-picker`)).toHaveCount(0);
+    await touchTap(trigger);
+    const picker = mobilePage.locator(`#${id}-picker`);
+    await expect(picker).toBeVisible();
+
+    const minuteWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 분" });
+    const zeroMinute = minuteWheel.getByRole("button", { name: "00분", exact: true });
+    await expect(zeroMinute).toBeVisible();
+
+    const beforeStyle = await zeroMinute.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { backgroundColor: style.backgroundColor, boxShadow: style.boxShadow, transform: style.transform };
+    });
+
+    await touchTap(zeroMinute);
+
+    const afterStyle = await zeroMinute.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { backgroundColor: style.backgroundColor, boxShadow: style.boxShadow, transform: style.transform };
+    });
+
+    expect(afterStyle).toEqual(beforeStyle);
+    await expectTimeValue(mobilePage, id, "07:00");
+
+    // 59<->00 wrap and 11<->12 carry remain unchanged by the hover guard.
+    await minuteWheel.press("End");
+    await expect(minuteWheel).toHaveAttribute("aria-valuetext", "59분");
+    await minuteWheel.press("ArrowDown");
+    await expect(minuteWheel).toHaveAttribute("aria-valuetext", "00분");
+    await expectTimeValue(mobilePage, id, "07:00");
+
+    const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
+    await hourWheel.focus();
+    await hourWheel.press("Home");
+    for (let current = 1; current < 11; current += 1) await hourWheel.press("ArrowDown");
+    await expect(hourWheel).toHaveAttribute("aria-valuetext", "11시");
+    await hourWheel.press("ArrowDown");
+    await expect(hourWheel).toHaveAttribute("aria-valuetext", "12시");
+    const afternoon = picker.getByRole("radio", { name: "오후", exact: true });
+    await expect(afternoon).toHaveAttribute("aria-checked", "true");
+  } finally {
+    await context.close().catch(() => undefined);
+  }
+});
