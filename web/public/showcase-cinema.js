@@ -1,5 +1,5 @@
 const SHOWCASE_FILM_URL =
-  "https://sk7-companion.gkrry.com/showcase/v1/video/showcase-final-v1-9094ae558239.mp4";
+  "https://sk7-companion.gkrry.com/showcase/v1/video/sk7-cinema-public-teaser-v1-60s-ed7e1baa477a.mp4";
 const SHOWCASE_POSTER_URL =
   "https://sk7-companion.gkrry.com/showcase/v1/images/showcase-poster-public-v1-2b8e766efde1.jpg";
 const SHOWCASE_DETAILS_URL = "/showcase/";
@@ -36,7 +36,7 @@ function createPortal() {
   opener.innerHTML = `
     <span class="sk7-showcase-entry-kicker">SHOWCASE</span>
     <span class="sk7-showcase-entry-title">Seven days can tell a story.</span>
-    <span class="sk7-showcase-entry-meta">04:00&nbsp;&nbsp; WATCH THE FILM <i aria-hidden="true">↗</i></span>
+    <span class="sk7-showcase-entry-meta">01:00&nbsp;&nbsp; WATCH THE FILM <i aria-hidden="true">↗</i></span>
   `;
 
   entry.append(opener);
@@ -72,7 +72,7 @@ function createPortal() {
             <div class="sk7-cinema-film-status" role="status" aria-live="polite"></div>
           </div>
           <p id="sk7-cinema-caption" class="sk7-cinema-caption">
-            SK7의 실제 화면 흐름을 담은 약 4분의 제품 Showcase입니다.
+            SK7의 실제 화면 흐름을 담은 60초 공개 Showcase입니다.
           </p>
         </div>
 

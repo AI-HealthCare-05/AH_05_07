@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const filmUrl =
-  "https://sk7-companion.gkrry.com/showcase/v1/video/showcase-final-v1-9094ae558239.mp4";
+  "https://sk7-companion.gkrry.com/showcase/v1/video/sk7-cinema-public-teaser-v1-60s-ed7e1baa477a.mp4";
 
 async function installSyntheticApi(page: Page) {
   await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
@@ -68,7 +68,7 @@ test.describe("SK7 cinema showcase portal", () => {
     await expect(entry).toBeVisible();
     await expect(entry).toContainText("SHOWCASE");
     await expect(entry).toContainText("Seven days can tell a story.");
-    await expect(entry).toContainText("04:00");
+    await expect(entry).toContainText("01:00");
     await expect(entry).toContainText("WATCH THE FILM");
 
     expect(pageErrors).toEqual([]);
