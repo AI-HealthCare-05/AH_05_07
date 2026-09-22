@@ -81,6 +81,11 @@ The adapter uses `visualViewport.offsetLeft/offsetTop/width/height`, matching th
 Phase 1 canonical coordinate contract. It does not use DPR scaling and it does
 not scan arbitrary DOM every frame.
 
+Enabled-mode resize, scroll and explicit-zone DOM invalidations coalesce behind
+one cancellable 16 ms shadow refresh timer. The host never joins the renderer
+animation-frame lifecycle, and cleanup removes every listener, observer and
+pending timer. Off mode installs no geometry timer or resize/scroll listener.
+
 320x568 intentionally publishes no S02 scene anchor when #709 suppresses the
 heavy visual. Semantic UI remains complete.
 

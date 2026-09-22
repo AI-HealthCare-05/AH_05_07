@@ -193,7 +193,9 @@ export function CompanionPresenceHostBridge({
     };
     const schedule = () => {
       if (disposed || schedulingRef.current !== null) return;
-      schedulingRef.current = window.requestAnimationFrame(refresh);
+      // Shadow geometry must not join the renderer animation-frame lifecycle.
+      // A single cancellable timer coalesces resize/scroll/DOM invalidations.
+      schedulingRef.current = window.setTimeout(refresh, 16);
     };
 
     // The existing off contract includes zero companion animation-frame work.
@@ -252,7 +254,7 @@ export function CompanionPresenceHostBridge({
       observer?.disconnect();
       mutationObserver?.disconnect();
       if (schedulingRef.current !== null) {
-        window.cancelAnimationFrame(schedulingRef.current);
+        window.clearTimeout(schedulingRef.current);
         schedulingRef.current = null;
       }
     };
