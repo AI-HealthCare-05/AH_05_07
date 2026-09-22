@@ -151,6 +151,8 @@ test("production S10 day focus reaches the unified scene as a bounded presentati
   const buttons = page.locator(".seven-day-trail .trail-day-button");
 
   await expect(buttons).toHaveCount(7);
+  await expect(runtime).toHaveAttribute("data-scene-environment-owner", "three-scene");
+  expect(await runtime.getAttribute("data-scene-actor-owner")).toBeNull();
   await expect(runtime).toHaveAttribute("data-companion-look-enabled", "true");
   await expect(runtime).toHaveAttribute("data-companion-look-posture", "head-spine");
   await expect(runtime).toHaveAttribute("data-companion-replay-cue-count", "0");

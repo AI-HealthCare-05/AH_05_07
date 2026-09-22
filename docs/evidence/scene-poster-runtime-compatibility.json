@@ -27,7 +27,8 @@
   },
   "runtimeVisualSourceHashes": {
     "web/src/components/scene/scene-stage.css": "d3eddb50686efa691e32f8616517dfb1d113a891053ad4dabc65235ee46f147d",
-    "web/src/components/scene/ThreeSceneRenderer.tsx": "dd6bbb75ecde9b672ee387d71099d839298a5395d2c2d2d8ccdae290cfe7d71f",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "5ef8d27f9dece905d1ee9e787e6450d2c629c294fe5fa026a6eea8433d016387",
+    "web/src/components/scene/s02SceneActor.ts": "50d2e331faacde98dfaf08a5ceb06430adb13549ca080778f78f8c06ab27f892",
     "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
     "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
     "web/src/ui/sceneRecipes.ts": "f3c652be8a3712db2aa42f4c49d9f334a966bc90919c07f9de3df6fb3e287659",

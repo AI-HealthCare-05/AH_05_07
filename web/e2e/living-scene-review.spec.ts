@@ -79,6 +79,66 @@ test("S02 keeps its decoded poster over a hidden canvas until the first GPU fram
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
 });
 
+test("leaving S02 during actor load releases the canvas and late completion cannot reveal it", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    const contexts = new Set<WebGLRenderingContext | WebGL2RenderingContext>();
+    Object.assign(window, { phase3aSceneContexts: contexts });
+    HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+      const context = original.apply(this, args);
+      if (context && (args[0] === "webgl" || args[0] === "webgl2")) {
+        contexts.add(context as WebGLRenderingContext | WebGL2RenderingContext);
+      }
+      return context;
+    } as typeof original;
+  });
+
+  let releaseGlb!: () => void;
+  let markGlbStarted!: () => void;
+  const glbGate = new Promise<void>(resolve => { releaseGlb = resolve; });
+  const glbStarted = new Promise<void>(resolve => { markGlbStarted = resolve; });
+  let glbFinished = false;
+
+  page.on("requestfinished", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbFinished = true;
+  });
+  await page.route("**/*.glb*", async route => {
+    markGlbStarted();
+    await glbGate;
+    await route.continue();
+  });
+
+  try {
+    await page.goto(url);
+    await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+    await glbStarted;
+    await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+    await expect(page.locator(".living-three-scene")).toHaveAttribute(
+      "data-scene-actor-owner",
+      "s02-actor-v1",
+    );
+
+    await page.locator(".home-lead button").click();
+    await expect(page.locator(".app-shell")).not.toHaveAttribute("data-screen", "S02");
+    await expect(page.locator('[data-living-scene="S02"]')).toHaveCount(0);
+    await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => [
+      ...(window as Window & {
+        phase3aSceneContexts: Set<WebGLRenderingContext | WebGL2RenderingContext>;
+      }).phase3aSceneContexts,
+    ].filter(context => !context.isContextLost()).length)).toBe(0);
+
+    releaseGlb();
+    await expect.poll(() => glbFinished, { timeout: 20_000 }).toBe(true);
+    await page.waitForTimeout(500);
+    await expect(page.locator(".app-shell")).not.toHaveAttribute("data-screen", "S02");
+    await expect(page.locator('[data-living-scene="S02"]')).toHaveCount(0);
+    await expect(page.locator(".living-three-scene")).toHaveCount(0);
+  } finally {
+    releaseGlb();
+  }
+});
+
 for (const [width, height] of [[320, 844], [390, 844], [1366, 768]]) {
   test(`review renders at ${width}x${height}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });
@@ -259,6 +319,10 @@ for (const species of companionSpecies) {
     // S02 scene remains the only visual owner.
     await expect(page.locator("[data-companion-status]")).toHaveCount(0);
     await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+    await expect(page.locator(".living-three-scene")).toHaveAttribute(
+      "data-scene-actor-owner",
+      "s02-actor-v1",
+    );
 
     for (const [width, height] of [
       [320, 844],
@@ -981,4 +1045,16 @@ test("Phase 2 shadow Presence Host observes S02 full-scene ownership without add
   await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
   await expect.poll(() => assets.length).toBe(1);
+
+  const sceneRuntime = page.locator(".living-three-scene");
+  await expect(sceneRuntime).toHaveAttribute(
+    "data-scene-environment-owner",
+    "three-scene",
+  );
+  await expect(sceneRuntime).toHaveAttribute(
+    "data-scene-actor-owner",
+    "s02-actor-v1",
+  );
+  expect(await sceneRuntime.getAttribute("data-scene-environment-owner"))
+    .not.toBe(await sceneRuntime.getAttribute("data-scene-actor-owner"));
 });
