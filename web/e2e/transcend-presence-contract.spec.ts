@@ -11,12 +11,30 @@ import {
   resolvePlacement,
   transitionArenaRoute,
   type ActorEnvelopes,
+  type AnchorPlacementIntent,
   type ArenaSnapshot,
-  type PlacementIntent,
   type ResolvedPose,
 } from "../transcend-lab/src/platform/spatial/companionWorld";
+import {
+  freeIntentFromPoint,
+  requestFromFreeIntent,
+  resolveFreePlacement,
+} from "../transcend-lab/src/platform/spatial/companionFreePlacement";
+import {
+  arenaPointToClient,
+  clientPointToArena,
+  clientRectToArena,
+} from "../transcend-lab/src/platform/spatial/visualViewportCoordinates";
+import {
+  beginGrab,
+  finishGrab,
+  moveGrab,
+} from "../transcend-lab/src/platform/behavior/companionGrabIntent";
 import { WorldRootLeaseManager } from "../transcend-lab/src/platform/behavior/rootMotionLease";
-import { loadPinnedActiveAsset } from "../transcend-lab/src/platform/embodiment/labAssetAdmission";
+import {
+  loadPinnedActiveAsset,
+  verifyGlbPayload,
+} from "../transcend-lab/src/platform/embodiment/labAssetAdmission";
 import {
   LabResourceLedger,
   PINNED_ACTIVE_ASSET,
@@ -32,7 +50,8 @@ const envelopes: ActorEnvelopes = Object.freeze({
   relocationHandle: Object.freeze({ width: 36, height: 24, offsetY: 31 }),
 });
 
-const intent: PlacementIntent = Object.freeze({
+const intent: AnchorPlacementIntent = Object.freeze({
+  kind: "anchor",
   preferredRole: "sidecar",
   fallbackOrder: Object.freeze(["anchor", "dock", "control", "hidden"] as const),
 });
@@ -49,6 +68,22 @@ function pose(snapshot: ArenaSnapshot, x = 150, y = 150): ResolvedPose {
     anchorId: "a",
     source: "anchor" as const,
   });
+}
+
+function minimalSelfContainedGlb(): ArrayBuffer {
+  const json = new TextEncoder().encode('{"asset":{"version":"2.0"},"scene":0,"scenes":[{}]}');
+  const paddedLength = Math.ceil(json.byteLength / 4) * 4;
+  const bytes = new ArrayBuffer(12 + 8 + paddedLength);
+  const view = new DataView(bytes);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.byteLength, true);
+  view.setUint32(12, paddedLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  const payload = new Uint8Array(bytes, 20, paddedLength);
+  payload.fill(0x20);
+  payload.set(json);
+  return bytes;
 }
 
 test.describe("ArenaSnapshot pure contract", () => {
@@ -199,6 +234,122 @@ test.describe("ArenaSnapshot pure contract", () => {
   });
 });
 
+test.describe("free placement and direct-grab proposals", () => {
+  const freeEnvelope = Object.freeze({ width: 100, height: 80 });
+
+  test("keeps three distinct non-anchor points and carries normalized intent into current route geometry", () => {
+    const arena = new ArenaSnapshotBuilder(() => ({ x: 0, y: 0, width: 500, height: 400 }));
+    arena.registerHardZoneProvider("center", () => [{ x: 210, y: 150, width: 80, height: 100 }]);
+    const first = arena.publish(1);
+    for (const point of [{ x: 80, y: 80 }, { x: 420, y: 80 }, { x: 80, y: 330 }]) {
+      const result = resolveFreePlacement(first, {
+        routeEpoch: first.routeEpoch,
+        arenaRevision: first.revision,
+        point: { space: ARENA_SPACE, revision: first.revision, ...point },
+      }, freeEnvelope, 0);
+      expect(result).toMatchObject({ kind: "placed", resolution: "unchanged", point });
+    }
+
+    const committedPoint = { space: ARENA_SPACE, revision: first.revision, x: 130, y: 120 } as const;
+    const carried = freeIntentFromPoint(first, committedPoint, freeEnvelope, 0);
+    expect(carried).toEqual({ kind: "free", u: 0.2, v: 0.25 });
+    const nextArena = new ArenaSnapshotBuilder(() => ({ x: 0, y: 0, width: 300, height: 220 }));
+    const next = nextArena.publish(2);
+    const request = requestFromFreeIntent(next, carried!, freeEnvelope, 0);
+    expect(request).toMatchObject({
+      routeEpoch: 2,
+      arenaRevision: next.revision,
+      point: { revision: next.revision, x: 90, y: 75 },
+    });
+  });
+
+  test("uses deterministic minimum correction across overlapping hard zones", () => {
+    const zones = [
+      { x: 200, y: 150, width: 100, height: 100 },
+      { x: 260, y: 120, width: 80, height: 150 },
+    ];
+    const solve = (orderedZones: typeof zones) => {
+      const arena = new ArenaSnapshotBuilder(() => ({ x: 0, y: 0, width: 500, height: 400 }));
+      arena.registerHardZoneProvider("overlap", () => orderedZones);
+      const snapshot = arena.publish(1);
+      return resolveFreePlacement(snapshot, {
+        routeEpoch: snapshot.routeEpoch,
+        arenaRevision: snapshot.revision,
+        point: { space: ARENA_SPACE, revision: snapshot.revision, x: 275, y: 200 },
+      }, freeEnvelope, 0);
+    };
+    const forward = solve(zones);
+    const reverse = solve([...zones].reverse());
+    expect(forward).toMatchObject({
+      kind: "placed",
+      resolution: "adjusted",
+      point: { x: 275, y: 310 },
+      correctionDistance: 110,
+    });
+    expect(reverse).toMatchObject({
+      kind: "placed",
+      point: { x: 275, y: 310 },
+      correctionDistance: 110,
+    });
+  });
+
+  test("distinguishes true no-space from stale requests on the actual small viewport", () => {
+    const tinyArena = new ArenaSnapshotBuilder(() => ({ x: 0, y: 0, width: 90, height: 70 }));
+    const tiny = tinyArena.publish(1);
+    const noSpace = resolveFreePlacement(tiny, {
+      routeEpoch: tiny.routeEpoch,
+      arenaRevision: tiny.revision,
+      point: { space: ARENA_SPACE, revision: tiny.revision, x: 45, y: 35 },
+    }, freeEnvelope, 0);
+    expect(noSpace).toEqual({ kind: "no-space", reason: "envelope-too-large" });
+
+    const stale = resolveFreePlacement(tiny, {
+      routeEpoch: tiny.routeEpoch,
+      arenaRevision: tiny.revision - 1,
+      point: { space: ARENA_SPACE, revision: tiny.revision - 1, x: 45, y: 35 },
+    }, freeEnvelope, 0);
+    expect(stale).toEqual({ kind: "rejected", reason: "stale-request" });
+  });
+
+  test("preserves off-center grab offset, threshold, foreign-pointer ownership, and stale-fence cancellation", () => {
+    const fence = { sessionEpoch: 3, routeEpoch: 4, arenaRevision: 5 };
+    const grab = beginGrab({
+      sample: { pointerId: 7, point: { x: 230, y: 160 } },
+      actor: { space: ARENA_SPACE, revision: 5, x: 200, y: 190 },
+      fence,
+      button: 0,
+      isPrimary: true,
+      threshold: 6,
+    });
+    expect(grab).not.toBeNull();
+    expect(moveGrab(grab!, { pointerId: 7, point: { x: 235, y: 160 } }, fence).kind).toBe("pending");
+    const drag = moveGrab(grab!, { pointerId: 7, point: { x: 250, y: 190 } }, fence);
+    expect(drag).toMatchObject({
+      kind: "drag",
+      request: { point: { x: 220, y: 220 } },
+    });
+    expect(moveGrab(grab!, { pointerId: 99, point: { x: 999, y: 999 } }, fence).kind).toBe("ignored");
+    expect(finishGrab(grab!, { pointerId: 99, point: { x: 999, y: 999 } }, fence).kind).toBe("ignored");
+    expect(moveGrab(grab!, { pointerId: 7, point: { x: 250, y: 190 } }, { ...fence, arenaRevision: 6 }))
+      .toEqual({ kind: "cancelled", reason: "stale-fence" });
+  });
+
+  test("adapts pointer and DOM geometry through one visual-viewport offset without DPR scaling", () => {
+    const viewport = { x: 34, y: 57, width: 320, height: 480 };
+    expect(clientPointToArena({ x: 20, y: 30 }, viewport)).toEqual({ x: 54, y: 87 });
+    expect(clientRectToArena({ x: 10, y: 12, width: 80, height: 40 }, viewport)).toEqual({
+      x: 44,
+      y: 69,
+      width: 80,
+      height: 40,
+    });
+    expect(arenaPointToClient(
+      { space: ARENA_SPACE, revision: 1, x: 54, y: 87 },
+      { space: ARENA_SPACE, revision: 1, ...viewport },
+    )).toEqual({ x: 20, y: 30 });
+  });
+});
+
 test.describe("world-root exact-token lease", () => {
   test("supports acquire, renew, write, preemption, and ABA-safe release", () => {
     const arena = builder();
@@ -265,7 +416,20 @@ test.describe("world-root exact-token lease", () => {
 });
 
 test.describe("fixture-pinned asset admission", () => {
-  test("admits the exact active-lite identity and makes one exact request", async () => {
+  test("verifies a known self-contained GLB by its actual bytes and literal digest", async () => {
+    const bytes = minimalSelfContainedGlb();
+    const inspection = await verifyGlbPayload(bytes, {
+      bytes: 72,
+      sha256: "3522cd64f98b150c43db6174f5fa1ae5ca148bfc802ad33d4d41d0233a478706",
+    });
+    expect(inspection).toEqual({ version: 2, animationNames: [] });
+    await expect(verifyGlbPayload(bytes, {
+      bytes: 72,
+      sha256: "0522cd64f98b150c43db6174f5fa1ae5ca148bfc802ad33d4d41d0233a478706",
+    })).rejects.toThrow(/SHA-256 mismatch/);
+  });
+
+  test("admits the exact identity but rejects unverified response bytes after one exact request", async () => {
     const resources = new LabResourceLedger();
     const requested: string[] = [];
     const result = await loadPinnedActiveAsset({
@@ -276,11 +440,9 @@ test.describe("fixture-pinned asset admission", () => {
       },
     });
     expect(result).toMatchObject({
-      status: "loaded",
+      status: "failed",
       assetId: PINNED_ACTIVE_ASSET.assetId,
-      url: PINNED_ACTIVE_ASSET.url,
-      sha256: PINNED_ACTIVE_ASSET.sha256,
-      responseBytes: 3,
+      reason: `asset load failed: asset byte length mismatch: expected ${PINNED_ACTIVE_ASSET.bytes}, received 3`,
     });
     expect(requested).toEqual([PINNED_ACTIVE_ASSET.url]);
     expect(resources.diagnostics().pendingLoads).toBe(0);

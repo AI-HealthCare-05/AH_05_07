@@ -1,4 +1,5 @@
 import type { ResolvedPose } from "../spatial/companionWorld";
+import type { VerifiedPinnedAsset } from "./labAssetAdmission";
 
 export type LabBackendKind = "movable-patch" | "shared-stage";
 export type ScenarioCondition = "cold" | "warm";
@@ -242,8 +243,20 @@ export type RendererMountContext = Readonly<{
   resources: LabResourceLedger;
   reducedMotion: boolean;
   forceFailure: boolean;
-  getViewport: () => Readonly<{ width: number; height: number }>;
+  getViewport: () => Readonly<{ x: number; y: number; width: number; height: number }>;
+  verifiedAsset: VerifiedPinnedAsset | null;
 }>;
+
+export type BackendRepresentation = Readonly<{
+  mode: "surrogate" | "verified-glb";
+  assetId: string | null;
+  sha256: string | null;
+  clipName: string | null;
+}>;
+
+export type AssetDisplayResult =
+  | Readonly<{ status: "displayed"; representation: BackendRepresentation }>
+  | Readonly<{ status: "cancelled" | "failed"; reason: string }>;
 
 export type BackendTelemetry = Readonly<{
   backend: LabBackendKind;
@@ -252,11 +265,13 @@ export type BackendTelemetry = Readonly<{
   frameDurationsMs: readonly number[];
   contextPeak: number;
   visible: boolean;
+  representation: BackendRepresentation;
 }>;
 
 export interface LabEmbodimentBackend {
   readonly kind: LabBackendKind;
   mount(context: RendererMountContext): Promise<void>;
+  installVerifiedAsset(asset: VerifiedPinnedAsset): Promise<AssetDisplayResult>;
   telemetry(): BackendTelemetry;
   diagnostics(): ResourceDiagnostics;
   stop(): Promise<void>;
@@ -264,7 +279,7 @@ export interface LabEmbodimentBackend {
 }
 
 export type LabMetrics = Readonly<{
-  schemaVersion: "transcend-lab-metrics.v1";
+  schemaVersion: "transcend-lab-metrics.v2";
   scenarioId: string;
   scenarioHash: string;
   sourceSha: string;
@@ -286,6 +301,8 @@ export type LabMetrics = Readonly<{
   commonClock: readonly number[];
   inputTrace: typeof TRANSCEND_SCENARIO_FIXTURE.inputTrace;
   frameSamplesMs: readonly number[];
+  frameSampleMeaning: "cpu-render-submission-ms";
+  representation: BackendRepresentation;
   longTaskSamplesMs: readonly number[];
   contextCounts: Readonly<{ peak: number; afterTeardown: number }>;
   drawActivity: Readonly<{ draws: number; mounted: number }>;
@@ -321,7 +338,7 @@ export function createMetrics(input: Readonly<{
 }>): LabMetrics {
   const userAgent = navigator.userAgent;
   return Object.freeze({
-    schemaVersion: "transcend-lab-metrics.v1" as const,
+    schemaVersion: "transcend-lab-metrics.v2" as const,
     scenarioId: TRANSCEND_SCENARIO_FIXTURE.scenarioId,
     scenarioHash: TRANSCEND_SCENARIO_FIXTURE.scenarioHash,
     sourceSha: TRANSCEND_SCENARIO_FIXTURE.sourceSha,
@@ -335,6 +352,8 @@ export function createMetrics(input: Readonly<{
     commonClock: TRANSCEND_SCENARIO_FIXTURE.clock,
     inputTrace: TRANSCEND_SCENARIO_FIXTURE.inputTrace,
     frameSamplesMs: Object.freeze([...input.telemetry.frameDurationsMs]),
+    frameSampleMeaning: "cpu-render-submission-ms" as const,
+    representation: input.telemetry.representation,
     longTaskSamplesMs: Object.freeze(
       performance
         .getEntriesByType("longtask")
