@@ -11,7 +11,8 @@ import {
 import { createLandmark } from "./environment";
 import { createDiorama } from "./diorama";
 import { disposeScene } from "./disposeScene";
-import { S02SceneActorOwner } from "./s02SceneActor";
+import { S02SceneActorOwner, S02SceneActorPort } from "./s02SceneActor";
+import { usePresenceSceneActorRuntime } from "../../platform/presence/PresenceSceneActorRuntimeContext";
 
 type Props = {
   screen: "S02" | "S10";
@@ -56,6 +57,7 @@ function replayStrength(elapsedMs: number) {
 
 /** Neutral clay study. No AnimationMixer, dynamic shadow pass or persistent frame loop. */
 export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, onReady, onFailure }: Props) {
+  const presenceSceneActorRuntime = usePresenceSceneActorRuntime();
   const host = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onReady, onFailure });
   callbacks.current = { onReady, onFailure };
@@ -76,6 +78,9 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
     let observer: ResizeObserver | undefined;
     let model: THREE.Object3D | undefined;
     let s02ActorOwner: S02SceneActorOwner | undefined;
+    let unregisterS02ActorPort: (() => boolean) | undefined;
+    let presenceOwnsS02Root = false;
+    let characterAnchor: readonly [number, number, number] = [0, 0.05, 0.65];
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-2, 2, 1.5, -1.5, 0.1, 40);
     let profile = sceneProfile(window.innerWidth);
@@ -360,7 +365,10 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       camera.updateProjectionMatrix();
       environment.position.fromArray(cameraRecipe.environmentAnchor);
       environment.scale.setScalar(cameraRecipe.environmentScale);
-      if (screen === "S02") s02ActorOwner?.setAnchor(cameraRecipe.characterAnchor);
+      characterAnchor = Object.freeze([...cameraRecipe.characterAnchor]) as readonly [number, number, number];
+      if (screen === "S02" && !presenceOwnsS02Root) {
+        s02ActorOwner?.setAnchor(cameraRecipe.characterAnchor);
+      }
       else if (model) model.position.fromArray(cameraRecipe.characterAnchor);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height, false);
@@ -391,6 +399,21 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
           onLoaded: () => {
             loaded = true;
             resize();
+            try {
+              const owner = s02ActorOwner;
+              if (!owner?.worldRoot) { fail(); return; }
+              const port = new S02SceneActorPort({
+                owner,
+                camera,
+                stage: element,
+                getCharacterAnchor: () => characterAnchor,
+                requestDraw: () => { if (!disposed) draw(); },
+                onFirstWrite: () => { presenceOwnsS02Root = true; },
+              });
+              unregisterS02ActorPort = presenceSceneActorRuntime.registerPort(port);
+            } catch {
+              fail();
+            }
           },
           onFailure: fail,
         });
@@ -425,6 +448,8 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       observer?.disconnect();
       removeReplayAttention?.();
       removeReplayAttention = undefined;
+      unregisterS02ActorPort?.();
+      unregisterS02ActorPort = undefined;
       s02ActorOwner?.dispose();
       s02ActorOwner = undefined;
       if (renderer) {
@@ -436,7 +461,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       // Release the context itself on route/recipe exit, not just its assets.
       renderer?.forceContextLoss();
     };
-  }, [screen, landmark, recipe.id, recipe.characterUrl]);
+  }, [screen, landmark, presenceSceneActorRuntime, recipe.id, recipe.characterUrl]);
 
   return <div
     className="living-three-scene"

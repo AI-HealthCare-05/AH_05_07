@@ -182,6 +182,7 @@ export function measureS02PresenceArena(
 
   push("today-primary-action", '[data-scene="S02"] .home-lead button');
   push("primary-navigation", ".primary-nav");
+  push("companion-position-control", '[data-scene="S02"] .presence-scene-actor-controls');
 
   const modal = Array.from(root.querySelectorAll('[role="dialog"][aria-modal="true"]'))
     .find(visible);

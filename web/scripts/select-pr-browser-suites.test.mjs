@@ -110,7 +110,9 @@ test('Presence Host product paths compose Journey and scene coverage', () => {
     'web/src/platform/presence/companionPresenceKernel.ts',
     'web/src/platform/presence/s02PresenceArena.ts',
     'web/src/components/CompanionPresenceHostBridge.tsx',
+    'web/src/components/PresenceSceneActorInteraction.tsx',
     'web/e2e/presence-host-foundation.spec.ts',
+    'web/e2e/s02-spatial-presence.spec.ts',
   ]) assert.deepEqual(browser([file]), ['journey-full', 'scene'], file);
 });
 

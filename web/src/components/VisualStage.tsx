@@ -6,6 +6,7 @@ import { resolveScenePlan, type ScenePlan } from "../ui/scenePolicy";
 import type { JourneyScreenId } from "../ui/journey";
 import { resolveS02CharacterRecipe, resolveS10CharacterRecipe, sceneProfile, type SceneRecipe } from "../ui/sceneRecipes";
 import type { CompanionSpecies } from "../ui/companion";
+import { PresenceSceneActorInteraction } from "./PresenceSceneActorInteraction";
 
 
 const ThreeSceneRenderer = lazy(() => import("./scene/ThreeSceneRenderer"));
@@ -124,11 +125,14 @@ export function VisualStage({ screen, calendarDate, companionSpecies, production
   const plan: ScenePlan = identityScreen && companionSpecies === null
     ? { ...basePlan, recipe: identityBound, tier: 1 }
     : { ...basePlan, recipe: identityBound };
-  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={basePlan.recipe.id} data-scene-date={calendarDate} aria-hidden="true" style={{
+  return <div className="living-visual-stage" data-living-scene={screen} data-scene-recipe={basePlan.recipe.id} data-scene-date={calendarDate} style={{
     "--scene-height-320": `${plan.recipe.compositions.mobile320.stageHeight}px`,
     "--scene-height-390": `${plan.recipe.compositions.mobile390.stageHeight}px`,
     "--scene-height-desktop": `${plan.recipe.compositions.desktop.stageHeight}px`,
   } as CSSProperties}>
-    <SceneRuntimeBoundary key={`${plan.recipe.id}:${plan.recipe.characterUrl}`} plan={plan} />
+    <div className="living-visual-runtime" aria-hidden="true">
+      <SceneRuntimeBoundary key={`${plan.recipe.id}:${plan.recipe.characterUrl}`} plan={plan} />
+    </div>
+    {screen === "S02" && <PresenceSceneActorInteraction />}
   </div>;
 }
