@@ -1398,7 +1398,7 @@ test('past-dated BP confirmation points to record history instead of today', asy
 });
 
 
-test('S01 offers a read-only 30-second preview and playful login microcopy', async ({ page }) => {
+test('S01 opens the isolated memory-only guest journey and returns through settings', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   const apiRequests: string[] = [];
@@ -1415,14 +1415,16 @@ test('S01 offers a read-only 30-second preview and playful login microcopy', asy
   await expect(preview).toBeVisible();
   await preview.click();
 
-  const demo = page.locator('[data-demo-mode="read-only"]');
-  await expect(demo).toBeVisible();
-  await expect(demo).toContainText('예시 데이터 · 저장되지 않아요');
-  await expect(demo.locator('.journey-today')).toBeVisible();
-  await expect(demo.locator('.home-trail-date')).toHaveCount(7);
+  await expect(page).toHaveURL(/\?guest=1$/);
+  const guest = page.locator('[data-guest-journey="memory-only"]');
+  await expect(guest).toBeVisible();
+  await expect(guest).toContainText('체험 중 입력은 서버로 보내거나 저장하지 않아요.');
+  await expect(guest.locator('.journey-today')).toBeVisible();
+  await expect(guest.locator('.home-trail-date')).toHaveCount(7);
   expect(apiRequests).toEqual([]);
 
-  await page.getByRole('button', { name: '맛보기 끝내기', exact: true }).click();
+  await page.locator('.primary-nav').getByRole('button', { name: '설정', exact: true }).click();
+  await page.getByRole('button', { name: '체험 끝내고 로그인으로', exact: true }).click();
   await expect(page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true })).toBeVisible();
 });
 
@@ -1473,7 +1475,7 @@ test('S01 narrator gate off preserves bubble and core login without renderer net
 });
 
 
-test('S01 demo-day preview keeps selected companion identity and gates product actions at 320px', async ({ page }) => {
+test('S01 guest journey keeps selected companion identity and opens memory-only actions at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   await page.addInitScript(() => {
@@ -1493,45 +1495,34 @@ test('S01 demo-day preview keeps selected companion identity and gates product a
 
   await preview.click();
 
-  const demo = page.locator('[data-demo-mode="read-only"]');
-  await expect(demo).toBeVisible();
-  await expect(demo).toHaveAttribute('data-demo-companion-species', 'fox');
-  await expect(demo).toContainText('예시 데이터 · 저장되지 않아요');
-  await expect(demo.locator('.journey-today')).toBeVisible();
+  const guest = page.locator('[data-guest-journey="memory-only"]');
+  await expect(guest).toBeVisible();
+  await expect(guest).toHaveAttribute('data-guest-companion-species', 'fox');
+  await expect(guest).toContainText('체험 중 입력은 서버로 보내거나 저장하지 않아요.');
+  await expect(guest.locator('.journey-today')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
-  await demo.locator('.home-lead button').click();
-
-  const gate = page.getByRole('dialog', { name: '여기부터는 실제 기록이에요.' });
-  await expect(gate).toBeVisible();
-  await expect(gate).toContainText('맛보기의 예시 데이터는 저장되지 않아요.');
+  await guest.locator('.home-lead button').click();
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
   expect(apiRequests).toEqual([]);
 
-  await gate.getByRole('button', { name: '계속 둘러보기', exact: true }).click();
-  await expect(gate).toBeHidden();
-
-  await demo.getByRole('link', { name: /7일 돌아보기/ }).click();
-  await expect(gate).toBeVisible();
-
-  await gate.getByRole('button', { name: '로그인하고 기록 시작', exact: true }).click();
-
-  const email = page.getByLabel('이메일', { exact: true });
-  await expect(email).toBeVisible();
-  await expect(email).toBeFocused();
+  await page.locator('.primary-nav').getByRole('button', { name: '설정', exact: true }).click();
+  await page.getByRole('button', { name: '체험 끝내고 로그인으로', exact: true }).click();
+  await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('sk7-companion-species'))).toBe('fox');
   expect(apiRequests).toEqual([]);
 });
 
 
-test('S01 demo-day preview contains decorative S02 width at desktop', async ({ page }) => {
+test('S01 guest journey contains decorative S02 width at desktop', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
   await page.goto('/');
 
   await page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true }).click();
-  const demo = page.locator('[data-demo-mode="read-only"]');
-  await expect(demo).toBeVisible();
-  await expect(demo.locator('.journey-today')).toBeVisible();
+  const guest = page.locator('[data-guest-journey="memory-only"]');
+  await expect(guest).toBeVisible();
+  await expect(guest.locator('.journey-today')).toBeVisible();
 
   expect(await page.evaluate(() => ({
     fits: document.documentElement.scrollWidth <= innerWidth,

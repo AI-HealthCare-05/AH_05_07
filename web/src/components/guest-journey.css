@@ -1,0 +1,44 @@
+[data-guest-journey="memory-only"] .guest-journey-disclosure {
+  width: min(100%, 46rem);
+  margin: 0 0 var(--sk7-space-md);
+  border-left: 2px solid var(--sk7-border-strong);
+  padding: .15rem 0 .15rem var(--sk7-space-sm);
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+}
+
+[data-guest-journey="memory-only"] .guest-local-confirmation.saved-scene {
+  padding-right: clamp(1.25rem, 4vw, 3rem);
+}
+
+[data-guest-journey="memory-only"] .guest-local-confirmation .save-ripple {
+  width: 8rem;
+  height: 8rem;
+}
+
+[data-guest-journey="memory-only"] .guest-checkin-actions {
+  margin-top: var(--sk7-space-sm);
+}
+
+[data-guest-journey="memory-only"] .guest-settings-exit {
+  border-bottom: 1px solid var(--sk7-border);
+}
+
+@media (max-width: 700px) {
+  [data-guest-journey="memory-only"] .guest-journey-disclosure {
+    width: calc(100% - 1.5rem);
+    margin: 0 .75rem var(--sk7-space-sm);
+  }
+
+  [data-guest-journey="memory-only"] .guest-local-confirmation.saved-scene {
+    padding-top: var(--sk7-space-lg);
+    padding-right: 1.25rem;
+  }
+}
+
+@media print {
+  [data-guest-journey="memory-only"] .guest-journey-disclosure {
+    display: none;
+  }
+}

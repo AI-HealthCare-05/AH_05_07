@@ -5,10 +5,11 @@
 ```mermaid
 flowchart TD
     A["S01 Signed-out · companion + email link"] --> B["Authenticated S02 Today"]
-    A --> P["30-second synthetic read-only preview"]
-    P --> Q["Demo S02 presentation"]
-    Q --> R["Login gate for product actions"]
-    R --> A
+    A --> P["?guest=1 · isolated Guest Journey Sandbox"]
+    P --> Q["Guest S02 · memory-only current/prior facts"]
+    Q --> R["Guest S04–S10 · local create/edit/delete"]
+    R --> T["Guest-safe S11/S14"]
+    T --> A
     B --> C["S04–S05 BP record"]
     B --> D["S07 Today detail"]
     B --> E["S08–S09 Records"]
@@ -34,11 +35,24 @@ separated review screens. The first challenge check-in locks the chosen action.
 
 S01 also presents the 11-species decorative companion selector and narrator. The
 non-medical preference is stored only as `sk7-companion-species`. The signed-out
-`로그인 없이 30초 맛보기` path carries that preference into a synthetic,
-read-only Demo S02 presentation without creating an account/session, opening an
-API/DB write path, or persisting demo progress. Product actions from the preview
-are intercepted by a login gate. The preview is presentation-only and is never
-treated as authenticated product history.
+`로그인 없이 30초 맛보기` action enters the canonical `?guest=1` route. The
+`30초` wording frames entry; it is not a timeout. That route dynamically mounts
+`GuestJourneySandbox` instead of the authenticated `App`, so direct guest loads
+do not start Supabase auth/session bootstrap or open Supabase, `/api/v1/**`, DB,
+export, feedback, refresh, or account-mutation capability.
+
+Guest state is seeded deterministically for the current Seoul date and the prior
+13 days, then held only in memory. Testers can create/edit/delete BP observations,
+select a challenge, create/update/delete check-ins, browse details, and compare
+the current/prior seven-day views; reload resets those facts. No BP, challenge,
+or health value is written to localStorage, sessionStorage, IndexedDB, Cache
+Storage, or cookies. The existing theme and companion-species preferences remain
+the only browser-local non-medical presentation settings. Guest S05 confirms only
+that memory was updated and never activates SavedScene persistence. Guest S10 may
+render its memory-backed report/PDF presentation but exposes no server JSON export
+or backend refresh. Guest S14 omits account deletion, retention management, and
+server export, and provides a quiet return to S01. The disclosure
+`체험 중 입력은 서버로 보내거나 저장하지 않아요.` appears once in the guest shell.
 
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
 five primary destinations are `오늘의 기록`, `AI 분석`, `기록 찾아보기`,
@@ -55,7 +69,7 @@ Focused work screens remain reachable without introducing a router dependency.
 
 | Screen | Purpose |
 |---|---|
-| S01 | Signed-out companion narrator/selector, email-link gate, and synthetic read-only preview entry |
+| S01 | Signed-out companion narrator/selector, email-link gate, and isolated guest-sandbox entry |
 | S02 | Today home; BP state determines the lead action |
 | S03 | Optional challenge choice |
 | S04–S05 | BP entry and confirmed new-save; successful edits return to their record detail |

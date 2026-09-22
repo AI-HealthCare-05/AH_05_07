@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 const filmUrl =
   "https://sk7-companion.gkrry.com/showcase/v1/video/sk7-cinema-public-teaser-v1-60s-ed7e1baa477a.mp4";
+const posterUrl =
+  "https://sk7-companion.gkrry.com/showcase/v1/images/showcase-poster-public-v1-2b8e766efde1.jpg";
 
 async function installSyntheticApi(page: Page) {
   await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
@@ -85,15 +87,17 @@ test.describe("SK7 cinema showcase portal", () => {
     const entry = showcaseEntry(page);
     await expect(entry).toBeVisible();
     expect(filmRequests).toEqual([]);
+    const dialog = page.locator("dialog.sk7-cinema-dialog");
+    const video = dialog.locator("video");
+    await expect(video).not.toHaveAttribute("poster", /.+/);
 
     await entry.click();
 
-    const dialog = page.locator("dialog.sk7-cinema-dialog");
     await expect(dialog).toHaveAttribute("open", "");
     await expect(dialog.getByRole("heading", { name: "Seven days can tell a story." })).toBeVisible();
     await expect(dialog.locator(".sk7-cinema-details")).toHaveAttribute("href", "/showcase/");
 
-    const video = dialog.locator("video");
+    await expect(video).toHaveAttribute("poster", posterUrl);
     await expect(video).toHaveAttribute("src", filmUrl);
     await expect.poll(() => filmRequests.length).toBeGreaterThan(0);
 
@@ -101,6 +105,7 @@ test.describe("SK7 cinema showcase portal", () => {
     await expect(dialog).not.toHaveAttribute("open", "");
     await expect(entry).toBeFocused();
     await expect(video).not.toHaveAttribute("src", /.+/);
+    await expect(video).not.toHaveAttribute("poster", /.+/);
   });
 
   test("does not expose the Showcase entry inside the signed-in product journey", async ({ page }) => {

@@ -37,9 +37,11 @@ identity remains a separate deployment-SSOT/control-plane question.
 - S05는 confirmed host persistence 뒤 exact `review` 또는 `production` scene
   gate에서 qualified SavedScene을 열며 fixed registered bear-lite
   `celebrate → idle`을 사용한다. saved species preference를 사용하지 않는다.
-- S01의 `로그인 없이 30초 맛보기`는 selected species를 synthetic/read-only
-  Demo S02 presentation에만 전달한다. account/session 또는 API/DB write를 열지
-  않고 demo progress를 저장하지 않으며 product action은 login gate로 막는다.
+- S01의 `로그인 없이 30초 맛보기`는 canonical `?guest=1` 경로에서 인증 App과
+  분리된 Guest Journey Sandbox를 연다. `30초`는 진입 framing이며 timeout이
+  아니다. guest S02는 같은 saved non-medical species preference와 현재
+  full-scene/Presence ownership을 재사용하지만, guest 입력은 memory-only이고
+  account/session, Supabase, API/DB, SavedScene persistence를 열지 않는다.
 - `off`와 reduced motion/failure 경계는 기존 semantic HTML/CSS와 poster/static
   fallback을 보존한다.
 

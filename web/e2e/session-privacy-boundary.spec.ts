@@ -70,6 +70,9 @@ async function routeWindow(page: Page, resolveWindow: (token: string) => unknown
 test("normal synthetic sign-in keeps the existing empty-state routing", async ({ page }) => {
   await routeWindow(page, () => emptyWindow);
   await page.goto("/");
+  // The normal App is now an intentional lazy entry. Wait for its S01 surface
+  // before exercising the synthetic session event owned by that App.
+  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
   await dispatchSession(page, accountA);
 
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
@@ -105,6 +108,7 @@ test("delayed A window response cannot update B state", async ({ page }) => {
   });
 
   await page.goto("/?e2e=signed-in&screen=S10");
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S10");
   await dispatchSession(page, null);
   await dispatchSession(page, accountB);
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();

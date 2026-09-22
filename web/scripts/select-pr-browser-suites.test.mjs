@@ -46,6 +46,24 @@ test('shared app shell and global styles fail safe to broad Journey confidence',
   assert.deepEqual(browser(['web/playwright.journey.config.ts']), ['journey-full']);
 });
 
+test('guest entry, store, presentation and firewall route to core, full Journey, scene, and dedicated guest CI', () => {
+  for (const file of [
+    'web/src/GuestJourneySandbox.tsx',
+    'web/src/guest/guestStore.ts',
+    'web/src/components/guest-journey.css',
+    'web/e2e/guest-journey.spec.ts',
+    'web/playwright.guest.config.ts',
+  ]) assert.deepEqual(browser([file]), ['core', 'journey-full', 'scene', 'guest'], file);
+});
+
+test('Showcase portal source and its journey-mode browser contract stay together', () => {
+  for (const file of [
+    'web/public/showcase-cinema.js',
+    'web/public/showcase-cinema.css',
+    'web/e2e/showcase-cinema.spec.ts',
+  ]) assert.deepEqual(browser([file]), ['journey-full'], file);
+});
+
 test('scene-owned CSS and runtime select only scene', () => {
   assert.deepEqual(browser(['web/src/components/scene/scene-stage.css']), ['scene']);
   assert.deepEqual(browser(['web/src/components/VisualStage.tsx']), ['scene']);
@@ -83,6 +101,7 @@ test('dependency graph changes retain broad browser confidence', () => {
     'core',
     'journey-full',
     'scene',
+    'guest',
     'model',
     'assets',
     'transcend-lab',
@@ -196,6 +215,7 @@ test('browser module commands are owned outside the path selector', () => {
     'journey',
     'journey-full',
     'scene',
+    'guest',
     'model',
     'assets',
     'transcend-lab',
@@ -209,8 +229,26 @@ test('browser module commands are owned outside the path selector', () => {
   assert.ok(browserModuleCommands['journey-full'].includes('node scripts/verify-ui-build-matrix.mjs'));
   assert.ok(browserModuleCommands.model.includes('npm run test:e2e:model-v2'));
   assert.ok(browserModuleCommands.scene.includes('npm run test:e2e:saved-scene'));
+  assert.deepEqual(browserModuleCommands.guest, ['npx playwright test --config=playwright.guest.config.ts']);
   assert.ok(browserModuleCommands.assets.includes('npx playwright test --config=playwright.companion-asset.config.ts'));
   assert.deepEqual(browserModuleCommands['transcend-lab'], ['npm --prefix transcend-lab test']);
+});
+
+test('dedicated guest config owns the guest firewall and exact scene-enabled build', () => {
+  const config = source('../playwright.guest.config.ts');
+  const spec = source('../e2e/guest-journey.spec.ts');
+  assert.match(config, /testMatch:\s*"guest-journey\.spec\.ts"/);
+  assert.match(config, /VITE_SK7_SCENE_MODE:\s*"review"/);
+  assert.match(config, /VITE_SK7_COMPANION_MODE:\s*"review"/);
+  for (const contract of [
+    '/api/v1 request',
+    'Supabase request',
+    'account/session refresh',
+    'structured feedback',
+    'indexedDatabases',
+    'cacheNames',
+    'reload resets it',
+  ]) assert.ok(spec.includes(contract), contract);
 });
 
 test('fast Journey config reuses focused Journey, B9 and S11 assertions in one build', () => {

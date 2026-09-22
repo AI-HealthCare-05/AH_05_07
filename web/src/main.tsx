@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import App from "./App";
 import "./styles.css";
 import "./components/journey-candidate.css";
 import "./components/journey-today.css";
@@ -45,8 +44,17 @@ window.addEventListener("vite:preloadError", (event) => {
   window.location.reload();
 });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function mountApplication() {
+  const guestJourney = new URLSearchParams(window.location.search).get("guest") === "1";
+  const { default: Root } = guestJourney
+    ? await import("./GuestJourneySandbox")
+    : await import("./App");
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <Root />
+    </StrictMode>,
+  );
+}
+
+void mountApplication();
