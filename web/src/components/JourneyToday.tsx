@@ -54,8 +54,8 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
     {/* Remove the existing poster’s near-white paper in presentation, retaining its source and date mapping. */}
     <svg className="today-poster-filter" width="0" height="0" aria-hidden="true"><defs><filter id="home-poster-paper" colorInterpolationFilters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -6 -6 -6 0 17" /></filter></defs></svg>
     <div className="today-journey">
-      <div className="today-hero">
-        <div className="today-desk">
+      <div className="today-hero today-showcase-hero">
+        <div className="today-desk today-showcase-copy">
           <div className="scene-copy screen-header">
             <p className="eyebrow"><UiIcon name="morning" className="today-sun" size={18} /><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
             <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 혈압 기록을,<br />날짜별로 이어봐요.<UiIcon name="leaf" className="today-wave" size={24} /></h1>
@@ -69,16 +69,15 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
             <button type="button" className="ui-control" aria-describedby="home-lead-support" onClick={() => onNavigate(lead.screen)}>{lead.action}<UiIcon name="arrow-right" size={20} /></button>
           </section>
         </div>
-        <figure className="journey-view" data-preview-date={landscapeDate} data-previewing={previewing}>
+        <figure className="journey-view today-showcase-scene" data-preview-date={landscapeDate} data-previewing={previewing} data-showcase-art-owner="scene">
           <div className="journey-view-label">
             <span>{previewing ? '그날의 풍경' : '오늘의 풍경'}</span>
             <time dateTime={landscapeDate}>{formatTrailDate(landscapeDate)}</time>
           </div>
-          <p className="today-companion-greeting">잠깐 쉬어가요.<br />오늘도, 함께.<span aria-hidden="true">♡</span></p>
-          <div className="journey-view-frame">
+          <div className="journey-view-frame today-showcase-scene-frame" data-scene-reserved-box="true">
             {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={landscapeDate} /> : <VisualStage screen="S02" calendarDate={today} companionSpecies={companionSpecies} />}
           </div>
-          <figcaption className="journey-view-caption"><span className="today-companion-dot" aria-hidden="true" /><span>모아와 잠깐</span><strong>{landmark?.label}</strong><span>{previewing ? '선택한 날짜에 머물러요' : '오늘의 길은 여기에서'}</span></figcaption>
+          <figcaption className="journey-view-caption"><span className="today-companion-dot" aria-hidden="true" /><span>{previewing ? '선택한 날짜의 풍경' : '오늘의 풍경'}</span><strong>{landmark?.label}</strong><span className="journey-view-caption-note">잠깐 쉬어가요. 오늘도, 함께.</span></figcaption>
         </figure>
       </div>
       <section className="living-week" data-window-kind="recent-history" aria-labelledby="living-week-title">
