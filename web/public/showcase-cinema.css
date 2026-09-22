@@ -1,0 +1,517 @@
+:root {
+  --sk7-cinema-black: #0d0e0d;
+  --sk7-cinema-ink: #f4f1e8;
+  --sk7-cinema-muted: #b9b5aa;
+  --sk7-cinema-line: rgb(255 255 255 / 0.14);
+  --sk7-cinema-warm: #e7d9ba;
+  --sk7-cinema-seat: #080908;
+}
+
+#sk7-showcase-cinema-portal[hidden] {
+  display: none !important;
+}
+
+.sk7-showcase-entry {
+  width: min(100% - 2.5rem, 73.75rem);
+  margin: 0 auto 2.2rem;
+  padding-top: 1.2rem;
+}
+
+.sk7-showcase-entry-button {
+  width: 100%;
+  min-height: 5.4rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--sk7-text, #20232a) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk7-text, #20232a) 10%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--sk7-text, #20232a);
+  padding: 1.05rem .25rem;
+  text-align: left;
+  box-shadow: none;
+}
+
+.sk7-showcase-entry-button:hover:not(:disabled) {
+  transform: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sk7-showcase-entry-kicker,
+.sk7-showcase-entry-meta {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.sk7-showcase-entry-kicker {
+  color: var(--sk7-text-muted, #646b79);
+}
+
+.sk7-showcase-entry-title {
+  min-width: 0;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 720;
+  letter-spacing: -.025em;
+}
+
+.sk7-showcase-entry-meta {
+  justify-self: end;
+  color: var(--sk7-text-muted, #646b79);
+  white-space: nowrap;
+}
+
+body.sk7-cinema-open {
+  overflow: hidden;
+}
+
+.sk7-cinema-dialog {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sk7-cinema-ink);
+  overflow: hidden;
+}
+
+.sk7-cinema-dialog::backdrop {
+  background: rgb(0 0 0 / .84);
+  backdrop-filter: blur(10px);
+}
+
+.sk7-cinema-room {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 30%, rgb(231 217 186 / .08), transparent 26%),
+    linear-gradient(180deg, #171817 0%, #0d0e0d 58%, #070807 100%);
+  color: var(--sk7-cinema-ink);
+}
+
+.sk7-cinema-topbar {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.2rem clamp(1.2rem, 3vw, 3rem);
+  border-bottom: 1px solid rgb(255 255 255 / .06);
+}
+
+.sk7-cinema-topbar p {
+  margin: 0 0 .15rem;
+  color: var(--sk7-cinema-muted);
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.sk7-cinema-topbar h2 {
+  margin: 0;
+  color: var(--sk7-cinema-ink);
+  font-size: clamp(.9rem, 1.8vw, 1.15rem);
+  font-weight: 680;
+  letter-spacing: -.025em;
+}
+
+.sk7-cinema-close {
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--sk7-cinema-muted);
+  padding: .4rem 0 .4rem .8rem;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  box-shadow: none;
+}
+
+.sk7-cinema-close:hover:not(:disabled) {
+  background: transparent;
+  color: #fff;
+  transform: none;
+  box-shadow: none;
+}
+
+.sk7-cinema-close span {
+  margin-left: .45rem;
+  font-size: 1.35rem;
+  font-weight: 400;
+  vertical-align: -.09em;
+}
+
+.sk7-cinema-stage {
+  position: absolute;
+  inset: 5rem 0 0;
+  perspective: 1100px;
+}
+
+.sk7-cinema-wall {
+  position: absolute;
+  top: 4%;
+  bottom: 4%;
+  width: 25%;
+  opacity: .58;
+  pointer-events: none;
+}
+
+.sk7-cinema-wall-left {
+  left: -4%;
+  background: linear-gradient(90deg, #080908, #171817);
+  clip-path: polygon(0 0, 100% 10%, 100% 90%, 0 100%);
+}
+
+.sk7-cinema-wall-right {
+  right: -4%;
+  background: linear-gradient(270deg, #080908, #171817);
+  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 90%);
+}
+
+.sk7-cinema-screen-wrap {
+  position: relative;
+  z-index: 4;
+  width: min(72vw, 1080px);
+  margin: clamp(2.2rem, 5vh, 4rem) auto 0;
+}
+
+.sk7-cinema-screen-glow {
+  position: absolute;
+  inset: 6% 4% -8%;
+  border-radius: 50%;
+  background: rgb(231 217 186 / .14);
+  filter: blur(44px);
+  pointer-events: none;
+}
+
+.sk7-cinema-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / .22);
+  border-radius: 3px;
+  background: #090a09;
+  box-shadow:
+    0 0 0 10px rgb(255 255 255 / .025),
+    0 24px 90px rgb(0 0 0 / .56),
+    0 0 65px rgb(231 217 186 / .09);
+}
+
+.sk7-cinema-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #060706;
+}
+
+.sk7-cinema-film-status {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  max-width: calc(100% - 2rem);
+  color: var(--sk7-cinema-ink);
+  background: rgb(0 0 0 / .65);
+  padding: .45rem .65rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  text-align: center;
+}
+
+.sk7-cinema-film-status:empty {
+  display: none;
+}
+
+.sk7-cinema-caption {
+  margin: .7rem 0 0;
+  color: var(--sk7-cinema-muted);
+  font-size: .72rem;
+  text-align: center;
+  letter-spacing: .015em;
+}
+
+.sk7-cinema-details {
+  position: absolute;
+  z-index: 7;
+  top: 48%;
+  right: clamp(1rem, 3vw, 3rem);
+  transform: translateY(-50%);
+  color: var(--sk7-cinema-muted);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-decoration: none;
+  writing-mode: vertical-rl;
+}
+
+.sk7-cinema-details:hover {
+  color: #fff;
+}
+
+.sk7-cinema-aisle {
+  position: absolute;
+  z-index: 2;
+  bottom: -7%;
+  width: 1px;
+  height: 42%;
+  transform-origin: bottom;
+  background: linear-gradient(180deg, transparent, rgb(231 217 186 / .55));
+  box-shadow: 0 0 14px rgb(231 217 186 / .35);
+}
+
+.sk7-cinema-aisle-left {
+  left: 28%;
+  transform: rotate(11deg);
+}
+
+.sk7-cinema-aisle-right {
+  right: 28%;
+  transform: rotate(-11deg);
+}
+
+.sk7-cinema-seats {
+  position: absolute;
+  z-index: 6;
+  left: -3%;
+  right: -3%;
+  bottom: -2.1rem;
+  display: grid;
+  gap: .15rem;
+  transform: rotateX(42deg);
+  transform-origin: bottom center;
+  pointer-events: none;
+}
+
+.sk7-cinema-seat-row {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: clamp(.5rem, 1.8vw, 1.8rem);
+}
+
+.sk7-cinema-seat-row.is-back {
+  opacity: .44;
+  transform: scale(.79);
+}
+
+.sk7-cinema-seat-row.is-middle {
+  opacity: .7;
+  transform: scale(.91);
+}
+
+.sk7-cinema-seat-row.is-front {
+  transform: scale(1.04);
+}
+
+.sk7-cinema-seat {
+  position: relative;
+  width: clamp(1.8rem, 4.7vw, 4.2rem);
+  height: clamp(2rem, 5.2vw, 4.8rem);
+  border-radius: 46% 46% 16% 16%;
+  background:
+    linear-gradient(180deg, #111311 0%, var(--sk7-cinema-seat) 76%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .035),
+    0 -1px 0 rgb(255 255 255 / .025);
+}
+
+.sk7-cinema-seat::after {
+  content: "";
+  position: absolute;
+  left: -9%;
+  right: -9%;
+  bottom: -8%;
+  height: 28%;
+  border-radius: 40% 40% 16% 16%;
+  background: #050605;
+}
+
+@media (max-width: 760px) {
+  .sk7-showcase-entry {
+    width: calc(100% - 2.5rem);
+    margin-bottom: 1.4rem;
+  }
+
+  .sk7-showcase-entry-button {
+    min-height: 4.9rem;
+    grid-template-columns: 1fr auto;
+    gap: .35rem 1rem;
+    padding: .9rem 0;
+  }
+
+  .sk7-showcase-entry-kicker {
+    grid-column: 1;
+  }
+
+  .sk7-showcase-entry-title {
+    grid-column: 1;
+  }
+
+  .sk7-showcase-entry-meta {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: .64rem;
+  }
+
+  .sk7-cinema-topbar {
+    min-height: 4.4rem;
+    padding: .9rem 1rem;
+  }
+
+  .sk7-cinema-topbar h2 {
+    max-width: 14rem;
+  }
+
+  .sk7-cinema-stage {
+  }
+
+  .sk7-cinema-screen-wrap {
+    width: calc(100vw - 2rem);
+    margin-top: clamp(4.5rem, 14vh, 7rem);
+  }
+
+  .sk7-cinema-details {
+    top: auto;
+    right: 1rem;
+    bottom: 8.7rem;
+    transform: none;
+    writing-mode: horizontal-tb;
+  }
+
+  .sk7-cinema-caption {
+    padding-inline: 2rem;
+  }
+
+  .sk7-cinema-wall {
+    width: 16%;
+  }
+
+  .sk7-cinema-seats {
+    bottom: -1rem;
+  }
+
+  .sk7-cinema-seat-row {
+    gap: .45rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .sk7-showcase-entry-title {
+    font-size: .94rem;
+  }
+
+  .sk7-showcase-entry-meta {
+    max-width: 6.2rem;
+    white-space: normal;
+    text-align: right;
+    line-height: 1.35;
+  }
+
+  .sk7-cinema-topbar h2 {
+    display: none;
+  }
+
+  .sk7-cinema-screen-wrap {
+    width: calc(100vw - 1rem);
+    margin-top: clamp(5rem, 17vh, 7rem);
+  }
+
+  .sk7-cinema-details {
+    bottom: 7.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk7-cinema-dialog *,
+  .sk7-showcase-entry-button {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* SK7 cinema visual polish v1 */
+.sk7-cinema-film-status {
+  bottom: 3.7rem;
+  max-width: min(28rem, calc(100% - 2rem));
+  border: 1px solid rgb(255 255 255 / .08);
+  background: rgb(8 9 8 / .78);
+  box-shadow: 0 8px 30px rgb(0 0 0 / .28);
+  backdrop-filter: blur(8px);
+}
+
+.sk7-cinema-seat-row.is-back {
+  opacity: .52;
+}
+
+.sk7-cinema-seat-row.is-middle {
+  opacity: .78;
+}
+
+.sk7-cinema-seat-row.is-front {
+  opacity: .96;
+}
+
+.sk7-cinema-seat {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .045),
+    0 -1px 0 rgb(255 255 255 / .03),
+    0 10px 24px rgb(0 0 0 / .16);
+}
+
+@media (max-width: 760px) {
+  .sk7-cinema-film-status {
+    bottom: 3.35rem;
+    max-width: calc(100% - 1.25rem);
+    font-size: .68rem;
+  }
+
+  .sk7-cinema-details {
+    letter-spacing: .1em;
+  }
+
+  .sk7-cinema-wall {
+    opacity: .66;
+  }
+}
+
+@media (max-width: 760px) and (min-height: 700px) {
+  .sk7-cinema-details {
+    top: 58vh;
+    right: 1.1rem;
+    bottom: auto;
+  }
+
+  .sk7-cinema-seats {
+    bottom: 1.35rem;
+    transform: rotateX(40deg) scale(1.06);
+  }
+
+  .sk7-cinema-aisle {
+    bottom: -2%;
+    height: 38%;
+  }
+}
+
+@media (max-width: 390px) and (min-height: 700px) {
+  .sk7-cinema-details {
+    top: 56vh;
+  }
+}
+
