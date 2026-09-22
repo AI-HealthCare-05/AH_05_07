@@ -28,6 +28,8 @@ export function PresenceSceneActorInteraction() {
   const snapshot = usePresenceSceneActorRuntimeSnapshot();
   const targetRef = useRef<HTMLButtonElement>(null);
   const pointerRef = useRef<PresencePointerToken | null>(null);
+  const settleRef = useRef<HTMLSpanElement>(null);
+  const settledCommitCountRef = useRef(snapshot.commitCount);
 
   const releaseCapture = useCallback((token: PresencePointerToken) => {
     const target = targetRef.current;
@@ -56,6 +58,17 @@ export function PresenceSceneActorInteraction() {
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, [releaseCapture, runtime, snapshot.activePointerToken]);
+
+  useEffect(() => {
+    const previousCommitCount = settledCommitCountRef.current;
+    settledCommitCountRef.current = snapshot.commitCount;
+    if (snapshot.commitCount <= previousCommitCount) return;
+    const settle = settleRef.current;
+    if (!settle) return;
+    settle.removeAttribute("data-presence-settle-active");
+    void settle.offsetWidth;
+    settle.setAttribute("data-presence-settle-active", String(snapshot.commitCount));
+  }, [snapshot.commitCount]);
 
   const projection = snapshot.projection;
   if (!snapshot.enabled || !projection) return null;
@@ -143,7 +156,14 @@ export function PresenceSceneActorInteraction() {
         onPointerUp={pointerUp}
         onPointerCancel={pointerCancel}
         onLostPointerCapture={lostPointerCapture}
-      />
+      >
+        <span
+          ref={settleRef}
+          className="presence-scene-actor-settle"
+          data-presence-settle="true"
+          aria-hidden="true"
+        />
+      </button>
       <div className="presence-scene-actor-controls" data-presence-hard-zone="position-control">
         <button
           type="button"
@@ -151,11 +171,15 @@ export function PresenceSceneActorInteraction() {
           aria-label="동반자 위치 바꾸기"
           onClick={() => runtime.cycleSafePreset()}
         >
-          동반자 위치 바꾸기
+          <span className="presence-scene-actor-cycle-mark" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
         </button>
         <span
           id="presence-scene-actor-status"
-          className="presence-scene-actor-status"
+          className="presence-scene-actor-status sr-only"
           role="status"
           aria-live="polite"
         >
