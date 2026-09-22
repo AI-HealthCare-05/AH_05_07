@@ -105,6 +105,15 @@ test('Transcend Lab reruns when its frozen membership seam changes', () => {
   assert.deepEqual(browser(['web/src/ui/journey.ts']), ['journey-full', 'transcend-lab']);
 });
 
+test('Presence Host product paths compose Journey and scene coverage', () => {
+  for (const file of [
+    'web/src/platform/presence/companionPresenceKernel.ts',
+    'web/src/platform/presence/s02PresenceArena.ts',
+    'web/src/components/CompanionPresenceHostBridge.tsx',
+    'web/e2e/presence-host-foundation.spec.ts',
+  ]) assert.deepEqual(browser([file]), ['journey-full', 'scene'], file);
+});
+
 test('selector and browser workflow changes use policy only', () => {
   assert.deepEqual(browser([
     'web/scripts/select-pr-browser-suites.mjs',

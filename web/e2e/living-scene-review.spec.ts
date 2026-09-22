@@ -944,3 +944,41 @@ test("poster failure resets for a new profile and Seoul weekday", async ({ page 
   await page.locator(".home-lead button").click();
   await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
 });
+
+test("Phase 2 shadow Presence Host observes S02 full-scene ownership without adding a second renderer owner", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const assets: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) assets.push(request.url());
+  });
+
+  await page.goto(url);
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+  await expect(host).toHaveCount(1);
+  await expect(host).toHaveAttribute("data-presence-owner", "full-scene");
+  await expect(host).toHaveAttribute(
+    "data-presence-asset-id",
+    companionAssetManifest.bear.lite.assetId,
+  );
+  await expect(host).toHaveAttribute(
+    "data-presence-observed-asset-id",
+    companionAssetManifest.bear.lite.assetId,
+  );
+  await expect(host).toHaveAttribute("data-presence-arena-status", "published");
+  await expect(host).toHaveAttribute("data-presence-anchor-count", "1");
+  await expect.poll(
+    async () => Number(await host.getAttribute("data-presence-hard-zone-count")),
+  ).toBeGreaterThanOrEqual(2);
+
+  await expect(page.locator("[data-companion-status]")).toHaveCount(0);
+  await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+  await expect.poll(() => assets.length).toBe(1);
+});

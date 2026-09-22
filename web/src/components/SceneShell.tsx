@@ -18,6 +18,7 @@ import {
 } from "../ui/companion";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 import { useJourneyTransition, type JourneyFeedbackPhase } from "./useJourneyTransition";
+import { CompanionPresenceHostBridge } from "./CompanionPresenceHostBridge";
 
 const SceneCompanionContext = createContext<ReactNode>(null);
 
@@ -43,6 +44,7 @@ type SceneShellProps = {
 export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [forcedColors, setForcedColors] = useState(() => window.matchMedia("(forced-colors: active)").matches);
+  const shellRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const activeNavigationScreen = primaryNavigationScreen(activeScreen);
 
@@ -94,7 +96,16 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
     : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
 
   return (
-    <main className="app-shell" data-screen={activeScreen} data-journey-presentation={journeyPresentation || undefined}>
+    <main ref={shellRef} className="app-shell" data-screen={activeScreen} data-journey-presentation={journeyPresentation || undefined}>
+      <CompanionPresenceHostBridge
+        rootRef={shellRef}
+        activeScreen={activeScreen}
+        sessionGeneration={sessionGeneration}
+        rawMode={import.meta.env.VITE_SK7_COMPANION_MODE}
+        companionSelection={companionSelection}
+        savedSceneOwner={Boolean(savedSceneAllowed && savedSceneEvent)}
+        suspended={feedbackSuspended}
+      />
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
         <button className="brand-button" type="button" onClick={() => onNavigate("S02")}

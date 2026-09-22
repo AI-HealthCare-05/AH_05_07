@@ -209,6 +209,15 @@ const transcendLabPrefixes = [
   'web/e2e/transcend-',
 ];
 
+const presenceFiles = new Set([
+  'web/src/components/CompanionPresenceHostBridge.tsx',
+  'web/e2e/presence-host-foundation.spec.ts',
+]);
+
+const presencePrefixes = [
+  'web/src/platform/presence/',
+];
+
 const modelDataEvidenceFiles = new Set([
   '.gitattributes',
   '.python-version',
@@ -289,6 +298,11 @@ export function selectPrBrowserModules(files) {
     if (matches(file, modelFiles, modelPrefixes)) { add(modules, 'model'); matched = true; }
     if (matches(file, assetFiles, assetPrefixes)) { add(modules, 'assets'); matched = true; }
     if (matches(file, transcendLabFiles, transcendLabPrefixes)) { add(modules, 'transcend-lab'); matched = true; }
+    if (matches(file, presenceFiles, presencePrefixes)) {
+      add(modules, 'journey-full');
+      add(modules, 'scene');
+      matched = true;
+    }
     if (matches(file, sceneFiles, scenePrefixes)) { add(modules, 'scene'); matched = true; }
     if (matches(file, journeyFiles)) {
       add(modules, 'journey');
