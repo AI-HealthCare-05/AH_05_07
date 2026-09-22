@@ -66,7 +66,6 @@ function createPortal() {
               controls
               playsinline
               preload="none"
-              poster="${SHOWCASE_POSTER_URL}"
               aria-describedby="sk7-cinema-caption"
             ></video>
             <div class="sk7-cinema-film-status" role="status" aria-live="polite"></div>
@@ -103,6 +102,7 @@ function createPortal() {
 
   function attachFilm() {
     if (video.getAttribute("src")) return;
+    video.poster = SHOWCASE_POSTER_URL;
     video.src = SHOWCASE_FILM_URL;
     video.load();
     status.textContent = "";
@@ -117,6 +117,7 @@ function createPortal() {
   function detachFilm() {
     video.pause();
     video.removeAttribute("src");
+    video.removeAttribute("poster");
     video.load();
     status.textContent = "";
   }
@@ -179,8 +180,10 @@ function isSignedOutLandingVisible() {
 let scheduled = false;
 function syncPortal() {
   scheduled = false;
-  const portal = createPortal();
   const visible = isSignedOutLandingVisible();
+  let portal = document.getElementById(ROOT_ID);
+  if (!visible && !portal) return;
+  portal ??= createPortal();
   portal.hidden = !visible;
 
   if (
@@ -196,13 +199,13 @@ function syncPortal() {
 function scheduleSync() {
   if (scheduled) return;
   scheduled = true;
-  window.requestAnimationFrame(syncPortal);
+  window.queueMicrotask(syncPortal);
 }
 
 const root = document.getElementById("root");
 if (root) {
   const observer = new MutationObserver(scheduleSync);
-  observer.observe(root, { childList: true, subtree: true, attributes: true });
+  observer.observe(root, { childList: true, subtree: true });
 }
 
 window.addEventListener("popstate", scheduleSync);

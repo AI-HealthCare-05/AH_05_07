@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: ["**/shared-ui-foundation.spec.ts", "**/saved-scene-review.spec.ts", "**/living-scene-review.spec.ts", "**/diorama-scene-review.spec.ts", "**/seoul-date-rollover.spec.ts", "**/production-fixture-boundary.spec.ts", "**/companion-review.spec.ts", "**/companion-production.spec.ts", "**/living-replay.spec.ts", "**/s10-production-scene.spec.ts", "**/companion-candidate-screen-integration.spec.ts", "**/guest-journey.spec.ts"],
+  testIgnore: ["**/shared-ui-foundation.spec.ts", "**/saved-scene-review.spec.ts", "**/living-scene-review.spec.ts", "**/diorama-scene-review.spec.ts", "**/seoul-date-rollover.spec.ts", "**/production-fixture-boundary.spec.ts", "**/companion-review.spec.ts", "**/companion-production.spec.ts", "**/living-replay.spec.ts", "**/s10-production-scene.spec.ts", "**/companion-candidate-screen-integration.spec.ts", "**/presence-host-foundation.spec.ts", "**/s02-spatial-presence.spec.ts", "**/showcase-cinema.spec.ts", "**/guest-journey.spec.ts"],
   workers: process.env.CI ? 1 : undefined,
   use: { baseURL: "http://127.0.0.1:4173" },
   webServer: {

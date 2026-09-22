@@ -20,6 +20,15 @@ const guestJourneyFiles = new Set([
 
 const guestJourneyPrefixes = ['web/src/guest/'];
 
+const showcaseFiles = new Set([
+  'web/e2e/showcase-cinema.spec.ts',
+  'web/public/showcase-cinema.css',
+  'web/public/showcase-cinema.js',
+  'web/public/showcase/index.html',
+  'web/public/showcase/showcase.css',
+  'web/public/showcase/showcase.js',
+]);
+
 const broadJourneyFiles = new Set([
   'web/src/styles.css',
   'web/src/components/SceneShell.tsx',
@@ -312,6 +321,7 @@ export function selectPrBrowserModules(files) {
       add(modules, 'guest');
       matched = true;
     }
+    if (showcaseFiles.has(file)) { add(modules, 'journey-full'); matched = true; }
     if (broadJourneyFiles.has(file)) { add(modules, 'journey-full'); matched = true; }
     if (matches(file, modelFiles, modelPrefixes)) { add(modules, 'model'); matched = true; }
     if (matches(file, assetFiles, assetPrefixes)) { add(modules, 'assets'); matched = true; }

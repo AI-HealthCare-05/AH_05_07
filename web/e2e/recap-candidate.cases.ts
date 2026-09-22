@@ -599,13 +599,21 @@ test('living week report preserves the complete selected week with separate fact
   const selectedDate = page.locator('[data-trail-date="2026-09-10"] > button');
   await selectedDate.click();
   await expect(page.locator('[data-record-lane="blood-pressure"] .record-action')).toHaveCount(0);
+  const replay = page.locator('[data-companion-status]');
+  if (await replay.count()) {
+    await expect(replay).toHaveAttribute('data-companion-status', 'ready', { timeout: 30000 });
+  }
+  await page.waitForLoadState('networkidle');
   const requestsBeforeReport = dataRequests;
   const storageBeforeReport = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, url: location.href }));
   await page.evaluate(() => {
-    const effects = { fetch: 0, storage: 0, share: 0, beacon: 0 };
+    const effects = { fetch: [] as string[], storage: 0, share: 0, beacon: 0 };
     Object.defineProperty(window, 'reportEffects', { value: () => effects });
     const fetch = window.fetch.bind(window);
-    window.fetch = (...args) => { effects.fetch++; return fetch(...args); };
+    window.fetch = (...args) => {
+      effects.fetch.push(typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0].url);
+      return fetch(...args);
+    };
     const setItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) { effects.storage++; setItem.call(this, key, value); };
     Object.defineProperty(navigator, 'share', { configurable: true, value: async () => { effects.share++; } });
@@ -653,7 +661,7 @@ test('living week report preserves the complete selected week with separate fact
   expect(await report(page).innerText()).not.toMatch(/정상|좋은 수치|나쁜 수치|목표 달성|건강 점수|성공률|참여율|개선율|%/);
   expect(dataRequests).toBe(requestsBeforeReport);
   expect(downloads).toBe(0);
-  expect(await page.evaluate(() => (window as unknown as { reportEffects: () => object }).reportEffects())).toEqual({ fetch: 0, storage: 0, share: 0, beacon: 0 });
+  expect(await page.evaluate(() => (window as unknown as { reportEffects: () => object }).reportEffects())).toEqual({ fetch: [], storage: 0, share: 0, beacon: 0 });
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, url: location.href }))).toEqual(storageBeforeReport);
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).press('Enter');
   await expect(report(page)).toHaveCount(0);

@@ -108,6 +108,7 @@ test("delayed A window response cannot update B state", async ({ page }) => {
   });
 
   await page.goto("/?e2e=signed-in&screen=S10");
+  await expect(page.locator(".app-shell")).toHaveAttribute("data-screen", "S10");
   await dispatchSession(page, null);
   await dispatchSession(page, accountB);
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();

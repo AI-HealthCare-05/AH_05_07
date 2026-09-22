@@ -56,6 +56,14 @@ test('guest entry, store, presentation and firewall route to core, full Journey,
   ]) assert.deepEqual(browser([file]), ['core', 'journey-full', 'scene', 'guest'], file);
 });
 
+test('Showcase portal source and its journey-mode browser contract stay together', () => {
+  for (const file of [
+    'web/public/showcase-cinema.js',
+    'web/public/showcase-cinema.css',
+    'web/e2e/showcase-cinema.spec.ts',
+  ]) assert.deepEqual(browser([file]), ['journey-full'], file);
+});
+
 test('scene-owned CSS and runtime select only scene', () => {
   assert.deepEqual(browser(['web/src/components/scene/scene-stage.css']), ['scene']);
   assert.deepEqual(browser(['web/src/components/VisualStage.tsx']), ['scene']);
