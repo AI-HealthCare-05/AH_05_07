@@ -33,12 +33,22 @@ export type ArenaRect = Readonly<{
 
 export type PlacementFallback = "anchor" | "dock" | "control" | "hidden";
 
-export type PlacementIntent = Readonly<{
+export type AnchorPlacementIntent = Readonly<{
+  kind: "anchor";
   preferredRole: string | null;
   preferredAnchorId?: string;
   normalizedOffset?: Readonly<{ x: number; y: number }>;
   fallbackOrder: readonly PlacementFallback[];
 }>;
+
+export type FreePlacementIntent = Readonly<{
+  kind: "free";
+  // Normalized inside the envelope-feasible root range, never against an anchor region.
+  u: number;
+  v: number;
+}>;
+
+export type PlacementIntent = AnchorPlacementIntent | FreePlacementIntent;
 
 export type CompanionAnchor = Readonly<{
   id: string;
@@ -54,7 +64,7 @@ export type ResolvedPose = Readonly<{
   arenaRevision: ArenaRevision;
   point: ArenaPoint;
   anchorId: string | null;
-  source: "anchor" | "dock" | "fallback";
+  source: "anchor" | "free" | "dock" | "fallback";
 }>;
 
 export type ArenaSnapshot = Readonly<{
@@ -156,7 +166,7 @@ function tagRect(rect: UntaggedRect, revision: ArenaRevision): ArenaRect {
   });
 }
 
-function freezeIntent(intent: PlacementIntent): PlacementIntent {
+function freezeIntent(intent: AnchorPlacementIntent): AnchorPlacementIntent {
   const normalizedOffset = intent.normalizedOffset
     ? Object.freeze({
         x: clamp01(intent.normalizedOffset.x),
@@ -164,6 +174,7 @@ function freezeIntent(intent: PlacementIntent): PlacementIntent {
       })
     : undefined;
   return Object.freeze({
+    kind: "anchor",
     preferredRole: intent.preferredRole,
     ...(intent.preferredAnchorId
       ? { preferredAnchorId: intent.preferredAnchorId }
@@ -353,7 +364,7 @@ function rectContains(outer: ArenaRect, inner: ArenaRect): boolean {
 
 function pointForRegion(
   region: ArenaRect,
-  normalizedOffset: PlacementIntent["normalizedOffset"],
+  normalizedOffset: AnchorPlacementIntent["normalizedOffset"],
 ): ArenaPoint {
   const offset = normalizedOffset ?? { x: 0.5, y: 0.5 };
   return Object.freeze({
@@ -394,7 +405,7 @@ function isSafePoint(
 
 export function deterministicAnchors(
   snapshot: ArenaSnapshot,
-  intent: PlacementIntent,
+  intent: AnchorPlacementIntent,
 ): readonly CompanionAnchor[] {
   const sorted = [...snapshot.anchors].sort(
     (left, right) => right.priority - left.priority || compareIds(left.id, right.id),
@@ -416,7 +427,7 @@ export function deterministicAnchors(
 
 export function resolvePlacement(
   snapshot: ArenaSnapshot,
-  rawIntent: PlacementIntent,
+  rawIntent: AnchorPlacementIntent,
   envelopes: ActorEnvelopes,
   environment: PlacementEnvironment = {},
 ): PlacementResolution {
@@ -496,7 +507,7 @@ export function nearestSafeAnchorIntent(
     "control",
     "hidden",
   ],
-): PlacementIntent {
+): AnchorPlacementIntent {
   const [nearest] = [...snapshot.anchors].sort((left, right) => {
     const leftCenter = pointForRegion(left.region, undefined);
     const rightCenter = pointForRegion(right.region, undefined);
@@ -505,6 +516,7 @@ export function nearestSafeAnchorIntent(
     return leftDistance - rightDistance || compareIds(left.id, right.id);
   });
   return Object.freeze({
+    kind: "anchor",
     preferredRole: nearest?.role ?? null,
     ...(nearest ? { preferredAnchorId: nearest.id } : {}),
     fallbackOrder: Object.freeze([...fallbackOrder]),

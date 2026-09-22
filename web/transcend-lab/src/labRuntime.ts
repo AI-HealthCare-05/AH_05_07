@@ -6,8 +6,10 @@ import {
   resolvePlacement,
   transitionArenaRoute,
   type ActorEnvelopes,
+  type AnchorPlacementIntent,
   type ArenaSnapshot,
   type ArenaTransitionStep,
+  type FreePlacementIntent,
   type PlacementIntent,
   type PlacementResolution,
   type ResolvedPose,
@@ -16,16 +18,38 @@ import {
   type UntaggedRect,
 } from "./platform/spatial/companionWorld";
 import {
+  freeIntentFromPoint,
+  requestFromFreeIntent,
+  resolveFreePlacement,
+} from "./platform/spatial/companionFreePlacement";
+import {
+  arenaPointToClient,
+  clientPointToArena,
+  clientRectToArena,
+  readVisualViewportRect,
+} from "./platform/spatial/visualViewportCoordinates";
+import {
   WorldRootLeaseManager,
   type WorldRootLease,
   type WorldRootRevocationReason,
   type WorldRootState,
 } from "./platform/behavior/rootMotionLease";
-import { loadPinnedActiveAsset, type AssetAdmissionResult } from "./platform/embodiment/labAssetAdmission";
+import {
+  beginGrab,
+  finishGrab,
+  moveGrab,
+  type GrabState,
+} from "./platform/behavior/companionGrabIntent";
+import {
+  loadPinnedActiveAsset,
+  type AssetAdmissionResult,
+  type VerifiedPinnedAsset,
+} from "./platform/embodiment/labAssetAdmission";
 import {
   LabResourceLedger,
   TRANSCEND_SCENARIO_FIXTURE,
   createMetrics,
+  type BackendRepresentation,
   type BackendTelemetry,
   type LabBackendKind,
   type LabMetrics,
@@ -35,14 +59,18 @@ import { SequentialBackendSelector } from "./labRenderers";
 
 export type LabRoute = "grove" | "cove";
 export type LabLifecycle = "starting" | "running" | "stopped" | "comparing" | "error";
+export type PointerFinishKind = "ignored" | "tap" | "drop" | "cancelled";
 
 export const LAB_ENVELOPES: ActorEnvelopes = Object.freeze({
-  visualAction: Object.freeze({ width: 112, height: 142, offsetY: -16 }),
-  tactileHit: Object.freeze({ width: 84, height: 84, offsetY: 4 }),
+  // Matches the visible 136x152 renderer patch, whose center is 44px above the root.
+  visualAction: Object.freeze({ width: 136, height: 152, offsetY: -44 }),
+  tactileHit: Object.freeze({ width: 136, height: 152, offsetY: -44 }),
   relocationHandle: Object.freeze({ width: 46, height: 30, offsetY: 38 }),
 });
 
-const DEFAULT_INTENT: PlacementIntent = Object.freeze({
+const FREE_CLEARANCE = 8;
+const DEFAULT_INTENT: AnchorPlacementIntent = Object.freeze({
+  kind: "anchor",
   preferredRole: "sunrise",
   preferredAnchorId: "sunrise",
   normalizedOffset: Object.freeze({ x: 0.5, y: 0.5 }),
@@ -72,11 +100,14 @@ export type LabPublicState = Readonly<{
   intent: PlacementIntent;
   selectedBackend: LabBackendKind;
   mountedBackend: LabBackendKind | null;
+  representation: BackendRepresentation | null;
   transitionTrace: readonly ArenaTransitionStep[];
   hardZoneExpanded: boolean;
   forceRendererFailure: boolean;
   assetResult: AssetAdmissionResult | null;
   assetLoading: boolean;
+  activePointerId: number | null;
+  pointerDragging: boolean;
   diagnostics: ResourceDiagnostics;
   evidence: readonly LabMetrics[];
   lastRevocation: WorldRootRevocationReason | null;
@@ -86,24 +117,21 @@ export type LabPublicState = Readonly<{
 type PointerSession = Readonly<{
   pointerId: number;
   lease: WorldRootLease;
+  grab: GrabState;
   intentBeforeDrag: PlacementIntent;
 }>;
 
+type ControlGeometryProvider = () => readonly UntaggedRect[];
+
 function viewportRect(): UntaggedRect {
-  const visual = window.visualViewport;
-  return Object.freeze({
-    x: 0,
-    y: 0,
-    width: Math.max(320, visual?.width ?? window.innerWidth),
-    height: Math.max(560, visual?.height ?? window.innerHeight),
-  });
+  return readVisualViewportRect();
 }
 
 function syntheticAnchors(route: LabRoute, viewport: UntaggedRect) {
-  const left = Math.min(Math.max(96, viewport.width * 0.2), viewport.width - 96);
-  const right = Math.max(Math.min(viewport.width - 96, viewport.width * 0.8), 96);
-  const upper = Math.min(Math.max(150, viewport.height * 0.28), viewport.height - 210);
-  const lower = Math.max(Math.min(viewport.height - 150, viewport.height * 0.72), 210);
+  const left = viewport.x + Math.min(Math.max(96, viewport.width * 0.2), viewport.width - 96);
+  const right = viewport.x + Math.max(Math.min(viewport.width - 96, viewport.width * 0.8), 96);
+  const upper = viewport.y + Math.min(Math.max(150, viewport.height * 0.28), viewport.height - 210);
+  const lower = viewport.y + Math.max(Math.min(viewport.height - 150, viewport.height * 0.72), 210);
   const positions = route === "grove"
     ? { sunrise: { x: left, y: upper }, harbor: { x: right, y: lower } }
     : { sunrise: { x: right, y: upper + 24 }, harbor: { x: left, y: lower - 24 } };
@@ -133,39 +161,41 @@ function syntheticAnchors(route: LabRoute, viewport: UntaggedRect) {
   ]);
 }
 
-function syntheticHardZones(expanded: boolean, viewport: UntaggedRect): readonly UntaggedRect[] {
-  if (expanded) {
-    return Object.freeze([
-      Object.freeze({ x: 28, y: 70, width: viewport.width - 56, height: viewport.height - 120 }),
-    ]);
-  }
-  return Object.freeze([
-    Object.freeze({
-      x: viewport.width / 2 - 84,
-      y: viewport.height / 2 - 52,
-      width: 168,
-      height: 104,
-    }),
-  ]);
+function noSpaceTestZone(expanded: boolean, viewport: UntaggedRect): readonly UntaggedRect[] {
+  return expanded
+    ? Object.freeze([Object.freeze({ ...viewport })])
+    : Object.freeze([]);
 }
 
 function dockRegion(viewport: UntaggedRect): UntaggedRect {
   return Object.freeze({
-    x: viewport.width - 104,
-    y: viewport.height - 116,
+    x: viewport.x + viewport.width - 104,
+    y: viewport.y + viewport.height - 116,
     width: 32,
     height: 32,
   });
 }
 
 function cloneIntent(intent: PlacementIntent): PlacementIntent {
+  if (intent.kind === "free") return Object.freeze({ kind: "free", u: intent.u, v: intent.v });
   return Object.freeze({
+    kind: "anchor",
     preferredRole: intent.preferredRole,
     ...(intent.preferredAnchorId ? { preferredAnchorId: intent.preferredAnchorId } : {}),
     ...(intent.normalizedOffset
       ? { normalizedOffset: Object.freeze({ ...intent.normalizedOffset }) }
       : {}),
     fallbackOrder: Object.freeze([...intent.fallbackOrder]),
+  });
+}
+
+function freePose(snapshot: ArenaSnapshot, point: ResolvedPose["point"]): ResolvedPose {
+  return Object.freeze({
+    routeEpoch: snapshot.routeEpoch,
+    arenaRevision: snapshot.revision,
+    point,
+    anchorId: null,
+    source: "free" as const,
   });
 }
 
@@ -185,26 +215,35 @@ export class TranscendLabRuntime {
   #pointer: PointerSession | null = null;
   #routeToggleCount = 0;
   #hardZoneExpanded = false;
+  #controlGeometryProvider: ControlGeometryProvider = () => Object.freeze([]);
+  #measurementViewport: UntaggedRect | null = null;
   #selectedBackend: LabBackendKind = "movable-patch";
   #forceRendererFailure: boolean;
   #lifecycle: LabLifecycle = "stopped";
   #status = "Lab initialized; renderer stopped.";
   #assetResult: AssetAdmissionResult | null = null;
   #assetLoading = false;
+  #verifiedAsset: VerifiedPinnedAsset | null = null;
+  #assetRequestId = 0;
+  #rendererRequestId = 0;
   #evidence: readonly LabMetrics[] = Object.freeze([]);
   #error: string | null = null;
   #state: LabPublicState;
 
   constructor(options: Readonly<{ forceRendererFailure?: boolean }> = {}) {
     this.#forceRendererFailure = options.forceRendererFailure ?? false;
-    this.#builder = new ArenaSnapshotBuilder(viewportRect);
+    this.#builder = new ArenaSnapshotBuilder(() => this.#currentMeasurementViewport());
     this.#builder.registerAnchorProvider("synthetic-route-anchors", () =>
-      syntheticAnchors(this.#route, viewportRect()),
+      syntheticAnchors(this.#route, this.#currentMeasurementViewport()),
     );
-    this.#builder.registerHardZoneProvider("synthetic-route-hard-zone", () =>
-      syntheticHardZones(this.#hardZoneExpanded, viewportRect()),
+    this.#builder.registerHardZoneProvider("registered-control-hard-zones", () => {
+      const viewport = this.#currentMeasurementViewport();
+      return this.#controlGeometryProvider().map((rect) => clientRectToArena(rect, viewport));
+    });
+    this.#builder.registerHardZoneProvider("no-space-test-zone", () =>
+      noSpaceTestZone(this.#hardZoneExpanded, this.#currentMeasurementViewport()),
     );
-    const first = this.#builder.publish(this.#routeEpoch);
+    const first = this.#publishSnapshot(this.#routeEpoch);
     this.#snapshot = first;
     this.#world = new WorldRootLeaseManager({
       sessionEpoch: this.#sessionEpoch,
@@ -232,8 +271,28 @@ export class TranscendLabRuntime {
     if (this.#host === host) this.#host = null;
   }
 
+  registerControlGeometryProvider(provider: ControlGeometryProvider): () => void {
+    this.#controlGeometryProvider = provider;
+    this.#rebuildCurrentArena("Ref-backed control geometry registered", true);
+    return () => {
+      if (this.#controlGeometryProvider === provider) this.#controlGeometryProvider = () => Object.freeze([]);
+    };
+  }
+
+  clientPoint(point: UntaggedPoint): UntaggedPoint {
+    const viewport = this.#snapshot?.viewport ?? viewportRect();
+    return clientPointToArena(point, viewport);
+  }
+
+  actorClientPoint(): UntaggedPoint | null {
+    const pose = this.#world.state.pose;
+    const snapshot = this.#snapshot;
+    return pose && snapshot ? arenaPointToClient(pose.point, snapshot.viewport) : null;
+  }
+
   async start(backend: LabBackendKind = this.#selectedBackend): Promise<void> {
     if (!this.#host) throw new Error("renderer host is not attached");
+    const requestId = ++this.#rendererRequestId;
     this.#selectedBackend = backend;
     this.#lifecycle = "starting";
     this.#status = `Starting ${backend}.`;
@@ -251,18 +310,17 @@ export class TranscendLabRuntime {
         resources,
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         forceFailure: this.#forceRendererFailure,
-        getViewport: () => ({
-          width: viewportRect().width,
-          height: viewportRect().height,
-        }),
+        getViewport: viewportRect,
+        verifiedAsset: this.#verifiedAsset,
       });
+      if (requestId !== this.#rendererRequestId) return;
       this.#resources = resources;
       this.#resources.listen(window, "keydown", (event) => {
         if (event instanceof KeyboardEvent && event.key === "Escape" && this.#pointer) {
           this.cancelPointer("escape");
         }
       });
-      const rebuildForGeometry = () => this.#rebuildCurrentArena("viewport/layout geometry changed");
+      const rebuildForGeometry = () => this.#rebuildCurrentArena("Viewport/layout geometry changed");
       this.#resources.listen(window, "resize", rebuildForGeometry, { passive: true });
       this.#resources.listen(window, "scroll", rebuildForGeometry, { passive: true });
       if (window.visualViewport) {
@@ -270,10 +328,12 @@ export class TranscendLabRuntime {
         this.#resources.listen(window.visualViewport, "scroll", rebuildForGeometry, { passive: true });
       }
       this.#lifecycle = "running";
-      this.#status = `${backend} mounted; one world-root writer available.`;
+      const mode = this.#selector.activeRepresentation?.mode ?? "surrogate";
+      this.#status = `${backend} mounted in ${mode} mode; one world-root writer available.`;
       this.#emit();
     } catch (error) {
       await resources.drain().catch(() => ZERO_DIAGNOSTICS);
+      if (requestId !== this.#rendererRequestId) return;
       this.#lifecycle = "error";
       this.#error = error instanceof Error ? error.message : "renderer failed";
       this.#status = "Renderer unavailable. Semantic relocation controls remain usable.";
@@ -282,12 +342,17 @@ export class TranscendLabRuntime {
   }
 
   async selectBackend(backend: LabBackendKind): Promise<void> {
+    this.#assetRequestId += 1;
+    this.#assetLoading = false;
     this.#world.revoke("renderer-transition", false);
     this.#pointer = null;
     await this.start(backend);
   }
 
   async stop(): Promise<ResourceDiagnostics> {
+    this.#rendererRequestId += 1;
+    this.#assetRequestId += 1;
+    this.#assetLoading = false;
     this.#world.revoke("stop", true);
     this.#pointer = null;
     const diagnostics = await this.#selector.stop(this.#host ?? undefined);
@@ -298,6 +363,8 @@ export class TranscendLabRuntime {
   }
 
   async reset(): Promise<ResourceDiagnostics> {
+    this.#rendererRequestId += 1;
+    this.#assetRequestId += 1;
     this.#world.revoke("reset", true);
     this.#pointer = null;
     const diagnostics = await this.#selector.stop(this.#host ?? undefined);
@@ -309,9 +376,10 @@ export class TranscendLabRuntime {
     this.#intent = DEFAULT_INTENT;
     this.#assetResult = null;
     this.#assetLoading = false;
+    this.#verifiedAsset = null;
     this.#evidence = Object.freeze([]);
     this.#world.replaceSession(this.#sessionEpoch);
-    const snapshot = this.#builder.publish(this.#routeEpoch);
+    const snapshot = this.#publishSnapshot(this.#routeEpoch);
     this.#snapshot = snapshot;
     this.#world.publishArena(this.#fenceFor(snapshot));
     this.#resolution = this.#resolve(this.#intent, snapshot);
@@ -333,7 +401,7 @@ export class TranscendLabRuntime {
       },
       measureSnapshot: (nextRouteEpoch) => {
         this.#route = route;
-        return this.#builder.publish(nextRouteEpoch);
+        return this.#publishSnapshot(nextRouteEpoch);
       },
       publishSnapshot: (snapshot) => {
         this.#routeEpoch = snapshot.routeEpoch;
@@ -348,7 +416,7 @@ export class TranscendLabRuntime {
     });
     this.#routeToggleCount += 1;
     this.#intent = carriedIntent;
-    this.#status = `Route ${route} published atomically at revision ${result.snapshot.revision}.`;
+    this.#status = `Route ${route} published atomically at revision ${result.snapshot.revision}; ${carriedIntent.kind} intent reinterpreted.`;
     this.#setTrace(result.trace);
     this.#emit();
   }
@@ -364,15 +432,16 @@ export class TranscendLabRuntime {
   setHardZoneExpanded(expanded: boolean): void {
     if (!this.#snapshot || expanded === this.#hardZoneExpanded) return;
     this.#world.revoke("hard-zone-invalidation", true);
+    this.#pointer = null;
     this.#hardZoneExpanded = expanded;
-    const snapshot = this.#builder.publish(this.#routeEpoch);
+    const snapshot = this.#publishSnapshot(this.#routeEpoch);
     this.#snapshot = snapshot;
     this.#world.publishArena(this.#fenceFor(snapshot));
     this.#resolution = this.#resolve(this.#intent, snapshot);
     this.#applyResolution(this.#resolution, "hard-zone-placement");
     this.#status = expanded
       ? `No-fit mode resolved to ${this.#resolution.kind}.`
-      : "Hard zone restored; placement re-resolved.";
+      : "Hard zone restored; committed intent re-resolved.";
     this.#emit();
   }
 
@@ -380,7 +449,8 @@ export class TranscendLabRuntime {
     if (!this.#snapshot) return false;
     const anchor = this.#snapshot.anchors.find((entry) => entry.id === anchorId);
     if (!anchor) return false;
-    const intent = Object.freeze({
+    const intent: AnchorPlacementIntent = Object.freeze({
+      kind: "anchor",
       preferredRole: anchor.role,
       preferredAnchorId: anchor.id,
       normalizedOffset: Object.freeze({ x: 0.5, y: 0.5 }),
@@ -391,105 +461,232 @@ export class TranscendLabRuntime {
     this.#resolution = resolution;
     const wrote = this.#applyResolution(resolution, owner);
     this.#status = wrote
-      ? `Actor relocated to ${anchor.id}.`
-      : `Relocation resolved to ${resolution.kind}.`;
+      ? `Actor relocated to anchor ${anchor.id}.`
+      : `Anchor relocation resolved to ${resolution.kind}.`;
     this.#emit();
     return wrote;
   }
 
-  beginPointer(pointerId: number): boolean {
-    if (!this.#snapshot || this.#pointer || this.#lifecycle !== "running") return false;
-    const lease = this.#world.acquire(`pointer:${pointerId}`, this.#fenceFor(this.#snapshot));
+  relocateToNormalized(u: number, v: number, owner = "free-position-control"): boolean {
+    if (!this.#snapshot || !Number.isFinite(u) || !Number.isFinite(v) || u < 0 || u > 1 || v < 0 || v > 1) {
+      this.#status = "Free placement rejected: coordinates must be between 0 and 100 percent.";
+      this.#emit();
+      return false;
+    }
+    const intent: FreePlacementIntent = Object.freeze({ kind: "free", u, v });
+    const resolution = this.#resolve(intent, this.#snapshot);
+    this.#intent = intent;
+    this.#resolution = resolution;
+    const wrote = this.#applyResolution(resolution, owner);
+    this.#status = wrote && resolution.kind === "pose"
+      ? `Free placement committed at ${Math.round(u * 100)}%, ${Math.round(v * 100)}%.`
+      : `Free placement resolved to ${resolution.kind}; no unsafe write was made.`;
+    this.#emit();
+    return wrote;
+  }
+
+  keyboardNudge(deltaU: number, deltaV: number): boolean {
+    if (!this.#snapshot || !this.#world.state.pose) return false;
+    const current = freeIntentFromPoint(
+      this.#snapshot,
+      this.#world.state.pose.point,
+      LAB_ENVELOPES.visualAction,
+      FREE_CLEARANCE,
+    );
+    if (!current) return false;
+    return this.relocateToNormalized(
+      Math.max(0, Math.min(1, current.u + deltaU)),
+      Math.max(0, Math.min(1, current.v + deltaV)),
+      "keyboard-free-placement",
+    );
+  }
+
+  beginPointer(input: Readonly<{
+    pointerId: number;
+    point: UntaggedPoint;
+    button: number;
+    isPrimary: boolean;
+  }>): boolean {
+    const snapshot = this.#snapshot;
+    const pose = this.#world.state.pose;
+    if (!snapshot || !pose || this.#pointer || this.#lifecycle !== "running") return false;
+    const fence = this.#fenceFor(snapshot);
+    const grab = beginGrab({
+      sample: { pointerId: input.pointerId, point: clientPointToArena(input.point, snapshot.viewport) },
+      actor: pose.point,
+      fence,
+      button: input.button,
+      isPrimary: input.isPrimary,
+    });
+    if (!grab) return false;
+    const lease = this.#world.acquire(`pointer:${input.pointerId}`, fence);
     if (!lease) return false;
     this.#pointer = Object.freeze({
-      pointerId,
+      pointerId: input.pointerId,
       lease,
+      grab,
       intentBeforeDrag: cloneIntent(this.#intent),
     });
-    this.#status = "Direct relocation lease acquired.";
+    this.#status = "Companion body engaged; move 6 CSS px to begin direct placement.";
     this.#emit();
     return true;
   }
 
-  movePointer(pointerId: number, point: UntaggedPoint): boolean {
-    if (!this.#snapshot || !this.#pointer || this.#pointer.pointerId !== pointerId) return false;
-    const viewport = this.#snapshot.viewport;
-    const halfWidth = LAB_ENVELOPES.visualAction.width / 2;
-    const halfHeight = LAB_ENVELOPES.visualAction.height / 2;
-    const arenaPoint = Object.freeze({
-      space: this.#snapshot.space,
-      revision: this.#snapshot.revision,
-      x: Math.min(viewport.x + viewport.width - halfWidth, Math.max(viewport.x + halfWidth, point.x)),
-      y: Math.min(viewport.y + viewport.height - halfHeight, Math.max(viewport.y + halfHeight, point.y)),
-    });
-    const pose = Object.freeze({
-      routeEpoch: this.#snapshot.routeEpoch,
-      arenaRevision: this.#snapshot.revision,
-      point: arenaPoint,
-      anchorId: null,
-      source: "fallback" as const,
-    });
-    const wrote = this.#world.write(this.#pointer.lease, pose);
-    if (wrote) this.#emit();
+  movePointer(pointerId: number, clientPoint: UntaggedPoint): boolean {
+    const snapshot = this.#snapshot;
+    const pointer = this.#pointer;
+    if (!snapshot || !pointer || pointer.pointerId !== pointerId) return false;
+    const update = moveGrab(
+      pointer.grab,
+      { pointerId, point: clientPointToArena(clientPoint, snapshot.viewport) },
+      this.#fenceFor(snapshot),
+    );
+    if (update.kind === "ignored" || update.kind === "pending") return false;
+    if (update.kind === "cancelled") {
+      this.cancelPointer("pointer-cancel", pointerId);
+      return false;
+    }
+    this.#pointer = Object.freeze({ ...pointer, grab: update.state });
+    const placement = resolveFreePlacement(snapshot, update.request, LAB_ENVELOPES.visualAction, FREE_CLEARANCE);
+    if (placement.kind !== "placed") return false;
+    const pose = freePose(snapshot, placement.point);
+    const wrote = this.#world.write(pointer.lease, pose);
+    if (wrote) {
+      this.#resolution = Object.freeze({ kind: "pose" as const, pose });
+      this.#emit();
+    }
     return wrote;
   }
 
-  endPointer(pointerId: number, point: UntaggedPoint): boolean {
-    if (!this.#snapshot || !this.#pointer || this.#pointer.pointerId !== pointerId) return false;
+  endPointer(pointerId: number, clientPoint: UntaggedPoint): PointerFinishKind {
+    const snapshot = this.#snapshot;
     const pointer = this.#pointer;
-    const intent = nearestSafeAnchorIntent(this.#snapshot, point);
-    const resolution = this.#resolve(intent, this.#snapshot);
+    if (!snapshot || !pointer || pointer.pointerId !== pointerId) return "ignored";
+    const finish = finishGrab(
+      pointer.grab,
+      { pointerId, point: clientPointToArena(clientPoint, snapshot.viewport) },
+      this.#fenceFor(snapshot),
+    );
+    if (finish.kind === "ignored") return "ignored";
+    if (finish.kind === "cancelled") {
+      this.cancelPointer("pointer-cancel", pointerId);
+      return "cancelled";
+    }
+    if (finish.kind === "tap") {
+      this.#world.release(pointer.lease);
+      this.#pointer = null;
+      this.#status = "Companion tap recognized.";
+      this.#emit();
+      return "tap";
+    }
+
+    const placement = resolveFreePlacement(snapshot, finish.request, LAB_ENVELOPES.visualAction, FREE_CLEARANCE);
+    if (placement.kind === "rejected") {
+      this.cancelPointer("pointer-cancel", pointerId);
+      this.#status = `Drop rejected without fallback write: ${placement.reason}.`;
+      this.#emit();
+      return "cancelled";
+    }
+    if (placement.kind === "placed") {
+      const pose = freePose(snapshot, placement.point);
+      const intent = freeIntentFromPoint(snapshot, placement.point, LAB_ENVELOPES.visualAction, FREE_CLEARANCE);
+      const wrote = intent ? this.#world.write(pointer.lease, pose) : false;
+      if (!wrote || !intent) {
+        this.cancelPointer("pointer-cancel", pointerId);
+        return "cancelled";
+      }
+      this.#world.release(pointer.lease);
+      this.#pointer = null;
+      this.#intent = intent;
+      this.#resolution = Object.freeze({ kind: "pose" as const, pose });
+      this.#status = placement.resolution === "unchanged"
+        ? "Free placement committed exactly at the drop position."
+        : `Free placement committed after ${placement.correctionDistance.toFixed(1)} CSS px safety correction.`;
+      this.#emit();
+      return "drop";
+    }
+
+    // Only genuine lack of safe space may enter the existing anchor/dock/control/hidden chain.
+    const fallbackIntent = nearestSafeAnchorIntent(snapshot, finish.request.point);
+    const resolution = resolvePlacement(snapshot, fallbackIntent, LAB_ENVELOPES, {
+      dockRegion: dockRegion(snapshot.viewport),
+      controlId: "relocation-controls",
+    });
     let wrote = false;
     if (resolution.kind === "pose") wrote = this.#world.write(pointer.lease, resolution.pose);
     this.#world.release(pointer.lease);
     this.#pointer = null;
-    this.#intent = intent;
+    this.#intent = fallbackIntent;
     this.#resolution = resolution;
+    if (resolution.kind !== "pose") this.#world.revoke("hard-zone-invalidation", true);
     this.#status = wrote
-      ? `Drop re-resolved safely to ${resolution.kind === "pose" ? resolution.pose.anchorId : "fallback"}.`
-      : `Drop used ${resolution.kind} fallback.`;
+      ? `No free space (${placement.reason}); anchor/dock fallback committed.`
+      : `No free space (${placement.reason}); resolved to ${resolution.kind}.`;
     this.#emit();
-    return wrote;
+    return "drop";
   }
 
-  cancelPointer(reason: Extract<WorldRootRevocationReason, "pointer-cancel" | "lost-pointer-capture" | "escape">): void {
-    if (!this.#pointer || !this.#snapshot) return;
-    this.#intent = this.#pointer.intentBeforeDrag;
+  cancelPointer(
+    reason: Extract<WorldRootRevocationReason, "pointer-cancel" | "lost-pointer-capture" | "escape">,
+    pointerId?: number,
+  ): boolean {
+    const pointer = this.#pointer;
+    const snapshot = this.#snapshot;
+    if (!pointer || !snapshot || (pointerId !== undefined && pointer.pointerId !== pointerId)) return false;
+    this.#intent = pointer.intentBeforeDrag;
     this.#pointer = null;
     this.#world.revoke(reason, false);
-    this.#resolution = this.#resolve(this.#intent, this.#snapshot);
+    this.#resolution = this.#resolve(this.#intent, snapshot);
     this.#applyResolution(this.#resolution, "cancel-recovery");
-    this.#status = `Direct relocation revoked: ${reason}.`;
+    this.#status = `Direct relocation cancelled (${reason}); committed ${this.#intent.kind} intent restored in current geometry.`;
     this.#emit();
-  }
-
-  keyboardRelocate(direction: "previous" | "next"): boolean {
-    if (!this.#snapshot) return false;
-    const ids = [...this.#snapshot.anchors].map((anchor) => anchor.id).sort();
-    const current = this.#world.state.pose?.anchorId;
-    const currentIndex = Math.max(0, ids.indexOf(current ?? ids[0]));
-    const nextIndex = direction === "next"
-      ? (currentIndex + 1) % ids.length
-      : (currentIndex - 1 + ids.length) % ids.length;
-    return this.relocateToAnchor(ids[nextIndex], "keyboard");
+    return true;
   }
 
   tactileActivate(): void {
-    this.#status = "Tactile hit admitted inside the independent hit envelope.";
+    this.#status = "Tactile hit admitted inside the visible body envelope.";
     this.#emit();
   }
 
   async loadAsset(): Promise<AssetAdmissionResult> {
+    if (this.#lifecycle !== "running" || !this.#selector.activeKind) {
+      const result = Object.freeze({
+        status: "failed" as const,
+        assetId: TRANSCEND_SCENARIO_FIXTURE.asset.assetId,
+        reason: "start a renderer before loading the pinned asset",
+      });
+      this.#assetResult = result;
+      this.#status = `Asset failed: ${result.reason}`;
+      this.#emit();
+      return result;
+    }
+    const requestId = ++this.#assetRequestId;
+    const resources = this.#resources;
     this.#assetLoading = true;
     this.#assetResult = null;
-    this.#status = "Checking immutable runtime membership before asset request.";
+    this.#status = "Checking immutable membership, response bytes, SHA-256, and GLB structure before parse.";
     this.#emit();
-    const result = await loadPinnedActiveAsset({ resources: this.#resources });
+    let verifiedForCurrentRenderer: VerifiedPinnedAsset | null = null;
+    const result = await loadPinnedActiveAsset({
+      resources,
+      onVerified: async (asset) => {
+        const displayed = await this.#selector.installVerifiedAsset(asset);
+        if (displayed.status !== "displayed") throw new Error(displayed.reason);
+        verifiedForCurrentRenderer = asset;
+      },
+    });
+    if (requestId !== this.#assetRequestId || resources !== this.#resources) return result;
     this.#assetLoading = false;
     this.#assetResult = result;
-    this.#status = result.status === "loaded"
-      ? `Admitted ${result.assetId}; ${result.responseBytes} bytes received.`
-      : `Asset ${result.status}: ${result.reason}`;
+    if (result.status === "loaded" && verifiedForCurrentRenderer) {
+      this.#verifiedAsset = verifiedForCurrentRenderer;
+      const representation = this.#selector.activeRepresentation;
+      this.#status = `Actual bytes verified and displayed as ${representation?.mode ?? "unknown"}; clip ${representation?.clipName ?? "none"}.`;
+    } else if (result.status === "loaded") {
+      this.#status = "Actual bytes verified, but no current renderer accepted the display generation.";
+    } else {
+      this.#status = `Asset ${result.status}: ${result.reason}`;
+    }
     this.#emit();
     return result;
   }
@@ -526,15 +723,11 @@ export class TranscendLabRuntime {
             await Promise.resolve();
           }
           const cumulative = this.#selector.activeTelemetry;
-          if (!cumulative || cumulative.backend !== backend) {
-            throw new Error(`missing ${backend} telemetry`);
-          }
+          if (!cumulative || cumulative.backend !== backend) throw new Error(`missing ${backend} telemetry`);
           const conditionTelemetry: BackendTelemetry = Object.freeze({
             ...cumulative,
             drawCount: cumulative.drawCount - previousDrawCount,
-            frameDurationsMs: Object.freeze(
-              cumulative.frameDurationsMs.slice(previousFrameCount),
-            ),
+            frameDurationsMs: Object.freeze(cumulative.frameDurationsMs.slice(previousFrameCount)),
           });
           previousDrawCount = cumulative.drawCount;
           previousFrameCount = cumulative.frameDurationsMs.length;
@@ -586,7 +779,9 @@ export class TranscendLabRuntime {
       worldState: () => this.#world.state,
       toggleRoutes: (count) => this.toggleRoutes(count),
       relocateToAnchor: (anchorId) => this.relocateToAnchor(anchorId, "test-api"),
+      relocateToNormalized: (u, v) => this.relocateToNormalized(u, v, "test-api-free"),
       start: (backend) => this.start(backend),
+      selectBackend: (backend) => this.selectBackend(backend),
       stop: () => this.stop(),
       reset: () => this.reset(),
       runComparison: () => this.runComparison(),
@@ -595,10 +790,26 @@ export class TranscendLabRuntime {
   }
 
   #resolve(intent: PlacementIntent, snapshot: ArenaSnapshot): PlacementResolution {
-    return resolvePlacement(snapshot, intent, LAB_ENVELOPES, {
-      dockRegion: dockRegion(viewportRect()),
-      controlId: "relocation-controls",
-    });
+    if (intent.kind === "anchor") {
+      return resolvePlacement(snapshot, intent, LAB_ENVELOPES, {
+        dockRegion: dockRegion(snapshot.viewport),
+        controlId: "relocation-controls",
+      });
+    }
+    const request = requestFromFreeIntent(snapshot, intent, LAB_ENVELOPES.visualAction, FREE_CLEARANCE);
+    if (!request) return Object.freeze({ kind: "hidden" as const });
+    const result = resolveFreePlacement(snapshot, request, LAB_ENVELOPES.visualAction, FREE_CLEARANCE);
+    if (result.kind === "placed") {
+      return Object.freeze({ kind: "pose" as const, pose: freePose(snapshot, result.point) });
+    }
+    if (result.kind === "no-space") {
+      return resolvePlacement(snapshot, nearestSafeAnchorIntent(snapshot, request.point), LAB_ENVELOPES, {
+        dockRegion: dockRegion(snapshot.viewport),
+        controlId: "relocation-controls",
+      });
+    }
+    // Invalid or stale requests fail closed; only no-space may enter the fallback chain.
+    return Object.freeze({ kind: "hidden" as const });
   }
 
   #applyResolution(resolution: PlacementResolution, owner: string): boolean {
@@ -640,11 +851,24 @@ export class TranscendLabRuntime {
     );
   }
 
-  #rebuildCurrentArena(reason: string): void {
-    if (!this.#snapshot || this.#lifecycle === "stopped" || this.#lifecycle === "error") return;
+  #currentMeasurementViewport(): UntaggedRect {
+    return this.#measurementViewport ?? viewportRect();
+  }
+
+  #publishSnapshot(routeEpoch: RouteEpoch): ArenaSnapshot {
+    this.#measurementViewport = viewportRect();
+    try {
+      return this.#builder.publish(routeEpoch);
+    } finally {
+      this.#measurementViewport = null;
+    }
+  }
+
+  #rebuildCurrentArena(reason: string, whileStopped = false): void {
+    if (!this.#snapshot || (!whileStopped && (this.#lifecycle === "stopped" || this.#lifecycle === "error"))) return;
     this.#pointer = null;
     this.#world.revoke("hard-zone-invalidation", true);
-    const snapshot = this.#builder.publish(this.#routeEpoch);
+    const snapshot = this.#publishSnapshot(this.#routeEpoch);
     this.#snapshot = snapshot;
     this.#world.publishArena(this.#fenceFor(snapshot));
     this.#resolution = this.#resolve(this.#intent, snapshot);
@@ -674,11 +898,14 @@ export class TranscendLabRuntime {
       intent: this.#intent,
       selectedBackend: this.#selectedBackend,
       mountedBackend: this.#selector.activeKind,
+      representation: this.#selector.activeRepresentation,
       transitionTrace: this.#transitionTrace,
       hardZoneExpanded: this.#hardZoneExpanded,
       forceRendererFailure: this.#forceRendererFailure,
       assetResult: this.#assetResult,
       assetLoading: this.#assetLoading,
+      activePointerId: this.#pointer?.pointerId ?? null,
+      pointerDragging: this.#pointer?.grab.dragging ?? false,
       diagnostics: this.#resources.diagnostics(),
       evidence: this.#evidence,
       lastRevocation: this.#world.state.lastRevocation,
@@ -698,7 +925,9 @@ export type TranscendLabTestApi = Readonly<{
   worldState: () => WorldRootState;
   toggleRoutes: (count: number) => void;
   relocateToAnchor: (anchorId: string) => boolean;
+  relocateToNormalized: (u: number, v: number) => boolean;
   start: (backend: LabBackendKind) => Promise<void>;
+  selectBackend: (backend: LabBackendKind) => Promise<void>;
   stop: () => Promise<ResourceDiagnostics>;
   reset: () => Promise<ResourceDiagnostics>;
   runComparison: () => Promise<readonly LabMetrics[]>;
