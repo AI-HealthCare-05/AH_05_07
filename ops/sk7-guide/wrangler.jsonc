@@ -1,0 +1,12 @@
+{
+  "$schema":"node_modules/wrangler/config-schema.json",
+  "name":"sk7-guide",
+  "main":"src/index.js",
+  "compatibility_date":"2026-09-22",
+  "workers_dev":false,
+  "routes":[{"pattern":"guide.hyeol.app","custom_domain":true}],
+  "vars":{"ALLOWED_ORIGINS":"https://hyeol.app,https://www.hyeol.app,https://guide.hyeol.app","GENERATION_MODEL":"@cf/zai-org/glm-4.7-flash"},
+  "ai_search":[{"binding":"KNOWLEDGE","instance_name":"sk7-guide-knowledge-v1","remote":true}],
+  "ratelimits":[{"name":"CHAT_RATE_LIMITER","namespace_id":"5070701","simple":{"limit":20,"period":60}}],
+  "observability":{"enabled":true}
+}
