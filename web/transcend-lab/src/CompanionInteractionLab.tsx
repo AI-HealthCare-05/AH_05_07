@@ -2,6 +2,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type CSSProperties,
   type FormEvent,
@@ -9,8 +10,23 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 
+import {
+  companionReviewCatalog,
+  type CompanionReviewClip,
+  type CompanionReviewCatalogEntry,
+} from "../../src/ui/companionReviewCatalog";
 import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embodiment/labEmbodimentPort";
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
+
+const reviewEligibleEntries = Object.freeze(
+  companionReviewCatalog.entries.filter((entry) => entry.reviewEligible),
+);
+const defaultReviewEntry = reviewEligibleEntries.find((entry) => entry.variantKey === "standard")
+  ?? reviewEligibleEntries[0];
+
+function reviewEntry(assetId: string): CompanionReviewCatalogEntry | null {
+  return reviewEligibleEntries.find((entry) => entry.assetId === assetId) ?? null;
+}
 
 function px(value: number): string {
   return `${Math.round(value)}px`;
@@ -33,6 +49,9 @@ export function CompanionInteractionLab() {
   const freeXRef = useRef<HTMLInputElement | null>(null);
   const freeYRef = useRef<HTMLInputElement | null>(null);
   const suppressNextClickRef = useRef(false);
+  const [reviewAssetId, setReviewAssetId] = useState(defaultReviewEntry?.assetId ?? "");
+  const [reviewClip, setReviewClip] = useState<CompanionReviewClip>("idle");
+  const selectedReviewEntry = reviewEntry(reviewAssetId);
 
   useLayoutEffect(() => runtime.registerControlGeometryProvider(() =>
     [labControlsRef.current, relocationControlsRef.current, assetPanelRef.current]
@@ -282,6 +301,63 @@ export function CompanionInteractionLab() {
         >
           {state.assetLoading ? "Loading admitted asset…" : "Verify and request pinned asset"}
         </button>
+        <div className="review-catalog-panel" data-testid="review-catalog-panel">
+          <div>
+            <p className="section-kicker">Always-open development catalog</p>
+            <h3>Review an immutable delivery without activation</h3>
+            <p>
+              This read-only catalog validates identity and required clips. Selection and playback
+              never change checked-in product membership.
+            </p>
+          </div>
+          <label>
+            Review asset
+            <select
+              data-testid="review-asset-select"
+              value={reviewAssetId}
+              onChange={(event) => setReviewAssetId(event.currentTarget.value)}
+            >
+              {reviewEligibleEntries.map((entry) => (
+                <option key={entry.assetId} value={entry.assetId}>
+                  {entry.speciesKey} · {entry.version} · {entry.variantKey} · {entry.assetId}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Required clip
+            <select
+              data-testid="review-clip-select"
+              value={reviewClip}
+              onChange={(event) => setReviewClip(event.currentTarget.value as CompanionReviewClip)}
+            >
+              {companionReviewCatalog.requiredClips.map((clip) => (
+                <option key={clip} value={clip}>{clip}</option>
+              ))}
+            </select>
+          </label>
+          {selectedReviewEntry ? (
+            <dl className="diagnostic-grid" data-testid="review-asset-identity">
+              <div><dt>Species</dt><dd>{selectedReviewEntry.speciesKey}</dd></div>
+              <div><dt>Version</dt><dd>{selectedReviewEntry.version}</dd></div>
+              <div><dt>Variant</dt><dd>{selectedReviewEntry.variantKey}</dd></div>
+              <div><dt>Asset</dt><dd>{selectedReviewEntry.assetId}</dd></div>
+              <div><dt>Required clips</dt><dd>{selectedReviewEntry.capabilities.requiredClips}</dd></div>
+              <div><dt>Self-contained</dt><dd>{selectedReviewEntry.capabilities.selfContainedGlb}</dd></div>
+              <div><dt>Exact identity</dt><dd>{selectedReviewEntry.capabilities.exactIdentity}</dd></div>
+              <div><dt>Review eligible</dt><dd>{selectedReviewEntry.reviewEligible ? "yes" : "no"}</dd></div>
+            </dl>
+          ) : <p role="alert">Review identity unavailable.</p>}
+          <button
+            type="button"
+            data-testid="load-review-asset"
+            disabled={state.assetLoading || !selectedReviewEntry}
+            onClick={() => selectedReviewEntry
+              && void runtime.loadReviewAsset(selectedReviewEntry.assetId, reviewClip)}
+          >
+            {state.assetLoading ? "Loading review asset…" : `Verify and play ${reviewClip}`}
+          </button>
+        </div>
       </section>
 
       <section className="lab-panel status-panel" aria-labelledby="status-title">

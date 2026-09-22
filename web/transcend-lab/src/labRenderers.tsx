@@ -239,18 +239,24 @@ abstract class ThreeLabBackend implements LabEmbodimentBackend {
           }
           try {
             const nextRoot = normalizedModel(gltf);
-            const selectedClip = gltf.animations.find((clip) => clip.name === "idle") ?? gltf.animations[0] ?? null;
-            this.#replaceModel(nextRoot);
-            if (selectedClip) {
-              this.#mixer = new AnimationMixer(gltf.scene);
-              this.#mixerRoot = gltf.scene;
-              this.#mixer.clipAction(selectedClip).play();
+            const selectedClip = gltf.animations.find((clip) => clip.name === asset.clipName) ?? null;
+            if (!selectedClip) {
+              disposeObject(gltf.scene);
+              finish(Object.freeze({
+                status: "failed" as const,
+                reason: `verified GLB is missing selected clip: ${asset.clipName}`,
+              }));
+              return;
             }
+            this.#replaceModel(nextRoot);
+            this.#mixer = new AnimationMixer(gltf.scene);
+            this.#mixerRoot = gltf.scene;
+            this.#mixer.clipAction(selectedClip).play();
             this.#representation = Object.freeze({
               mode: "verified-glb" as const,
               assetId: asset.assetId,
               sha256: asset.sha256,
-              clipName: selectedClip?.name ?? null,
+              clipName: selectedClip.name,
             });
             if (this.root) this.root.dataset.representation = "verified-glb";
             this.applyPose(this.lastPose);

@@ -2,7 +2,11 @@ import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
 import { companionSpecies, companionVariants } from "../src/ui/companion";
-import { getActiveCompanionAsset } from "../src/ui/companionActiveAsset";
+import {
+  getActiveCompanionAsset,
+  getActiveCompanionAssetForScreen,
+} from "../src/ui/companionActiveAsset";
+import { resolveCompanionRuntimeAsset } from "../src/ui/companionAssetResolver";
 import {
   companionAssetManifest,
   getCompanionAsset,
@@ -11,6 +15,12 @@ import {
   activeCompanionAssetIds,
   getCompanionRuntimeMembership,
 } from "../src/ui/companionRuntimeMembership";
+import {
+  companionReviewCatalog,
+  getCompanionReviewCatalogEntry,
+  getReviewEligibleCompanionAsset,
+} from "../src/ui/companionReviewCatalog";
+import { getActiveSceneCharacter } from "../src/ui/companionSceneRegistry";
 
 type CandidateInventory = Readonly<{
   candidates: readonly Readonly<{ candidateId: string }>[];
@@ -49,6 +59,49 @@ test("every standard companion remains catalog-only", () => {
       asset: standard,
     });
     expect(activeCompanionAssetIds).not.toContain(standard.assetId);
+  }
+});
+
+test("review catalog enumerates capability-complete delivery metadata without granting activation", () => {
+  expect(companionReviewCatalog.status).toBe("review-only");
+  expect(companionReviewCatalog.entries).toHaveLength(22);
+  expect(companionReviewCatalog.requiredClips).toEqual([
+    "idle", "greet", "move", "curious", "celebrate", "rest", "special",
+  ]);
+
+  for (const entry of companionReviewCatalog.entries) {
+    expect(entry.reviewEligible).toBe(true);
+    expect(entry.capabilities).toMatchObject({
+      exactIdentity: "verified",
+      requiredClips: "complete",
+      selfContainedGlb: "complete",
+      missingClips: [],
+      extensionsRequired: [],
+      externalDependencies: [],
+    });
+    expect(getCompanionReviewCatalogEntry(entry.assetId)).toBe(entry);
+    expect(getReviewEligibleCompanionAsset(entry.assetId)).toBe(entry);
+  }
+
+  const standard = companionReviewCatalog.entries.find((entry) => entry.variantKey === "standard")!;
+  expect(getCompanionRuntimeMembership(standard.assetId).status).toBe("catalog-only");
+  expect(resolveCompanionRuntimeAsset("production", {
+    screen: "S02",
+    species: standard.speciesKey as typeof companionSpecies[number],
+    variant: "standard",
+    clip: "idle",
+    assetScope: "review-catalog",
+  })).toBeNull();
+});
+
+test("every active species satisfies the S05 celebrate-then-idle resolver contract", () => {
+  for (const species of companionSpecies) {
+    const asset = getActiveCompanionAssetForScreen(species, "S05");
+    const character = getActiveSceneCharacter(species);
+
+    expect(asset.variant).toBe("lite");
+    expect(character.clips).toEqual(expect.arrayContaining(["celebrate", "idle"]));
+    expect(getCompanionRuntimeMembership(asset.assetId).status).toBe("active-runtime-member");
   }
 });
 

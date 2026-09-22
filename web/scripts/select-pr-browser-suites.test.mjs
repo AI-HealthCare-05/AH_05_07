@@ -124,6 +124,18 @@ test('Transcend Lab reruns when its frozen membership seam changes', () => {
   assert.deepEqual(browser(['web/src/ui/journey.ts']), ['journey-full', 'transcend-lab']);
 });
 
+test('review catalog generation is hosted by assets and the isolated Transcend Lab', () => {
+  for (const file of [
+    'web/asset-candidates/companion-review-catalog.v1.json',
+    'web/scripts/import-companion-r2-inventory.mjs',
+    'web/scripts/import-companion-r2-inventory.test.mjs',
+  ]) assert.deepEqual(browser([file]), ['assets', 'transcend-lab'], file);
+  assert.deepEqual(
+    browser(['web/src/ui/companionReviewCatalog.ts']),
+    ['scene', 'assets', 'transcend-lab'],
+  );
+});
+
 test('Presence Host product paths compose Journey and scene coverage', () => {
   for (const file of [
     'web/src/platform/presence/companionPresenceKernel.ts',
@@ -231,6 +243,8 @@ test('browser module commands are owned outside the path selector', () => {
   assert.ok(browserModuleCommands.scene.includes('npm run test:e2e:saved-scene'));
   assert.deepEqual(browserModuleCommands.guest, ['npx playwright test --config=playwright.guest.config.ts']);
   assert.ok(browserModuleCommands.assets.includes('npx playwright test --config=playwright.companion-asset.config.ts'));
+  assert.ok(browserModuleCommands.assets.includes('node --test scripts/import-companion-r2-inventory.test.mjs'));
+  assert.ok(browserModuleCommands.assets.some(command => command.includes('import-companion-r2-inventory.mjs') && command.includes('--check')));
   assert.deepEqual(browserModuleCommands['transcend-lab'], ['npm --prefix transcend-lab test']);
 });
 

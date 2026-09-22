@@ -19,13 +19,11 @@ selection. Record navigation does not move a character in time.
 
 ## Companion identity firewall
 
-S01 narrator, S02 scene identity, and the S10 unified review-scene candidate
-may use only the saved 11-species `sk7-companion-species` preference.
-Production S10 continues to receive the same non-medical preference through its
-existing separate host boundary; invalid or absent preference falls back to the
-approved bear profile. Query parameters, BP, Model V2 input/output, challenge
-facts, record coverage, or health semantics must never choose either review or
-production species.
+S01 narrator, S02 scene identity, confirmed S05, and the S10 unified scene use
+only the saved 11-species `sk7-companion-species` preference. Invalid or absent
+preference falls back to the approved bear profile. Query parameters, BP, Model
+V2 input/output, challenge facts, record coverage, or health semantics must
+never choose either review or production species.
 
 When the S10 scene is active in review or in an explicitly authorized
 exact-production Journey host, it is the single decorative character owner:
@@ -35,12 +33,14 @@ screen coordinates. Exact-production S10 requires that explicit host ownership
 bit; legacy/non-Journey callers remain closed so two production character
 renderers cannot coexist.
 
-S05 remains a separate confirmed-save exception: its qualified SavedScene uses
-the fixed registered bear/lite asset, not the saved species preference. The
-isolated `?guest=1` sandbox may reuse the same decorative preference and S02
-full-scene/Presence system, but guest facts remain memory-only and must not create
-product data or activate SavedScene authority. BP, challenge, and guest-navigation
-facts still cannot affect visual identity, pose, position, lighting, or mood.
+S05 remains a confirmed-save exception for animation authority, not identity:
+its qualified SavedScene resolves the saved species through active registered
+`lite` membership. The isolated `?guest=1` sandbox reuses the same decorative
+preference and S02 full-scene/Presence system. An actual guest confirmation may
+create an explicit memory-only S05 `celebrate → idle` selection, but it never
+creates a SavedScene persistence event. A direct guest S05 URL remains closed.
+BP, challenge, and guest-navigation facts still cannot affect visual identity,
+pose, position, lighting, or mood.
 
 ## Current scene activation
 
@@ -65,14 +65,19 @@ boundary for an App-issued confirmed persistence event; after PR #584 the exact
 scene gate may be `review` or `production`. Default/off/unknown values stay
 closed.
 
-Only confirmed persistence can produce the fixed registered bear-lite
-`celebrate` exactly once then idle; failed/optimistic/unknown/conflict events
-cannot. S05 does not consume the saved species preference. Reduced motion skips
-action. No health meaning. The SavedScene path implements per-confirmed-event
+Only confirmed persistence can produce the selected active registered lite
+identity's `celebrate` exactly once then idle; failed/optimistic/unknown/conflict
+events cannot. Query parameters cannot override the saved preference. Reduced
+motion skips action. No health meaning. The SavedScene path implements exact
+asset/species-safe byte caching and per-confirmed-event
 deduplication across rerender/remount/back/forward/retry/tier changes. Do not
 replay missed celebration after visibility or motion preference changes. The
 recovery matrix supplements the existing production normal-lifecycle tests;
 neither establishes physical-device acceptance.
+
+Guest S05 does not use this persistence authority. It can render the same
+selected active-lite animation only while an actual in-memory guest confirmation
+is active; reload/direct navigation has no event to replay.
 
 ## Current model UI
 

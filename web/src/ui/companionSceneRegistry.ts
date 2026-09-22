@@ -1,4 +1,4 @@
-import { companionSpecies, type CompanionSpecies } from "./companion";
+import { companionClips, companionSpecies, type CompanionClip, type CompanionSpecies } from "./companion";
 import { getCompanionAsset } from "./companionAssets.generated";
 import { sceneManifest } from "./sceneManifest.generated";
 
@@ -11,6 +11,7 @@ export type ActiveSceneCharacter = Readonly<{
   species: CompanionSpecies;
   url: string;
   sha256: string;
+  clips: readonly CompanionClip[];
 }>;
 
 export const activeSceneCompanionSpecies: readonly CompanionSpecies[] = companionSpecies;
@@ -32,12 +33,21 @@ const activeSceneCharacters: ReadonlyMap<CompanionSpecies, ActiveSceneCharacter>
     if (asset.delivery.url !== companion.url || asset.delivery.sha256 !== companion.sha256) {
       throw new Error(`scene registration mismatch for ${species}`);
     }
+    const clips = asset.clips.map((clip) => clip.name);
+    if (
+      clips.length !== companionClips.length
+      || new Set(clips).size !== companionClips.length
+      || companionClips.some((clip) => !clips.includes(clip))
+    ) {
+      throw new Error(`scene companion clip contract mismatch for ${species}`);
+    }
     if (map.has(species)) throw new Error(`duplicate active scene species: ${species}`);
     map.set(species, {
       id,
       species,
       url: asset.delivery.url,
       sha256: asset.delivery.sha256,
+      clips: Object.freeze(clips as CompanionClip[]),
     });
   }
 

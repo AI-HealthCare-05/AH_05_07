@@ -30,8 +30,8 @@
     "web/src/components/scene/ThreeSceneRenderer.tsx": "cc473f8874b0aa1599484d9adcddff0adadc901eb7a993a1b256a144c5767b07",
     "web/src/components/scene/s02SceneActor.ts": "0cfc5bfb5da05eb3af56e152edc59ca8ce1796f23a289ebb4015d72197218a89",
     "web/src/components/VisualStage.tsx": "e9ed056f3f7daece2efa8f316c3357042ff063efe11d9af880c196c581b1caa7",
-    "web/src/components/SceneShell.tsx": "4cc211b0b49fbfc6b29d44b94e5db409c2b63383736fa353488f850f327bcfd7",
-    "web/src/components/CompanionPresenceHostBridge.tsx": "19d91d9d8de31eaab277f2a2a45dc1e4a4c431b22dd4903c5e9c7c1fbe06426a",
+    "web/src/components/SceneShell.tsx": "269c02861e9693fd5a7fff74308666641064c94f9d906f01ebc51dd001492ff7",
+    "web/src/components/CompanionPresenceHostBridge.tsx": "6109254ec84277c706b575adf78fc9672b153b93425b39d34bbea0982a1638f8",
     "web/src/components/PresenceSceneActorInteraction.tsx": "82f2a2d051d216c73c081623b988730fbe924236f59a5118b08e1e50dd4a6d4c",
     "web/src/platform/presence/PresenceSceneActorRuntimeContext.tsx": "eaf41c33f0cab9f0acf7caf5c06009adc20648d4d1a9301b7b3b47ab0fd2672c",
     "web/src/platform/presence/presenceSceneActorRuntime.ts": "d4e3a7ac0136a96a5162cbd32694955a6e1212b271174f6b9cf7000b9fd845a1",
@@ -39,9 +39,9 @@
     "web/src/platform/presence/s02PresencePlacement.ts": "23abc41e975cca68ee5abd1fbbf9c75a16d1b37bf521d5ae22baf910aef94c3c",
     "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
     "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
-    "web/src/ui/sceneRecipes.ts": "f3c652be8a3712db2aa42f4c49d9f334a966bc90919c07f9de3df6fb3e287659",
+    "web/src/ui/sceneRecipes.ts": "98a45947ba3dc67c02e224ac4c70944130669d7e8f4dd9422c1013d80e111dbf",
     "web/src/ui/scenePolicy.ts": "4a21260fdadd0ded1d8c980ab557196bba0adb8a2038b4782095c6d28f56b9c3",
-    "web/src/ui/companionSceneRegistry.ts": "2425768d779382071fd3ca19e94c7cc97f1ea71e9f12daacbecce4b107b323b2",
+    "web/src/ui/companionSceneRegistry.ts": "0730699ec200f538a695689375e3b74a2031391d36e8a2d4f4ba4cfd68579029",
     "web/src/ui/companionPresentationProfiles.ts": "7e327d542dd9db36e7737b83f2a1df300347367a9cc97a91c585b735945f3896"
   },
   "stageContract": {

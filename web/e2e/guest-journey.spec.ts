@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 
 const fixedNow = new Date("2026-09-11T03:00:00Z");
 const today = "2026-09-11";
@@ -134,6 +135,10 @@ async function createTodayBloodPressure(page: Page, systolic = "132", diastolic 
   await expect(page.locator('[data-scene="S05"]')).toBeVisible();
 }
 
+function companionRequests(urls: string[]) {
+  return urls.filter((url) => /sk7-companion\.gkrry\.com\/companion\/v1\/.+\.glb(?:\?|$)/i.test(url));
+}
+
 async function chooseWalkingChallenge(page: Page) {
   await page.locator('button:has([data-choice="walk-10-minutes"])').click();
   await expect(page.locator('[data-scene="S06"]')).toBeVisible();
@@ -262,6 +267,76 @@ test("S01 entry uses the canonical isolated guest query and S14 can end the gues
   await page.getByRole("button", { name: "체험 끝내고 로그인으로", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('[data-scene="S01"].journey-login')).toBeVisible();
+});
+
+test("S01 fox identity continues through guest S02, confirmed S05, and S10 without a bear S05 request", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.clock.setFixedTime(fixedNow);
+  await page.goto("/");
+  await page.locator("#login-companion-species").selectOption("fox");
+  await expect.poll(() => companionRequests(requests).filter((url) => url === companionAssetManifest.fox.lite.url).length).toBeGreaterThan(0);
+  const s02RequestStart = requests.length;
+  await page.getByRole("button", { name: "로그인 없이 30초 맛보기", exact: true }).click();
+  await expect(page.locator('[data-living-scene="S02"]')).toBeVisible();
+  await expect.poll(() => companionRequests(requests.slice(s02RequestStart))).toContain(companionAssetManifest.fox.lite.url);
+
+  await page.locator(".home-lead").getByRole("button", { name: "혈압 기록하기", exact: true }).click();
+  const s05RequestStart = requests.length;
+  await page.getByLabel(/수축기/).fill("132");
+  await page.getByLabel(/이완기/).fill("84");
+  await page.getByRole("button", { name: "체험 기록에 반영", exact: true }).click();
+  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+  const slot = page.locator('.companion-runtime-slot[data-companion-species="fox"]');
+  await expect(slot).toHaveAttribute("data-companion-asset-id", companionAssetManifest.fox.lite.assetId);
+  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(page.locator('[data-saved-scene-status], [data-saved-scene-event]')).toHaveCount(0);
+  const s05Requests = companionRequests(requests.slice(s05RequestStart));
+  expect(s05Requests).toContain(companionAssetManifest.fox.lite.url);
+  expect(s05Requests).not.toContain(companionAssetManifest.bear.lite.url);
+
+  const s10RequestStart = requests.length;
+  await page.locator(".primary-nav").getByRole("button", { name: "7일 돌아보기", exact: true }).click();
+  await expect(page.locator('[data-living-scene="S10"]')).toBeVisible();
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 30_000 },
+  );
+  await expect.poll(() => companionRequests(requests.slice(s10RequestStart))).toContain(
+    companionAssetManifest.fox.lite.url,
+  );
+  expect(companionRequests(requests.slice(s10RequestStart))).not.toContain(companionAssetManifest.bear.lite.url);
+});
+
+test("guest S14 cat identity continues into an actual memory-only S05 confirmation", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await openGuest(page);
+  await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
+  await page.locator("#guest-companion-species").selectOption("cat");
+  const s02RequestStart = requests.length;
+  await page.locator(".primary-nav").getByRole("button", { name: "오늘의 기록", exact: true }).click();
+  await expect(page.locator('[data-living-scene="S02"]')).toBeVisible();
+  await expect.poll(() => companionRequests(requests.slice(s02RequestStart))).toContain(companionAssetManifest.cat.lite.url);
+
+  await page.locator(".home-lead").getByRole("button", { name: "혈압 기록하기", exact: true }).click();
+  const s05RequestStart = requests.length;
+  await page.getByLabel(/수축기/).fill("131");
+  await page.getByLabel(/이완기/).fill("83");
+  await page.getByRole("button", { name: "체험 기록에 반영", exact: true }).click();
+  await expect(page.locator('[data-scene="S05"]')).toContainText("현재 체험 메모리에만 적용돼요.");
+  await expect(page.locator('.companion-runtime-slot[data-companion-species="cat"]')).toHaveAttribute(
+    "data-companion-asset-id",
+    companionAssetManifest.cat.lite.assetId,
+  );
+  await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
+  await expect(page.locator('[data-saved-scene-status], [data-saved-scene-event]')).toHaveCount(0);
+  const s05Requests = companionRequests(requests.slice(s05RequestStart));
+  expect(s05Requests).toContain(companionAssetManifest.cat.lite.url);
+  expect(s05Requests).not.toContain(companionAssetManifest.bear.lite.url);
 });
 
 async function captureGuestVisuals(page: Page, testInfo: TestInfo, width: number, height: number) {

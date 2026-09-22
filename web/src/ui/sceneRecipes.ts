@@ -1,5 +1,5 @@
 import { sceneManifest } from "./sceneManifest.generated";
-import { getActiveSceneCharacter } from "./companionSceneRegistry";
+import { getActiveCompanionAssetForScreen } from "./companionActiveAsset";
 import { getSceneCharacterPresentationProfile } from "./companionPresentationProfiles";
 import type { CompanionSpecies } from "./companion";
 
@@ -54,7 +54,7 @@ function resolveSelectableCharacterRecipe(
   if (!baseRecipe.id.startsWith(prefix)) {
     throw new Error(`${screen} identity binding rejected for non-${screen} recipe`);
   }
-  const registered = getActiveSceneCharacter(species);
+  const registered = getActiveCompanionAssetForScreen(species, screen);
   const presentation = getSceneCharacterPresentationProfile(screen, species);
   return {
     ...baseRecipe,

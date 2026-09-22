@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { PINNED_ACTIVE_ASSET } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
+import { companionReviewCatalog } from "../src/ui/companionReviewCatalog";
+import { getCompanionRuntimeMembership } from "../src/ui/companionRuntimeMembership";
 
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.config.metadata.transcendLab !== true, "dedicated Transcend Lab config only");
@@ -25,6 +27,18 @@ async function fetchExactPinnedBytes(request: APIRequestContext): Promise<Buffer
   const bytes = await response.body();
   expect(bytes.byteLength).toBe(PINNED_ACTIVE_ASSET.bytes);
   expect(createHash("sha256").update(bytes).digest("hex")).toBe(PINNED_ACTIVE_ASSET.sha256);
+  return bytes;
+}
+
+async function fetchExactReviewBytes(
+  request: APIRequestContext,
+  asset: (typeof companionReviewCatalog.entries)[number],
+): Promise<Buffer> {
+  const response = await request.get(asset.url);
+  expect(response.ok()).toBe(true);
+  const bytes = await response.body();
+  expect(bytes.byteLength).toBe(asset.bytes);
+  expect(createHash("sha256").update(bytes).digest("hex")).toBe(asset.sha256);
   return bytes;
 }
 
@@ -359,6 +373,53 @@ test("exact pinned bytes parse into the real GLB for both backends and A/B evide
   expect(evidence.every((record) => record.routeContinuity.toggles === 2 && record.routeContinuity.retained)).toBe(true);
   await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(0);
   expect(await noTaskResources(page)).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
+test("review catalog selects a catalog-only identity and required clip without changing product membership", async ({ page, request }) => {
+  const reviewAsset = companionReviewCatalog.entries.find((entry) =>
+    entry.speciesKey === "fox" && entry.variantKey === "standard",
+  )!;
+  expect(reviewAsset.reviewEligible).toBe(true);
+  expect(getCompanionRuntimeMembership(reviewAsset.assetId).status).toBe("catalog-only");
+  const exactBytes = await fetchExactReviewBytes(request, reviewAsset);
+  const requests: string[] = [];
+  page.on("request", (browserRequest) => requests.push(browserRequest.url()));
+  await page.route(reviewAsset.url, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "model/gltf-binary",
+      body: exactBytes,
+    });
+  });
+
+  await openRunningLab(page);
+  await page.getByTestId("review-asset-select").selectOption(reviewAsset.assetId);
+  await page.getByTestId("review-clip-select").selectOption("celebrate");
+  await expect(page.getByTestId("review-asset-identity")).toContainText("fox");
+  await expect(page.getByTestId("review-asset-identity")).toContainText("standard");
+  await expect(page.getByTestId("review-asset-identity")).toContainText(reviewAsset.assetId);
+  await expect(page.getByTestId("review-asset-identity")).toContainText("complete");
+  await page.getByTestId("load-review-asset").click();
+
+  await expect(page.getByTestId("lab-status")).toContainText("Review-only bytes verified and displayed");
+  await expect(page.getByTestId("lab-status")).toContainText("Product membership is unchanged");
+  await expect(page.getByTestId("representation-mode")).toContainText("verified-glb · clip celebrate");
+  const state = await page.evaluate(() => window.__TRANSCEND_LAB__!.state());
+  expect(state.assetResult).toMatchObject({
+    status: "loaded",
+    assetId: reviewAsset.assetId,
+    authority: "review-catalog",
+    clipName: "celebrate",
+    sha256: reviewAsset.sha256,
+  });
+  expect(state.representation).toMatchObject({
+    mode: "verified-glb",
+    assetId: reviewAsset.assetId,
+    sha256: reviewAsset.sha256,
+    clipName: "celebrate",
+  });
+  expect(requests.filter((url) => url.endsWith(".glb"))).toEqual([reviewAsset.url]);
+  expect(getCompanionRuntimeMembership(reviewAsset.assetId).status).toBe("catalog-only");
 });
 
 test("reduced motion and forced colors preserve presence, controls, focus, and semantic status", async ({ browser, baseURL }) => {

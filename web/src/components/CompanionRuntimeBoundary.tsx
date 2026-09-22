@@ -1,8 +1,7 @@
 import { lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react";
 
 import { resolveCompanionRuntimeConfig, type CompanionSelection } from "../ui/companion";
-import { getCompanionAsset } from "../ui/companionAssets.generated";
-import { getActiveCompanionAsset } from "../ui/companionActiveAsset";
+import { resolveCompanionRuntimeAsset } from "../ui/companionAssetResolver";
 
 export type CompanionFraming = "default" | "journey-s05" | "login-narrator";
 export type CompanionInteractionActivation = "disabled" | "immediate" | "after-idle";
@@ -57,9 +56,8 @@ class RendererErrorBoundary extends Component<{ children: ReactNode }, { failed:
 export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = false, framing = "default" }: CompanionRuntimeBoundaryProps) {
   const config = resolveCompanionRuntimeConfig(mode, { reducedMotion });
   if (!config.enabled || !selection) return null;
-  const asset = config.mode === "review"
-    ? getCompanionAsset(selection.species, selection.variant)
-    : getActiveCompanionAsset(selection.species);
+  const asset = resolveCompanionRuntimeAsset(config.mode, selection);
+  if (!asset) return null;
   const interactionActivation: CompanionInteractionActivation = config.reducedMotion
     ? "disabled"
     : config.mode === "review"
@@ -91,6 +89,9 @@ export function CompanionRuntimeBoundary({ mode, selection, reducedMotion = fals
       data-companion-interactive={tactileEligible ? "true" : "false"}
       data-companion-interaction-activation={interactionActivation}
       data-companion-attention-look={attentionLook ? "true" : "false"}
+      data-companion-species={asset.species}
+      data-companion-variant={asset.variant}
+      data-companion-asset-id={asset.assetId}
       style={interactionActivation === "immediate" ? { pointerEvents: "auto" } : undefined}
     >
       <RendererErrorBoundary>

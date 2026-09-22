@@ -1,4 +1,12 @@
 import { getCompanionRuntimeMembership } from "../../../../src/ui/companionRuntimeMembership";
+import {
+  companionReviewCatalog,
+  getReviewEligibleCompanionAsset,
+  type CompanionReviewClip,
+  type CompanionReviewCatalogEntry,
+} from "../../../../src/ui/companionReviewCatalog";
+
+export type ReviewClip = CompanionReviewClip;
 
 import {
   LabResourceLedger,
@@ -7,6 +15,7 @@ import {
 
 type Membership = ReturnType<typeof getCompanionRuntimeMembership>;
 export type MembershipReader = (assetId: string) => Membership;
+export type ReviewCatalogReader = (assetId: string) => CompanionReviewCatalogEntry | null;
 export type AssetRequester = (
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -19,6 +28,7 @@ export type VerifiedPinnedAsset = Readonly<{
   responseBytes: number;
   bytes: ArrayBuffer;
   animationNames: readonly string[];
+  clipName: CompanionReviewClip;
 }>;
 
 export type AssetAdmissionResult =
@@ -31,6 +41,8 @@ export type AssetAdmissionResult =
       verification: "actual-response-sha256";
       container: "self-contained-glb-v2";
       animationNames: readonly string[];
+      clipName: CompanionReviewClip;
+      authority: "active-membership" | "review-catalog";
     }>
   | Readonly<{
       status: "rejected" | "failed" | "cancelled";
@@ -150,6 +162,91 @@ export async function verifyGlbPayload(
   return inspectSelfContainedGlb(bytes);
 }
 
+type ExactReviewAsset = Readonly<{
+  assetId: string;
+  url: string;
+  bytes: number;
+  sha256: string;
+}>;
+
+async function requestVerifiedAsset(options: Readonly<{
+  resources: LabResourceLedger;
+  asset: ExactReviewAsset;
+  requiredClips: readonly CompanionReviewClip[];
+  clipName: CompanionReviewClip;
+  authority: "active-membership" | "review-catalog";
+  requester: AssetRequester;
+  onVerified?: (asset: VerifiedPinnedAsset) => void | Promise<void>;
+}>): Promise<AssetAdmissionResult> {
+  const { asset } = options;
+  const load = options.resources.beginLoad();
+  try {
+    const response = await options.requester(asset.url, {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "force-cache",
+      signal: load.signal,
+      headers: { Accept: "model/gltf-binary,application/octet-stream;q=0.9" },
+    });
+    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
+      return Object.freeze({ status: "cancelled" as const, assetId: asset.assetId, reason: "stale load generation" });
+    }
+    if (!response.ok) {
+      return Object.freeze({ status: "failed" as const, assetId: asset.assetId, reason: `asset response ${response.status}` });
+    }
+    const body = await response.arrayBuffer();
+    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
+      return Object.freeze({ status: "cancelled" as const, assetId: asset.assetId, reason: "stale load generation" });
+    }
+    const inspection = await verifyGlbPayload(body, asset);
+    const missingClips = options.requiredClips.filter((clip) => !inspection.animationNames.includes(clip));
+    const selectedClipMissing = !inspection.animationNames.includes(options.clipName);
+    if (missingClips.length > 0 || selectedClipMissing) {
+      const missing = selectedClipMissing ? [...missingClips, options.clipName] : missingClips;
+      throw new Error(`asset clip contract mismatch: missing ${[...new Set(missing)].join(", ")}`);
+    }
+    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
+      return Object.freeze({ status: "cancelled" as const, assetId: asset.assetId, reason: "stale load generation" });
+    }
+    await options.onVerified?.(Object.freeze({
+      assetId: asset.assetId,
+      url: asset.url,
+      sha256: asset.sha256,
+      responseBytes: body.byteLength,
+      bytes: body.slice(0),
+      animationNames: inspection.animationNames,
+      clipName: options.clipName,
+    }));
+    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
+      return Object.freeze({ status: "cancelled" as const, assetId: asset.assetId, reason: "stale load generation" });
+    }
+    return Object.freeze({
+      status: "loaded" as const,
+      assetId: asset.assetId,
+      url: asset.url,
+      sha256: asset.sha256,
+      responseBytes: body.byteLength,
+      verification: "actual-response-sha256" as const,
+      container: "self-contained-glb-v2" as const,
+      animationNames: inspection.animationNames,
+      clipName: options.clipName,
+      authority: options.authority,
+    });
+  } catch (error) {
+    const cancelled = load.signal.aborted || !options.resources.isCurrent(load.generation);
+    return Object.freeze({
+      status: cancelled ? ("cancelled" as const) : ("failed" as const),
+      assetId: asset.assetId,
+      reason: cancelled
+        ? "asset load cancelled"
+        : `asset load failed: ${error instanceof Error ? error.message : "unknown"}`,
+    });
+  } finally {
+    load.done();
+  }
+}
+
 /** Admission completes before the requester is called; every negative authority path is zero-request. */
 export async function loadPinnedActiveAsset(options: Readonly<{
   resources: LabResourceLedger;
@@ -178,62 +275,69 @@ export async function loadPinnedActiveAsset(options: Readonly<{
       reason: "asset is not the exact fixture-pinned active runtime member",
     });
   }
+  return requestVerifiedAsset({
+    resources: options.resources,
+    asset: PINNED_ACTIVE_ASSET,
+    requiredClips: ["idle"],
+    clipName: "idle",
+    authority: "active-membership",
+    requester,
+    onVerified: options.onVerified,
+  });
+}
 
-  const load = options.resources.beginLoad();
+/** Review admission is catalog-only and cannot modify or satisfy active product membership. */
+export async function loadReviewCatalogAsset(options: Readonly<{
+  resources: LabResourceLedger;
+  assetId: string;
+  clipName: CompanionReviewClip;
+  catalogReader?: ReviewCatalogReader;
+  requester?: AssetRequester;
+  onVerified?: (asset: VerifiedPinnedAsset) => void | Promise<void>;
+}>): Promise<AssetAdmissionResult> {
+  const catalogReader = options.catalogReader ?? getReviewEligibleCompanionAsset;
+  const requester = options.requester ?? window.fetch.bind(window);
+  let asset: CompanionReviewCatalogEntry | null;
   try {
-    const response = await requester(PINNED_ACTIVE_ASSET.url, {
-      method: "GET",
-      mode: "cors",
-      credentials: "omit",
-      cache: "force-cache",
-      signal: load.signal,
-      headers: { Accept: "model/gltf-binary,application/octet-stream;q=0.9" },
-    });
-    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
-      return Object.freeze({ status: "cancelled" as const, assetId, reason: "stale load generation" });
-    }
-    if (!response.ok) {
-      return Object.freeze({ status: "failed" as const, assetId, reason: `asset response ${response.status}` });
-    }
-    const body = await response.arrayBuffer();
-    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
-      return Object.freeze({ status: "cancelled" as const, assetId, reason: "stale load generation" });
-    }
-    const inspection = await verifyGlbPayload(body, PINNED_ACTIVE_ASSET);
-    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
-      return Object.freeze({ status: "cancelled" as const, assetId, reason: "stale load generation" });
-    }
-    await options.onVerified?.(Object.freeze({
-      assetId,
-      url: PINNED_ACTIVE_ASSET.url,
-      sha256: PINNED_ACTIVE_ASSET.sha256,
-      responseBytes: body.byteLength,
-      bytes: body.slice(0),
-      animationNames: inspection.animationNames,
-    }));
-    if (!options.resources.isCurrent(load.generation) || load.signal.aborted) {
-      return Object.freeze({ status: "cancelled" as const, assetId, reason: "stale load generation" });
-    }
-    return Object.freeze({
-      status: "loaded" as const,
-      assetId,
-      url: PINNED_ACTIVE_ASSET.url,
-      sha256: PINNED_ACTIVE_ASSET.sha256,
-      responseBytes: body.byteLength,
-      verification: "actual-response-sha256" as const,
-      container: "self-contained-glb-v2" as const,
-      animationNames: inspection.animationNames,
-    });
+    asset = catalogReader(options.assetId);
   } catch (error) {
-    const cancelled = load.signal.aborted || !options.resources.isCurrent(load.generation);
     return Object.freeze({
-      status: cancelled ? ("cancelled" as const) : ("failed" as const),
-      assetId,
-      reason: cancelled
-        ? "asset load cancelled"
-        : `asset load failed: ${error instanceof Error ? error.message : "unknown"}`,
+      status: "rejected" as const,
+      assetId: options.assetId,
+      reason: `review catalog authority threw: ${error instanceof Error ? error.message : "unknown"}`,
     });
-  } finally {
-    load.done();
   }
+  if (
+    !asset
+    || asset.assetId !== options.assetId
+    || !asset.reviewEligible
+    || asset.capabilities.exactIdentity !== "verified"
+    || asset.capabilities.requiredClips !== "complete"
+    || asset.capabilities.selfContainedGlb !== "complete"
+  ) {
+    return Object.freeze({
+      status: "rejected" as const,
+      assetId: options.assetId,
+      reason: "asset is not an exact capability-complete review catalog entry",
+    });
+  }
+  if (
+    !companionReviewCatalog.requiredClips.includes(options.clipName)
+    || !asset.clips.includes(options.clipName)
+  ) {
+    return Object.freeze({
+      status: "rejected" as const,
+      assetId: options.assetId,
+      reason: `review clip is unavailable: ${options.clipName}`,
+    });
+  }
+  return requestVerifiedAsset({
+    resources: options.resources,
+    asset,
+    requiredClips: companionReviewCatalog.requiredClips,
+    clipName: options.clipName,
+    authority: "review-catalog",
+    requester,
+    onVerified: options.onVerified,
+  });
 }

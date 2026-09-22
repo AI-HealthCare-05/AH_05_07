@@ -1,8 +1,8 @@
 # SK7 Visual Factory → Runtime activation boundary
 
-Status: architecture only; no production, test, asset, manifest, CI, or deployment change
-Repository baseline: `origin/main` at `f36a9eb3aa2a44ee4a544854e712d670859d8664`
-Investigated: 2026-09-19 KST
+Status: source seam implemented; no asset publication, R2 mutation, activation, merge, or deployment
+Repository baseline: `origin/main` at `cb1675bbc2d30ee48d4f78247bbb2ad260d5e8a2`
+Investigated: 2026-09-19 KST; implementation update: 2026-09-23 KST
 
 ## Scope and decision
 
@@ -49,15 +49,18 @@ historical line references were not used as source authority.
 | Candidate intake verifier | [`web/scripts/verify-companion-candidates.mjs`](../../web/scripts/verify-companion-candidates.mjs) |
 | Current immutable delivery evidence | [`docs/evidence/companion-r2-v1.json`](../evidence/companion-r2-v1.json) |
 | Generated companion inventory | [`web/scripts/generate-companion-manifest.mjs`](../../web/scripts/generate-companion-manifest.mjs), [`web/src/ui/companionAssets.generated.ts`](../../web/src/ui/companionAssets.generated.ts) |
+| Read-only delivery import and review catalog | [`web/scripts/import-companion-r2-inventory.mjs`](../../web/scripts/import-companion-r2-inventory.mjs), [`web/asset-candidates/companion-review-catalog.v1.json`](../../web/asset-candidates/companion-review-catalog.v1.json), [`web/src/ui/companionReviewCatalog.ts`](../../web/src/ui/companionReviewCatalog.ts) |
 | Authored/generated scene inventory | [`web/src/ui/scene-manifest.v2.json`](../../web/src/ui/scene-manifest.v2.json), [`web/src/ui/sceneManifest.generated.ts`](../../web/src/ui/sceneManifest.generated.ts) |
 | Scene manifest verifier | [`web/scripts/verify-scene-manifest.mjs`](../../web/scripts/verify-scene-manifest.mjs) |
 | Current active scene bridge | [`web/src/ui/companionSceneRegistry.ts`](../../web/src/ui/companionSceneRegistry.ts) |
+| Central product asset resolver | [`web/src/ui/companionActiveAsset.ts`](../../web/src/ui/companionActiveAsset.ts), [`web/src/ui/companionAssetResolver.ts`](../../web/src/ui/companionAssetResolver.ts) |
 | Companion policy and production selection | [`web/src/ui/companion.ts`](../../web/src/ui/companion.ts) |
 | Full-scene policy and recipe binding | [`web/src/ui/scenePolicy.ts`](../../web/src/ui/scenePolicy.ts), [`web/src/ui/sceneRecipes.ts`](../../web/src/ui/sceneRecipes.ts) |
 | Shell ownership decision | [`web/src/App.tsx`](../../web/src/App.tsx), [`web/src/components/SceneShell.tsx`](../../web/src/components/SceneShell.tsx) |
 | Legacy companion lazy boundary / renderer | [`web/src/components/CompanionRuntimeBoundary.tsx`](../../web/src/components/CompanionRuntimeBoundary.tsx), [`web/src/components/CompanionReviewRenderer.tsx`](../../web/src/components/CompanionReviewRenderer.tsx) |
 | S02/S10 full-scene lazy boundary / renderer | [`web/src/components/VisualStage.tsx`](../../web/src/components/VisualStage.tsx), [`web/src/components/scene/ThreeSceneRenderer.tsx`](../../web/src/components/scene/ThreeSceneRenderer.tsx) |
 | S05 saved-scene lazy boundary / renderer | [`web/src/components/SavedSceneBoundary.tsx`](../../web/src/components/SavedSceneBoundary.tsx), [`web/src/components/scene/SavedSceneRenderer.tsx`](../../web/src/components/scene/SavedSceneRenderer.tsx) |
+| Isolated development review surface | [`web/transcend-lab/src/CompanionInteractionLab.tsx`](../../web/transcend-lab/src/CompanionInteractionLab.tsx), [`web/transcend-lab/src/platform/embodiment/labAssetAdmission.ts`](../../web/transcend-lab/src/platform/embodiment/labAssetAdmission.ts) |
 | Fallback contracts | [`docs/scene-fallback-contract.md`](../scene-fallback-contract.md), [`web/src/components/StaticSceneFallback.tsx`](../../web/src/components/StaticSceneFallback.tsx) |
 | Release and served-state authority | [`docs/scene-release-gates.md`](../scene-release-gates.md), [`docs/deployment-ssot.md`](../deployment-ssot.md) |
 | Focused tests / CI routing | [`web/e2e/scene-policy.spec.ts`](../../web/e2e/scene-policy.spec.ts), [`web/e2e/companion-production.spec.ts`](../../web/e2e/companion-production.spec.ts), [`web/e2e/s10-production-scene.spec.ts`](../../web/e2e/s10-production-scene.spec.ts), [`web/scripts/select-pr-browser-suites.mjs`](../../web/scripts/select-pr-browser-suites.mjs), [`.github/workflows/evidence-controls.yml`](../../.github/workflows/evidence-controls.yml) |
@@ -89,6 +92,7 @@ several technical, device, and human-review gates have evidence.
 | Stage | Source of truth | Input | Output | Owner | Validation | Failure behavior |
 | --- | --- | --- | --- | --- | --- | --- |
 | Immutable delivery evidence | `docs/evidence/companion-r2-v1.json` | Already reviewed and published object identities | 22 standard/lite object records for the current 11 species | Delivery/release evidence | Exact count, bucket/prefix/origin, GET/CORS/MIME/cache evidence, bytes and SHA-256 | Generator rejects missing or mismatched evidence |
+| Read-only review import | Supplied inventory JSON plus optional GLB audit | Existing object metadata; no live LIST or credentials | Deterministic review-only catalog with identity and capability status | Operator/build tooling | Safe keys, exact digest/bytes, HTTPS/MIME, seven clips, self-contained GLB metadata | Rejects malformed input; missing capability remains ineligible; never writes membership |
 | Generated available inventory | `generate-companion-manifest.mjs` | Delivery evidence; candidate inventory is validated but is not an input | `companionAssets.generated.ts` with `assetId/species/version/variant/url/bytes/sha256` | Build tooling | Exact species and variants, verified delivery, deterministic generated source | Build/verification fails if stale or divergent |
 | Scene registration | `scene-manifest.v2.json` and its verifier | Current published lite identities, scene/poster/environment evidence | Verified generated scene manifest | Scene author/reviewer | Exact delivery/provenance/clip identity, empty decoder/extensions, budgets, fallbacks, source hashes | Invalid registration or fallback blocks build |
 | Active scene set | `s02SelectableCharacters` consumed by `companionSceneRegistry.ts` | 11 scene character IDs | Map of 11 active lite species descriptors | Reviewed source PR | Every scene entry must match the immutable companion descriptor; missing/duplicate/mismatched species throws | Fails closed during module initialization/build/test |
@@ -108,10 +112,12 @@ Important current semantics:
   checked-in `s02SelectableCharacters` allowlist plus the registry cross-check.
   The field name is historical; current `sceneRecipes.ts` uses the registry for
   both S02 and S10.
-- The legacy companion renderer still looks up the broader generated inventory
-  directly after receiving a selection, and S05 `SavedSceneRenderer` directly
-  names `companionAssetManifest.bear.lite`. Those are the two remaining lookup
-  paths that should converge on the existing active registry seam.
+- Product companion and SavedScene renderers receive a descriptor resolved by
+  the central active-membership seam. SavedScene no longer names bear or an R2
+  URL and its exact-byte cache is keyed by immutable asset/species identity.
+- The generated review catalog is separate from membership. Transcend Lab may
+  enumerate and load its eligible entries, but catalog lookup cannot satisfy a
+  production lookup or edit membership.
 - Current source and currently served production are distinct facts. The latest
   deployment SSOT records a served source older than this document's
   `origin/main`. A repository merge is not deployment evidence.
@@ -214,9 +220,10 @@ part of activation.
 | S02 full scene | `App` ownership + `resolveScenePlan` + `resolveS02CharacterRecipe` | saved preference when companion mode is not off; null forces poster | active registered `lite` | neutral static scene | scene recipe camera/profile; poster then CSS |
 | S10 full scene | explicit Journey production ownership + `resolveS10CharacterRecipe` | saved preference; invalid becomes bear | active registered `lite` | neutral static plus bounded optional look cue | diorama profile; poster then CSS; separate companion suppressed |
 | S10 legacy fallback | `resolveProductionCompanion` when full scene does not own decoration | saved preference | fixed `lite` | `idle` | default companion framing; decorative null on error |
-| S05 legacy companion | `resolveProductionCompanion` after confirmed save | fixed bear | fixed `lite` | `celebrate_then_idle` | `journey-s05`; semantic confirmation and CTAs remain outside |
-| S05 saved scene | `allowsSavedScene` after confirmed event | fixed bear | direct current bear-lite descriptor | one celebrate opportunity, then static idle | verified byte cache; CSS/semantic S05 on failure |
+| S05 legacy/guest companion | `resolveProductionCompanion` or actual guest confirmation | saved/fallback non-medical preference; query ignored in production | active registered `lite` | `celebrate_then_idle` | guest is memory-only and direct URL closed; semantic confirmation and CTAs remain outside |
+| S05 saved scene | `allowsSavedScene` after authenticated confirmed event | saved/fallback non-medical preference | active registered `lite` descriptor | one celebrate opportunity, then static idle | exact-asset byte cache; CSS/semantic S05 on failure |
 | Review companion | explicit validated query on allowed screens | active `CompanionSpecies` only | explicit `lite` or `standard` | allowed/conditional clip policy | review-only, exact query, fail closed |
+| Transcend Lab review | explicit review-catalog identity and required clip | any catalog species | catalog variant | selected required clip after full capability and exact-byte verification | separate non-production build; no membership write/import of product App |
 
 There is no automatic device-based standard/lite choice. Production deliberately
 uses `lite`. Device/performance and reduced-motion constraints select a rendering
@@ -226,7 +233,7 @@ tier or stop motion; they do not silently substitute an unreviewed binary.
 
 Keep hard-coded because it is product policy:
 
-- S05 is bear-lite and confirmed-save-only;
+- S05 is confirmed-save-only and uses the saved/fallback active-lite identity;
 - S01 is greet; S10 fallback is idle; S05 is celebrate then idle;
 - production surfaces use lite until a separately measured decision changes it;
 - saved identity is non-medical and health/model/challenge facts cannot select it;
@@ -309,25 +316,33 @@ checks named by the scene release gates.
 
 ## I. Minimum seam
 
-The smallest useful seam is **one verified active descriptor lookup**, built on
-the existing `companionSceneRegistry.ts` membership and cross-checks.
+The implemented product seam is **one verified active descriptor lookup**, built
+on the existing `companionSceneRegistry.ts` membership and cross-checks.
 
-The first implementation should make that module expose the complete current
-active lite `CompanionAsset` descriptor, not just `{id, species, url, sha256}`.
-Production consumers then receive an already-resolved descriptor:
+The implementation exposes the complete current active lite `CompanionAsset`
+descriptor, validates screen-required clips, and gives production consumers an
+already-resolved descriptor:
 
 ```text
 checked-in s02SelectableCharacters membership
   + generated eligible companion descriptor
   + scene-manifest identity cross-check
   → getActiveCompanionAsset(species)
+  → getActiveCompanionAssetForScreen(species, screen)
   → { assetId, species, version, variant: "lite", url, bytes, sha256 }
 ```
 
 Review mode may continue to resolve explicit standard/lite entries from the
 broader generated inventory. Production mode, S02/S10 recipes, and S05 must use
-the active lookup. This keeps review breadth without allowing availability to
+the screen-aware active lookup; S01 reaches the same lookup through the shared
+runtime resolver. This keeps review breadth without allowing availability to
 become production activation.
+
+The open development lane remains separate: a file-fed read-only importer
+generates capability metadata for `companionReviewCatalog`, and only the
+isolated Transcend Lab consumes that seam. Import, catalog inclusion, successful
+playback, and upload are never active-membership decisions. The public Asset
+Gateway remains GET/HEAD-only.
 
 Do not rename the historical manifest field, rewrite the scene manifest, add a
 new JSON schema, or migrate all presentation policy in this first slice.
@@ -340,9 +355,11 @@ new JSON schema, or migrate all presentation policy in this first slice.
 | 2. Lightweight checked-in active lookup | Extend existing `companionSceneRegistry.ts` to return a normalized active descriptor; route production companion and S05 lookups through it | Reuses current evidence, manifest, types, allowlist, and failure model; deterministic, reviewable, reversible; no service/schema/dependency | Historical `s02SelectableCharacters` name remains awkward; focused rewiring must preserve review behavior | Small, one coherent PR | Revert registry/consumer commit or prior allowlist; deployment can also switch visual gates off | **Recommended** |
 | 3. Broader declarative registry architecture | New schema for surfaces, capabilities, states, fallbacks, promotion records, generator, and migration of scene/legacy/S05 policy | One expressive data model and future automation potential | Duplicates current scene/policy contracts, invites generic-engine scope, creates more status semantics and a larger activation blast radius | High | Complex schema/data/code rollback | Not justified by current SK7 requirements |
 
-## K. First implementation slice
+## K. Historical first implementation plan (completed 2026-09-23)
 
-This is a proposal for the next task, not an implementation performed here.
+The plan below is retained as review history. The implemented slice additionally
+carried the saved species through S05, added the isolated read-only catalog/Lab
+lane, and routed its tests; current contracts above are authoritative.
 
 ### Characterization/test-first guard
 
@@ -353,7 +370,7 @@ Before the production refactor, add a focused characterization that freezes:
 - a candidate-only species/optimized variant is absent from production
   resolution even though candidate metadata exists;
 - review can still select current standard/lite entries explicitly;
-- S05 remains fixed bear-lite and S02/S10 preserve saved-species behavior;
+- S05/S02/S10 preserve the saved non-medical species behavior;
 - reduced-motion and failure request counts do not change.
 
 ### Exact files likely changed
@@ -497,8 +514,8 @@ eligibility and release qualification, not the architecture of the active lookup
 ## Open questions
 
 1. Should a future active allowlist remain one shared 11-species lite set for
-   S01/S02/S10, or should a proven product need introduce surface-specific
-   membership? Current evidence supports the shared set plus fixed S05 bear.
+   S01/S02/S05/S10, or should a proven product need introduce surface-specific
+   membership? Current evidence supports the shared set.
 2. Should promotion require all seven clips forever, or only the clips/capabilities
    used by an activated surface? Keep the current seven-clip contract until a real
    candidate demonstrates a need to narrow it.

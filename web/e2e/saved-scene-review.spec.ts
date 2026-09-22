@@ -6,6 +6,8 @@ import { allScreenIds } from "../src/ui/journey";
 import { e2eSessionEventName } from "../src/lib/e2eHarness";
 
 const assetUrl = companionAssetManifest.bear.lite.url;
+const catAssetUrl = companionAssetManifest.cat.lite.url;
+const foxAssetUrl = companionAssetManifest.fox.lite.url;
 const runtime = (page: Page) => page.locator("[data-saved-scene-status]");
 const character = (page: Page) => page.locator("[data-saved-scene-renderer]");
 const headers = { "Access-Control-Allow-Origin": "http://127.0.0.1:4173", "Access-Control-Allow-Headers": "authorization,content-type", "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS" };
@@ -18,20 +20,29 @@ function deferred() {
 
 // Fetch the real, immutable GLB once before scene timers start; behavior tests
 // still use the real renderer. Live transport remains covered by the existing CI step.
-let assetBody: Buffer;
+const assetBodies = new Map<string, Buffer>();
 test.beforeAll(async ({ request }) => {
-  const asset = companionAssetManifest.bear.lite;
-  const response = await request.get(assetUrl, { headers: { Origin: headers["Access-Control-Allow-Origin"] } });
-  expect(response.status()).toBe(200);
-  expect(response.headers()["access-control-allow-origin"]).toBe(headers["Access-Control-Allow-Origin"]);
-  assetBody = await response.body();
-  expect(assetBody.length).toBe(asset.bytes);
-  expect(createHash("sha256").update(assetBody).digest("hex")).toBe(asset.sha256);
-  await response.dispose();
+  for (const asset of [
+    companionAssetManifest.bear.lite,
+    companionAssetManifest.cat.lite,
+    companionAssetManifest.fox.lite,
+    companionAssetManifest.hedgehog.lite,
+  ]) {
+    const response = await request.get(asset.url, { headers: { Origin: headers["Access-Control-Allow-Origin"] } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["access-control-allow-origin"]).toBe(headers["Access-Control-Allow-Origin"]);
+    const body = await response.body();
+    expect(body.length).toBe(asset.bytes);
+    expect(createHash("sha256").update(body).digest("hex")).toBe(asset.sha256);
+    assetBodies.set(asset.url, body);
+    await response.dispose();
+  }
 });
 
 async function setup(page: Page) {
-  await page.route(assetUrl, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body: assetBody }));
+  for (const [url, body] of assetBodies) {
+    await page.route(url, route => route.fulfill({ status: 200, headers, contentType: "model/gltf-binary", body }));
+  }
   const state = {
     posts: 0, windows: 0, navigations: 0, urls: [] as string[], errors: [] as string[],
     outcome: "ok" as "ok" | "unknown" | "conflict" | "invalid-json",
@@ -95,6 +106,13 @@ async function openForm(page: Page) {
   await page.getByLabel(/수축기/).fill("120");
   await page.getByLabel(/이완기/).fill("80");
 }
+async function openBloodPressureFormFromSettings(page: Page) {
+  await page.getByRole("button", { name: "SK7 · 하루의 사실을 차분하게 · 오늘의 기록으로 이동", exact: true }).click();
+  const home = page.locator('[data-scene="S02"], [data-scene="S12"]');
+  await expect(home).toBeVisible();
+  await home.getByRole("button", { name: /혈압 기록하기|혈압 추가 기록/ }).first().click();
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+}
 async function submit(page: Page) { await page.getByRole("button", { name: "혈압 기록 저장" }).click(); }
 async function ready(page: Page) {
   await expect(page.getByRole("heading", { name: "기록을 저장했어요" })).toBeVisible();
@@ -142,6 +160,52 @@ test("direct S05 query and fixture cannot create a real saved-scene event", asyn
   expect(state.urls.filter(url => /SavedSceneRenderer/.test(url))).toEqual([]);
   await page.goto("/?fixture=VP-10&screen=S05&companion_context=save_success");
   await expect(runtime(page)).toHaveCount(0);
+});
+
+test("signed-in S14 cat preference owns confirmed SavedScene S05 and ignores query species", async ({ page }) => {
+  const state = await setup(page);
+  await page.goto("/?e2e=signed-in&screen=S14&companion_species=fox&companion_variant=standard&companion_clip=greet");
+  const select = page.locator("#companion-species");
+  await expect(select).toHaveValue("bear");
+  await select.selectOption("cat");
+  await openBloodPressureFormFromSettings(page);
+  const s05RequestStart = state.urls.length;
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+  await submit(page);
+  await ready(page);
+  await expect(runtime(page)).toHaveAttribute("data-companion-species", "cat");
+  await expect(runtime(page)).toHaveAttribute("data-companion-asset-id", companionAssetManifest.cat.lite.assetId);
+  const presenceHost = page.locator('[data-companion-presence-host="shadow-v1"]');
+  await expect(presenceHost).toHaveAttribute("data-presence-owner", "saved-scene");
+  await expect(presenceHost).toHaveAttribute("data-presence-asset-id", companionAssetManifest.cat.lite.assetId);
+  await expect(presenceHost).toHaveAttribute("data-presence-observed-asset-id", companionAssetManifest.cat.lite.assetId);
+  expect(glbs(state.urls.slice(s05RequestStart))).toEqual([catAssetUrl]);
+  expect(glbs(state.urls.slice(s05RequestStart))).not.toContain(assetUrl);
+});
+
+test("saved-scene byte cache is exact-asset safe across cat then fox confirmations", async ({ page }) => {
+  const state = await setup(page);
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.locator("#companion-species").selectOption("cat");
+  await openBloodPressureFormFromSettings(page);
+  await page.getByLabel(/수축기/).fill("120");
+  await page.getByLabel(/이완기/).fill("80");
+  await submit(page);
+  await ready(page);
+  await expect(runtime(page)).toHaveAttribute("data-companion-species", "cat");
+
+  await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
+  await page.locator("#companion-species").selectOption("fox");
+  await openBloodPressureFormFromSettings(page);
+  await page.getByLabel(/수축기/).fill("121");
+  await page.getByLabel(/이완기/).fill("81");
+  const secondStart = state.urls.length;
+  await submit(page);
+  await ready(page);
+  await expect(runtime(page)).toHaveAttribute("data-companion-species", "fox");
+  await expect(runtime(page)).toHaveAttribute("data-companion-asset-id", companionAssetManifest.fox.lite.assetId);
+  expect(glbs(state.urls.slice(secondStart))).toEqual([foxAssetUrl]);
 });
 
 test("persistence and refresh pending keep S04; one confirmed event settles to idle with no RAF", async ({ page }) => {
@@ -374,6 +438,56 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 900]]) test(`S05 k
   await expect(page.getByRole("button", { name: "혈압 기록 저장" })).toBeVisible();
   expect(state.errors).toEqual([]);
 });
+
+for (const species of ["bear", "cat", "hedgehog"] as const) {
+  for (const [width, height] of [[390, 844], [1366, 768]] as const) {
+    test(`S05 ${species} visual identity stays clear of CTA and nav at ${width}x${height}`, async ({ page }, info) => {
+      const state = await setup(page);
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/?e2e=signed-in&screen=S14");
+      await page.locator("#companion-species").selectOption(species);
+      await openBloodPressureFormFromSettings(page);
+      await page.getByLabel(/수축기/).fill("120");
+      await page.getByLabel(/이완기/).fill("80");
+      const requestStart = state.urls.length;
+      await submit(page);
+      await ready(page);
+      const expectedAsset = companionAssetManifest[species].lite;
+      await expect(runtime(page)).toHaveAttribute("data-companion-species", species);
+      await expect(runtime(page)).toHaveAttribute("data-companion-asset-id", expectedAsset.assetId);
+      await expect(character(page).locator("canvas")).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect().toJSON();
+        return {
+          slot: rect(".companion-runtime-slot"),
+          canvas: rect("[data-saved-scene-renderer] canvas"),
+          cta: rect(".split-actions"),
+          nav: rect(".primary-nav"),
+          viewport: { width: innerWidth, height: innerHeight },
+          overflow: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+      const overlap = (a: DOMRect, b: DOMRect) =>
+        a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      expect(geometry.overflow).toBe(false);
+      expect(overlap(geometry.slot, geometry.cta)).toBe(false);
+      expect(overlap(geometry.slot, geometry.nav)).toBe(false);
+      expect(geometry.slot.left).toBeGreaterThanOrEqual(0);
+      expect(geometry.slot.top).toBeGreaterThanOrEqual(0);
+      expect(geometry.slot.right).toBeLessThanOrEqual(geometry.viewport.width);
+      expect(geometry.slot.bottom).toBeLessThanOrEqual(geometry.viewport.height);
+      expect(geometry.canvas.width).toBeGreaterThan(0);
+      expect(geometry.canvas.height).toBeGreaterThan(0);
+      expect(glbs(state.urls.slice(requestStart))).toEqual([expectedAsset.url]);
+      expect(state.errors).toEqual([]);
+      await page.screenshot({
+        path: info.outputPath(`s05-${species}-${width}x${height}.png`),
+        fullPage: true,
+      });
+    });
+  }
+}
 
 test("saving from a scrolled form shows S05 before its one celebration opportunity", async ({ page }) => {
   await setup(page);

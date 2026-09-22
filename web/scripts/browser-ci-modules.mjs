@@ -38,6 +38,8 @@ export const browserModuleCommands = Object.freeze({
   ],
   assets: [
     'node --test scripts/frontend-assets.test.mjs',
+    'node --test scripts/import-companion-r2-inventory.test.mjs',
+    'node scripts/import-companion-r2-inventory.mjs --inventory ../docs/evidence/companion-r2-v1.json --audit ../docs/evidence/scene-glb-forensics.json --output asset-candidates/companion-review-catalog.v1.json --check',
     'SK7_UI_TEST_COMPANION=off npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
     'npx playwright test --config=playwright.frontend-assets.config.ts --workers=1',
     'npx playwright test --config=playwright.companion-asset.config.ts',

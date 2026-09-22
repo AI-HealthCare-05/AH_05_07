@@ -1,4 +1,4 @@
-import type { CompanionSpecies } from "./companion";
+import type { CompanionClip, CompanionSpecies } from "./companion";
 import { getCompanionAsset, type CompanionAsset } from "./companionAssets.generated";
 import { getActiveSceneCharacter } from "./companionSceneRegistry";
 
@@ -16,4 +16,27 @@ export function getActiveCompanionAsset(species: CompanionSpecies): CompanionAss
   }
 
   return asset;
+}
+
+export type ProductCompanionScreen = "S01" | "S02" | "S05" | "S10";
+
+export const productCompanionRequiredClips = Object.freeze({
+  S01: Object.freeze(["greet"] as const),
+  S02: Object.freeze(["idle"] as const),
+  S05: Object.freeze(["celebrate", "idle"] as const),
+  S10: Object.freeze(["idle"] as const),
+}) satisfies Readonly<Record<ProductCompanionScreen, readonly CompanionClip[]>>;
+
+/** Resolve one product asset only through checked-in active membership and surface capability. */
+export function getActiveCompanionAssetForScreen(
+  species: CompanionSpecies,
+  screen: ProductCompanionScreen,
+): CompanionAsset {
+  const activeCharacter = getActiveSceneCharacter(species);
+  for (const clip of productCompanionRequiredClips[screen]) {
+    if (!activeCharacter.clips.includes(clip)) {
+      throw new Error(`active companion is missing ${screen} clip ${clip}: ${species}`);
+    }
+  }
+  return getActiveCompanionAsset(species);
 }

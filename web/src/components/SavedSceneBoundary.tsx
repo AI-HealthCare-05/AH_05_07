@@ -1,6 +1,8 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { SavedSceneEvent } from "../ui/savedScene";
+import type { CompanionSpecies } from "../ui/companion";
+import { getActiveCompanionAssetForScreen } from "../ui/companionActiveAsset";
 
 const SavedSceneRenderer = lazy(() => import("./scene/SavedSceneRenderer"));
 
@@ -12,7 +14,8 @@ class SavedSceneErrorBoundary extends Component<{ children: ReactNode; onFailure
 }
 
 /** CSS checkmark, heading and CTAs remain outside this decorative boundary. */
-export function SavedSceneBoundary({ event, reducedMotion }: { event: SavedSceneEvent; reducedMotion: boolean }) {
+export function SavedSceneBoundary({ event, reducedMotion, species }: { event: SavedSceneEvent; reducedMotion: boolean; species: CompanionSpecies }) {
+  const asset = getActiveCompanionAssetForScreen(species, "S05");
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
@@ -55,10 +58,10 @@ export function SavedSceneBoundary({ event, reducedMotion }: { event: SavedScene
 
   // Keep the review character beside the confirmation, away from the top edge
   // that Safari can scroll under its chrome while dismissing the input keyboard.
-  return <div ref={host} className="companion-runtime-slot" style={{ top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" data-saved-scene-status={failed ? "fallback" : ready ? "ready" : "loading"}>
+  return <div ref={host} className="companion-runtime-slot" style={{ top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" data-saved-scene-status={failed ? "fallback" : ready ? "ready" : "loading"} data-companion-species={asset.species} data-companion-variant={asset.variant} data-companion-asset-id={asset.assetId}>
     {active && !failed && <SavedSceneErrorBoundary onFailure={fail}>
       <Suspense fallback={null}>
-        <SavedSceneRenderer event={event} reducedMotion={reducedMotion} visible={visible} onReady={onReady} onFailure={fail} />
+        <SavedSceneRenderer asset={asset} event={event} reducedMotion={reducedMotion} visible={visible} onReady={onReady} onFailure={fail} />
       </Suspense>
     </SavedSceneErrorBoundary>}
   </div>;
