@@ -72,6 +72,60 @@ for (const [width, height] of [[390, 844], [768, 900], [1366, 768]] as const) {
   });
 }
 
+test("S02 presentation controls stay visually quiet without losing semantics", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
+  const status = layer.locator(".presence-scene-actor-status");
+
+  await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await target.hover();
+  await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(target).toHaveCSS("box-shadow", "none");
+  await expect(target).toHaveCSS("transform", "none");
+
+  await expect(cycle).toHaveAccessibleName("동반자 위치 바꾸기");
+  expect((await cycle.textContent())?.trim()).toBe("");
+  expect(await cycle.evaluate(element => Array.from(element.childNodes).some(node =>
+    node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
+  ))).toBe(false);
+  const cycleBox = await cycle.boundingBox();
+  if (!cycleBox) throw new Error("alternative control is not measurable");
+  expect(cycleBox.width).toBeGreaterThanOrEqual(44);
+  expect(cycleBox.height).toBeGreaterThanOrEqual(44);
+  await expect(cycle).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(cycle.locator(".presence-scene-actor-cycle-mark")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await expect(cycle.locator(".presence-scene-actor-cycle-mark i")).toHaveCount(3);
+
+  await expect(status).toHaveAttribute("role", "status");
+  await expect(status).toHaveAttribute("aria-live", "polite");
+  await expect(status).toHaveClass(/\bsr-only\b/);
+  expect(await status.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      position: style.position,
+      width: style.width,
+      height: style.height,
+      overflow: style.overflow,
+      clip: style.clip,
+    };
+  })).toEqual({
+    position: "absolute",
+    width: "1px",
+    height: "1px",
+    overflow: "hidden",
+    clip: "rect(0px, 0px, 0px, 0px)",
+  });
+
+  await target.focus();
+  await page.keyboard.press("Tab");
+  await expect(cycle).toBeFocused();
+  expect(await cycle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+});
+
 test("unsafe S02 drop receives deterministic nearest-safe correction", async ({ page }) => {
   const layer = await openSpatialS02(page);
   const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
@@ -206,13 +260,48 @@ test("normalized S02 placement survives route return and responsive Arena rebuil
 test("S02 alternative control supports pointer and keyboard through the same commit path", async ({ page }) => {
   const layer = await openSpatialS02(page);
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
+  const settle = layer.locator(".presence-scene-actor-settle");
+  await expect(settle).toHaveCount(1);
+  await expect(settle).not.toHaveAttribute("data-presence-settle-active", /.+/);
   await cycle.click();
   await expect(layer).toHaveAttribute("data-presence-commit-count", "1");
+  await expect(settle).toHaveAttribute("data-presence-settle-active", "1");
+  await expect(settle).toHaveCSS("animation-name", "presence-scene-actor-settle");
+  const settleDuration = await settle.evaluate(element =>
+    Number.parseFloat(getComputedStyle(element).animationDuration) * 1000,
+  );
+  expect(settleDuration).toBeGreaterThanOrEqual(180);
+  expect(settleDuration).toBeLessThanOrEqual(260);
   await cycle.focus();
   await expect(cycle).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(layer).toHaveAttribute("data-presence-commit-count", "2");
-  await expect(layer.locator("[role=status]")).toBeVisible();
+  await expect(settle).toHaveAttribute("data-presence-settle-active", "2");
+  await expect(layer.locator("[role=status]")).toHaveClass(/\bsr-only\b/);
+});
+
+test("reduced motion suppresses the S02 placement settle animation", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  await layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true }).click();
+  await expect(layer).toHaveAttribute("data-presence-commit-count", "1");
+  await expect(layer.locator(".presence-scene-actor-settle")).toHaveCount(1);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator('[data-presence-scene-actor-interaction="S02"]')).toHaveCount(0);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "poster",
+  );
+  const probe = page.locator("[data-presence-settle-reduced-motion-probe]");
+  await page.locator(".living-visual-stage").evaluate(stage => {
+    const element = document.createElement("span");
+    element.className = "presence-scene-actor-settle";
+    element.dataset.presenceSettleActive = "1";
+    element.dataset.presenceSettleReducedMotionProbe = "true";
+    stage.append(element);
+  });
+  await expect(probe).toHaveCSS("animation-name", "none");
+  await expect(probe).toHaveCSS("opacity", "0");
 });
 
 test("only the S02 actor target suppresses touch gestures and outside wheel scroll remains native", async ({ page }) => {
@@ -231,7 +320,7 @@ test("only the S02 actor target suppresses touch gestures and outside wheel scro
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
 });
 
-test("forced colors preserves the S02 focus, control, and status surfaces", async ({ page }) => {
+test("forced colors preserves S02 focus and the graphical alternative control", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
   const layer = await openSpatialS02(page);
   const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
@@ -239,7 +328,14 @@ test("forced colors preserves the S02 focus, control, and status surfaces", asyn
   await target.focus();
   await expect(target).toBeFocused();
   expect(await target.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+  await page.keyboard.press("Tab");
+  await expect(cycle).toBeFocused();
+  expect(await cycle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
   await expect(cycle).toBeVisible();
-  await expect(layer.locator("[role=status]")).toBeVisible();
+  await expect(cycle).toHaveCSS("border-top-style", "solid");
+  expect(await cycle.locator("i").first().evaluate(
+    element => getComputedStyle(element).backgroundColor,
+  )).not.toBe("rgba(0, 0, 0, 0)");
+  await expect(layer.locator("[role=status]")).toHaveClass(/\bsr-only\b/);
   expect(await cycle.evaluate(element => getComputedStyle(element).color)).not.toBe("rgba(0, 0, 0, 0)");
 });
