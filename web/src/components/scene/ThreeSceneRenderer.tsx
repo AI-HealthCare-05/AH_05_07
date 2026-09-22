@@ -11,6 +11,7 @@ import {
 import { createLandmark } from "./environment";
 import { createDiorama } from "./diorama";
 import { disposeScene } from "./disposeScene";
+import { S02SceneActorOwner } from "./s02SceneActor";
 
 type Props = {
   screen: "S02" | "S10";
@@ -74,6 +75,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
     let renderer: THREE.WebGLRenderer | undefined;
     let observer: ResizeObserver | undefined;
     let model: THREE.Object3D | undefined;
+    let s02ActorOwner: S02SceneActorOwner | undefined;
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-2, 2, 1.5, -1.5, 0.1, 40);
     let profile = sceneProfile(window.innerWidth);
@@ -114,7 +116,10 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
         renderer.render(scene, camera);
         element.dataset.drawCalls = String(renderer.info.render.calls);
         element.dataset.triangles = String(renderer.info.render.triangles);
-        if (model) {
+        if (screen === "S02") {
+          const bounds = s02ActorOwner?.measure(camera, element.clientHeight);
+          if (bounds) element.dataset.subjectBounds = JSON.stringify(bounds);
+        } else if (model) {
           const bounds = new THREE.Box3().setFromObject(model);
           const corners = [bounds.min.x, bounds.max.x].flatMap(x =>
             [bounds.min.y, bounds.max.y].flatMap(y => [bounds.min.z, bounds.max.z].map(z =>
@@ -355,7 +360,8 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       camera.updateProjectionMatrix();
       environment.position.fromArray(cameraRecipe.environmentAnchor);
       environment.scale.setScalar(cameraRecipe.environmentScale);
-      if (model) model.position.fromArray(cameraRecipe.characterAnchor);
+      if (screen === "S02") s02ActorOwner?.setAnchor(cameraRecipe.characterAnchor);
+      else if (model) model.position.fromArray(cameraRecipe.characterAnchor);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height, false);
       void render();
@@ -377,26 +383,40 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       observer.observe(element);
       invalidate.current = resize;
       resize();
-      new GLTFLoader().load(recipe.characterUrl, (gltf) => {
-        if (disposed) { disposeScene(gltf.scene); return; }
-        if (!gltf.animations.some((clip) => clip.name === "idle")) { disposeScene(gltf.scene); fail(); return; }
-        const normalized = new THREE.Group();
-        normalized.add(gltf.scene);
-        model = new THREE.Group();
-        model.add(normalized);
-        const bounds = new THREE.Box3().setFromObject(model);
-        const size = bounds.getSize(new THREE.Vector3());
-        const center = bounds.getCenter(new THREE.Vector3());
-        const scale = (1.65 / Math.max(size.y, 0.001)) * recipe.characterScale;
-        normalized.scale.setScalar(scale);
-        normalized.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
-        // Keep normalization separate from the responsive world-space anchor.
-        model.position.set(0, 0.05, 0.65);
-        scene.add(model);
-        setupReplayAttention(gltf.scene);
-        loaded = true;
-        resize();
-      }, undefined, fail);
+      if (screen === "S02") {
+        s02ActorOwner = new S02SceneActorOwner({
+          scene,
+          assetUrl: recipe.characterUrl,
+          characterScale: recipe.characterScale,
+          onLoaded: () => {
+            loaded = true;
+            resize();
+          },
+          onFailure: fail,
+        });
+        s02ActorOwner.start();
+      } else {
+        new GLTFLoader().load(recipe.characterUrl, (gltf) => {
+          if (disposed) { disposeScene(gltf.scene); return; }
+          if (!gltf.animations.some((clip) => clip.name === "idle")) { disposeScene(gltf.scene); fail(); return; }
+          const normalized = new THREE.Group();
+          normalized.add(gltf.scene);
+          model = new THREE.Group();
+          model.add(normalized);
+          const bounds = new THREE.Box3().setFromObject(model);
+          const size = bounds.getSize(new THREE.Vector3());
+          const center = bounds.getCenter(new THREE.Vector3());
+          const scale = (1.65 / Math.max(size.y, 0.001)) * recipe.characterScale;
+          normalized.scale.setScalar(scale);
+          normalized.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+          // Keep normalization separate from the responsive world-space anchor.
+          model.position.set(0, 0.05, 0.65);
+          scene.add(model);
+          setupReplayAttention(gltf.scene);
+          loaded = true;
+          resize();
+        }, undefined, fail);
+      }
     } catch { fail(); }
     return () => {
       disposed = true;
@@ -405,6 +425,8 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       observer?.disconnect();
       removeReplayAttention?.();
       removeReplayAttention = undefined;
+      s02ActorOwner?.dispose();
+      s02ActorOwner = undefined;
       if (renderer) {
         renderer.domElement.removeEventListener("webglcontextlost", fail);
         renderer.domElement.remove();
@@ -416,5 +438,11 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
     };
   }, [screen, landmark, recipe.id, recipe.characterUrl]);
 
-  return <div className="living-three-scene" ref={host} aria-hidden="true" />;
+  return <div
+    className="living-three-scene"
+    ref={host}
+    aria-hidden="true"
+    data-scene-environment-owner="three-scene"
+    data-scene-actor-owner={screen === "S02" ? "s02-actor-v1" : undefined}
+  />;
 }

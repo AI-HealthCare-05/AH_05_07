@@ -7,6 +7,7 @@ export const sceneCaptureProfiles = {
 const sharedCaptureSources = [
   "web/src/components/scene/environment.ts",
   "web/src/components/scene/ThreeSceneRenderer.tsx",
+  "web/src/components/scene/s02SceneActor.ts",
   "web/src/components/scene/disposeScene.ts",
   "web/src/components/scene/scene-stage.css",
   "web/src/components/VisualStage.tsx",
@@ -24,6 +25,7 @@ const sharedCaptureSources = [
 export const sceneRuntimeVisualSources = [
   "web/src/components/scene/scene-stage.css",
   "web/src/components/scene/ThreeSceneRenderer.tsx",
+  "web/src/components/scene/s02SceneActor.ts",
   "web/src/components/scene/environment.ts",
   "web/src/components/scene/diorama.ts",
   "web/src/ui/sceneRecipes.ts",
