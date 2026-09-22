@@ -11,7 +11,10 @@ import {
   type CompanionSelection,
 } from "../ui/companion";
 import { getActiveCompanionAsset } from "../ui/companionActiveAsset";
-import { getCompanionAsset } from "../ui/companionAssets.generated";
+import {
+  getCompanionAsset,
+  type CompanionAsset,
+} from "../ui/companionAssets.generated";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import type { ScreenId } from "../ui/journey";
 import {
@@ -22,6 +25,10 @@ import {
   measureS02PresenceArena,
   type S02PresenceArenaSnapshot,
 } from "../platform/presence/s02PresenceArena";
+import {
+  usePresenceSceneActorRuntime,
+  usePresenceSceneActorRuntimeSnapshot,
+} from "../platform/presence/PresenceSceneActorRuntimeContext";
 
 type CompanionPresenceHostBridgeProps = Readonly<{
   rootRef: RefObject<HTMLElement | null>;
@@ -33,12 +40,18 @@ type CompanionPresenceHostBridgeProps = Readonly<{
   suspended: boolean;
 }>;
 
-function safeActiveAssetId(species: Parameters<typeof getActiveCompanionAsset>[0]): string | null {
+function safeActiveAsset(
+  species: Parameters<typeof getActiveCompanionAsset>[0],
+): CompanionAsset | null {
   try {
-    return getActiveCompanionAsset(species).assetId;
+    return getActiveCompanionAsset(species);
   } catch {
     return null;
   }
+}
+
+function safeActiveAssetId(species: Parameters<typeof getActiveCompanionAsset>[0]): string | null {
+  return safeActiveAsset(species)?.assetId ?? null;
 }
 
 function observedLegacyAssetId(selection: CompanionSelection | null): string | null {
@@ -92,10 +105,11 @@ function observedOwnerAssetId(
 }
 
 /**
- * Phase 2 shadow host.
+ * Presence host bridge.
  *
- * It observes existing product ownership and measures S02 geometry. It does not
- * mount, hide, move, load, dispose or authorize any renderer.
+ * It observes existing product ownership and measures S02 geometry. Phase 3B
+ * publishes only the fenced S02 world-root capability; renderer mount, asset
+ * load, drawing and disposal remain owned by the existing visual runtime.
  */
 export function CompanionPresenceHostBridge({
   rootRef,
@@ -108,7 +122,11 @@ export function CompanionPresenceHostBridge({
 }: CompanionPresenceHostBridgeProps) {
   const mode = resolveCompanionMode(rawMode);
   const preferredSpecies = readCompanionIdentity();
-  const logicalAssetId = mode === "off" ? null : safeActiveAssetId(preferredSpecies);
+  const activeAsset = mode === "off" ? null : safeActiveAsset(preferredSpecies);
+  const logicalAssetId = activeAsset?.assetId ?? null;
+  const activeAssetUrl = activeAsset?.url ?? null;
+  const sceneActorRuntime = usePresenceSceneActorRuntime();
+  const sceneActorSnapshot = usePresenceSceneActorRuntimeSnapshot();
   const kernelRef = useRef<CompanionPresenceKernel | null>(null);
   if (!kernelRef.current) {
     kernelRef.current = new CompanionPresenceKernel({
@@ -141,6 +159,7 @@ export function CompanionPresenceHostBridge({
     if (!root) return;
 
     let disposed = false;
+    const hostConnection = sceneActorRuntime.connectHost();
     const refresh = () => {
       schedulingRef.current = null;
       if (disposed) return;
@@ -164,6 +183,7 @@ export function CompanionPresenceHostBridge({
         suspended,
       });
 
+      let publishedArena: S02PresenceArenaSnapshot | null = null;
       if (activeScreen === "S02") {
         const arenaFence = `${reconciled.snapshot.runtime.sessionEpoch}:${reconciled.snapshot.runtime.routeEpoch}`;
         if (arenaFenceRef.current !== arenaFence) {
@@ -180,6 +200,7 @@ export function CompanionPresenceHostBridge({
         if (measured) {
           arenaRevisionRef.current = nextRevision;
           kernel.publishArena(measured.routeEpoch, measured.revision);
+          publishedArena = measured;
           setArena(measured);
         } else {
           setArena(null);
@@ -189,7 +210,27 @@ export function CompanionPresenceHostBridge({
         arenaRevisionRef.current = 0;
         setArena(null);
       }
-      setSnapshot(kernel.snapshot);
+      const current = kernel.snapshot;
+      hostConnection.publish({
+        screen: activeScreen,
+        owner: current.owner,
+        suspended,
+        sessionEpoch: current.runtime.sessionEpoch,
+        routeEpoch: current.runtime.routeEpoch,
+        arenaRevision: current.runtime.arenaRevision,
+        ownerGeneration: current.runtime.ownerGeneration,
+        ownerToken: current.ownerToken?.token ?? null,
+        activeAssetId: logicalAssetId,
+        activeAssetUrl,
+        observedAssetId: current.observedAssetId,
+        arena: publishedArena,
+        placementIntent: current.presence?.placementIntent ?? null,
+        rememberPlacementIntent: (intent) => {
+          if (!kernel.rememberPlacementIntent(intent)) return;
+          setSnapshot(kernel.snapshot);
+        },
+      });
+      setSnapshot(current);
     };
     const schedule = () => {
       if (disposed || schedulingRef.current !== null) return;
@@ -211,6 +252,7 @@ export function CompanionPresenceHostBridge({
       return () => {
         disposed = true;
         offMutationObserver?.disconnect();
+        hostConnection.disconnect();
       };
     }
 
@@ -257,9 +299,11 @@ export function CompanionPresenceHostBridge({
         window.clearTimeout(schedulingRef.current);
         schedulingRef.current = null;
       }
+      hostConnection.disconnect();
     };
   }, [
     activeScreen,
+    activeAssetUrl,
     companionSelection,
     identityKey,
     kernel,
@@ -268,6 +312,7 @@ export function CompanionPresenceHostBridge({
     rootRef,
     savedSceneOwner,
     sessionGeneration,
+    sceneActorRuntime,
     suspended,
   ]);
 
@@ -291,6 +336,17 @@ export function CompanionPresenceHostBridge({
       data-presence-arena-status={arena ? "published" : "unavailable"}
       data-presence-anchor-count={arena?.anchors.length ?? 0}
       data-presence-hard-zone-count={arena?.hardZones.length ?? 0}
+      data-presence-world-root-status={sceneActorSnapshot.status}
+      data-presence-world-root-enabled={sceneActorSnapshot.enabled || undefined}
+      data-presence-world-root-port-count={sceneActorSnapshot.portCount}
+      data-presence-world-root-port-incarnation={sceneActorSnapshot.portIncarnation}
+      data-presence-world-root-write-count={sceneActorSnapshot.writeCount}
+      data-presence-world-root-commit-count={sceneActorSnapshot.commitCount}
+      data-presence-world-root-revocation-count={sceneActorSnapshot.revocationCount}
+      data-presence-world-root-lease={sceneActorSnapshot.leaseToken ?? "none"}
+      data-presence-world-root-pointer={sceneActorSnapshot.activePointerToken ?? "none"}
+      data-presence-placement-x={sceneActorSnapshot.committedNormalized?.x}
+      data-presence-placement-y={sceneActorSnapshot.committedNormalized?.y}
     />
   );
 }

@@ -14,10 +14,15 @@
 }
 
 .living-scene-runtime,
+.living-visual-runtime,
 .living-three-scene,
 .living-scene-fallback {
   position: absolute;
   inset: 0;
+}
+
+.living-visual-runtime {
+  pointer-events: none;
 }
 
 .living-three-scene canvas {
@@ -53,6 +58,110 @@
   display: none;
 }
 
+.presence-scene-actor-layer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.presence-scene-actor-hit-target {
+  position: absolute;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 42%;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.presence-scene-actor-hit-target:hover,
+.presence-scene-actor-hit-target:active {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.presence-scene-actor-hit-target[data-pointer-dragging="true"] {
+  cursor: grabbing;
+}
+
+.presence-scene-actor-hit-target:focus-visible {
+  outline: 3px solid var(--sk7-focus, #235448);
+  outline-offset: 3px;
+}
+
+.presence-scene-actor-controls {
+  position: absolute;
+  z-index: 2;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  width: min(10.5rem, calc(100% - 16px));
+  pointer-events: none;
+}
+
+.presence-scene-actor-cycle {
+  min-height: 44px;
+  padding: .45rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--sk7-accent) 55%, var(--sk7-border));
+  border-radius: var(--sk7-radius-control, .75rem);
+  background: color-mix(in srgb, var(--sk7-surface-solid) 92%, transparent);
+  box-shadow: 0 2px 8px #173e391a;
+  color: var(--sk7-text);
+  font-size: .72rem;
+  line-height: 1.25;
+  pointer-events: auto;
+  touch-action: auto;
+}
+
+.presence-scene-actor-cycle:hover:not(:disabled) {
+  background: var(--sk7-surface-solid);
+  transform: none;
+}
+
+.presence-scene-actor-cycle:focus-visible {
+  outline: 3px solid var(--sk7-focus, #235448);
+  outline-offset: 2px;
+}
+
+.presence-scene-actor-status {
+  max-width: 100%;
+  height: 2.6em;
+  padding: 2px 5px;
+  border-radius: .35rem;
+  background: color-mix(in srgb, var(--sk7-surface-solid) 88%, transparent);
+  color: var(--sk7-text-muted);
+  font-size: .58rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-align: right;
+}
+
+@media (forced-colors: active) {
+  .presence-scene-actor-hit-target:focus-visible,
+  .presence-scene-actor-cycle:focus-visible {
+    outline: 3px solid Highlight;
+  }
+
+  .presence-scene-actor-cycle,
+  .presence-scene-actor-status {
+    border: 1px solid ButtonText;
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: auto;
+  }
+}
+
 @media (max-width: 580px) {
   .living-visual-stage {
     height: var(--scene-height-390, 240px);
@@ -63,5 +172,9 @@
 @media (max-width: 350px) {
   .living-visual-stage {
     height: var(--scene-height-320, 200px);
+  }
+
+  .presence-scene-actor-layer {
+    display: none;
   }
 }

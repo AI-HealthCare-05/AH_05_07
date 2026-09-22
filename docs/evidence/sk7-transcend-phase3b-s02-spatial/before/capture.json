@@ -1,0 +1,32 @@
+{
+  "synthetic": true,
+  "phase": "before",
+  "fixedTime": "2026-09-11T03:00:00Z",
+  "motion": "no-preference",
+  "captures": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollY": 0,
+      "canvasCount": 1,
+      "glbRequests": [
+        "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb"
+      ],
+      "committedNormalized": null
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scrollY": 0,
+      "canvasCount": 1,
+      "glbRequests": [
+        "https://sk7-companion.gkrry.com/companion/v1/bear/v007/lite.glb"
+      ],
+      "committedNormalized": null
+    }
+  ]
+}

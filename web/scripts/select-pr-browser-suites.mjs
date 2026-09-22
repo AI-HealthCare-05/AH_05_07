@@ -211,7 +211,9 @@ const transcendLabPrefixes = [
 
 const presenceFiles = new Set([
   'web/src/components/CompanionPresenceHostBridge.tsx',
+  'web/src/components/PresenceSceneActorInteraction.tsx',
   'web/e2e/presence-host-foundation.spec.ts',
+  'web/e2e/s02-spatial-presence.spec.ts',
 ]);
 
 const presencePrefixes = [

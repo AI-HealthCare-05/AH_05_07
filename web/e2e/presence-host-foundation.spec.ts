@@ -6,7 +6,17 @@ import {
 } from "../src/platform/presence/companionPresenceKernel";
 import {
   buildS02PresenceArenaSnapshot,
+  type S02PresenceArenaSnapshot,
 } from "../src/platform/presence/s02PresenceArena";
+import {
+  PresenceSceneActorRuntime,
+  type PresenceSceneActorHostConnection,
+  type PresenceSceneActorPort,
+} from "../src/platform/presence/presenceSceneActorRuntime";
+import {
+  resolveS02FreePlacement,
+  type PresenceArenaPoint,
+} from "../src/platform/presence/s02PresencePlacement";
 
 const headers = {
   "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
@@ -14,6 +24,89 @@ const headers = {
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 const companionOff = process.env.SK7_UI_TEST_COMPANION === "off";
+
+function spatialArena(
+  revision: number,
+  hardZones: readonly Readonly<{
+    id: string;
+    rect: Readonly<{ x: number; y: number; width: number; height: number }>;
+  }>[] = [],
+): S02PresenceArenaSnapshot {
+  return buildS02PresenceArenaSnapshot({
+    routeEpoch: 1,
+    revision,
+    viewport: { x: 0, y: 0, width: 240, height: 220 },
+    scene: { x: 20, y: 20, width: 200, height: 180 },
+    hardZones,
+    observedOwner: "full-scene",
+  });
+}
+
+function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>) {
+  let root = { ...initial };
+  const writes: PresenceArenaPoint[] = [];
+  const port: PresenceSceneActorPort = {
+    assetUrl,
+    project: revision => ({
+      space: "visual-viewport-css-px",
+      revision,
+      stage: { space: "visual-viewport-css-px", revision, x: 20, y: 20, width: 200, height: 180 },
+      root: { space: "visual-viewport-css-px", revision, x: root.x, y: root.y },
+      visualEnvelope: {
+        space: "visual-viewport-css-px",
+        revision,
+        x: root.x - 20,
+        y: root.y - 60,
+        width: 40,
+        height: 60,
+      },
+      hitRect: {
+        space: "visual-viewport-css-px",
+        revision,
+        x: root.x - 20,
+        y: root.y - 60,
+        width: 40,
+        height: 60,
+      },
+    }),
+    write: request => {
+      if (request.assetUrl !== assetUrl) return false;
+      root = { x: request.point.x, y: request.point.y };
+      writes.push(request.point);
+      return true;
+    },
+  };
+  return { port, writes, root: () => root };
+}
+
+function publishSpatialHost(
+  connection: PresenceSceneActorHostConnection,
+  arena: S02PresenceArenaSnapshot,
+  options: Readonly<{
+    assetUrl?: string;
+    ownerToken?: string;
+    ownerGeneration?: number;
+    sessionEpoch?: number;
+  }> = {},
+  commits: PresencePlacementIntent[] = [],
+) {
+  return connection.publish({
+    screen: "S02",
+    owner: "full-scene",
+    suspended: false,
+    sessionEpoch: options.sessionEpoch ?? 1,
+    routeEpoch: arena.routeEpoch,
+    arenaRevision: arena.revision,
+    ownerGeneration: options.ownerGeneration ?? 1,
+    ownerToken: options.ownerToken ?? `owner-${arena.revision}`,
+    activeAssetId: "ACTIVE-001",
+    activeAssetUrl: options.assetUrl ?? "https://asset.invalid/active.glb",
+    observedAssetId: "ACTIVE-001",
+    arena,
+    placementIntent: null,
+    rememberPlacementIntent: intent => commits.push(intent),
+  });
+}
 
 async function openS02(page: Page) {
   await page.clock.setFixedTime(new Date("2026-09-11T03:00:00Z"));
@@ -151,6 +244,191 @@ test("S02 arena snapshot stamps one revision across viewport, anchor and explici
   expect(Object.isFrozen(snapshot)).toBe(true);
 });
 
+test("S02 world-root lease is exact-token, ABA-safe, and fenced by every host and port generation", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const firstPort = fakePort("https://asset.invalid/active.glb", { x: 110, y: 150 });
+  const unregisterFirst = runtime.registerPort(firstPort.port);
+  expect(publishSpatialHost(connection, spatialArena(1))).toBe(true);
+
+  const firstFence = runtime.snapshot.fence!;
+  expect(Object.keys(firstFence).sort()).toEqual([
+    "arenaRevision",
+    "ownerGeneration",
+    "ownerToken",
+    "portIncarnation",
+    "routeEpoch",
+    "sessionEpoch",
+  ]);
+  const t1 = runtime.acquireWorldRootLease("pointer-1")!;
+  const t2 = runtime.acquireWorldRootLease("pointer-2")!;
+  const currentPoint: PresenceArenaPoint = {
+    space: "visual-viewport-css-px",
+    revision: 1,
+    x: 120,
+    y: 150,
+  };
+  expect(runtime.releaseWorldRootLease(t1)).toBe(false);
+  expect(runtime.writeWorldRoot(t1, currentPoint)).toBe(false);
+  expect(runtime.writeWorldRoot(t2, currentPoint)).toBe(true);
+
+  expect(publishSpatialHost(connection, spatialArena(2), {
+    ownerToken: "owner-next",
+    ownerGeneration: 2,
+  })).toBe(true);
+  const writesAfterFenceChange = firstPort.writes.length;
+  expect(runtime.writeWorldRoot(t2, { ...currentPoint, revision: 2 })).toBe(false);
+  expect(firstPort.writes).toHaveLength(writesAfterFenceChange);
+
+  // Even if every host field returns to its old values, the revoked token
+  // cannot reappear as current authority.
+  expect(publishSpatialHost(connection, spatialArena(1))).toBe(true);
+  expect(runtime.writeWorldRoot(t2, currentPoint)).toBe(false);
+
+  const prePortAba = runtime.acquireWorldRootLease("before-port-aba")!;
+  expect(unregisterFirst()).toBe(true);
+  const secondPort = fakePort("https://asset.invalid/active.glb", firstPort.root());
+  runtime.registerPort(secondPort.port);
+  expect(runtime.snapshot.fence?.portIncarnation).toBeGreaterThan(firstFence.portIncarnation);
+  expect(runtime.writeWorldRoot(prePortAba, currentPoint)).toBe(false);
+  expect(runtime.releaseWorldRootLease(t1)).toBe(false);
+});
+
+test("S02 world-root port fails closed when its loaded asset URL differs from active authority", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const mismatched = fakePort("https://asset.invalid/stale.glb", { x: 110, y: 150 });
+  runtime.registerPort(mismatched.port);
+  publishSpatialHost(connection, spatialArena(1), {
+    assetUrl: "https://asset.invalid/active.glb",
+  });
+
+  expect(runtime.snapshot.enabled).toBe(false);
+  expect(runtime.snapshot.fence).toBeNull();
+  expect(runtime.acquireWorldRootLease("mismatch")).toBeNull();
+  expect(mismatched.writes).toEqual([]);
+});
+
+test("S02 nearest-safe placement uses today-sidecar, 8px clearance, and x-then-y ties", () => {
+  const arena = spatialArena(3, [
+    { id: "center-obstacle", rect: { x: 100, y: 90, width: 20, height: 20 } },
+  ]);
+  const result = resolveS02FreePlacement(arena, {
+    routeEpoch: 1,
+    arenaRevision: 3,
+    point: { space: "visual-viewport-css-px", revision: 3, x: 110, y: 100 },
+  }, { width: 20, height: 20, offsetX: 0, offsetY: 0 }, 8);
+
+  expect(result).toMatchObject({
+    kind: "placed",
+    resolution: "adjusted",
+    point: { x: 82, y: 100 },
+  });
+
+  const noSpace = resolveS02FreePlacement(spatialArena(4, [
+    { id: "occupied", rect: { x: 0, y: 0, width: 240, height: 220 } },
+  ]), {
+    routeEpoch: 1,
+    arenaRevision: 4,
+    point: { space: "visual-viewport-css-px", revision: 4, x: 110, y: 100 },
+  }, { width: 20, height: 20, offsetX: 0, offsetY: 0 }, 8);
+  expect(noSpace).toEqual({ kind: "no-space", reason: "occupied" });
+});
+
+test("S02 direct grab waits for 6px, preserves grab offset, commits only on up, and rejects stale pointer tokens", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const port = fakePort("https://asset.invalid/active.glb", { x: 100, y: 150 });
+  runtime.registerPort(port.port);
+  const commits: PresencePlacementIntent[] = [];
+  publishSpatialHost(connection, spatialArena(1), {}, commits);
+  const baselineCommits = runtime.snapshot.commitCount;
+
+  const tap = runtime.beginPointer({
+    pointerId: 3,
+    clientX: 108,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  })!;
+  expect(runtime.movePointer(tap, { clientX: 113, clientY: 125 })).toBe(false);
+  expect(runtime.snapshot.leaseToken).toBeNull();
+  expect(runtime.endPointer(tap, { clientX: 113, clientY: 125 })).toBe("tap");
+  expect(runtime.snapshot.commitCount).toBe(baselineCommits);
+
+  const dragStart = port.root();
+  const drag = runtime.beginPointer({
+    pointerId: 4,
+    clientX: dragStart.x + 8,
+    clientY: dragStart.y - 25,
+    button: 0,
+    isPrimary: true,
+  })!;
+  expect(runtime.movePointer(drag, {
+    clientX: dragStart.x + 28,
+    clientY: dragStart.y - 15,
+  })).toBe(true);
+  expect(port.root().x).toBeCloseTo(dragStart.x + 20);
+  expect(port.root().y).toBeCloseTo(dragStart.y + 10);
+  expect(runtime.snapshot.commitCount).toBe(baselineCommits);
+  expect(runtime.endPointer(drag, {
+    clientX: dragStart.x + 28,
+    clientY: dragStart.y - 15,
+  })).toBe("committed");
+  expect(runtime.snapshot.commitCount).toBe(baselineCommits + 1);
+  expect(commits).toHaveLength(1);
+
+  const stale = runtime.beginPointer({
+    pointerId: 5,
+    clientX: port.root().x,
+    clientY: port.root().y - 20,
+    button: 0,
+    isPrimary: true,
+  })!;
+  publishSpatialHost(connection, spatialArena(2), {
+    ownerToken: "new-owner-token",
+    ownerGeneration: 2,
+  }, commits);
+  const writesAfterInvalidation = port.writes.length;
+  expect(runtime.movePointer(stale, { clientX: port.root().x + 40, clientY: port.root().y })).toBe(false);
+  expect(runtime.endPointer(stale, { clientX: port.root().x + 40, clientY: port.root().y })).toBe("ignored");
+  expect(port.writes).toHaveLength(writesAfterInvalidation);
+});
+
+test("S02 Arena invalidation restores the committed safe root before a no-space revision", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const port = fakePort("https://asset.invalid/active.glb", { x: 100, y: 150 });
+  runtime.registerPort(port.port);
+  publishSpatialHost(connection, spatialArena(1));
+  const committed = port.root();
+
+  const pointer = runtime.beginPointer({
+    pointerId: 9,
+    clientX: committed.x,
+    clientY: committed.y - 20,
+    button: 0,
+    isPrimary: true,
+  })!;
+  expect(runtime.movePointer(pointer, {
+    clientX: committed.x + 30,
+    clientY: committed.y - 20,
+  })).toBe(true);
+  expect(port.root()).not.toEqual(committed);
+
+  publishSpatialHost(connection, spatialArena(2, [
+    { id: "occupied", rect: { x: 0, y: 0, width: 240, height: 220 } },
+  ]), { ownerToken: "owner-blocked", ownerGeneration: 2 });
+
+  expect(port.root()).toEqual(committed);
+  expect(runtime.snapshot.status).toBe("no-space");
+  expect(runtime.snapshot.activePointerToken).toBeNull();
+  expect(runtime.movePointer(pointer, {
+    clientX: committed.x + 60,
+    clientY: committed.y,
+  })).toBe(false);
+});
+
 test("shadow presence host publishes S02 geometry without creating companion network or a second visible owner", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const glbRequests: string[] = [];
@@ -183,6 +461,8 @@ test("shadow presence host publishes S02 geometry without creating companion net
   expect(glbRequests).toEqual([]);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
   await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
 
   if (!companionOff) {
     await page.evaluate(() => {
@@ -230,6 +510,8 @@ test("compact S02 keeps semantic task path while the shadow arena declines an in
   await expect(page.locator(".journey-view-frame")).toBeHidden();
   await expect(host).toHaveAttribute("data-presence-arena-status", "unavailable");
   await expect(host).toHaveAttribute("data-presence-anchor-count", "0");
+  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
   await expect(page.locator(".home-lead button")).toBeVisible();
   await expect(page.locator(".home-trail-dates")).toBeVisible();
 });

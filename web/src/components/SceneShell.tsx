@@ -19,6 +19,7 @@ import {
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 import { useJourneyTransition, type JourneyFeedbackPhase } from "./useJourneyTransition";
 import { CompanionPresenceHostBridge } from "./CompanionPresenceHostBridge";
+import { PresenceSceneActorRuntimeProvider } from "../platform/presence/PresenceSceneActorRuntimeContext";
 
 const SceneCompanionContext = createContext<ReactNode>(null);
 
@@ -97,6 +98,7 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
 
   return (
     <main ref={shellRef} className="app-shell" data-screen={activeScreen} data-journey-presentation={journeyPresentation || undefined}>
+      <PresenceSceneActorRuntimeProvider>
       <CompanionPresenceHostBridge
         rootRef={shellRef}
         activeScreen={activeScreen}
@@ -144,6 +146,7 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
           </button>
         ))}
       </nav>
+      </PresenceSceneActorRuntimeProvider>
     </main>
   );
 }
