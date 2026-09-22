@@ -82,7 +82,9 @@ async function assertGuestStorageFirewall(page: Page) {
 async function openGuest(page: Page, width = 390, height = 844) {
   await page.setViewportSize({ width, height });
   await page.clock.setFixedTime(fixedNow);
-  await page.goto("/?guest=1");
+  // Remote registered visual assets must not hold the document entry contract
+  // open indefinitely; the scene readiness assertion below owns that boundary.
+  await page.goto("/?guest=1", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page.getByText("체험 중 입력은 서버로 보내거나 저장하지 않아요.", { exact: true })).toHaveCount(1);
