@@ -170,7 +170,6 @@ function Login({
   onSession,
   recoveryMessage,
   journey,
-  today,
   companionMode,
   companionSpecies,
   onCompanionSpeciesChange,
@@ -178,7 +177,6 @@ function Login({
   onSession: (session: Session) => void;
   recoveryMessage?: string;
   journey: boolean;
-  today: string;
   companionMode: CompanionMode;
   companionSpecies: CompanionSpecies;
   onCompanionSpeciesChange: (species: CompanionSpecies) => void;
@@ -186,31 +184,12 @@ function Login({
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewGateOpen, setPreviewGateOpen] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
-  const previewDays = useMemo(() => {
-    const observationPattern = [1, 0, 2, 1, 0, 1, 1] as const;
-    const participationPattern = ["기록함", "기록 없음", "기록함", "건너뜀", "기록 없음", "기록함", "기록 없음"] as const;
-    return observationPattern.map((observationCount, index) => ({
-      date: shiftDate(today, index - 6),
-      observationCount,
-      participation: participationPattern[index],
-    }));
-  }, [today]);
-  const previewSceneEnabled = resolveSceneGate(import.meta.env.VITE_SK7_SCENE_MODE) !== "off";
 
-  function openPreview() {
-    setPreviewGateOpen(false);
-    setPreviewOpen(true);
-  }
-
-  function returnToLogin(focusEmail: boolean) {
-    setPreviewGateOpen(false);
-    setPreviewOpen(false);
-    if (focusEmail) {
-      window.requestAnimationFrame(() => emailRef.current?.focus());
-    }
+  function enterGuestJourney() {
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set("guest", "1");
+    window.location.assign(url);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -230,75 +209,6 @@ function Login({
       setPending(false);
     }
   }
-
-  if (journey && previewOpen) return (
-    <main
-      className="journey-demo-preview-shell"
-      data-scene="S01"
-      data-demo-mode="read-only"
-      data-demo-companion-species={companionSpecies}
-    >
-      <header className="journey-demo-preview-bar">
-        <div className="journey-demo-preview-heading section-header">
-          <p className="eyebrow">30초 맛보기</p>
-          <strong>예시 데이터 · 저장되지 않아요</strong>
-          <p className="journey-demo-preview-guide">여기가 로그인 후 만나는 첫 화면이에요. 지금 보이는 기록은 모두 예시예요.</p>
-        </div>
-        <button type="button" className="secondary" onClick={() => returnToLogin(false)}>맛보기 끝내기</button>
-      </header>
-
-      {previewGateOpen && <div className="journey-demo-login-gate-backdrop">
-        <section
-          className="journey-demo-login-gate surface"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="journey-demo-login-gate-title"
-        >
-          <div className="screen-header">
-            <p className="eyebrow">맛보기는 여기까지</p>
-            <h2 id="journey-demo-login-gate-title">여기부터는 실제 기록이에요.</h2>
-            <p>로그인하면 내 혈압 기록과 7일 흐름을 이어서 남길 수 있어요. 맛보기의 예시 데이터는 저장되지 않아요.</p>
-          </div>
-          <div className="journey-demo-login-gate-actions action-group">
-            <button type="button" onClick={() => returnToLogin(true)}>로그인하고 기록 시작</button>
-            <button type="button" className="secondary" onClick={() => setPreviewGateOpen(false)}>계속 둘러보기</button>
-          </div>
-        </section>
-      </div>}
-
-      <JourneyToday
-        staticLandscape={!previewSceneEnabled}
-        today={today}
-        days={previewDays}
-        freshness="ready"
-        lead={{
-          key: "demo-login",
-          title: "오늘 혈압 기록",
-          support: "예시 데이터로 최근 7일 흐름을 먼저 보고 있어요.",
-          action: "혈압 기록하기",
-          screen: "S04",
-        }}
-        secondary={[
-          {
-            key: "challenge",
-            title: "오늘 챌린지 상태",
-            support: "10분 걷기 · 오늘 상태는 아직 기록하지 않았어요.",
-            action: "확인",
-            screen: "S06",
-          },
-          {
-            key: "today-detail",
-            title: "오늘 상태",
-            support: "오늘 혈압 기록 여부와 챌린지 상태를 확인해요.",
-            action: "확인",
-            screen: "S07",
-          },
-        ]}
-        companionSpecies={previewSceneEnabled ? (companionMode === "off" ? null : companionSpecies) : undefined}
-        onNavigate={() => setPreviewGateOpen(true)}
-      />
-    </main>
-  );
 
   if (journey) return (
     <main className="welcome-shell journey-login" data-scene="S01">
@@ -324,9 +234,9 @@ function Login({
           </div>
           <div className="journey-login-preview-entry section-header">
             <div className="action-group">
-              <button type="button" className="secondary entry-preview-button journey-demo-entry-button" onClick={openPreview}>로그인 없이 30초 맛보기</button>
+              <button type="button" className="secondary entry-preview-button journey-demo-entry-button" onClick={enterGuestJourney}>로그인 없이 30초 맛보기</button>
             </div>
-            <p>예시 데이터만 사용해 첫 화면을 보고, 실제 기록은 로그인 후 시작해요.</p>
+            <p>예시 데이터로 여러 화면을 둘러볼 수 있어요. 실제 기록은 로그인 후 시작해요.</p>
           </div>
         </section>
         <section className="welcome-card journey-login-auth surface" aria-label="이메일 로그인">
@@ -1228,7 +1138,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <Login journey={presentation.journey} today={today} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;

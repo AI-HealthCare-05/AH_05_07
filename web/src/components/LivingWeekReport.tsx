@@ -13,11 +13,12 @@ type LivingWeekReportProps = {
   freshness: 'ready' | 'refreshing' | 'refresh-error';
   createdAt: Date;
   completedCycle?: boolean;
+  guestLocal?: boolean;
   onClose: () => void;
 };
 
 /** A presentation of the loaded calendar facts, with only user-facing record fields. */
-export function LivingWeekReport({ days, observations, checkins, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, completedCycle = false, onClose }: LivingWeekReportProps) {
+export function LivingWeekReport({ days, observations, checkins, hasLegacyRecords, unconfirmedChanges, freshness, createdAt, completedCycle = false, guestLocal = false, onClose }: LivingWeekReportProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summary = summarizeTrailDays(days);
   const bloodPressure = projectReportBloodPressure(days, observations);
@@ -43,7 +44,9 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
         <h1 id="living-week-report-title" ref={headingRef} tabIndex={-1}>7일 기록 리포트</h1>
         <p className="week-report-range"><time dateTime={days[0].date}>{formatTrailDate(days[0].date)}</time> ~ <time dateTime={days[6].date}>{formatTrailDate(days[6].date)}</time></p>
         <p className="week-report-generated">리포트 열람 시각 · <time dateTime={createdAt.toISOString()}>{generatedTime}</time> (서울)</p>
-        <p>표시된 {completedCycle ? '종료된 7일' : '현재 7일'} 구간에 저장되어 현재 불러온 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.</p>
+        <p>{guestLocal
+          ? '현재 체험 메모리에 반영된 7일 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.'
+          : `표시된 ${completedCycle ? '종료된 7일' : '현재 7일'} 구간에 저장되어 현재 불러온 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.`}</p>
         <p>필요하면 PDF로 저장하거나 인쇄해 진료·상담 때 이 기록을 직접 보여줄 수 있어요.</p>
       </header>
 
@@ -113,7 +116,9 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
       <footer className="week-report-footer">
         {hasLegacyRecords && <p>이전 방식의 기록은 이 리포트의 요약과 날짜별 기록에 포함하지 않았어요. 7일 돌아보기의 별도 목록에서 확인할 수 있어요.</p>}
         <p>이 리포트는 사용자가 입력한 7일 기록의 정리본이며, 진단·치료·치료 효과 판정이 아닙니다.</p>
-        <p>PDF와 인쇄물은 사용자가 직접 관리하는 사본이며, 계정의 30일 서버 보관과 별개예요.</p>
+        <p>{guestLocal
+          ? 'PDF와 인쇄물은 사용자가 직접 관리하는 사본이며, 체험을 새로 열면 원본 기록은 초기화돼요.'
+          : 'PDF와 인쇄물은 사용자가 직접 관리하는 사본이며, 계정의 30일 서버 보관과 별개예요.'}</p>
       </footer>
     </article>
   </main>;

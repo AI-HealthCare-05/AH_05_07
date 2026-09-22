@@ -37,8 +37,10 @@ renderers cannot coexist.
 
 S05 remains a separate confirmed-save exception: its qualified SavedScene uses
 the fixed registered bear/lite asset, not the saved species preference. The
-anonymous Demo S02 path may reuse the same decorative preference but remains
-synthetic/read-only and must not create product data.
+isolated `?guest=1` sandbox may reuse the same decorative preference and S02
+full-scene/Presence system, but guest facts remain memory-only and must not create
+product data or activate SavedScene authority. BP, challenge, and guest-navigation
+facts still cannot affect visual identity, pose, position, lighting, or mood.
 
 ## Current scene activation
 

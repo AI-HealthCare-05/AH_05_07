@@ -11,6 +11,15 @@ const selectorFiles = new Set([
 const dependencyFiles = new Set(['web/package.json', 'web/package-lock.json']);
 const appShellFiles = new Set(['web/src/App.tsx', 'web/src/main.tsx']);
 
+const guestJourneyFiles = new Set([
+  'web/src/GuestJourneySandbox.tsx',
+  'web/src/components/guest-journey.css',
+  'web/e2e/guest-journey.spec.ts',
+  'web/playwright.guest.config.ts',
+]);
+
+const guestJourneyPrefixes = ['web/src/guest/'];
+
 const broadJourneyFiles = new Set([
   'web/src/styles.css',
   'web/src/components/SceneShell.tsx',
@@ -285,7 +294,7 @@ export function selectPrBrowserModules(files) {
 
   const relevant = unique.filter(file => !file.startsWith('docs/') || modelFiles.has(file) || assetFiles.has(file));
   if (relevant.length === 0) return ['policy'];
-  if (relevant.some(file => dependencyFiles.has(file))) return ['core', 'journey-full', 'scene', 'model', 'assets', 'transcend-lab'];
+  if (relevant.some(file => dependencyFiles.has(file))) return ['core', 'journey-full', 'scene', 'guest', 'model', 'assets', 'transcend-lab'];
 
   const modules = [];
   for (const file of relevant) {
@@ -296,6 +305,13 @@ export function selectPrBrowserModules(files) {
       continue;
     }
     let matched = false;
+    if (matches(file, guestJourneyFiles, guestJourneyPrefixes)) {
+      add(modules, 'core');
+      add(modules, 'journey-full');
+      add(modules, 'scene');
+      add(modules, 'guest');
+      matched = true;
+    }
     if (broadJourneyFiles.has(file)) { add(modules, 'journey-full'); matched = true; }
     if (matches(file, modelFiles, modelPrefixes)) { add(modules, 'model'); matched = true; }
     if (matches(file, assetFiles, assetPrefixes)) { add(modules, 'assets'); matched = true; }
@@ -318,7 +334,7 @@ export function selectPrBrowserModules(files) {
     if (fastJourney !== -1) modules.splice(fastJourney, 1);
   }
   return modules.length > 0
-    ? ['core', 'journey', 'journey-full', 'scene', 'model', 'assets', 'transcend-lab'].filter(module => modules.includes(module))
+    ? ['core', 'journey', 'journey-full', 'scene', 'guest', 'model', 'assets', 'transcend-lab'].filter(module => modules.includes(module))
     : ['policy'];
 }
 

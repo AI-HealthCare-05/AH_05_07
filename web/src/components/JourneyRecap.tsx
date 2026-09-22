@@ -24,10 +24,11 @@ type JourneyRecapProps = {
   actions: ReactNode;
   companionSpecies?: CompanionSpecies | null;
   productionSceneEnabled?: boolean;
+  reportOnly?: boolean;
 };
 
 /** Disposable day focus only; App retains requests, window dates and action guards. */
-export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, companionSpecies, productionSceneEnabled = false }: JourneyRecapProps) {
+export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, companionSpecies, productionSceneEnabled = false, reportOnly = false }: JourneyRecapProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const recordsRef = useRef<HTMLDivElement>(null);
   const selectedDay = days.find(day => day.date === selectedDate);
@@ -149,13 +150,17 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       <footer className="recap-tools">
         <div className="recap-tools-intro">
           <UiObject name="book" className="recap-tools-object" />
-          <h3>리포트와 내보내기</h3>
-          <p>혈압 기록을 인쇄·PDF로 정리하고, 현재 7일은 JSON으로 내보낼 수 있어요.</p>
+          <h3>{reportOnly ? '리포트' : '리포트와 내보내기'}</h3>
+          <p>{reportOnly
+            ? '체험 기록을 인쇄·PDF로 정리할 수 있어요.'
+            : '혈압 기록을 인쇄·PDF로 정리하고, 현재 7일은 JSON으로 내보낼 수 있어요.'}</p>
         </div>
-        <p className="recap-tools-state">{readOnly
-          ? '파일 내보내기는 현재 7일에서 사용할 수 있어요.'
-          : '내보낸 파일은 본인 기기에 보관해요.'}</p>
-        {focusedDate && !readOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
+        <p className="recap-tools-state">{reportOnly
+          ? '현재 보고 있는 7일을 정리해요.'
+          : readOnly
+            ? '파일 내보내기는 현재 7일에서 사용할 수 있어요.'
+            : '내보낸 파일은 본인 기기에 보관해요.'}</p>
+        {focusedDate && !readOnly && !reportOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
         <div className="scene-actions utility-actions" data-recap-tools>{actions}</div>
       </footer>
     </div>
