@@ -7,8 +7,12 @@
   "routes": [{"pattern":"assets.hyeol.app","custom_domain":true}],
   "vars": {
     "ALLOWED_ORIGINS": "https://hyeol.app,https://www.hyeol.app",
-    "ASSET_MOUNTS_JSON": "{\"sk7\":{\"binding\":\"SK7_ASSETS\",\"prefix\":\"\"}}"
+    "ASSET_MOUNTS_JSON": "{\"sk7\":{\"binding\":\"SK7_ASSETS\",\"prefix\":\"\"},\"shared\":{\"binding\":\"GOM_PUBLIC_ASSETS\",\"prefix\":\"\"},\"models\":{\"binding\":\"WEBLLM_MODELS\",\"prefix\":\"\"}}"
   },
-  "r2_buckets": [{"binding":"SK7_ASSETS","bucket_name":"sk7-assets-prod"}],
+  "r2_buckets": [
+    {"binding":"SK7_ASSETS","bucket_name":"sk7-assets-prod"},
+    {"binding":"GOM_PUBLIC_ASSETS","bucket_name":"gom-public-assets"},
+    {"binding":"WEBLLM_MODELS","bucket_name":"edu-webllm-models"}
+  ],
   "observability": {"enabled":true}
 }
