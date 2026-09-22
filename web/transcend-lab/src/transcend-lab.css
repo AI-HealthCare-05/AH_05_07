@@ -11,13 +11,13 @@
 }
 
 html {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100%;
   background: #f2f0e7;
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 180vh;
   margin: 0;
   background:
@@ -183,6 +183,31 @@ code {
   padding: 0.55rem 0.9rem;
 }
 
+.free-coordinate-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.free-coordinate-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: #42534a;
+  font-size: 0.82rem;
+}
+
+.free-coordinate-form input {
+  width: 9rem;
+  min-height: 2.75rem;
+  border: 1px solid #69786d;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  color: #17241e;
+  background: #fffdf4;
+}
+
 .asset-panel {
   display: flex;
   align-items: center;
@@ -290,6 +315,10 @@ code {
   pointer-events: auto;
 }
 
+.actor-interaction[data-pointer-dragging="true"] {
+  cursor: grabbing;
+}
+
 .actor-hit-envelope {
   position: absolute;
   left: 50%;
@@ -304,29 +333,9 @@ code {
   min-height: var(--hit-height);
   padding: 0;
   pointer-events: auto;
-  touch-action: manipulation;
-}
-
-.actor-move-handle {
-  position: absolute;
-  z-index: 1;
-  left: 50%;
-  top: calc(50% + 38px);
-  width: var(--handle-width);
-  min-width: var(--handle-width);
-  height: var(--handle-height);
-  min-height: var(--handle-height);
-  transform: translate(-50%, -50%);
-  padding: 0;
-  border: 2px solid #fff8e7;
-  color: #fff;
-  background: #245a42;
-  box-shadow: 0 0.35rem 1rem rgb(20 48 36 / 25%);
-  font-size: 0.68rem;
-  font-weight: 760;
-  pointer-events: auto;
   touch-action: none;
   user-select: none;
+  cursor: grab;
 }
 
 @media (max-width: 640px) {
@@ -370,9 +379,10 @@ code {
   }
 
   button,
+  input,
   .anchor-marker,
   .hard-zone-marker,
-  .actor-move-handle {
+  .actor-hit-envelope {
     border: 2px solid ButtonText;
     color: ButtonText;
     background: ButtonFace;

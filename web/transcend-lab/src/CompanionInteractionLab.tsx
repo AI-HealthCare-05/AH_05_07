@@ -1,13 +1,15 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useSyncExternalStore,
   type CSSProperties,
+  type FormEvent,
   type PointerEvent as ReactPointerEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 
-import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE, type LabBackendKind } from "./platform/embodiment/labEmbodimentPort";
+import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embodiment/labEmbodimentPort";
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 
 function px(value: number): string {
@@ -24,7 +26,21 @@ export function CompanionInteractionLab() {
   const runtime = runtimeRef.current;
   const state = useSyncExternalStore(runtime.subscribe.bind(runtime), runtime.getState, runtime.getState);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
+  const labControlsRef = useRef<HTMLElement | null>(null);
   const relocationControlsRef = useRef<HTMLFieldSetElement | null>(null);
+  const assetPanelRef = useRef<HTMLElement | null>(null);
+  const actorTargetRef = useRef<HTMLButtonElement | null>(null);
+  const freeXRef = useRef<HTMLInputElement | null>(null);
+  const freeYRef = useRef<HTMLInputElement | null>(null);
+  const suppressNextClickRef = useRef(false);
+
+  useLayoutEffect(() => runtime.registerControlGeometryProvider(() =>
+    [labControlsRef.current, relocationControlsRef.current, assetPanelRef.current]
+      .filter((element): element is HTMLElement => element !== null)
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      })), [runtime]);
 
   useEffect(() => {
     const host = rendererHostRef.current;
@@ -39,14 +55,19 @@ export function CompanionInteractionLab() {
   }, [runtime]);
 
   useEffect(() => {
-    if (state.resolution.kind === "control") relocationControlsRef.current?.focus();
-  }, [state.resolution]);
+    if (state.activePointerId !== null) return;
+    const target = actorTargetRef.current;
+    const captured = Number(target?.dataset.activePointerId);
+    if (!target || !Number.isSafeInteger(captured)) return;
+    if (target.hasPointerCapture(captured)) target.releasePointerCapture(captured);
+    delete target.dataset.activePointerId;
+  }, [state.activePointerId]);
 
   const pose = state.pose;
-  const actorStyle = pose
+  const actorStyle = pose && state.snapshot
     ? ({
-        left: px(pose.point.x),
-        top: px(pose.point.y),
+        left: px(pose.point.x - state.snapshot.viewport.x + (LAB_ENVELOPES.tactileHit.offsetX ?? 0)),
+        top: px(pose.point.y - state.snapshot.viewport.y + (LAB_ENVELOPES.tactileHit.offsetY ?? 0)),
         "--hit-width": px(LAB_ENVELOPES.tactileHit.width),
         "--hit-height": px(LAB_ENVELOPES.tactileHit.height),
         "--handle-width": px(LAB_ENVELOPES.relocationHandle.width),
@@ -55,10 +76,20 @@ export function CompanionInteractionLab() {
     : undefined;
 
   function pointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (!runtime.beginPointer(event.pointerId)) return;
+    if (!runtime.beginPointer({
+      pointerId: event.pointerId,
+      point: { x: event.clientX, y: event.clientY },
+      button: event.button,
+      isPrimary: event.isPrimary,
+    })) return;
     event.preventDefault();
     event.currentTarget.dataset.activePointerId = String(event.pointerId);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      delete event.currentTarget.dataset.activePointerId;
+      runtime.cancelPointer("pointer-cancel", event.pointerId);
+    }
   }
 
   function pointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -70,13 +101,15 @@ export function CompanionInteractionLab() {
   function pointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     event.preventDefault();
-    runtime.endPointer(event.pointerId, { x: event.clientX, y: event.clientY });
+    const result = runtime.endPointer(event.pointerId, { x: event.clientX, y: event.clientY });
+    suppressNextClickRef.current = result === "drop";
     event.currentTarget.releasePointerCapture(event.pointerId);
     delete event.currentTarget.dataset.activePointerId;
   }
 
   function pointerCancel(event: ReactPointerEvent<HTMLButtonElement>) {
-    runtime.cancelPointer("pointer-cancel");
+    if (event.currentTarget.dataset.activePointerId !== String(event.pointerId)) return;
+    runtime.cancelPointer("pointer-cancel", event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -84,19 +117,37 @@ export function CompanionInteractionLab() {
   }
 
   function lostPointerCapture(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.currentTarget.dataset.activePointerId !== String(event.pointerId)) return;
     delete event.currentTarget.dataset.activePointerId;
-    runtime.cancelPointer("lost-pointer-capture");
+    runtime.cancelPointer("lost-pointer-capture", event.pointerId);
   }
 
   function actorKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
-    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      event.preventDefault();
-      runtime.keyboardRelocate("previous");
+    const nudges: Partial<Record<string, readonly [number, number]>> = {
+      ArrowLeft: [-0.05, 0],
+      ArrowRight: [0.05, 0],
+      ArrowUp: [0, -0.05],
+      ArrowDown: [0, 0.05],
+    };
+    const nudge = nudges[event.key];
+    if (!nudge) return;
+    event.preventDefault();
+    runtime.keyboardNudge(...nudge);
+  }
+
+  function actorClick() {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
     }
-    if (event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      runtime.keyboardRelocate("next");
-    }
+    runtime.tactileActivate();
+  }
+
+  function applyFreeCoordinates(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const x = freeXRef.current?.valueAsNumber;
+    const y = freeYRef.current?.valueAsNumber;
+    runtime.relocateToNormalized((x ?? Number.NaN) / 100, (y ?? Number.NaN) / 100);
   }
 
   return (
@@ -109,7 +160,7 @@ export function CompanionInteractionLab() {
       data-route-epoch={state.routeEpoch}
     >
       <header className="lab-hero">
-        <p className="eyebrow">SK7 Transcend · isolated Phase 1 experiment</p>
+        <p className="eyebrow">SK7 Transcend · isolated Phase 2 preparation A</p>
         <h1>Companion Interaction Lab</h1>
         <p>
           One logical actor, one fenced pose writer, and one visible renderer at a time.
@@ -117,7 +168,7 @@ export function CompanionInteractionLab() {
         </p>
       </header>
 
-      <section className="lab-panel lab-controls" aria-labelledby="lab-controls-title">
+      <section ref={labControlsRef} className="lab-panel lab-controls" aria-labelledby="lab-controls-title">
         <div>
           <p className="section-kicker">Synthetic route</p>
           <h2 id="lab-controls-title">Route and renderer controls</h2>
@@ -184,7 +235,10 @@ export function CompanionInteractionLab() {
         tabIndex={-1}
       >
         <legend>Accessible relocation alternatives</legend>
-        <p>These single-press and keyboard controls reach the same semantic anchors as drag.</p>
+        <p>
+          Anchor buttons stay explicit. Percentage coordinates and body-arrow nudges use the same
+          free-placement solver as drag, without capturing keys from text inputs.
+        </p>
         <div className="control-row">
           <button type="button" data-testid="move-sunrise" onClick={() => runtime.relocateToAnchor("sunrise")}>Move to sunrise</button>
           <button type="button" data-testid="move-harbor" onClick={() => runtime.relocateToAnchor("harbor")}>Move to harbor</button>
@@ -197,13 +251,28 @@ export function CompanionInteractionLab() {
             Expand hard zone (exercise no-fit fallback)
           </label>
         </div>
+        <form className="free-coordinate-form" onSubmit={applyFreeCoordinates}>
+          <label>
+            Horizontal position (%)
+            <input ref={freeXRef} data-testid="free-position-x" type="number" min="0" max="100" step="1" defaultValue="50" inputMode="numeric" />
+          </label>
+          <label>
+            Vertical position (%)
+            <input ref={freeYRef} data-testid="free-position-y" type="number" min="0" max="100" step="1" defaultValue="50" inputMode="numeric" />
+          </label>
+          <button type="submit" data-testid="apply-free-position">Apply free position</button>
+        </form>
       </fieldset>
 
-      <section className="lab-panel asset-panel" aria-labelledby="asset-title">
+      <section ref={assetPanelRef} className="lab-panel asset-panel" aria-labelledby="asset-title">
         <div>
           <p className="section-kicker">Read-only asset authority</p>
           <h2 id="asset-title">Fixture-pinned active-lite admission</h2>
           <p><code>{PINNED_ACTIVE_ASSET.assetId}</code> · bear lite · <code>{PINNED_ACTIVE_ASSET.sha256}</code></p>
+          <p data-testid="representation-mode">
+            Representation: {state.representation?.mode ?? "none"}
+            {state.representation?.clipName ? ` · clip ${state.representation.clipName}` : ""}
+          </p>
         </div>
         <button
           type="button"
@@ -224,9 +293,11 @@ export function CompanionInteractionLab() {
         {state.error ? <p role="alert" data-testid="renderer-error">{state.error}</p> : null}
         <dl className="diagnostic-grid" data-testid="resource-diagnostics">
           <div><dt>Backend</dt><dd>{state.mountedBackend ?? "none"}</dd></div>
+          <div><dt>Representation</dt><dd>{state.representation?.mode ?? "none"}</dd></div>
+          <div><dt>Intent</dt><dd>{state.intent.kind}</dd></div>
           <div><dt>Actor</dt><dd>{state.actorId}</dd></div>
           <div><dt>Revision</dt><dd>{state.snapshot?.revision ?? "retired"}</dd></div>
-          <div><dt>Pose anchor</dt><dd>{state.pose?.anchorId ?? state.resolution.kind}</dd></div>
+          <div><dt>Pose source</dt><dd>{state.pose?.anchorId ?? state.pose?.source ?? state.resolution.kind}</dd></div>
           <div><dt>Listeners</dt><dd>{state.diagnostics.listeners}</dd></div>
           <div><dt>Timers</dt><dd>{state.diagnostics.timers}</dd></div>
           <div><dt>RAF loops</dt><dd>{state.diagnostics.rafLoops}</dd></div>
@@ -243,6 +314,7 @@ export function CompanionInteractionLab() {
           <p className="section-kicker">Shared protocol</p>
           <h2 id="evidence-title">A/B metrics</h2>
           <p>{TRANSCEND_SCENARIO_FIXTURE.scenarioId} · {TRANSCEND_SCENARIO_FIXTURE.scenarioHash}</p>
+          <p>Frame samples are CPU render-submission durations, not presented FPS or GPU completion.</p>
         </div>
         <output data-testid="evidence-count">{state.evidence.length} metric records</output>
         <pre data-testid="evidence-json">{JSON.stringify(state.evidence, null, 2)}</pre>
@@ -256,8 +328,8 @@ export function CompanionInteractionLab() {
           className="anchor-marker"
           data-anchor-id={anchor.id}
           style={{
-            left: px(anchor.region.x + anchor.region.width / 2),
-            top: px(anchor.region.y + anchor.region.height / 2),
+            left: px(anchor.region.x + anchor.region.width / 2 - (state.snapshot?.viewport.x ?? 0)),
+            top: px(anchor.region.y + anchor.region.height / 2 - (state.snapshot?.viewport.y ?? 0)),
           }}
           aria-hidden="true"
         >
@@ -270,7 +342,12 @@ export function CompanionInteractionLab() {
           key={`${zone.revision}-${index}`}
           className="hard-zone-marker"
           data-testid="hard-zone"
-          style={{ left: px(zone.x), top: px(zone.y), width: px(zone.width), height: px(zone.height) }}
+          style={{
+            left: px(zone.x - (state.snapshot?.viewport.x ?? 0)),
+            top: px(zone.y - (state.snapshot?.viewport.y ?? 0)),
+            width: px(zone.width),
+            height: px(zone.height),
+          }}
           aria-hidden="true"
         >
           protected UI
@@ -278,28 +355,27 @@ export function CompanionInteractionLab() {
       ))}
 
       {pose && state.resolution.kind === "pose" ? (
-        <div className="actor-interaction" style={actorStyle} data-testid="logical-actor" data-actor-id={state.actorId}>
+        <div
+          className="actor-interaction"
+          style={actorStyle}
+          data-testid="logical-actor"
+          data-actor-id={state.actorId}
+          data-pointer-dragging={state.pointerDragging}
+        >
           <button
+            ref={actorTargetRef}
             type="button"
             className="actor-hit-envelope"
             data-testid="actor-hit-envelope"
-            aria-label="Interact with companion"
-            onClick={() => runtime.tactileActivate()}
-          />
-          <button
-            type="button"
-            className="actor-move-handle"
-            data-testid="actor-move-handle"
-            aria-label="Move companion. Drag, press Enter, or use arrow keys."
+            aria-label="Companion body. Tap to interact, drag to place freely, or use arrow keys to nudge."
+            onClick={actorClick}
             onPointerDown={pointerDown}
             onPointerMove={pointerMove}
             onPointerUp={pointerUp}
             onPointerCancel={pointerCancel}
             onLostPointerCapture={lostPointerCapture}
             onKeyDown={actorKeyDown}
-          >
-            Move
-          </button>
+          />
         </div>
       ) : null}
     </main>
