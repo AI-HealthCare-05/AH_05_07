@@ -25,10 +25,29 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
   test(`journey candidate primary action, input identity and navigation at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    const heroAssetRequests: string[] = [];
+    page.on('request', request => {
+      if (/home-window-garden-v2\.webp|\/scene-review\/s02\/v1\/.*\.webp(?:\?|$)/.test(request.url())) heroAssetRequests.push(request.url());
+    });
     const posts = await candidate(page);
+    const hero = page.locator('.today-hero');
+    const sceneFrame = page.locator('[data-scene-reserved-box="true"]');
     const primary = page.locator('.home-lead button');
     const buttonBox = (await primary.boundingBox())!;
     const navBox = (await page.locator('.primary-nav').boundingBox())!;
+    const firstFrames = await page.evaluate(() => new Promise<Array<{ width: number; height: number; backgroundImage: string }>>(resolve => {
+      const samples: Array<{ width: number; height: number; backgroundImage: string }> = [];
+      const sample = () => {
+        const frame = document.querySelector<HTMLElement>('[data-scene-reserved-box="true"]')!;
+        const rect = frame.getBoundingClientRect();
+        samples.push({ width: rect.width, height: rect.height, backgroundImage: getComputedStyle(document.querySelector<HTMLElement>('.today-hero')!).backgroundImage });
+        if (samples.length === 3) resolve(samples);
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    }));
+    expect(firstFrames.every(frame => !frame.backgroundImage.includes('home-window-garden-v2.webp'))).toBe(true);
+    expect(new Set(firstFrames.map(frame => `${frame.width}:${frame.height}`)).size).toBe(1);
     if (width <= 580) {
       expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y);
       const trailTouchBoxes = await page.locator('.home-trail-dates > li > button').evaluateAll(buttons => buttons.map(button => {
@@ -48,6 +67,31 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
       expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(navBox.y);
       await expect(page.locator('.journey-view-frame')).toBeHidden();
       await expect(page.locator('.journey-view-caption')).toBeHidden();
+    } else {
+      const frameBox = await sceneFrame.boundingBox();
+      expect(frameBox).not.toBeNull();
+      expect(frameBox!.width).toBeGreaterThan(0);
+      expect(frameBox!.height).toBeGreaterThanOrEqual(width <= 820 ? 200 : 340);
+      const visibleOwners = await page.locator('.today-showcase-scene').evaluate(figure => {
+        const visible = (element: Element | null) => {
+          if (!element) return false;
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+        };
+        const runtime = figure.querySelector<HTMLElement>('[data-living-scene-status]');
+        const poster = figure.querySelector('.living-scene-fallback img');
+        const canvas = figure.querySelector('.living-three-scene canvas');
+        return Number(visible(poster)) + Number(runtime?.dataset.livingSceneStatus === 'ready' && visible(canvas));
+      });
+      expect(visibleOwners).toBe(1);
+      if (width <= 820) expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(frameBox!.y);
+      if (width === 768) expect(frameBox!.height).toBeLessThanOrEqual(340);
+      if (width === 1366) {
+        const heroBox = (await hero.boundingBox())!;
+        expect(frameBox!.x).toBeGreaterThanOrEqual(heroBox.x + heroBox.width * .4);
+        expect(frameBox!.width).toBeGreaterThanOrEqual(heroBox.width * .42);
+      }
     }
     const recipe = await page.locator('[data-scene-recipe]').getAttribute('data-scene-recipe');
     await primary.click();
@@ -168,16 +212,24 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
     const s02ReturnFrames = await page.evaluate(() => new Promise<Array<{
       backgroundImage: string;
+      width: number;
+      height: number;
     }>>((resolve) => {
       history.back();
       const frames: Array<{
         backgroundImage: string;
+        width: number;
+        height: number;
       }> = [];
       const sample = () => {
         const hero = document.querySelector<HTMLElement>('.today-hero');
-        if (!hero) { requestAnimationFrame(sample); return; }
+        const frame = document.querySelector<HTMLElement>('[data-scene-reserved-box="true"]');
+        if (!hero || !frame) { requestAnimationFrame(sample); return; }
+        const rect = frame.getBoundingClientRect();
         frames.push({
           backgroundImage: getComputedStyle(hero).backgroundImage,
+          width: rect.width,
+          height: rect.height,
         });
         if (frames.length === 3) resolve(frames);
         else requestAnimationFrame(sample);
@@ -185,8 +237,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
       requestAnimationFrame(sample);
     }));
     await expect(page.locator('#S02-title')).toBeFocused();
-    expect(s02ReturnFrames[0].backgroundImage).toContain('home-window-garden-v2.webp');
-    expect(s02ReturnFrames.every(frame => frame.backgroundImage.includes('home-window-garden-v2.webp'))).toBe(true);
+    expect(s02ReturnFrames.every(frame => !frame.backgroundImage.includes('home-window-garden-v2.webp'))).toBe(true);
+    expect(new Set(s02ReturnFrames.map(frame => `${frame.width}:${frame.height}`)).size).toBe(1);
     const returnedPoster = page.locator('.today-hero .living-scene-fallback img');
     await expect(returnedPoster).toHaveCount(1);
     await expect(page.locator('.today-hero .living-scene-fallback')).toHaveAttribute('data-poster-asset', /^poster-/);
@@ -195,6 +247,8 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     // A changed domain fact changes the CTA, never the scenery recipe.
     await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
     await expect(page.locator('[data-saved-scene-status]')).toHaveCount(0);
+    expect(heroAssetRequests.filter(url => url.includes('home-window-garden-v2.webp'))).toEqual([]);
+    expect(new Set(heroAssetRequests.filter(url => /\/scene-review\/s02\/v1\//.test(url))).size).toBe(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   });
 }
@@ -247,6 +301,8 @@ test('journey candidate uses the shared hierarchy without a nested surface stack
     return {
       stageToWeekGap: weekElement.getBoundingClientRect().top - hero.bottom,
       leadBackground: lead.backgroundColor,
+      leadBorders: [lead.borderTopWidth, lead.borderRightWidth, lead.borderBottomWidth, lead.borderLeftWidth],
+      leadRadius: lead.borderRadius,
       leadShadow: lead.boxShadow,
       weekBorders: [week.borderTopWidth, week.borderRightWidth, week.borderBottomWidth, week.borderLeftWidth],
       weekBackground: week.backgroundColor,
@@ -260,7 +316,9 @@ test('journey candidate uses the shared hierarchy without a nested surface stack
   });
 
   expect(hierarchy.stageToWeekGap).toBeGreaterThanOrEqual(23);
-  expect(hierarchy.leadBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(hierarchy.leadBackground).toBe('rgba(0, 0, 0, 0)');
+  expect(hierarchy.leadBorders).toEqual(['1px', '0px', '0px', '0px']);
+  expect(hierarchy.leadRadius).toBe('0px');
   expect(hierarchy.leadShadow).toBe('none');
   expect(hierarchy.weekBorders).toEqual(['1px', '0px', '1px', '0px']);
   expect(hierarchy.weekBackground).toBe('rgba(0, 0, 0, 0)');
@@ -270,6 +328,30 @@ test('journey candidate uses the shared hierarchy without a nested surface stack
   expect(hierarchy.factBackground).toBe('rgba(0, 0, 0, 0)');
   expect(hierarchy.factShadow).toBe('none');
   expect(hierarchy.secondary.every(item => item.background === 'rgba(0, 0, 0, 0)' && item.borderRadius === '0px' && item.boxShadow === 'none')).toBe(true);
+});
+
+test('journey scene failure keeps the bounded surface and semantic task path usable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route(/\.(glb|webp)(\?|$)/, route => route.abort());
+  await candidate(page);
+
+  const frame = page.locator('[data-scene-reserved-box="true"]');
+  await expect(frame).toBeVisible();
+  await expect(frame.locator('.living-scene-fallback img')).toHaveCount(0);
+  const fallback = await frame.evaluate(element => {
+    const box = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    return { width: box.width, height: box.height, backgroundImage: styles.backgroundImage };
+  });
+  expect(fallback.width).toBeGreaterThan(0);
+  expect(fallback.height).toBeGreaterThanOrEqual(200);
+  expect(fallback.backgroundImage).toContain('gradient');
+  await expect(page.locator('[data-trail-date]')).toHaveCount(7);
+  await expect(page.locator('.journey-facts')).toContainText('혈압 관찰');
+  await expect(page.locator('.journey-facts')).toContainText('챌린지 참여');
+  await page.locator('.home-lead button').click();
+  await expect(page.locator('#S04-title')).toBeFocused();
 });
 
 test('journey day selection exposes separate facts locally and returns to today', async ({ page }) => {

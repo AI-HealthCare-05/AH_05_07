@@ -438,8 +438,9 @@ test('heejoo feedback closeout keeps S02 mobile compact and the starting-point t
   const viewBox = await view.boundingBox();
   expect(frameBox).not.toBeNull();
   expect(viewBox).not.toBeNull();
-  expect(Math.round(frameBox!.height)).toBe(168);
-  expect(frameBox!.width).toBeLessThan(viewBox!.width);
+  expect(frameBox!.height).toBeGreaterThanOrEqual(200);
+  expect(frameBox!.height).toBeLessThanOrEqual(260);
+  expect(frameBox!.width).toBeLessThanOrEqual(viewBox!.width);
 
   const startingPoint = home.locator('.today-starting-point-entry');
   await expect(startingPoint).toBeVisible();
@@ -496,7 +497,7 @@ test('North Star Home recognizes recent history when a returning user has not re
   await expect(home.locator('.today-week-card')).toHaveCount(0);
   await expect(home.locator('.today-observation-chart')).toHaveCount(0);
   await expect(home.locator('.today-word-card')).toHaveCount(0);
-  await expect(home.locator('.today-companion-greeting')).toBeVisible();
+  await expect(home.locator('.journey-view-caption-note')).toHaveText('잠깐 쉬어가요. 오늘도, 함께.');
 
   const todayState = home.locator('[data-home-concept="today-detail"]');
   await expect(todayState).toContainText('오늘 상태');
