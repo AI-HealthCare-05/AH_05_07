@@ -336,3 +336,15 @@ test('S05 Android retains fill, motion, clipping and pixel-ratio guards', () => 
     'expect(geometry.devicePixelRatio).toBe(2.8125)',
   ]) assert.ok(android.includes(contract), contract);
 });
+
+test('first-paint authority and harness changes run the scene control module', () => {
+  for (const file of [
+    'web/src/components/SceneFirstPaintWitness.tsx',
+    'web/src/components/sceneFirstPaintChannel.mjs',
+    'web/src/components/sceneFirstPaintChannel.d.ts',
+    'web/scripts/scene-first-paint-channel.test.mjs',
+    'web/e2e/sceneGpuTestHarness.ts',
+  ]) assert.deepEqual(browser([file]), ['scene'], file);
+  assert.ok(browserModuleCommands.scene.includes('npm run test:scene-manifest'));
+  assert.ok(browserModuleCommands.scene.some(command => command.includes('S02 companion-off stays identity-neutral fallback and requests no character GLB')));
+});

@@ -10,6 +10,7 @@ import type { TrailDay } from '../ui/livingWeek';
 import { landmarkForCalendarDate } from '../ui/scenePolicy';
 import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
 import type { CompanionSpecies } from '../ui/companion';
+import type { CompanionAsset } from '../ui/companionAssets.generated';
 
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
@@ -23,10 +24,11 @@ type JourneyTodayProps = {
   children?: ReactNode;
   onNavigate: (screen: ScreenId) => void;
   companionSpecies?: CompanionSpecies | null;
+  companionAsset?: CompanionAsset | null;
 };
 
 /** The selection is disposable UI state. Facts and action destinations still belong to App. */
-export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate, companionSpecies }: JourneyTodayProps) {
+export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate, companionSpecies, companionAsset }: JourneyTodayProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -75,7 +77,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
             <time dateTime={landscapeDate}>{formatTrailDate(landscapeDate)}</time>
           </div>
           <div className="journey-view-frame today-showcase-scene-frame" data-scene-reserved-box="true">
-            {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={landscapeDate} /> : <VisualStage screen="S02" calendarDate={today} companionSpecies={companionSpecies} />}
+            {staticLandscape ? <StaticJourneyLandscape screen="S02" calendarDate={landscapeDate} /> : <VisualStage screen="S02" calendarDate={today} companionSpecies={companionSpecies} companionAsset={companionAsset} />}
           </div>
           <figcaption className="journey-view-caption"><span className="today-companion-dot" aria-hidden="true" /><span>{previewing ? '선택한 날짜의 풍경' : '오늘의 풍경'}</span><strong>{landmark?.label}</strong><span className="journey-view-caption-note">잠깐 쉬어가요. 오늘도, 함께.</span></figcaption>
         </figure>

@@ -92,6 +92,11 @@ const journeyFiles = new Set(Object.keys(fastJourneyCoverage));
 
 const sceneFiles = new Set([
   'web/src/components/VisualStage.tsx',
+  'web/src/components/SceneFirstPaintWitness.tsx',
+  'web/src/components/sceneFirstPaintChannel.mjs',
+  'web/src/components/sceneFirstPaintChannel.d.ts',
+  'web/scripts/scene-first-paint-channel.test.mjs',
+  'web/e2e/sceneGpuTestHarness.ts',
   'web/src/components/SavedSceneBoundary.tsx',
   'web/src/components/CompanionReviewRenderer.tsx',
   'web/src/components/CompanionRuntimeBoundary.tsx',

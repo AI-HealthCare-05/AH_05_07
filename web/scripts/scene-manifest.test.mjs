@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import "./scene-first-paint-channel.test.mjs";
 import { buildPosterCompatibilityEvidence, loadInputs, verifySceneManifest, generateSceneSource, selectPosterDelivery, verifyPosterSourceCompatibility, S02_RENDERER_LOADER_RESERVE_BYTES } from "./verify-scene-manifest.mjs";
 
 const original = JSON.parse(fs.readFileSync(new URL("../src/ui/scene-manifest.v2.json", import.meta.url), "utf8"));
@@ -327,4 +328,19 @@ test("rejects character whose scene registration disagrees with generated compan
   const rabbit = manifest.assets.find(a => a.companionSpecies === "rabbit" && a.kind === "character");
   rabbit.delivery.sha256 = "a".repeat(64);
   assert.throws(() => verifySceneManifest(manifest, inputs), /evidence mismatch/);
+});
+
+
+for (const [name, mutate] of [
+  ["runtime scope claim", evidence => { evidence.f1SourceCompatibility.scope = "runtime-qualified"; }],
+  ["poster recapture claim", evidence => { evidence.f1SourceCompatibility.posterRecaptureClaim = true; }],
+  ["pixel equivalence claim", evidence => { evidence.f1SourceCompatibility.pixelEquivalentPosterClaim = true; }],
+  ["white rectangle cause claim", evidence => { evidence.f1SourceCompatibility.whiteRectangleRootCauseClaim = true; }],
+  ["current browser observation claim", evidence => { evidence.reviewObservation = evidence.historicalReviewObservation; }],
+  ["missing channel authority hash", evidence => { delete evidence.f1SourceCompatibility.currentSourceHashes["web/src/components/sceneFirstPaintChannel.mjs"]; }],
+  ["missing witness authority hash", evidence => { delete evidence.runtimeVisualSourceHashes["web/src/components/SceneFirstPaintWitness.tsx"]; }],
+]) test(`F1 source compatibility rejects ${name}`, () => {
+  const compatibility = structuredClone(inputs.compatibility);
+  mutate(compatibility);
+  assert.throws(() => verifySceneManifest(original, { ...inputs, compatibility }), /evidence mismatch/);
 });

@@ -68,8 +68,8 @@ export function scenePosterStageContract(manifest, stageCss) {
 export function buildPosterCompatibilityEvidence(manifest, inputs) {
   equal(inputs.stageContract, scenePosterStageContract(manifest, inputs.stageCss), "current scene stage contract");
   return {
-    format: "sk7-scene-poster-runtime-compatibility-v1",
-    status: "reviewed-current-runtime-compatibility",
+    format: "sk7-scene-poster-runtime-compatibility-v2",
+    status: "reviewed-historical-posters-with-f1-source-contract",
     posterSetDigest: {
       algorithm: "sha256",
       canonicalization: "json-array-sorted-by-id",
@@ -80,16 +80,18 @@ export function buildPosterCompatibilityEvidence(manifest, inputs) {
         evidence: sceneRegistrations.S02.evidence,
         posterSetDigest: posterSetDigest(inputs.posters),
         historicalSourceHashesDigest: sourceHashesDigest(inputs.posters.sourceHashes),
+        note: "Canonical historical bear-bearing posters. Identity-bound S02/S10 suppress them in F1; F2 will recapture neutral posters.",
       },
       S10: {
         evidence: sceneRegistrations.S10.evidence,
         posterSetDigest: posterSetDigest(inputs.dioramaPosters),
         historicalSourceHashesDigest: sourceHashesDigest(inputs.dioramaPosters.sourceHashes),
+        note: "Canonical historical bear-bearing posters. Identity-bound S02/S10 suppress them in F1; F2 will recapture neutral posters.",
       },
     },
     runtimeVisualSourceHashes: inputs.runtimeVisualSourceHashes,
     stageContract: inputs.stageContract,
-    reviewObservation: {
+    historicalReviewObservation: {
       scope: "local-review-observation",
       playwright: "1.62.1",
       chromium: "151.0.7922.34",
@@ -98,6 +100,17 @@ export function buildPosterCompatibilityEvidence(manifest, inputs) {
       canonicalVsMacDecodedPixelDifferences: "42/42",
       largestChangedPixelRatioPercent: 44.048388,
       locallyRegeneratedPostersAcceptedAsCanonical: false,
+      note: "Historical observations from the previous capture/runtime baseline before F1 identity suppression.",
+    },
+    f1SourceCompatibility: {
+      scope: "f1-source-compatibility",
+      note: "Current source compatibility contract for F1 first-paint identity suppression. This is not a checked-in browser runtime observation; runtime behavior is covered by Playwright tests and local/dev evidence, not represented as a captured pixel qualification.",
+      identityBearingProductPosterSuppression: true,
+      neutralF1Fallback: true,
+      currentSourceHashes: inputs.runtimeVisualSourceHashes,
+      posterRecaptureClaim: false,
+      pixelEquivalentPosterClaim: false,
+      whiteRectangleRootCauseClaim: false,
     },
   };
 }
@@ -108,7 +121,7 @@ export function verifyPosterSourceCompatibility(manifest, inputs, collections) {
   if (exactCurrentCapture) return "exact-current-capture";
   requireValue(inputs.compatibility, "poster capture source mismatch requires current runtime compatibility evidence");
   equal(inputs.compatibility, buildPosterCompatibilityEvidence(manifest, inputs), "scene poster runtime compatibility");
-  return "reviewed-current-runtime-compatibility";
+  return "reviewed-historical-posters-with-f1-source-contract";
 }
 
 export function writePosterCompatibilityEvidence(manifest, inputs = loadInputs()) {

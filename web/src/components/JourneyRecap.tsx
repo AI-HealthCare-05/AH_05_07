@@ -7,6 +7,7 @@ import { SevenDayTrail } from './SevenDayTrail';
 import { TrailDayDetail } from './TrailDayDetail';
 import type { TrailDay } from '../ui/livingWeek';
 import type { CompanionSpecies } from '../ui/companion';
+import type { CompanionAsset } from '../ui/companionAssets.generated';
 import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
 import { dispatchLivingReplayDayFocus } from '../ui/livingReplayAttention';
 import './journey-recap.css';
@@ -23,12 +24,13 @@ type JourneyRecapProps = {
   challenge: ReactNode;
   actions: ReactNode;
   companionSpecies?: CompanionSpecies | null;
+  companionAsset?: CompanionAsset | null;
   productionSceneEnabled?: boolean;
   reportOnly?: boolean;
 };
 
 /** Disposable day focus only; App retains requests, window dates and action guards. */
-export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, companionSpecies, productionSceneEnabled = false, reportOnly = false }: JourneyRecapProps) {
+export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, companionSpecies, companionAsset, productionSceneEnabled = false, reportOnly = false }: JourneyRecapProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const recordsRef = useRef<HTMLDivElement>(null);
   const selectedDay = days.find(day => day.date === selectedDate);
@@ -125,7 +127,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       </div>
       <aside className="recap-landscape" aria-label={staticLandscape && focusedDate ? '선택한 날짜의 풍경' : '오늘의 풍경'}>
         <figure className="recap-view">
-          {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} companionSpecies={companionSpecies} productionS10Enabled={productionSceneEnabled} />}
+          {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} companionSpecies={companionSpecies} companionAsset={companionAsset} productionS10Enabled={productionSceneEnabled} />}
           <figcaption key={previewDate}>
             <span>{staticLandscape && focusedDate ? '선택한 날의 풍경' : '모아와 잠깐, 오늘의 풍경'}</span>
             <small><time dateTime={previewDate}>{formatTrailDate(previewDate)}</time>{staticLandscape && focusedDate ? ' · 날짜에 따라 펼쳐지는 풍경이에요.' : ' · 선택한 기록 기간과는 별개예요.'}</small>

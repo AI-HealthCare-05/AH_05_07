@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Request } from "@playwright/test";
 import { findSceneRecipe, sceneComposition, sceneProfile } from "../src/ui/sceneRecipes";
 import { sceneLandmarks } from "../src/ui/scenePolicy";
+import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 import posterEvidence from "../../docs/evidence/scene-diorama-posters.json" with { type: "json" };
 
 const fixtureUrl = "/?fixture=VP-10&screen=S10";
@@ -46,25 +47,78 @@ async function expectReady(page: Page, landmark: string, width: number, expected
   expectRelativeSubjectHeight(bounds.height, stageHeight, composition);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
+  await expect(stage(page)).toHaveAttribute("data-scene-first-paint-state", "realtime-ready");
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 }
-async function expectPoster(page: Page, landmark: string, width: number) {
-  const profile = sceneProfile(width);
-  const evidence = posterEvidence.posters.find(p => p.landmarkId === landmark && p.profile === profile)!;
-  const recipe = findSceneRecipe("S10", landmark)!;
-  await expect(page.locator("[data-poster-asset]")).toHaveAttribute("data-poster-asset", evidence.id);
-  const image = page.locator(".living-scene-fallback img");
-  await expect(image).toHaveAttribute("src", recipe.posters[profile].url);
-  await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth), { timeout: 15000 }).toBe(evidence.width);
-  const box = (await image.boundingBox())!, area = (await stage(page).boundingBox())!;
-  const bounds = evidence.subjectBounds;
-  expect(box.x + (bounds.left + 1) / 2 * box.width).toBeGreaterThanOrEqual(area.x - 2);
-  expect(box.x + (bounds.right + 1) / 2 * box.width).toBeLessThanOrEqual(area.x + area.width + 2);
-  const height = (bounds.top - bounds.bottom) / 2 * box.height;
-  const composition = sceneComposition(recipe, width);
-  expectRelativeSubjectHeight(height, box.height, composition);
+async function expectNeutralFallback(page: Page) {
+  await expect(stage(page)).toHaveAttribute("data-scene-first-paint-state", "fallback-neutral");
+  await expect(page.locator("[data-poster-asset]")).toHaveAttribute("data-poster-asset", "none");
+  await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
+  await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
 }
+
+test("S10 non-bear first paint holds neutral fallback until the exact selected actor is ready", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-companion-species", "fox");
+    const originalWait = WebGL2RenderingContext.prototype.clientWaitSync;
+    let released = false;
+    (window as import("./sceneGpuTestHarness").SceneGpuTestHarnessWindow).signalSceneGpuFence = () => { released = true; };
+    WebGL2RenderingContext.prototype.clientWaitSync = function (sync, flags, timeout) {
+      const state = window as import("./sceneGpuTestHarness").SceneGpuTestHarnessWindow;
+      state.sceneGpuFencePolls = (state.sceneGpuFencePolls ?? 0) + 1;
+      return released ? originalWait.call(this, sync, flags, timeout) : this.TIMEOUT_EXPIRED;
+    };
+  });
+  await mockCalendar(page);
+
+  let releaseGlb!: () => void;
+  let markGlbStarted!: () => void;
+  const glbGate = new Promise<void>(resolve => { releaseGlb = resolve; });
+  const glbStarted = new Promise<void>(resolve => { markGlbStarted = resolve; });
+  const glbRequests: string[] = [];
+  page.on("request", request => {
+    if (/\.glb(?:\?|$)/.test(request.url())) glbRequests.push(request.url());
+  });
+  await page.route("**/*.glb*", async route => {
+    markGlbStarted();
+    await glbGate;
+    await route.continue();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await stage(page).scrollIntoViewIfNeeded();
+  await glbStarted;
+
+  const runtime = page.locator("[data-living-scene-status]");
+  const visualStage = stage(page);
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  // Held reveal boundary: neutral fallback, loading visit, no observed identity yet.
+  await expect(visualStage).toHaveAttribute("data-scene-first-paint-state", "realtime-loading");
+  await expect(runtime).toHaveAttribute("data-living-scene-status", "poster");
+  await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
+  await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+  await expect(host).toHaveAttribute("data-presence-observed-asset-id", "none");
+
+  releaseGlb();
+  await expect.poll(() => page.evaluate(() => (window as import("./sceneGpuTestHarness").SceneGpuTestHarnessWindow).sceneGpuFencePolls ?? 0)).toBeGreaterThan(0);
+  await expect(visualStage).toHaveAttribute("data-scene-first-paint-state", "realtime-loading");
+  await expect(host).toHaveAttribute("data-presence-observed-asset-id", "none");
+  await expect(page.locator(".living-three-scene")).toHaveCSS("opacity", "0");
+  await page.evaluate(() => (window as import("./sceneGpuTestHarness").SceneGpuTestHarnessWindow).signalSceneGpuFence?.());
+
+  await expect(runtime).toHaveAttribute("data-living-scene-status", "ready", { timeout: 20000 });
+  await expect(visualStage).toHaveAttribute("data-scene-first-paint-state", "realtime-ready");
+  await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
+  await expect(page.locator(".living-scene-fallback")).toHaveCount(0);
+  await expect.poll(() => glbRequests.length).toBe(1);
+  expect(glbRequests[0]).toBe(companionAssetManifest.fox.lite.url);
+  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(host).toHaveAttribute("data-presence-observed-asset-id", companionAssetManifest.fox.lite.assetId);
+});
 
 for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]]) test(`S10 renders and measures its scene at ${width}x${height}`, async ({ page }, testInfo) => {
   await page.setViewportSize({ width, height });
@@ -73,12 +127,13 @@ for (const [width, height] of [[320, 568], [320, 844], [390, 844], [1366, 768]])
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(fixtureUrl);
   await expectReady(page, "footbridge", width);
-  await expect.poll(() => completed.filter(request => request.url().includes("/scene-review/s10/")).length, { timeout: 15000 }).toBe(1);
+  // F1: identity-bound S10 first paint does not request the historical bear-bearing poster.
   const requests = await Promise.all(completed.filter(request => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)|\/scene-review\/s10\//.test(request.url()))
     .map(async request => ({ url: request.url(), ...await request.sizes() })));
   expect(requests.filter(request => /\.glb(?:\?|$)/.test(request.url))).toHaveLength(1);
   expect(requests.some(request => /ThreeSceneRenderer/.test(request.url))).toBe(true);
   expect(requests.some(request => /GLTFLoader/.test(request.url))).toBe(true);
+  expect(requests.filter(request => /\/scene-review\/s10\//.test(request.url))).toHaveLength(0);
   expect(requests.reduce((sum, request) => sum + request.responseBodySize, 0)).toBeLessThanOrEqual(900000);
   expect(errors).toEqual([]);
   await testInfo.attach("s10-scene-network", { body: JSON.stringify({ viewport: { width, height }, requests,
@@ -98,7 +153,7 @@ for (const width of [320, 390, 1366]) test(`S10 seven weekday compositions stay 
   }
 });
 
-for (const width of [320, 390, 1366]) test(`S10 reduced motion selects one weekday poster at ${width}px`, async ({ page }) => {
+for (const width of [320, 390, 1366]) test(`S10 reduced motion uses identity-neutral fallback at ${width}px`, async ({ page }) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -110,8 +165,8 @@ for (const width of [320, 390, 1366]) test(`S10 reduced motion selects one weekd
     await page.clock.setFixedTime(new Date(`2026-09-${String(index + 7).padStart(2, "0")}T03:00:00Z`));
     await page.goto("/?e2e=signed-in&screen=S10");
     await stage(page).scrollIntoViewIfNeeded();
-    await expectPoster(page, landmark.id, width);
-    expect(requests.filter(url => /\/scene-review\/s10\//.test(url))).toHaveLength(1);
+    await expectNeutralFallback(page);
+    expect(requests.filter(url => /\/scene-review\/s10\//.test(url))).toHaveLength(0);
     expect(requests.filter(url => /ThreeSceneRenderer|GLTFLoader|disposeScene|\.glb(?:\?|$)/.test(url))).toEqual([]);
   }
 });
@@ -132,7 +187,7 @@ test("S10 responsive environment rebuild keeps one character load and bounded fr
   for (const width of [320, 350, 351, 580, 581, 768, 1366]) {
     await page.setViewportSize({ width, height: 844 });
     await stage(page).scrollIntoViewIfNeeded();
-    await expectPoster(page, "footbridge", width);
+    await expectNeutralFallback(page);
   }
 });
 
@@ -198,12 +253,12 @@ for (const screen of ["S02", "S10"]) for (const failure of ["chunk", "GLB"]) tes
     await visualStage.scrollIntoViewIfNeeded();
   }
   await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
-  await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
-  await expect(page.locator(".living-scene-fallback img")).toHaveCount(1);
+  await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
+  await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   for (const reducedMotion of ["reduce", "no-preference"] as const) {
     await page.emulateMedia({ reducedMotion });
     await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "fallback");
-    await expect(page.locator(".living-scene-fallback")).toHaveCount(1);
+    await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
   }
   expect(failedRequests).toBe(failure === "chunk" ? 2 : 1);
   expect(navigations).toBe(failure === "chunk" ? 2 : 1);

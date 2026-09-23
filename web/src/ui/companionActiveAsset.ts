@@ -40,3 +40,24 @@ export function getActiveCompanionAssetForScreen(
   }
   return getActiveCompanionAsset(species);
 }
+
+/**
+ * Validate that an already-selected descriptor is exactly the active member for
+ * a surface. Returns the SAME descriptor when valid; rejects/fails closed.
+ */
+export function validateActiveCompanionAssetForScreen(
+  asset: CompanionAsset,
+  screen: ProductCompanionScreen,
+): CompanionAsset {
+  const expected = getActiveCompanionAssetForScreen(asset.species, screen);
+  if (
+    asset.assetId !== expected.assetId
+    || asset.url !== expected.url
+    || asset.sha256 !== expected.sha256
+    || asset.species !== expected.species
+    || asset.variant !== expected.variant
+  ) {
+    throw new Error(`descriptor does not match active ${screen} membership for ${asset.species}`);
+  }
+  return asset;
+}
