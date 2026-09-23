@@ -209,10 +209,48 @@ code {
 }
 
 .asset-panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
+}
+
+.review-catalog-panel {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  border-top: 1px solid rgb(31 75 55 / 20%);
+  padding-top: 1.15rem;
+}
+
+.review-catalog-panel > :first-child,
+.review-catalog-panel .diagnostic-grid {
+  grid-column: 1 / -1;
+}
+
+.review-catalog-panel h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.review-catalog-panel label {
+  display: grid;
+  gap: 0.35rem;
+  color: #42534a;
+  font-size: 0.82rem;
+}
+
+.review-catalog-panel select {
+  min-height: 2.75rem;
+  min-width: 0;
+  border: 1px solid #69786d;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  color: #17241e;
+  background: #fffdf4;
 }
 
 .diagnostic-grid {
@@ -352,7 +390,11 @@ code {
 
   .asset-panel {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .review-catalog-panel {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -380,6 +422,7 @@ code {
 
   button,
   input,
+  select,
   .anchor-marker,
   .hard-zone-marker,
   .actor-hit-envelope {

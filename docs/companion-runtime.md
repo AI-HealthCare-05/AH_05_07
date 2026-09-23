@@ -35,13 +35,16 @@ identity remains a separate deployment-SSOT/control-plane question.
   companion의 `lite` + `idle` 경로가 계속 유효하다. source activation 자체는
   Cloudflare build variable이나 deployed Worker 상태를 바꾸지 않는다.
 - S05는 confirmed host persistence 뒤 exact `review` 또는 `production` scene
-  gate에서 qualified SavedScene을 열며 fixed registered bear-lite
-  `celebrate → idle`을 사용한다. saved species preference를 사용하지 않는다.
+  gate에서 qualified SavedScene을 열며 saved non-medical preference의 active
+  registered `lite` identity로 `celebrate → idle`을 사용한다. query는 production
+  preference를 override하지 못하며 absent/invalid preference는 bear다.
 - S01의 `로그인 없이 30초 맛보기`는 canonical `?guest=1` 경로에서 인증 App과
   분리된 Guest Journey Sandbox를 연다. `30초`는 진입 framing이며 timeout이
   아니다. guest S02는 같은 saved non-medical species preference와 현재
-  full-scene/Presence ownership을 재사용하지만, guest 입력은 memory-only이고
-  account/session, Supabase, API/DB, SavedScene persistence를 열지 않는다.
+  full-scene/Presence ownership을 재사용한다. 실제 guest confirmation 동안에는
+  같은 species의 explicit S05 `lite`/`celebrate` selection을 memory-only로 열지만,
+  guest 입력은 account/session, Supabase, API/DB, SavedScene persistence event를
+  열지 않는다. direct S05 URL은 닫힌다.
 - `off`와 reduced motion/failure 경계는 기존 semantic HTML/CSS와 poster/static
   fallback을 보존한다.
 
@@ -114,9 +117,12 @@ clip은 `idle`, `greet`, `move`, `curious`, `celebrate`, `rest`, `special` 7개�
 
 `VITE_SK7_COMPANION_MODE`는 exact `off`, `review`, `production`만 허용한다.
 누락·빈 문자열·오타·unknown은 모두 `off`다. `review`는 기존 explicit query
-selection을 유지하지만 `production`은 query를 읽지 않고 승인된 고정 profile만
-생성한다. [`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
-mode, 화면, selection, animation policy를 모두 통과한 뒤에만 renderer를 lazy import한다.
+selection을 유지하지만 `production`은 query를 읽지 않고 saved/fallback identity와
+승인된 screen profile만 사용한다. [`companionAssetResolver.ts`](../web/src/ui/companionAssetResolver.ts)는
+product selection을 active membership 및 화면별 clip capability에 결합한다.
+[`CompanionRuntimeBoundary`](../web/src/components/CompanionRuntimeBoundary.tsx)는
+mode, 화면, selection, animation policy와 이 resolver를 모두 통과한 뒤에만
+renderer를 lazy import한다.
 [evidence manifest](evidence/companion-r2-v1.json)를
 읽는 generator가 만드는 [`companionAssets.generated.ts`](../web/src/ui/companionAssets.generated.ts) 외의
 URL/version/file name은 사용하지 않는다.
@@ -140,8 +146,10 @@ HTML 말주머니와 로그인/둘러보기 UI만 남는다. query parameter, �
 
 Production sequence는 신규 저장 성공이 확인된 S05에서만
 `celebrate`를 `LoopOnce`/1회로 재생하고 mixer `finished` event 뒤 `idle` loop로
-전환한다. sequence 중 selection을 바꾸지 않으므로 approved bear-lite GLB는
-정확히 한 번만 요청된다. tactile production v1은 celebration 동안
+전환한다. sequence 중 selection을 바꾸지 않으므로 selected active-lite GLB는
+정확히 한 번만 요청된다. SavedScene byte cache는 asset ID/species/version/variant/
+bytes/SHA identity로 격리되어 다른 species의 bytes를 재사용하지 않는다.
+tactile production v1은 기존 범위를 넓히지 않아 bear celebration 동안
 `pointer-events: none`/interaction disabled를 유지하고 `idle` 진입 뒤에만 기존
 head/body/feet tactile controller를 생성한다. interaction은 저장 결과·혈압 값·
 모델 결과를 입력으로 받지 않는다. `prefers-reduced-motion: reduce`에서는 action,
@@ -187,9 +195,11 @@ GLB Git 추가, 로컬 자산 복사, 생성·모델링·재렌더,
 7 clip runtime name set, 허용/조건부/차단 policy, 제외 화면 network=0, reduced motion,
 404/abort 실패 격리, 1366/390/320 responsive 경계를 실제 브라우저에서 검증한다.
 `npm run test:e2e:production:on`은 실제 runtime delivery의 S05 production-on
-경로에서 save 전 0회, confirmed save 후 bear-lite 1회, `celebrate → idle`,
+경로에서 save 전 0회, confirmed save 후 selected active-lite 1회, `celebrate → idle`,
 celebration 중 tactile 차단, idle 이후 mouse/touch tactile 활성화와 celebrate
-non-replay를 검증한다. 같은 suite와 후속 identity regression은 S10의 saved/fallback species
+non-replay를 검증한다. 후속 identity/SavedScene regression은 guest fox/cat과
+authenticated non-bear confirmation, exact-species cache/request isolation,
+query 무시를 검증한다. 같은 suite와 후속 identity regression은 S10의 saved/fallback species
 `lite`/`idle`, query 무시, presentation-only day-focus attention, tactile disabled,
 reduced motion static을 검증하고 다른 화면은 계속 제외한다. failure isolation과 1366/390/320 non-overlap도
 기존 S05 경계에서 유지한다. 이 테스트의 production variable은 local test web server에만
@@ -213,8 +223,9 @@ methods `GET, HEAD`, wildcard·credentials 없음이다. 4175 등 다른 local p
 ## S3E rollout and rollback contract
 
 - Production selection source: `resolveProductionCompanion`의 고정 계약. 입력은
-  mode, screen, `confirmedSave`, 그리고 S10에서만 사용할 수 있는 비의료적 species
-  preference다. S05는 confirmed save일 때만 fixed bear/lite `celebrate → idle`,
+  mode, screen, `confirmedSave`, 그리고 S01/S05/S10에 이어지는 비의료적 species
+  preference다. S05는 confirmed save일 때만 saved/fallback species의 active
+  `lite` `celebrate → idle`,
   S10은 save 상태와 무관하게 saved/fallback species의 `lite`/`idle` profile을 만든다.
   BP value, 입력 기반 위험군 선별 신호, model output, challenge adherence/result는
   species나 animation 입력으로 받지 않는다.
@@ -243,3 +254,11 @@ Scene fit data now lives separately from binary identity so S02/S10 framing can
 evolve without turning candidate registration into activation. Promotion from a
 candidate batch to the active set requires its own reviewed runtime/evidence
 change; deployment remains a separate decision.
+
+Published delivery metadata also has a deterministic read-only intake path:
+supplied inventory JSON plus optional GLB audit produces a generated review
+catalog. The isolated Transcend Lab can enumerate capability-complete entries
+and play required clips without changing production membership. The adapter has
+no R2 credentials/mutation/listing and the public Asset Gateway remains
+GET/HEAD-only. Promotion still requires an explicit reviewed active-membership
+change after review.

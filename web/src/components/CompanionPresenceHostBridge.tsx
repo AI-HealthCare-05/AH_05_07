@@ -11,10 +11,8 @@ import {
   type CompanionSelection,
 } from "../ui/companion";
 import { getActiveCompanionAsset } from "../ui/companionActiveAsset";
-import {
-  getCompanionAsset,
-  type CompanionAsset,
-} from "../ui/companionAssets.generated";
+import { resolveCompanionRuntimeAsset } from "../ui/companionAssetResolver";
+import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import type { ScreenId } from "../ui/journey";
 import {
@@ -54,10 +52,13 @@ function safeActiveAssetId(species: Parameters<typeof getActiveCompanionAsset>[0
   return safeActiveAsset(species)?.assetId ?? null;
 }
 
-function observedLegacyAssetId(selection: CompanionSelection | null): string | null {
+function observedLegacyAssetId(
+  selection: CompanionSelection | null,
+  mode: ReturnType<typeof resolveCompanionMode>,
+): string | null {
   if (!selection) return null;
   try {
-    return getCompanionAsset(selection.species, selection.variant).assetId;
+    return resolveCompanionRuntimeAsset(mode, selection)?.assetId ?? null;
   } catch {
     return null;
   }
@@ -97,10 +98,11 @@ function observedOwnerAssetId(
   owner: PresenceRenderOwner,
   logicalAssetId: string | null,
   selection: CompanionSelection | null,
+  mode: ReturnType<typeof resolveCompanionMode>,
 ): string | null {
   if (owner === "full-scene") return logicalAssetId;
-  if (owner === "saved-scene") return safeActiveAssetId("bear");
-  if (owner === "legacy-slot") return observedLegacyAssetId(selection);
+  if (owner === "saved-scene") return logicalAssetId;
+  if (owner === "legacy-slot") return observedLegacyAssetId(selection, mode);
   return null;
 }
 
@@ -171,7 +173,7 @@ export function CompanionPresenceHostBridge({
         companionSelection,
       );
       const owner: PresenceRenderOwner = logicalAssetId ? observed : "none";
-      const observedAssetId = observedOwnerAssetId(owner, logicalAssetId, companionSelection);
+      const observedAssetId = observedOwnerAssetId(owner, logicalAssetId, companionSelection, mode);
       const reconciled = kernel.reconcile({
         sessionEpoch: Math.max(0, sessionGeneration),
         route: activeScreen,

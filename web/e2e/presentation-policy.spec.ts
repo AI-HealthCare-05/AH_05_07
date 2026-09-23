@@ -16,6 +16,7 @@ for (const scene of [undefined, '', 'off', 'unknown', 'production', 'review']) {
         visualDisabled: false, webglAvailable: true, gate: scene })?.tier ?? null).toBe(s02SceneActive ? 2 : null);
       expect(allowsSavedScene(scene, 'S05', true)).toBe(s02SceneActive);
       expect(resolveProductionCompanion('production', 'S05', true)?.species).toBe('bear');
+      expect(resolveProductionCompanion('production', 'S05', true, 'cat')?.species).toBe('cat');
     });
   }
 }

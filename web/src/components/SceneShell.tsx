@@ -15,6 +15,7 @@ import {
   resolveCompanionSelection,
   resolveProductionCompanion,
   type CompanionSelection,
+  type CompanionSpecies,
 } from "../ui/companion";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 import { useJourneyTransition, type JourneyFeedbackPhase } from "./useJourneyTransition";
@@ -39,10 +40,11 @@ type SceneShellProps = {
   onSignOut?: () => void;
   signOutPending?: boolean;
   companionSelection: CompanionSelection | null;
+  companionSpecies: CompanionSpecies;
   savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, savedSceneEvent = null }: SceneShellProps) {
+export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, companionSpecies, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [forcedColors, setForcedColors] = useState(() => window.matchMedia("(forced-colors: active)").matches);
   const shellRef = useRef<HTMLElement>(null);
@@ -80,7 +82,7 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
 
     const mode = resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE);
     const futureS05Selection = mode === "production"
-      ? resolveProductionCompanion(mode, "S05", true)
+      ? resolveProductionCompanion(mode, "S05", true, companionSpecies)
       : resolveCompanionSelection(
           "S05",
           new URLSearchParams(window.location.search),
@@ -88,12 +90,12 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
         );
 
     if (futureS05Selection) warmCompanionRendererModule();
-  }, [activeScreen]);
+  }, [activeScreen, companionSpecies]);
 
   const savedSceneAllowed = allowsSavedScene(import.meta.env.VITE_SK7_SCENE_MODE, activeScreen, Boolean(savedSceneEvent));
   const inlineCompanion = staticJourneyUi && activeScreen === "S05" && !savedSceneAllowed;
   const companion = savedSceneAllowed && savedSceneEvent
-    ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} />
+    ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} species={companionSpecies} />
     : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
 
   return (

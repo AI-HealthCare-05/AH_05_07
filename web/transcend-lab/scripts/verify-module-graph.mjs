@@ -4,13 +4,18 @@ import { fileURLToPath } from "node:url";
 
 import { LAB_OUT_DIR, LAB_ROOT, WEB_ROOT, assertLabIsolation } from "./isolation-guard.mjs";
 
-const PRODUCT_CLOSURE = Object.freeze([
+const PRODUCT_DIRECT_SEAMS = Object.freeze([
   "src/ui/companionRuntimeMembership.ts",
+  "src/ui/companionReviewCatalog.ts",
+]);
+const PRODUCT_CLOSURE = Object.freeze([
+  ...PRODUCT_DIRECT_SEAMS,
   "src/ui/companion.ts",
   "src/ui/companionActiveAsset.ts",
   "src/ui/companionAssets.generated.ts",
   "src/ui/companionSceneRegistry.ts",
   "src/ui/sceneManifest.generated.ts",
+  "asset-candidates/companion-review-catalog.v1.json",
 ]);
 const TYPE_ONLY_CLOSURE = "src/ui/journey.ts";
 const ALLOWED_PACKAGES = new Set(["react", "react-dom", "scheduler", "three"]);
@@ -79,7 +84,7 @@ export function validateModuleGraph(graph) {
   }
 
   const byId = new Map(graph.modules.map((module) => [cleanId(module.id), module]));
-  let membershipSeen = false;
+  const directSeamsSeen = new Set();
   for (const module of graph.modules) {
     const descriptor = describeModule(module.id);
     if (DENIED_PATTERNS.some((pattern) => pattern.test(descriptor.id))) {
@@ -94,7 +99,9 @@ export function validateModuleGraph(graph) {
     if (descriptor.kind === "type-only") {
       errors.push(`type-only compiler dependency entered executable graph: ${descriptor.id}`);
     }
-    if (descriptor.id === absolute(PRODUCT_CLOSURE[0])) membershipSeen = true;
+    for (const seam of PRODUCT_DIRECT_SEAMS) {
+      if (descriptor.id === absolute(seam)) directSeamsSeen.add(seam);
+    }
 
     const imports = [...(module.importedIds ?? []), ...(module.dynamicallyImportedIds ?? [])];
     for (const importedId of imports) {
@@ -102,9 +109,9 @@ export function validateModuleGraph(graph) {
       if (
         descriptor.kind === "lab"
         && imported.kind === "product-closure"
-        && imported.id !== absolute(PRODUCT_CLOSURE[0])
+        && !PRODUCT_DIRECT_SEAMS.some((seam) => imported.id === absolute(seam))
       ) {
-        errors.push(`Lab directly imports a closure member other than membership seam: ${imported.id}`);
+        errors.push(`Lab directly imports a closure member outside the read-only seams: ${imported.id}`);
       }
       const cleanedImport = cleanId(importedId);
       if (!byId.has(cleanedImport) && imported.kind !== "virtual" && imported.kind !== "package") {
@@ -112,7 +119,9 @@ export function validateModuleGraph(graph) {
       }
     }
   }
-  if (!membershipSeen) errors.push("runtime membership seam is absent from executable graph");
+  for (const seam of PRODUCT_DIRECT_SEAMS) {
+    if (!directSeamsSeen.has(seam)) errors.push(`required read-only seam is absent from executable graph: ${seam}`);
+  }
 
   const entries = graph.modules.filter((module) => module.isEntry).map((module) => cleanId(module.id));
   if (entries.length === 0) errors.push("module graph has no executable entry");

@@ -47,7 +47,7 @@ test("screen and animation policy never uses health or model facts", () => {
   expect(getCompanionDecision("S11", "idle").status).toBe("blocked");
 });
 
-test("production resolver exposes only fixed S05 save and S10 replay profiles", () => {
+test("production resolver preserves the supplied non-medical identity for S05 and S10", () => {
   expect(resolveProductionCompanion("review", "S05", true)).toBeNull();
   expect(resolveProductionCompanion("review", "S10", false)).toBeNull();
   expect(resolveProductionCompanion("production", "S04", true)).toBeNull();
@@ -67,6 +67,14 @@ test("production resolver exposes only fixed S05 save and S10 replay profiles", 
   expect(resolveProductionCompanion("production", "S05", true)).toEqual({
     screen: "S05",
     species: "bear",
+    variant: "lite",
+    clip: "celebrate",
+    context: "save_success",
+    sequence: "celebrate_then_idle",
+  });
+  expect(resolveProductionCompanion("production", "S05", true, "fox")).toEqual({
+    screen: "S05",
+    species: "fox",
     variant: "lite",
     clip: "celebrate",
     context: "save_success",

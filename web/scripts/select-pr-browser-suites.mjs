@@ -187,11 +187,14 @@ const corePrefixes = [
 
 const assetFiles = new Set([
   'web/asset-candidates/companion-candidates.v1.json',
+  'web/asset-candidates/companion-review-catalog.v1.json',
   'web/playwright.companion-asset.config.ts',
   'web/playwright.frontend-assets.config.ts',
   'web/scripts/frontend-assets.manifest.json',
   'web/scripts/frontend-assets.test.mjs',
   'web/scripts/generate-companion-manifest.mjs',
+  'web/scripts/import-companion-r2-inventory.mjs',
+  'web/scripts/import-companion-r2-inventory.test.mjs',
   'web/scripts/verify-companion-candidates.mjs',
   'web/scripts/verify-companion-candidates.test.mjs',
   'web/scripts/verify-companion-manifest.mjs',
@@ -200,6 +203,7 @@ const assetFiles = new Set([
   'web/src/components/UiObject.tsx',
   'web/src/components/frontend-assets.css',
   'web/src/ui/companionAssets.generated.ts',
+  'web/src/ui/companionReviewCatalog.ts',
   'web/src/ui/uiIconPaths.ts',
   'web/e2e/frontend-assets.cases.ts',
   'web/src/components/CompanionReviewRenderer.tsx',
@@ -213,7 +217,11 @@ const assetPrefixes = ['web/public/assets/ui/v1/', 'tools/character-preview/'];
 
 const transcendLabFiles = new Set([
   'web/playwright.transcend-lab.config.ts',
+  'web/asset-candidates/companion-review-catalog.v1.json',
+  'web/scripts/import-companion-r2-inventory.mjs',
+  'web/scripts/import-companion-r2-inventory.test.mjs',
   'web/src/ui/companionRuntimeMembership.ts',
+  'web/src/ui/companionReviewCatalog.ts',
   'web/src/ui/companion.ts',
   'web/src/ui/companionActiveAsset.ts',
   'web/src/ui/companionAssets.generated.ts',

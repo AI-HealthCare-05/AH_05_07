@@ -8,6 +8,8 @@ import { validateModuleGraph } from "./verify-module-graph.mjs";
 const labEntry = path.join(LAB_ROOT, "src/main.tsx");
 const admission = path.join(LAB_ROOT, "src/platform/embodiment/labAssetAdmission.ts");
 const membership = path.join(WEB_ROOT, "src/ui/companionRuntimeMembership.ts");
+const reviewCatalog = path.join(WEB_ROOT, "src/ui/companionReviewCatalog.ts");
+const reviewCatalogJson = path.join(WEB_ROOT, "asset-candidates/companion-review-catalog.v1.json");
 const companion = path.join(WEB_ROOT, "src/ui/companion.ts");
 
 function graph(modules) {
@@ -19,11 +21,13 @@ function graph(modules) {
   };
 }
 
-test("accepts a Lab entry that reaches product source only through membership", () => {
+test("accepts a Lab entry that reaches product source only through read-only membership and review catalog seams", () => {
   const errors = validateModuleGraph(graph([
     { id: labEntry, isEntry: true, importedIds: [admission], dynamicallyImportedIds: [] },
-    { id: admission, isEntry: false, importedIds: [membership], dynamicallyImportedIds: [] },
+    { id: admission, isEntry: false, importedIds: [membership, reviewCatalog], dynamicallyImportedIds: [] },
     { id: membership, isEntry: false, importedIds: [companion], dynamicallyImportedIds: [] },
+    { id: reviewCatalog, isEntry: false, importedIds: [companion, reviewCatalogJson], dynamicallyImportedIds: [] },
+    { id: reviewCatalogJson, isEntry: false, importedIds: [], dynamicallyImportedIds: [] },
     { id: companion, isEntry: false, importedIds: [], dynamicallyImportedIds: [] },
   ]));
   assert.deepEqual(errors, []);

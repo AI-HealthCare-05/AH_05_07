@@ -53,6 +53,8 @@ export type CompanionSelection = Readonly<{
   clip: CompanionClip;
   context?: CompanionSelectionContext;
   sequence?: CompanionAnimationSequence;
+  /** Explicit non-production selection may use the read-only review catalog. */
+  assetScope?: "review-catalog";
 }>;
 export type CompanionDecision = Readonly<{
   status: "allowed" | "conditional" | "blocked";
@@ -104,6 +106,18 @@ export function resolveLoginCompanion(species: CompanionSpecies): CompanionSelec
   };
 }
 
+/** One confirmed save presentation, independent of persistence implementation. */
+export function resolveConfirmedSaveCompanion(species: CompanionSpecies): CompanionSelection {
+  return {
+    screen: "S05",
+    species,
+    variant: "lite",
+    clip: "celebrate",
+    context: "save_success",
+    sequence: "celebrate_then_idle",
+  };
+}
+
 export function resolveProductionCompanion(
   mode: CompanionMode,
   screen: ScreenId,
@@ -120,14 +134,7 @@ export function resolveProductionCompanion(
     };
   }
   if (screen !== "S05" || !confirmedSave) return null;
-  return {
-    screen: "S05",
-    species: "bear",
-    variant: "lite",
-    clip: "celebrate",
-    context: "save_success",
-    sequence: "celebrate_then_idle",
-  };
+  return resolveConfirmedSaveCompanion(species);
 }
 
 export function isCompanionReviewCandidate(screen: ScreenId): screen is CompanionReviewScreen {
@@ -210,5 +217,12 @@ export function resolveCompanionSelection(
   const queryContext = search.get("companion_context") === "non_semantic" ? "non_semantic" : undefined;
   const context = hostContext ?? queryContext;
   if (getCompanionDecision(screen, clip, context).status === "blocked") return null;
-  return { screen, species, variant, clip, ...(context ? { context } : {}) };
+  return {
+    screen,
+    species,
+    variant,
+    clip,
+    ...(context ? { context } : {}),
+    assetScope: "review-catalog",
+  };
 }

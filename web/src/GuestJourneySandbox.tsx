@@ -31,6 +31,7 @@ import {
   writeCompanionIdentity,
 } from "./ui/companionIdentity";
 import {
+  resolveConfirmedSaveCompanion,
   resolveCompanionMode,
   type CompanionSpecies,
 } from "./ui/companion";
@@ -192,6 +193,9 @@ function GuestJourney({ today }: { today: string }) {
   const s10SceneOwnsDecoration = activeScreen === "S10"
     && (sceneGate === "review" || sceneGate === "production");
   const sceneCompanionSpecies = companionMode === "off" ? null : companionSpecies;
+  const guestCompanionSelection = companionMode !== "off" && activeScreen === "S05" && confirmation
+    ? resolveConfirmedSaveCompanion(companionSpecies)
+    : null;
   const dashboardPeriodName = isPriorDashboard ? "이전 7일" : "현재 7일";
   const displayMeasurement = (record: BloodPressureObservation) =>
     `${record.systolic}/${record.diastolic} mmHg`;
@@ -930,7 +934,8 @@ function GuestJourney({ today }: { today: string }) {
         sessionGeneration={0}
         activeScreen={activeScreen}
         onNavigate={navigate}
-        companionSelection={null}
+        companionSelection={guestCompanionSelection}
+        companionSpecies={companionSpecies}
         savedSceneEvent={null}
       >
         <p className="guest-journey-disclosure" role="note">체험 중 입력은 서버로 보내거나 저장하지 않아요.</p>

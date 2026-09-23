@@ -2,29 +2,32 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { companionAssetManifest } from "../../ui/companionAssets.generated";
+import type { CompanionAsset } from "../../ui/companionAssets.generated";
 import type { SavedSceneEvent } from "../../ui/savedScene";
 import { disposeScene } from "./disposeScene";
 
-const asset = companionAssetManifest.bear.lite;
-// One immutable public asset, bounded to 518,636 bytes. Never retain parsed GPU
-// resources or user data across visits. Incomplete requests remain visit-owned.
-let cachedBytes: ArrayBuffer | undefined;
-async function loadBytes(signal: AbortSignal) {
-  if (cachedBytes) return cachedBytes;
+// Cache at most one exact immutable asset. The identity key prevents bytes from
+// one species/version from crossing into another confirmed visit.
+let cachedAsset: Readonly<{ key: string; bytes: ArrayBuffer }> | undefined;
+function cacheKey(asset: CompanionAsset): string {
+  return `${asset.assetId}:${asset.species}:${asset.version}:${asset.variant}:${asset.bytes}:${asset.sha256}`;
+}
+async function loadBytes(asset: CompanionAsset, signal: AbortSignal) {
+  const key = cacheKey(asset);
+  if (cachedAsset?.key === key) return cachedAsset.bytes;
   const response = await fetch(asset.url, { signal });
   if (!response.ok) throw new Error("Saved scene asset unavailable");
   const bytes = await response.arrayBuffer();
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), byte => byte.toString(16).padStart(2, "0")).join("");
   if (signal.aborted) throw new Error("Saved scene visit ended");
   if (bytes.byteLength !== asset.bytes || hash !== asset.sha256) throw new Error("Saved scene asset identity mismatch");
-  cachedBytes = bytes;
+  cachedAsset = Object.freeze({ key, bytes });
   return bytes;
 }
 
-type Props = { event: SavedSceneEvent; reducedMotion: boolean; visible: boolean; onReady: () => void; onFailure: () => void };
+type Props = { asset: CompanionAsset; event: SavedSceneEvent; reducedMotion: boolean; visible: boolean; onReady: () => void; onFailure: () => void };
 
-export default function SavedSceneRenderer({ event, reducedMotion, visible, onReady, onFailure }: Props) {
+export default function SavedSceneRenderer({ asset, event, reducedMotion, visible, onReady, onFailure }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const presentation = useRef({ reducedMotion, visible });
   const interrupt = useRef<(() => void) | null>(null);
@@ -107,7 +110,7 @@ export default function SavedSceneRenderer({ event, reducedMotion, visible, onRe
       observer = new ResizeObserver(resize);
       observer.observe(element);
       resize();
-      void loadBytes(controller.signal).then(bytes => new GLTFLoader().parseAsync(bytes, "")).then(gltf => {
+      void loadBytes(asset, controller.signal).then(bytes => new GLTFLoader().parseAsync(bytes, "")).then(gltf => {
         if (disposed) { disposeScene(gltf.scene); return; }
         model = gltf.scene;
         scene.add(model);
@@ -171,8 +174,8 @@ export default function SavedSceneRenderer({ event, reducedMotion, visible, onRe
         renderer.forceContextLoss();
       }
     };
-  }, [event, onReady, onFailure]);
+  }, [asset, event, onReady, onFailure]);
 
   useEffect(() => { interrupt.current?.(); }, [reducedMotion, visible]);
-  return <div ref={host} className="companion-runtime-canvas" data-saved-scene-renderer aria-hidden="true" />;
+  return <div ref={host} className="companion-runtime-canvas" data-saved-scene-renderer data-companion-species={asset.species} data-companion-asset-id={asset.assetId} aria-hidden="true" />;
 }

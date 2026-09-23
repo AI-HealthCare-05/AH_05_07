@@ -42,7 +42,9 @@ import {
 } from "./platform/behavior/companionGrabIntent";
 import {
   loadPinnedActiveAsset,
+  loadReviewCatalogAsset,
   type AssetAdmissionResult,
+  type ReviewClip,
   type VerifiedPinnedAsset,
 } from "./platform/embodiment/labAssetAdmission";
 import {
@@ -691,6 +693,51 @@ export class TranscendLabRuntime {
     return result;
   }
 
+  async loadReviewAsset(assetId: string, clipName: ReviewClip): Promise<AssetAdmissionResult> {
+    if (this.#lifecycle !== "running" || !this.#selector.activeKind) {
+      const result = Object.freeze({
+        status: "failed" as const,
+        assetId,
+        reason: "start a renderer before loading a review catalog asset",
+      });
+      this.#assetResult = result;
+      this.#status = `Review asset failed: ${result.reason}`;
+      this.#emit();
+      return result;
+    }
+    const requestId = ++this.#assetRequestId;
+    const resources = this.#resources;
+    this.#assetLoading = true;
+    this.#assetResult = null;
+    this.#status = `Checking review-only identity, capabilities, response bytes, SHA-256, and ${clipName} before parse.`;
+    this.#emit();
+    let verifiedForCurrentRenderer: VerifiedPinnedAsset | null = null;
+    const result = await loadReviewCatalogAsset({
+      resources,
+      assetId,
+      clipName,
+      onVerified: async (asset) => {
+        const displayed = await this.#selector.installVerifiedAsset(asset);
+        if (displayed.status !== "displayed") throw new Error(displayed.reason);
+        verifiedForCurrentRenderer = asset;
+      },
+    });
+    if (requestId !== this.#assetRequestId || resources !== this.#resources) return result;
+    this.#assetLoading = false;
+    this.#assetResult = result;
+    if (result.status === "loaded" && verifiedForCurrentRenderer) {
+      this.#verifiedAsset = verifiedForCurrentRenderer;
+      const representation = this.#selector.activeRepresentation;
+      this.#status = `Review-only bytes verified and displayed as ${representation?.mode ?? "unknown"}; clip ${representation?.clipName ?? "none"}. Product membership is unchanged.`;
+    } else if (result.status === "loaded") {
+      this.#status = "Review-only bytes verified, but no current renderer accepted the display generation.";
+    } else {
+      this.#status = `Review asset ${result.status}: ${result.reason}`;
+    }
+    this.#emit();
+    return result;
+  }
+
   setForceRendererFailure(force: boolean): void {
     this.#forceRendererFailure = force;
     this.#emit();
@@ -786,6 +833,7 @@ export class TranscendLabRuntime {
       reset: () => this.reset(),
       runComparison: () => this.runComparison(),
       loadAsset: () => this.loadAsset(),
+      loadReviewAsset: (assetId, clipName) => this.loadReviewAsset(assetId, clipName),
     });
   }
 
@@ -932,4 +980,5 @@ export type TranscendLabTestApi = Readonly<{
   reset: () => Promise<ResourceDiagnostics>;
   runComparison: () => Promise<readonly LabMetrics[]>;
   loadAsset: () => Promise<AssetAdmissionResult>;
+  loadReviewAsset: (assetId: string, clipName: ReviewClip) => Promise<AssetAdmissionResult>;
 }>;

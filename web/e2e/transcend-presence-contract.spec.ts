@@ -33,12 +33,15 @@ import {
 import { WorldRootLeaseManager } from "../transcend-lab/src/platform/behavior/rootMotionLease";
 import {
   loadPinnedActiveAsset,
+  loadReviewCatalogAsset,
   verifyGlbPayload,
 } from "../transcend-lab/src/platform/embodiment/labAssetAdmission";
 import {
   LabResourceLedger,
   PINNED_ACTIVE_ASSET,
 } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
+import { companionClips, type CompanionClip } from "../src/ui/companion";
+import type { CompanionReviewCatalogEntry } from "../src/ui/companionReviewCatalog";
 
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.config.metadata.transcendLab !== true, "dedicated Transcend Lab config only");
@@ -70,8 +73,16 @@ function pose(snapshot: ArenaSnapshot, x = 150, y = 150): ResolvedPose {
   });
 }
 
-function minimalSelfContainedGlb(): ArrayBuffer {
-  const json = new TextEncoder().encode('{"asset":{"version":"2.0"},"scene":0,"scenes":[{}]}');
+function minimalSelfContainedGlb(animationNames: readonly string[] = []): ArrayBuffer {
+  const source = animationNames.length === 0
+    ? '{"asset":{"version":"2.0"},"scene":0,"scenes":[{}]}'
+    : JSON.stringify({
+        asset: { version: "2.0" },
+        scene: 0,
+        scenes: [{}],
+        animations: animationNames.map((name) => ({ name, channels: [], samplers: [] })),
+      });
+  const json = new TextEncoder().encode(source);
   const paddedLength = Math.ceil(json.byteLength / 4) * 4;
   const bytes = new ArrayBuffer(12 + 8 + paddedLength);
   const view = new DataView(bytes);
@@ -84,6 +95,12 @@ function minimalSelfContainedGlb(): ArrayBuffer {
   payload.fill(0x20);
   payload.set(json);
   return bytes;
+}
+
+async function sha256(bytes: ArrayBuffer): Promise<string> {
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 test.describe("ArenaSnapshot pure contract", () => {
@@ -494,5 +511,105 @@ test.describe("fixture-pinned asset admission", () => {
     const result = await loading;
     expect(result.status).toBe("cancelled");
     expect(diagnostics).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+  });
+
+  test("review catalog admission verifies all required clips and the selected clip without activation", async () => {
+    const bytes = minimalSelfContainedGlb(companionClips);
+    const digest = await sha256(bytes);
+    const asset: CompanionReviewCatalogEntry = Object.freeze({
+      assetId: "COMPANION-R2-900",
+      speciesKey: "otter",
+      version: "v001",
+      variantKey: "standard",
+      objectKey: "companion/v1/otter/v001/standard.glb",
+      url: "https://assets.example.test/companion/v1/otter/v001/standard.glb",
+      bytes: bytes.byteLength,
+      sha256: digest,
+      mime: "model/gltf-binary",
+      clips: companionClips,
+      capabilities: {
+        exactIdentity: "verified",
+        requiredClips: "complete",
+        selfContainedGlb: "complete",
+        missingClips: [],
+        extensionsRequired: [],
+        externalDependencies: [],
+      },
+      reviewEligible: true,
+    });
+    const requested: string[] = [];
+    let verifiedClip: CompanionClip | null = null;
+    const resources = new LabResourceLedger();
+    const result = await loadReviewCatalogAsset({
+      resources,
+      assetId: asset.assetId,
+      clipName: "celebrate",
+      catalogReader: () => asset,
+      requester: async (input) => {
+        requested.push(String(input));
+        return new Response(bytes.slice(0), { status: 200 });
+      },
+      onVerified: (verified) => {
+        verifiedClip = verified.clipName;
+      },
+    });
+
+    expect(result).toMatchObject({
+      status: "loaded",
+      assetId: asset.assetId,
+      authority: "review-catalog",
+      clipName: "celebrate",
+      verification: "actual-response-sha256",
+    });
+    expect(verifiedClip).toBe("celebrate");
+    expect(requested).toEqual([asset.url]);
+    expect(resources.diagnostics().pendingLoads).toBe(0);
+  });
+
+  test("unknown, incomplete, mismatched and unsupported review selections make zero requests", async () => {
+    let requests = 0;
+    const requester = async () => {
+      requests += 1;
+      return new Response(new Uint8Array([1]), { status: 200 });
+    };
+    const resources = new LabResourceLedger();
+    const base = {
+      assetId: "COMPANION-R2-900",
+      speciesKey: "otter",
+      version: "v001",
+      variantKey: "standard",
+      objectKey: "companion/v1/otter/v001/standard.glb",
+      url: "https://assets.example.test/companion/v1/otter/v001/standard.glb",
+      bytes: 1,
+      sha256: "a".repeat(64),
+      mime: "model/gltf-binary" as const,
+      clips: companionClips,
+      capabilities: {
+        exactIdentity: "verified" as const,
+        requiredClips: "complete" as const,
+        selfContainedGlb: "complete" as const,
+        missingClips: [] as readonly CompanionClip[],
+        extensionsRequired: [] as readonly string[],
+        externalDependencies: [] as readonly string[],
+      },
+      reviewEligible: true,
+    };
+    const cases = [
+      { assetId: "unknown", reader: () => null, clipName: "idle" as CompanionClip },
+      { assetId: base.assetId, reader: () => ({ ...base, reviewEligible: false }), clipName: "idle" as CompanionClip },
+      { assetId: "mismatch", reader: () => base, clipName: "idle" as CompanionClip },
+      { assetId: base.assetId, reader: () => base, clipName: "not-a-clip" as CompanionClip },
+    ];
+    for (const item of cases) {
+      const result = await loadReviewCatalogAsset({
+        resources,
+        assetId: item.assetId,
+        clipName: item.clipName,
+        catalogReader: item.reader,
+        requester,
+      });
+      expect(result.status).toBe("rejected");
+    }
+    expect(requests).toBe(0);
   });
 });
