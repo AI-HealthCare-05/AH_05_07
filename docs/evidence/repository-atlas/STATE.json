@@ -6,25 +6,34 @@
   "branch": "audit/repository-evidence-system-v1",
   "worktree": "/Users/gom/Projects/AH_05_07-evidence-system-v1",
   "started_at": "2026-09-23T19:03:41.018680+00:00",
-  "last_checkpoint_at": "2026-09-23T19:03:41.018680+00:00",
-  "last_verified_task": "EA-001",
+  "last_checkpoint_at": "2026-09-24T00:00:00+00:00",
+  "last_verified_task": "EA-004",
   "active_task": null,
-  "next_task": "EA-002",
+  "next_task": "EA-005",
   "completed_tasks": [
-    "EA-001"
+    "EA-001",
+    "EA-002",
+    "EA-003",
+    "EA-004"
   ],
   "blocked_tasks": [],
-  "last_commit": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "last_commit": "ef017e954b5629d72369d985f0e075e5ea3718db",
   "last_commit_semantics": "Last observed HEAD before writing this checkpoint, not the self-containing commit. Resolve containing checkpoint with git log -1 --format=%H -- docs/evidence/repository-atlas/STATE.json.",
   "verification_commands": [
+    "uv run pytest -q tests/test_repository_evidence.py",
+    "python3 scripts/check_repository_evidence.py --check",
     "git diff --check"
   ],
   "important_findings": [
     "Canonical origin/main starts at 6f163c33bf11193f0322c0377ff9463567b361b4",
-    "User explicitly limits this task to local commits; no CI integration."
+    "User explicitly limits this task to local commits; no CI integration.",
+    "Pinned origin/main snapshot contains 1146 tracked files; 665 match the archaeology scope filters.",
+    "The offline scan extracted 6116 references: 1808 resolved local, 952 broken local, and 3356 unverified remote/symbolic.",
+    "Binary contents are excluded from text extraction; inventory records Git metadata only."
   ],
   "known_unknowns": [
-    "Local history completeness and reference validity have not yet been audited."
+    "Curated evidence normalization and authority relationships remain to be written.",
+    "Broken reference results include historical and intentionally stale documents; they require scoped triage, not automatic product fixes."
   ],
   "resume_instructions": [
     "Read WORKPLAN.md, STATE.json, QUEUE.json, RESUME.md; reconcile live Git first.",

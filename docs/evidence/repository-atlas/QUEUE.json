@@ -39,8 +39,8 @@
       "verification": [
         "Inventory counts match git ls-tree; JSON parse; repeat byte equality"
       ],
-      "status": "pending",
-      "notes": []
+      "status": "verified",
+      "notes": ["Inventory generated from the pinned audited SHA; repeat generation is byte-stable."]
     },
     {
       "id": "EA-003",
@@ -61,8 +61,8 @@
       "verification": [
         "Scanner unit tests; compare repeated extraction"
       ],
-      "status": "pending",
-      "notes": []
+      "status": "verified",
+      "notes": ["Typed extraction includes source line, stable ID, raw token and source SHA context."]
     },
     {
       "id": "EA-004",
@@ -83,8 +83,8 @@
       "verification": [
         "Temporary Git fixture tests; broken and historical target fixtures; deterministic run"
       ],
-      "status": "pending",
-      "notes": []
+      "status": "verified",
+      "notes": ["Local paths, Markdown anchors and commit SHAs are resolved offline; remote references remain unverified."]
     },
     {
       "id": "EA-005",

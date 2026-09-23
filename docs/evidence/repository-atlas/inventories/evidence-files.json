@@ -1,0 +1,2112 @@
+{
+  "files": [
+    {
+      "audit_scope": true,
+      "blob_sha": "736709073f9c2afd4b55bff33c55f7541158f4f6",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0001-modular-monolith.md",
+      "size_bytes": 550,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "589ca322f7eb15fd97d45ab610867a3e095a5f9e",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0002-ai-toolchain-and-change-control.md",
+      "size_bytes": 3056,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "93a879b5d35d818a3279b035883ece61df739c3d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0003-data-semantics-and-local-preparation.md",
+      "size_bytes": 3268,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "fc5980d0863fedfff45e7292271baf0f9c351bb3",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0004-frozen-validation-comparison.md",
+      "size_bytes": 2026,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "775940ebe9ae286572f50da279ec70f0462e58e0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0005-validation-paired-bootstrap.md",
+      "size_bytes": 3856,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "05aea999f989a8121ea8771ff121aa5695f4cead",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0006-local-character-preview.md",
+      "size_bytes": 3519,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3326f6766d71920e125fd723a0ac61b1a24d6539",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/adr/0008-s11-verifiable-local-inference.md",
+      "size_bytes": 13762,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9a5aea00a8c3a990f4edf9a25035fc0eaa809b3b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/ac05-deployed-expiry-invisibility.md",
+      "size_bytes": 2696,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "debcfa7dccb6b1e96d587aa74a7bd518a9cb71db",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/ac10-web-clean-release-execution.md",
+      "size_bytes": 8372,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e751635b75db0ec55aac089552380ff10baea153",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/asset-review-lanes-closeout-2026-09-18.md",
+      "size_bytes": 2414,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "642946ec1d33f928ca05bb0d506e1f8b6deff60d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-initial-v1-baseline-identities.json",
+      "size_bytes": 7805,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2859140a8aa2060a4712ba9fcce5da2393e8444f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-initial-v1-baseline-review.md",
+      "size_bytes": 2465,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "63e846e22836cbfa90fd8326a91be6984d449397",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-optimized-v1-ab-review.md",
+      "size_bytes": 2315,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e12e8733511d9086e39dafb53e854e8e4c150c17",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-optimized-v1-identities.json",
+      "size_bytes": 13193,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "6a65b3c98f352833ed8557c2dd88db56f988633c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-optimized-v1-provenance.md",
+      "size_bytes": 1611,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c3132bd338699ea975189a6351f6075a07491601",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-r2-v1.json",
+      "size_bytes": 26019,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2aea4ba14bf330b9d5ed018be552d7f887497ae8",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-android-physical-device.json",
+      "size_bytes": 8944,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0af91dd893f660f73ac37b3686688eed94a6eb48",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-android-physical-device.md",
+      "size_bytes": 1872,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "32c4ea2352f7240c82e1e3bca68365f038881e46",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-blender-reimport.json",
+      "size_bytes": 10332,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "565805fe0761d857978d052cf628c7614d3087e1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-blender-reimport.md",
+      "size_bytes": 2515,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "785c9961641994173fbeabfa51d9c46327501d68",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-browser-prequalification.json",
+      "size_bytes": 13915,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "800474657e37a1e5a5e1c47d81e90bf7de2a287a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-browser-prequalification.md",
+      "size_bytes": 3874,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ec78dac03d966f77dc1d567254d1740efa5aaa4e",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-candidate-provenance.md",
+      "size_bytes": 2819,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "36d9019bebf08b799a2d8fdd26c5a98747468b8d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-ios-simulator.json",
+      "size_bytes": 13425,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9a4e539e5648f645a0338f905f10be1ab5c0365b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-ios-simulator.md",
+      "size_bytes": 1942,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "688bfb264b8cd7a36065e18f48264dbf32d4052b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-qualification-status.md",
+      "size_bytes": 3147,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c99030e3930d2ae95f2ab6b90706255c54fff27b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-screen-integration.json",
+      "size_bytes": 28282,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d4a871e750c41f9c37378cb542bf4ae5cbcdf428",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-screen-integration.md",
+      "size_bytes": 3230,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4578a5c272b74d1aa800b7329f531663d674766e",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-screen-output-isolation.json",
+      "size_bytes": 591,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d1505bd84ff4da924491cd77850907cd46946461",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-visual-acceptance.json",
+      "size_bytes": 2915,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d2946908e17b53289310d1ff3ce740c9b891f60c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/companion-world-v2-visual-acceptance.md",
+      "size_bytes": 1943,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "cff5e485fc1b510b14924b37b46f6318ba847e79",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/deployment-history-through-20260918.md",
+      "size_bytes": 8740,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c6a909c13960548f39227b07f1250a470140c80f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/local-reliability.json",
+      "size_bytes": 22636,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0b71879dd1bb9b11221cea630d87c8f395d743ec",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-comparison.json",
+      "size_bytes": 14930,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0818432dd09d2c2f6e821b6974721862ecb9f1af",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-gate-1b.json",
+      "size_bytes": 1185,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4558d8b8ac6fd270dd9953ac794649e2a4caff20",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-uncertainty.json",
+      "size_bytes": 23571,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ea6dddc18c73be821e912e8db81a8bbf15c487fd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-v2-finite-reference.json",
+      "size_bytes": 8188,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b320c3007dc267fafb553755208fb8ffb4f17f34",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-v2-reference-distribution.json",
+      "size_bytes": 73942,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1f99100f652bbcbecb12ae39d12e267c1e4a640b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-v2-reference-uncertainty.json",
+      "size_bytes": 53547,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f3db46ff28011d2d80362800c895aacae889a342",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/model-v2-visible-result-reconciliation-20260919.md",
+      "size_bytes": 20868,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ea5cec979ec59d39ccb88c277992551886d2d979",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1-submission-manifest.json",
+      "size_bytes": 5915,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f024092ec32a99d350ad4da57e4fbf72e9c5e104",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/empty-1366.png",
+      "size_bytes": 75715,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f39097855554995f64731e04f8ce6427761b9a16",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/empty-390.png",
+      "size_bytes": 45894,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2d98ce1d9ee9b6ba148757d2e1f84563c100424c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/error-1366.png",
+      "size_bytes": 83898,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3159151eb8c2125ddc668395f5dd9cf922c3010c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/error-390.png",
+      "size_bytes": 42752,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "350250068755a3584a77b47772ae855f9be3af3b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/normal-1366.png",
+      "size_bytes": 138157,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1c9382e8449eea5ea95b9ef928dfdc41e5c25ff9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/normal-390.png",
+      "size_bytes": 109543,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "657b169f0fd96411797dd14964a418f453e2db9d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/not-ready-1366.png",
+      "size_bytes": 98191,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c897e0651139fb4ad71f63802b4bbfd25f021112",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/mvp1/not-ready-390.png",
+      "size_bytes": 62717,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9434099e3c7002201dc1b314b1f54a87127e28b7",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/o1-production-execution.md",
+      "size_bytes": 6760,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "fbbbae9136c2d0b6e3486a3d9f87a49ce18cbd49",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/o3-clean-release-execution.md",
+      "size_bytes": 6489,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9233f1aec158f553d7cff53ff72c997aa49d0b10",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/production-release-20260918.md",
+      "size_bytes": 4365,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b97177efa491c4f6c17ee31a605842117de94c83",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/question-review/review-1366-viewport.png",
+      "size_bytes": 63807,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "bf41e045f86bc90cabd652df2a452971b12de297",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/question-review/review-1366.png",
+      "size_bytes": 123031,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e23a2bfb627b99973e43354b222a5ddc1afd535c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/question-review/review-390.png",
+      "size_bytes": 110644,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f3645183670f906d2a98cf717fb4c2b8fcb4eb75",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/s11-production-closeout-20260919.md",
+      "size_bytes": 3775,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c789950a55b3b82167db396da2ec8ad1382781ef",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-android-chrome-sm-a528n.json",
+      "size_bytes": 5489,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2d2ac3a7d27dc94b32183d166fbe2adad01e9b8c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-android-heap-growth-accounting.json",
+      "size_bytes": 12237,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b4e1983e781e43b606c091aa8d07276ebc00db1a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-android-memory.json",
+      "size_bytes": 66402,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "facea18b1b5da9b0ece6b534e4702cc73f8672ac",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-android-performance-after-fix.json",
+      "size_bytes": 39571,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d0c38544e91a72ba89f263c950c445b47f7a0540",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-android-performance.json",
+      "size_bytes": 37715,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "713c3ad1630c82607a0a8d4ca670dd592b3e2965",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-clay-network.json",
+      "size_bytes": 6714,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "6680bdbb0c30fa6840dbd2b762b2fd83457d9bcd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-clay-posters.json",
+      "size_bytes": 24131,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a1e4c7d81e7c496ff9fb73739e5f0bc95588ce83",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-clay-r2-network.json",
+      "size_bytes": 6986,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d723edb093740bd29fa0321299bb6e3b507afd6a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-clay-r2.json",
+      "size_bytes": 14751,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "10969b1213884aef47c72f61eb47f8319406d46b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-clip-subset-experiment.json",
+      "size_bytes": 700,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "430b49780eb292dda55f4bffec53f2eff68f19f9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-diorama-posters.json",
+      "size_bytes": 24368,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0a992d4358e1a2bedf212f7aa2f6f1fe35b0af10",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-diorama-r2-network.json",
+      "size_bytes": 6418,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "03fb2022dfd709b0f8ad4351b2b8a9e994c25588",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-diorama-r2.json",
+      "size_bytes": 14835,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9f2c7b4dcb6acc2e2c1517673ef4dceebdf983a1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-glb-forensics.json",
+      "size_bytes": 88155,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "46ed00e8eaef0408dc6e48e5d54d32c2fdbfd1e2",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-ios-simulator-safari-position-fix.json",
+      "size_bytes": 18446,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d1e2a369022c28fefa54c9dc339baf5c30a2ca8b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-ios-simulator-safari.json",
+      "size_bytes": 24831,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "7febaa29e92f44a19ab74647a4b49dc865aade84",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-ios-voiceover-user-check.json",
+      "size_bytes": 2135,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2fc28ceb5000d07fdc5b7e80697da46656054283",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-local-browser-results.json",
+      "size_bytes": 651,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "daf930a570ed078c753362abf6fb38f3f6881d39",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-phone-review-https-smoke.json",
+      "size_bytes": 6608,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9ffe594d5a23f09dd9c4a44200b1c825dac3b908",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-phone-user-check.json",
+      "size_bytes": 2378,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d3723c0a3398fa5530a6cd12e56efc2421f10e84",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-poster-runtime-compatibility.json",
+      "size_bytes": 8558,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "06ef40c150f33ca9bdefa5d5005a21d7c071b34b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-poster-source.json",
+      "size_bytes": 586,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ce75e820fbe42096fbe449d4e1300de0c73accee",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-review-network.json",
+      "size_bytes": 7218,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0db482c88159afa661e68153d443c837239456b2",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-s05-parity.json",
+      "size_bytes": 7612,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d6b5bb27bd2c282138f8192910605670fcef87b4",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/footbridge-320.png",
+      "size_bytes": 13001,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c1b0ee73233c9b7cf2e767948f86f3d75228d259",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/garden-gate-320.png",
+      "size_bytes": 12215,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5c93a97ff314f709471c9ca962536ae1fee72623",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/herb-garden-320.png",
+      "size_bytes": 15476,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5a1ff875514672f10d708c23dd9041c8e342a2b9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/pavilion-320.png",
+      "size_bytes": 14822,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "85b735f59d86f9dbe6b9348f97544e42dc5ff1f1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/reading-shelter-320.png",
+      "size_bytes": 14552,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "415f3b7cf9ae25c525ac1f48b5eba0859801247f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/shade-tree-320.png",
+      "size_bytes": 13575,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3bc4603b5b402bf8f2d02b372b302518c998de72",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/scene-weekdays/sunset-overlook-320.png",
+      "size_bytes": 14191,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1767a51c580aed0cb3b01bb11318bfa59d2889d5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/README.md",
+      "size_bytes": 7419,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3abbd0e115feb7fd76d84c765140eeaa28003abe",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-1366x768-viewport.png",
+      "size_bytes": 161988,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4ba2b4919179d28d5db74a894d0412af695e0415",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-1366x768.png",
+      "size_bytes": 168065,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d8f107a0fc80c88cb690bc07b7bd16bf49765780",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-320x568-viewport.png",
+      "size_bytes": 58923,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ae32ab0518a62ff74e848cb287947f9b4cf395a6",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-320x568.png",
+      "size_bytes": 75877,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4295714159fd82d07694987204055c1c9e26d2d9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-390x844-viewport.png",
+      "size_bytes": 85381,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c9cead824d6445e78efaa4f371cabb5a37f89c12",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S02-390x844.png",
+      "size_bytes": 95797,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8c66eff60ea060417d04f8c3c9ef8a24923efb17",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-1366x768-viewport.png",
+      "size_bytes": 69284,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "16fc9746047a149feafb8697db7f5b0706b6f6c4",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-1366x768.png",
+      "size_bytes": 69607,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a342f71aaeec2e155912bb9be431ffc8c1b58164",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-320x568-viewport.png",
+      "size_bytes": 28537,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8894919e14a6b49dc8f8c81a92c7aa40b7f73150",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-320x568.png",
+      "size_bytes": 38092,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "74a0744badf1109482f435b6ec9c28ae153c70c9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-390x844-viewport.png",
+      "size_bytes": 41443,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "00e8dad58de9bc16fdea5cb2114709fff0edecfe",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S04-390x844.png",
+      "size_bytes": 41772,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e2cd5c9357847b1e3a41cb1be5a5c0d26f263579",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-1366x768-viewport.png",
+      "size_bytes": 66187,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e2cd5c9357847b1e3a41cb1be5a5c0d26f263579",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-1366x768.png",
+      "size_bytes": 66187,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3b5ccedd82ca998ec51358812112333230bd9532",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-320x568-viewport.png",
+      "size_bytes": 46124,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9eded58ec43198d7453b45d3dde14e552777e87a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-320x568.png",
+      "size_bytes": 46720,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "eabe24747d9dc597d8b351a38519911090612cbb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-390x844-viewport.png",
+      "size_bytes": 51305,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "eabe24747d9dc597d8b351a38519911090612cbb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/after/S05-390x844.png",
+      "size_bytes": 51305,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ea0f615cd645f9676820a8b3ff8d6bacc4f931f1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-1366x768-viewport.png",
+      "size_bytes": 182056,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1479f2ef8d7cc60ec6aba3bc2321787c20f02110",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-1366x768.png",
+      "size_bytes": 324051,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "7e1a200f551d26b2fd7b7aa50126ca57102a3b4f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-320x568-viewport.png",
+      "size_bytes": 47591,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "71a8bece5ee08ec3e7398d7ac5d07eb87d0b4e08",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-320x568.png",
+      "size_bytes": 115199,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f444e5542b70aaa8e3d65d0e1dfeafe463653e42",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-390x844-viewport.png",
+      "size_bytes": 64832,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c7cc8959e298f7425fc3a6db934618f5ff48ef0a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S02-390x844.png",
+      "size_bytes": 128683,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "71a05e43c13143a922db7a4448b578a19b651cb1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-1366x768-viewport.png",
+      "size_bytes": 242543,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "381c730e361f782f96e8ead308fa52ff7e519b81",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-1366x768.png",
+      "size_bytes": 245737,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "fddd40fa73bc3bf157064954c0bfe87db5498f40",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-320x568-viewport.png",
+      "size_bytes": 45126,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0c02c3f8007a13b24291f57c57501da896d464dc",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-320x568.png",
+      "size_bytes": 57184,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2a32624b860f19841500c4674c8792ca0e2db167",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-390x844-viewport.png",
+      "size_bytes": 61925,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8516946941ecbd8ae7a2d98fe01d72ad0db45266",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S04-390x844.png",
+      "size_bytes": 63553,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1fcb0e5251bd7bb8d9c877351eba7ddfbb2650bc",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-1366x768-viewport.png",
+      "size_bytes": 237346,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1fcb0e5251bd7bb8d9c877351eba7ddfbb2650bc",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-1366x768.png",
+      "size_bytes": 237346,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c1baa5987cf8b66fe8c82071eb21023999dfdd06",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-320x568-viewport.png",
+      "size_bytes": 60533,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4fb342292460588dbd736f51fdbf6223d2211f05",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-320x568.png",
+      "size_bytes": 67398,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "bc6776d25392efaf27e360ddda4b4608fe6ba513",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-390x844-viewport.png",
+      "size_bytes": 72904,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "02c0f0e6717f9ed7db5fe6e7d91db616215d1398",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/before/S05-390x844.png",
+      "size_bytes": 73010,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3662b382504dfd6603d7637ae080118e03cf9955",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-journey/verification.json",
+      "size_bytes": 11492,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "845e7e240fbf8acc1163235f78958a1e0b4ea346",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/README.md",
+      "size_bytes": 13534,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4021f05634487d8b59d17c82c6bd9e1d552bdbdd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-1366x768-viewport.png",
+      "size_bytes": 182434,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d106e2817d191301fa45186480b6b57deab26aa0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-1366x768.png",
+      "size_bytes": 292467,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5b2e39487a390b033b698a5718caa0f224ed3933",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-320x568-viewport.png",
+      "size_bytes": 44307,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "41bfd7e12e57f4b15d69f10e6b28d2ee4ed827d0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-320x568.png",
+      "size_bytes": 169240,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9aff31306b946962f8fc2ba9f6c270507965adc2",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-390x844-viewport.png",
+      "size_bytes": 69540,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3bb49bf368b866817a492077ec77b677f876cb7e",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-current-390x844.png",
+      "size_bytes": 186408,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "26f6a0bff8392ed526724b7edd98e8eb87d25e1b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-prior-390x844-viewport.png",
+      "size_bytes": 68955,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "30689b002289f23f8f7aacf72e77ba43fdb688ce",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-prior-390x844.png",
+      "size_bytes": 198555,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5f968c3b37b3ac0ce14465385b1491c1a8089f58",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-stale-390x844-viewport.png",
+      "size_bytes": 72004,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "376f3f40ca8d2c3a1df128c1c2a9f39a749fed41",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/S10-stale-390x844.png",
+      "size_bytes": 209801,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b60571ffb23063d7cea56262515f5f418666740a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/after/capture.json",
+      "size_bytes": 699,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "024a66567575af25076e2c06e3331e41ccda0ef9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-1366x768-viewport.png",
+      "size_bytes": 178737,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "fbed92ad22580cadbe68172b96733e929583d743",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-1366x768.png",
+      "size_bytes": 474605,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "08b2c67ec59e7776b2e624886394ebbb691382af",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-320x568-viewport.png",
+      "size_bytes": 47606,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ca28663cc0da1c12d4e0a2466046071ea93fe8fd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-320x568.png",
+      "size_bytes": 164814,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4b4f4422c20a8000a71cf17e21da3e1c5e40f1e8",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-390x844-viewport.png",
+      "size_bytes": 62406,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c9ccb0cea1898129c5718f9d32447764c9202663",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-current-390x844.png",
+      "size_bytes": 177251,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2f45e505bd060e50713fc64ecbcd90a474d8a205",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-prior-390x844-viewport.png",
+      "size_bytes": 29384,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8a0174b479777146cf2b15ab3b73cfdc840c11a1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-prior-390x844.png",
+      "size_bytes": 177809,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5e388a648b1eaebc5b965284b2b0c70522abf9a4",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-stale-390x844-viewport.png",
+      "size_bytes": 72387,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a886ddae8ddd8b0b1a37579cbaf4b46c27742064",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/S10-stale-390x844.png",
+      "size_bytes": 200197,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b1d062911317d7ef3a67258793416a2ff87046df",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/before/capture.json",
+      "size_bytes": 699,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9ba5b020338419e19e00d5f2893e2bf2f33152c5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-recap/verification.json",
+      "size_bytes": 5361,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8ebfe0f186bec186ebb3350174d013386fe122ea",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/README.md",
+      "size_bytes": 1254,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9e239f170c95b673fbc30ebf8d58496ec3f565f5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/after/S02-1366x768-viewport.png",
+      "size_bytes": 238871,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2d6ad0be55b5b8d3e5337a7902500227aa7c9df3",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/after/S02-390x844-viewport.png",
+      "size_bytes": 102934,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "09c5bd60873fa768a1dffc9b3728689d6c37cafd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/after/capture.json",
+      "size_bytes": 867,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "356fe519aebc23c978d6944469a60dddee173a74",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/before/S02-1366x768-viewport.png",
+      "size_bytes": 232832,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "194640d6975b349a6347521314435150f4eb73e0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/before/S02-390x844-viewport.png",
+      "size_bytes": 101024,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "aa9786a62e01b73b16cb2e4974eb2c4680de419c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-transcend-phase3b-s02-spatial/before/capture.json",
+      "size_bytes": 674,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "6f30784f5c6661fc543024079b49c32b48c72f76",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/README.md",
+      "size_bytes": 6819,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9e8dad5aec16e5433b4bf1b43fa372d9aa49f7a7",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/capture-provenance.json",
+      "size_bytes": 14779,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b9641f7db11cf69f742278cf209b15544316f65b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/normal-login-390.png",
+      "size_bytes": 35198,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4ba2b4919179d28d5db74a894d0412af695e0415",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S02-1366.png",
+      "size_bytes": 168065,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ae32ab0518a62ff74e848cb287947f9b4cf395a6",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S02-320.png",
+      "size_bytes": 75877,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "14c7d4c2f93e29e9628f2c838ed01e0901678b4f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S02-390.png",
+      "size_bytes": 98050,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "00e8dad58de9bc16fdea5cb2114709fff0edecfe",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S04-390.png",
+      "size_bytes": 41772,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ef1870a79fee988bf0089c881421de2501b9a055",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-actions-scrolled-320.png",
+      "size_bytes": 40907,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "665565e86a461eb3333613ded0f49735a720f4f7",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-1366.png",
+      "size_bytes": 65333,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e215c8269569596b0573a663b9ed8c29ed7e6690",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-320.png",
+      "size_bytes": 42008,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0aeadfa46c690fb7dcaf04cb1a865f05900d1627",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-390.png",
+      "size_bytes": 46244,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "b9293833fb2c2843e3f97faf4ab614c01327a27d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-celebrate-1366.png",
+      "size_bytes": 66253,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "65cfe5646d2be5dae49667d215ea4b0105df5a58",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-celebrate-320.png",
+      "size_bytes": 42552,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f7326835addbc29d7b3aa3ff2c7b40d06decfaa5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-celebrate-390.png",
+      "size_bytes": 46839,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "03ddef5ef07c2d040c31d6f29460e5ceaa6c97de",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-neutral-1366.png",
+      "size_bytes": 65427,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "8960d71373c886a1bc44c1431d8f2a711137ed73",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-neutral-320.png",
+      "size_bytes": 41955,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ab9fb36d1a48fa8a200bd45594ef78bf588c3b98",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-companion-neutral-390.png",
+      "size_bytes": 46176,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f64baf300534e6dc4823dcd35fc8bf528907033e",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S05-failed-media-390.png",
+      "size_bytes": 32764,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "933e53a19d66126d863aded034f45b4c86d5bd9b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S10-1366.png",
+      "size_bytes": 283121,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "56e6613e72eced63f1fa1cef75044c6258f5675a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/sk7-ui-release/synthetic-S10-390.png",
+      "size_bytes": 177799,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "cc4bc873dbc617ee62ac039b5b0c2e0fe9f21a80",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/world-props-v2-identities.json",
+      "size_bytes": 7871,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5e75ff01a52627fb31ce7be15d4f22b1ab9ae304",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/world-props-v2-review.md",
+      "size_bytes": 2129,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a3d03d2225541b05f638cbb93ee4b51781886fcb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/world-scenes-v2-identities.json",
+      "size_bytes": 3717,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "943f354589e91ff83536725f6273d4819f836940",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/evidence/world-scenes-v2-review.md",
+      "size_bytes": 1960,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "24c5162e054e6263d5478864c98d22a37d4605e4",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/architecture-research-run-01.md",
+      "size_bytes": 5544,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "bd67fb4a86ed34697b0235947e8a62d2822227e5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-charter.md",
+      "size_bytes": 8832,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e60f7b39ef76233a476b222db6e04e4e24515310",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-comprehension-study-protocol.md",
+      "size_bytes": 14366,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0b8253c10eb5256c571b56472020472aa8e4350b",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-comprehension-study-result.md",
+      "size_bytes": 8889,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3521e7aadf0eb3f72a1d53ca8e2df32c4c3f85bb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-finite-reference-comprehension-contract.md",
+      "size_bytes": 8431,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "193af71f053558f3555fec4f5ca3389dad56cd35",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-finite-reference-comprehension-prototype.html",
+      "size_bytes": 11223,
+      "text_candidate": false
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "13fab13c2be2400f9dd1ad15f419d1acbd0e129a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-finite-reference-comprehension-result.md",
+      "size_bytes": 7598,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "695e328d27ed6a123ca242bd7341f581cb0db49c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g1-dataset-screen.md",
+      "size_bytes": 12106,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "72fae98aaf7a8e9ccef70d4a7f1fed836416c351",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g2-audit-contract.md",
+      "size_bytes": 6063,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "028b3d66b9e3927b15e0c2ba00843454248fe9ad",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g2-knhanes-audit.md",
+      "size_bytes": 7014,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "1b165916adece90b05e8d2c035ac53cd6d1de8b5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g3-freeze-contract.md",
+      "size_bytes": 5683,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "6b5dc74fbf60f7eb156475858a82b097f43346cb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g3-split-manifest.md",
+      "size_bytes": 1367,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f07be27a45f06778f43bd8a2b515765192e356e1",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g4-baseline-contract.md",
+      "size_bytes": 5315,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c1ee8c1deb9ca277cdc98000f459b38371709c31",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g4-baseline-result.md",
+      "size_bytes": 2689,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e290a8ed32f903fc1f7946deaed0d5f378ce0447",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g5-family-screen-contract.md",
+      "size_bytes": 5716,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "9406568d9d127b4f6f31780ac2611a91c9602997",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g5-family-screen-result.md",
+      "size_bytes": 2914,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "54228067cb9a35b662fa0e942ac49180618c1dbe",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g6-validation-contract.md",
+      "size_bytes": 5139,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "38450576a20158d44155ee67df881d7e31e32151",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g6-validation-result.md",
+      "size_bytes": 3325,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4d7dd05dc1f25dac6d0004bf1e9827bd14a79389",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g7-external-evaluation-contract.md",
+      "size_bytes": 5640,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a8eb1a6f3b779099d091f1814546a6502050bc82",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g7-external-evaluation-result.md",
+      "size_bytes": 4179,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "89a4de119e655d7bb5c597ad6f72531c8c7adc96",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g7a-external-compatibility-contract.md",
+      "size_bytes": 3613,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f1189fc30747f41b24c3ebe1b5c41384ae9261d5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g7a-external-compatibility-result.md",
+      "size_bytes": 1632,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "a9c21e53ecf85ef7c9360b4451337b5b786ba83c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g8-final-test-result.md",
+      "size_bytes": 4182,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "accea614cad658b8877713028e06689463015bcc",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g9-release-review-contract.md",
+      "size_bytes": 4880,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c0f3ab17b5a91bc4ab606445342b0ccaf46e320c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-g9-release-review-result.md",
+      "size_bytes": 2096,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "44e326e69903e062f8e4351a3d5299769515f05f",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r1-artifact-contract.md",
+      "size_bytes": 3634,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d64823e91c201c97df3101f112026c335266d39a",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r1-artifact-result.md",
+      "size_bytes": 1922,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4e4438cd54da011e5dba2aacc17a54308835e2b3",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r2-inference-contract.md",
+      "size_bytes": 4769,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0278660c9ef0cae8b4cb526564f7573a1ce7e48d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r2-inference-result.md",
+      "size_bytes": 2866,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "632c0aa3a959c2a0ee05b4fba64e1bb2d9b03784",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r3-activation-readiness-contract.md",
+      "size_bytes": 2835,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5a5f8dbd493558bfd7cce02e8e1653d326261df0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-r3-activation-readiness-result.md",
+      "size_bytes": 2747,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "117e7b92f719abcf96e751298c9fbdf99f08b17c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-reference-distribution-contract.md",
+      "size_bytes": 11873,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2fc4784d81c2c681d5f722713c9ffee011b24afb",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-reference-distribution-result.md",
+      "size_bytes": 26523,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "28bbe24c92485426293a26aec357f6c5e39b47a0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-reference-uncertainty-contract.md",
+      "size_bytes": 11519,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d2ce39cfe106e4f79ec40c01793ee839943b24d6",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-reference-uncertainty-result.md",
+      "size_bytes": 35679,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "d60f663b4fc4c16c4ff2299de88be838eb65d523",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t1-product-planning-20260908.md",
+      "size_bytes": 28989,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "448d1d7b57e496da9e1ab404f34749c02e2935f2",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t10-operational-readiness-result.md",
+      "size_bytes": 6246,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f5901b37948a1482f1169d14a6205ee82d05adb0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t11-release-readiness-result.md",
+      "size_bytes": 3509,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "132a93fa4150dc03d12236bca28815169d876bb5",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t12-product-policy-resolution-result.md",
+      "size_bytes": 5331,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3598672ecf237cb11d6453719b8a7618d060b364",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t13-product-readiness-transition-result.md",
+      "size_bytes": 4002,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ed0fd6284414c1c2e649eee2e8caeb5e3e0fcedd",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t14-privacy-readiness-transition-result.md",
+      "size_bytes": 4039,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "56eb39947760001e68dfcc3b18daeea505b7d3da",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t15-operational-owner-transition-result.md",
+      "size_bytes": 2249,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "4edd0fb6e5db80f129e13c3f0a014a35270abfc2",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t16-explicit-activation-approval-result.md",
+      "size_bytes": 2101,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c8682d160524dfe2d4bacaa8a7c44e90b13766cf",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t17-production-candidate-verification.md",
+      "size_bytes": 2865,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "f2b510f4f8337381e6e9c3b159d6f8c1290316c9",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t18-production-go-live-result.md",
+      "size_bytes": 3408,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "c4a15182bc73986c60107c2b20b6d4433535dd92",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t19-api-score-boundary-result.md",
+      "size_bytes": 1574,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "32053eeb9a0f028d265b4283291a2d57df22387d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t2-semantic-parity-result.md",
+      "size_bytes": 6258,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "0295b4f712ed93d2ff73423145ec334ea72ed6b0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t20-production-monitoring-baseline.md",
+      "size_bytes": 6653,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "ac971fc1e9df24dd663a3df9639318187a962f83",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t4-authenticated-api-result.md",
+      "size_bytes": 1932,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e658f4558f70eddc605d7d167b18883db00e682c",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t5-input-adapter-result.md",
+      "size_bytes": 3702,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "3b13de3e9d1ecc0e6ac8aa5250f874e3d593fa1d",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t6-result-state-ui-result.md",
+      "size_bytes": 2803,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "2f5d0198411ad89eed80177f246c117e5e7ef7e0",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t7-activation-go-no-go-result.md",
+      "size_bytes": 3577,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "5c22b50af3ccdda200c36ffa9aa38bd19ef01589",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t8-product-readiness-result.md",
+      "size_bytes": 4363,
+      "text_candidate": true
+    },
+    {
+      "audit_scope": true,
+      "blob_sha": "e1e316783a4b3519ec63373e25a4c0ae3dc5a3ab",
+      "mode": "100644",
+      "object_type": "blob",
+      "path": "docs/research/model-v2-t9-privacy-readiness-result.md",
+      "size_bytes": 5502,
+      "text_candidate": true
+    }
+  ],
+  "schema_version": 1,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4"
+}
