@@ -1,6 +1,5 @@
 import type { FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
 
 import { scoreModelV2Locally } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
@@ -12,12 +11,12 @@ import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, TIME_FIELD_KEYS, type Draft } from "./modelV2Draft";
 import { FIELDS, formatTimeKorean, INPUT_STEPS, PROGRESS_STEPS, reviewValue, STEPS, stepProblem, type InputStep, type Step, type StepProblem } from "./modelV2Steps";
 import type { ModelV2Continuation } from "./modelV2Continuation";
+import type { ModelV2ExecutionGuard } from "./modelV2ExecutionGuard";
 import "./ModelV2InputFlow.css";
 
 type Props = {
-  session: Session;
-  captureRequestContext: (activeSession: Session | null) => ModelV2RequestContext | null;
-  isCurrentRequestContext: (requestContext: ModelV2RequestContext) => boolean;
+  guard: ModelV2ExecutionGuard;
+  guestCue?: string;
   bloodPressureStatus: string;
   bloodPressureSupport: string;
   continuation: ModelV2Continuation;
@@ -25,12 +24,6 @@ type Props = {
   challengeSupport: string;
   onContinue: () => void;
   onReturnToToday: () => void;
-};
-
-export type ModelV2RequestContext = {
-  userId: string;
-  generation: number;
-  accessToken: string;
 };
 
 type ResultState = "idle" | "input_invalid" | "temporarily_unavailable" | "processed";
@@ -467,9 +460,8 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
 }
 
 export function ModelV2InputFlow({
-  session,
-  captureRequestContext,
-  isCurrentRequestContext,
+  guard,
+  guestCue,
   bloodPressureStatus,
   bloodPressureSupport,
   continuation,
@@ -604,8 +596,8 @@ export function ModelV2InputFlow({
       return;
     }
 
-    const requestContext = captureRequestContext(session);
-    if (!requestContext) return;
+    const token = guard.capture();
+    if (!token) return;
     requestInFlight.current = true;
     setPending(true);
     clearFeedback();
@@ -613,12 +605,12 @@ export function ModelV2InputFlow({
 
     try {
       const localResult = await scoreModelV2Locally(payload);
-      if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
+      if (!mounted.current || !guard.isCurrent(token)) return;
       setPreviewOutput(visibleModelV2Output(localResult.continuousOutput, seoulDate()));
       setResultState("processed");
       setFocusRequest({ id: "model-v2-result-title" });
     } catch (error) {
-      if (!mounted.current || !isCurrentRequestContext(requestContext)) return;
+      if (!mounted.current || !guard.isCurrent(token)) return;
       if (error instanceof ModelV2LocalError && error.code === "input_invalid") {
         setResultState("input_invalid");
         setMessage("입력 조합을 확인해 주세요. 수정한 뒤 다시 시도할 수 있습니다.");
@@ -720,6 +712,7 @@ export function ModelV2InputFlow({
 
               {step === "intro" && <section className="model-v2-intro section-header" aria-labelledby={STEP_TITLE_ID}>
                 <div className="model-v2-intro-mark" aria-hidden="true" />
+                {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
                 <p>기본 정보·활동·수면·생활습관을 입력합니다.</p>
                 <p><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong></p>
                 {previewOpen ? (

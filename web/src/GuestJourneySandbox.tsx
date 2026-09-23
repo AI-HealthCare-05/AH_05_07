@@ -1,10 +1,11 @@
-import type { FormEvent } from "react";
+import type { ComponentProps, FormEvent } from "react";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { JourneyRecap } from "./components/JourneyRecap";
 import { JourneyToday } from "./components/JourneyToday";
 import { LivingWeekReport } from "./components/LivingWeekReport";
+import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
 import { RecordExplorer } from "./components/RecordExplorer";
 import { Scene, SceneShell } from "./components/SceneShell";
 import {
@@ -13,6 +14,8 @@ import {
   type BloodPressureDraft,
 } from "./components/useNewBloodPressureDraft";
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
+import { resolveModelV2Continuation } from "./components/modelV2Continuation";
+import { createModelV2GuestGuard } from "./components/modelV2ExecutionGuard";
 import {
   createGuestJourneyState,
   guestJourneyReducer,
@@ -104,6 +107,14 @@ function challengeLabel(actionId: string): string {
 
 function checkinLabel(status: ChallengeCheckin["status"]): string {
   return status === "completed" ? "기록함" : "건너뜀";
+}
+
+// Guest S11 mounts this wrapper only while activeScreen === "S11". The guard
+// is created once per mount via useMemo, so ordinary parent re-renders keep
+// the same guard, and navigating away/re-entering creates a fresh instance.
+function GuestModelV2InputFlow(props: Omit<ComponentProps<typeof ModelV2InputFlow>, "guard">) {
+  const guard = useMemo(() => createModelV2GuestGuard(), []);
+  return <ModelV2InputFlow {...props} guard={guard} />;
 }
 
 function GuestJourney({ today }: { today: string }) {
@@ -220,6 +231,39 @@ function GuestJourney({ today }: { today: string }) {
     `guest:${startOn}:${endOn}`,
     activeScreen,
   );
+  const modelV2Continuation = resolveModelV2Continuation({
+    freshness: "confirmed",
+    bloodPressure: todayMeasurement ? "exists" : "missing",
+    challenge: !activeChallenge ? "none"
+      : activeChallengeEnded ? "ended"
+        : todayCheckin ? "active_recorded" : "active_pending",
+  });
+  const modelV2BloodPressureStatus = !todayMeasurement
+    ? "오늘 혈압 기록 전"
+    : todayMorningMeasurement && todayEveningMeasurement
+      ? "오늘 아침·저녁 기록 있음"
+      : todayMorningMeasurement
+        ? "오늘 아침 기록 있음"
+        : "오늘 저녁 기록 있음";
+  const modelV2BloodPressureSupport = !todayMeasurement
+    ? "오늘 기록 없음"
+    : todayMorningMeasurement && todayEveningMeasurement
+      ? "아침·저녁 기록 있음"
+      : todayMorningMeasurement
+        ? "아침 기록 있음"
+        : "저녁 기록 있음";
+  const modelV2ChallengeStatus = activeChallengeEnded && activeChallenge
+    ? `${challengeLabel(activeChallenge.action_id)} · 기간이 끝났어요.`
+    : activeChallenge
+      ? todayCheckin
+        ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 ${checkinLabel(todayCheckin.status)}`
+        : `${challengeLabel(activeChallenge.action_id)} · 오늘 상태는 아직 기록하지 않았어요.`
+      : "진행 중인 7일 챌린지가 없어요.";
+  const modelV2ChallengeSupport = activeChallengeEnded
+    ? "오늘의 기록으로 돌아가 원하면 다음 챌린지를 고를 수 있어요."
+    : activeChallenge
+      ? "오늘의 기록에서 현재 챌린지 상태를 이어서 확인할 수 있어요."
+      : "원하면 오늘의 기록에서 7일 챌린지를 선택할 수 있어요.";
 
   useEffect(() => {
     const onPopState = () => {
@@ -862,16 +906,16 @@ function GuestJourney({ today }: { today: string }) {
     }
 
     if (activeScreen === "S11") {
-      return <Scene id="S11" eyebrow="체험용 예시" title="AI 분석 맛보기" tone="secondary" className="signal-scene">
-        <div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div>
-        <div className="signal-card" data-guest-model-v2-demo="available" role="status" aria-live="polite">
-          <span className="status-pill">AI 분석 맛보기</span>
-          <h2>생활정보를 바탕으로 이런 방식으로 분석해요</h2>
-          <p>체험에서는 분석 화면의 흐름만 보여드려요. 로그인 후에는 입력한 생활정보를 이 브라우저에서 계산하며, 분석 입력과 결과를 서버에 보내거나 저장하지 않아요.</p>
-        </div>
-        <p className="signal-disclaimer">이 분석은 진단·치료·예방 판단이 아닙니다.</p>
-        <button className="secondary" type="button" onClick={() => navigate("S02")}>오늘 화면으로 돌아가기</button>
-      </Scene>;
+      return <GuestModelV2InputFlow
+        guestCue="로그인 없이 체험하는 중이에요."
+        bloodPressureStatus={modelV2BloodPressureStatus}
+        bloodPressureSupport={modelV2BloodPressureSupport}
+        continuation={modelV2Continuation}
+        challengeStatus={modelV2ChallengeStatus}
+        challengeSupport={modelV2ChallengeSupport}
+        onContinue={() => navigate(modelV2Continuation.destination)}
+        onReturnToToday={() => navigate("S02")}
+      />;
     }
 
     return <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings surface guest-settings">

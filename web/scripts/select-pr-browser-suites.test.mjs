@@ -56,6 +56,13 @@ test('guest entry, store, presentation and firewall route to core, full Journey,
   ]) assert.deepEqual(browser([file]), ['core', 'journey-full', 'scene', 'guest'], file);
 });
 
+test('guest Model V2 isolation checker and its tests route to the dedicated guest module', () => {
+  for (const file of [
+    'web/scripts/verify-guest-model-v2-isolation.mjs',
+    'web/scripts/verify-guest-model-v2-isolation.test.mjs',
+  ]) assert.deepEqual(browser([file]), ['guest'], file);
+});
+
 test('Showcase portal source and its journey-mode browser contract stay together', () => {
   for (const file of [
     'web/public/showcase-cinema.js',
@@ -241,7 +248,11 @@ test('browser module commands are owned outside the path selector', () => {
   assert.ok(browserModuleCommands['journey-full'].includes('node scripts/verify-ui-build-matrix.mjs'));
   assert.ok(browserModuleCommands.model.includes('npm run test:e2e:model-v2'));
   assert.ok(browserModuleCommands.scene.includes('npm run test:e2e:saved-scene'));
-  assert.deepEqual(browserModuleCommands.guest, ['npx playwright test --config=playwright.guest.config.ts']);
+  assert.deepEqual(browserModuleCommands.guest, [
+    'node scripts/verify-guest-model-v2-isolation.mjs',
+    'node --test scripts/verify-guest-model-v2-isolation.test.mjs',
+    'npx playwright test --config=playwright.guest.config.ts',
+  ]);
   assert.ok(browserModuleCommands.assets.includes('npx playwright test --config=playwright.companion-asset.config.ts'));
   assert.ok(browserModuleCommands.assets.includes('node --test scripts/import-companion-r2-inventory.test.mjs'));
   assert.ok(browserModuleCommands.assets.some(command => command.includes('import-companion-r2-inventory.mjs') && command.includes('--check')));

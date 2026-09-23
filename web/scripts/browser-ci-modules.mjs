@@ -30,6 +30,8 @@ export const browserModuleCommands = Object.freeze({
     'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
   ],
   guest: [
+    'node scripts/verify-guest-model-v2-isolation.mjs',
+    'node --test scripts/verify-guest-model-v2-isolation.test.mjs',
     'npx playwright test --config=playwright.guest.config.ts',
   ],
   model: [
