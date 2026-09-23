@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "status": "active",
+  "base_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "audited_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "branch": "audit/repository-evidence-system-v1",
+  "worktree": "/Users/gom/Projects/AH_05_07-evidence-system-v1",
+  "started_at": "2026-09-23T19:03:41.018680+00:00",
+  "last_checkpoint_at": "2026-09-23T19:03:41.018680+00:00",
+  "last_verified_task": "EA-001",
+  "active_task": null,
+  "next_task": "EA-002",
+  "completed_tasks": [
+    "EA-001"
+  ],
+  "blocked_tasks": [],
+  "last_commit": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "last_commit_semantics": "Last observed HEAD before writing this checkpoint, not the self-containing commit. Resolve containing checkpoint with git log -1 --format=%H -- docs/evidence/repository-atlas/STATE.json.",
+  "verification_commands": [
+    "git diff --check"
+  ],
+  "important_findings": [
+    "Canonical origin/main starts at 6f163c33bf11193f0322c0377ff9463567b361b4",
+    "User explicitly limits this task to local commits; no CI integration."
+  ],
+  "known_unknowns": [
+    "Local history completeness and reference validity have not yet been audited."
+  ],
+  "resume_instructions": [
+    "Read WORKPLAN.md, STATE.json, QUEUE.json, RESUME.md; reconcile live Git first.",
+    "Recover active task first; otherwise execute next_task. Do not repeat verified tasks."
+  ],
+  "owned_paths": [
+    "docs/evidence/repository-atlas/",
+    "scripts/check_repository_evidence.py",
+    "tests/test_repository_evidence.py"
+  ],
+  "publication": {
+    "push": 0,
+    "pr": 0,
+    "merge": 0,
+    "deploy": 0
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "EA-001",
+      "title": "Establish persistent control plane",
+      "objective": "Save the complete task contract and recoverable queue before archaeology.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [],
+      "verification": [
+        "Parse JSON; validate one active task; git diff --check"
+      ],
+      "status": "verified",
+      "notes": [
+        "Bootstrap JSON and task invariants verified before first checkpoint."
+      ]
+    },
+    {
+      "id": "EA-002",
+      "title": "Inventory tracked repository and evidence files",
+      "objective": "Inventory pinned Git tree without opening binary contents.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/inventories/",
+        "scripts/check_repository_evidence.py"
+      ],
+      "dependencies": [
+        "EA-001"
+      ],
+      "verification": [
+        "Inventory counts match git ls-tree; JSON parse; repeat byte equality"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-003",
+      "title": "Extract document references",
+      "objective": "Implement deterministic stdlib extraction with source lines and typed references.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py",
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-002"
+      ],
+      "verification": [
+        "Scanner unit tests; compare repeated extraction"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-004",
+      "title": "Validate local references",
+      "objective": "Resolve paths, anchors and commits locally; separate remote existence and ambiguity.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py",
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-003"
+      ],
+      "verification": [
+        "Temporary Git fixture tests; broken and historical target fixtures; deterministic run"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-005",
+      "title": "Normalize architecture and frozen Model V2 evidence",
+      "objective": "Record source-grounded lifecycle and boundary relationships.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-004"
+      ],
+      "verification": [
+        "Every selection has exact source and lifecycle justification"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-006",
+      "title": "Normalize journey, companion, assets and Transcend evidence",
+      "objective": "Record current authority and scoped historical observations without designing product changes.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-005"
+      ],
+      "verification": [
+        "Read selected sources; verify relation endpoints and citations"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-007",
+      "title": "Normalize auth, account, deployment and verification evidence",
+      "objective": "Map security/data boundaries and CI/release evidence with scope limits.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-006"
+      ],
+      "verification": [
+        "Read selected sources; no current-runtime inference from dated reports"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-008",
+      "title": "Build authority graph and index",
+      "objective": "Generate normalized records and typed, traceable relationships from curated sources.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py",
+        "docs/evidence/repository-atlas/"
+      ],
+      "dependencies": [
+        "EA-007"
+      ],
+      "verification": [
+        "Graph schema/endpoint tests; curated quotation validation"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-009",
+      "title": "Analyze and triage evidence gaps",
+      "objective": "Separate confirmed local reference gaps from review candidates and unverified remote claims.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/",
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py"
+      ],
+      "dependencies": [
+        "EA-008"
+      ],
+      "verification": [
+        "Inspect representative failures and false positives; record confidence and follow-up"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-010",
+      "title": "Generate atlas and document audit interface",
+      "objective": "Provide compact domain maps and reproducible read-only check/regenerate commands.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/",
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py"
+      ],
+      "dependencies": [
+        "EA-009"
+      ],
+      "verification": [
+        "Read-only --check; byte-stable regeneration; output drift negative test"
+      ],
+      "status": "pending",
+      "notes": []
+    },
+    {
+      "id": "EA-011",
+      "title": "Final divergence review and verification",
+      "objective": "Fetch main once, inspect incremental changes, finish checks and self-review.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "allowed_outputs": [
+        "docs/evidence/repository-atlas/",
+        "scripts/check_repository_evidence.py",
+        "tests/test_repository_evidence.py"
+      ],
+      "dependencies": [
+        "EA-010"
+      ],
+      "verification": [
+        "Targeted tests; relevant existing policy tests; ruff lint and format; git diff --check; boundary/commit review"
+      ],
+      "status": "pending",
+      "notes": []
+    }
+  ]
+}
