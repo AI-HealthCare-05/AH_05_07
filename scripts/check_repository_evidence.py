@@ -288,6 +288,7 @@ def inventory_outputs(root: Path, ref: str) -> dict[str, str]:
     )
     result["references.md"] = render_references(ref, refs)
     result["validation.md"] = render_validation(ref, validations)
+    result.update(normalized_outputs(root, ref, rows, validations))
     return result
 
 
@@ -326,6 +327,191 @@ def render_validation(ref: str, rows: list[dict]) -> str:
     )
     lines.append("")
     return "\n".join(lines)
+
+
+def source_records(root: Path, ref: str) -> list[dict]:
+    source_doc = json.loads((root / ATLAS / "SOURCES.json").read_text())
+    if source_doc.get("audited_sha") != ref:
+        raise ValueError("SOURCES.json audited_sha does not match the generated source snapshot")
+    records = source_doc.get("records")
+    if not isinstance(records, list):
+        raise ValueError("SOURCES.json records must be a list")
+    required = {
+        "id",
+        "title",
+        "category",
+        "status",
+        "source_type",
+        "source_path",
+        "source_sha",
+        "authority",
+        "protects",
+        "summary",
+        "verification",
+    }
+    for record in records:
+        missing = required - set(record)
+        if missing:
+            raise ValueError(f"evidence record {record.get('id')} missing: {', '.join(sorted(missing))}")
+        if record["source_sha"] != ref:
+            raise ValueError(f"evidence record {record['id']} is not pinned to the audited SHA")
+    return sorted(records, key=lambda record: record["id"])
+
+
+def validate_sources(records: list[dict], inventory_rows: list[dict]) -> list[dict]:
+    paths = {row["path"] for row in inventory_rows}
+    return [
+        {
+            "id": record["id"],
+            "source_path": record["source_path"],
+            "status": "resolved" if record["source_path"] in paths else "broken",
+            "reason": "source path exists at audited SHA"
+            if record["source_path"] in paths
+            else "source path is absent at audited SHA",
+        }
+        for record in records
+    ]
+
+
+def render_authority_map(records: list[dict], ref: str) -> str:
+    lines = [
+        "# Project authority map",
+        "",
+        f"Curated from source-grounded records pinned to `{ref}`.",
+        "",
+        "| Boundary | Current authority | Lifecycle | Protects |",
+        "| --- | --- | --- | --- |",
+    ]
+    for record in records:
+        if record["status"] == "current":
+            lines.append(
+                f"| `{record['category']}` | [{record['title']}]({record['source_path']}) | `{record['status']}` | {', '.join(record['protects']) or '—'} |"
+            )
+    lines.extend(
+        [
+            "",
+            "Historical, research and evidence records remain traceable in `evidence-index.json`; they do not establish live runtime state.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def render_atlas(records: list[dict], ref: str) -> str:
+    lines = [
+        "# Evidence atlas",
+        "",
+        f"Navigation view generated from curated records at `{ref}`.",
+        "",
+        "| Area | Current authority | Key evidence | Verification | Historical predecessor / scope |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for record in records:
+        if record["status"] == "current":
+            related = (
+                record.get("supersedes") or "; ".join(record.get("notes", [])) or "No historical predecessor asserted."
+            )
+            lines.append(
+                f"| **{record['category']}** | [{record['title']}]({record['source_path']}) | {record['summary']} | {record['verification']} | {related} |"
+            )
+    lines.extend(["", "Status is a repository evidence lifecycle at the audited SHA. It is not deployment proof.", ""])
+    return "\n".join(lines)
+
+
+def render_gaps(gaps: list[dict], validation_counts: dict[str, int], ref: str) -> str:
+    lines = [
+        "# Evidence gaps",
+        "",
+        f"Offline gap analysis for `{ref}`.",
+        "",
+        "This report distinguishes confirmed local reference gaps from remote or symbolic references that were intentionally not fetched.",
+        "",
+        "| Class | Count | Severity / confidence |",
+        "| --- | ---: | --- |",
+        f"| Broken local reference | {validation_counts.get('broken', 0)} | review / high for path absence |",
+        f"| Remote or symbolic reference not checked | {validation_counts.get('unverified', 0)} | review / medium; network or human verification required |",
+        f"| Curated source record gap | {sum(g['kind'] == 'source_record' for g in gaps)} | review / high |",
+        "",
+        "Representative gaps (first 50 by stable ID):",
+        "",
+        "| ID | Kind | Source | Detail |",
+        "| --- | --- | --- | --- |",
+    ]
+    for gap in sorted(gaps, key=lambda item: item["id"])[:50]:
+        lines.append(
+            f"| `{gap['id']}` | `{gap['kind']}` | `{gap.get('source_path', 'SOURCES.json')}` | {gap['reason']} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def normalized_outputs(root: Path, ref: str, inventory_rows: list[dict], validations: list[dict]) -> dict[str, str]:
+    records = source_records(root, ref)
+    source_checks = validate_sources(records, inventory_rows)
+    nodes = [
+        {
+            "id": r["id"],
+            "title": r["title"],
+            "category": r["category"],
+            "status": r["status"],
+            "source_path": r["source_path"],
+        }
+        for r in records
+    ]
+    edges = []
+    for record in records:
+        edges.append({"from": record["id"], "to": record["source_path"], "type": "grounded_in"})
+        edges.extend({"from": record["id"], "to": target, "type": "protects"} for target in record["protects"])
+        if record.get("supersedes"):
+            edges.append({"from": record["id"], "to": record["supersedes"], "type": "supersedes"})
+    gaps = []
+    for item in validations:
+        if item["status"] == "broken":
+            gaps.append(
+                {
+                    "id": "GAP-" + item["id"],
+                    "kind": "broken_local_reference",
+                    "severity": "low",
+                    "confidence": "high",
+                    "source_path": item["source_path"],
+                    "line": item["line"],
+                    "reason": item["reason"],
+                    "reference_id": item["id"],
+                    "recommended_follow_up": "Confirm whether the link is historical, intentionally stale, or should be repaired in its owning document.",
+                }
+            )
+    for check in source_checks:
+        if check["status"] == "broken":
+            gaps.append(
+                {
+                    "id": "GAP-SOURCE-" + check["id"],
+                    "kind": "source_record",
+                    "severity": "medium",
+                    "confidence": "high",
+                    "source_path": check["source_path"],
+                    "reason": check["reason"],
+                    "recommended_follow_up": "Repair the curated record before treating it as evidence.",
+                }
+            )
+    counts = dict(sorted(Counter(item["status"] for item in validations).items()))
+    return {
+        "evidence-index.json": encode({"schema_version": 1, "source_sha": ref, "records": records}),
+        "authority-graph.json": encode(
+            {
+                "schema_version": 1,
+                "source_sha": ref,
+                "nodes": nodes,
+                "edges": sorted(edges, key=lambda edge: (edge["from"], edge["type"], edge["to"])),
+            }
+        ),
+        "source-validation.json": encode({"schema_version": 1, "source_sha": ref, "records": source_checks}),
+        "gaps.json": encode(
+            {"schema_version": 1, "source_sha": ref, "counts": counts, "gaps": sorted(gaps, key=lambda gap: gap["id"])}
+        ),
+        "reports/PROJECT_AUTHORITY_MAP.md": render_authority_map(records, ref),
+        "reports/EVIDENCE_ATLAS.md": render_atlas(records, ref),
+        "reports/EVIDENCE_GAPS.md": render_gaps(gaps, counts, ref),
+    }
 
 
 def preflight_write(root: Path, expected_head: str | None, outputs: dict[str, str]) -> None:  # noqa: C901

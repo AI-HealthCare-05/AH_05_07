@@ -1,0 +1,475 @@
+{
+  "edges": [
+    {
+      "from": "EV-001",
+      "to": "AGENTS.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-001",
+      "to": "checkpoint and attribution rules",
+      "type": "protects"
+    },
+    {
+      "from": "EV-001",
+      "to": "protected product boundaries",
+      "type": "protects"
+    },
+    {
+      "from": "EV-002",
+      "to": "docs/README.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-002",
+      "to": "CURRENT versus EVIDENCE lifecycle",
+      "type": "protects"
+    },
+    {
+      "from": "EV-002",
+      "to": "named document boundaries",
+      "type": "protects"
+    },
+    {
+      "from": "EV-003",
+      "to": "docs/architecture.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-003",
+      "to": "API and data layering",
+      "type": "protects"
+    },
+    {
+      "from": "EV-003",
+      "to": "modular monolith boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-004",
+      "to": "Model V2 frozen boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "auth/RLS/retention",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "request/session guards",
+      "type": "protects"
+    },
+    {
+      "from": "EV-005",
+      "to": "docs/requirements.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-005",
+      "to": "input-based risk-group screening signal wording",
+      "type": "protects"
+    },
+    {
+      "from": "EV-005",
+      "to": "product scope",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "docs/model-v2-product-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-006",
+      "to": "11-feature order and preprocessing",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "frozen Model V2 artifact",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "target-leakage prohibition",
+      "type": "protects"
+    },
+    {
+      "from": "EV-007",
+      "to": "docs/api-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-007",
+      "to": "API semantics",
+      "type": "protects"
+    },
+    {
+      "from": "EV-007",
+      "to": "request and uncertain-write protections",
+      "type": "protects"
+    },
+    {
+      "from": "EV-008",
+      "to": "docs/auth-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-008",
+      "to": "authentication semantics",
+      "type": "protects"
+    },
+    {
+      "from": "EV-008",
+      "to": "session ownership",
+      "type": "protects"
+    },
+    {
+      "from": "EV-009",
+      "to": "docs/data-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-009",
+      "to": "fact separation",
+      "type": "protects"
+    },
+    {
+      "from": "EV-009",
+      "to": "retention and account deletion",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "docs/observation-data-lifecycle.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-010",
+      "to": "deletion",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "observation ownership",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "retention",
+      "type": "protects"
+    },
+    {
+      "from": "EV-011",
+      "to": "docs/ux-flow.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-011",
+      "to": "journey states",
+      "type": "protects"
+    },
+    {
+      "from": "EV-011",
+      "to": "user-facing fact separation",
+      "type": "protects"
+    },
+    {
+      "from": "EV-012",
+      "to": "docs/scene-policy-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-012",
+      "to": "runtime boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-012",
+      "to": "scene policy",
+      "type": "protects"
+    },
+    {
+      "from": "EV-013",
+      "to": "docs/visual-production-contract.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-013",
+      "to": "asset production gates",
+      "type": "protects"
+    },
+    {
+      "from": "EV-013",
+      "to": "visual acceptance boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-014",
+      "to": "docs/companion-runtime.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-014",
+      "to": "companion behavior boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-014",
+      "to": "scene lifecycle",
+      "type": "protects"
+    },
+    {
+      "from": "EV-015",
+      "to": "docs/asset-register.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-015",
+      "to": "asset provenance",
+      "type": "protects"
+    },
+    {
+      "from": "EV-015",
+      "to": "asset review scope",
+      "type": "protects"
+    },
+    {
+      "from": "EV-016",
+      "to": "docs/deployment-ssot.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-016",
+      "to": "deployment flow",
+      "type": "protects"
+    },
+    {
+      "from": "EV-016",
+      "to": "runtime release state",
+      "type": "protects"
+    },
+    {
+      "from": "EV-017",
+      "to": "docs/architecture/RELEASE_CONTRACT.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-017",
+      "to": "release gates",
+      "type": "protects"
+    },
+    {
+      "from": "EV-017",
+      "to": "rollback boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-018",
+      "to": "docs/transcend/PROGRAM.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-018",
+      "to": "Transcend scope",
+      "type": "protects"
+    },
+    {
+      "from": "EV-018",
+      "to": "experimental boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-019",
+      "to": "docs/transcend/W1.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-019",
+      "to": "W1 acceptance",
+      "type": "protects"
+    },
+    {
+      "from": "EV-019",
+      "to": "experimental runtime boundary",
+      "type": "protects"
+    },
+    {
+      "from": "EV-020",
+      "to": "docs/evidence/production-release-20260918.md",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-020",
+      "to": "historical traceability",
+      "type": "protects"
+    },
+    {
+      "from": "EV-021",
+      "to": "docs/evidence/model-gate-1b.json",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-021",
+      "to": "Model V2 evidence traceability",
+      "type": "protects"
+    }
+  ],
+  "nodes": [
+    {
+      "category": "governance",
+      "id": "EV-001",
+      "source_path": "AGENTS.md",
+      "status": "current",
+      "title": "Repository contribution and protected-boundary rules"
+    },
+    {
+      "category": "policy",
+      "id": "EV-002",
+      "source_path": "docs/README.md",
+      "status": "current",
+      "title": "Documentation authority and lifecycle map"
+    },
+    {
+      "category": "architecture",
+      "id": "EV-003",
+      "source_path": "docs/architecture.md",
+      "status": "current",
+      "title": "System architecture"
+    },
+    {
+      "category": "architecture",
+      "id": "EV-004",
+      "source_path": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "status": "current",
+      "title": "Architecture invariants"
+    },
+    {
+      "category": "product",
+      "id": "EV-005",
+      "source_path": "docs/requirements.md",
+      "status": "current",
+      "title": "Product requirements"
+    },
+    {
+      "category": "model",
+      "id": "EV-006",
+      "source_path": "docs/model-v2-product-contract.md",
+      "status": "current",
+      "title": "Model V2 product contract"
+    },
+    {
+      "category": "api",
+      "id": "EV-007",
+      "source_path": "docs/api-contract.md",
+      "status": "current",
+      "title": "API contract"
+    },
+    {
+      "category": "auth",
+      "id": "EV-008",
+      "source_path": "docs/auth-contract.md",
+      "status": "current",
+      "title": "Authentication contract"
+    },
+    {
+      "category": "data",
+      "id": "EV-009",
+      "source_path": "docs/data-contract.md",
+      "status": "current",
+      "title": "Data contract"
+    },
+    {
+      "category": "database",
+      "id": "EV-010",
+      "source_path": "docs/observation-data-lifecycle.md",
+      "status": "current",
+      "title": "Observation data lifecycle"
+    },
+    {
+      "category": "journey",
+      "id": "EV-011",
+      "source_path": "docs/ux-flow.md",
+      "status": "current",
+      "title": "Living Journey UX flow"
+    },
+    {
+      "category": "visual",
+      "id": "EV-012",
+      "source_path": "docs/scene-policy-contract.md",
+      "status": "current",
+      "title": "Scene policy contract"
+    },
+    {
+      "category": "assets",
+      "id": "EV-013",
+      "source_path": "docs/visual-production-contract.md",
+      "status": "current",
+      "title": "Visual production contract"
+    },
+    {
+      "category": "companion",
+      "id": "EV-014",
+      "source_path": "docs/companion-runtime.md",
+      "status": "current",
+      "title": "Companion runtime"
+    },
+    {
+      "category": "assets",
+      "id": "EV-015",
+      "source_path": "docs/asset-register.md",
+      "status": "current",
+      "title": "Asset register"
+    },
+    {
+      "category": "deployment",
+      "id": "EV-016",
+      "source_path": "docs/deployment-ssot.md",
+      "status": "current",
+      "title": "Deployment SSOT"
+    },
+    {
+      "category": "release",
+      "id": "EV-017",
+      "source_path": "docs/architecture/RELEASE_CONTRACT.md",
+      "status": "current",
+      "title": "Release contract"
+    },
+    {
+      "category": "research",
+      "id": "EV-018",
+      "source_path": "docs/transcend/PROGRAM.md",
+      "status": "current",
+      "title": "Transcend program"
+    },
+    {
+      "category": "research",
+      "id": "EV-019",
+      "source_path": "docs/transcend/W1.md",
+      "status": "current",
+      "title": "Transcend W1 playable slice contract"
+    },
+    {
+      "category": "deployment",
+      "id": "EV-020",
+      "source_path": "docs/evidence/production-release-20260918.md",
+      "status": "historical",
+      "title": "Production release evidence snapshot"
+    },
+    {
+      "category": "model",
+      "id": "EV-021",
+      "source_path": "docs/evidence/model-gate-1b.json",
+      "status": "research-only",
+      "title": "Model gate 1B evidence"
+    }
+  ],
+  "schema_version": 1,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4"
+}

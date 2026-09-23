@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
 
@@ -49,8 +50,46 @@ def test_reference_extraction_and_validation(tmp_path: Path) -> None:
 
 def test_inventory_outputs_are_deterministic(tmp_path: Path) -> None:
     root, ref = fixture(tmp_path)
+    atlas = root / evidence.ATLAS
+    atlas.mkdir(parents=True)
+    (atlas / "SOURCES.json").write_text(json.dumps({"audited_sha": ref, "records": []}))
     first = evidence.inventory_outputs(root, ref)
     second = evidence.inventory_outputs(root, ref)
     assert first == second
     assert "references.json" in first
     assert "validation.json" in first
+
+
+def test_normalized_graph_has_traceable_endpoints(tmp_path: Path) -> None:
+    root, ref = fixture(tmp_path)
+    (root / evidence.ATLAS).mkdir(parents=True)
+    (root / evidence.ATLAS / "SOURCES.json").write_text(
+        json.dumps(
+            {
+                "audited_sha": ref,
+                "records": [
+                    {
+                        "id": "EV-TEST",
+                        "title": "Fixture authority",
+                        "category": "testing",
+                        "status": "current",
+                        "source_type": "contract",
+                        "source_path": "docs/guide.md",
+                        "source_sha": ref,
+                        "authority": "fixture",
+                        "protects": ["fixture boundary"],
+                        "summary": "Fixture summary",
+                        "verification": "Fixture check",
+                    }
+                ],
+            }
+        )
+    )
+    rows = evidence.inventory(root, ref)
+    refs = evidence.extract_references(root, ref, rows)
+    validations = evidence.validate_references(root, ref, rows, refs)
+    output = evidence.normalized_outputs(root, ref, rows, validations)
+    graph = json.loads(output["authority-graph.json"])
+    endpoints = {node["id"] for node in graph["nodes"]} | {edge["to"] for edge in graph["edges"]}
+    assert {"EV-TEST", "docs/guide.md", "fixture boundary"} <= endpoints
+    assert json.loads(output["source-validation.json"])["records"][0]["status"] == "resolved"

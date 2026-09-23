@@ -1,5 +1,346 @@
 {
+  "records": [
+    {
+      "authority": "CURRENT repository process authority",
+      "category": "governance",
+      "id": "EV-001",
+      "notes": [
+        "This atlas does not override AGENTS.md."
+      ],
+      "protects": [
+        "protected product boundaries",
+        "checkpoint and attribution rules"
+      ],
+      "source_path": "AGENTS.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "policy",
+      "status": "current",
+      "summary": "Defines repository lanes, protected product boundaries, verification lifecycle and local checkpoint discipline.",
+      "title": "Repository contribution and protected-boundary rules",
+      "verification": "Read with every task; task-local WORKPLAN applies the scope."
+    },
+    {
+      "authority": "CURRENT documentation routing authority",
+      "category": "policy",
+      "id": "EV-002",
+      "protects": [
+        "named document boundaries",
+        "CURRENT versus EVIDENCE lifecycle"
+      ],
+      "source_path": "docs/README.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "authority_map",
+      "status": "current",
+      "summary": "Routes product, architecture, API, auth, data, Model V2, UX, visual, Transcend and deployment readers to named authority.",
+      "title": "Documentation authority and lifecycle map",
+      "verification": "The map explicitly states that evidence and research directories are not current runtime authority."
+    },
+    {
+      "authority": "CURRENT architecture authority",
+      "category": "architecture",
+      "id": "EV-003",
+      "protects": [
+        "modular monolith boundary",
+        "API and data layering"
+      ],
+      "source_path": "docs/architecture.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Describes the current application architecture within the documented system boundary.",
+      "title": "System architecture",
+      "verification": "Routed by docs/README.md and paired with architecture invariants."
+    },
+    {
+      "authority": "CURRENT invariant authority",
+      "category": "architecture",
+      "id": "EV-004",
+      "protects": [
+        "auth/RLS/retention",
+        "Model V2 frozen boundary",
+        "request/session guards"
+      ],
+      "source_path": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Records durable architecture and security invariants used to constrain implementation and review.",
+      "title": "Architecture invariants",
+      "verification": "Named by the project handoff for API, DB and Model V2 work."
+    },
+    {
+      "authority": "CURRENT product requirements",
+      "category": "product",
+      "id": "EV-005",
+      "protects": [
+        "product scope",
+        "input-based risk-group screening signal wording"
+      ],
+      "source_path": "docs/requirements.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "requirements",
+      "status": "current",
+      "summary": "Defines the product requirements boundary used by web and journey work.",
+      "title": "Product requirements",
+      "verification": "Routed by docs/project-handoff.md for product and web tasks."
+    },
+    {
+      "authority": "CURRENT Model V2 product authority",
+      "category": "model",
+      "id": "EV-006",
+      "protects": [
+        "frozen Model V2 artifact",
+        "11-feature order and preprocessing",
+        "target-leakage prohibition"
+      ],
+      "source_path": "docs/model-v2-product-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "frozen_contract",
+      "status": "current",
+      "summary": "Defines user-visible Model V2 behavior and its time-boxed research/development preview boundary.",
+      "title": "Model V2 product contract",
+      "verification": "Use the current-authority section and architecture invariants together."
+    },
+    {
+      "authority": "CURRENT API contract",
+      "category": "api",
+      "id": "EV-007",
+      "protects": [
+        "API semantics",
+        "request and uncertain-write protections"
+      ],
+      "source_path": "docs/api-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Defines API behavior and data exchange expectations for the application boundary.",
+      "title": "API contract",
+      "verification": "Project handoff pairs this document with generated /api/openapi.json."
+    },
+    {
+      "authority": "CURRENT authentication authority",
+      "category": "auth",
+      "id": "EV-008",
+      "protects": [
+        "authentication semantics",
+        "session ownership"
+      ],
+      "source_path": "docs/auth-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Defines authentication and session behavior for the documented product boundary.",
+      "title": "Authentication contract",
+      "verification": "Named by docs/project-handoff.md and AGENTS.md protected boundaries."
+    },
+    {
+      "authority": "CURRENT data authority",
+      "category": "data",
+      "id": "EV-009",
+      "protects": [
+        "fact separation",
+        "retention and account deletion"
+      ],
+      "source_path": "docs/data-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Defines stored data semantics and separation of model output, measured blood pressure and challenge participation.",
+      "title": "Data contract",
+      "verification": "Paired with observation lifecycle and observation/challenge contract."
+    },
+    {
+      "authority": "CURRENT observation lifecycle authority",
+      "category": "database",
+      "id": "EV-010",
+      "protects": [
+        "retention",
+        "deletion",
+        "observation ownership"
+      ],
+      "source_path": "docs/observation-data-lifecycle.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "lifecycle_contract",
+      "status": "current",
+      "summary": "Defines the observation lifecycle and its retention/deletion boundary.",
+      "title": "Observation data lifecycle",
+      "verification": "Routed by docs/project-handoff.md for DB and data work."
+    },
+    {
+      "authority": "CURRENT Living Journey authority",
+      "category": "journey",
+      "id": "EV-011",
+      "protects": [
+        "journey states",
+        "user-facing fact separation"
+      ],
+      "source_path": "docs/ux-flow.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "ux_contract",
+      "status": "current",
+      "summary": "Defines the current journey flow used to reason about user-facing states and transitions.",
+      "title": "Living Journey UX flow",
+      "verification": "Named by project handoff as Living Journey authority."
+    },
+    {
+      "authority": "CURRENT visual/scene policy",
+      "category": "visual",
+      "id": "EV-012",
+      "protects": [
+        "scene policy",
+        "runtime boundary"
+      ],
+      "source_path": "docs/scene-policy-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Defines scene-specific policy constraints without changing runtime behavior in this task.",
+      "title": "Scene policy contract",
+      "verification": "Routed by project handoff for scene and asset work."
+    },
+    {
+      "authority": "CURRENT visual production authority",
+      "category": "assets",
+      "id": "EV-013",
+      "protects": [
+        "asset production gates",
+        "visual acceptance boundary"
+      ],
+      "source_path": "docs/visual-production-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Defines visual production and acceptance constraints for asset work.",
+      "title": "Visual production contract",
+      "verification": "Paired with scene policy and companion runtime documents."
+    },
+    {
+      "authority": "CURRENT companion runtime authority",
+      "category": "companion",
+      "id": "EV-014",
+      "protects": [
+        "companion behavior boundary",
+        "scene lifecycle"
+      ],
+      "source_path": "docs/companion-runtime.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "runtime_contract",
+      "status": "current",
+      "summary": "Defines companion runtime behavior and its documented integration boundary.",
+      "title": "Companion runtime",
+      "verification": "Named by project handoff for visual and companion work."
+    },
+    {
+      "authority": "CURRENT asset inventory reference",
+      "category": "assets",
+      "id": "EV-015",
+      "protects": [
+        "asset provenance",
+        "asset review scope"
+      ],
+      "source_path": "docs/asset-register.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "register",
+      "status": "current",
+      "summary": "Indexes asset-related records; it does not independently establish production activation.",
+      "title": "Asset register",
+      "verification": "Read with visual production contract and asset evidence lifecycle."
+    },
+    {
+      "authority": "CURRENT deployment authority",
+      "category": "deployment",
+      "id": "EV-016",
+      "protects": [
+        "deployment flow",
+        "runtime release state"
+      ],
+      "source_path": "docs/deployment-ssot.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "deployment_contract",
+      "status": "current",
+      "summary": "Defines deployment source of truth and release-time verification scope.",
+      "title": "Deployment SSOT",
+      "verification": "Project handoff routes production work here; dated evidence cannot replace it."
+    },
+    {
+      "authority": "CURRENT release authority",
+      "category": "release",
+      "id": "EV-017",
+      "protects": [
+        "release gates",
+        "rollback boundary"
+      ],
+      "source_path": "docs/architecture/RELEASE_CONTRACT.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "release_contract",
+      "status": "current",
+      "summary": "Defines release verification and release contract expectations.",
+      "title": "Release contract",
+      "verification": "Paired with Deployment SSOT for production work."
+    },
+    {
+      "authority": "CURRENT experimental program direction",
+      "category": "research",
+      "id": "EV-018",
+      "protects": [
+        "Transcend scope",
+        "experimental boundary"
+      ],
+      "source_path": "docs/transcend/PROGRAM.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "program_authority",
+      "status": "current",
+      "summary": "Defines the Transcend experimental program direction and scope.",
+      "title": "Transcend program",
+      "verification": "docs/README.md explicitly limits this row to experimental program direction."
+    },
+    {
+      "authority": "CURRENT W1 acceptance authority",
+      "category": "research",
+      "id": "EV-019",
+      "protects": [
+        "W1 acceptance",
+        "experimental runtime boundary"
+      ],
+      "source_path": "docs/transcend/W1.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "acceptance_contract",
+      "status": "current",
+      "summary": "Defines W1 playable-slice acceptance within the Transcend experimental program.",
+      "title": "Transcend W1 playable slice contract",
+      "verification": "Does not attest to production activation, API, DB, Auth or Model V2 authority."
+    },
+    {
+      "authority": "EVIDENCE for recorded date and scope only",
+      "category": "deployment",
+      "id": "EV-020",
+      "protects": [
+        "historical traceability"
+      ],
+      "source_path": "docs/evidence/production-release-20260918.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "evidence",
+      "status": "historical",
+      "summary": "A dated release observation retained for traceability; presence on main does not prove current runtime.",
+      "title": "Production release evidence snapshot",
+      "verification": "Use only with its recorded SHA, environment and scope."
+    },
+    {
+      "authority": "EVIDENCE for recorded model gate scope only",
+      "category": "model",
+      "id": "EV-021",
+      "protects": [
+        "Model V2 evidence traceability"
+      ],
+      "source_path": "docs/evidence/model-gate-1b.json",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "evidence",
+      "status": "research-only",
+      "summary": "A model evidence artifact retained for its recorded scope and not a replacement for the current product contract.",
+      "title": "Model gate 1B evidence",
+      "verification": "Read with Model V2 contract; never infer current activation from this record."
+    }
+  ],
   "schema_version": 1,
-  "status": "not_generated",
-  "records": []
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4"
 }
