@@ -24,8 +24,13 @@ not duplicate product contracts or attest to a deployed runtime.
 | Model V2 | [Product contract](model-v2-product-contract.md#current-authority), [architecture invariants](architecture/ARCHITECTURE_INVARIANTS.md) |
 | UX | [UX flow](ux-flow.md) |
 | Visual / scene | [Scene policy](scene-policy-contract.md), [scene architecture](scene-architecture.md), [visual production contract](visual-production-contract.md), [companion runtime](companion-runtime.md) |
+| Transcend experimental program | [Transcend program](transcend/PROGRAM.md), [W1 playable-slice contract](transcend/W1.md) |
 | Deployment | [Deployment SSOT](deployment-ssot.md), [release contract](architecture/RELEASE_CONTRACT.md) |
 | Recovery | [Recovery contract](architecture/RECOVERY_CONTRACT.md) |
+
+The Transcend row owns experimental program direction and W1 acceptance only.
+It does not attest to production activation, deployment, asset membership or
+changes to API/DB/Auth/Model V2 authority.
 
 ## Lifecycle
 
