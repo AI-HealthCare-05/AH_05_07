@@ -44,6 +44,11 @@
   place-items: center;
 }
 
+.living-scene-fallback--neutral {
+  /* Identity-neutral foundation; no character-bearing pixels. */
+  background: var(--sk7-scene-stage-background);
+}
+
 .living-scene-fallback img {
   position: absolute;
   top: 0;

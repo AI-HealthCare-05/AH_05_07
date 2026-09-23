@@ -9,11 +9,10 @@ import {
 import {
   resolveCompanionMode,
   type CompanionSelection,
+  type CompanionSpecies,
 } from "../ui/companion";
-import { getActiveCompanionAsset } from "../ui/companionActiveAsset";
 import { resolveCompanionRuntimeAsset } from "../ui/companionAssetResolver";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
-import { readCompanionIdentity } from "../ui/companionIdentity";
 import type { ScreenId } from "../ui/journey";
 import {
   CompanionPresenceKernel,
@@ -27,6 +26,8 @@ import {
   usePresenceSceneActorRuntime,
   usePresenceSceneActorRuntimeSnapshot,
 } from "../platform/presence/PresenceSceneActorRuntimeContext";
+import { useSceneFirstPaintVisit } from "./SceneFirstPaintWitness";
+import { matchesReadySceneWitness } from "./sceneFirstPaintChannel";
 
 type CompanionPresenceHostBridgeProps = Readonly<{
   rootRef: RefObject<HTMLElement | null>;
@@ -34,23 +35,13 @@ type CompanionPresenceHostBridgeProps = Readonly<{
   sessionGeneration: number;
   rawMode: unknown;
   companionSelection: CompanionSelection | null;
+  /** Product identity authority shared with VisualStage. */
+  companionSpecies: CompanionSpecies;
+  /** Resolved active descriptor from the owner tree. */
+  companionAsset: CompanionAsset | null;
   savedSceneOwner: boolean;
   suspended: boolean;
 }>;
-
-function safeActiveAsset(
-  species: Parameters<typeof getActiveCompanionAsset>[0],
-): CompanionAsset | null {
-  try {
-    return getActiveCompanionAsset(species);
-  } catch {
-    return null;
-  }
-}
-
-function safeActiveAssetId(species: Parameters<typeof getActiveCompanionAsset>[0]): string | null {
-  return safeActiveAsset(species)?.assetId ?? null;
-}
 
 function observedLegacyAssetId(
   selection: CompanionSelection | null,
@@ -96,11 +87,30 @@ function observedOwner(
 
 function observedOwnerAssetId(
   owner: PresenceRenderOwner,
+  screen: ScreenId,
   logicalAssetId: string | null,
+  logicalAssetUrl: string | null,
   selection: CompanionSelection | null,
   mode: ReturnType<typeof resolveCompanionMode>,
+  activeVisit: ReturnType<typeof useSceneFirstPaintVisit>,
 ): string | null {
-  if (owner === "full-scene") return logicalAssetId;
+  if (owner === "full-scene") {
+    // Consume only the exact ready witness from the current VisualStage visit.
+    if (
+      logicalAssetId != null
+      && logicalAssetUrl != null
+      && activeVisit != null
+      && matchesReadySceneWitness(activeVisit, {
+        screen,
+        token: activeVisit.token,
+        assetId: logicalAssetId,
+        assetUrl: logicalAssetUrl,
+      })
+    ) {
+      return logicalAssetId;
+    }
+    return null;
+  }
   if (owner === "saved-scene") return logicalAssetId;
   if (owner === "legacy-slot") return observedLegacyAssetId(selection, mode);
   return null;
@@ -119,14 +129,17 @@ export function CompanionPresenceHostBridge({
   sessionGeneration,
   rawMode,
   companionSelection,
+  companionSpecies,
+  companionAsset,
   savedSceneOwner,
   suspended,
 }: CompanionPresenceHostBridgeProps) {
   const mode = resolveCompanionMode(rawMode);
-  const preferredSpecies = readCompanionIdentity();
-  const activeAsset = mode === "off" ? null : safeActiveAsset(preferredSpecies);
+  const preferredSpecies = companionSpecies;
+  const activeAsset = mode === "off" ? null : companionAsset;
   const logicalAssetId = activeAsset?.assetId ?? null;
   const activeAssetUrl = activeAsset?.url ?? null;
+  const activeVisit = useSceneFirstPaintVisit();
   const sceneActorRuntime = usePresenceSceneActorRuntime();
   const sceneActorSnapshot = usePresenceSceneActorRuntimeSnapshot();
   const kernelRef = useRef<CompanionPresenceKernel | null>(null);
@@ -173,7 +186,7 @@ export function CompanionPresenceHostBridge({
         companionSelection,
       );
       const owner: PresenceRenderOwner = logicalAssetId ? observed : "none";
-      const observedAssetId = observedOwnerAssetId(owner, logicalAssetId, companionSelection, mode);
+      const observedAssetId = observedOwnerAssetId(owner, activeScreen, logicalAssetId, activeAssetUrl, companionSelection, mode, activeVisit);
       const reconciled = kernel.reconcile({
         sessionEpoch: Math.max(0, sessionGeneration),
         route: activeScreen,
@@ -274,7 +287,7 @@ export function CompanionPresenceHostBridge({
         root.querySelectorAll(selector).forEach(element => observer.observe(element));
       }
     };
-    const mutationObserver = activeScreen === "S02" && typeof MutationObserver !== "undefined"
+    const mutationObserver = (activeScreen === "S02" || activeScreen === "S10") && typeof MutationObserver !== "undefined"
       ? new MutationObserver(() => {
           observeExplicitGeometry();
           schedule();
@@ -307,6 +320,7 @@ export function CompanionPresenceHostBridge({
     activeScreen,
     activeAssetUrl,
     companionSelection,
+    activeVisit,
     identityKey,
     kernel,
     logicalAssetId,

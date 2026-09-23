@@ -22,8 +22,12 @@ const statusText = {
   "no-space": "놓을 수 있는 공간이 없어 이전 위치를 유지해요.",
 } as const;
 
+type PresenceSceneActorInteractionProps = Readonly<{
+  phase: "loading" | "ready" | "failed";
+}>;
+
 /** Semantic sibling of the aria-hidden scene runtime; it never owns WebGL. */
-export function PresenceSceneActorInteraction() {
+export function PresenceSceneActorInteraction({ phase }: PresenceSceneActorInteractionProps) {
   const runtime = usePresenceSceneActorRuntime();
   const snapshot = usePresenceSceneActorRuntimeSnapshot();
   const targetRef = useRef<HTMLButtonElement>(null);
@@ -71,7 +75,9 @@ export function PresenceSceneActorInteraction() {
   }, [snapshot.commitCount]);
 
   const projection = snapshot.projection;
-  if (!snapshot.enabled || !projection) return null;
+  // F1: admit the semantic target only after the exact selected runtime visit
+  // has passed GPU-ready reveal. Existing runtime fences remain authoritative.
+  if (phase !== "ready" || !snapshot.enabled || !projection) return null;
 
   const hitStyle = {
     left: `${projection.hitRect.x - projection.stage.x}px`,

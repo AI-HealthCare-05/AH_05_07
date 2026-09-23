@@ -180,7 +180,7 @@ test("production S10 day focus reaches the unified scene as a bounded presentati
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
 });
 
-test("production S10 reduced motion stays poster-only with no character GLB", async ({ page }) => {
+test("production S10 reduced motion stays neutral fallback with no character GLB", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await installSyntheticApi(page);
 

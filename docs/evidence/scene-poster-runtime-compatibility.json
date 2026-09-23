@@ -1,6 +1,6 @@
 {
-  "format": "sk7-scene-poster-runtime-compatibility-v1",
-  "status": "reviewed-current-runtime-compatibility",
+  "format": "sk7-scene-poster-runtime-compatibility-v2",
+  "status": "reviewed-historical-posters-with-f1-source-contract",
   "posterSetDigest": {
     "algorithm": "sha256",
     "canonicalization": "json-array-sorted-by-id",
@@ -17,22 +17,31 @@
     "S02": {
       "evidence": "docs/evidence/scene-clay-posters.json",
       "posterSetDigest": "47364f49063c547dad4abe93a2e188304b750b257178e18df23d45fe371c73ed",
-      "historicalSourceHashesDigest": "499c35f7f7f4bac8416ff7b2c9d8caf031206de6b5cd8b6e1a1db1202cb4a567"
+      "historicalSourceHashesDigest": "499c35f7f7f4bac8416ff7b2c9d8caf031206de6b5cd8b6e1a1db1202cb4a567",
+      "note": "Canonical historical bear-bearing posters. Identity-bound S02/S10 suppress them in F1; F2 will recapture neutral posters."
     },
     "S10": {
       "evidence": "docs/evidence/scene-diorama-posters.json",
       "posterSetDigest": "d6b277844063f836f1a4e8687dd2679b08047ab99146958d2f1fae3056c5f249",
-      "historicalSourceHashesDigest": "5404a435ed644de167631c0ddb269130b6750cefa67ef347d3831820e3447b74"
+      "historicalSourceHashesDigest": "5404a435ed644de167631c0ddb269130b6750cefa67ef347d3831820e3447b74",
+      "note": "Canonical historical bear-bearing posters. Identity-bound S02/S10 suppress them in F1; F2 will recapture neutral posters."
     }
   },
   "runtimeVisualSourceHashes": {
-    "web/src/components/scene/scene-stage.css": "d8efdd447e5a04d2461663b68eea9714eaf8aaba9476c09f8199f139b2f2f7b4",
+    "web/src/components/scene/scene-stage.css": "1133789dcb4119035ae456a6e5d942a3f9f65e3ea68868142538daca2b41aa7d",
     "web/src/components/scene/ThreeSceneRenderer.tsx": "cc473f8874b0aa1599484d9adcddff0adadc901eb7a993a1b256a144c5767b07",
     "web/src/components/scene/s02SceneActor.ts": "0cfc5bfb5da05eb3af56e152edc59ca8ce1796f23a289ebb4015d72197218a89",
-    "web/src/components/VisualStage.tsx": "e9ed056f3f7daece2efa8f316c3357042ff063efe11d9af880c196c581b1caa7",
-    "web/src/components/SceneShell.tsx": "269c02861e9693fd5a7fff74308666641064c94f9d906f01ebc51dd001492ff7",
-    "web/src/components/CompanionPresenceHostBridge.tsx": "6109254ec84277c706b575adf78fc9672b153b93425b39d34bbea0982a1638f8",
-    "web/src/components/PresenceSceneActorInteraction.tsx": "82f2a2d051d216c73c081623b988730fbe924236f59a5118b08e1e50dd4a6d4c",
+    "web/src/components/VisualStage.tsx": "9a33b1c2e410c65d65174faf99c5cdab26f1dc87d85c1dbf6e7bdd95d20f3b3c",
+    "web/src/components/SceneShell.tsx": "e100d3f3bf51ff1975b2b06e8c987f14cc2ed8c1ef7390058f0f3cd016d40f82",
+    "web/src/components/SceneFirstPaintWitness.tsx": "2211bf34fce3bbff1cb2df4468a5fbd4f1737a669520f87cb6e73139368ebfbe",
+    "web/src/components/sceneFirstPaintChannel.d.ts": "782e2adcbc075b6ea7ec80b334791727e32967f826a216e003799329424871eb",
+    "web/src/App.tsx": "d2c2f57a199f055e30d2fba97b22b75c0adf548e993de828564c78283741b262",
+    "web/src/GuestJourneySandbox.tsx": "684f6634e00130c74b33cab53d16221b10b5e48249984df05ae4d1b4af281cef",
+    "web/src/components/JourneyToday.tsx": "4929e6fd0a7a648d2a8d4d3948d0b2260e1b7de5a9bf0cb3280a391db2f1798b",
+    "web/src/components/JourneyRecap.tsx": "10c2f9a92e6e07949d24c59184b7c943baf35c2aec9e87ef8fe743c37d6d7ab3",
+    "web/src/components/sceneFirstPaintChannel.mjs": "06bd9e7b1ee306d50cd84ec7e9f6f6fcf716beb17ecb7a34076926b8da23ef0b",
+    "web/src/components/CompanionPresenceHostBridge.tsx": "e7ab18f8b5f2c84f30581f59e0ae7628c84ec38f844967c4416e98a66933ff02",
+    "web/src/components/PresenceSceneActorInteraction.tsx": "5c29390b7fce8c2820a9c972ecb2f088748584683a2adb193c923c55b42c5230",
     "web/src/platform/presence/PresenceSceneActorRuntimeContext.tsx": "eaf41c33f0cab9f0acf7caf5c06009adc20648d4d1a9301b7b3b47ab0fd2672c",
     "web/src/platform/presence/presenceSceneActorRuntime.ts": "d4e3a7ac0136a96a5162cbd32694955a6e1212b271174f6b9cf7000b9fd845a1",
     "web/src/platform/presence/s02PresenceArena.ts": "c3d8db6730698f0618ac7393e224ceb6fa104767efaa3dfa54bea2c03e7e3995",
@@ -41,6 +50,7 @@
     "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
     "web/src/ui/sceneRecipes.ts": "98a45947ba3dc67c02e224ac4c70944130669d7e8f4dd9422c1013d80e111dbf",
     "web/src/ui/scenePolicy.ts": "4a21260fdadd0ded1d8c980ab557196bba0adb8a2038b4782095c6d28f56b9c3",
+    "web/src/ui/companionActiveAsset.ts": "8904c58941f9a66cd33fd0ab04c689ea59b04b936b99b2ca8d9e52eb9c870976",
     "web/src/ui/companionSceneRegistry.ts": "0730699ec200f538a695689375e3b74a2031391d36e8a2d4f4ba4cfd68579029",
     "web/src/ui/companionPresentationProfiles.ts": "7e327d542dd9db36e7737b83f2a1df300347367a9cc97a91c585b735945f3896"
   },
@@ -64,7 +74,7 @@
       }
     }
   },
-  "reviewObservation": {
+  "historicalReviewObservation": {
     "scope": "local-review-observation",
     "playwright": "1.62.1",
     "chromium": "151.0.7922.34",
@@ -72,6 +82,43 @@
     "sameMacRepeatBinaryEquality": "42/42",
     "canonicalVsMacDecodedPixelDifferences": "42/42",
     "largestChangedPixelRatioPercent": 44.048388,
-    "locallyRegeneratedPostersAcceptedAsCanonical": false
+    "locallyRegeneratedPostersAcceptedAsCanonical": false,
+    "note": "Historical observations from the previous capture/runtime baseline before F1 identity suppression."
+  },
+  "f1SourceCompatibility": {
+    "scope": "f1-source-compatibility",
+    "note": "Current source compatibility contract for F1 first-paint identity suppression. This is not a checked-in browser runtime observation; runtime behavior is covered by Playwright tests and local/dev evidence, not represented as a captured pixel qualification.",
+    "identityBearingProductPosterSuppression": true,
+    "neutralF1Fallback": true,
+    "currentSourceHashes": {
+      "web/src/components/scene/scene-stage.css": "1133789dcb4119035ae456a6e5d942a3f9f65e3ea68868142538daca2b41aa7d",
+      "web/src/components/scene/ThreeSceneRenderer.tsx": "cc473f8874b0aa1599484d9adcddff0adadc901eb7a993a1b256a144c5767b07",
+      "web/src/components/scene/s02SceneActor.ts": "0cfc5bfb5da05eb3af56e152edc59ca8ce1796f23a289ebb4015d72197218a89",
+      "web/src/components/VisualStage.tsx": "9a33b1c2e410c65d65174faf99c5cdab26f1dc87d85c1dbf6e7bdd95d20f3b3c",
+      "web/src/components/SceneShell.tsx": "e100d3f3bf51ff1975b2b06e8c987f14cc2ed8c1ef7390058f0f3cd016d40f82",
+      "web/src/components/SceneFirstPaintWitness.tsx": "2211bf34fce3bbff1cb2df4468a5fbd4f1737a669520f87cb6e73139368ebfbe",
+      "web/src/components/sceneFirstPaintChannel.d.ts": "782e2adcbc075b6ea7ec80b334791727e32967f826a216e003799329424871eb",
+      "web/src/App.tsx": "d2c2f57a199f055e30d2fba97b22b75c0adf548e993de828564c78283741b262",
+      "web/src/GuestJourneySandbox.tsx": "684f6634e00130c74b33cab53d16221b10b5e48249984df05ae4d1b4af281cef",
+      "web/src/components/JourneyToday.tsx": "4929e6fd0a7a648d2a8d4d3948d0b2260e1b7de5a9bf0cb3280a391db2f1798b",
+      "web/src/components/JourneyRecap.tsx": "10c2f9a92e6e07949d24c59184b7c943baf35c2aec9e87ef8fe743c37d6d7ab3",
+      "web/src/components/sceneFirstPaintChannel.mjs": "06bd9e7b1ee306d50cd84ec7e9f6f6fcf716beb17ecb7a34076926b8da23ef0b",
+      "web/src/components/CompanionPresenceHostBridge.tsx": "e7ab18f8b5f2c84f30581f59e0ae7628c84ec38f844967c4416e98a66933ff02",
+      "web/src/components/PresenceSceneActorInteraction.tsx": "5c29390b7fce8c2820a9c972ecb2f088748584683a2adb193c923c55b42c5230",
+      "web/src/platform/presence/PresenceSceneActorRuntimeContext.tsx": "eaf41c33f0cab9f0acf7caf5c06009adc20648d4d1a9301b7b3b47ab0fd2672c",
+      "web/src/platform/presence/presenceSceneActorRuntime.ts": "d4e3a7ac0136a96a5162cbd32694955a6e1212b271174f6b9cf7000b9fd845a1",
+      "web/src/platform/presence/s02PresenceArena.ts": "c3d8db6730698f0618ac7393e224ceb6fa104767efaa3dfa54bea2c03e7e3995",
+      "web/src/platform/presence/s02PresencePlacement.ts": "23abc41e975cca68ee5abd1fbbf9c75a16d1b37bf521d5ae22baf910aef94c3c",
+      "web/src/components/scene/environment.ts": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+      "web/src/components/scene/diorama.ts": "ef081648397566bc742298f002807e399747f9a74d44c7fc09bc59f8d5be508c",
+      "web/src/ui/sceneRecipes.ts": "98a45947ba3dc67c02e224ac4c70944130669d7e8f4dd9422c1013d80e111dbf",
+      "web/src/ui/scenePolicy.ts": "4a21260fdadd0ded1d8c980ab557196bba0adb8a2038b4782095c6d28f56b9c3",
+      "web/src/ui/companionActiveAsset.ts": "8904c58941f9a66cd33fd0ab04c689ea59b04b936b99b2ca8d9e52eb9c870976",
+      "web/src/ui/companionSceneRegistry.ts": "0730699ec200f538a695689375e3b74a2031391d36e8a2d4f4ba4cfd68579029",
+      "web/src/ui/companionPresentationProfiles.ts": "7e327d542dd9db36e7737b83f2a1df300347367a9cc97a91c585b735945f3896"
+    },
+    "posterRecaptureClaim": false,
+    "pixelEquivalentPosterClaim": false,
+    "whiteRectangleRootCauseClaim": false
   }
 }
