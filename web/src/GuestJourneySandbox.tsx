@@ -37,10 +37,6 @@ import {
 } from "./ui/companion";
 import { journeyCopy, type ScreenId } from "./ui/journey";
 import { sevenDayFacts } from "./ui/livingWeek";
-import {
-  getSyntheticModelV2ResultView,
-  MODEL_V2_DEFAULT_RESULT_STATE,
-} from "./ui/modelV2SyntheticResultState";
 import type { ExplorerSelection, RecordBrowseItem } from "./ui/recordExplorer";
 import { resolveSceneGate } from "./ui/scenePolicy";
 import {
@@ -866,15 +862,14 @@ function GuestJourney({ today }: { today: string }) {
     }
 
     if (activeScreen === "S11") {
-      const syntheticView = getSyntheticModelV2ResultView(MODEL_V2_DEFAULT_RESULT_STATE);
-      return <Scene id="S11" {...journeyCopy.S11} tone="secondary" className="signal-scene">
+      return <Scene id="S11" eyebrow="체험용 예시" title="AI 분석 맛보기" tone="secondary" className="signal-scene">
         <div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div>
-        <div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={MODEL_V2_DEFAULT_RESULT_STATE} role="status" aria-live="polite">
-          <span className="status-pill">{syntheticView.status}</span>
-          <h2>{syntheticView.heading}</h2>
-          <p>{syntheticView.body}</p>
+        <div className="signal-card" data-guest-model-v2-demo="available" role="status" aria-live="polite">
+          <span className="status-pill">AI 분석 맛보기</span>
+          <h2>생활정보를 바탕으로 이런 방식으로 분석해요</h2>
+          <p>체험에서는 분석 화면의 흐름만 보여드려요. 로그인 후에는 입력한 생활정보를 이 브라우저에서 계산하며, 분석 입력과 결과를 서버에 보내거나 저장하지 않아요.</p>
         </div>
-        <p className="signal-disclaimer">{syntheticView.disclaimer}</p>
+        <p className="signal-disclaimer">이 분석은 진단·치료·예방 판단이 아닙니다.</p>
         <button className="secondary" type="button" onClick={() => navigate("S02")}>오늘 화면으로 돌아가기</button>
       </Scene>;
     }

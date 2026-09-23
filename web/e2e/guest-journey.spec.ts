@@ -192,7 +192,12 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
   await page.getByRole("button", { name: "7일 돌아보기로 돌아가기", exact: true }).click();
 
   await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
-  await expect(page.locator('[data-scene="S11"] [data-model-v2-synthetic-result]')).toHaveAttribute("data-model-v2-result-state", "not_ready");
+  await expect(page).toHaveURL(/screen=S11/);
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
+  await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
+  await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
   await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
 
   await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
@@ -367,3 +372,47 @@ for (const [width, height] of [[390, 844], [1366, 768]] as const) {
     await captureGuestVisuals(page, testInfo, width, height);
   });
 }
+
+test.describe("guest S11 demo presentation", () => {
+  test("is reachable from primary nav and never shows unfinished messaging", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    await openGuest(page);
+
+    await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
+    await expect(page).toHaveURL(/screen=S11/);
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
+    await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
+    await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
+    await expect(page.getByText("체험용 예시")).toBeVisible();
+    const demoCard = page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]');
+    await expect(demoCard.locator(".status-pill")).toHaveText("AI 분석 맛보기");
+    await expect(demoCard.locator("h2")).toHaveText("생활정보를 바탕으로 이런 방식으로 분석해요");
+    await expect(page.getByText("체험에서는 분석 화면의 흐름만 보여드려요")).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+
+  test("is reachable directly with ?guest=1&screen=S11 and keeps firewalls clean", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.clock.setFixedTime(fixedNow);
+    await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
+
+    await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
+    await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
+    await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
+    await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+});
