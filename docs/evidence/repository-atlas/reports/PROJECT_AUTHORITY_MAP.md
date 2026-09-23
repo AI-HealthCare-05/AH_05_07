@@ -4,24 +4,24 @@ Curated from source-grounded records pinned to `6f163c33bf11193f0322c0377ff94635
 
 | Boundary | Current authority | Lifecycle | Protects |
 | --- | --- | --- | --- |
-| `governance` | [Repository contribution and protected-boundary rules](AGENTS.md) | `current` | protected product boundaries, checkpoint and attribution rules |
-| `policy` | [Documentation authority and lifecycle map](docs/README.md) | `current` | named document boundaries, CURRENT versus EVIDENCE lifecycle |
-| `architecture` | [System architecture](docs/architecture.md) | `current` | modular monolith boundary, API and data layering |
-| `architecture` | [Architecture invariants](docs/architecture/ARCHITECTURE_INVARIANTS.md) | `current` | auth/RLS/retention, Model V2 frozen boundary, request/session guards |
-| `product` | [Product requirements](docs/requirements.md) | `current` | product scope, input-based risk-group screening signal wording |
-| `model` | [Model V2 product contract](docs/model-v2-product-contract.md) | `current` | frozen Model V2 artifact, 11-feature order and preprocessing, target-leakage prohibition |
-| `api` | [API contract](docs/api-contract.md) | `current` | API semantics, request and uncertain-write protections |
-| `auth` | [Authentication contract](docs/auth-contract.md) | `current` | authentication semantics, session ownership |
-| `data` | [Data contract](docs/data-contract.md) | `current` | fact separation, retention and account deletion |
-| `database` | [Observation data lifecycle](docs/observation-data-lifecycle.md) | `current` | retention, deletion, observation ownership |
-| `journey` | [Living Journey UX flow](docs/ux-flow.md) | `current` | journey states, user-facing fact separation |
-| `visual` | [Scene policy contract](docs/scene-policy-contract.md) | `current` | scene policy, runtime boundary |
-| `assets` | [Visual production contract](docs/visual-production-contract.md) | `current` | asset production gates, visual acceptance boundary |
-| `companion` | [Companion runtime](docs/companion-runtime.md) | `current` | companion behavior boundary, scene lifecycle |
-| `assets` | [Asset register](docs/asset-register.md) | `current` | asset provenance, asset review scope |
-| `deployment` | [Deployment SSOT](docs/deployment-ssot.md) | `current` | deployment flow, runtime release state |
-| `release` | [Release contract](docs/architecture/RELEASE_CONTRACT.md) | `current` | release gates, rollback boundary |
-| `research` | [Transcend program](docs/transcend/PROGRAM.md) | `current` | Transcend scope, experimental boundary |
-| `research` | [Transcend W1 playable slice contract](docs/transcend/W1.md) | `current` | W1 acceptance, experimental runtime boundary |
+| `governance` | [Repository contribution and protected-boundary rules](../../../../AGENTS.md) | `current` | protected product boundaries, checkpoint and attribution rules |
+| `policy` | [Documentation authority and lifecycle map](../../../../docs/README.md) | `current` | named document boundaries, CURRENT versus EVIDENCE lifecycle |
+| `architecture` | [System architecture](../../../../docs/architecture.md) | `current` | modular monolith boundary, API and data layering |
+| `architecture` | [Architecture invariants](../../../../docs/architecture/ARCHITECTURE_INVARIANTS.md) | `current` | auth/RLS/retention, Model V2 frozen boundary, request/session guards |
+| `product` | [Product requirements](../../../../docs/requirements.md) | `current` | product scope, input-based risk-group screening signal wording |
+| `model` | [Model V2 product contract](../../../../docs/model-v2-product-contract.md) | `current` | frozen Model V2 artifact, 11-feature order and preprocessing, target-leakage prohibition |
+| `api` | [API contract](../../../../docs/api-contract.md) | `current` | API semantics, request and uncertain-write protections |
+| `auth` | [Authentication contract](../../../../docs/auth-contract.md) | `current` | authentication semantics, session ownership |
+| `data` | [Data contract](../../../../docs/data-contract.md) | `current` | fact separation, retention and account deletion |
+| `database` | [Observation data lifecycle](../../../../docs/observation-data-lifecycle.md) | `current` | retention, deletion, observation ownership |
+| `journey` | [Living Journey UX flow](../../../../docs/ux-flow.md) | `current` | journey states, user-facing fact separation |
+| `visual` | [Scene policy contract](../../../../docs/scene-policy-contract.md) | `current` | scene policy, runtime boundary |
+| `assets` | [Visual production contract](../../../../docs/visual-production-contract.md) | `current` | asset production gates, visual acceptance boundary |
+| `companion` | [Companion runtime](../../../../docs/companion-runtime.md) | `current` | companion behavior boundary, scene lifecycle |
+| `assets` | [Asset register](../../../../docs/asset-register.md) | `current` | asset provenance, asset review scope |
+| `deployment` | [Deployment SSOT](../../../../docs/deployment-ssot.md) | `current` | deployment flow, runtime release state |
+| `release` | [Release contract](../../../../docs/architecture/RELEASE_CONTRACT.md) | `current` | release gates, rollback boundary |
+| `research` | [Transcend program](../../../../docs/transcend/PROGRAM.md) | `current` | Transcend scope, experimental boundary |
+| `research` | [Transcend W1 playable slice contract](../../../../docs/transcend/W1.md) | `current` | W1 acceptance, experimental runtime boundary |
 
 Historical, research and evidence records remain traceable in `evidence-index.json`; they do not establish live runtime state.

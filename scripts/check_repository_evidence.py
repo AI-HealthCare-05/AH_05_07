@@ -373,6 +373,10 @@ def validate_sources(records: list[dict], inventory_rows: list[dict]) -> list[di
     ]
 
 
+def report_link(source_path: str) -> str:
+    return f"../../../../{source_path}"
+
+
 def render_authority_map(records: list[dict], ref: str) -> str:
     lines = [
         "# Project authority map",
@@ -385,7 +389,7 @@ def render_authority_map(records: list[dict], ref: str) -> str:
     for record in records:
         if record["status"] == "current":
             lines.append(
-                f"| `{record['category']}` | [{record['title']}]({record['source_path']}) | `{record['status']}` | {', '.join(record['protects']) or '—'} |"
+                f"| `{record['category']}` | [{record['title']}]({report_link(record['source_path'])}) | `{record['status']}` | {', '.join(record['protects']) or '—'} |"
             )
     lines.extend(
         [
@@ -412,7 +416,7 @@ def render_atlas(records: list[dict], ref: str) -> str:
                 record.get("supersedes") or "; ".join(record.get("notes", [])) or "No historical predecessor asserted."
             )
             lines.append(
-                f"| **{record['category']}** | [{record['title']}]({record['source_path']}) | {record['summary']} | {record['verification']} | {related} |"
+                f"| **{record['category']}** | [{record['title']}]({report_link(record['source_path'])}) | {record['summary']} | {record['verification']} | {related} |"
             )
     lines.extend(["", "Status is a repository evidence lifecycle at the audited SHA. It is not deployment proof.", ""])
     return "\n".join(lines)

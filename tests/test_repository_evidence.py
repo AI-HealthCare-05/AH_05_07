@@ -93,6 +93,7 @@ def test_normalized_graph_has_traceable_endpoints(tmp_path: Path) -> None:
     endpoints = {node["id"] for node in graph["nodes"]} | {edge["to"] for edge in graph["edges"]}
     assert {"EV-TEST", "docs/guide.md", "fixture boundary"} <= endpoints
     assert json.loads(output["source-validation.json"])["records"][0]["status"] == "resolved"
+    assert "../../../../docs/guide.md" in output["reports/PROJECT_AUTHORITY_MAP.md"]
 
 
 def test_write_preflight_rejects_wrong_head_before_writing(tmp_path: Path) -> None:
