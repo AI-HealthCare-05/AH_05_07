@@ -93,3 +93,20 @@ def test_normalized_graph_has_traceable_endpoints(tmp_path: Path) -> None:
     endpoints = {node["id"] for node in graph["nodes"]} | {edge["to"] for edge in graph["edges"]}
     assert {"EV-TEST", "docs/guide.md", "fixture boundary"} <= endpoints
     assert json.loads(output["source-validation.json"])["records"][0]["status"] == "resolved"
+
+
+def test_write_preflight_rejects_wrong_head_before_writing(tmp_path: Path) -> None:
+    root, ref = fixture(tmp_path)
+    atlas = root / evidence.ATLAS
+    atlas.mkdir(parents=True)
+    branch = git(root, "branch", "--show-current")
+    (atlas / "STATE.json").write_text(json.dumps({"branch": branch, "base_sha": ref}))
+    (atlas / "SOURCES.json").write_text(json.dumps({"records": []}))
+    target = atlas / "generated.txt"
+    try:
+        evidence.apply_outputs(root, {"generated.txt": "would be written\n"}, True, "0" * 40)
+    except ValueError as error:
+        assert "expect-head" in str(error)
+    else:
+        raise AssertionError("wrong reviewed head must fail closed")
+    assert not target.exists()
