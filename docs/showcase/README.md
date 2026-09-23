@@ -6,7 +6,7 @@ The normal SK7 landing remains the product landing.
 
 A single low-weight Showcase entry appears after the signed-out S01 landing:
 
-`SHOWCASE · Seven days can tell a story. · 01:00 WATCH THE FILM`
+`SHOWCASE · Seven days can tell a story. · 04:00 WATCH THE FILM`
 
 It opens a full-screen native `<dialog>` that treats the film as a cinema
 experience. A small `DETAILS ↗` link opens `/showcase/`, which holds the longer
@@ -44,19 +44,20 @@ checking that another lane has not already added them.
 
 ## Film publication boundary
 
-The Cinema modal now targets the reviewed, content-addressed 60-second public cut:
+The Cinema modal targets the reviewed, content-addressed 4-minute Showcase:
 
-`https://sk7-companion.gkrry.com/showcase/v1/video/sk7-cinema-public-teaser-v1-60s-ed7e1baa477a.mp4`
+`https://sk7-companion.gkrry.com/showcase/v1/video/showcase-final-v1-9094ae558239.mp4`
 
 Public object verification:
 
-- bytes: `5,791,297`
-- SHA-256: `ed7e1baa477a503ce0340f512ad5d1b076900c83ef69e29384a6d6939c783f4b`
+- bytes: `31,612,721`
+- SHA-256: `9094ae5582395811beda7240a0e661a77f4c6d8b5431d19cff1da8e980d3a30c`
 - MIME: `video/mp4`
-- cache: immutable public asset
+- public GET verified byte-for-byte
+- browser-origin media request verified
 
-The longer 4-minute narrated submission remains in private source/archive storage.
-It is intentionally not referenced by the public Cinema runtime.
+The 60-second teaser remains an alternate archived cut.
+It is not referenced by the current public Cinema runtime.
 
 ## Accessibility
 
