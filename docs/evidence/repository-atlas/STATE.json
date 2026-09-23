@@ -24,7 +24,7 @@
     "EA-011"
   ],
   "blocked_tasks": [],
-  "last_commit": "6c89252d4790dfa0cc26e5fd54bfd00487b94648",
+  "last_commit": "623321b",
   "last_commit_semantics": "Last observed HEAD before writing this checkpoint, not the self-containing commit. Resolve containing checkpoint with git log -1 --format=%H -- docs/evidence/repository-atlas/STATE.json.",
   "verification_commands": [
     "uv run pytest -q tests/test_repository_evidence.py",
@@ -48,7 +48,7 @@
   "known_unknowns": [
     "Broken reference results include historical and intentionally stale documents; they require scoped triage, not automatic product fixes.",
     "Remote PR, issue, GitHub URL and tag existence remains unverified by the offline command.",
-    "The final fetch found origin/main unchanged; the task branch is three commits ahead and zero behind."
+    "The final fetch found origin/main unchanged; all task commits remain local and unpushed."
   ],
   "resume_instructions": [
     "Read WORKPLAN.md, STATE.json, QUEUE.json, RESUME.md; reconcile live Git first.",
