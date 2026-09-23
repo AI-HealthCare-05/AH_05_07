@@ -23,7 +23,8 @@ import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDr
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
-import { ModelV2InputFlow, type ModelV2RequestContext } from "./components/ModelV2InputFlow";
+import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
+import { createModelV2SessionGuard } from "./components/modelV2ExecutionGuard";
 import {
   ApiRequestError,
   deleteAccount,
@@ -91,7 +92,7 @@ type HomeAction = {
   screen: ScreenId;
 };
 type SessionIdentity = { userId: string | null; generation: number };
-type RequestContext = ModelV2RequestContext;
+type RequestContext = { userId: string; generation: number; accessToken: string };
 type BloodPressureErrorField = "observed-on" | "systolic" | "diastolic";
 type BloodPressureValidationError = {
   field: BloodPressureErrorField;
@@ -1932,11 +1933,14 @@ function App() {
       if (evidenceMode || !session) {
         return <Scene id="S11" {...journeyCopy.S11} tone="secondary" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={syntheticModelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{syntheticModelV2ResultView.status}</span><h2>{syntheticModelV2ResultView.heading}</h2><p>{syntheticModelV2ResultView.body}</p></div><p className="signal-disclaimer">{syntheticModelV2ResultView.disclaimer}</p></Scene>;
       }
+      const modelV2Guard = createModelV2SessionGuard(() => ({
+        userId: sessionIdentityRef.current.userId,
+        generation: sessionIdentityRef.current.generation,
+      }));
       return (
         <ModelV2InputFlow
-          key={session.user.id}
-          session={session}
-          captureRequestContext={captureRequestContext}
+          key={sessionIdentityRef.current.generation}
+          guard={modelV2Guard}
           bloodPressureStatus={modelV2Continuation.key === "confirm-today" ? "오늘 혈압 상태 · 최신 여부 미확인" : todayBloodPressureStatus}
           bloodPressureSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 기록을 확인해요." : todayBloodPressureSupport}
           continuation={modelV2Continuation}
@@ -1944,7 +1948,6 @@ function App() {
           challengeSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 챌린지 상태를 확인해요." : modelV2ChallengeSupport}
           onContinue={() => navigate(modelV2Continuation.destination)}
           onReturnToToday={() => navigate("S02")}
-          isCurrentRequestContext={isCurrentRequestContext}
         />
       );
     }

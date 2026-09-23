@@ -1,14 +1,124 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 import { companionAssetManifest } from "../src/ui/companionAssets.generated";
+import { chooseTime } from "./model-v2-time-wheel";
 
-const fixedNow = new Date("2026-09-11T03:00:00Z");
-const today = "2026-09-11";
+const modelFixturePath = fileURLToPath(new URL("../public/models/model-v2.json", import.meta.url));
+const timeInputs = [
+  ["model-weekday-bed", "23:30"],
+  ["model-weekday-wake", "07:00"],
+  ["model-weekend-bed", "23:30"],
+  ["model-weekend-wake", "08:00"],
+] as const;
 
-// These are the only browser-local keys guest mode may read or update. Both
-// localStorage keys are non-medical presentation preferences; the session key
-// is main.tsx's existing stale-Vite-chunk recovery timestamp.
+async function routeGuestModel(page: Page) {
+  const requests: { method: string; body: string | null; url: string }[] = [];
+  await page.route("**/models/model-v2.json", async (route) => {
+    const request = route.request();
+    requests.push({ method: request.method(), body: request.postData(), url: request.url() });
+    expect(request.method()).toBe("GET");
+    expect(request.postData()).toBeNull();
+    await route.fulfill({ path: modelFixturePath });
+  });
+  return requests;
+}
+
+const step = (page: Page, value: string) => page.locator(`[data-model-v2-step="${value}"]`);
+const submit = (page: Page) => page.getByRole("button", { name: "생활정보 분석하기", exact: true });
+const result = (page: Page) => page.locator('[data-model-v2-user-result="processed"]');
+
+async function begin(page: Page) {
+  await page.getByRole("button", { name: "입력 시작하기" }).click();
+  await expect(step(page, "basics")).toBeVisible();
+}
+
+async function fillBasics(page: Page, age = "35") {
+  await page.getByLabel("만 나이", { exact: true }).fill(age);
+  await page.getByLabel("성별", { exact: true }).selectOption("1");
+  await page.locator("#model-height").fill("170");
+  await page.locator("#model-weight").fill("68");
+}
+
+async function fillActivity(page: Page) {
+  await page.getByLabel("최근 7일 동안 걸은 날은 며칠인가요?", { exact: true }).fill("4");
+  await page.locator("#model-walking-hours").fill("0");
+  await page.locator("#model-walking-minutes").fill("40");
+  await page.getByLabel("최근 7일 동안 근력운동을 한 날은 며칠인가요?", { exact: true }).selectOption("2_days");
+}
+
+async function fillSleep(page: Page) {
+  for (const [id, value] of timeInputs) await chooseTime(page, id, value);
+}
+
+async function fillHabits(page: Page) {
+  await page.getByLabel("일반담배(궐련) 흡연 상태는 어떤가요?", { exact: true }).selectOption("never_smoked");
+  await page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true }).selectOption("lt_monthly");
+  await page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true }).selectOption("1_2_drinks");
+}
+
+async function toReview(page: Page) {
+  await begin(page);
+  await fillBasics(page);
+  await page.getByRole("button", { name: "다음", exact: true }).click();
+  await expect(step(page, "activity")).toBeVisible();
+  await fillActivity(page);
+  await page.getByRole("button", { name: "다음", exact: true }).click();
+  await expect(step(page, "sleep")).toBeVisible();
+  await fillSleep(page);
+  await page.getByRole("button", { name: "다음", exact: true }).click();
+  await expect(step(page, "habits")).toBeVisible();
+  await fillHabits(page);
+  await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
+  await expect(step(page, "review")).toBeVisible();
+  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
+}
+
+async function holdGuestModel(page: Page) {
+  const requests: { method: string; body: string | null; url: string }[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/models/model-v2.json", async (route) => {
+    const request = route.request();
+    requests.push({ method: request.method(), body: request.postData(), url: request.url() });
+    expect(request.method()).toBe("GET");
+    expect(request.postData()).toBeNull();
+    await gate;
+    await route.fulfill({ path: modelFixturePath });
+  });
+  return { requests, release };
+}
+
+const sensitiveSurveyMarkers = [
+  "0.055",
+  "35",
+  "170",
+  "68",
+  "never_smoked",
+  "lt_monthly",
+  "1_2_drinks",
+  "2_days",
+  "age_years",
+  "sex_knhanes",
+  "bmi_from_height_weight",
+  "cigarette_smoking_state",
+  "alcohol_frequency",
+  "alcohol_amount_category",
+  "walking_days_7d",
+  "walking_minutes_per_active_day",
+  "strength_days_7d",
+  "weekday_sleep_minutes",
+  "weekend_sleep_minutes",
+] as const;
+
 const allowedLocalStorageKeys = ["sk7-companion-species", "sk7-ui-theme"];
 const allowedSessionStorageKeys = ["sk7:vite-preload-recovery-at"];
+
+type StorageRecord = {
+  storage: "local" | "session" | "idb" | "cache";
+  method: string;
+  key?: string;
+  args?: unknown;
+};
 
 function forbiddenRequestReason(rawUrl: string): string | null {
   const url = new URL(rawUrl);
@@ -17,7 +127,7 @@ function forbiddenRequestReason(rawUrl: string): string | null {
   if (/\/(?:auth|rest|realtime|storage)\/v1(?:\/|$)/.test(url.pathname)) return "Supabase request";
   if (/\/rpc(?:\/|$)/.test(url.pathname)) return "RPC request";
   if (/refresh_token|grant_type=refresh_token|\/session(?:\/|$)/i.test(`${url.pathname}${url.search}`)) return "account/session refresh";
-  if (/structured[-_/]?feedback|\/feedback(?:\/|$)/i.test(url.pathname)) return "structured feedback";
+  if (/structured[-_\/]?feedback|\/feedback(?:\/|$)/i.test(url.pathname)) return "structured feedback";
   return null;
 }
 
@@ -45,6 +155,239 @@ async function installGuestNetworkFirewall(page: Page) {
       expect(loadedAssets.some((pathname) => /\/App-[^/]+\.(?:js|css)$/.test(pathname))).toBe(false);
     },
   };
+}
+
+async function observeGuestTwoPhaseNetwork(page: Page) {
+  // Bootstrap phase: normal guest entry/static/scene requests are allowed.
+  // Sensitive phase begins once the first survey answer is entered.
+  type RequestRecord = { method: string; url: string; phase: "A" | "B" };
+  let phaseBStarted = false;
+  const records: RequestRecord[] = [];
+  page.on("request", (request) => {
+    records.push({ method: request.method(), url: request.url(), phase: phaseBStarted ? "B" : "A" });
+  });
+
+  function phase(phaseName: "A" | "B") {
+    return records.filter((record) => record.phase === phaseName);
+  }
+
+  function isAllowedPhaseA(record: RequestRecord): boolean {
+    const parsed = new URL(record.url);
+    const sameOrigin = parsed.origin === new URL(page.url()).origin;
+    if (record.method === "GET" && sameOrigin && parsed.pathname === "/" && (parsed.search === "" || parsed.search.startsWith("?guest="))) return true;
+    if ((record.method === "GET" || record.method === "HEAD") && sameOrigin && parsed.pathname.startsWith("/assets/")) return true;
+    if (record.method === "GET" && sameOrigin && parsed.pathname === "/models/model-v2.json" && parsed.search === "") return true;
+    if ((record.method === "GET" || record.method === "HEAD") && parsed.hostname === "sk7-companion.gkrry.com" && (parsed.pathname.startsWith("/companion/v1/") || parsed.pathname.startsWith("/scene-review/"))) return true;
+    if ((record.method === "GET" || record.method === "HEAD") && parsed.hostname === "sk7-assets.gomdory.com" && parsed.pathname.startsWith("/visual/v1/")) return true;
+    if ((record.method === "GET" || record.method === "HEAD") && sameOrigin && (parsed.pathname === "/favicon.ico" || parsed.pathname === "/favicon.svg")) return true;
+    if ((record.method === "GET" || record.method === "HEAD") && sameOrigin && [
+      "/showcase-cinema.css",
+      "/showcase-cinema.js",
+      "/canonical-origin.js",
+      "/src/main.tsx",
+    ].includes(parsed.pathname)) return true;
+    return false;
+  }
+
+  function isExactModelGet(record: RequestRecord): boolean {
+    const parsed = new URL(record.url);
+    const sameOrigin = parsed.origin === new URL(page.url()).origin;
+    return record.method === "GET"
+      && sameOrigin
+      && parsed.pathname === "/models/model-v2.json"
+      && parsed.search === ""
+      && parsed.hash === "";
+  }
+
+  return {
+    startSensitivePhase() {
+      phaseBStarted = true;
+    },
+    assertPhaseA() {
+      for (const record of phase("A")) {
+        expect(isAllowedPhaseA(record), `unexpected phase-A request: ${record.method} ${record.url}`).toBe(true);
+      }
+    },
+    assertPhaseB() {
+      for (const record of phase("B")) {
+        expect(isExactModelGet(record), `phase-B request after sensitive input must be the exact model GET: ${record.method} ${record.url}`).toBe(true);
+      }
+    },
+  };
+}
+
+async function observeGuestStorage(page: Page) {
+  await page.addInitScript(({ allowedLocal, allowedSession }) => {
+    (window as unknown as { guestStorageRecords: StorageRecord[] }).guestStorageRecords = [];
+    const record = (storage: StorageRecord["storage"], method: string, args: unknown[]) => {
+      const rec: StorageRecord = { storage, method };
+      if (typeof args[0] === "string") rec.key = args[0];
+      if (method === "setItem" && args.length > 1) rec.args = args[1];
+      (window as unknown as { guestStorageRecords: StorageRecord[] }).guestStorageRecords.push(rec);
+    };
+
+    for (const method of ["setItem", "removeItem", "clear"] as const) {
+      const original = Storage.prototype[method];
+      Storage.prototype[method] = function (this: Storage, ...args: unknown[]) {
+        const name = this === localStorage ? "local" : this === sessionStorage ? "session" : "unknown";
+        record(name as StorageRecord["storage"], method, args);
+        return Reflect.apply(original, this, args);
+      };
+    }
+
+    if (globalThis.indexedDB) {
+      const wrapObjectStore = (target: IDBObjectStore) => {
+        for (const method of ["add", "put", "delete", "clear"] as const) {
+          const original = (target as unknown as Record<string, unknown>)[method];
+          if (typeof original === "function") {
+            (target as unknown as Record<string, unknown>)[method] = function (this: IDBObjectStore, ...args: unknown[]) {
+              record("idb", `objectStore.${method}`, args);
+              return Reflect.apply(original as (...args: unknown[]) => unknown, this, args);
+            };
+          }
+        }
+      };
+      const originalOpen = indexedDB.open.bind(indexedDB);
+      indexedDB.open = (...args: unknown[]) => {
+        record("idb", "open", args);
+        const request = originalOpen(...args);
+        request.addEventListener("upgradeneeded", (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
+          record("idb", "open.upgradeneeded", [db.name, db.version]);
+        });
+        return request;
+      };
+      const originalDeleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+      indexedDB.deleteDatabase = (...args: unknown[]) => { record("idb", "deleteDatabase", args); return originalDeleteDatabase(...args); };
+
+      // Wrap future object stores obtained through transaction.objectStore().
+      const originalObjectStore = IDBTransaction.prototype.objectStore;
+      IDBTransaction.prototype.objectStore = function (this: IDBTransaction, ...args: unknown[]) {
+        const store = Reflect.apply(originalObjectStore, this, args) as IDBObjectStore;
+        wrapObjectStore(store);
+        return store;
+      };
+    }
+
+    if (globalThis.caches) {
+      const originalCacheOpen = caches.open.bind(caches);
+      caches.open = async (...args: unknown[]) => {
+        record("cache", "open", args);
+        const cache = await originalCacheOpen(...args);
+        for (const method of ["put", "add", "addAll", "delete"] as const) {
+          const original = (cache as unknown as Record<string, unknown>)[method];
+          (cache as unknown as Record<string, unknown>)[method] = function (this: Cache, ...methodArgs: unknown[]) {
+            record("cache", `Cache.${method}`, methodArgs);
+            return Reflect.apply(original as (...args: unknown[]) => unknown, this, methodArgs);
+          };
+        }
+        return cache;
+      };
+      const originalCacheDelete = caches.delete.bind(caches);
+      caches.delete = async (...args: unknown[]) => { record("cache", "CacheStorage.delete", args); return originalCacheDelete(...args); };
+    }
+  }, { allowedLocal: allowedLocalStorageKeys, allowedSession: allowedSessionStorageKeys });
+
+  return {
+    async assertClean() {
+      const records = await page.evaluate(() => (window as unknown as { guestStorageRecords: StorageRecord[] }).guestStorageRecords);
+      const unexpected: StorageRecord[] = [];
+      for (const record of records) {
+        if (record.storage === "local") {
+          if (!allowedLocalStorageKeys.includes(record.key ?? "")) unexpected.push(record);
+        } else if (record.storage === "session") {
+          if (!allowedSessionStorageKeys.includes(record.key ?? "")) unexpected.push(record);
+        } else if (record.storage === "idb" || record.storage === "cache") {
+          // IDB and cache mutations are unexpected in guest S11 flow.
+          unexpected.push(record);
+        }
+      }
+      expect(unexpected, `unexpected durable write operations: ${JSON.stringify(unexpected)}`).toEqual([]);
+
+      const allValues = records
+        .filter((record) => record.storage === "local" || record.storage === "session")
+        .map((record) => String(record.args ?? ""))
+        .join("\n");
+      const allArgs = records.map((record) => JSON.stringify(record.args)).join("\n");
+      const combined = `${allValues}\n${allArgs}`;
+      for (const marker of sensitiveSurveyMarkers) {
+        expect(combined, `storage value leaked survey/model payload: ${marker}`).not.toContain(marker);
+      }
+    },
+  };
+}
+
+async function observeGuestUrlPayloads(page: Page) {
+  await page.addInitScript(() => {
+    type HistoryEntry = { url: string; data: string };
+    (window as unknown as { guestUrlHistory: HistoryEntry[] }).guestUrlHistory = [{ url: location.href, data: "" }];
+    const serialize = (value: unknown) => {
+      try { return JSON.stringify(value); } catch { return "[unserializable]"; }
+    };
+    const record = (url: string, data: unknown) => {
+      (window as unknown as { guestUrlHistory: HistoryEntry[] }).guestUrlHistory.push({ url, data: serialize(data) });
+    };
+    const originalPushState = history.pushState.bind(history);
+    history.pushState = (data: unknown, unused: string, url?: string | URL | null) => {
+      const result = originalPushState(data, unused, url);
+      record(typeof url === "string" ? new URL(url, location.href).href : location.href, data);
+      return result;
+    };
+    const originalReplaceState = history.replaceState.bind(history);
+    history.replaceState = (data: unknown, unused: string, url?: string | URL | null) => {
+      const result = originalReplaceState(data, unused, url);
+      record(typeof url === "string" ? new URL(url, location.href).href : location.href, data);
+      return result;
+    };
+    window.addEventListener("popstate", (event) => {
+      record(location.href, event.state);
+    });
+  });
+  return {
+    async assertClean() {
+      const history = await page.evaluate(() => (window as unknown as { guestUrlHistory: { url: string; data: string }[] }).guestUrlHistory);
+      const joined = [...history.map((entry) => `${entry.url}\n${entry.data}`), page.url()].join("\n");
+      for (const marker of sensitiveSurveyMarkers) {
+        expect(joined, `URL/history leaked survey/model payload: ${marker}`).not.toContain(marker);
+      }
+    },
+  };
+}
+
+async function installGuestCryptoDigestObserver(page: Page) {
+  await page.addInitScript(() => {
+    type DigestRecord = { algorithm: string; count: number };
+    (window as unknown as { guestDigestRecords: DigestRecord[] }).guestDigestRecords = [];
+    if (globalThis.crypto?.subtle?.digest) {
+      const originalDigest = crypto.subtle.digest.bind(crypto.subtle);
+      crypto.subtle.digest = async (algorithm: AlgorithmIdentifier, data: BufferSource) => {
+        const result = await originalDigest(algorithm, data);
+        const name = typeof algorithm === "string" ? algorithm : (algorithm as { name?: string }).name ?? "unknown";
+        (window as unknown as { guestDigestRecords: DigestRecord[] }).guestDigestRecords.push({ algorithm: name, count: (data as ArrayBufferView).byteLength ?? 0 });
+        return result;
+      };
+    }
+  });
+  return {
+    async waitForSha256Digests(minimum: number, timeout = 10_000) {
+      await page.waitForFunction((expected) => {
+        const records = (window as unknown as { guestDigestRecords: { algorithm: string }[] }).guestDigestRecords;
+        return records.filter((record) => record.algorithm === "SHA-256").length >= expected;
+      }, minimum, { timeout });
+    },
+    async count() {
+      return page.evaluate(() =>
+        (window as unknown as { guestDigestRecords: { algorithm: string }[] }).guestDigestRecords)
+        .then((records) => records.filter((record) => record.algorithm === "SHA-256").length);
+    },
+  };
+}
+
+async function installGuestS11Audits(page: Page) {
+  const network = await observeGuestTwoPhaseNetwork(page);
+  const storage = await observeGuestStorage(page);
+  const urls = await observeGuestUrlPayloads(page);
+  return { network, storage, urls };
 }
 
 async function assertGuestStorageFirewall(page: Page) {
@@ -80,9 +423,9 @@ async function assertGuestStorageFirewall(page: Page) {
     .not.toMatch(/132|84|143|91|walk-10-minutes|sleep-routine|low-sodium-meal|completed|skipped/);
 }
 
-async function openGuest(page: Page, width = 390, height = 844) {
+async function openGuest(page: Page, width = 390, height = 844, fixedTime: string | Date = fixedNow) {
   await page.setViewportSize({ width, height });
-  await page.clock.setFixedTime(fixedNow);
+  await page.clock.setFixedTime(fixedTime);
   // Remote registered visual assets must not hold the document entry contract
   // open indefinitely; the scene readiness assertion below owns that boundary.
   await page.goto("/?guest=1", { waitUntil: "domcontentloaded" });
@@ -151,6 +494,9 @@ async function openTodayRecord(page: Page, kind: "blood-pressure" | "challenge-c
   await expect(page.locator('[data-scene="S09"]')).toBeVisible();
 }
 
+const fixedNow = new Date("2026-09-11T03:00:00Z");
+const today = "2026-09-11";
+
 test("guest full journey is memory-only, keeps #713 direct placement, and reload resets it", async ({ page }) => {
   const firewall = await installGuestNetworkFirewall(page);
   await openGuest(page);
@@ -194,11 +540,13 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
   await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
   await expect(page).toHaveURL(/screen=S11/);
   await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-  await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
+  await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
+  await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
+  await expect(page.locator('[data-guest-model-v2-demo="available"]')).toHaveCount(0);
   await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
   await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
   await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
-  await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
 
   await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
@@ -373,43 +721,269 @@ for (const [width, height] of [[390, 844], [1366, 768]] as const) {
   });
 }
 
-test.describe("guest S11 demo presentation", () => {
-  test("is reachable from primary nav and never shows unfinished messaging", async ({ page }) => {
+async function captureGuestS11Visuals(page: Page, testInfo: TestInfo, width: number, height: number) {
+  await routeGuestModel(page);
+  await page.setViewportSize({ width, height });
+  await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
+  await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath(`guest-S11-intro-${width}x${height}.png`), animations: "disabled" });
+  await toReview(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath(`guest-S11-result-${width}x${height}.png`), animations: "disabled" });
+}
+
+for (const [width, height] of [[390, 844], [1366, 768]] as const) {
+  test(`guest S11 real flow visual QA capture at ${width}x${height}`, async ({ page }, testInfo) => {
+    await captureGuestS11Visuals(page, testInfo, width, height);
+  });
+}
+
+test.describe("guest S11 real local model flow", () => {
+  test("completes real ModelV2InputFlow from primary nav inside preview window", async ({ page }) => {
     const firewall = await installGuestNetworkFirewall(page);
-    await openGuest(page);
+    const audits = await installGuestS11Audits(page);
+    const modelRequests = await routeGuestModel(page);
+    await openGuest(page, 390, 844, "2026-09-23T12:00:00+09:00");
 
     await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(page).toHaveURL(/screen=S11/);
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-    await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
-    await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
+    await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
+    await expect(page.locator('[data-guest-model-v2-demo="available"]')).toHaveCount(0);
     await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
     await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
-    await expect(page.getByText("체험용 예시")).toBeVisible();
-    const demoCard = page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]');
-    await expect(demoCard.locator(".status-pill")).toHaveText("AI 분석 맛보기");
-    await expect(demoCard.locator("h2")).toHaveText("생활정보를 바탕으로 이런 방식으로 분석해요");
-    await expect(page.getByText("체험에서는 분석 화면의 흐름만 보여드려요")).toBeVisible();
-    await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
+
+    await audits.network.startSensitivePhase();
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    expect(modelRequests).toEqual([{
+      method: "GET",
+      body: null,
+      url: expect.stringMatching(/\/models\/model-v2\.json(?:\?|$)/),
+    }]);
+    expect(new URL(modelRequests[0].url).search).toBe("");
+
+    const preview = result(page).locator("[data-model-v2-preview]");
+    await expect(preview).toBeVisible();
+    await expect(preview.locator("#model-v2-preview-label")).toHaveText("연구/개발 미리보기 · 내부 연속 출력");
+    await expect(preview.locator("[data-model-v2-preview-value]")).toHaveText("0.055");
+    await expect(result(page).locator(".model-v2-local-privacy")).toHaveText(
+      "이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함",
+    );
+
+    audits.network.assertPhaseA();
+    audits.network.assertPhaseB();
+    await audits.storage.assertClean();
+    await audits.urls.assertClean();
 
     firewall.assertClean();
     firewall.assertEntryIsolation();
     await assertGuestStorageFirewall(page);
   });
 
-  test("is reachable directly with ?guest=1&screen=S11 and keeps firewalls clean", async ({ page }) => {
+  test("completes real ModelV2InputFlow directly with ?guest=1&screen=S11", async ({ page }) => {
     const firewall = await installGuestNetworkFirewall(page);
+    const audits = await installGuestS11Audits(page);
+    const modelRequests = await routeGuestModel(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.clock.setFixedTime(fixedNow);
+    await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
     await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
 
     await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-    await expect(page.locator('[data-scene="S11"] [data-guest-model-v2-demo="available"]')).toBeVisible();
-    await expect(page.locator('[data-scene="S11"] [data-model-v2-result-state]')).toHaveCount(0);
-    await expect(page.getByText("아직 준비 중이에요")).toHaveCount(0);
-    await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
-    await expect(page.locator('[data-scene="S11"] form')).toHaveCount(0);
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
+    await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
+
+    await audits.network.startSensitivePhase();
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
+    expect(modelRequests).toHaveLength(1);
+    expect(modelRequests[0].method).toBe("GET");
+    expect(modelRequests[0].body).toBeNull();
+    expect(new URL(modelRequests[0].url).pathname).toBe("/models/model-v2.json");
+
+    audits.network.assertPhaseA();
+    audits.network.assertPhaseB();
+    await audits.storage.assertClean();
+    await audits.urls.assertClean();
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+
+  test("hides numeric output outside the preview window while keeping non-numeric completion", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    const audits = await installGuestS11Audits(page);
+    const modelRequests = await routeGuestModel(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.clock.setFixedTime("2026-10-18T12:00:00+09:00");
+    await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
+
+    await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+
+    await audits.network.startSensitivePhase();
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
+    await expect(result(page).locator(".model-v2-outcome-heading")).toContainText(
+      "현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.",
+    );
+    await expect(result(page).locator(".model-v2-local-privacy")).toBeVisible();
+    expect(modelRequests).toHaveLength(1);
+
+    audits.network.assertPhaseA();
+    audits.network.assertPhaseB();
+    await audits.storage.assertClean();
+    await audits.urls.assertClean();
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+
+  test("discards transient draft and result on navigate away, reload, and return", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    const modelRequests = await routeGuestModel(page);
+    await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
+    await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
+
+    await toReview(page);
+    await submit(page).click();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
+    const afterFirstSubmit = modelRequests.length;
+
+    await page.locator(".primary-nav").getByRole("button", { name: "오늘의 기록", exact: true }).click();
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await expect(result(page)).toHaveCount(0);
+
+    await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
+    await expect(page).toHaveURL(/screen=S11/);
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(result(page)).toHaveCount(0);
+    await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
+
+    await begin(page);
+    await page.locator("#model-age").fill("35");
+    await page.reload();
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(result(page)).toHaveCount(0);
+    expect(modelRequests).toHaveLength(afterFirstSubmit);
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+
+  test("completes once after an ordinary parent re-render while the model response is held", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    const audits = await installGuestS11Audits(page);
+    const { requests: modelRequests, release } = await holdGuestModel(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
+    // Start with dashboard_window=current so a legitimate non-medical parent state change can be forced.
+    await page.goto("/?guest=1&screen=S11&dashboard_window=current", { waitUntil: "domcontentloaded" });
+
+    await audits.network.startSensitivePhase();
+    await toReview(page);
+    await submit(page).click();
+    await expect(page.locator("#model-v2-pending")).toBeVisible();
+    expect(modelRequests).toHaveLength(1);
+    expect(modelRequests[0].method).toBe("GET");
+    expect(modelRequests[0].body).toBeNull();
+    expect(new URL(modelRequests[0].url).pathname).toBe("/models/model-v2.json");
+    expect(new URL(modelRequests[0].url).search).toBe("");
+
+    // Force a real parent state change without leaving S11: switch dashboard_window to prior.
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("dashboard_window", "prior");
+      window.history.pushState({ guestJourney: true }, "", url);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await expect(page.locator('[data-guest-dashboard-window="prior"]')).toBeVisible();
+    // S11 stayed mounted and the flow instance did not reset.
+    await expect(page.locator('[data-model-v2-step="review"]')).toBeVisible();
+    await expect(page.locator("#model-v2-pending")).toBeVisible();
+    expect(modelRequests).toHaveLength(1);
+
+    release();
+    await expect(result(page)).toBeVisible();
+    await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
+    expect(modelRequests).toHaveLength(1);
+
+    audits.network.assertPhaseA();
+    // The dashboard_window change in this test triggers a legitimate code-split
+    // chunk load, so the strict phase-B audit is enforced in the complete-flow
+    // tests that stay on S11 without navigation.
+    await audits.storage.assertClean();
+    await audits.urls.assertClean();
+
+    firewall.assertClean();
+    firewall.assertEntryIsolation();
+    await assertGuestStorageFirewall(page);
+  });
+
+  test("discards stale completion when navigating away while the model response is held, then re-entering fresh", async ({ page }) => {
+    const firewall = await installGuestNetworkFirewall(page);
+    const audits = await installGuestS11Audits(page);
+    const digest = await installGuestCryptoDigestObserver(page);
+    const { requests: firstRequests, release } = await holdGuestModel(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
+    await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
+
+    await audits.network.startSensitivePhase();
+    await toReview(page);
+    await submit(page).click();
+    await expect(page.locator("#model-v2-pending")).toBeVisible();
+    expect(firstRequests).toHaveLength(1);
+
+    // Navigate away while pending: the flow unmounts.
+    await page.locator(".primary-nav").getByRole("button", { name: "오늘의 기록", exact: true }).click();
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await expect(result(page)).toHaveCount(0);
+
+    // Re-enter S11: a fresh flow mounts with blank inputs.
+    await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
+    await expect(page).toHaveURL(/screen=S11/);
+    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(result(page)).toHaveCount(0);
+    await begin(page);
+    await expect(page.locator("#model-age")).toHaveValue("");
+
+    const digestsBeforeRelease = await digest.count();
+
+    // Release the OLD held response from the unmounted flow.
+    release();
+    // Wait deterministically until the old model SHA digest observation completes.
+    await digest.waitForSha256Digests(digestsBeforeRelease + 1);
+    // Flush at least two browser task/render turns.
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    }));
+
+    await expect(page.locator('[data-model-v2-user-result="processed"]')).toHaveCount(0);
+    await expect(page.locator("[data-model-v2-preview]")).toHaveCount(0);
+    await expect(page.locator("#model-age")).toHaveValue("");
+
+    audits.network.assertPhaseA();
+    // This test navigates away and back after sensitive input, so code-split
+    // chunks legitimately load after phase B begins; the strict phase-B audit
+    // is enforced in the complete-flow tests that stay on S11.
+    await audits.storage.assertClean();
+    await audits.urls.assertClean();
 
     firewall.assertClean();
     firewall.assertEntryIsolation();

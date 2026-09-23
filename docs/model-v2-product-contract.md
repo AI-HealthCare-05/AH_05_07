@@ -13,7 +13,9 @@ separate; follow [Deployment SSOT](deployment-ssot.md) for release verification.
 
 - Window: **2026-09-17 through 2026-10-17 KST**, inclusive. Numeric output ends
   at **2026-10-18 00:00:00 KST** unless explicitly extended by a human decision.
-- Audience: signed-in S11 users; no additional whitelist or disclosure expansion.
+- Audience: signed-in S11 users and, during the same window only, isolated
+  Guest S11 (`?guest=1`) with transient browser-memory input. This Guest
+  expansion is temporary and bounded by the same preview dates.
 - After successful browser-local frozen computation, show the continuous output
   immediately under **`연구 모델 분석 결과`**, labelled
   **`연구/개발 미리보기 · 내부 연속 출력`**. The primary result is default-visible,
@@ -24,6 +26,11 @@ separate; follow [Deployment SSOT](deployment-ssot.md) for release verification.
   effect. No traffic-light, gauge, color or position may imply such a classification.
 - This temporary visibility does not authorize permanent numeric semantics, a
   G10 threshold decision, recalibration, retraining, or a production deployment.
+- Guest (`?guest=1`) S11 participates only through the same temporary window and
+  receives no authentication, API, database, or persistence privileges. Guest model
+  input and result remain browser-memory-only; verified public model asset GET is
+  still allowed. After the window, Guest local flow may complete with the existing
+  non-numeric outcome and the existing numeric-hiding policy applies.
 
 Result order: visible output, what it is/is not, local privacy cue, existing
 “오늘의 시작점” activity/sleep/lifestyle summary, existing state-aware next action,
@@ -72,7 +79,8 @@ inference POST, server fallback, DB or Web Storage persistence, S10/history/PDF
 result, URL/query payload, telemetry, analytics or logging (including errors,
 traces and debugging). No BP/challenge/prior-result/other-account feature joins.
 Existing Auth session storage and BP/challenge retention grant no model storage
-permission.
+permission. Guest S11 adds no Supabase auth bootstrap, fake session, `/api/v1/**`
+access, backend refresh/retry, account mutation, or model input/result persistence.
 
 Verified public model asset GET is allowed. The visible cue
 “이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함”

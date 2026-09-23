@@ -20,6 +20,11 @@ const guestJourneyFiles = new Set([
 
 const guestJourneyPrefixes = ['web/src/guest/'];
 
+const guestModelV2IsolationFiles = new Set([
+  'web/scripts/verify-guest-model-v2-isolation.mjs',
+  'web/scripts/verify-guest-model-v2-isolation.test.mjs',
+]);
+
 const showcaseFiles = new Set([
   'web/e2e/showcase-cinema.spec.ts',
   'web/public/showcase-cinema.css',
@@ -326,6 +331,10 @@ export function selectPrBrowserModules(files) {
       add(modules, 'core');
       add(modules, 'journey-full');
       add(modules, 'scene');
+      add(modules, 'guest');
+      matched = true;
+    }
+    if (guestModelV2IsolationFiles.has(file)) {
       add(modules, 'guest');
       matched = true;
     }
