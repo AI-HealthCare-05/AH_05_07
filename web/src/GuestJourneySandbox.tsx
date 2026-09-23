@@ -38,6 +38,7 @@ import {
   resolveCompanionMode,
   type CompanionSpecies,
 } from "./ui/companion";
+import { getActiveCompanionAsset } from "./ui/companionActiveAsset";
 import { journeyCopy, type ScreenId } from "./ui/journey";
 import { sevenDayFacts } from "./ui/livingWeek";
 import type { ExplorerSelection, RecordBrowseItem } from "./ui/recordExplorer";
@@ -200,6 +201,10 @@ function GuestJourney({ today }: { today: string }) {
   const s10SceneOwnsDecoration = activeScreen === "S10"
     && (sceneGate === "review" || sceneGate === "production");
   const sceneCompanionSpecies = companionMode === "off" ? null : companionSpecies;
+  const activeCompanionAsset = useMemo(
+    () => companionMode === "off" ? null : getActiveCompanionAsset(companionSpecies),
+    [companionMode, companionSpecies],
+  );
   const guestCompanionSelection = companionMode !== "off" && activeScreen === "S05" && confirmation
     ? resolveConfirmedSaveCompanion(companionSpecies)
     : null;
@@ -605,6 +610,7 @@ function GuestJourney({ today }: { today: string }) {
         freshness="ready"
         onNavigate={navigate}
         companionSpecies={s02SceneOwnsDecoration ? sceneCompanionSpecies : undefined}
+        companionAsset={activeCompanionAsset}
       />;
     }
 
@@ -879,6 +885,7 @@ function GuestJourney({ today }: { today: string }) {
           key={endOn}
           staticLandscape={!s10SceneOwnsDecoration}
           companionSpecies={s10SceneOwnsDecoration ? sceneCompanionSpecies : undefined}
+          companionAsset={activeCompanionAsset}
           productionSceneEnabled={s10SceneOwnsDecoration}
           today={today}
           days={trailDays}
@@ -975,6 +982,7 @@ function GuestJourney({ today }: { today: string }) {
         onNavigate={navigate}
         companionSelection={guestCompanionSelection}
         companionSpecies={companionSpecies}
+        companionAsset={activeCompanionAsset}
         savedSceneEvent={null}
       >
         <p className="guest-journey-disclosure" role="note">체험 중 입력은 서버로 보내거나 저장하지 않아요.</p>

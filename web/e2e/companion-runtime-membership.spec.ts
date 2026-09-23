@@ -5,6 +5,8 @@ import { companionSpecies, companionVariants } from "../src/ui/companion";
 import {
   getActiveCompanionAsset,
   getActiveCompanionAssetForScreen,
+  validateActiveCompanionAssetForScreen,
+  productCompanionRequiredClips,
 } from "../src/ui/companionActiveAsset";
 import { resolveCompanionRuntimeAsset } from "../src/ui/companionAssetResolver";
 import {
@@ -155,5 +157,44 @@ test("review-only candidates and arbitrary ids cannot expand runtime membership"
       status: "unknown",
       asset: null,
     });
+  }
+});
+
+
+test("exact passed descriptors preserve screen capability and fail closed on identity mismatch", () => {
+  for (const species of companionSpecies) {
+    for (const screen of ["S01", "S02", "S05", "S10"] as const) {
+      const asset = { ...getActiveCompanionAsset(species) };
+      expect(validateActiveCompanionAssetForScreen(asset, screen)).toBe(asset);
+      for (const clip of productCompanionRequiredClips[screen]) {
+        expect(getActiveSceneCharacter(species).clips).toContain(clip);
+      }
+      for (const mismatch of [
+        { assetId: "unknown" }, { url: "https://invalid.example/actor.glb" },
+        { sha256: "0".repeat(64) }, { species: species === "cat" ? "fox" : "cat" },
+        { variant: "standard" },
+      ] as const) {
+        expect(() => validateActiveCompanionAssetForScreen({ ...asset, ...mismatch }, screen)).toThrow();
+      }
+    }
+  }
+});
+
+
+test("passed descriptor validation rejects each missing screen-required clip", () => {
+  const asset = getActiveCompanionAsset("cat");
+  const character = getActiveSceneCharacter("cat");
+  // Test-only corruption of the in-memory registry; always restore its exact value.
+  const mutable = character as { clips: typeof character.clips };
+  const original = character.clips;
+  try {
+    for (const screen of ["S01", "S02", "S05", "S10"] as const) {
+      for (const clip of productCompanionRequiredClips[screen]) {
+        Object.assign(mutable, { clips: original.filter(value => value !== clip) });
+        expect(() => validateActiveCompanionAssetForScreen(asset, screen)).toThrow(`missing ${screen} clip ${clip}`);
+      }
+    }
+  } finally {
+    Object.assign(mutable, { clips: original });
   }
 });

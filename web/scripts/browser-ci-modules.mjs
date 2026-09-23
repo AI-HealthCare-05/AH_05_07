@@ -21,12 +21,13 @@ export const browserModuleCommands = Object.freeze({
     'node scripts/verify-ui-build-matrix.mjs',
   ],
   scene: [
+    'npm run test:scene-manifest',
     'node scripts/diagnose-companion-r2.mjs',
     'npm run test:e2e:review',
     'npm run test:e2e:production:on',
     'npm run test:e2e:saved-scene',
     'npm run test:e2e:scene',
-    'SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays poster-only and requests no character GLB"',
+    'SK7_SCENE_TEST_COMPANION=off npx playwright test --config=playwright.scene.config.ts --workers=1 --grep "S02 companion-off stays identity-neutral fallback and requests no character GLB"',
     'npx playwright test e2e/s10-production-scene.spec.ts --config=playwright.s10-production.config.ts --workers=1',
   ],
   guest: [

@@ -26,15 +26,22 @@ const sharedCaptureSources = [
   "web/scripts/capture-scene-posters.mjs",
 ];
 
-// These sources own the current visual relationship between the realtime scene
-// and its canonical poster fallback. Capture orchestration and disposal remain
-// provenance/behavior concerns, but do not define current pixel compatibility.
+// These sources bind the current F1 identity/fallback contract to historical
+// canonical posters. Their hashes establish source compatibility only, never
+// current browser or pixel qualification.
 export const sceneRuntimeVisualSources = [
   "web/src/components/scene/scene-stage.css",
   "web/src/components/scene/ThreeSceneRenderer.tsx",
   "web/src/components/scene/s02SceneActor.ts",
   "web/src/components/VisualStage.tsx",
   "web/src/components/SceneShell.tsx",
+  "web/src/components/SceneFirstPaintWitness.tsx",
+  "web/src/components/sceneFirstPaintChannel.d.ts",
+  "web/src/App.tsx",
+  "web/src/GuestJourneySandbox.tsx",
+  "web/src/components/JourneyToday.tsx",
+  "web/src/components/JourneyRecap.tsx",
+  "web/src/components/sceneFirstPaintChannel.mjs",
   "web/src/components/CompanionPresenceHostBridge.tsx",
   "web/src/components/PresenceSceneActorInteraction.tsx",
   "web/src/platform/presence/PresenceSceneActorRuntimeContext.tsx",
@@ -45,6 +52,7 @@ export const sceneRuntimeVisualSources = [
   "web/src/components/scene/diorama.ts",
   "web/src/ui/sceneRecipes.ts",
   "web/src/ui/scenePolicy.ts",
+  "web/src/ui/companionActiveAsset.ts",
   "web/src/ui/companionSceneRegistry.ts",
   "web/src/ui/companionPresentationProfiles.ts",
 ];

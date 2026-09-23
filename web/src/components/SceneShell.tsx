@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useReducer, useRef, useState } from "react";
 
 import { UiIcon } from "./UiIcon";
 import { iconForScreen } from "../ui/uiIconPaths";
@@ -17,10 +17,17 @@ import {
   type CompanionSelection,
   type CompanionSpecies,
 } from "../ui/companion";
+import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { resolveSceneVisuals } from "../ui/r2VisualAssets";
 import { useJourneyTransition, type JourneyFeedbackPhase } from "./useJourneyTransition";
 import { CompanionPresenceHostBridge } from "./CompanionPresenceHostBridge";
 import { PresenceSceneActorRuntimeProvider } from "../platform/presence/PresenceSceneActorRuntimeContext";
+import {
+  initialSceneFirstPaintChannelState,
+  sceneFirstPaintChannelReducer,
+  SceneFirstPaintDispatchContext,
+  SceneFirstPaintVisitContext,
+} from "./SceneFirstPaintWitness";
 
 const SceneCompanionContext = createContext<ReactNode>(null);
 
@@ -41,10 +48,11 @@ type SceneShellProps = {
   signOutPending?: boolean;
   companionSelection: CompanionSelection | null;
   companionSpecies: CompanionSpecies;
+  companionAsset: CompanionAsset | null;
   savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, companionSpecies, savedSceneEvent = null }: SceneShellProps) {
+export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, companionSpecies, companionAsset, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [forcedColors, setForcedColors] = useState(() => window.matchMedia("(forced-colors: active)").matches);
   const shellRef = useRef<HTMLElement>(null);
@@ -97,16 +105,24 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
   const companion = savedSceneAllowed && savedSceneEvent
     ? <SavedSceneBoundary key={savedSceneEvent.key} event={savedSceneEvent} reducedMotion={reducedMotion} species={companionSpecies} />
     : <CompanionRuntimeBoundary mode={import.meta.env.VITE_SK7_COMPANION_MODE} selection={companionSelection} reducedMotion={reducedMotion} framing={inlineCompanion ? "journey-s05" : "default"} />;
+  const [firstPaintChannel, dispatchFirstPaintChannel] = useReducer(
+    sceneFirstPaintChannelReducer,
+    initialSceneFirstPaintChannelState,
+  );
 
   return (
     <main ref={shellRef} className="app-shell" data-screen={activeScreen} data-journey-presentation={journeyPresentation || undefined}>
       <PresenceSceneActorRuntimeProvider>
+      <SceneFirstPaintDispatchContext.Provider value={dispatchFirstPaintChannel}>
+      <SceneFirstPaintVisitContext.Provider value={firstPaintChannel.activeVisit}>
       <CompanionPresenceHostBridge
         rootRef={shellRef}
         activeScreen={activeScreen}
         sessionGeneration={sessionGeneration}
         rawMode={import.meta.env.VITE_SK7_COMPANION_MODE}
         companionSelection={companionSelection}
+        companionSpecies={companionSpecies}
+        companionAsset={companionAsset}
         savedSceneOwner={Boolean(savedSceneAllowed && savedSceneEvent)}
         suspended={feedbackSuspended}
       />
@@ -148,6 +164,8 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
           </button>
         ))}
       </nav>
+      </SceneFirstPaintVisitContext.Provider>
+      </SceneFirstPaintDispatchContext.Provider>
       </PresenceSceneActorRuntimeProvider>
     </main>
   );
