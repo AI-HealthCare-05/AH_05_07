@@ -3,6 +3,13 @@ import { createHash } from "node:crypto";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { PINNED_ACTIVE_ASSET } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
+import {
+  FixedStepClock,
+  WORLD_SPACE,
+  translateWorldPoint,
+  worldPoint,
+  worldVector,
+} from "../transcend-lab/src/platform/spatial/worldSpaceClock";
 import { companionReviewCatalog } from "../src/ui/companionReviewCatalog";
 import { getCompanionRuntimeMembership } from "../src/ui/companionRuntimeMembership";
 
@@ -41,6 +48,63 @@ async function fetchExactReviewBytes(
   expect(createHash("sha256").update(bytes).digest("hex")).toBe(asset.sha256);
   return bytes;
 }
+
+test("W1 WorldSpace remains metre-tagged and explicit", () => {
+  const start = worldPoint(1, 2, 3);
+  const moved = translateWorldPoint(start, worldVector(0.5, -1, 2));
+  expect(start).toEqual({ space: WORLD_SPACE, kind: "point", x: 1, y: 2, z: 3 });
+  expect(moved).toEqual({ space: WORLD_SPACE, kind: "point", x: 1.5, y: 1, z: 5 });
+  expect(() => worldPoint(Number.NaN, 0, 0)).toThrow("x must be finite");
+});
+
+test("W1 fixed-step clock is display-rate independent and reset-replay deterministic", () => {
+  const runForOneSecond = (displayHz: number) => {
+    const clock = new FixedStepClock(1 / 60);
+    let distanceMetres = 0;
+    clock.resume(0);
+    for (let frame = 1; frame <= displayHz; frame += 1) {
+      clock.sample(frame * (1000 / displayHz), (stepSeconds) => {
+        distanceMetres += 2 * stepSeconds;
+      });
+    }
+    return { distanceMetres, snapshot: clock.snapshot };
+  };
+
+  const at60 = runForOneSecond(60);
+  const at120 = runForOneSecond(120);
+  expect(at60.snapshot.stepCount).toBe(60);
+  expect(at120.snapshot.stepCount).toBe(60);
+  expect(at60.snapshot.simulationSeconds).toBeCloseTo(1, 10);
+  expect(at120.snapshot.simulationSeconds).toBeCloseTo(1, 10);
+  expect(at60.distanceMetres).toBeCloseTo(2, 10);
+  expect(at120.distanceMetres).toBeCloseTo(2, 10);
+
+  const replayClock = new FixedStepClock(1 / 60);
+  const replay = () => {
+    replayClock.resume(100);
+    for (const frameTime of [108, 116, 124, 132, 140, 148, 156, 164, 172, 180, 188, 196, 204]) {
+      replayClock.sample(frameTime, () => undefined);
+    }
+    return replayClock.snapshot;
+  };
+  const first = replay();
+  replayClock.reset();
+  expect(replay()).toEqual(first);
+});
+
+test("W1 fixed-step suspension fences hidden time instead of catching up", () => {
+  const clock = new FixedStepClock(1 / 60);
+  let executed = 0;
+  clock.resume(0);
+  clock.sample(10, () => { executed += 1; });
+  clock.suspend();
+
+  clock.resume(5000);
+  clock.sample(5017, () => { executed += 1; });
+  expect(executed).toBe(1);
+  expect(clock.snapshot.stepCount).toBe(1);
+  expect(clock.snapshot.simulationSeconds).toBeCloseTo(1 / 60, 10);
+});
 
 test("isolated synthetic routing retains one actor, one writer, one backend, and no product state", async ({ page, context }) => {
   const requests: string[] = [];
