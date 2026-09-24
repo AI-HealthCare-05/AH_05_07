@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
+import { WorldMovementIntentController } from "../transcend-lab/src/platform/behavior/worldMovementIntent";
 import { PINNED_ACTIVE_ASSET } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
 import {
   FixedStepClock,
@@ -104,6 +105,90 @@ test("W1 fixed-step suspension fences hidden time instead of catching up", () =>
   expect(executed).toBe(1);
   expect(clock.snapshot.stepCount).toBe(1);
   expect(clock.snapshot.simulationSeconds).toBeCloseTo(1 / 60, 10);
+});
+
+
+test("W1 input normalizes keyboard diagonals and opposing keys deterministically", () => {
+  const input = new WorldMovementIntentController();
+  expect(input.keyDown("KeyW")).toBe(true);
+  expect(input.keyDown("KeyD")).toBe(true);
+  expect(input.keyDown("KeyW")).toBe(true);
+  expect(input.snapshot.intent).toMatchObject({ source: "keyboard", magnitude: 1 });
+  expect(input.snapshot.intent.lateral).toBeCloseTo(Math.SQRT1_2, 12);
+  expect(input.snapshot.intent.forward).toBeCloseTo(Math.SQRT1_2, 12);
+  expect(input.snapshot.pressedKeys).toEqual(["KeyD", "KeyW"]);
+
+  input.keyDown("KeyS");
+  expect(input.snapshot.intent).toEqual({ lateral: 1, forward: 0, magnitude: 1, source: "keyboard" });
+  input.keyUp("KeyD");
+  input.keyUp("KeyW");
+  input.keyUp("KeyS");
+  expect(input.snapshot.intent).toEqual({ lateral: 0, forward: 0, magnitude: 0, source: "none" });
+  expect(input.keyDown("Space")).toBe(false);
+});
+
+test("W1 input fences exact pointer ownership and fail-closes abnormal pointer loss", () => {
+  const input = new WorldMovementIntentController();
+  expect(input.beginPointer(7)).toBe(true);
+  expect(input.beginPointer(8)).toBe(false);
+  expect(input.updatePointer(8, 1, 0)).toBe(false);
+  expect(input.updatePointer(7, 3, 4)).toBe(true);
+  expect(input.snapshot.intent.source).toBe("pointer");
+  expect(input.snapshot.intent.lateral).toBeCloseTo(0.6, 12);
+  expect(input.snapshot.intent.forward).toBeCloseTo(0.8, 12);
+  expect(input.snapshot.intent.magnitude).toBeCloseTo(1, 12);
+
+  input.keyDown("KeyW");
+  expect(input.snapshot.intent.source).toBe("pointer");
+  expect(input.cancelPointer(7)).toBe(true);
+  expect(input.snapshot).toMatchObject({
+    intent: { lateral: 0, forward: 0, magnitude: 0, source: "none" },
+    pressedKeys: [],
+    pointerId: null,
+    lastClearReason: "pointer-cancel",
+  });
+
+  expect(input.beginPointer(9)).toBe(true);
+  input.updatePointer(9, -1, 0.5);
+  expect(input.lostPointerCapture(9)).toBe(true);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.snapshot.lastClearReason).toBe("lost-pointer-capture");
+});
+
+test("W1 input blur visibility and semantic suspension never restore stale movement", () => {
+  const input = new WorldMovementIntentController();
+  input.keyDown("ArrowUp");
+  input.beginPointer(11);
+  input.updatePointer(11, 0.4, 0.7);
+  input.blur();
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.snapshot.lastClearReason).toBe("blur");
+
+  input.keyDown("KeyA");
+  input.setHidden(true);
+  expect(input.snapshot).toMatchObject({ suspended: true, pointerId: null, pressedKeys: [] });
+  expect(input.keyDown("KeyW")).toBe(false);
+  expect(input.beginPointer(12)).toBe(false);
+  input.setHidden(false);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.snapshot.suspended).toBe(false);
+
+  input.keyDown("KeyD");
+  input.setSemanticSuspended(true);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.snapshot.lastClearReason).toBe("semantic-suspend");
+  input.setSemanticSuspended(false);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+
+  input.keyDown("KeyS");
+  input.reset();
+  expect(input.snapshot).toEqual({
+    intent: { lateral: 0, forward: 0, magnitude: 0, source: "none" },
+    pressedKeys: [],
+    pointerId: null,
+    suspended: false,
+    lastClearReason: "reset",
+  });
 });
 
 test("isolated synthetic routing retains one actor, one writer, one backend, and no product state", async ({ page, context }) => {
