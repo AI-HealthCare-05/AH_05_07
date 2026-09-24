@@ -57,3 +57,39 @@ Old audit/checkpoint/`Next`/`PENDING`/`DISABLED` wording is not a live queue.
 Use Git history, evidence and research only for a named need. Historical source,
 Worker, API, model or verification status never proves today's runtime; follow
 [Deployment SSOT](deployment-ssot.md) for release-time verification.
+
+## Fresh-session task discovery
+
+When a new agent or chat must recover work without relying on prior conversation
+context, it may run the read-only helper below after the Fast start checks:
+
+```bash
+python3 scripts/git/resume_task_context.py
+```
+
+The helper reads live GitHub state with `gh`, gives open PRs first priority, and
+only treats an Issue as a resumable task when that Issue explicitly contains an
+`Agent resume` section. It never promotes an unclassified Issue merely because
+it is open or old. If several candidates have equal authority, it reports the
+ambiguity instead of choosing one.
+
+A task Issue may opt in with this compact block:
+
+```markdown
+## Agent resume
+- Status: `READY`
+- Priority: `P1`
+- Workstream: `Transcend`
+- Blocked by: none
+- Next action: Implement the next bounded W1 slice from the current authority.
+```
+
+Allowed Status values are `READY`, `ACTIVE`, `BLOCKED`, `REVIEW`, and `DONE`.
+Priority is `P0` through `P3`. `Blocked by` accepts `none` or Issue references
+such as `#123, #456`; an open referenced Issue keeps the task blocked. Keep this
+metadata in the task Issue itself rather than in a second project ledger. Update
+it only when the task state actually changes.
+
+Use `python3 scripts/git/resume_task_context.py --json` when another tool or
+agent needs a machine-readable snapshot. The helper is discovery-only: it does
+not edit Issues, branches, PRs, labels, Projects, or repository files.
