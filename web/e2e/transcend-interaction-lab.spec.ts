@@ -265,12 +265,12 @@ test("W1 Rapier spike executes in the browser, owns the fixture, and drains expl
   const result = await page.evaluate(() => window.__TRANSCEND_LAB__!.runRapierSpike());
   expect(result).toMatchObject({
     status: "ready",
-    version: "0.20.0",
     colliderCount: 5,
     liveWorld: true,
     liveController: true,
   });
   if (result.status !== "ready") throw new Error("Rapier spike did not become ready");
+  expect(result.runtimeVersion).toMatch(/^\d+\.\d+\.\d+$/);
   expect(result.wall.x).toBeGreaterThanOrEqual(0);
   expect(result.wall.x).toBeLessThan(2);
   for (const movement of [result.wall, result.step, result.slope, result.groundedProbe]) {

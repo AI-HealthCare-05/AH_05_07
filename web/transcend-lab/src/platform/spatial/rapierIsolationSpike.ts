@@ -8,7 +8,7 @@ export type RapierSpikeResult =
   | Readonly<{
       status: "ready";
       generation: number;
-      version: string;
+      runtimeVersion: string;
       colliderCount: number;
       wall: RapierProbeMovement;
       step: RapierProbeMovement;
@@ -152,7 +152,7 @@ export class RapierIsolationSpike {
       return Object.freeze({
         status: "ready" as const,
         generation,
-        version: RAPIER.version(),
+        runtimeVersion: RAPIER.version(),
         colliderCount: world.colliders.len(),
         wall,
         step,

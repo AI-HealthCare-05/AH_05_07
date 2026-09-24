@@ -58,6 +58,11 @@ build emits a separate Rapier chunk of about **2.86 MB minified / 1.08 MB gzip**
 Those measurements are evidence for keeping the spike Lab-only, not production
 performance or release budgets.
 
+A fresh GitHub-hosted browser run also showed that `RAPIER.version()` reports
+`0.12.0` from the compat 0.20.0 package. Treat that function as an engine/runtime
+diagnostic, **not** npm package identity; the dependency version remains pinned
+by `package.json` and `package-lock.json`.
+
 ## Cleanup and stale work
 
 A live spike owns exactly one World and one character controller. Explicit stop
