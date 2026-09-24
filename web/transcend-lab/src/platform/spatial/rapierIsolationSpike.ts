@@ -1,4 +1,4 @@
-type RapierModule = typeof import("@dimforge/rapier3d-compat");
+import { loadLabRapier, type RapierModule } from "./rapierRuntime";
 type RapierWorld = import("@dimforge/rapier3d-compat").World;
 type RapierController = import("@dimforge/rapier3d-compat").KinematicCharacterController;
 
@@ -38,14 +38,7 @@ function finiteMovement(vector: Readonly<{ x: number; y: number; z: number }>): 
   return Object.freeze({ x: vector.x, y: vector.y, z: vector.z });
 }
 
-let rapierInitPromise: Promise<void> | null = null;
 
-async function defaultLoader(): Promise<RapierModule> {
-  const module = await import("@dimforge/rapier3d-compat");
-  rapierInitPromise ??= module.init();
-  await rapierInitPromise;
-  return module;
-}
 
 /**
  * Lab-only W1 dependency spike.
@@ -60,7 +53,7 @@ export class RapierIsolationSpike {
   #controller: RapierController | null = null;
   readonly #loadRapier: RapierLoader;
 
-  constructor(loadRapier: RapierLoader = defaultLoader) {
+  constructor(loadRapier: RapierLoader = loadLabRapier) {
     this.#loadRapier = loadRapier;
   }
 
@@ -136,8 +129,7 @@ export class RapierIsolationSpike {
       const groundedProbe = probe({ x: 0, y: -0.25, z: 0 });
 
       if (generation !== this.#generation) {
-        world.removeCharacterController(controller);
-        // The finally block owns World.free() on every unpublished path.
+        // The finally block owns controller removal and World.free() exactly once.
         return Object.freeze({
           status: "stale" as const,
           generation,

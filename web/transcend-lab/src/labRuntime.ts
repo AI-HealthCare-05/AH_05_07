@@ -58,6 +58,7 @@ import {
   type ResourceDiagnostics,
 } from "./platform/embodiment/labEmbodimentPort";
 import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
+import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
 import { SequentialBackendSelector } from "./labRenderers";
 
 export type LabRoute = "grove" | "cove";
@@ -208,6 +209,7 @@ export class TranscendLabRuntime {
   readonly #world: WorldRootLeaseManager;
   readonly #selector = new SequentialBackendSelector();
   readonly #rapierSpike = new RapierIsolationSpike();
+  readonly #kinematicWorld = new KinematicWorld();
   #resources = new LabResourceLedger();
   #host: HTMLElement | null = null;
   #sessionEpoch = 1;
@@ -354,6 +356,7 @@ export class TranscendLabRuntime {
   }
 
   async stop(): Promise<ResourceDiagnostics> {
+    this.#kinematicWorld.stop();
     this.#rapierSpike.stop();
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
@@ -368,6 +371,7 @@ export class TranscendLabRuntime {
   }
 
   async reset(): Promise<ResourceDiagnostics> {
+    this.#kinematicWorld.stop();
     this.#rapierSpike.stop();
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
@@ -838,7 +842,21 @@ export class TranscendLabRuntime {
       runComparison: () => this.runComparison(),
       loadAsset: () => this.loadAsset(),
       loadReviewAsset: (assetId, clipName) => this.loadReviewAsset(assetId, clipName),
-      runRapierSpike: () => this.#rapierSpike.run(),
+      runRapierSpike: () => {
+        this.#kinematicWorld.stop();
+        return this.#rapierSpike.run();
+      },
+      kinematic: Object.freeze({
+        ...this.#kinematicWorld.testApi(),
+        start: (fixture?: WorldFixtureName) => {
+          this.#rapierSpike.stop();
+          return this.#kinematicWorld.start(fixture);
+        },
+        reset: () => {
+          this.#rapierSpike.stop();
+          return this.#kinematicWorld.reset();
+        },
+      }),
       stopRapierSpike: () => this.#rapierSpike.stop(),
       rapierSpikeState: () => this.#rapierSpike.state,
     });
@@ -991,4 +1009,5 @@ export type TranscendLabTestApi = Readonly<{
   runRapierSpike: () => Promise<RapierSpikeResult>;
   stopRapierSpike: () => RapierSpikeState;
   rapierSpikeState: () => RapierSpikeState;
+  kinematic: KinematicWorldTestApi;
 }>;
