@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import posixpath
 import re
 import subprocess
 from collections import Counter
@@ -17,6 +18,7 @@ OWNED = (str(ATLAS) + "/", "scripts/check_repository_evidence.py", "tests/test_r
 SCOPE = ("docs/", ".github/", "scripts/", "tools/", "tests/", "web/e2e/", "infra/", "ops/", "supabase/")
 TEXT_SUFFIXES = {".md", ".mdx", ".rst", ".txt", ".json", ".yaml", ".yml"}
 MAX_TEXT_BYTES = 2_000_000
+REFERENCE_EXCLUDED_BASENAMES = {"package-lock.json", "pnpm-lock.yaml", "yarn.lock"}
 REF_TYPES = {
     "commit_sha",
     "github_url",
@@ -28,13 +30,19 @@ REF_TYPES = {
     "release_tag",
     "evidence_path",
 }
-HEX_RE = re.compile(r"(?<![0-9a-f])([0-9a-f]{7,40})(?![0-9a-f])", re.I)
-GH_RE = re.compile(r"https?://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(?:pull|issues)/\d+(?:[^\s)]*)?", re.I)
+HEX_RE = re.compile(r"(?<![A-Za-z0-9])([0-9a-f]{7,40})(?![A-Za-z0-9])", re.I)
+GH_RE = re.compile(
+    r"https?://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
+    r"(?:pull/\d+|issues/\d+|commit/[0-9a-f]{7,40}|releases/tag/[A-Za-z0-9_.-]+)(?:[^\s)]*)?",
+    re.I,
+)
 MD_LINK_RE = re.compile(r'!?(?:\[[^\]]*\])\((?:<([^>]+)>|([^\s)]+))(?:\s+["\'][^"\']*["\'])?\)')
 PATH_RE = re.compile(
-    r"(?<![A-Za-z0-9_./-])((?:docs|scripts|tests|web|infra|ops|supabase|tools|\.github)(?:/[A-Za-z0-9_.@+-]+)+)"
+    r"(?<![A-Za-z0-9_./@-])((?:docs|scripts|tests|web|infra|ops|supabase|tools|\.github)(?:/[A-Za-z0-9_.@+-]+)+)"
 )
-TAG_RE = re.compile(r"(?<![A-Za-z0-9])((?:v\d+|release[-_/][A-Za-z0-9_.-]+))(?![A-Za-z0-9])", re.I)
+TAG_CONTEXT_RE = re.compile(
+    r"(?i)\b(?:release\s+tag|git\s+tag)\s*(?::\s*|=\s*|is\s+)`?([A-Za-z0-9][A-Za-z0-9_.-]{1,80})`?"
+)
 
 
 def git(root: Path, *args: str) -> str:
@@ -107,7 +115,12 @@ def add_ref(rows: list[dict], source_path: str, text: str, kind: str, target: st
 def extract_references(root: Path, ref: str, rows: list[dict]) -> list[dict]:  # noqa: C901
     refs: list[dict] = []
     for row in rows:
-        if not row["text_candidate"] or row["size_bytes"] is None or row["size_bytes"] > MAX_TEXT_BYTES:
+        if (
+            not row["text_candidate"]
+            or row["size_bytes"] is None
+            or row["size_bytes"] > MAX_TEXT_BYTES
+            or Path(row["path"]).name in REFERENCE_EXCLUDED_BASENAMES
+        ):
             continue
         text = read_blob(root, ref, row["path"])
         if text is None:
@@ -142,6 +155,10 @@ def extract_references(root: Path, ref: str, rows: list[dict]) -> list[dict]:  #
                     match.start(),
                     match.group(0),
                 )
+            elif len(bits) >= 4 and bits[2].lower() == "commit":
+                collect("commit_sha", bits[3].lower(), match.start(), match.group(0))
+            elif len(bits) >= 5 and bits[2].lower() == "releases" and bits[3].lower() == "tag":
+                collect("release_tag", bits[4], match.start(), match.group(0))
         for match in MD_LINK_RE.finditer(text):
             target = unquote(match.group(1) or match.group(2)).strip()
             if target.startswith(("mailto:", "javascript:")):
@@ -155,6 +172,8 @@ def extract_references(root: Path, ref: str, rows: list[dict]) -> list[dict]:  #
             if any(c.isalpha() for c in token.lower()):
                 collect("commit_sha", token.lower(), match.start(), match.group(0))
         for match in PATH_RE.finditer(text):
+            if match.end() < len(text) and text[match.end()] in "${*?":
+                continue
             target = match.group(1).rstrip(".,;:)")
             kind = (
                 "evidence_path"
@@ -162,7 +181,7 @@ def extract_references(root: Path, ref: str, rows: list[dict]) -> list[dict]:  #
                 else ("workflow" if target.startswith(".github/workflows/") else "repo_path")
             )
             collect(kind, target, match.start(), match.group(0))
-        for match in TAG_RE.finditer(text):
+        for match in TAG_CONTEXT_RE.finditer(text):
             collect("release_tag", match.group(1), match.start(), match.group(0))
         for match in re.finditer(r"(?i)\b(?:PR|pull request)\s*#?(\d+)\b", text):
             collect("pull_request", match.group(1), match.start(), match.group(0))
@@ -181,6 +200,27 @@ def heading_anchors(text: str) -> set[str]:
     return anchors
 
 
+def normalize_repo_path(target: str) -> str:
+    return target[2:] if target.startswith("./") else target
+
+
+def tracked_directory(paths: set[str], target: str) -> bool:
+    prefix = target.rstrip("/") + "/"
+    return any(path.startswith(prefix) for path in paths)
+
+
+def unique_tracked_suffix(paths: set[str], target: str) -> str | None:
+    normalized = normalize_repo_path(target).lstrip("/")
+    suffix = "/" + normalized
+    matches = sorted(path for path in paths if path.endswith(suffix))
+    return matches[0] if len(matches) == 1 else None
+
+
+def graph_node_id(prefix: str, value: str) -> str:
+    digest = hashlib.sha1(value.encode(), usedforsecurity=False).hexdigest()[:12]
+    return f"{prefix}-{digest}"
+
+
 def validate_references(root: Path, ref: str, inventory_rows: list[dict], refs: list[dict]) -> list[dict]:  # noqa: C901
     paths = {row["path"] for row in inventory_rows}
     results = []
@@ -192,15 +232,24 @@ def validate_references(root: Path, ref: str, inventory_rows: list[dict], refs: 
                 git(root, "cat-file", "-e", f"{target}^{{commit}}")
                 status, reason = "resolved", "commit resolves in local repository"
             except subprocess.CalledProcessError:
-                status, reason = "broken", "commit does not resolve in local repository"
+                status, reason = (
+                    "unverified",
+                    "hex token does not resolve as a local commit; it may be historical, external, or a non-commit hash",
+                )
         elif item["type"] in {"repo_path", "evidence_path", "workflow"}:
-            resolved = target.lstrip("./")
-            status = "resolved" if resolved in paths else "broken"
-            reason = (
-                "tracked path exists at audited SHA"
-                if status == "resolved"
-                else "tracked path is absent at audited SHA"
-            )
+            resolved = normalize_repo_path(target)
+            if resolved in paths:
+                status, reason = "resolved", "tracked path exists at audited SHA"
+            elif tracked_directory(paths, resolved):
+                status, reason = "resolved", "tracked directory exists at audited SHA"
+            elif suffix_match := unique_tracked_suffix(paths, resolved):
+                resolved = suffix_match
+                status, reason = "resolved", "unique tracked suffix resolves the context-relative path"
+            else:
+                status, reason = (
+                    "unverified",
+                    "path-like token is not tracked at audited SHA; it may be generated, runtime-only, symbolic, or stale",
+                )
         elif item["type"] == "markdown_link":
             if target.startswith(("#", "/")):
                 base, fragment = item["source_path"], target[1:] if target.startswith("#") else ""
@@ -211,7 +260,7 @@ def validate_references(root: Path, ref: str, inventory_rows: list[dict], refs: 
                 continue
             else:
                 base, fragment = (target.split("#", 1) + [""])[:2] if "#" in target else (target, "")
-                resolved = str((Path(item["source_path"]).parent / base).as_posix())
+                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(item["source_path"]), base))
             if resolved in paths:
                 if fragment and resolved.lower().endswith((".md", ".mdx")):
                     source = read_blob(root, ref, resolved) or ""
@@ -223,6 +272,8 @@ def validate_references(root: Path, ref: str, inventory_rows: list[dict], refs: 
                     )
                 else:
                     status, reason = "resolved", "local link target exists"
+            elif tracked_directory(paths, resolved):
+                status, reason = "resolved", "local directory link target exists"
             elif resolved == item["source_path"] and target.startswith("#"):
                 source = read_blob(root, ref, resolved) or ""
                 status = "resolved" if target[1:].lower() in heading_anchors(source) else "broken"
@@ -277,56 +328,33 @@ def inventory_outputs(root: Path, ref: str) -> dict[str, str]:
     )
     refs = extract_references(root, ref, rows)
     validations = validate_references(root, ref, rows, refs)
-    result["references.json"] = encode(dict(schema_version=1, source_sha=ref, references=refs))
+    type_counts = dict(sorted(Counter(x["type"] for x in refs).items()))
+    status_counts = dict(sorted(Counter(x["status"] for x in validations).items()))
+    unverified_type_counts = dict(
+        sorted(Counter(x["type"] for x in validations if x["status"] == "unverified").items())
+    )
+    reason_counts = dict(sorted(Counter(x["reason"] for x in validations).items()))
+    result["reference-summary.json"] = encode(
+        dict(
+            schema_version=1,
+            source_sha=ref,
+            total=len(refs),
+            by_type=type_counts,
+            by_status=status_counts,
+            unverified_by_type=unverified_type_counts,
+            by_reason=reason_counts,
+        )
+    )
     result["validation.json"] = encode(
         dict(
             schema_version=1,
             source_sha=ref,
             references=validations,
-            counts=dict(sorted(Counter(x["status"] for x in validations).items())),
+            counts=status_counts,
         )
     )
-    result["references.md"] = render_references(ref, refs)
-    result["validation.md"] = render_validation(ref, validations)
     result.update(normalized_outputs(root, ref, rows, validations))
     return result
-
-
-def render_references(ref: str, refs: list[dict]) -> str:
-    lines = [
-        "# Extracted repository references",
-        "",
-        f"A deterministic scan of text candidates at `{ref}`. Extraction is descriptive; validation is separate.",
-        "",
-        "| ID | Source | Line | Type | Target |",
-        "| --- | --- | ---: | --- | --- |",
-    ]
-    lines.extend(
-        f"| `{r['id']}` | `{r['source_path']}` | {r['line']} | `{r['type']}` | `{r['target'].replace('|', '\\|')}` |"
-        for r in refs
-    )
-    lines.append("")
-    return "\n".join(lines)
-
-
-def render_validation(ref: str, rows: list[dict]) -> str:
-    counts = Counter(r["status"] for r in rows)
-    lines = [
-        "# Repository reference validation",
-        "",
-        f"Source snapshot: `{ref}`. Offline validation does not claim remote URL, PR, issue or tag existence.",
-        "",
-        "Counts: " + ", ".join(f"`{k}`={counts[k]}" for k in sorted(counts)),
-        "",
-        "| Status | Source | Line | Type | Target | Reason |",
-        "| --- | --- | ---: | --- | --- | --- |",
-    ]
-    lines.extend(
-        f"| `{r['status']}` | `{r['source_path']}` | {r['line']} | `{r['type']}` | `{r['target'].replace('|', '\\|')}` | {r['reason']} |"
-        for r in rows
-    )
-    lines.append("")
-    return "\n".join(lines)
 
 
 def source_records(root: Path, ref: str) -> list[dict]:
@@ -449,12 +477,13 @@ def render_gaps(gaps: list[dict], validation_counts: dict[str, int], ref: str) -
     return "\n".join(lines)
 
 
-def normalized_outputs(root: Path, ref: str, inventory_rows: list[dict], validations: list[dict]) -> dict[str, str]:
+def normalized_outputs(root: Path, ref: str, inventory_rows: list[dict], validations: list[dict]) -> dict[str, str]:  # noqa: C901
     records = source_records(root, ref)
     source_checks = validate_sources(records, inventory_rows)
     nodes = [
         {
             "id": r["id"],
+            "node_type": "evidence_record",
             "title": r["title"],
             "category": r["category"],
             "status": r["status"],
@@ -462,12 +491,45 @@ def normalized_outputs(root: Path, ref: str, inventory_rows: list[dict], validat
         }
         for r in records
     ]
-    edges = []
+    source_nodes: dict[str, str] = {}
+    boundary_nodes: dict[str, str] = {}
     for record in records:
-        edges.append({"from": record["id"], "to": record["source_path"], "type": "grounded_in"})
-        edges.extend({"from": record["id"], "to": target, "type": "protects"} for target in record["protects"])
+        source_path = record["source_path"]
+        source_nodes.setdefault(source_path, graph_node_id("SRC", source_path))
+        for boundary in record["protects"]:
+            boundary_nodes.setdefault(boundary, graph_node_id("BND", boundary))
+    nodes.extend(
+        {
+            "id": node_id,
+            "node_type": "source_document",
+            "title": source_path,
+            "source_path": source_path,
+        }
+        for source_path, node_id in sorted(source_nodes.items())
+    )
+    nodes.extend(
+        {
+            "id": node_id,
+            "node_type": "protected_boundary",
+            "title": boundary,
+        }
+        for boundary, node_id in sorted(boundary_nodes.items())
+    )
+    edges = []
+    record_ids = {record["id"] for record in records}
+    for record in records:
+        edges.append({"from": record["id"], "to": source_nodes[record["source_path"]], "type": "grounded_in"})
+        edges.extend(
+            {"from": record["id"], "to": boundary_nodes[target], "type": "protects"} for target in record["protects"]
+        )
         if record.get("supersedes"):
-            edges.append({"from": record["id"], "to": record["supersedes"], "type": "supersedes"})
+            target = record["supersedes"]
+            if target not in record_ids:
+                raise ValueError(f"evidence record {record['id']} supersedes unknown record id: {target}")
+            edges.append({"from": record["id"], "to": target, "type": "supersedes"})
+    node_ids = {node["id"] for node in nodes}
+    if any(edge["from"] not in node_ids or edge["to"] not in node_ids for edge in edges):
+        raise ValueError("authority graph contains an edge with an unknown endpoint")
     gaps = []
     for item in validations:
         if item["status"] == "broken":

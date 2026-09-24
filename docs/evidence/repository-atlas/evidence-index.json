@@ -231,7 +231,7 @@
       "verification": "Named by project handoff for visual and companion work."
     },
     {
-      "authority": "CURRENT asset inventory reference",
+      "authority": "ACTIVE REFERENCE asset inventory",
       "category": "assets",
       "id": "EV-015",
       "protects": [
@@ -241,10 +241,10 @@
       "source_path": "docs/asset-register.md",
       "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
       "source_type": "register",
-      "status": "current",
-      "summary": "Indexes asset-related records; it does not independently establish production activation.",
+      "status": "active-reference",
+      "summary": "Indexes asset-related records and provenance; it does not independently establish current production activation or visual authority.",
       "title": "Asset register",
-      "verification": "Read with visual production contract and asset evidence lifecycle."
+      "verification": "Use with docs/README.md, visual production authority and scoped asset evidence."
     },
     {
       "authority": "CURRENT deployment authority",
@@ -339,6 +339,70 @@
       "summary": "A model evidence artifact retained for its recorded scope and not a replacement for the current product contract.",
       "title": "Model gate 1B evidence",
       "verification": "Read with Model V2 contract; never infer current activation from this record."
+    },
+    {
+      "authority": "CURRENT restart and handoff authority",
+      "category": "governance",
+      "id": "EV-022",
+      "protects": [
+        "restart source-of-truth",
+        "live Git reconciliation"
+      ],
+      "source_path": "docs/project-handoff.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "handoff_authority",
+      "status": "current",
+      "summary": "Routes fresh work to actual origin/main, current authority documents and a concise recoverable restart record.",
+      "title": "Project handoff",
+      "verification": "docs/README.md names this document as the CURRENT restart/handoff authority."
+    },
+    {
+      "authority": "CURRENT observation/challenge contract",
+      "category": "data",
+      "id": "EV-023",
+      "protects": [
+        "observation/challenge fact separation",
+        "non-causal health semantics"
+      ],
+      "source_path": "docs/observation-challenge-contract.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "contract",
+      "status": "current",
+      "summary": "Separates model risk signals, blood-pressure observations and challenge events and constrains their health semantics.",
+      "title": "Seven-day observation and challenge contract",
+      "verification": "docs/README.md and project handoff route data/DB work to this contract alongside the data lifecycle documents."
+    },
+    {
+      "authority": "CURRENT scene architecture authority",
+      "category": "visual",
+      "id": "EV-024",
+      "protects": [
+        "semantic UI versus decorative scene ownership",
+        "scene runtime lifecycle"
+      ],
+      "source_path": "docs/scene-architecture.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "architecture_contract",
+      "status": "current",
+      "summary": "Defines the current Living Journey hybrid scene composition, ownership, fallback and runtime boundaries.",
+      "title": "Scene architecture",
+      "verification": "docs/README.md and project handoff name scene architecture as current visual/scene authority."
+    },
+    {
+      "authority": "CURRENT recovery authority",
+      "category": "operations",
+      "id": "EV-025",
+      "protects": [
+        "runtime rollback versus data recovery separation",
+        "explicit recovery uncertainty"
+      ],
+      "source_path": "docs/architecture/RECOVERY_CONTRACT.md",
+      "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+      "source_type": "recovery_contract",
+      "status": "current",
+      "summary": "Separates runtime rollback, schema reconstruction and data recovery and preserves unresolved recovery facts as explicit uncertainty.",
+      "title": "Recovery contract",
+      "verification": "docs/README.md and project handoff route recovery work to this contract."
     }
   ],
   "schema_version": 1,

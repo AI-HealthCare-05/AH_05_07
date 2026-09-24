@@ -2,33 +2,26 @@
   "schema_version": 1,
   "tasks": [
     {
-      "id": "EA-001",
-      "title": "Establish persistent control plane",
-      "objective": "Save the complete task contract and recoverable queue before archaeology.",
-      "inputs": [
-        "AGENTS.md",
-        "docs/README.md"
-      ],
       "allowed_outputs": [
         "docs/evidence/repository-atlas/"
       ],
       "dependencies": [],
-      "verification": [
-        "Parse JSON; validate one active task; git diff --check"
-      ],
-      "status": "verified",
-      "notes": [
-        "Bootstrap JSON and task invariants verified before first checkpoint."
-      ]
-    },
-    {
-      "id": "EA-002",
-      "title": "Inventory tracked repository and evidence files",
-      "objective": "Inventory pinned Git tree without opening binary contents.",
+      "id": "EA-001",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Bootstrap JSON and task invariants verified before first checkpoint."
+      ],
+      "objective": "Save the complete task contract and recoverable queue before archaeology.",
+      "status": "verified",
+      "title": "Establish persistent control plane",
+      "verification": [
+        "Parse JSON; validate one active task; git diff --check"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/inventories/",
         "scripts/check_repository_evidence.py"
@@ -36,20 +29,22 @@
       "dependencies": [
         "EA-001"
       ],
-      "verification": [
-        "Inventory counts match git ls-tree; JSON parse; repeat byte equality"
-      ],
-      "status": "verified",
-      "notes": ["Inventory generated from the pinned audited SHA; repeat generation is byte-stable."]
-    },
-    {
-      "id": "EA-003",
-      "title": "Extract document references",
-      "objective": "Implement deterministic stdlib extraction with source lines and typed references.",
+      "id": "EA-002",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Inventory generated from the pinned audited SHA; repeat generation is byte-stable."
+      ],
+      "objective": "Inventory pinned Git tree without opening binary contents.",
+      "status": "verified",
+      "title": "Inventory tracked repository and evidence files",
+      "verification": [
+        "Inventory counts match git ls-tree; JSON parse; repeat byte equality"
+      ]
+    },
+    {
       "allowed_outputs": [
         "scripts/check_repository_evidence.py",
         "tests/test_repository_evidence.py",
@@ -58,20 +53,22 @@
       "dependencies": [
         "EA-002"
       ],
-      "verification": [
-        "Scanner unit tests; compare repeated extraction"
-      ],
-      "status": "verified",
-      "notes": ["Typed extraction includes source line, stable ID, raw token and source SHA context."]
-    },
-    {
-      "id": "EA-004",
-      "title": "Validate local references",
-      "objective": "Resolve paths, anchors and commits locally; separate remote existence and ambiguity.",
+      "id": "EA-003",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Typed extraction includes source line, stable ID, raw token and source SHA context."
+      ],
+      "objective": "Implement deterministic stdlib extraction with source lines and typed references.",
+      "status": "verified",
+      "title": "Extract document references",
+      "verification": [
+        "Scanner unit tests; compare repeated extraction"
+      ]
+    },
+    {
       "allowed_outputs": [
         "scripts/check_repository_evidence.py",
         "tests/test_repository_evidence.py",
@@ -80,80 +77,88 @@
       "dependencies": [
         "EA-003"
       ],
-      "verification": [
-        "Temporary Git fixture tests; broken and historical target fixtures; deterministic run"
-      ],
-      "status": "verified",
-      "notes": ["Local paths, Markdown anchors and commit SHAs are resolved offline; remote references remain unverified."]
-    },
-    {
-      "id": "EA-005",
-      "title": "Normalize architecture and frozen Model V2 evidence",
-      "objective": "Record source-grounded lifecycle and boundary relationships.",
+      "id": "EA-004",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Local paths, Markdown anchors and commit SHAs are resolved offline; remote references remain unverified."
+      ],
+      "objective": "Resolve paths, anchors and commits locally; separate remote existence and ambiguity.",
+      "status": "verified",
+      "title": "Validate local references",
+      "verification": [
+        "Temporary Git fixture tests; broken and historical target fixtures; deterministic run"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/"
       ],
       "dependencies": [
         "EA-004"
       ],
-      "verification": [
-        "Every selection has exact source and lifecycle justification"
-      ],
-      "status": "verified",
-      "notes": ["Current architecture and Model V2 records are pinned to the audited SHA with explicit protected boundaries."]
-    },
-    {
-      "id": "EA-006",
-      "title": "Normalize journey, companion, assets and Transcend evidence",
-      "objective": "Record current authority and scoped historical observations without designing product changes.",
+      "id": "EA-005",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Current architecture and Model V2 records are pinned to the audited SHA with explicit protected boundaries."
+      ],
+      "objective": "Record source-grounded lifecycle and boundary relationships.",
+      "status": "verified",
+      "title": "Normalize architecture and frozen Model V2 evidence",
+      "verification": [
+        "Every selection has exact source and lifecycle justification"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/"
       ],
       "dependencies": [
         "EA-005"
       ],
-      "verification": [
-        "Read selected sources; verify relation endpoints and citations"
-      ],
-      "status": "verified",
-      "notes": ["Journey, companion, assets and Transcend records preserve their documented authority scopes."]
-    },
-    {
-      "id": "EA-007",
-      "title": "Normalize auth, account, deployment and verification evidence",
-      "objective": "Map security/data boundaries and CI/release evidence with scope limits.",
+      "id": "EA-006",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Journey, companion, assets and Transcend records preserve their documented authority scopes."
+      ],
+      "objective": "Record current authority and scoped historical observations without designing product changes.",
+      "status": "verified",
+      "title": "Normalize journey, companion, assets and Transcend evidence",
+      "verification": [
+        "Read selected sources; verify relation endpoints and citations"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/"
       ],
       "dependencies": [
         "EA-006"
       ],
-      "verification": [
-        "Read selected sources; no current-runtime inference from dated reports"
-      ],
-      "status": "verified",
-      "notes": ["Auth, data, deployment, release and dated evidence records retain lifecycle limits; no runtime claim was added."]
-    },
-    {
-      "id": "EA-008",
-      "title": "Build authority graph and index",
-      "objective": "Generate normalized records and typed, traceable relationships from curated sources.",
+      "id": "EA-007",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Auth, data, deployment, release and dated evidence records retain lifecycle limits; no runtime claim was added."
+      ],
+      "objective": "Map security/data boundaries and CI/release evidence with scope limits.",
+      "status": "verified",
+      "title": "Normalize auth, account, deployment and verification evidence",
+      "verification": [
+        "Read selected sources; no current-runtime inference from dated reports"
+      ]
+    },
+    {
       "allowed_outputs": [
         "scripts/check_repository_evidence.py",
         "tests/test_repository_evidence.py",
@@ -162,20 +167,22 @@
       "dependencies": [
         "EA-007"
       ],
-      "verification": [
-        "Graph schema/endpoint tests; curated quotation validation"
-      ],
-      "status": "verified",
-      "notes": ["Evidence index, authority graph and source validation are machine-readable and endpoint-traceable."]
-    },
-    {
-      "id": "EA-009",
-      "title": "Analyze and triage evidence gaps",
-      "objective": "Separate confirmed local reference gaps from review candidates and unverified remote claims.",
+      "id": "EA-008",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Evidence index, typed-node authority graph and source validation are machine-readable; every graph edge resolves to a declared node."
+      ],
+      "objective": "Generate normalized records and typed, traceable relationships from curated sources.",
+      "status": "verified",
+      "title": "Build authority graph and index",
+      "verification": [
+        "Graph schema/endpoint tests; curated source-path validation"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/",
         "scripts/check_repository_evidence.py",
@@ -184,20 +191,22 @@
       "dependencies": [
         "EA-008"
       ],
-      "verification": [
-        "Inspect representative failures and false positives; record confidence and follow-up"
-      ],
-      "status": "verified",
-      "notes": ["Gap report distinguishes confirmed local path absence from remote/symbolic references left unverified offline."]
-    },
-    {
-      "id": "EA-010",
-      "title": "Generate atlas and document audit interface",
-      "objective": "Provide compact domain maps and reproducible read-only check/regenerate commands.",
+      "id": "EA-009",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "Gap report distinguishes confirmed local path absence from remote/symbolic references left unverified offline."
+      ],
+      "objective": "Separate confirmed local reference gaps from review candidates and unverified remote claims.",
+      "status": "verified",
+      "title": "Analyze and triage evidence gaps",
+      "verification": [
+        "Inspect representative failures and false positives; record confidence and follow-up"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/",
         "scripts/check_repository_evidence.py",
@@ -206,20 +215,22 @@
       "dependencies": [
         "EA-009"
       ],
-      "verification": [
-        "Read-only --check; byte-stable regeneration; output drift negative test"
-      ],
-      "status": "verified",
-      "notes": ["EVIDENCE_ATLAS.md, EVIDENCE_GAPS.md and PROJECT_AUTHORITY_MAP.md are generated by the audit command."]
-    },
-    {
-      "id": "EA-011",
-      "title": "Final divergence review and verification",
-      "objective": "Fetch main once, inspect incremental changes, finish checks and self-review.",
+      "id": "EA-010",
       "inputs": [
         "AGENTS.md",
         "docs/README.md"
       ],
+      "notes": [
+        "EVIDENCE_ATLAS.md, EVIDENCE_GAPS.md and PROJECT_AUTHORITY_MAP.md are generated by the audit command."
+      ],
+      "objective": "Provide compact domain maps and reproducible read-only check/regenerate commands.",
+      "status": "verified",
+      "title": "Generate atlas and document audit interface",
+      "verification": [
+        "Read-only --check; byte-stable regeneration; output drift negative test"
+      ]
+    },
+    {
       "allowed_outputs": [
         "docs/evidence/repository-atlas/",
         "scripts/check_repository_evidence.py",
@@ -228,11 +239,20 @@
       "dependencies": [
         "EA-010"
       ],
+      "id": "EA-011",
+      "inputs": [
+        "AGENTS.md",
+        "docs/README.md"
+      ],
+      "notes": [
+        "Final review found origin/main unchanged at the audited base. Scanner precision, graph integrity, generated-output slimming, lint, formatting, deterministic audit checks and relevant tests were revalidated."
+      ],
+      "objective": "Fetch main once, inspect incremental changes, finish checks and self-review.",
+      "status": "verified",
+      "title": "Final divergence review and verification",
       "verification": [
         "Targeted tests; relevant existing policy tests; ruff lint and format; git diff --check; boundary/commit review"
-      ],
-      "status": "verified",
-      "notes": ["Final fetch found origin/main unchanged; branch is three commits ahead and zero behind. Targeted tests, lint, format, audit drift and diff checks passed."]
+      ]
     }
   ]
 }

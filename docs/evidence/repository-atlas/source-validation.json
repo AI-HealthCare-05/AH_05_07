@@ -125,6 +125,30 @@
       "reason": "source path exists at audited SHA",
       "source_path": "docs/evidence/model-gate-1b.json",
       "status": "resolved"
+    },
+    {
+      "id": "EV-022",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/project-handoff.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-023",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/observation-challenge-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-024",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/scene-architecture.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-025",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/architecture/RECOVERY_CONTRACT.md",
+      "status": "resolved"
     }
   ],
   "schema_version": 1,

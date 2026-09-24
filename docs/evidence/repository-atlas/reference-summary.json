@@ -1,0 +1,42 @@
+{
+  "by_reason": {
+    "GitHub URL retained as remote evidence; no network assertion": 119,
+    "commit resolves in local repository": 284,
+    "external link is intentionally not fetched offline": 202,
+    "hex token does not resolve as a local commit; it may be historical, external, or a non-commit hash": 471,
+    "local directory link target exists": 5,
+    "local link target exists": 649,
+    "path and heading anchor resolve": 39,
+    "path-like token is not tracked at audited SHA; it may be generated, runtime-only, symbolic, or stale": 57,
+    "remote or symbolic reference requires human/network verification": 400,
+    "tracked directory exists at audited SHA": 55,
+    "tracked path exists at audited SHA": 1011,
+    "unique tracked suffix resolves the context-relative path": 32
+  },
+  "by_status": {
+    "resolved": 2075,
+    "unverified": 1249
+  },
+  "by_type": {
+    "commit_sha": 755,
+    "evidence_path": 75,
+    "github_url": 119,
+    "issue": 296,
+    "markdown_link": 895,
+    "pull_request": 104,
+    "repo_path": 1071,
+    "workflow": 9
+  },
+  "schema_version": 1,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "total": 3324,
+  "unverified_by_type": {
+    "commit_sha": 471,
+    "github_url": 119,
+    "issue": 296,
+    "markdown_link": 202,
+    "pull_request": 104,
+    "repo_path": 55,
+    "workflow": 2
+  }
+}
