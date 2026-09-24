@@ -13,5 +13,8 @@
     "verify:product-isolation": "node scripts/verify-product-isolation.mjs",
     "test:e2e": "npm run build && playwright test --config=../playwright.transcend-lab.config.ts",
     "test": "npm --prefix .. run build && npm run verify:product-isolation && npm run test:e2e"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.20.0"
   }
 }

@@ -64,3 +64,14 @@ test("rejects forbidden package reachability", () => {
   ]));
   assert.match(errors.join("\n"), /outside the Lab allowlist|denied module/);
 });
+
+test("accepts the explicitly isolated Rapier compatibility package", () => {
+  const rapier = path.join(LAB_ROOT, "node_modules/@dimforge/rapier3d-compat/dist/rapier.mjs");
+  const errors = validateModuleGraph(graph([
+    { id: labEntry, isEntry: true, importedIds: [membership, reviewCatalog, rapier], dynamicallyImportedIds: [] },
+    { id: membership, isEntry: false, importedIds: [], dynamicallyImportedIds: [] },
+    { id: reviewCatalog, isEntry: false, importedIds: [], dynamicallyImportedIds: [] },
+    { id: rapier, isEntry: false, importedIds: [], dynamicallyImportedIds: [] },
+  ]));
+  assert.deepEqual(errors, []);
+});

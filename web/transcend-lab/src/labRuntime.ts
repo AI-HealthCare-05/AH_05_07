@@ -57,6 +57,7 @@ import {
   type LabMetrics,
   type ResourceDiagnostics,
 } from "./platform/embodiment/labEmbodimentPort";
+import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
 import { SequentialBackendSelector } from "./labRenderers";
 
 export type LabRoute = "grove" | "cove";
@@ -206,6 +207,7 @@ export class TranscendLabRuntime {
   readonly #builder: ArenaSnapshotBuilder;
   readonly #world: WorldRootLeaseManager;
   readonly #selector = new SequentialBackendSelector();
+  readonly #rapierSpike = new RapierIsolationSpike();
   #resources = new LabResourceLedger();
   #host: HTMLElement | null = null;
   #sessionEpoch = 1;
@@ -352,6 +354,7 @@ export class TranscendLabRuntime {
   }
 
   async stop(): Promise<ResourceDiagnostics> {
+    this.#rapierSpike.stop();
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
     this.#assetLoading = false;
@@ -365,6 +368,7 @@ export class TranscendLabRuntime {
   }
 
   async reset(): Promise<ResourceDiagnostics> {
+    this.#rapierSpike.stop();
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
     this.#world.revoke("reset", true);
@@ -834,6 +838,9 @@ export class TranscendLabRuntime {
       runComparison: () => this.runComparison(),
       loadAsset: () => this.loadAsset(),
       loadReviewAsset: (assetId, clipName) => this.loadReviewAsset(assetId, clipName),
+      runRapierSpike: () => this.#rapierSpike.run(),
+      stopRapierSpike: () => this.#rapierSpike.stop(),
+      rapierSpikeState: () => this.#rapierSpike.state,
     });
   }
 
@@ -981,4 +988,7 @@ export type TranscendLabTestApi = Readonly<{
   runComparison: () => Promise<readonly LabMetrics[]>;
   loadAsset: () => Promise<AssetAdmissionResult>;
   loadReviewAsset: (assetId: string, clipName: ReviewClip) => Promise<AssetAdmissionResult>;
+  runRapierSpike: () => Promise<RapierSpikeResult>;
+  stopRapierSpike: () => RapierSpikeState;
+  rapierSpikeState: () => RapierSpikeState;
 }>;
