@@ -1,0 +1,156 @@
+{
+  "records": [
+    {
+      "id": "EV-001",
+      "reason": "source path exists at audited SHA",
+      "source_path": "AGENTS.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-002",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/README.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-003",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/architecture.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-004",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-005",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/requirements.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-006",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/model-v2-product-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-007",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/api-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-008",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/auth-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-009",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/data-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-010",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/observation-data-lifecycle.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-011",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/ux-flow.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-012",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/scene-policy-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-013",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/visual-production-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-014",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/companion-runtime.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-015",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/asset-register.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-016",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/deployment-ssot.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-017",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/architecture/RELEASE_CONTRACT.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-018",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/transcend/PROGRAM.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-019",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/transcend/W1.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-020",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/evidence/production-release-20260918.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-021",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/evidence/model-gate-1b.json",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-022",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/project-handoff.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-023",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/observation-challenge-contract.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-024",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/scene-architecture.md",
+      "status": "resolved"
+    },
+    {
+      "id": "EV-025",
+      "reason": "source path exists at audited SHA",
+      "source_path": "docs/architecture/RECOVERY_CONTRACT.md",
+      "status": "resolved"
+    }
+  ],
+  "schema_version": 1,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4"
+}

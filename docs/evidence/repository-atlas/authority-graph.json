@@ -1,0 +1,993 @@
+{
+  "edges": [
+    {
+      "from": "EV-001",
+      "to": "SRC-37dd68363fc1",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-001",
+      "to": "BND-68646042ea20",
+      "type": "protects"
+    },
+    {
+      "from": "EV-001",
+      "to": "BND-77ca61d56242",
+      "type": "protects"
+    },
+    {
+      "from": "EV-002",
+      "to": "SRC-9f7cbce127b9",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-002",
+      "to": "BND-8aeb46546b6c",
+      "type": "protects"
+    },
+    {
+      "from": "EV-002",
+      "to": "BND-e55e5ca891a0",
+      "type": "protects"
+    },
+    {
+      "from": "EV-003",
+      "to": "SRC-f48b101bb900",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-003",
+      "to": "BND-58f6ab9ddb49",
+      "type": "protects"
+    },
+    {
+      "from": "EV-003",
+      "to": "BND-7ca916de805a",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "SRC-adcb4c1b4803",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-004",
+      "to": "BND-4207aa8b3ff9",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "BND-5211a9f1f332",
+      "type": "protects"
+    },
+    {
+      "from": "EV-004",
+      "to": "BND-b13a88203216",
+      "type": "protects"
+    },
+    {
+      "from": "EV-005",
+      "to": "SRC-a77e4fd37656",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-005",
+      "to": "BND-27c24bc03efe",
+      "type": "protects"
+    },
+    {
+      "from": "EV-005",
+      "to": "BND-ed686f2983f6",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "SRC-1a3d4d2d7c14",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-006",
+      "to": "BND-34338c93cffe",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "BND-d07ba6fac1e3",
+      "type": "protects"
+    },
+    {
+      "from": "EV-006",
+      "to": "BND-daddadf9596f",
+      "type": "protects"
+    },
+    {
+      "from": "EV-007",
+      "to": "SRC-d8e5636cec06",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-007",
+      "to": "BND-27c38c9e90c3",
+      "type": "protects"
+    },
+    {
+      "from": "EV-007",
+      "to": "BND-2b474b3afbfe",
+      "type": "protects"
+    },
+    {
+      "from": "EV-008",
+      "to": "SRC-7370bb03b540",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-008",
+      "to": "BND-0680ebf74076",
+      "type": "protects"
+    },
+    {
+      "from": "EV-008",
+      "to": "BND-cba8912312ba",
+      "type": "protects"
+    },
+    {
+      "from": "EV-009",
+      "to": "SRC-66e56264bcde",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-009",
+      "to": "BND-036c87f3020b",
+      "type": "protects"
+    },
+    {
+      "from": "EV-009",
+      "to": "BND-9a2bdf8e0b5f",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "SRC-2cc7cc89f85f",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-010",
+      "to": "BND-013e5670c034",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "BND-31e69adfb28b",
+      "type": "protects"
+    },
+    {
+      "from": "EV-010",
+      "to": "BND-630b416af798",
+      "type": "protects"
+    },
+    {
+      "from": "EV-011",
+      "to": "SRC-3e61cde9cf24",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-011",
+      "to": "BND-0ba7806e301d",
+      "type": "protects"
+    },
+    {
+      "from": "EV-011",
+      "to": "BND-6bedf2f7a5a0",
+      "type": "protects"
+    },
+    {
+      "from": "EV-012",
+      "to": "SRC-e199715db58c",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-012",
+      "to": "BND-480450162eff",
+      "type": "protects"
+    },
+    {
+      "from": "EV-012",
+      "to": "BND-e9b14fcc928d",
+      "type": "protects"
+    },
+    {
+      "from": "EV-013",
+      "to": "SRC-632c0d02e18e",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-013",
+      "to": "BND-8645b3e59867",
+      "type": "protects"
+    },
+    {
+      "from": "EV-013",
+      "to": "BND-d12edca2af7a",
+      "type": "protects"
+    },
+    {
+      "from": "EV-014",
+      "to": "SRC-d7e050138c1d",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-014",
+      "to": "BND-61e0a82f54d8",
+      "type": "protects"
+    },
+    {
+      "from": "EV-014",
+      "to": "BND-7652329f6ffc",
+      "type": "protects"
+    },
+    {
+      "from": "EV-015",
+      "to": "SRC-e340301e167e",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-015",
+      "to": "BND-082e2ad6a97d",
+      "type": "protects"
+    },
+    {
+      "from": "EV-015",
+      "to": "BND-bd1f184815b3",
+      "type": "protects"
+    },
+    {
+      "from": "EV-016",
+      "to": "SRC-b3162fcd2036",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-016",
+      "to": "BND-17dbcbf0f07f",
+      "type": "protects"
+    },
+    {
+      "from": "EV-016",
+      "to": "BND-77f9953c1ce2",
+      "type": "protects"
+    },
+    {
+      "from": "EV-017",
+      "to": "SRC-7ef23549ac0d",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-017",
+      "to": "BND-6ec66331afc9",
+      "type": "protects"
+    },
+    {
+      "from": "EV-017",
+      "to": "BND-8f28627b8870",
+      "type": "protects"
+    },
+    {
+      "from": "EV-018",
+      "to": "SRC-7d27583c654c",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-018",
+      "to": "BND-2d23596c0288",
+      "type": "protects"
+    },
+    {
+      "from": "EV-018",
+      "to": "BND-e932a01aaae6",
+      "type": "protects"
+    },
+    {
+      "from": "EV-019",
+      "to": "SRC-da710c6f0ce3",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-019",
+      "to": "BND-30fe051857b7",
+      "type": "protects"
+    },
+    {
+      "from": "EV-019",
+      "to": "BND-5e6b18214b6c",
+      "type": "protects"
+    },
+    {
+      "from": "EV-020",
+      "to": "SRC-98e55e84c1f6",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-020",
+      "to": "BND-316333fd3168",
+      "type": "protects"
+    },
+    {
+      "from": "EV-021",
+      "to": "SRC-2ba6902594a5",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-021",
+      "to": "BND-f3b5937066ba",
+      "type": "protects"
+    },
+    {
+      "from": "EV-022",
+      "to": "SRC-37befa15ceb4",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-022",
+      "to": "BND-16666345bc51",
+      "type": "protects"
+    },
+    {
+      "from": "EV-022",
+      "to": "BND-73a8d10ec143",
+      "type": "protects"
+    },
+    {
+      "from": "EV-023",
+      "to": "SRC-3f4661dfaba1",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-023",
+      "to": "BND-3d7050cc200f",
+      "type": "protects"
+    },
+    {
+      "from": "EV-023",
+      "to": "BND-7faab5cc4f93",
+      "type": "protects"
+    },
+    {
+      "from": "EV-024",
+      "to": "SRC-8c5921392338",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-024",
+      "to": "BND-2cc7284b9a38",
+      "type": "protects"
+    },
+    {
+      "from": "EV-024",
+      "to": "BND-3b6925036544",
+      "type": "protects"
+    },
+    {
+      "from": "EV-025",
+      "to": "SRC-f1e137b79f25",
+      "type": "grounded_in"
+    },
+    {
+      "from": "EV-025",
+      "to": "BND-02133ce39052",
+      "type": "protects"
+    },
+    {
+      "from": "EV-025",
+      "to": "BND-79330c58ad35",
+      "type": "protects"
+    }
+  ],
+  "nodes": [
+    {
+      "category": "governance",
+      "id": "EV-001",
+      "node_type": "evidence_record",
+      "source_path": "AGENTS.md",
+      "status": "current",
+      "title": "Repository contribution and protected-boundary rules"
+    },
+    {
+      "category": "policy",
+      "id": "EV-002",
+      "node_type": "evidence_record",
+      "source_path": "docs/README.md",
+      "status": "current",
+      "title": "Documentation authority and lifecycle map"
+    },
+    {
+      "category": "architecture",
+      "id": "EV-003",
+      "node_type": "evidence_record",
+      "source_path": "docs/architecture.md",
+      "status": "current",
+      "title": "System architecture"
+    },
+    {
+      "category": "architecture",
+      "id": "EV-004",
+      "node_type": "evidence_record",
+      "source_path": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "status": "current",
+      "title": "Architecture invariants"
+    },
+    {
+      "category": "product",
+      "id": "EV-005",
+      "node_type": "evidence_record",
+      "source_path": "docs/requirements.md",
+      "status": "current",
+      "title": "Product requirements"
+    },
+    {
+      "category": "model",
+      "id": "EV-006",
+      "node_type": "evidence_record",
+      "source_path": "docs/model-v2-product-contract.md",
+      "status": "current",
+      "title": "Model V2 product contract"
+    },
+    {
+      "category": "api",
+      "id": "EV-007",
+      "node_type": "evidence_record",
+      "source_path": "docs/api-contract.md",
+      "status": "current",
+      "title": "API contract"
+    },
+    {
+      "category": "auth",
+      "id": "EV-008",
+      "node_type": "evidence_record",
+      "source_path": "docs/auth-contract.md",
+      "status": "current",
+      "title": "Authentication contract"
+    },
+    {
+      "category": "data",
+      "id": "EV-009",
+      "node_type": "evidence_record",
+      "source_path": "docs/data-contract.md",
+      "status": "current",
+      "title": "Data contract"
+    },
+    {
+      "category": "database",
+      "id": "EV-010",
+      "node_type": "evidence_record",
+      "source_path": "docs/observation-data-lifecycle.md",
+      "status": "current",
+      "title": "Observation data lifecycle"
+    },
+    {
+      "category": "journey",
+      "id": "EV-011",
+      "node_type": "evidence_record",
+      "source_path": "docs/ux-flow.md",
+      "status": "current",
+      "title": "Living Journey UX flow"
+    },
+    {
+      "category": "visual",
+      "id": "EV-012",
+      "node_type": "evidence_record",
+      "source_path": "docs/scene-policy-contract.md",
+      "status": "current",
+      "title": "Scene policy contract"
+    },
+    {
+      "category": "assets",
+      "id": "EV-013",
+      "node_type": "evidence_record",
+      "source_path": "docs/visual-production-contract.md",
+      "status": "current",
+      "title": "Visual production contract"
+    },
+    {
+      "category": "companion",
+      "id": "EV-014",
+      "node_type": "evidence_record",
+      "source_path": "docs/companion-runtime.md",
+      "status": "current",
+      "title": "Companion runtime"
+    },
+    {
+      "category": "assets",
+      "id": "EV-015",
+      "node_type": "evidence_record",
+      "source_path": "docs/asset-register.md",
+      "status": "active-reference",
+      "title": "Asset register"
+    },
+    {
+      "category": "deployment",
+      "id": "EV-016",
+      "node_type": "evidence_record",
+      "source_path": "docs/deployment-ssot.md",
+      "status": "current",
+      "title": "Deployment SSOT"
+    },
+    {
+      "category": "release",
+      "id": "EV-017",
+      "node_type": "evidence_record",
+      "source_path": "docs/architecture/RELEASE_CONTRACT.md",
+      "status": "current",
+      "title": "Release contract"
+    },
+    {
+      "category": "research",
+      "id": "EV-018",
+      "node_type": "evidence_record",
+      "source_path": "docs/transcend/PROGRAM.md",
+      "status": "current",
+      "title": "Transcend program"
+    },
+    {
+      "category": "research",
+      "id": "EV-019",
+      "node_type": "evidence_record",
+      "source_path": "docs/transcend/W1.md",
+      "status": "current",
+      "title": "Transcend W1 playable slice contract"
+    },
+    {
+      "category": "deployment",
+      "id": "EV-020",
+      "node_type": "evidence_record",
+      "source_path": "docs/evidence/production-release-20260918.md",
+      "status": "historical",
+      "title": "Production release evidence snapshot"
+    },
+    {
+      "category": "model",
+      "id": "EV-021",
+      "node_type": "evidence_record",
+      "source_path": "docs/evidence/model-gate-1b.json",
+      "status": "research-only",
+      "title": "Model gate 1B evidence"
+    },
+    {
+      "category": "governance",
+      "id": "EV-022",
+      "node_type": "evidence_record",
+      "source_path": "docs/project-handoff.md",
+      "status": "current",
+      "title": "Project handoff"
+    },
+    {
+      "category": "data",
+      "id": "EV-023",
+      "node_type": "evidence_record",
+      "source_path": "docs/observation-challenge-contract.md",
+      "status": "current",
+      "title": "Seven-day observation and challenge contract"
+    },
+    {
+      "category": "visual",
+      "id": "EV-024",
+      "node_type": "evidence_record",
+      "source_path": "docs/scene-architecture.md",
+      "status": "current",
+      "title": "Scene architecture"
+    },
+    {
+      "category": "operations",
+      "id": "EV-025",
+      "node_type": "evidence_record",
+      "source_path": "docs/architecture/RECOVERY_CONTRACT.md",
+      "status": "current",
+      "title": "Recovery contract"
+    },
+    {
+      "id": "SRC-37dd68363fc1",
+      "node_type": "source_document",
+      "source_path": "AGENTS.md",
+      "title": "AGENTS.md"
+    },
+    {
+      "id": "SRC-9f7cbce127b9",
+      "node_type": "source_document",
+      "source_path": "docs/README.md",
+      "title": "docs/README.md"
+    },
+    {
+      "id": "SRC-d8e5636cec06",
+      "node_type": "source_document",
+      "source_path": "docs/api-contract.md",
+      "title": "docs/api-contract.md"
+    },
+    {
+      "id": "SRC-f48b101bb900",
+      "node_type": "source_document",
+      "source_path": "docs/architecture.md",
+      "title": "docs/architecture.md"
+    },
+    {
+      "id": "SRC-adcb4c1b4803",
+      "node_type": "source_document",
+      "source_path": "docs/architecture/ARCHITECTURE_INVARIANTS.md",
+      "title": "docs/architecture/ARCHITECTURE_INVARIANTS.md"
+    },
+    {
+      "id": "SRC-f1e137b79f25",
+      "node_type": "source_document",
+      "source_path": "docs/architecture/RECOVERY_CONTRACT.md",
+      "title": "docs/architecture/RECOVERY_CONTRACT.md"
+    },
+    {
+      "id": "SRC-7ef23549ac0d",
+      "node_type": "source_document",
+      "source_path": "docs/architecture/RELEASE_CONTRACT.md",
+      "title": "docs/architecture/RELEASE_CONTRACT.md"
+    },
+    {
+      "id": "SRC-e340301e167e",
+      "node_type": "source_document",
+      "source_path": "docs/asset-register.md",
+      "title": "docs/asset-register.md"
+    },
+    {
+      "id": "SRC-7370bb03b540",
+      "node_type": "source_document",
+      "source_path": "docs/auth-contract.md",
+      "title": "docs/auth-contract.md"
+    },
+    {
+      "id": "SRC-d7e050138c1d",
+      "node_type": "source_document",
+      "source_path": "docs/companion-runtime.md",
+      "title": "docs/companion-runtime.md"
+    },
+    {
+      "id": "SRC-66e56264bcde",
+      "node_type": "source_document",
+      "source_path": "docs/data-contract.md",
+      "title": "docs/data-contract.md"
+    },
+    {
+      "id": "SRC-b3162fcd2036",
+      "node_type": "source_document",
+      "source_path": "docs/deployment-ssot.md",
+      "title": "docs/deployment-ssot.md"
+    },
+    {
+      "id": "SRC-2ba6902594a5",
+      "node_type": "source_document",
+      "source_path": "docs/evidence/model-gate-1b.json",
+      "title": "docs/evidence/model-gate-1b.json"
+    },
+    {
+      "id": "SRC-98e55e84c1f6",
+      "node_type": "source_document",
+      "source_path": "docs/evidence/production-release-20260918.md",
+      "title": "docs/evidence/production-release-20260918.md"
+    },
+    {
+      "id": "SRC-1a3d4d2d7c14",
+      "node_type": "source_document",
+      "source_path": "docs/model-v2-product-contract.md",
+      "title": "docs/model-v2-product-contract.md"
+    },
+    {
+      "id": "SRC-3f4661dfaba1",
+      "node_type": "source_document",
+      "source_path": "docs/observation-challenge-contract.md",
+      "title": "docs/observation-challenge-contract.md"
+    },
+    {
+      "id": "SRC-2cc7cc89f85f",
+      "node_type": "source_document",
+      "source_path": "docs/observation-data-lifecycle.md",
+      "title": "docs/observation-data-lifecycle.md"
+    },
+    {
+      "id": "SRC-37befa15ceb4",
+      "node_type": "source_document",
+      "source_path": "docs/project-handoff.md",
+      "title": "docs/project-handoff.md"
+    },
+    {
+      "id": "SRC-a77e4fd37656",
+      "node_type": "source_document",
+      "source_path": "docs/requirements.md",
+      "title": "docs/requirements.md"
+    },
+    {
+      "id": "SRC-8c5921392338",
+      "node_type": "source_document",
+      "source_path": "docs/scene-architecture.md",
+      "title": "docs/scene-architecture.md"
+    },
+    {
+      "id": "SRC-e199715db58c",
+      "node_type": "source_document",
+      "source_path": "docs/scene-policy-contract.md",
+      "title": "docs/scene-policy-contract.md"
+    },
+    {
+      "id": "SRC-7d27583c654c",
+      "node_type": "source_document",
+      "source_path": "docs/transcend/PROGRAM.md",
+      "title": "docs/transcend/PROGRAM.md"
+    },
+    {
+      "id": "SRC-da710c6f0ce3",
+      "node_type": "source_document",
+      "source_path": "docs/transcend/W1.md",
+      "title": "docs/transcend/W1.md"
+    },
+    {
+      "id": "SRC-3e61cde9cf24",
+      "node_type": "source_document",
+      "source_path": "docs/ux-flow.md",
+      "title": "docs/ux-flow.md"
+    },
+    {
+      "id": "SRC-632c0d02e18e",
+      "node_type": "source_document",
+      "source_path": "docs/visual-production-contract.md",
+      "title": "docs/visual-production-contract.md"
+    },
+    {
+      "id": "BND-34338c93cffe",
+      "node_type": "protected_boundary",
+      "title": "11-feature order and preprocessing"
+    },
+    {
+      "id": "BND-7ca916de805a",
+      "node_type": "protected_boundary",
+      "title": "API and data layering"
+    },
+    {
+      "id": "BND-2b474b3afbfe",
+      "node_type": "protected_boundary",
+      "title": "API semantics"
+    },
+    {
+      "id": "BND-e55e5ca891a0",
+      "node_type": "protected_boundary",
+      "title": "CURRENT versus EVIDENCE lifecycle"
+    },
+    {
+      "id": "BND-f3b5937066ba",
+      "node_type": "protected_boundary",
+      "title": "Model V2 evidence traceability"
+    },
+    {
+      "id": "BND-4207aa8b3ff9",
+      "node_type": "protected_boundary",
+      "title": "Model V2 frozen boundary"
+    },
+    {
+      "id": "BND-2d23596c0288",
+      "node_type": "protected_boundary",
+      "title": "Transcend scope"
+    },
+    {
+      "id": "BND-5e6b18214b6c",
+      "node_type": "protected_boundary",
+      "title": "W1 acceptance"
+    },
+    {
+      "id": "BND-d12edca2af7a",
+      "node_type": "protected_boundary",
+      "title": "asset production gates"
+    },
+    {
+      "id": "BND-082e2ad6a97d",
+      "node_type": "protected_boundary",
+      "title": "asset provenance"
+    },
+    {
+      "id": "BND-bd1f184815b3",
+      "node_type": "protected_boundary",
+      "title": "asset review scope"
+    },
+    {
+      "id": "BND-b13a88203216",
+      "node_type": "protected_boundary",
+      "title": "auth/RLS/retention"
+    },
+    {
+      "id": "BND-cba8912312ba",
+      "node_type": "protected_boundary",
+      "title": "authentication semantics"
+    },
+    {
+      "id": "BND-77ca61d56242",
+      "node_type": "protected_boundary",
+      "title": "checkpoint and attribution rules"
+    },
+    {
+      "id": "BND-61e0a82f54d8",
+      "node_type": "protected_boundary",
+      "title": "companion behavior boundary"
+    },
+    {
+      "id": "BND-013e5670c034",
+      "node_type": "protected_boundary",
+      "title": "deletion"
+    },
+    {
+      "id": "BND-77f9953c1ce2",
+      "node_type": "protected_boundary",
+      "title": "deployment flow"
+    },
+    {
+      "id": "BND-e932a01aaae6",
+      "node_type": "protected_boundary",
+      "title": "experimental boundary"
+    },
+    {
+      "id": "BND-30fe051857b7",
+      "node_type": "protected_boundary",
+      "title": "experimental runtime boundary"
+    },
+    {
+      "id": "BND-79330c58ad35",
+      "node_type": "protected_boundary",
+      "title": "explicit recovery uncertainty"
+    },
+    {
+      "id": "BND-036c87f3020b",
+      "node_type": "protected_boundary",
+      "title": "fact separation"
+    },
+    {
+      "id": "BND-daddadf9596f",
+      "node_type": "protected_boundary",
+      "title": "frozen Model V2 artifact"
+    },
+    {
+      "id": "BND-316333fd3168",
+      "node_type": "protected_boundary",
+      "title": "historical traceability"
+    },
+    {
+      "id": "BND-27c24bc03efe",
+      "node_type": "protected_boundary",
+      "title": "input-based risk-group screening signal wording"
+    },
+    {
+      "id": "BND-6bedf2f7a5a0",
+      "node_type": "protected_boundary",
+      "title": "journey states"
+    },
+    {
+      "id": "BND-16666345bc51",
+      "node_type": "protected_boundary",
+      "title": "live Git reconciliation"
+    },
+    {
+      "id": "BND-58f6ab9ddb49",
+      "node_type": "protected_boundary",
+      "title": "modular monolith boundary"
+    },
+    {
+      "id": "BND-8aeb46546b6c",
+      "node_type": "protected_boundary",
+      "title": "named document boundaries"
+    },
+    {
+      "id": "BND-3d7050cc200f",
+      "node_type": "protected_boundary",
+      "title": "non-causal health semantics"
+    },
+    {
+      "id": "BND-630b416af798",
+      "node_type": "protected_boundary",
+      "title": "observation ownership"
+    },
+    {
+      "id": "BND-7faab5cc4f93",
+      "node_type": "protected_boundary",
+      "title": "observation/challenge fact separation"
+    },
+    {
+      "id": "BND-ed686f2983f6",
+      "node_type": "protected_boundary",
+      "title": "product scope"
+    },
+    {
+      "id": "BND-68646042ea20",
+      "node_type": "protected_boundary",
+      "title": "protected product boundaries"
+    },
+    {
+      "id": "BND-6ec66331afc9",
+      "node_type": "protected_boundary",
+      "title": "release gates"
+    },
+    {
+      "id": "BND-27c38c9e90c3",
+      "node_type": "protected_boundary",
+      "title": "request and uncertain-write protections"
+    },
+    {
+      "id": "BND-5211a9f1f332",
+      "node_type": "protected_boundary",
+      "title": "request/session guards"
+    },
+    {
+      "id": "BND-73a8d10ec143",
+      "node_type": "protected_boundary",
+      "title": "restart source-of-truth"
+    },
+    {
+      "id": "BND-31e69adfb28b",
+      "node_type": "protected_boundary",
+      "title": "retention"
+    },
+    {
+      "id": "BND-9a2bdf8e0b5f",
+      "node_type": "protected_boundary",
+      "title": "retention and account deletion"
+    },
+    {
+      "id": "BND-8f28627b8870",
+      "node_type": "protected_boundary",
+      "title": "rollback boundary"
+    },
+    {
+      "id": "BND-e9b14fcc928d",
+      "node_type": "protected_boundary",
+      "title": "runtime boundary"
+    },
+    {
+      "id": "BND-17dbcbf0f07f",
+      "node_type": "protected_boundary",
+      "title": "runtime release state"
+    },
+    {
+      "id": "BND-02133ce39052",
+      "node_type": "protected_boundary",
+      "title": "runtime rollback versus data recovery separation"
+    },
+    {
+      "id": "BND-7652329f6ffc",
+      "node_type": "protected_boundary",
+      "title": "scene lifecycle"
+    },
+    {
+      "id": "BND-480450162eff",
+      "node_type": "protected_boundary",
+      "title": "scene policy"
+    },
+    {
+      "id": "BND-3b6925036544",
+      "node_type": "protected_boundary",
+      "title": "scene runtime lifecycle"
+    },
+    {
+      "id": "BND-2cc7284b9a38",
+      "node_type": "protected_boundary",
+      "title": "semantic UI versus decorative scene ownership"
+    },
+    {
+      "id": "BND-0680ebf74076",
+      "node_type": "protected_boundary",
+      "title": "session ownership"
+    },
+    {
+      "id": "BND-d07ba6fac1e3",
+      "node_type": "protected_boundary",
+      "title": "target-leakage prohibition"
+    },
+    {
+      "id": "BND-0ba7806e301d",
+      "node_type": "protected_boundary",
+      "title": "user-facing fact separation"
+    },
+    {
+      "id": "BND-8645b3e59867",
+      "node_type": "protected_boundary",
+      "title": "visual acceptance boundary"
+    }
+  ],
+  "schema_version": 1,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4"
+}

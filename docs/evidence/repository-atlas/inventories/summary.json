@@ -1,0 +1,33 @@
+{
+  "evidence_candidates": 234,
+  "policy_candidates": 33,
+  "roots": {
+    ".dockerignore": 1,
+    ".gitattributes": 1,
+    ".github": 6,
+    ".gitignore": 1,
+    ".python-version": 1,
+    "AGENTS.md": 1,
+    "README.md": 1,
+    "ai_worker": 9,
+    "app": 89,
+    "cloudbuild.api.yaml": 1,
+    "data": 2,
+    "docker-compose.yml": 1,
+    "docs": 348,
+    "envs": 2,
+    "infra": 4,
+    "ops": 18,
+    "pyproject.toml": 1,
+    "scripts": 74,
+    "supabase": 20,
+    "tests": 75,
+    "tools": 68,
+    "uv.lock": 1,
+    "web": 421
+  },
+  "schema_version": 1,
+  "scoped": 665,
+  "source_sha": "6f163c33bf11193f0322c0377ff9463567b361b4",
+  "total": 1146
+}
