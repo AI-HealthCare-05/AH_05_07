@@ -3,6 +3,11 @@ import { createHash } from "node:crypto";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { WorldMovementIntentController } from "../transcend-lab/src/platform/behavior/worldMovementIntent";
+import {
+  cameraObstacle,
+  cameraRelativeMovement,
+  resolveThirdPersonCamera,
+} from "../transcend-lab/src/platform/spatial/thirdPersonCamera";
 import { PINNED_ACTIVE_ASSET } from "../transcend-lab/src/platform/embodiment/labEmbodimentPort";
 import {
   FixedStepClock,
@@ -189,6 +194,69 @@ test("W1 input blur visibility and semantic suspension never restore stale movem
     suspended: false,
     lastClearReason: "reset",
   });
+});
+
+
+test("W1 camera maps normalized movement intent relative to yaw", () => {
+  const forwardAtZero = cameraRelativeMovement({ lateral: 0, forward: 1 }, 0);
+  expect(forwardAtZero).toEqual({ space: WORLD_SPACE, kind: "vector", x: 0, y: 0, z: -1 });
+
+  const forwardAtQuarterTurn = cameraRelativeMovement({ lateral: 0, forward: 1 }, Math.PI / 2);
+  expect(forwardAtQuarterTurn.x).toBeCloseTo(-1, 12);
+  expect(forwardAtQuarterTurn.z).toBeCloseTo(0, 12);
+
+  const diagonal = cameraRelativeMovement({ lateral: 1, forward: 1 }, Math.PI / 4);
+  expect(Math.hypot(diagonal.x, diagonal.z)).toBeCloseTo(1, 12);
+  expect(diagonal.y).toBe(0);
+});
+
+test("W1 camera resolves above and behind focus then shortens before nearest surrogate obstruction", () => {
+  const focus = worldPoint(0, 1, 0);
+  const config = {
+    yawRadians: 0,
+    pitchRadians: Math.PI / 6,
+    minPitchRadians: 0,
+    maxPitchRadians: Math.PI / 3,
+    desiredDistance: 6,
+    minDistance: 1,
+    obstructionClearance: 0.2,
+  };
+  const wall = cameraObstacle("wall", worldPoint(-1, 1, 2.4), worldPoint(1, 5, 3));
+  const farColumn = cameraObstacle("far-column", worldPoint(-0.5, 2, 4.2), worldPoint(0.5, 6, 4.6));
+
+  const blocked = resolveThirdPersonCamera(focus, config, [farColumn, wall]);
+  expect(blocked.occluded).toBe(true);
+  expect(blocked.obstructionId).toBe("wall");
+  expect(blocked.resolvedDistance).toBeLessThan(blocked.desiredDistance);
+  expect(blocked.position.y).toBeGreaterThan(focus.y);
+  expect(blocked.position.z).toBeLessThan(wall.min.z);
+
+  const clear = resolveThirdPersonCamera(focus, config, []);
+  expect(clear).toMatchObject({ occluded: false, obstructionId: null, resolvedDistance: 6 });
+  expect(clear.position.y).toBeGreaterThan(focus.y);
+  expect(clear.position.z).toBeGreaterThan(blocked.position.z);
+});
+
+test("W1 camera obstruction ordering is deterministic and pitch is clamped", () => {
+  const focus = worldPoint(0, 0, 0);
+  const config = {
+    yawRadians: 0,
+    pitchRadians: Math.PI,
+    minPitchRadians: 0.1,
+    maxPitchRadians: 0.5,
+    desiredDistance: 8,
+    minDistance: 1,
+    obstructionClearance: 0.1,
+  };
+  const a = cameraObstacle("a", worldPoint(-1, 0, 2), worldPoint(1, 6, 2.5));
+  const b = cameraObstacle("b", worldPoint(-1, 0, 2), worldPoint(1, 6, 2.5));
+
+  const first = resolveThirdPersonCamera(focus, config, [b, a]);
+  const second = resolveThirdPersonCamera(focus, config, [a, b]);
+  expect(first.obstructionId).toBe("a");
+  expect(second.obstructionId).toBe("a");
+  expect(first.position).toEqual(second.position);
+  expect(first.pitchRadians).toBe(0.5);
 });
 
 test("isolated synthetic routing retains one actor, one writer, one backend, and no product state", async ({ page, context }) => {
