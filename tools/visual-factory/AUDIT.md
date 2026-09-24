@@ -84,8 +84,9 @@ run on the user's Mac from a fresh worktree based on current `origin/main`.
 - Current mounted conversation PNG originals from the earlier package audit: **47/47** inspected;
   **19** had nonopaque pixels and **28** were fully opaque. That evidence remains package-time scope.
 
-**Not yet executed:** GitHub-hosted CI and branch push/PR checks. These must not be
-reported as PASS until run.
+Remote branch push and Draft PR #742 are complete. GitHub-hosted CI required checks
+`lint` and `test` passed on the published candidate; local `tests.test_visual_factory` also
+passed 57 tests, with Python compile plus Ruff lint/format checks passing.
 
 No product runtime, public `visual/v1`, planned product `visual/v2`, `companion/v1`,
 DNS, CORS, bucket-publicity setting, or application catalog was changed. The only cloud
