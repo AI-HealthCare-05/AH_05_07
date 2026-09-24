@@ -18,7 +18,7 @@ const PRODUCT_CLOSURE = Object.freeze([
   "asset-candidates/companion-review-catalog.v1.json",
 ]);
 const TYPE_ONLY_CLOSURE = "src/ui/journey.ts";
-const ALLOWED_PACKAGES = new Set(["react", "react-dom", "scheduler", "three"]);
+const ALLOWED_PACKAGES = new Set(["@dimforge/rapier3d-compat", "react", "react-dom", "scheduler", "three"]);
 const DENIED_PATTERNS = [
   /\/src\/App\.tsx$/,
   /\/src\/components\/SceneShell\.tsx$/,

@@ -7,6 +7,9 @@ const markers = [
   /transcend-lab/i,
   /CompanionInteractionLab/,
   /phase1-cross-route-relocation-v1/,
+  /@dimforge\/rapier3d/i,
+  /rapier_wasm3d/i,
+  /rapier/i,
 ];
 const textExtensions = new Set([".html", ".js", ".css", ".json", ".map", ".txt"]);
 
@@ -35,4 +38,4 @@ while (pending.length) {
 if (violations.length) {
   throw new Error(`default product build contains Lab markers:\n${violations.join("\n")}`);
 }
-process.stdout.write("Default product build contains no Transcend Lab marker or entry.\n");
+process.stdout.write("Default product build contains no Transcend Lab or Rapier marker.\n");

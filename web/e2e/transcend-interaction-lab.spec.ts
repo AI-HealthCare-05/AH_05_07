@@ -259,6 +259,58 @@ test("W1 camera obstruction ordering is deterministic and pitch is clamped", () 
   expect(first.pitchRadians).toBe(0.5);
 });
 
+
+test("W1 Rapier spike executes in the browser, owns the fixture, and drains explicitly", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(() => window.__TRANSCEND_LAB__!.runRapierSpike());
+  expect(result).toMatchObject({
+    status: "ready",
+    colliderCount: 5,
+    liveWorld: true,
+    liveController: true,
+  });
+  if (result.status !== "ready") throw new Error("Rapier spike did not become ready");
+  expect(result.runtimeVersion).toMatch(/^\d+\.\d+\.\d+$/);
+  expect(result.wall.x).toBeGreaterThanOrEqual(0);
+  expect(result.wall.x).toBeLessThan(2);
+  for (const movement of [result.wall, result.step, result.slope, result.groundedProbe]) {
+    expect([movement.x, movement.y, movement.z].every(Number.isFinite)).toBe(true);
+  }
+
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stopRapierSpike());
+  expect(stopped).toMatchObject({ liveWorld: false, liveController: false });
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.rapierSpikeState()))).toEqual(stopped);
+});
+
+test("W1 Rapier spike generation fence prevents stale async import revival and repeated teardown leaks", async ({ page }) => {
+  await openRunningLab(page);
+  const stale = await page.evaluate(async () => {
+    const api = window.__TRANSCEND_LAB__!;
+    const pending = api.runRapierSpike();
+    api.stopRapierSpike();
+    return pending;
+  });
+  expect(stale).toMatchObject({ status: "stale", liveWorld: false, liveController: false });
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.rapierSpikeState()))).toMatchObject({
+    liveWorld: false,
+    liveController: false,
+  });
+
+  for (let index = 0; index < 3; index += 1) {
+    const ready = await page.evaluate(() => window.__TRANSCEND_LAB__!.runRapierSpike());
+    expect(ready.status).toBe("ready");
+    const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stopRapierSpike());
+    expect(stopped).toMatchObject({ liveWorld: false, liveController: false });
+  }
+
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.runRapierSpike());
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.rapierSpikeState()))).toMatchObject({
+    liveWorld: false,
+    liveController: false,
+  });
+});
+
 test("isolated synthetic routing retains one actor, one writer, one backend, and no product state", async ({ page, context }) => {
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
