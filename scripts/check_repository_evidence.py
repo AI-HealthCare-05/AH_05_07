@@ -290,42 +290,28 @@ def validate_references(root: Path, ref: str, inventory_rows: list[dict], refs: 
 
 def inventory_outputs(root: Path, ref: str) -> dict[str, str]:
     rows = inventory(root, ref)
-    subsets = {
-        "repository-files": rows,
-        "evidence-files": [r for r in rows if r["path"].startswith(("docs/evidence/", "docs/research/", "docs/adr/"))],
-        "policy-files": [
-            r
-            for r in rows
-            if r["path"] == "AGENTS.md"
-            or r["path"].startswith(".github/")
-            or ("contract" in r["path"] and r["path"].startswith("docs/"))
-            or r["path"] in ("docs/README.md", "docs/project-handoff.md")
-        ],
-    }
-    result = {}
-    for name, files in subsets.items():
-        result[f"inventories/{name}.json"] = encode(dict(schema_version=1, source_sha=ref, files=files))
-        lines = [
-            f"# {name}",
-            "",
-            f"Snapshot: `{ref}`. {len(files)} tracked entries.",
-            "",
-            "Metadata only; binary contents are not read. Policy/evidence subsets are discovery filters, not authority assignments.",
-            "",
-            "| Path | Bytes | Git object |",
-            "| --- | ---: | --- |",
-        ]
-        lines.extend(f"| `{r['path']}` | {r['size_bytes']} | `{r['blob_sha']}` |" for r in files)
-        result[f"inventories/{name}.md"] = "\n".join(lines) + "\n"
-    result["inventories/summary.json"] = encode(
-        dict(
-            schema_version=1,
-            source_sha=ref,
-            total=len(rows),
-            roots=dict(sorted(Counter(r["path"].split("/")[0] for r in rows).items())),
-            scoped=sum(r["audit_scope"] for r in rows),
+    evidence_rows = [r for r in rows if r["path"].startswith(("docs/evidence/", "docs/research/", "docs/adr/"))]
+    policy_rows = [
+        r
+        for r in rows
+        if r["path"] == "AGENTS.md"
+        or r["path"].startswith(".github/")
+        or ("contract" in r["path"] and r["path"].startswith("docs/"))
+        or r["path"] in ("docs/README.md", "docs/project-handoff.md")
+    ]
+    result = {
+        "inventories/summary.json": encode(
+            dict(
+                schema_version=1,
+                source_sha=ref,
+                total=len(rows),
+                roots=dict(sorted(Counter(r["path"].split("/")[0] for r in rows).items())),
+                scoped=sum(r["audit_scope"] for r in rows),
+                evidence_candidates=len(evidence_rows),
+                policy_candidates=len(policy_rows),
+            )
         )
-    )
+    }
     refs = extract_references(root, ref, rows)
     validations = validate_references(root, ref, rows, refs)
     type_counts = dict(sorted(Counter(x["type"] for x in refs).items()))
@@ -343,14 +329,6 @@ def inventory_outputs(root: Path, ref: str) -> dict[str, str]:
             by_status=status_counts,
             unverified_by_type=unverified_type_counts,
             by_reason=reason_counts,
-        )
-    )
-    result["validation.json"] = encode(
-        dict(
-            schema_version=1,
-            source_sha=ref,
-            references=validations,
-            counts=status_counts,
         )
     )
     result.update(normalized_outputs(root, ref, rows, validations))
@@ -583,11 +561,14 @@ def normalized_outputs(root: Path, ref: str, inventory_rows: list[dict], validat
 def preflight_write(root: Path, expected_head: str | None, outputs: dict[str, str]) -> None:  # noqa: C901
     if expected_head is None or git(root, "rev-parse", "HEAD") != expected_head:
         raise ValueError("--write requires --expect-head equal to the reviewed full HEAD SHA")
-    state = json.loads((root / ATLAS / "STATE.json").read_text())
     branch = git(root, "branch", "--show-current")
-    if not branch or branch != state["branch"]:
-        raise ValueError("write requires the attached task branch recorded in STATE")
-    git(root, "merge-base", "--is-ancestor", state["base_sha"], "HEAD")
+    if not branch:
+        raise ValueError("write requires an attached task branch")
+    sources = json.loads((root / ATLAS / "SOURCES.json").read_text())
+    audited_sha = sources.get("audited_sha")
+    if not isinstance(audited_sha, str) or not audited_sha:
+        raise ValueError("SOURCES.json must record audited_sha")
+    git(root, "merge-base", "--is-ancestor", audited_sha, "HEAD")
     status_raw = subprocess.check_output(
         ["git", "-C", str(root), "status", "--porcelain=v1", "-z", "--untracked-files=all"], text=True
     )
@@ -606,7 +587,7 @@ def preflight_write(root: Path, expected_head: str | None, outputs: dict[str, st
             raise ValueError("output escaped atlas")
         if any(p.is_symlink() for p in [path, *path.parents]):
             raise ValueError("symlink output is not allowed")
-    if not isinstance(json.loads((root / ATLAS / "SOURCES.json").read_text())["records"], list):
+    if not isinstance(sources.get("records"), list):
         raise ValueError("invalid SOURCES.records")
 
 

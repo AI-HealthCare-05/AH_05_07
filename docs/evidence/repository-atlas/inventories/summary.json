@@ -1,4 +1,6 @@
 {
+  "evidence_candidates": 234,
+  "policy_candidates": 33,
   "roots": {
     ".dockerignore": 1,
     ".gitattributes": 1,

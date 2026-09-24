@@ -57,7 +57,9 @@ def test_inventory_outputs_are_deterministic(tmp_path: Path) -> None:
     second = evidence.inventory_outputs(root, ref)
     assert first == second
     assert "reference-summary.json" in first
-    assert "validation.json" in first
+    assert "validation.json" not in first
+    assert "inventories/repository-files.json" not in first
+    assert "inventories/repository-files.md" not in first
     assert "references.json" not in first
     assert "references.md" not in first
     assert "validation.md" not in first
@@ -109,9 +111,7 @@ def test_write_preflight_rejects_wrong_head_before_writing(tmp_path: Path) -> No
     root, ref = fixture(tmp_path)
     atlas = root / evidence.ATLAS
     atlas.mkdir(parents=True)
-    branch = git(root, "branch", "--show-current")
-    (atlas / "STATE.json").write_text(json.dumps({"branch": branch, "base_sha": ref}))
-    (atlas / "SOURCES.json").write_text(json.dumps({"records": []}))
+    (atlas / "SOURCES.json").write_text(json.dumps({"audited_sha": ref, "records": []}))
     target = atlas / "generated.txt"
     try:
         evidence.apply_outputs(root, {"generated.txt": "would be written\n"}, True, "0" * 40)
