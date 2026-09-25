@@ -220,6 +220,7 @@ export class TranscendLabRuntime {
   #playableResources: LabResourceLedger | null = null;
   #playableStage: WorldPlayableStage | null = null;
   #playable = false;
+  #worldInteractionSuspended = false;
   #host: HTMLElement | null = null;
   #sessionEpoch = 1;
   #routeEpoch = 1;
@@ -395,7 +396,8 @@ export class TranscendLabRuntime {
     this.#playableStage = stage;
 
     try {
-      const started = await this.#kinematicWorld.start("camera-obstruction");
+      const started = await this.#kinematicWorld.start("playable");
+      this.#kinematicWorld.setSemanticSuspended(this.#worldInteractionSuspended);
       if (!started || requestId !== this.#rendererRequestId) {
         throw new Error("playable physics start was superseded");
       }
@@ -454,6 +456,12 @@ export class TranscendLabRuntime {
     this.#assetLoading = false;
     await this.#stopPlayableInternal();
     await this.start(this.#selectedBackend);
+  }
+
+  setWorldInteractionSuspended(suspended: boolean): void {
+    this.#worldInteractionSuspended = suspended;
+    this.#kinematicWorld.setSemanticSuspended(suspended);
+    this.#kinematicWorld.blur();
   }
 
   playableCameraNudge(deltaYawRadians: number): void {

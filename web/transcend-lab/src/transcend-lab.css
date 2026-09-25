@@ -520,3 +520,28 @@ code {
   }
   .world-touch-pad[data-pointer-id] .world-touch-thumb { opacity: 0.65; }
 }
+
+.world-destination-status {
+  position: absolute;
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 9rem);
+  left: 50%;
+  width: min(32rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgb(24 49 40 / 90%);
+  color: #f8fff8;
+  text-align: center;
+  pointer-events: none;
+}
+
+.world-destination-dialog {
+  max-width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.5rem;
+  border: 2px solid currentColor;
+  border-radius: 1rem;
+}
+
+.world-destination-dialog::backdrop { background: rgb(0 0 0 / 45%); }

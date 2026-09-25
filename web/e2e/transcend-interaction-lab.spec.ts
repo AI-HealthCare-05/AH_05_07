@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
-import { KinematicWorld } from "../transcend-lab/src/platform/spatial/kinematicWorld";
+import { KinematicWorld, KINEMATIC_CONFIG } from "../transcend-lab/src/platform/spatial/kinematicWorld";
+import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
 import { WorldMovementIntentController } from "../transcend-lab/src/platform/behavior/worldMovementIntent";
 import {
@@ -1330,4 +1331,128 @@ test("renderer and load failures leave semantic controls usable; stop/reset drai
   await page.waitForTimeout(100);
   await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(0);
   expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.state())).lifecycle).toBe("stopped");
+});
+
+
+test("W1 visible layout shares bounded boxes and exact ramp vertices with physics", () => {
+  const layout = playableWorldLayout(KINEMATIC_CONFIG);
+  expect(layout.map(shape => shape.id)).toEqual([
+    "camera-pillar", "wall", "step-allowed", "step-blocked", "slope-allowed", "slope-blocked",
+  ]);
+  expect(Object.isFrozen(layout)).toBe(true);
+  for (const shape of layout) {
+    expect(Object.isFrozen(shape)).toBe(true);
+    expect(shape.width * shape.height * shape.depth).toBeGreaterThan(0);
+    expect(Math.abs(shape.z) + shape.depth / 2).toBeLessThan(KINEMATIC_CONFIG.worldLimit);
+    if (shape.kind === "ramp") {
+      const vertices = rampVertices(shape);
+      expect(vertices).toHaveLength(18);
+      expect(Math.max(...RAMP_TRIANGLES)).toBe(5);
+      expect(vertices[0]).toBeCloseTo(shape.x);
+      expect(vertices[6]).toBeCloseTo(shape.x + shape.width);
+      expect(vertices[7]).toBeCloseTo(shape.height);
+    }
+  }
+  expect(layout.find(s => s.id === "step-allowed")!.height).toBeLessThan(KINEMATIC_CONFIG.autostepMaxHeight);
+  expect(layout.find(s => s.id === "step-blocked")!.height).toBeGreaterThan(KINEMATIC_CONFIG.autostepMaxHeight);
+  expect(() => rampVertices({ ...layout[4], height: Number.NaN })).toThrow();
+  expect(() => rampVertices(layout[0])).toThrow();
+});
+
+test("W1 combined playable physics stops at the visible wall and reaches the station corridor", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const api = window.__TRANSCEND_LAB__!.kinematic;
+    await api.start("playable");
+    const colliders = api.state().resources.colliders;
+    api.key("KeyD", true);
+    for (let i = 0; i <= 180; i += 1) api.sample(1000 + i * 1000 / 60);
+    const atWall = api.state().position;
+    api.stop();
+    await api.start("playable");
+    api.key("KeyW", true);
+    for (let i = 0; i <= 90; i += 1) api.sample(1000 + i * 1000 / 60);
+    api.key("KeyW", false);
+    const station = api.state().position;
+    api.stop();
+    return { colliders, atWall, station, drained: api.state().resources };
+  });
+  expect(result.colliders).toBe(8); // ground + player + six visible solid fixtures
+  expect(result.atWall!.x).toBeGreaterThan(2.4);
+  expect(result.atWall!.x).toBeLessThan(2.65);
+  expect(Math.hypot(result.station!.x - PLAYABLE_DESTINATION.x, result.station!.z - PLAYABLE_DESTINATION.z))
+    .toBeLessThan(PLAYABLE_DESTINATION.radius);
+  expect(result.drained).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+});
+
+test("W1 station has the same keyboard-accessible destination without 3D movement", async ({ page, request }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, body: bytes, contentType: "model/gltf-binary" }));
+  await openRunningLab(page);
+  const semantic = page.getByTestId("open-world-destination-semantic");
+  const dialog = page.getByRole("dialog", { name: "Grove station" });
+  await semantic.focus();
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAttribute("data-destination-id", PLAYABLE_DESTINATION.id);
+  await expect(dialog.getByRole("button", { name: "Return from station" })).toBeFocused();
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources.worlds).toBe(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(semantic).toBeFocused();
+
+  await page.getByTestId("start-world-playable").click();
+  const stage = page.getByTestId("world-playable-stage");
+  await expect(stage).toHaveAttribute("data-playable-clip", "idle");
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.fixtureIds)
+    .toEqual(playableWorldLayout(KINEMATIC_CONFIG).map(shape => shape.id));
+  await page.keyboard.down("w");
+  await expect(stage).toHaveAttribute("data-destination-near", "true", { timeout: 10_000 });
+  await page.keyboard.up("w");
+  const station = page.getByTestId("open-world-destination");
+  await station.click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAttribute("data-destination-id", PLAYABLE_DESTINATION.id);
+  const paused = await page.evaluate(() => {
+    const k = window.__TRANSCEND_LAB__!.kinematic;
+    const before = k.state().position;
+    const accepted = k.key("KeyW", true);
+    k.sample(performance.now() + 10_000);
+    return { before, after: k.state().position, input: k.state().input, accepted };
+  });
+  expect(paused.input.suspended).toBe(true);
+  expect(paused.accepted).toBe(false);
+  expect(paused.after).toEqual(paused.before);
+  await dialog.getByRole("button", { name: "Return from station" }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(station).toBeFocused();
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input)).intent.magnitude).toBe(0);
+  await page.getByTestId("exit-world-playable").click();
+});
+
+test("W1 station remains usable with reduced motion and after actual context loss", async ({ page, request }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, body: bytes, contentType: "model/gltf-binary" }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  await expect(page.getByTestId("world-playable-stage")).toHaveAttribute("data-playable-clip", "idle");
+  await page.getByTestId("open-world-destination").click();
+  const dialog = page.getByRole("dialog", { name: "Grove station" });
+  await expect(dialog).toBeVisible();
+  await page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="world-playable-canvas"]')!;
+    const gl = canvas.getContext("webgl2")!;
+    const extension = gl.getExtension("WEBGL_lose_context");
+    if (!extension) throw new Error("Context-loss extension required for this test");
+    extension.loseContext();
+  });
+  await expect(page.getByTestId("transcend-lab")).toHaveAttribute("data-lifecycle", "error");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Return from station" }).click();
+  await page.getByTestId("open-world-destination-semantic").click();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  const resources = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(resources).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });

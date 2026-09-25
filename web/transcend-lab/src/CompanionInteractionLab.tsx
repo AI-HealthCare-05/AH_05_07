@@ -49,6 +49,10 @@ export function CompanionInteractionLab() {
   const freeXRef = useRef<HTMLInputElement | null>(null);
   const freeYRef = useRef<HTMLInputElement | null>(null);
   const suppressNextClickRef = useRef(false);
+  const destinationDialogRef = useRef<HTMLDialogElement | null>(null);
+  const destinationOpenerRef = useRef<HTMLButtonElement | null>(null);
+  const destinationFallbackRef = useRef<HTMLButtonElement | null>(null);
+  const [destinationOpen, setDestinationOpen] = useState(false);
   const [reviewAssetId, setReviewAssetId] = useState(defaultReviewEntry?.assetId ?? "");
   const [reviewClip, setReviewClip] = useState<CompanionReviewClip>("idle");
   const selectedReviewEntry = reviewEntry(reviewAssetId);
@@ -81,6 +85,24 @@ export function CompanionInteractionLab() {
     if (target.hasPointerCapture(captured)) target.releasePointerCapture(captured);
     delete target.dataset.activePointerId;
   }, [state.activePointerId]);
+
+  useEffect(() => {
+    const dialog = destinationDialogRef.current;
+    if (destinationOpen && dialog && !dialog.open) dialog.showModal();
+  }, [destinationOpen]);
+
+  function openDestination(opener: HTMLButtonElement) {
+    destinationOpenerRef.current = opener;
+    runtime.setWorldInteractionSuspended(true);
+    setDestinationOpen(true);
+  }
+
+  function closeDestination() {
+    runtime.setWorldInteractionSuspended(false);
+    setDestinationOpen(false);
+    const opener = destinationOpenerRef.current;
+    (opener?.isConnected ? opener : destinationFallbackRef.current)?.focus({ preventScroll: true });
+  }
 
   const pose = state.pose;
   const actorStyle = pose && state.snapshot
@@ -244,6 +266,8 @@ export function CompanionInteractionLab() {
           >
             {state.assetLoading ? "Preparing playable…" : "Start W1 playable"}
           </button>
+          <button ref={destinationFallbackRef} type="button" data-testid="open-world-destination-semantic"
+            onClick={(event) => openDestination(event.currentTarget)}>Open Grove station without walking</button>
         </div>
       </section>
 
@@ -255,12 +279,23 @@ export function CompanionInteractionLab() {
             <button type="button" onClick={() => runtime.playableCameraNudge(Math.PI / 12)}>Camera left</button>
             <button type="button" onClick={() => runtime.playableCameraReset()}>Reset camera</button>
             <button type="button" onClick={() => runtime.playableCameraNudge(-Math.PI / 12)}>Camera right</button>
+            <button type="button" data-testid="open-world-destination"
+              onClick={(event) => openDestination(event.currentTarget)}>Open Grove station</button>
             <button type="button" data-testid="exit-world-playable" onClick={() => void runtime.exitPlayable()}>
               Exit playable
             </button>
           </div>
         </aside>
       ) : null}
+
+      <dialog ref={destinationDialogRef} className="world-destination-dialog"
+        data-testid="world-destination-dialog" data-destination-id="grove-station"
+        aria-labelledby="world-destination-title" onClose={closeDestination}>
+        <h2 id="world-destination-title">Grove station</h2>
+        <p>This is the same Lab-only destination whether reached by movement or the station button.</p>
+        <p>World movement is paused while this panel is open. Nothing is saved or sent.</p>
+        <form method="dialog"><button type="submit">Return from station</button></form>
+      </dialog>
 
       <section className={`synthetic-route synthetic-route--${state.route}`} aria-labelledby="route-title">
         <div className="route-copy">
