@@ -345,6 +345,42 @@ test("W1 input aliases cannot overweight opposites and invalid pointer movement 
   expect(input.snapshot.pointerId).toBeNull();
 });
 
+test("W1 camera shape cast catches near-edge Rapier obstruction and restores clear boom", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const physics = window.__TRANSCEND_LAB__!.kinematic;
+    const config = {
+      yawRadians: 0,
+      pitchRadians: 0.15,
+      minPitchRadians: -0.2,
+      maxPitchRadians: 0.6,
+      desiredDistance: 4,
+      minDistance: 0.8,
+      obstructionClearance: 0.05,
+    };
+    await physics.start("camera-obstruction");
+    const blocked = physics.camera(config, 0.25);
+    let rejectedRadius = false;
+    try { physics.camera(config, 0); } catch { rejectedRadius = true; }
+    const afterRejectedRadius = physics.state();
+    await physics.start("flat");
+    const clear = physics.camera(config, 0.25);
+    physics.stop();
+    return { blocked, clear, rejectedRadius, afterRejectedRadius, stopped: physics.state() };
+  });
+
+  expect(result.blocked).not.toBeNull();
+  expect(result.blocked).toMatchObject({ occluded: true, desiredDistance: 4 });
+  expect(result.blocked!.obstructionId).toMatch(/^rapier:/);
+  expect(result.blocked!.resolvedDistance).toBeGreaterThanOrEqual(0.8);
+  expect(result.blocked!.resolvedDistance).toBeLessThan(4);
+  expect(result.clear).toMatchObject({ occluded: false, obstructionId: null, resolvedDistance: 4 });
+  expect(result.clear!.position.z).toBeGreaterThan(result.blocked!.position.z);
+  expect(result.rejectedRadius).toBe(true);
+  expect(result.afterRejectedRadius.lifecycle).toBe("running");
+  expect(result.stopped.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+});
+
 test("W1 physics fixture matrix distinguishes walls steps slopes and stable ground", async ({ page }, testInfo) => {
   await openRunningLab(page);
   const results = await page.evaluate(async () => {
