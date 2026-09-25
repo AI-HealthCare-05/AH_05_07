@@ -299,6 +299,46 @@ code {
   white-space: pre-wrap;
 }
 
+.world-playable-launch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgb(31 75 55 / 14%);
+  padding-top: 1rem;
+}
+
+.world-playable-launch p {
+  margin: 0;
+}
+
+.world-playable-controls {
+  position: fixed;
+  z-index: 90;
+  top: max(1rem, env(safe-area-inset-top));
+  left: 50%;
+  width: min(48rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 44%);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  color: #f8fff8;
+  background: rgb(24 49 40 / 90%);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 18%);
+  backdrop-filter: blur(14px);
+}
+
+.world-playable-controls > span {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.world-playable-controls .control-row {
+  margin-top: 0.65rem;
+}
+
 .renderer-host,
 .transcend-renderer {
   position: fixed;

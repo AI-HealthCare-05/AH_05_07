@@ -49,6 +49,7 @@ import {
 } from "./platform/embodiment/labAssetAdmission";
 import {
   LabResourceLedger,
+  PINNED_ACTIVE_ASSET,
   TRANSCEND_SCENARIO_FIXTURE,
   createMetrics,
   type BackendRepresentation,
@@ -60,6 +61,10 @@ import {
 import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
 import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
 import { SequentialBackendSelector } from "./labRenderers";
+import {
+  WorldPlayableStage,
+  type WorldPlayableDiagnostics,
+} from "./worldPlayableStage";
 
 export type LabRoute = "grove" | "cove";
 export type LabLifecycle = "starting" | "running" | "stopped" | "comparing" | "error";
@@ -116,6 +121,7 @@ export type LabPublicState = Readonly<{
   evidence: readonly LabMetrics[];
   lastRevocation: WorldRootRevocationReason | null;
   error: string | null;
+  playable: boolean;
 }>;
 
 type PointerSession = Readonly<{
@@ -211,6 +217,9 @@ export class TranscendLabRuntime {
   readonly #rapierSpike = new RapierIsolationSpike();
   readonly #kinematicWorld = new KinematicWorld();
   #resources = new LabResourceLedger();
+  #playableResources: LabResourceLedger | null = null;
+  #playableStage: WorldPlayableStage | null = null;
+  #playable = false;
   #host: HTMLElement | null = null;
   #sessionEpoch = 1;
   #routeEpoch = 1;
@@ -299,6 +308,8 @@ export class TranscendLabRuntime {
   async start(backend: LabBackendKind = this.#selectedBackend): Promise<void> {
     if (!this.#host) throw new Error("renderer host is not attached");
     const requestId = ++this.#rendererRequestId;
+    await this.#stopPlayableInternal();
+    if (requestId !== this.#rendererRequestId) return;
     this.#selectedBackend = backend;
     this.#lifecycle = "starting";
     this.#status = `Starting ${backend}.`;
@@ -355,15 +366,115 @@ export class TranscendLabRuntime {
     await this.start(backend);
   }
 
-  async stop(): Promise<ResourceDiagnostics> {
-    this.#kinematicWorld.stop();
+  async startPlayable(): Promise<AssetAdmissionResult> {
+    if (!this.#host) throw new Error("renderer host is not attached");
+    const requestId = ++this.#rendererRequestId;
+    this.#assetRequestId += 1;
+    this.#assetLoading = true;
+    this.#assetResult = null;
+    this.#lifecycle = "starting";
+    this.#status = "Starting W1 desktop playable with review-only bear admission.";
+    this.#error = null;
+    this.#emit();
+
+    const cancelled = (): AssetAdmissionResult => Object.freeze({
+      status: "cancelled", assetId: PINNED_ACTIVE_ASSET.assetId, reason: "playable start superseded",
+    });
+    await this.#stopPlayableInternal();
+    if (requestId !== this.#rendererRequestId) return cancelled();
+    await this.#selector.stop(this.#host);
+    if (requestId !== this.#rendererRequestId) return cancelled();
     this.#rapierSpike.stop();
+    this.#world.revoke("renderer-transition", true);
+    this.#pointer = null;
+
+    const resources = new LabResourceLedger();
+    const stage = new WorldPlayableStage();
+    this.#resources = resources;
+    this.#playableResources = resources;
+    this.#playableStage = stage;
+
+    try {
+      const started = await this.#kinematicWorld.start("camera-obstruction");
+      if (!started || requestId !== this.#rendererRequestId) {
+        throw new Error("playable physics start was superseded");
+      }
+
+      const result = await loadReviewCatalogAsset({
+        resources,
+        assetId: PINNED_ACTIVE_ASSET.assetId,
+        clipName: "move",
+        onVerified: (asset) => stage.mount({
+          host: this.#host!,
+          resources,
+          world: this.#kinematicWorld,
+          asset,
+          reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+          onFailure: (error) => { void this.#failPlayable(resources, requestId, error); },
+        }),
+      });
+      if (requestId !== this.#rendererRequestId || resources !== this.#playableResources) return result;
+      this.#assetLoading = false;
+      this.#assetResult = result;
+      if (result.status !== "loaded") throw new Error(result.reason);
+
+      this.#playable = true;
+      this.#lifecycle = "running";
+      this.#status = "W1 desktop playable running: WASD/arrows move; drag the view to look.";
+      this.#emit();
+      return result;
+    } catch (error) {
+      // A superseded load must never stop a newer playable owner.
+      if (resources === this.#playableResources) await this.#stopPlayableInternal();
+      if (requestId !== this.#rendererRequestId) {
+        return Object.freeze({
+          status: "cancelled" as const,
+          assetId: PINNED_ACTIVE_ASSET.assetId,
+          reason: "playable start superseded",
+        });
+      }
+      this.#assetLoading = false;
+      const result = Object.freeze({
+        status: "failed" as const,
+        assetId: PINNED_ACTIVE_ASSET.assetId,
+        reason: error instanceof Error ? error.message : "playable start failed",
+      });
+      this.#assetResult = result;
+      this.#lifecycle = "error";
+      this.#error = result.reason;
+      this.#status = "Playable unavailable. Existing semantic Lab controls remain usable.";
+      this.#emit();
+      return result;
+    }
+  }
+
+  async exitPlayable(): Promise<void> {
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
     this.#assetLoading = false;
+    await this.#stopPlayableInternal();
+    await this.start(this.#selectedBackend);
+  }
+
+  playableCameraNudge(deltaYawRadians: number): void {
+    this.#playableStage?.nudgeCamera(deltaYawRadians);
+  }
+
+  playableCameraReset(): void {
+    this.#playableStage?.resetCamera();
+  }
+
+  async stop(): Promise<ResourceDiagnostics> {
+    this.#rendererRequestId += 1;
+    this.#assetRequestId += 1;
+    const playableDiagnostics = await this.#stopPlayableInternal();
+    this.#kinematicWorld.stop();
+    this.#rapierSpike.stop();
+    this.#assetLoading = false;
     this.#world.revoke("stop", true);
     this.#pointer = null;
-    const diagnostics = await this.#selector.stop(this.#host ?? undefined);
+    const selectorDiagnostics = await this.#selector.stop(this.#host ?? undefined);
+    const diagnostics = playableDiagnostics ?? selectorDiagnostics;
     this.#lifecycle = "stopped";
     this.#status = "Stopped after asynchronous teardown barrier.";
     this.#emit();
@@ -371,13 +482,15 @@ export class TranscendLabRuntime {
   }
 
   async reset(): Promise<ResourceDiagnostics> {
-    this.#kinematicWorld.stop();
-    this.#rapierSpike.stop();
     this.#rendererRequestId += 1;
     this.#assetRequestId += 1;
+    const playableDiagnostics = await this.#stopPlayableInternal();
+    this.#kinematicWorld.stop();
+    this.#rapierSpike.stop();
     this.#world.revoke("reset", true);
     this.#pointer = null;
-    const diagnostics = await this.#selector.stop(this.#host ?? undefined);
+    const selectorDiagnostics = await this.#selector.stop(this.#host ?? undefined);
+    const diagnostics = playableDiagnostics ?? selectorDiagnostics;
     this.#sessionEpoch += 1;
     this.#routeEpoch += 1;
     this.#route = "grove";
@@ -842,6 +955,11 @@ export class TranscendLabRuntime {
       runComparison: () => this.runComparison(),
       loadAsset: () => this.loadAsset(),
       loadReviewAsset: (assetId, clipName) => this.loadReviewAsset(assetId, clipName),
+      startPlayable: () => this.startPlayable(),
+      exitPlayable: () => this.exitPlayable(),
+      playableDiagnostics: () => this.#playableStage?.diagnostics() ?? null,
+      playableCameraNudge: (deltaYawRadians) => this.playableCameraNudge(deltaYawRadians),
+      playableCameraReset: () => this.playableCameraReset(),
       runRapierSpike: () => {
         this.#kinematicWorld.stop();
         return this.#rapierSpike.run();
@@ -860,6 +978,39 @@ export class TranscendLabRuntime {
       stopRapierSpike: () => this.#rapierSpike.stop(),
       rapierSpikeState: () => this.#rapierSpike.state,
     });
+  }
+
+  async #stopPlayableInternal(): Promise<ResourceDiagnostics | null> {
+    const resources = this.#playableResources;
+    const stage = this.#playableStage;
+    if (!resources && !stage) {
+      this.#playable = false;
+      return null;
+    }
+
+    this.#playable = false;
+    this.#playableResources = null;
+    this.#playableStage = null;
+    this.#kinematicWorld.stop();
+    // Remove the old host synchronously before another transition can mount.
+    // Do not convert a failed teardown into fabricated zero-resource evidence.
+    stage?.unmount();
+    return resources ? resources.drain() : ZERO_DIAGNOSTICS;
+  }
+
+  async #failPlayable(resources: LabResourceLedger, requestId: number, error: Error): Promise<void> {
+    if (resources !== this.#playableResources || requestId !== this.#rendererRequestId) return;
+    const failureEpoch = ++this.#rendererRequestId;
+    this.#assetRequestId += 1;
+    let reason = error.message;
+    try { await this.#stopPlayableInternal(); }
+    catch (cleanupError) { reason += `; cleanup failed: ${String(cleanupError)}`; }
+    if (failureEpoch !== this.#rendererRequestId) return;
+    this.#assetLoading = false;
+    this.#lifecycle = "error";
+    this.#error = reason;
+    this.#status = "Playable unavailable. Existing semantic Lab controls remain usable.";
+    this.#emit();
   }
 
   #resolve(intent: PlacementIntent, snapshot: ArenaSnapshot): PlacementResolution {
@@ -983,6 +1134,7 @@ export class TranscendLabRuntime {
       evidence: this.#evidence,
       lastRevocation: this.#world.state.lastRevocation,
       error: this.#error,
+      playable: this.#playable,
     });
   }
 
@@ -1006,6 +1158,11 @@ export type TranscendLabTestApi = Readonly<{
   runComparison: () => Promise<readonly LabMetrics[]>;
   loadAsset: () => Promise<AssetAdmissionResult>;
   loadReviewAsset: (assetId: string, clipName: ReviewClip) => Promise<AssetAdmissionResult>;
+  startPlayable: () => Promise<AssetAdmissionResult>;
+  exitPlayable: () => Promise<void>;
+  playableDiagnostics: () => WorldPlayableDiagnostics | null;
+  playableCameraNudge: (deltaYawRadians: number) => void;
+  playableCameraReset: () => void;
   runRapierSpike: () => Promise<RapierSpikeResult>;
   stopRapierSpike: () => RapierSpikeState;
   rapierSpikeState: () => RapierSpikeState;
