@@ -381,6 +381,149 @@ test("W1 camera shape cast catches near-edge Rapier obstruction and restores cle
   expect(result.stopped.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
 });
 
+test("W1 desktop playable moves the verified bear and preserves exclusive renderer ownership", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  const requests: string[] = [];
+  page.on("request", (browserRequest) => requests.push(browserRequest.url()));
+  await page.route(PINNED_ACTIVE_ASSET.url, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "model/gltf-binary",
+      body: pinnedBytes,
+    });
+  });
+
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+
+  const stage = page.getByTestId("world-playable-stage");
+  const canvas = page.getByTestId("world-playable-canvas");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(0);
+  await expect(canvas).toBeFocused();
+  await expect(stage).toHaveAttribute("data-playable-clip", "idle");
+  await expect(stage).toHaveAttribute("data-camera-occluded", "true");
+
+  const started = await page.evaluate(() => ({
+    state: window.__TRANSCEND_LAB__!.state(),
+    physics: window.__TRANSCEND_LAB__!.kinematic.state(),
+    playable: window.__TRANSCEND_LAB__!.playableDiagnostics(),
+  }));
+  expect(started.state.playable).toBe(true);
+  expect(started.state.assetResult).toMatchObject({
+    status: "loaded",
+    assetId: PINNED_ACTIVE_ASSET.assetId,
+    authority: "review-catalog",
+    clipName: "move",
+    sha256: PINNED_ACTIVE_ASSET.sha256,
+  });
+  expect(started.physics.lifecycle).toBe("running");
+  expect(started.playable).toMatchObject({ mounted: true, clip: "idle", cameraOccluded: true });
+  const startZ = started.physics.position!.z;
+
+  await page.keyboard.down("w");
+  await expect(stage).toHaveAttribute("data-playable-clip", "move");
+  await expect.poll(async () => (
+    await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().position!.z)
+  )).toBeLessThan(startZ - 0.1);
+  await page.keyboard.up("w");
+  await expect(stage).toHaveAttribute("data-playable-clip", "idle");
+
+  const yawBefore = (await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.yawRadians;
+  const canvasBox = await canvas.boundingBox();
+  expect(canvasBox).not.toBeNull();
+  await page.mouse.move(canvasBox!.x + canvasBox!.width / 2, canvasBox!.y + canvasBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox!.x + canvasBox!.width / 2 + 80, canvasBox!.y + canvasBox!.height / 2);
+  await page.mouse.up();
+  const afterDrag = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics());
+  expect(afterDrag!.yawRadians).toBeLessThan(yawBefore);
+
+  await page.getByRole("button", { name: "Camera right" }).click();
+  const cameraAfter = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics());
+  expect(cameraAfter!.yawRadians).toBeLessThan(afterDrag!.yawRadians);
+  expect(cameraAfter!.cameraOccluded).toBe(false);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input.pressedKeys))).toEqual([]);
+
+  expect(requests.filter((url) => url.endsWith(".glb"))).toEqual([PINNED_ACTIVE_ASSET.url]);
+  expect(requests.some((url) => /\/api\/|supabase|model-v2|auth/i.test(url))).toBe(false);
+
+  await page.getByTestId("exit-world-playable").click();
+  await expect(stage).toHaveCount(0);
+  await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(1);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.state())).playable).toBe(false);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources)
+    .toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
+test("W1 desktop playable cancellation and overlapping starts retain only the latest owner", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+  await openRunningLab(page);
+  for (const action of ["stop", "reset"] as const) {
+    const result = await page.evaluate(async (method) => {
+      const api = window.__TRANSCEND_LAB__!;
+      const pending = api.startPlayable();
+      const drained = await api[method]();
+      const admission = await pending;
+      return { drained, admission, state: api.state(), physics: api.kinematic.state() };
+    }, action);
+    expect(result.admission.status).toBe("cancelled");
+    expect(result.state).toMatchObject({ playable: false, lifecycle: "stopped", assetLoading: false });
+    expect(result.drained).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+    expect(result.physics.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+    await expect(page.getByTestId("world-playable-stage")).toHaveCount(0);
+  }
+  const overlap = await page.evaluate(async () => {
+    const api = window.__TRANSCEND_LAB__!;
+    const admissions = await Promise.all([api.startPlayable(), api.startPlayable()]);
+    return { admissions, state: api.state(), physics: api.kinematic.state() };
+  });
+  expect(overlap.admissions.map((entry) => entry.status)).toEqual(["cancelled", "loaded"]);
+  expect(overlap.state).toMatchObject({ playable: true, lifecycle: "running", assetLoading: false });
+  expect(overlap.physics.resources.worlds).toBe(1);
+  await expect(page.getByTestId("world-playable-stage")).toHaveCount(1);
+  await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(0);
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
+test("W1 desktop playable context loss releases the world and keeps retry controls usable", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.state().playable)).toBe(true);
+  const lost = await page.getByTestId("world-playable-canvas").evaluate((element) => {
+    const extension = (element as HTMLCanvasElement).getContext("webgl2")?.getExtension("WEBGL_lose_context");
+    if (!extension) return false;
+    extension.loseContext();
+    return true;
+  });
+  expect(lost).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.state().lifecycle)).toBe("error");
+  await expect(page.getByTestId("world-playable-stage")).toHaveCount(0);
+  await expect(page.getByTestId("start-world-playable")).toBeVisible();
+  await expect(page.getByTestId("start-world-playable")).toBeEnabled();
+  const state = await page.evaluate(() => ({
+    lab: window.__TRANSCEND_LAB__!.state(), physics: window.__TRANSCEND_LAB__!.kinematic.state(),
+  }));
+  expect(state.lab).toMatchObject({ playable: false, assetLoading: false });
+  expect(state.lab.error).toContain("context lost");
+  expect(state.physics.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+  await page.getByTestId("start-world-playable").click();
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.state().playable)).toBe(true);
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
 test("W1 physics fixture matrix distinguishes walls steps slopes and stable ground", async ({ page }, testInfo) => {
   await openRunningLab(page);
   const results = await page.evaluate(async () => {

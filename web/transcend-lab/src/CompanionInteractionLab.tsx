@@ -231,7 +231,36 @@ export function CompanionInteractionLab() {
             Run A/B evidence
           </button>
         </div>
+        <div className="world-playable-launch">
+          <div>
+            <p className="section-kicker">W1 desktop slice</p>
+            <p>Verified bear · Rapier movement · third-person camera · Lab only.</p>
+          </div>
+          <button
+            type="button"
+            data-testid="start-world-playable"
+            disabled={state.assetLoading || state.playable}
+            onClick={() => void runtime.startPlayable()}
+          >
+            {state.assetLoading ? "Preparing playable…" : "Start W1 playable"}
+          </button>
+        </div>
       </section>
+
+      {state.playable ? (
+        <aside className="world-playable-controls" aria-label="W1 playable controls">
+          <strong>W1 Desktop Playable</strong>
+          <span>WASD / arrows move · drag the world to look</span>
+          <div className="control-row">
+            <button type="button" onClick={() => runtime.playableCameraNudge(Math.PI / 12)}>Camera left</button>
+            <button type="button" onClick={() => runtime.playableCameraReset()}>Reset camera</button>
+            <button type="button" onClick={() => runtime.playableCameraNudge(-Math.PI / 12)}>Camera right</button>
+            <button type="button" data-testid="exit-world-playable" onClick={() => void runtime.exitPlayable()}>
+              Exit playable
+            </button>
+          </div>
+        </aside>
+      ) : null}
 
       <section className={`synthetic-route synthetic-route--${state.route}`} aria-labelledby="route-title">
         <div className="route-copy">
