@@ -1,5 +1,10 @@
 import { WorldMovementIntentController } from "../behavior/worldMovementIntent";
-import { cameraRelativeMovement } from "./thirdPersonCamera";
+import {
+  cameraRelativeMovement,
+  resolveThirdPersonCamera,
+  type ThirdPersonCameraConfig,
+  type ThirdPersonCameraResult,
+} from "./thirdPersonCamera";
 import { loadLabRapier, type RapierModule } from "./rapierRuntime";
 import { FixedStepClock, worldPoint, type WorldPoint3 } from "./worldSpaceClock";
 
@@ -9,7 +14,7 @@ type Body = import("@dimforge/rapier3d-compat").RigidBody;
 type Collider = import("@dimforge/rapier3d-compat").Collider;
 
 export const WORLD_FIXTURES = Object.freeze([
-  "flat", "wall", "slope-allowed", "slope-blocked", "step-allowed", "step-blocked", "recovery",
+  "flat", "wall", "camera-obstruction", "slope-allowed", "slope-blocked", "step-allowed", "step-blocked", "recovery",
 ] as const);
 export type WorldFixtureName = (typeof WORLD_FIXTURES)[number];
 
@@ -59,6 +64,7 @@ export class KinematicWorld {
   #position: WorldPoint3 | null = null;
   #previousPosition: WorldPoint3 | null = null;
   #runtimeVersion: string | null = null;
+  #rapier: RapierModule | null = null;
   #verticalVelocity = 0;
   #grounded = false;
   #yaw = 0;
@@ -127,6 +133,10 @@ export class KinematicWorld {
       const front = KINEMATIC_CONFIG.obstacleFrontX;
       if (fixture === "wall") {
         world.createCollider(R.ColliderDesc.cuboid(0.15, 1.5, 4).setTranslation(front + 0.15, 1.5, 0));
+      } else if (fixture === "camera-obstruction") {
+        // A thin, slightly off-axis pillar: a center ray would miss it, while
+        // the W1 camera sphere must catch the near edge.
+        world.createCollider(R.ColliderDesc.cuboid(0.12, 2, 0.04).setTranslation(0.32, 2, 2));
       } else if (fixture === "step-allowed" || fixture === "step-blocked") {
         const height = fixture === "step-allowed" ? KINEMATIC_CONFIG.allowedStepHeight : KINEMATIC_CONFIG.blockedStepHeight;
         world.createCollider(R.ColliderDesc.cuboid(0.75, height / 2, 2).setTranslation(front + 0.75, height / 2, 0));
@@ -161,6 +171,7 @@ export class KinematicWorld {
       this.#position = spawn;
       this.#previousPosition = spawn;
       this.#runtimeVersion = R.version();
+      this.#rapier = R;
       this.#lifecycle = "running";
       ownedWorld = null;
       ownedController = null;
@@ -215,6 +226,57 @@ export class KinematicWorld {
     if (!Number.isFinite(radians)) throw new TypeError("Yaw must be finite");
     this.#yaw = radians;
   }
+
+  camera(config: ThirdPersonCameraConfig, radius: number): ThirdPersonCameraResult | null {
+    if (!Number.isFinite(radius) || radius <= 0) {
+      throw new RangeError("Camera shape radius must be finite and greater than zero");
+    }
+    const world = this.#world;
+    const collider = this.#collider;
+    const focus = this.#position;
+    const R = this.#rapier;
+    if (this.#lifecycle !== "running" || !world || !collider || !focus || !R) return null;
+
+    const clear = resolveThirdPersonCamera(focus, config);
+    const delta = {
+      x: clear.position.x - clear.focus.x,
+      y: clear.position.y - clear.focus.y,
+      z: clear.position.z - clear.focus.z,
+    };
+    const inverseDistance = 1 / clear.desiredDistance;
+    const hit = world.castShape(
+      clear.focus,
+      { x: 0, y: 0, z: 0, w: 1 },
+      {
+        x: delta.x * inverseDistance,
+        y: delta.y * inverseDistance,
+        z: delta.z * inverseDistance,
+      },
+      new R.Ball(radius),
+      0,
+      clear.desiredDistance,
+      true,
+      undefined,
+      undefined,
+      collider,
+    );
+    if (!hit) return clear;
+
+    const resolvedDistance = Math.max(config.minDistance, hit.time_of_impact - config.obstructionClearance);
+    const ratio = resolvedDistance / clear.desiredDistance;
+    return Object.freeze({
+      ...clear,
+      position: worldPoint(
+        clear.focus.x + delta.x * ratio,
+        clear.focus.y + delta.y * ratio,
+        clear.focus.z + delta.z * ratio,
+      ),
+      resolvedDistance,
+      occluded: true,
+      obstructionId: `rapier:${hit.collider.handle}`,
+    });
+  }
+
   setHidden(hidden: boolean): void {
     if (this.#hidden === hidden) return;
     this.#hidden = hidden;
@@ -294,6 +356,7 @@ export class KinematicWorld {
     this.#position = null;
     this.#previousPosition = null;
     this.#runtimeVersion = null;
+    this.#rapier = null;
     if (world) {
       try { if (controller) world.removeCharacterController(controller); }
       finally { world.free(); }
@@ -314,6 +377,7 @@ export class KinematicWorld {
       cancelPointer: (id: number) => this.cancelPointer(id),
       lostPointerCapture: (id: number) => this.lostPointerCapture(id),
       setYaw: (yaw: number) => this.setYaw(yaw),
+      camera: (config: ThirdPersonCameraConfig, radius: number) => this.camera(config, radius),
       setHidden: (hidden: boolean) => this.setHidden(hidden),
       setSemanticSuspended: (suspended: boolean) => this.setSemanticSuspended(suspended),
       blur: () => this.blur(),
