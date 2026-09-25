@@ -365,8 +365,9 @@ export class WorldPlayableStage {
 
     options.world.setYaw(this.#yaw);
     options.world.setHidden(document.hidden);
+    // Anchor physics and animation to the first RAF timestamp. An asynchronous
+    // mount's performance.now() can be later than an already queued RAF sample.
     options.resources.startRafLoop((time) => this.#frame(time));
-    this.#frame(performance.now());
     renderer.domElement.focus({ preventScroll: true });
   }
 

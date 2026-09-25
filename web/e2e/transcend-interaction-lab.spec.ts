@@ -1456,3 +1456,29 @@ test("W1 station remains usable with reduced motion and after actual context los
   const resources = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(resources).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });
+
+
+test("W1 playable first frame uses only the monotonic RAF clock", async ({ page, request }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  const pageErrors: string[] = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+  // A queued RAF timestamp may precede performance.now() at asynchronous mount.
+  // A fixed offset preserves monotonic frame deltas while making that gap explicit.
+  await page.addInitScript(() => {
+    const request = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = callback => request(time => callback(Math.max(0, time - 100)));
+  });
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, body: bytes, contentType: "model/gltf-binary" }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()?.renderCount ?? 0), { timeout: 4000 })
+    .toBeGreaterThanOrEqual(6);
+  const before = await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().position!.z);
+  await page.getByTestId("world-playable-canvas").focus();
+  await page.keyboard.down("w");
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().position!.z)).toBeLessThan(before - 0.1);
+  await page.keyboard.up("w");
+  expect(pageErrors).toEqual([]);
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
