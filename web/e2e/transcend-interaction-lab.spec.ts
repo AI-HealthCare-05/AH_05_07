@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
+import { KinematicWorld } from "../transcend-lab/src/platform/spatial/kinematicWorld";
+import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
 import { WorldMovementIntentController } from "../transcend-lab/src/platform/behavior/worldMovementIntent";
 import {
   cameraObstacle,
@@ -270,7 +272,7 @@ test("W1 Rapier spike executes in the browser, owns the fixture, and drains expl
     liveController: true,
   });
   if (result.status !== "ready") throw new Error("Rapier spike did not become ready");
-  expect(result.runtimeVersion).toMatch(/^\d+\.\d+\.\d+$/);
+  expect(result.runtimeVersion).toBe("0.20.0");
   expect(result.wall.x).toBeGreaterThanOrEqual(0);
   expect(result.wall.x).toBeLessThan(2);
   for (const movement of [result.wall, result.step, result.slope, result.groundedProbe]) {
@@ -309,6 +311,250 @@ test("W1 Rapier spike generation fence prevents stale async import revival and r
     liveWorld: false,
     liveController: false,
   });
+});
+
+test("W1 input composes hidden and semantic blockers and preserves them through reset", () => {
+  for (const reverse of [false, true]) {
+    const input = new WorldMovementIntentController();
+    input.keyDown("KeyW");
+    input.setHidden(true);
+    input.setSemanticSuspended(true);
+    if (reverse) input.setSemanticSuspended(false);
+    else input.setHidden(false);
+    expect(input.snapshot.suspended).toBe(true);
+    input.reset();
+    expect(input.snapshot.suspended).toBe(true);
+    expect(input.keyDown("KeyW")).toBe(false);
+    if (reverse) input.setHidden(false);
+    else input.setSemanticSuspended(false);
+    expect(input.snapshot.intent.magnitude).toBe(0);
+    expect(input.snapshot.suspended).toBe(false);
+  }
+});
+
+test("W1 input aliases cannot overweight opposites and invalid pointer movement fails closed", () => {
+  const input = new WorldMovementIntentController();
+  for (const key of ["KeyW", "ArrowUp", "KeyS"]) input.keyDown(key);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.keyDown("toString")).toBe(false);
+  expect(input.keyDown("__proto__")).toBe(false);
+  input.beginPointer(3);
+  input.updatePointer(3, 0.5, 0.5);
+  expect(input.updatePointer(3, Number.NaN, 1)).toBe(false);
+  expect(input.snapshot.intent.magnitude).toBe(0);
+  expect(input.snapshot.pointerId).toBeNull();
+});
+
+test("W1 physics fixture matrix distinguishes walls steps slopes and stable ground", async ({ page }, testInfo) => {
+  await openRunningLab(page);
+  const results = await page.evaluate(async () => {
+    const physics = window.__TRANSCEND_LAB__!.kinematic;
+    const results = [];
+    for (const fixture of ["flat", "wall", "step-allowed", "step-blocked", "slope-allowed", "slope-blocked"] as const) {
+      await physics.start(fixture);
+      physics.sample(0);
+      for (let i = 1; i <= 30; i++) physics.sample(i * 1000 / 60);
+      const settled = physics.state();
+      let maxY = settled.position!.y;
+      let minY = settled.position!.y;
+      let maxX = settled.position!.x;
+      physics.key("KeyD", true);
+      for (let i = 1; i <= 180; i++) {
+        physics.sample(500 + i * 1000 / 60);
+        const point = physics.state().position!;
+        maxX = Math.max(maxX, point.x);
+        maxY = Math.max(maxY, point.y);
+        minY = Math.min(minY, point.y);
+      }
+      physics.key("KeyD", false);
+      const end = physics.state();
+      results.push({ fixture, settled: settled.position, groundedAtStart: settled.grounded,
+        end: end.position, maxX, minY, maxY, fixedSteps: end.clock.stepCount,
+        runtimeVersion: end.runtimeVersion, resources: end.resources });
+      physics.stop();
+    }
+    return results;
+  });
+  await testInfo.attach("kinematic-fixture-results.json", { body: JSON.stringify(results, null, 2), contentType: "application/json" });
+  console.log("W1 kinematic fixture evidence", JSON.stringify(results));
+  for (const result of results) {
+    expect(result.runtimeVersion).toBe("0.20.0");
+    expect(result.groundedAtStart).toBe(true);
+    expect(result.fixedSteps).toBe(210);
+    expect(result.resources).toMatchObject({ worlds: 1, controllers: 1, bodies: 1, pendingLoads: 0 });
+    expect(result.minY).toBeGreaterThanOrEqual(0.74);
+  }
+  const find = (fixture: string) => results.find(result => result.fixture === fixture)!;
+  expect(find("flat").end!.x).toBeCloseTo(6, 3);
+  expect(find("wall").maxX).toBeLessThanOrEqual(1.5 - 0.25 + 0.002);
+  expect(find("step-allowed").end!.x).toBeGreaterThan(3.5);
+  expect(find("step-allowed").maxY).toBeGreaterThan(0.9);
+  expect(find("step-blocked").maxX).toBeLessThan(1.5);
+  expect(find("slope-allowed").end!.x).toBeGreaterThan(4.5);
+  expect(find("slope-allowed").maxY).toBeGreaterThan(1.7);
+  expect(find("slope-blocked").maxX).toBeLessThan(2);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources)
+    .toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+});
+
+test("W1 physics movement is fixed-step deterministic across 60 and 120 Hz and reset replay", async ({ page }) => {
+  await openRunningLab(page);
+  const evidence = await page.evaluate(async () => {
+    const physics = window.__TRANSCEND_LAB__!.kinematic;
+    const run = (hz: number) => {
+      physics.sample(0);
+      physics.key("KeyD", true);
+      for (let i = 1; i <= hz * 2; i++) physics.sample(i * 1000 / hz);
+      const s = physics.state();
+      return { position: s.position, previousPosition: s.previousPosition, clock: s.clock, grounded: s.grounded };
+    };
+    await physics.start("flat");
+    const at60 = run(60);
+    await physics.reset();
+    const at120 = run(120);
+    await physics.reset();
+    const replay = run(60);
+    physics.stop();
+    return { at60, at120, replay };
+  });
+  expect(evidence.at60).toEqual(evidence.at120);
+  expect(evidence.replay).toEqual(evidence.at60);
+  expect(evidence.at60.clock.stepCount).toBe(120);
+  expect(evidence.at60.position!.x).toBeCloseTo(4, 3);
+});
+
+test("W1 physics hidden panel blur and pointer loss never replay stale movement", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const p = window.__TRANSCEND_LAB__!.kinematic;
+    await p.start(); p.sample(0); p.key("KeyD", true);
+    for (let i = 1; i <= 60; i++) p.sample(i * 1000 / 60);
+    const before = p.state();
+    p.setHidden(true); p.setSemanticSuspended(true); p.sample(10000);
+    p.setHidden(false);
+    const refused = p.key("KeyD", true); p.sample(11000);
+    const stillBlocked = p.state();
+    p.setSemanticSuspended(false); p.sample(12000); p.sample(12017);
+    const resumed = p.state();
+    p.beginPointer(7); p.updatePointer(7, 1, 0); p.cancelPointer(7); p.sample(12034);
+    p.beginPointer(8); p.updatePointer(8, 1, 0); p.lostPointerCapture(8); p.sample(12051);
+    p.key("KeyD", true); p.blur(); p.sample(22000); p.sample(22017);
+    const after = p.state(); p.stop();
+    return { before, refused, stillBlocked, resumed, after };
+  });
+  expect(result.refused).toBe(false);
+  expect(result.stillBlocked.input.suspended).toBe(true);
+  expect(result.stillBlocked.clock.stepCount).toBe(result.before.clock.stepCount);
+  for (const state of [result.resumed, result.after]) {
+    expect(state.position!.x).toBe(result.before.position!.x);
+    expect(state.input.intent.magnitude).toBe(0);
+  }
+  expect(result.resumed.clock.stepCount).toBe(result.before.clock.stepCount + 1);
+});
+
+test("W1 physics stale starts stop reset and spike replacement drain owned allocations", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const api = window.__TRANSCEND_LAB__!;
+    const p = api.kinematic;
+    const pending = p.start("wall"); p.stop();
+    const stale = await pending;
+    const drained = p.state();
+    const cycles = [];
+    for (let i = 0; i < 5; i++) {
+      await p.start("wall"); p.sample(0); p.key("KeyD", true); p.sample(20);
+      await p.reset(); cycles.push(p.state()); p.stop();
+    }
+    await p.start(); await api.runRapierSpike();
+    const afterSpike = p.state();
+    await p.reset(); const spikeAfterReset = api.rapierSpikeState();
+    await api.reset(); const afterLabReset = p.state();
+    return { stale, drained, cycles, afterSpike, spikeAfterReset, afterLabReset };
+  });
+  expect(result.stale).toBe(false);
+  for (const state of [result.drained, result.afterSpike, result.afterLabReset]) {
+    expect(state.lifecycle).toBe("stopped");
+    expect(state.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+  }
+  for (const state of result.cycles) {
+    expect(state.resources).toMatchObject({ worlds: 1, controllers: 1, bodies: 1, pendingLoads: 0 });
+    expect(state.clock.stepCount).toBe(0);
+    expect(state.input.intent.magnitude).toBe(0);
+  }
+  expect(result.spikeAfterReset).toMatchObject({ liveWorld: false, liveController: false });
+});
+
+test("W1 physics out-of-bounds recovery clears movement and oversized frames are bounded", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const p = window.__TRANSCEND_LAB__!.kinematic;
+    await p.start("recovery"); p.sample(0); p.key("KeyD", true); p.sample(17);
+    const recovered = p.state();
+    p.key("KeyD", true); p.sample(1e12);
+    const stalled = p.state(); p.sample(1e12 + 17);
+    const after = p.state(); p.stop();
+    return { recovered, stalled, after };
+  });
+  expect(result.recovered.recoveries).toBe(1);
+  expect(result.recovered.position).toMatchObject({ space: "world-metres", x: 0, y: 0.8, z: 0 });
+  expect(result.recovered.input.intent.magnitude).toBe(0);
+  expect(result.stalled.discardedIntervals).toBe(1);
+  expect(result.stalled.clock.stepCount).toBe(result.recovered.clock.stepCount);
+  expect(result.after.clock.stepCount).toBe(result.recovered.clock.stepCount + 1);
+  expect(result.after.position!.x).toBe(0);
+});
+
+test("W1 physics partial construction and rejected initialization release resources", async () => {
+  let worldsFreed = 0;
+  let controllersRemoved = 0;
+  class Descriptor {
+    setTranslation() { return this; }
+    static capsule() { return new Descriptor(); }
+    static kinematicPositionBased() { return new Descriptor(); }
+  }
+  class AllocatedWorld {
+    createCollider() { return {}; }
+    createRigidBody() { return {}; }
+    createCharacterController() { return { setUp() { throw new Error("synthetic setup failure"); } }; }
+    removeCharacterController() { controllersRemoved += 1; }
+    free() { worldsFreed += 1; }
+  }
+  const synthetic = {
+    World: AllocatedWorld, ColliderDesc: Descriptor, RigidBodyDesc: Descriptor, HalfSpace: class {},
+  } as unknown as RapierModule;
+  const world = new KinematicWorld(async () => synthetic);
+  await expect(world.start()).rejects.toThrow("synthetic setup failure");
+  expect(world.snapshot.lifecycle).toBe("error");
+  expect(world.snapshot.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+  expect(worldsFreed).toBe(1);
+  expect(controllersRemoved).toBe(1);
+  world.stop(); world.stop();
+  expect(worldsFreed).toBe(1);
+  const rejected = new KinematicWorld(async () => { throw new Error("synthetic loader failure"); });
+  await expect(rejected.start()).rejects.toThrow("synthetic loader failure");
+  expect(rejected.snapshot.resources).toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+});
+
+test("W1 physics consumes normalized camera-relative input and rejects invalid time without mutation", async ({ page }) => {
+  await openRunningLab(page);
+  const result = await page.evaluate(async () => {
+    const p = window.__TRANSCEND_LAB__!.kinematic;
+    await p.start(); p.setYaw(Math.PI / 2); p.sample(0); p.key("KeyW", true); p.key("KeyD", true);
+    for (let i = 1; i <= 120; i++) p.sample(i * 1000 / 60);
+    const before = p.state();
+    const failures = [];
+    for (const badTime of [Number.NaN, Number.POSITIVE_INFINITY, 1999]) {
+      try { p.sample(badTime); failures.push(false); } catch { failures.push(true); }
+    }
+    const after = p.state(); p.stop();
+    return { before, after, failures };
+  });
+  expect(result.failures).toEqual([true, true, true]);
+  expect(result.after).toEqual(result.before);
+  const point = result.before.position!;
+  expect(point.x).toBeLessThan(0);
+  expect(point.z).toBeLessThan(0);
+  expect(Math.hypot(point.x, point.z)).toBeCloseTo(4, 3);
 });
 
 test("isolated synthetic routing retains one actor, one writer, one backend, and no product state", async ({ page, context }) => {

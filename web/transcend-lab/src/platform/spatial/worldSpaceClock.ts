@@ -144,7 +144,9 @@ export class FixedStepClock {
     const epsilon = this.#stepSeconds * 1e-9;
     while (this.#accumulatorSeconds + epsilon >= this.#stepSeconds) {
       this.#accumulatorSeconds -= this.#stepSeconds;
-      if (this.#accumulatorSeconds < 0 && this.#accumulatorSeconds > -epsilon) {
+      // Canonicalize either-sign round-off at a completed fixed step. Frame
+      // partitioning must not leave different near-zero interpolation states.
+      if (Math.abs(this.#accumulatorSeconds) < epsilon) {
         this.#accumulatorSeconds = 0;
       }
       this.#stepCount += 1;

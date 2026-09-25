@@ -68,7 +68,10 @@ export class WorldMovementIntentController {
   readonly #pressedKeys = new Set<string>();
   #pointerId: number | null = null;
   #pointerIntent: MovementIntent | null = null;
-  #suspended = false;
+  #hidden = false;
+  #semanticSuspended = false;
+
+  get #suspended(): boolean { return this.#hidden || this.#semanticSuspended; }
   #lastClearReason: MovementClearReason | null = null;
 
   get snapshot(): MovementInputSnapshot {
@@ -82,14 +85,14 @@ export class WorldMovementIntentController {
   }
 
   keyDown(code: string): boolean {
-    if (this.#suspended || !(code in KEY_AXES)) return false;
+    if (this.#suspended || !Object.hasOwn(KEY_AXES, code)) return false;
     this.#pressedKeys.add(code);
     this.#lastClearReason = null;
     return true;
   }
 
   keyUp(code: string): boolean {
-    if (!(code in KEY_AXES)) return false;
+    if (!Object.hasOwn(KEY_AXES, code)) return false;
     const deleted = this.#pressedKeys.delete(code);
     if (deleted) this.#lastClearReason = null;
     return deleted;
@@ -105,6 +108,10 @@ export class WorldMovementIntentController {
 
   updatePointer(pointerId: number, lateral: number, forward: number): boolean {
     if (this.#suspended || pointerId !== this.#pointerId) return false;
+    if (!Number.isFinite(lateral) || !Number.isFinite(forward)) {
+      this.#clear("pointer-cancel");
+      return false;
+    }
     this.#pointerIntent = normalized(lateral, forward, "pointer");
     this.#lastClearReason = null;
     return true;
@@ -134,25 +141,17 @@ export class WorldMovementIntentController {
   }
 
   setHidden(hidden: boolean): void {
-    if (hidden) {
-      this.#suspended = true;
-      this.#clear("visibility-hidden");
-      return;
-    }
-    this.#suspended = false;
+    this.#hidden = hidden;
+    if (hidden) this.#clear("visibility-hidden");
   }
 
   setSemanticSuspended(suspended: boolean): void {
-    if (suspended) {
-      this.#suspended = true;
-      this.#clear("semantic-suspend");
-      return;
-    }
-    this.#suspended = false;
+    this.#semanticSuspended = suspended;
+    if (suspended) this.#clear("semantic-suspend");
   }
 
   reset(): void {
-    this.#suspended = false;
+    // Reset movement, not the environmental blockers still owned by the caller.
     this.#clear("reset");
   }
 
@@ -167,14 +166,10 @@ export class WorldMovementIntentController {
     if (this.#suspended) return normalized(0, 0, "none");
     if (this.#pointerId !== null && this.#pointerIntent) return this.#pointerIntent;
 
-    let lateral = 0;
-    let forward = 0;
-    for (const code of this.#pressedKeys) {
-      const axis = KEY_AXES[code];
-      if (!axis) continue;
-      lateral += axis[0];
-      forward += axis[1];
-    }
+    // WASD/arrow aliases describe directions, not extra speed or key votes.
+    const has = (a: string, b: string) => this.#pressedKeys.has(a) || this.#pressedKeys.has(b);
+    const lateral = Number(has("KeyD", "ArrowRight")) - Number(has("KeyA", "ArrowLeft"));
+    const forward = Number(has("KeyW", "ArrowUp")) - Number(has("KeyS", "ArrowDown"));
     return normalized(lateral, forward, "keyboard");
   }
 }

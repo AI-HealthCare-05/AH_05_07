@@ -58,10 +58,19 @@ build emits a separate Rapier chunk of about **2.86 MB minified / 1.08 MB gzip**
 Those measurements are evidence for keeping the spike Lab-only, not production
 performance or release budgets.
 
-A fresh GitHub-hosted browser run also showed that `RAPIER.version()` reports
-`0.12.0` from the compat 0.20.0 package. Treat that function as an engine/runtime
-diagnostic, **not** npm package identity; the dependency version remains pinned
-by `package.json` and `package-lock.json`.
+### Correction after PR #739 — exact package resolution
+
+The initial hosted run reporting `0.12.0` did **not** execute the approved
+0.20.0 package. The hosted entry installed only `web/package-lock.json`, so an
+uninstalled Lab dependency resolved the ancestor copy brought by `@types/three`.
+A clean before/after reproduction confirmed `RAPIER.version()` is `0.12.0`
+for that ancestor copy and `0.20.0` after installing the unchanged Lab lock.
+The earlier interpretation as merely an engine diagnostic was incorrect.
+
+The Lab test entry now installs its own lock, build/typecheck rejects missing,
+wrong-version or symlinked Lab installs, and the browser requires runtime
+`0.20.0` again. The approved package/version and production dependency graph
+are unchanged. The earlier green run is not evidence of 0.20.0 execution.
 
 ## Cleanup and stale work
 
