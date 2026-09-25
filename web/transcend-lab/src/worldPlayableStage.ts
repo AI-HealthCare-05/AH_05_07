@@ -20,6 +20,8 @@ import {
 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+import { mountWorldTouchControls } from "./worldTouchControls";
+
 import type { VerifiedPinnedAsset } from "./platform/embodiment/labAssetAdmission";
 import { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
 import {
@@ -316,6 +318,16 @@ export class WorldPlayableStage {
     options.resources.listen(renderer.domElement, "pointerup", finishPointer);
     options.resources.listen(renderer.domElement, "pointercancel", finishPointer);
     options.resources.listen(renderer.domElement, "lostpointercapture", finishPointer);
+
+    mountWorldTouchControls({
+      root, canvas: renderer.domElement, resources: options.resources, world: options.world,
+      look: (dx, dy) => {
+        this.#yaw -= dx * LOOK_SENSITIVITY;
+        this.#pitch = Math.max(CAMERA_SEED.minPitchRadians,
+          Math.min(CAMERA_SEED.maxPitchRadians, this.#pitch - dy * LOOK_SENSITIVITY));
+        options.world.setYaw(this.#yaw);
+      },
+    });
 
     options.world.setYaw(this.#yaw);
     options.world.setHidden(document.hidden);

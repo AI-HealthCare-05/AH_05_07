@@ -524,6 +524,127 @@ test("W1 desktop playable context loss releases the world and keeps retry contro
   expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });
 
+async function openTouchPlayable(browser: Browser, request: APIRequestContext, baseURL: string | undefined) {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, contentType: "model/gltf-binary", body: bytes }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  await expect(page.getByTestId("world-playable-stage")).toHaveAttribute("data-playable-clip", "idle");
+  const move = page.getByTestId("world-touch-move");
+  const look = page.getByTestId("world-touch-look");
+  await expect(move).toBeVisible();
+  await expect(look).toBeVisible();
+  const m = (await move.boundingBox())!;
+  const l = (await look.boundingBox())!;
+  const first = { x: m.x + m.width / 2, y: m.y + m.height / 2, id: 11 };
+  const second = { x: l.x + l.width / 2, y: l.y + l.height / 2, id: 22 };
+  const cdp = await context.newCDPSession(page);
+  const send = (type: "touchStart" | "touchMove" | "touchEnd" | "touchCancel", touchPoints: typeof first[]) =>
+    cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  return { context, page, move, look, first, second, send };
+}
+
+test("W1 touch pads keep move and look owners independent with browser multi-touch dispatch", async ({ browser, request, baseURL }) => {
+  const h = await openTouchPlayable(browser, request, baseURL);
+  try {
+    const { page, move, look, first, second, send } = h;
+    const start = await page.evaluate(() => ({ z: window.__TRANSCEND_LAB__!.kinematic.state().position!.z,
+      yaw: window.__TRANSCEND_LAB__!.playableDiagnostics()!.yawRadians }));
+    await send("touchStart", [first]);
+    await send("touchStart", [first, second]);
+    await expect(move).toHaveAttribute("data-pointer-id", /[0-9]+/);
+    await expect(look).toHaveAttribute("data-pointer-id", /[0-9]+/);
+    const moving = { ...first, y: first.y - 32 };
+    await send("touchMove", [moving, { ...second, x: second.x + 22 }]);
+    await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().position!.z)).toBeLessThan(start.z - 0.05);
+    const active = await page.evaluate(() => ({ input: window.__TRANSCEND_LAB__!.kinematic.state().input,
+      yaw: window.__TRANSCEND_LAB__!.playableDiagnostics()!.yawRadians }));
+    expect(active.input.intent.source).toBe("pointer");
+    expect(active.input.intent.magnitude).toBeGreaterThan(0);
+    expect(active.input.intent.magnitude).toBeLessThanOrEqual(1);
+    expect(active.yaw).toBeLessThan(start.yaw);
+    await send("touchEnd", [{ ...second, x: second.x + 22 }]); // End the right contact only.
+    await expect(look).not.toHaveAttribute("data-pointer-id", /.+/);
+    expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input)).intent.magnitude).toBeGreaterThan(0);
+    await send("touchEnd", []);
+    await expect(move).not.toHaveAttribute("data-pointer-id", /.+/);
+    expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input)).intent.magnitude).toBe(0);
+    const native = await page.getByTestId("world-playable-canvas").evaluate(el => ({ canvas: getComputedStyle(el).touchAction,
+      body: getComputedStyle(document.body).touchAction, move: getComputedStyle(document.querySelector('[data-testid="world-touch-move"]')!).touchAction }));
+    expect(native).toEqual({ canvas: "auto", body: "auto", move: "none" });
+  } finally { await h.context.close(); }
+});
+
+test("W1 touch cancellation focus and viewport changes never retain stale contacts", async ({ browser, request, baseURL }) => {
+  const h = await openTouchPlayable(browser, request, baseURL);
+  try {
+    const { page, move, look, first, second, send } = h;
+    for (const reason of ["cancel", "lostcapture", "blur", "focus", "visibility", "resize"] as const) {
+      await send("touchStart", [first, second]);
+      await send("touchMove", [{ ...first, y: first.y - 24 }, { ...second, x: second.x + 12 }]);
+      await expect(move).toHaveAttribute("data-pointer-id", /[0-9]+/);
+      if (reason === "cancel") await send("touchCancel", []);
+      else if (reason === "lostcapture") {
+        await move.evaluate(el => el.releasePointerCapture(Number((el as HTMLElement).dataset.pointerId)));
+        // Pending capture release is processed on the next pointer event.
+        await send("touchMove", [{ ...first, y: first.y - 25 }, { ...second, x: second.x + 13 }]);
+      }
+      else if (reason === "blur") await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+      else if (reason === "focus") await page.getByRole("button", { name: "Camera left" }).focus();
+      else if (reason === "visibility") await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      else await page.evaluate(() => window.dispatchEvent(new Event("resize")));
+      await expect(move).not.toHaveAttribute("data-pointer-id", /.+/);
+      await expect(look).not.toHaveAttribute("data-pointer-id", /.+/);
+      expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input)).intent.magnitude).toBe(0);
+      if (reason === "visibility") await page.evaluate(() => {
+        delete (document as unknown as { hidden?: boolean }).hidden;
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      if (reason !== "cancel") {
+        await send("touchMove", [{ ...first, y: first.y - 35 }, { ...second, x: second.x + 30 }]);
+        expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state().input)).intent.magnitude).toBe(0);
+        await send("touchEnd", []);
+      }
+    }
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(move).toBeVisible();
+    await expect(look).toBeVisible();
+    const boxes = [(await move.boundingBox())!, (await look.boundingBox())!];
+    expect(boxes.every(b => b.x >= 0 && b.y >= 0 && b.x + b.width <= 844 && b.y + b.height <= 390)).toBe(true);
+    const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+    expect(stopped).toMatchObject({ listeners: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+    await expect(page.getByTestId("world-touch-controls")).toHaveCount(0);
+  } finally { await h.context.close(); }
+});
+
+test("W1 touch pads ignore a third contact and drain active touches on stop", async ({ browser, request, baseURL }) => {
+  const h = await openTouchPlayable(browser, request, baseURL);
+  try {
+    const { page, move, look, first, second, send } = h;
+    await send("touchStart", [second]); // Look may start before movement.
+    await send("touchStart", [first, second]);
+    const owners = [await move.getAttribute("data-pointer-id"), await look.getAttribute("data-pointer-id")];
+    const third = { ...first, x: first.x + 10, id: 33 };
+    await send("touchStart", [first, second, third]);
+    await send("touchMove", [{ ...first, y: first.y - 22 }, second, { ...third, y: third.y + 30 }]);
+    expect([await move.getAttribute("data-pointer-id"), await look.getAttribute("data-pointer-id")]).toEqual(owners);
+    await send("touchEnd", [{ ...first, y: first.y - 22 }]); // End only the movement contact.
+    await expect(move).not.toHaveAttribute("data-pointer-id", /.+/);
+    expect(await look.getAttribute("data-pointer-id")).toBe(owners[1]);
+    const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+    expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+    await send("touchEnd", []);
+    expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources)
+      .toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+    await expect(page.getByTestId("world-touch-controls")).toHaveCount(0);
+  } finally { await h.context.close(); }
+});
+
 test("W1 physics fixture matrix distinguishes walls steps slopes and stable ground", async ({ page }, testInfo) => {
   await openRunningLab(page);
   const results = await page.evaluate(async () => {

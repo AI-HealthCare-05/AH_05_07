@@ -233,7 +233,7 @@ export function CompanionInteractionLab() {
         </div>
         <div className="world-playable-launch">
           <div>
-            <p className="section-kicker">W1 desktop slice</p>
+            <p className="section-kicker">W1 playable slice</p>
             <p>Verified bear · Rapier movement · third-person camera · Lab only.</p>
           </div>
           <button
@@ -249,8 +249,8 @@ export function CompanionInteractionLab() {
 
       {state.playable ? (
         <aside className="world-playable-controls" aria-label="W1 playable controls">
-          <strong>W1 Desktop Playable</strong>
-          <span>WASD / arrows move · drag the world to look</span>
+          <strong>W1 Playable</strong>
+          <span>WASD / arrows move · drag to look · touch: left Move / right Look</span>
           <div className="control-row">
             <button type="button" onClick={() => runtime.playableCameraNudge(Math.PI / 12)}>Camera left</button>
             <button type="button" onClick={() => runtime.playableCameraReset()}>Reset camera</button>
