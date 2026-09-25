@@ -8,13 +8,15 @@ import {
 import { loadLabRapier, type RapierModule } from "./rapierRuntime";
 import { FixedStepClock, worldPoint, type WorldPoint3 } from "./worldSpaceClock";
 
+import { playableWorldLayout, rampVertices } from "./playableWorldLayout";
+
 type PhysicsWorld = import("@dimforge/rapier3d-compat").World;
 type CharacterController = import("@dimforge/rapier3d-compat").KinematicCharacterController;
 type Body = import("@dimforge/rapier3d-compat").RigidBody;
 type Collider = import("@dimforge/rapier3d-compat").Collider;
 
 export const WORLD_FIXTURES = Object.freeze([
-  "flat", "wall", "camera-obstruction", "slope-allowed", "slope-blocked", "step-allowed", "step-blocked", "recovery",
+  "flat", "wall", "playable", "camera-obstruction", "slope-allowed", "slope-blocked", "step-allowed", "step-blocked", "recovery",
 ] as const);
 export type WorldFixtureName = (typeof WORLD_FIXTURES)[number];
 
@@ -131,7 +133,16 @@ export class KinematicWorld {
       // flat-rate fixture. The explicit worldLimit still bounds the playable area.
       world.createCollider(new R.ColliderDesc(new R.HalfSpace({ x: 0, y: 1, z: 0 })));
       const front = KINEMATIC_CONFIG.obstacleFrontX;
-      if (fixture === "wall") {
+      if (fixture === "playable") {
+        for (const shape of playableWorldLayout(KINEMATIC_CONFIG)) {
+          const descriptor = shape.kind === "box"
+            ? R.ColliderDesc.cuboid(shape.width / 2, shape.height / 2, shape.depth / 2)
+              .setTranslation(shape.x, shape.height / 2, shape.z)
+            : R.ColliderDesc.convexHull(rampVertices(shape));
+          if (!descriptor) throw new Error(`Invalid playable fixture: ${shape.id}`);
+          world.createCollider(descriptor);
+        }
+      } else if (fixture === "wall") {
         world.createCollider(R.ColliderDesc.cuboid(0.15, 1.5, 4).setTranslation(front + 0.15, 1.5, 0));
       } else if (fixture === "camera-obstruction") {
         // A thin, slightly off-axis pillar: a center ray would miss it, while

@@ -4,6 +4,9 @@ import {
   AnimationMixer,
   Box3,
   BoxGeometry,
+  BufferGeometry,
+  Float32BufferAttribute,
+  CircleGeometry,
   Color,
   DirectionalLight,
   Group,
@@ -29,6 +32,8 @@ import {
   type KinematicWorld,
 } from "./platform/spatial/kinematicWorld";
 
+import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "./platform/spatial/playableWorldLayout";
+
 export type WorldPlayableClip = "idle" | "move";
 
 export type WorldPlayableDiagnostics = Readonly<{
@@ -38,6 +43,8 @@ export type WorldPlayableDiagnostics = Readonly<{
   yawRadians: number;
   pitchRadians: number;
   renderCount: number;
+  fixtureIds: readonly string[];
+  destinationNear: boolean;
 }>;
 
 type MountOptions = Readonly<{
@@ -144,6 +151,8 @@ export class WorldPlayableStage {
   #disposed = false;
   #hostPointerEvents = "";
   #hostZIndex = "";
+  #destinationStatus: HTMLElement | null = null;
+  #destinationNear = false;
 
   diagnostics(): WorldPlayableDiagnostics {
     return Object.freeze({
@@ -153,6 +162,8 @@ export class WorldPlayableStage {
       yawRadians: this.#yaw,
       pitchRadians: this.#pitch,
       renderCount: this.#renderCount,
+      fixtureIds: Object.freeze(this.#scene?.children.filter((child) => child.name.startsWith("fixture:")).map((child) => child.name.slice(8)) ?? []),
+      destinationNear: this.#destinationNear,
     });
   }
 
@@ -211,25 +222,48 @@ export class WorldPlayableStage {
     scene.add(key);
 
     const ground = new Mesh(
-      new PlaneGeometry(24, 24),
+      new PlaneGeometry(KINEMATIC_CONFIG.worldLimit * 2, KINEMATIC_CONFIG.worldLimit * 2),
       new MeshStandardMaterial({ color: new Color("#b8cba8"), roughness: 0.92 }),
     );
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
 
-    const pillar = new Mesh(
-      new BoxGeometry(0.24, 4, 0.08),
-      new MeshStandardMaterial({ color: new Color("#7c8e78"), roughness: 0.82 }),
-    );
-    pillar.position.set(0.32, 2, 2);
-    scene.add(pillar);
+    for (const shape of playableWorldLayout(KINEMATIC_CONFIG)) {
+      let geometry: BufferGeometry;
+      if (shape.kind === "box") {
+        geometry = new BoxGeometry(shape.width, shape.height, shape.depth);
+        geometry.translate(shape.x, shape.height / 2, shape.z);
+      } else {
+        geometry = new BufferGeometry();
+        geometry.setAttribute("position", new Float32BufferAttribute(rampVertices(shape), 3));
+        geometry.setIndex([...RAMP_TRIANGLES]);
+        geometry.computeVertexNormals();
+      }
+      const mesh = new Mesh(geometry, new MeshStandardMaterial({
+        color: shape.id.includes("blocked") ? 0xac7f68 : 0x7c8e78, roughness: 0.86,
+      }));
+      mesh.name = `fixture:${shape.id}`;
+      scene.add(mesh);
+    }
 
-    const station = new Mesh(
-      new BoxGeometry(0.8, 0.75, 0.8),
-      new MeshStandardMaterial({ color: new Color("#c98f62"), roughness: 0.76 }),
+    const destination = new Mesh(
+      new CircleGeometry(PLAYABLE_DESTINATION.radius, 40),
+      new MeshStandardMaterial({ color: 0xf3c86a, roughness: 0.8 }),
     );
-    station.position.set(-2.2, 0.375, -3);
-    scene.add(station);
+    destination.name = PLAYABLE_DESTINATION.id;
+    destination.rotation.x = -Math.PI / 2;
+    destination.position.set(PLAYABLE_DESTINATION.x, 0.012, PLAYABLE_DESTINATION.z);
+    scene.add(destination);
+    const status = document.createElement("p");
+    status.className = "world-destination-status";
+    status.dataset.testid = "world-destination-status";
+    status.dataset.destinationId = PLAYABLE_DESTINATION.id;
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    status.textContent = "Grove station is on the gold circle ahead. Or open it with the station button.";
+    root.append(status);
+    this.#destinationStatus = status;
+    root.dataset.destinationNear = "false";
 
     const camera = new PerspectiveCamera(48, 1, 0.05, 60);
     this.#camera = camera;
@@ -360,6 +394,8 @@ export class WorldPlayableStage {
       delete this.#host.dataset.worldPlayable;
     }
     this.#root = null;
+    this.#destinationStatus = null;
+    this.#destinationNear = false;
     this.#renderer = null;
     this.#scene = null;
     this.#camera = null;
@@ -394,6 +430,14 @@ export class WorldPlayableStage {
       }
     }
 
+    const near = position !== null && Math.hypot(position.x - PLAYABLE_DESTINATION.x, position.z - PLAYABLE_DESTINATION.z) <= PLAYABLE_DESTINATION.radius;
+    if (near !== this.#destinationNear) {
+      this.#destinationNear = near;
+      if (this.#root) this.#root.dataset.destinationNear = String(near);
+      if (this.#destinationStatus) this.#destinationStatus.textContent = near
+        ? "At Grove station. Open the station when ready."
+        : "Grove station is on the gold circle. The station button is always available.";
+    }
     const moving = snapshot.input.intent.magnitude > 1e-3;
     this.#switchClip(moving ? "move" : "idle");
     const delta = this.#previousFrameTime === null ? 0 : Math.min((time - this.#previousFrameTime) / 1000, 0.05);
