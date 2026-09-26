@@ -1,4 +1,5 @@
 import type { ResolvedPose } from "../spatial/companionWorld";
+import type { WorldResourceScope } from "../runtime/worldResourceScope";
 import type { VerifiedPinnedAsset } from "./labAssetAdmission";
 
 export type LabBackendKind = "movable-patch" | "shared-stage";
@@ -79,7 +80,7 @@ type ListenerRecord = Readonly<{
 }>;
 
 /** Task-owned browser resources shared by the currently selected backend. */
-export class LabResourceLedger {
+export class LabResourceLedger implements WorldResourceScope {
   #generation = 1;
   readonly #listeners = new Set<ListenerRecord>();
   readonly #subscriptions = new Set<() => void>();

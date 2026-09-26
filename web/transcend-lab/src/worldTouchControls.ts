@@ -1,4 +1,4 @@
-import type { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
+import type { WorldResourceScope } from "./platform/runtime/worldResourceScope";
 import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
 import { isUsablePointerId } from "./platform/behavior/worldMovementIntent";
 
@@ -15,7 +15,7 @@ type Contact = {
 type TouchOptions = Readonly<{
   root: HTMLElement;
   canvas: HTMLCanvasElement;
-  resources: LabResourceLedger;
+  resources: WorldResourceScope;
   world: WorldRuntimePort;
   look: (dx: number, dy: number) => void;
 }>;
