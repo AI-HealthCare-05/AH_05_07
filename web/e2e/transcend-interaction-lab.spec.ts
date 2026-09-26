@@ -13,6 +13,7 @@ import {
   livingWeekMarkers,
   livingWeekSegments,
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
+import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
@@ -126,6 +127,18 @@ test("W4 Living Week render projection preserves ordered marker and segment geom
   expect(Object.isFrozen(segments)).toBe(true);
   expect(livingWeekMarkers()).toEqual(markers);
   expect(livingWeekSegments()).toEqual(segments);
+});
+
+test("W4 Living Week scene plan composes bounded immutable render-neutral geometry", () => {
+  expect(LIVING_WEEK_SCENE_PLAN.boundMetres).toBe(LIVING_WEEK_BOUND_METRES);
+  expect(LIVING_WEEK_SCENE_PLAN.groundSizeMetres).toBe(LIVING_WEEK_BOUND_METRES * 2);
+  expect(LIVING_WEEK_SCENE_PLAN.markers).toEqual(livingWeekMarkers());
+  expect(LIVING_WEEK_SCENE_PLAN.segments).toEqual(livingWeekSegments());
+  expect(LIVING_WEEK_SCENE_PLAN.markers).toHaveLength(7);
+  expect(LIVING_WEEK_SCENE_PLAN.segments).toHaveLength(6);
+  expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN)).toBe(true);
+  expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN.markers)).toBe(true);
+  expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN.segments)).toBe(true);
 });
 
 test("W1 WorldSpace remains metre-tagged and explicit", () => {
