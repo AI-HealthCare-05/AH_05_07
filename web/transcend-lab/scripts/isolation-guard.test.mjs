@@ -124,3 +124,24 @@ test("Lab composition can inject an alternate playable world session", () => {
   assert.match(runtime, /#playableWorldSession/);
   assert.doesNotMatch(runtime, /#kinematicWorld\.start\("playable"\)/);
 });
+
+test("W2 world kernel facade exports only reusable world contracts", () => {
+  const facade = readFileSync(path.join(LAB_ROOT, "src/platform/worldKernel.ts"), "utf8");
+  for (const expected of [
+    "kinematicWorldKernel",
+    "worldRuntimePort",
+    "worldSceneProfile",
+    "worldPlayableSession",
+    "worldPlayableStagePort",
+    "worldTouchSurfacePort",
+    "worldResourceScope",
+    "worldRenderableAsset",
+    "worldSpaceClock",
+  ]) {
+    assert.match(facade, new RegExp(expected));
+  }
+  assert.doesNotMatch(
+    facade,
+    /w1|labRuntime|LabResourceLedger|PINNED_ACTIVE_ASSET|CompanionInteractionLab|companionReviewCatalog|\.\.\/\.\.\/src/i,
+  );
+});
