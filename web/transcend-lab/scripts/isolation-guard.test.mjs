@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -31,5 +31,13 @@ test("rejects a symlink alias to web/dist", () => {
     );
   } finally {
     rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test("world renderer and touch input depend on the reusable runtime port", () => {
+  for (const relativePath of ["src/worldPlayableStage.ts", "src/worldTouchControls.ts"]) {
+    const source = readFileSync(path.join(LAB_ROOT, relativePath), "utf8");
+    assert.match(source, /platform\/spatial\/worldRuntimePort/);
+    assert.doesNotMatch(source, /type KinematicWorld/);
   }
 });
