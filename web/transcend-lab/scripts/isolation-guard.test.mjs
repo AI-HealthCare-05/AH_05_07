@@ -178,3 +178,12 @@ test("playable renderer maps generic overlay segments into world-space line mesh
   assert.match(stage, /segment\.end\.z/);
   assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
 });
+
+test("playable renderer maps generic overlay marker labels into billboard sprites", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(stage, /marker\.label/);
+  assert.match(stage, /overlay-label:\$\{marker\.id\}/);
+  assert.match(stage, /CanvasTexture/);
+  assert.match(stage, /SpriteMaterial/);
+  assert.doesNotMatch(stage, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday/);
+});
