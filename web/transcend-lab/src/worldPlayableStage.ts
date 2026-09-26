@@ -5,6 +5,7 @@ import {
   Box3,
   BoxGeometry,
   BufferGeometry,
+  CanvasTexture,
   Float32BufferAttribute,
   CircleGeometry,
   Color,
@@ -18,6 +19,8 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
+  Sprite,
+  SpriteMaterial,
   Texture,
   Vector3,
   WebGLRenderer,
@@ -28,7 +31,10 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
-import type { WorldSceneOverlayPlan } from "./platform/spatial/worldSceneOverlayPlan";
+import type {
+  WorldSceneOverlayMarker,
+  WorldSceneOverlayPlan,
+} from "./platform/spatial/worldSceneOverlayPlan";
 import type {
   WorldPlayableClip,
   WorldPlayableDiagnostics,
@@ -71,6 +77,41 @@ function disposeObject(root: Object3D): void {
     const skeleton = (object as unknown as { skeleton?: { dispose?: () => void } }).skeleton;
     skeleton?.dispose?.();
   });
+}
+
+function createOverlayMarkerLabel(marker: WorldSceneOverlayMarker): Sprite {
+  const canvas = document.createElement("canvas");
+  canvas.width = 320;
+  canvas.height = 80;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("2D canvas unavailable for overlay marker label");
+
+  context.font = "600 28px system-ui, sans-serif";
+  const measuredWidth = Math.ceil(context.measureText(marker.label).width + 52);
+  canvas.width = Math.max(160, Math.min(420, measuredWidth));
+  canvas.height = 80;
+
+  context.font = "600 28px system-ui, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = "rgba(24, 32, 44, 0.84)";
+  context.beginPath();
+  context.roundRect(4, 8, canvas.width - 8, canvas.height - 16, 24);
+  context.fill();
+  context.fillStyle = "rgba(255, 255, 255, 0.96)";
+  context.fillText(marker.label, canvas.width / 2, canvas.height / 2 + 1);
+
+  const texture = new CanvasTexture(canvas);
+  const sprite = new Sprite(new SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+  }));
+  const height = 0.42;
+  sprite.name = `overlay-label:${marker.id}`;
+  sprite.scale.set(height * (canvas.width / canvas.height), height, 1);
+  sprite.position.set(marker.position.x, marker.position.y + 0.48, marker.position.z);
+  return sprite;
 }
 
 function normalizeModel(model: Group, modelHeight: number): Group {
@@ -161,6 +202,9 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       ).length ?? 0,
       renderedOverlaySegmentCount: this.#scene?.children.filter(
         (child) => child.name.startsWith("overlay-segment:"),
+      ).length ?? 0,
+      renderedOverlayLabelCount: this.#scene?.children.filter(
+        (child) => child.name.startsWith("overlay-label:"),
       ).length ?? 0,
     });
   }
@@ -263,6 +307,10 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       );
       line.name = `overlay-segment:${segment.id}`;
       scene.add(line);
+    }
+
+    for (const marker of this.#overlayPlan?.markers ?? []) {
+      scene.add(createOverlayMarkerLabel(marker));
     }
 
     const destination = new Mesh(
