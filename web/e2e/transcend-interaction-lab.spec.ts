@@ -9,6 +9,10 @@ import {
   LIVING_WEEK_DAYS,
   LIVING_WEEK_LANDMARKS,
 } from "../transcend-lab/src/platform/spatial/livingWeekLandmarks";
+import {
+  livingWeekMarkers,
+  livingWeekSegments,
+} from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
@@ -99,6 +103,29 @@ test("W4 Living Week topology is seven ordered connected bounded landmarks", () 
   expect(reachable.size).toBe(LIVING_WEEK_LANDMARKS.length);
   expect(Object.isFrozen(LIVING_WEEK_LANDMARKS)).toBe(true);
   expect(Object.isFrozen(LIVING_WEEK_CONNECTIONS)).toBe(true);
+});
+
+test("W4 Living Week render projection preserves ordered marker and segment geometry", () => {
+  const markers = livingWeekMarkers();
+  const segments = livingWeekSegments();
+  expect(markers).toHaveLength(7);
+  expect(segments).toHaveLength(6);
+  expect(markers.map((marker) => marker.id)).toEqual(LIVING_WEEK_LANDMARKS.map((landmark) => landmark.id));
+  expect(markers.map((marker) => marker.ordinal)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  expect(segments.map((segment) => [segment.from, segment.to])).toEqual(
+    LIVING_WEEK_CONNECTIONS.map((connection) => [connection.from, connection.to]),
+  );
+  for (const [index, segment] of segments.entries()) {
+    expect(segment.start).toBe(LIVING_WEEK_LANDMARKS[index].position);
+    expect(segment.end).toBe(LIVING_WEEK_LANDMARKS[index + 1].position);
+    expect(segment.lengthMetres).toBeGreaterThan(0);
+    expect(Number.isFinite(segment.lengthMetres)).toBe(true);
+    expect(Object.isFrozen(segment)).toBe(true);
+  }
+  expect(Object.isFrozen(markers)).toBe(true);
+  expect(Object.isFrozen(segments)).toBe(true);
+  expect(livingWeekMarkers()).toEqual(markers);
+  expect(livingWeekSegments()).toEqual(segments);
 });
 
 test("W1 WorldSpace remains metre-tagged and explicit", () => {
