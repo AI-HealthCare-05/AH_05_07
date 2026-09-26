@@ -13,6 +13,12 @@ export type WorldSceneProfile = Readonly<{
   groundSize: number;
   fixtures: readonly WorldFixture[];
   destination: WorldSceneDestination;
+  copy: Readonly<{
+    canvasLabel: string;
+    destinationAhead: string;
+    destinationNear: string;
+    destinationAway: string;
+  }>;
   camera: Readonly<{
     seed: ThirdPersonCameraConfig;
     shapeRadius: number;

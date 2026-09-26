@@ -182,10 +182,7 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     renderer.setClearColor(0xdbe7d2, 1);
     renderer.domElement.dataset.testid = "world-playable-canvas";
     renderer.domElement.tabIndex = 0;
-    renderer.domElement.setAttribute(
-      "aria-label",
-      "W1 3D world. Use W A S D or arrow keys to move; drag to look.",
-    );
+    renderer.domElement.setAttribute("aria-label", this.#profile.copy.canvasLabel);
     renderer.domElement.style.display = "block";
     renderer.domElement.style.pointerEvents = "auto";
     renderer.domElement.style.cursor = "grab";
@@ -243,7 +240,7 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     status.dataset.destinationId = this.#profile.destination.id;
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
-    status.textContent = `${this.#profile.destination.label} is on the gold circle ahead. Or open it with the station button.`;
+    status.textContent = this.#profile.copy.destinationAhead;
     root.append(status);
     this.#destinationStatus = status;
     root.dataset.destinationNear = "false";
@@ -458,9 +455,11 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     if (near !== this.#destinationNear) {
       this.#destinationNear = near;
       if (this.#root) this.#root.dataset.destinationNear = String(near);
-      if (this.#destinationStatus) this.#destinationStatus.textContent = near
-        ? `At ${this.#profile.destination.label}. Open the station when ready.`
-        : `${this.#profile.destination.label} is on the gold circle. The station button is always available.`;
+      if (this.#destinationStatus) {
+        this.#destinationStatus.textContent = near
+          ? this.#profile.copy.destinationNear
+          : this.#profile.copy.destinationAway;
+      }
     }
     const moving = snapshot.input.intent.magnitude > 1e-3;
     this.#switchClip(moving ? "move" : "idle");
