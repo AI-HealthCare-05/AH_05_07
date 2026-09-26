@@ -1,5 +1,6 @@
 import type { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
 import type { KinematicWorld } from "./platform/spatial/kinematicWorld";
+import { isUsablePointerId } from "./platform/behavior/worldMovementIntent";
 
 type Contact = {
   id: number;
@@ -62,8 +63,8 @@ export function mountWorldTouchControls(options: TouchOptions): void {
     release(oldMove);
     release(oldLook);
   };
-  const valid = (event: PointerEvent) => Number.isSafeInteger(event.pointerId)
-    && event.pointerId >= 0 && Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
+  const valid = (event: PointerEvent) => isUsablePointerId(event.pointerId)
+    && Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
 
   pads.forEach((pad, index) => {
     const isMove = index === 0;
