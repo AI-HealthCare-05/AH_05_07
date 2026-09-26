@@ -25,7 +25,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { mountWorldTouchControls } from "./worldTouchControls";
 
-import type { VerifiedPinnedAsset } from "./platform/embodiment/labAssetAdmission";
+import type { WorldRenderableAsset } from "./platform/embodiment/worldRenderableAsset";
 import type { WorldResourceScope } from "./platform/runtime/worldResourceScope";
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
@@ -53,7 +53,7 @@ type MountOptions = Readonly<{
   host: HTMLElement;
   resources: WorldResourceScope;
   world: WorldRuntimePort;
-  asset: VerifiedPinnedAsset;
+  asset: WorldRenderableAsset;
   reducedMotion: boolean;
   onFailure: (error: Error) => void;
 }>;
@@ -280,11 +280,13 @@ export class WorldPlayableStage {
         disposeObject(gltf.scene);
         throw new Error("stale playable GLB parse generation");
       }
-      const idleClip = gltf.animations.find((clip) => clip.name === "idle") ?? null;
-      const moveClip = gltf.animations.find((clip) => clip.name === "move") ?? null;
+      const idleClipName = this.#profile.actor.clips.idle;
+      const moveClipName = this.#profile.actor.clips.move;
+      const idleClip = gltf.animations.find((clip) => clip.name === idleClipName) ?? null;
+      const moveClip = gltf.animations.find((clip) => clip.name === moveClipName) ?? null;
       if (!idleClip || !moveClip) {
         disposeObject(gltf.scene);
-        throw new Error("playable bear requires verified idle and move clips");
+        throw new Error(`world actor requires configured clips: ${idleClipName}, ${moveClipName}`);
       }
 
       const actor = normalizeModel(gltf.scene, this.#profile.actor.modelHeight);

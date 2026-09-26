@@ -22,5 +22,9 @@ export type WorldSceneProfile = Readonly<{
   actor: Readonly<{
     modelHeight: number;
     footOffset: number;
+    clips: Readonly<{
+      idle: string;
+      move: string;
+    }>;
   }>;
 }>;
