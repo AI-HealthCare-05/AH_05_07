@@ -18,6 +18,7 @@ import {
 import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embodiment/labEmbodimentPort";
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
+import { LIVING_WEEK_SCENE_PLAN } from "./platform/spatial/livingWeekScenePlan";
 import { createW2SyntheticPlayableWorldSession } from "./platform/spatial/w2SyntheticPlayableWorldSession";
 
 const reviewEligibleEntries = Object.freeze(
@@ -45,6 +46,9 @@ export function CompanionInteractionLab() {
         : undefined,
       playableWorldSession: params.get("worldProfile") === "synthetic"
         ? createW2SyntheticPlayableWorldSession()
+        : undefined,
+      playableOverlayPlan: params.get("overlayPlan") === "living-week"
+        ? LIVING_WEEK_SCENE_PLAN
         : undefined,
     });
   }

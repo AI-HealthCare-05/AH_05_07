@@ -63,6 +63,7 @@ import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } fro
 import { createW1PlayableWorldSession } from "./platform/spatial/w1PlayableWorldSession";
 import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
+import type { WorldSceneOverlayPlan } from "./platform/spatial/worldSceneOverlayPlan";
 import { SequentialBackendSelector } from "./labRenderers";
 import { WorldPlayableStage } from "./worldPlayableStage";
 import { mountWorldTouchControls } from "./worldTouchControls";
@@ -225,6 +226,7 @@ export class TranscendLabRuntime {
   readonly #kinematicWorld = new KinematicWorld();
   readonly #playableWorldSession: WorldPlayableSession;
   readonly #playableSceneProfile: WorldSceneProfile;
+  readonly #playableOverlayPlan: WorldSceneOverlayPlan | null;
   #resources = new LabResourceLedger();
   #playableResources: LabResourceLedger | null = null;
   #playableStage: WorldPlayableStagePort | null = null;
@@ -259,11 +261,13 @@ export class TranscendLabRuntime {
     forceRendererFailure?: boolean;
     playableSceneProfile?: WorldSceneProfile;
     playableWorldSession?: WorldPlayableSession;
+    playableOverlayPlan?: WorldSceneOverlayPlan | null;
   }> = {}) {
     this.#forceRendererFailure = options.forceRendererFailure ?? false;
     this.#playableWorldSession = options.playableWorldSession
       ?? createW1PlayableWorldSession(this.#kinematicWorld);
     this.#playableSceneProfile = options.playableSceneProfile ?? W1_WORLD_SCENE_PROFILE;
+    this.#playableOverlayPlan = options.playableOverlayPlan ?? null;
     this.#builder = new ArenaSnapshotBuilder(() => this.#currentMeasurementViewport());
     this.#builder.registerAnchorProvider("synthetic-route-anchors", () =>
       syntheticAnchors(this.#route, this.#currentMeasurementViewport()),
@@ -406,7 +410,11 @@ export class TranscendLabRuntime {
     this.#pointer = null;
 
     const resources = new LabResourceLedger();
-    const stage = new WorldPlayableStage(this.#playableSceneProfile, mountWorldTouchControls);
+    const stage = new WorldPlayableStage(
+      this.#playableSceneProfile,
+      mountWorldTouchControls,
+      this.#playableOverlayPlan,
+    );
     this.#resources = resources;
     this.#playableResources = resources;
     this.#playableStage = stage;

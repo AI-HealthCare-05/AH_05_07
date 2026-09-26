@@ -104,7 +104,8 @@ test("playable renderer receives its touch surface from Lab composition", () => 
   const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
   assert.match(stage, /WorldTouchSurfaceInstaller/);
   assert.doesNotMatch(stage, /worldTouchControls/);
-  assert.match(runtime, /new WorldPlayableStage\(this\.#playableSceneProfile, mountWorldTouchControls\)/);
+  assert.match(runtime, /new WorldPlayableStage\(/);
+  assert.match(runtime, /mountWorldTouchControls/);
 });
 
 test("Lab composition can inject an alternate world scene profile", () => {
@@ -145,4 +146,16 @@ test("W2 world kernel facade exports only reusable world contracts", () => {
     facade,
     /w1|labRuntime|LabResourceLedger|PINNED_ACTIVE_ASSET|CompanionInteractionLab|companionReviewCatalog|\.\.\/\.\.\/src/i,
   );
+});
+
+test("Lab composition can inject an optional reusable scene overlay plan", () => {
+  const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(component, /playableOverlayPlan/);
+  assert.match(component, /LIVING_WEEK_SCENE_PLAN/);
+  assert.match(runtime, /#playableOverlayPlan/);
+  assert.match(runtime, /this\.#playableOverlayPlan/);
+  assert.match(stage, /WorldSceneOverlayPlan/);
+  assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
 });
