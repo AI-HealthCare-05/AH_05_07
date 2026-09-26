@@ -60,6 +60,7 @@ import {
 } from "./platform/embodiment/labEmbodimentPort";
 import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
 import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
+import { createW1PlayableWorldSession } from "./platform/spatial/w1PlayableWorldSession";
 import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
 import { SequentialBackendSelector } from "./labRenderers";
@@ -69,6 +70,8 @@ import type {
   WorldPlayableDiagnostics,
   WorldPlayableStagePort,
 } from "./platform/runtime/worldPlayableStagePort";
+import type { WorldPlayableSession } from "./platform/runtime/worldPlayableSession";
+import type { WorldRuntimeSnapshot } from "./platform/spatial/worldRuntimePort";
 
 export type LabRoute = "grove" | "cove";
 export type LabLifecycle = "starting" | "running" | "stopped" | "comparing" | "error";
@@ -220,6 +223,7 @@ export class TranscendLabRuntime {
   readonly #selector = new SequentialBackendSelector();
   readonly #rapierSpike = new RapierIsolationSpike();
   readonly #kinematicWorld = new KinematicWorld();
+  readonly #playableWorldSession: WorldPlayableSession;
   readonly #playableSceneProfile: WorldSceneProfile;
   #resources = new LabResourceLedger();
   #playableResources: LabResourceLedger | null = null;
@@ -254,8 +258,11 @@ export class TranscendLabRuntime {
   constructor(options: Readonly<{
     forceRendererFailure?: boolean;
     playableSceneProfile?: WorldSceneProfile;
+    playableWorldSession?: WorldPlayableSession;
   }> = {}) {
     this.#forceRendererFailure = options.forceRendererFailure ?? false;
+    this.#playableWorldSession = options.playableWorldSession
+      ?? createW1PlayableWorldSession(this.#kinematicWorld);
     this.#playableSceneProfile = options.playableSceneProfile ?? W1_WORLD_SCENE_PROFILE;
     this.#builder = new ArenaSnapshotBuilder(() => this.#currentMeasurementViewport());
     this.#builder.registerAnchorProvider("synthetic-route-anchors", () =>
@@ -405,8 +412,9 @@ export class TranscendLabRuntime {
     this.#playableStage = stage;
 
     try {
-      const started = await this.#kinematicWorld.start("playable");
-      this.#kinematicWorld.setSemanticSuspended(this.#worldInteractionSuspended);
+      this.#kinematicWorld.stop();
+      const started = await this.#playableWorldSession.start();
+      this.#playableWorldSession.setSemanticSuspended(this.#worldInteractionSuspended);
       if (!started || requestId !== this.#rendererRequestId) {
         throw new Error("playable physics start was superseded");
       }
@@ -418,7 +426,7 @@ export class TranscendLabRuntime {
         onVerified: (asset) => stage.mount({
           host: this.#host!,
           resources,
-          world: this.#kinematicWorld,
+          world: this.#playableWorldSession.runtime,
           asset,
           reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
           onFailure: (error) => { void this.#failPlayable(resources, requestId, error); },
@@ -469,8 +477,8 @@ export class TranscendLabRuntime {
 
   setWorldInteractionSuspended(suspended: boolean): void {
     this.#worldInteractionSuspended = suspended;
-    this.#kinematicWorld.setSemanticSuspended(suspended);
-    this.#kinematicWorld.blur();
+    this.#playableWorldSession.setSemanticSuspended(suspended);
+    this.#playableWorldSession.runtime.blur();
   }
 
   playableCameraNudge(deltaYawRadians: number): void {
@@ -979,20 +987,24 @@ export class TranscendLabRuntime {
       startPlayable: () => this.startPlayable(),
       exitPlayable: () => this.exitPlayable(),
       playableDiagnostics: () => this.#playableStage?.diagnostics() ?? null,
+      playableWorldState: () => this.#playableWorldSession.runtime.snapshot,
       playableCameraNudge: (deltaYawRadians) => this.playableCameraNudge(deltaYawRadians),
       playableCameraReset: () => this.playableCameraReset(),
       playableCameraZoom: (deltaMetres: number) => this.playableCameraZoom(deltaMetres),
       runRapierSpike: () => {
+        this.#playableWorldSession.stop();
         this.#kinematicWorld.stop();
         return this.#rapierSpike.run();
       },
       kinematic: Object.freeze({
         ...this.#kinematicWorld.testApi(),
         start: (fixture?: WorldFixtureName) => {
+          this.#playableWorldSession.stop();
           this.#rapierSpike.stop();
           return this.#kinematicWorld.start(fixture);
         },
         reset: () => {
+          this.#playableWorldSession.stop();
           this.#rapierSpike.stop();
           return this.#kinematicWorld.reset();
         },
@@ -1013,7 +1025,7 @@ export class TranscendLabRuntime {
     this.#playable = false;
     this.#playableResources = null;
     this.#playableStage = null;
-    this.#kinematicWorld.stop();
+    this.#playableWorldSession.stop();
     // Remove the old host synchronously before another transition can mount.
     // Do not convert a failed teardown into fabricated zero-resource evidence.
     stage?.unmount();
@@ -1183,6 +1195,7 @@ export type TranscendLabTestApi = Readonly<{
   startPlayable: () => Promise<AssetAdmissionResult>;
   exitPlayable: () => Promise<void>;
   playableDiagnostics: () => WorldPlayableDiagnostics | null;
+  playableWorldState: () => WorldRuntimeSnapshot;
   playableCameraNudge: (deltaYawRadians: number) => void;
   playableCameraReset: () => void;
   runRapierSpike: () => Promise<RapierSpikeResult>;

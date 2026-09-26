@@ -18,6 +18,7 @@ import {
 import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embodiment/labEmbodimentPort";
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
+import { createW2SyntheticPlayableWorldSession } from "./platform/spatial/w2SyntheticPlayableWorldSession";
 
 const reviewEligibleEntries = Object.freeze(
   companionReviewCatalog.entries.filter((entry) => entry.reviewEligible),
@@ -41,6 +42,9 @@ export function CompanionInteractionLab() {
       forceRendererFailure: params.get("rendererFailure") === "1",
       playableSceneProfile: params.get("sceneProfile") === "synthetic"
         ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
+        : undefined,
+      playableWorldSession: params.get("worldProfile") === "synthetic"
+        ? createW2SyntheticPlayableWorldSession()
         : undefined,
     });
   }
