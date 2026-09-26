@@ -2,9 +2,9 @@
 """Classify an SK7 autonomous change as routine, protected, or denied.
 
 The guard deliberately does not execute arbitrary project commands. It only reads
-Git path state and applies repository-owned path policy. The existing AGENTS.md
-risk lane and CI remain authoritative for what checks must run. A successful
-classification never authorizes merge; human merge remains the final gate.
+Git path state and applies repository-owned path policy. AGENTS.md, the task
+Issue, and required CI define the workflow. Classification is advisory scope
+information; protected changes may still be merged by an authorized agent.
 """
 
 from __future__ import annotations
@@ -18,16 +18,15 @@ from pathlib import Path
 
 LANE_ORDER = {"none": 0, "routine": 1, "protected": 2, "deny": 3}
 
-DENY_EXACT = {
+DENY_EXACT: set[str] = set()
+DENY_PREFIXES: tuple[str, ...] = ()
+
+PROTECTED_EXACT = {
     ".github/CODEOWNERS",
     "AGENTS.md",
     "docs/autopilot-lite.md",
     "scripts/git/autopilot_guard.py",
     "scripts/git/codex-commit",
-}
-DENY_PREFIXES = (".github/workflows/",)
-
-PROTECTED_EXACT = {
     "Dockerfile",
     "pyproject.toml",
     "uv.lock",
@@ -166,18 +165,22 @@ def self_test() -> None:
     assert classify_path("supabase/migrations/001.sql") == "protected"
     assert classify_path("web/package-lock.json") == "protected"
     assert classify_path("scripts/ci/verify_secret_boundary.py") == "protected"
-    assert classify_path("AGENTS.md") == "deny"
-    assert classify_path(".github/workflows/checks.yml") == "deny"
-    assert classify_path("scripts/git/autopilot_guard.py") == "deny"
+    assert classify_path("AGENTS.md") == "protected"
+    assert classify_path(".github/workflows/checks.yml") == "protected"
+    assert classify_path("scripts/git/autopilot_guard.py") == "protected"
     assert classify_path("web/.env.production") == "deny"
 
     mixed = classify_paths(["web/src/App.tsx", "app/main.py"])
     assert mixed.lane == "protected"
     assert mixed.protected == ("app/main.py",)
 
-    denied = classify_paths(["web/src/App.tsx", "AGENTS.md"])
+    governance = classify_paths(["web/src/App.tsx", "AGENTS.md"])
+    assert governance.lane == "protected"
+    assert governance.protected == ("AGENTS.md",)
+
+    denied = classify_paths(["web/src/App.tsx", "web/.env.production"])
     assert denied.lane == "deny"
-    assert denied.deny == ("AGENTS.md",)
+    assert denied.deny == ("web/.env.production",)
 
     assert classify_paths([]).lane == "none"
 
@@ -208,20 +211,20 @@ def main() -> int:
     render(result, args.json)
 
     if result.lane == "deny":
-        print("autopilot decision: stop; denied files require a human-governed change")
+        print("autopilot decision: stop; denied secret/credential paths require explicit handling")
         return 1
     if result.lane == "protected":
         if args.require_routine:
-            print("autopilot decision: strict routine assertion failed; protected change requires human review/merge")
+            print("autopilot decision: strict routine assertion failed; protected scope detected")
             return 2
-        print("autopilot decision: protected lane; PR preparation is allowed; human merge is required")
+        print("autopilot decision: protected lane; Issue/PR flow is allowed and agent merge follows required CI")
         return 0
     if result.lane == "none":
         print("autopilot decision: no change detected")
         return 0
 
     print(
-        "autopilot decision: routine lane; PR preparation is allowed; human merge is required; existing required CI remains authoritative"
+        "autopilot decision: routine lane; Issue/PR flow is allowed and agent merge follows required CI"
     )
     return 0
 

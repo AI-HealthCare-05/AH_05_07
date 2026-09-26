@@ -1,170 +1,98 @@
-# Repository rules
+# SK7 Repository Operating Contract
 
-## Fast start
+This file is the sole repository-workflow authority for SK7.
+Historical evidence, handoffs, completed audits, and design notes are not workflow SSOT.
+Domain contracts remain authoritative only for the product boundary they define.
 
-Canonical source: `AI-HealthCare-05/AH_05_07`. Copies in
-`emotigom/ah-05-07-pages` are deployment snapshots, not a second development
-authority. Start from current upstream `main`, this file, and the user's scoped
-request. Read [project handoff](docs/project-handoff.md#fast-start) and only the
-contract or tests for the boundary being changed. Historical ledgers, completed
-audits, and unrelated evidence are not startup requirements.
+Canonical development repository: `AI-HealthCare-05/AH_05_07`.
+The `emotigom/ah-05-07-pages` mirror is a deployment snapshot controlled by the human owner, not a development authority.
+
+## Default task flow
+
+1. Create a GitHub Issue for every requested task before repository mutation.
+2. Start from current `origin/main` in a short task branch/worktree linked to that Issue.
+3. Commit as often as useful. Prefer coherent, locally checked commits; there is no target commit count.
+4. Open a PR when the task is reviewable. The PR must reference or close its Issue.
+5. Merge as soon as the PR is conflict-free and the required hosted `lint` and `test` checks pass.
+6. Human review or human merge is not a default gate. The authorized agent may enable auto-merge or squash-merge directly.
+7. Delete the merged task branch. Do not rerun a post-merge full matrix by default.
+
+The human owner is continuously observing and may interrupt, narrow, or stop any task.
+
+## Merge and deployment are separate
+
+A merged PR is not authorization for an external production side effect.
+The agent does not trigger, wait for, or verify the personal mirror / Cloudflare build or deployment unless the user explicitly requests that as a separate task.
+The human owner controls mirror-to-Cloudflare publication.
+
+Do not use Cloudflare build status, a post-merge main matrix, scheduled browser confidence, or a manual trusted-runner job as a routine merge gate.
 
 ## Protected product boundaries
 
-- Use `입력 기반 위험군 선별 신호`; never diagnosis, treatment, prevention,
-  or causal-improvement language.
-- Do not store real clinical records, names, contacts, original documents,
-  free-text medical histories, credentials, or raw production output.
-- Keep model output, measured blood pressure, and challenge participation as
-  separate facts.
-- Preserve authentication, RLS/ownership, retention, account deletion,
-  request/session/uncertain-write protections, and secret boundaries.
-- Preserve the frozen Model V2 artifact, schema, 11-feature order,
-  preprocessing, and target-leakage prohibition. User-visible Model V2 output
-  follows `docs/model-v2-product-contract.md`, including its time-boxed
-  research/development preview.
-- Do not add an LLM, OCR, Redis, worker, new server, or deployment topology
-  without a measured requirement and an ADR.
+- Use `입력 기반 위험군 선별 신호`; never diagnosis, treatment, prevention, or causal-improvement language.
+- Do not store real clinical records, names, contacts, original documents, free-text medical histories, credentials, or raw production output.
+- Keep model output, measured blood pressure, and challenge participation as separate facts.
+- Preserve authentication, RLS/ownership, retention, account deletion, request/session/uncertain-write protections, and secret boundaries.
+- Preserve the frozen Model V2 artifact, schema, 11-feature order, preprocessing, and target-leakage prohibition.
+- Do not add an LLM, OCR, Redis, worker, new server, or deployment topology without a measured requirement and an ADR.
 
-## Risk-based change policy
+Protected-boundary code may still follow the normal Issue -> branch -> PR -> agent merge flow.
+Actual destructive database operations, production activation/deployment, credential changes, or other irreversible external effects require explicit current-task authorization before execution.
+Merging code alone does not perform those effects.
 
-Use the lightest lane that matches the actual diff. When uncertain, use the
-protected-boundary lane.
+## Verification
 
-### Routine product lane
+During development, run the smallest checks that directly cover the diff.
+Before PR publication, run `git diff --check`, the affected local checks, and `python3 scripts/git/autopilot_guard.py --base origin/main`.
 
-For copy, CSS, semantic layout, presentation components, tests, tooling, and
-docs that do not alter a protected boundary:
+GitHub merge-time CI is intentionally small:
+- required `lint`
+- required `test`
 
-- An Issue is optional. The user's request and PR body may be the task record.
-- Use one coherent short branch and PR; do not split work by screen or create
-  paperwork-only follow-up PRs. Accumulate logical, locally checked commits,
-  then batch-push a reviewable candidate. Do not push per micro-step or bundle
-  unrelated work merely to reduce CI runs.
-- During development, run the smallest affected checks. Final-candidate CI keeps
-  the required named `lint` and `test` merge gates, but their payload is
-  path-aware: frontend/docs lanes may satisfy them with lightweight routing while
-  backend/protected/unknown changes keep the full Python/AI/MySQL payload.
-- Do not create an ADR, evidence document, deployment record, screenshot set,
-  or full-matrix rerun unless it proves behavior changed by this diff.
+Those checks remain path-aware. Backend/auth/data/model changes may route to heavier payloads; routine frontend/docs changes should not inherit unrelated Python/AI/MySQL work.
 
-### Protected-boundary lane
+Broad Browser E2E is schedule/manual confidence only, not a PR or main merge gate.
+Trusted local runners are manual tools only.
+Do not replay the complete browser matrix after merge.
 
-For API or database semantics, auth/RLS/retention, write/session guards,
-Model V2 contracts or artifacts, secrets, production activation/deployment,
-or a new dependency/topology:
+## Risk classification
 
-- Use an Issue, a short branch, a PR, and the directly relevant contract/tests.
-- Add an ADR only for a new architectural dependency/topology or another
-  durable decision with meaningful alternatives.
-- Record deployment/rollback evidence only when runtime state actually changes.
+The autopilot guard is a scope classifier, not merge authorization.
 
-### Verification lifecycle
+- `routine`: ordinary UI/docs/tests/tooling changes.
+- `protected`: product contracts, backend/auth/data/model/dependency/governance/CI changes. These may still be merged by the authorized agent after required checks pass.
+- `deny`: tracked secret/credential containers or another explicitly forbidden path. Stop and ask rather than weakening the guard.
 
-- PR/local verification selects the smallest affected checks: docs-only uses
-  diff/static checks, test-only uses its targeted test, web runtime source uses
-  a build plus directly related tests, and scene/companion runtime uses its
-  directly related scene test plus a physical spot-check only when needed. The
-  full browser matrix is skipped by default.
-- Routine App shell / presentation wiring does not by itself imply backend
-  Python/AI/MySQL verification; protected auth/API/data/model/dependency/deployment
-  paths still escalate to the full lane. Browser CI is concern-routed; Model V2
-  cross-browser coverage is not a generic UI tax.
-- For AI-assisted local verification, redirect verbose passing test/build logs to
-  `/tmp` and surface only result summaries or focused failure excerpts. Do not feed
-  line-by-line passing Playwright output into model context.
-- Generated mutation/recovery must preflight the reviewed ref/SHA, dirty-path
-  ownership, detached-vs-attached worktree state, and every required
-  textual/structural anchor **before the first write**. A failed preflight makes
-  zero writes; recovery restores only task-owned paths from the reviewed source.
-- Match publish-time CI exactly: lint and formatter checks are separate gates
-  (for example `ruff check` and `ruff format --check`); one passing does not imply
-  the other.
-- Create Markdown-rich PR bodies through `--body-file` or stdin. Do not place
-  Markdown/backticks inside a double-quoted shell argument where command
-  substitution can alter the body.
-- Required PR/core CI owns merge-time regression. Do not replay the complete
-  browser matrix after every `main` merge; scheduled nightly or explicit manual
-  Browser E2E owns broad browser confidence. Classify a red scheduled/manual run
-  as product regression, test-contract mismatch, or transient rather than
-  turning every routine change into a release exercise.
-- A green aggregate proves only the payloads that were selected and actually ran.
-  A skipped, conditionally excluded, or unrouted suite is **not** a PASS. When a
-  change adds a new isolated test surface, route that surface into hosted CI in
-  the same task or state the hosted coverage gap explicitly; do not substitute an
-  unrelated broad suite merely to produce a green check.
-- Release verification may explicitly run the full browser matrix and required
-  physical device gates. Do not require release evidence for a routine PR.
-- `INVARIANT` is a durable product/security/health contract. `TASK GUARD` is
-  current-task-only and must not carry forward. `HYPOTHESIS` is experimental and
-  expires when falsified. `EVIDENCE` is valid only for its recorded SHA,
-  environment, and scope.
-- An incident becomes a durable rule only with reusable value, a clear scope,
-  and human review. Completed audits, expired hypotheses, and old thresholds are
-  not startup requirements for a new task.
+A current user request plus its Issue is the authorization record for governance/workflow changes.
+Do not create a second approval ledger.
 
-### Long-running work and restart
+## Restart and continuity
 
-- At meaningful checkpoints and before a session handoff, preserve task-owned
-  work and one concise restart record: worktree/branch, HEAD and reviewed base,
-  owned/unfinished paths, checks with environment/scope, blockers, and next action.
-  Reuse the task's existing handoff/state; do not add a mandatory ledger or schema.
-- Chat history and temporary paths alone are not durable storage. Verify that
-  referenced artifacts are recoverable, including required Base/Delta dependencies
-  when used. Reconcile checkpoints with live Git/source state on restart; do not
-  replay unchanged audits or silently overwrite newer decisions.
-- For an unchanged external blocker, keep it `BLOCKED` and avoid repeated
-  acquisition attempts. Continue only independent work already authorized by the
-  task; otherwise checkpoint and hand off. Never weaken a gate or invent work to
-  meet an elapsed-time, commit-count, or test-count target.
+The durable restart record is intentionally small:
+- Issue number
+- branch/worktree
+- HEAD and base
+- unfinished task-owned paths
+- checks already run
+- next action or blocker
 
-## Autonomous execution lane
+Use one concise handoff only when a task outlives the session.
+On restart, live Git/process state outranks chat memory or an old handoff.
+Do not replay completed external effects merely because a previous room forgot them.
 
-Hands-off AI development uses the existing repository controls instead of adding
-a second orchestration stack. Do not add a tunnel, persistent writer daemon, or
-new deployment service for routine autonomous work. See
-[Autopilot Lite](docs/autopilot-lite.md) for the operator workflow.
+## No workflow-SSOT sprawl
 
-- Work from current `origin/main` in an isolated Git worktree and a short task
-  branch. Preserve unrelated worktrees and user changes.
-- Before publishing an autonomously prepared change, run
-  `python3 scripts/git/autopilot_guard.py --base origin/main`. The guard is a
-  classification aid, not merge authorization. `--require-routine` is only a
-  strict assertion for an operator that expects a routine diff.
-- A `routine` result may be implemented, tested, and published as a PR. Required
-  checks still apply, and **human merge is the final gate**.
-- A `protected` result may be implemented, tested, and published as a PR. Human
-  review and merge are required; the agent does not enable auto-merge.
-- A `deny` result means the change is outside the hands-off autonomous lane.
-  Governance, workflow, credential, and guard files remain protected from
-  self-authorization. If the current user request **explicitly scopes a
-  human-governed task** to named governance/workflow/guard paths, an agent may
-  prepare, test, commit, push, and open a Draft PR limited to that approved scope
-  even though the guard continues to report `deny`. There is no bypass flag:
-  explicit human authorization comes from the current task, cannot be inferred
-  by the agent, and human review/merge remains mandatory.
-- GitHub-hosted required PR/core CI remains the merge gate. The scheduled/manual
-  full Browser E2E matrix is broad confidence and release coverage, not a routine
-  merge prerequisite. Persistent self-hosted runners remain manual trusted
-  verification only and are not the default autonomous merge path.
+Do not create new workflow policy files or mandatory evidence ledgers.
+This file defines repository workflow.
+`docs/autopilot-lite.md` is explanatory only.
+`docs/project-handoff.md` is project context only.
+Domain contracts/tests define their own product semantics; historical evidence stays historical.
 
 ## Shared defaults
 
-- Keep `main` runnable and merge through a PR with passing required `lint` and
-  `test` checks. Prefer squash merge for a compact linear history.
-- Preserve unrelated user changes. Do not clean, reset, stash, delete, or
-  rewrite files merely to prepare a task.
-- Reuse still-valid evidence within its exact scope. Never relabel historical,
-  mock, simulator, or source-only evidence as current production proof.
+Keep `main` runnable and merge through PRs.
+Prefer squash merge for compact main history while allowing many useful branch commits.
+Preserve unrelated user changes; do not reset, clean, stash, or rewrite unrelated work.
 
-- When Codex materially contributes to a commit, create that commit with
-  `scripts/git/codex-commit` instead of invoking `git commit` directly.
-  The resulting commit message must contain exactly one
-  `Co-authored-by: Codex <noreply@openai.com>` trailer.
-- Do not rewrite already-published history solely to add Codex attribution.
-- When a Codex-authored branch is squash-merged, GitHub may copy each
-  constituent commit's `Co-authored-by: Codex <noreply@openai.com>` trailer
-  into the generated squash body. Remove those repeated constituent trailers
-  before merging, then keep exactly one final
-  `Co-authored-by: Codex <noreply@openai.com>` trailer at the end of the squash
-  commit message so attribution survives on `main`.
+When Codex materially contributes to a commit, keep exactly one
+`Co-authored-by: Codex <noreply@openai.com>` trailer in the final main commit.
