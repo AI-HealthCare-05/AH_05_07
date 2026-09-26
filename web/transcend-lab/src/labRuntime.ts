@@ -63,6 +63,7 @@ import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } fro
 import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
 import { SequentialBackendSelector } from "./labRenderers";
 import { WorldPlayableStage } from "./worldPlayableStage";
+import { mountWorldTouchControls } from "./worldTouchControls";
 import type {
   WorldPlayableDiagnostics,
   WorldPlayableStagePort,
@@ -392,7 +393,7 @@ export class TranscendLabRuntime {
     this.#pointer = null;
 
     const resources = new LabResourceLedger();
-    const stage = new WorldPlayableStage(W1_WORLD_SCENE_PROFILE);
+    const stage = new WorldPlayableStage(W1_WORLD_SCENE_PROFILE, mountWorldTouchControls);
     this.#resources = resources;
     this.#playableResources = resources;
     this.#playableStage = stage;
