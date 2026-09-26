@@ -496,6 +496,49 @@ test("W1 desktop playable moves the verified bear and preserves exclusive render
   expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });
 
+test("W2 alternate scene profile mounts through the reusable world composition", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await openRunningLab(page, "/?sceneProfile=synthetic");
+  await page.getByTestId("start-world-playable").click();
+
+  const stage = page.getByTestId("world-playable-stage");
+  const canvas = page.getByTestId("world-playable-canvas");
+  const destination = page.getByTestId("world-destination-status");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(canvas).toHaveAttribute(
+    "aria-label",
+    "W2 synthetic world. Use movement controls to explore.",
+  );
+  await expect(destination).toHaveAttribute("data-destination-id", "w2-synthetic-marker");
+  await expect(destination).toHaveText("Synthetic marker is ahead.");
+
+  const mounted = await page.evaluate(() => ({
+    state: window.__TRANSCEND_LAB__!.state(),
+    playable: window.__TRANSCEND_LAB__!.playableDiagnostics(),
+    physics: window.__TRANSCEND_LAB__!.kinematic.state(),
+  }));
+  expect(mounted.state.playable).toBe(true);
+  expect(mounted.playable).toMatchObject({
+    mounted: true,
+    fixtureIds: [],
+    destinationNear: false,
+  });
+  expect(mounted.physics.lifecycle).toBe("running");
+
+  await page.getByTestId("exit-world-playable").click();
+  await expect(stage).toHaveCount(0);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources)
+    .toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
 test("W1 desktop playable cancellation and overlapping starts retain only the latest owner", async ({ page, request }) => {
   const pinnedBytes = await fetchExactPinnedBytes(request);
   await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
