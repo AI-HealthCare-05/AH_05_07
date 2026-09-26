@@ -168,3 +168,13 @@ test("playable renderer maps generic overlay markers into world-space marker mes
   assert.match(stage, /marker\.position\.z/);
   assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
 });
+
+test("playable renderer maps generic overlay segments into world-space line meshes", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(stage, /overlay-segment:\$\{segment\.id\}/);
+  assert.match(stage, /segment\.start\.x/);
+  assert.match(stage, /segment\.start\.z/);
+  assert.match(stage, /segment\.end\.x/);
+  assert.match(stage, /segment\.end\.z/);
+  assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
+});

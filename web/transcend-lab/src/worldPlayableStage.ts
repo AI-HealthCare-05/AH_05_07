@@ -11,6 +11,8 @@ import {
   CylinderGeometry,
   DirectionalLight,
   Group,
+  Line,
+  LineBasicMaterial,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
@@ -247,6 +249,20 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       mesh.name = `overlay-marker:${marker.id}`;
       mesh.position.set(marker.position.x, marker.position.y + 0.04, marker.position.z);
       scene.add(mesh);
+    }
+
+    for (const segment of this.#overlayPlan?.segments ?? []) {
+      const geometry = new BufferGeometry();
+      geometry.setFromPoints([
+        new Vector3(segment.start.x, segment.start.y + 0.025, segment.start.z),
+        new Vector3(segment.end.x, segment.end.y + 0.025, segment.end.z),
+      ]);
+      const line = new Line(
+        geometry,
+        new LineBasicMaterial({ color: 0x7f8fa8 }),
+      );
+      line.name = `overlay-segment:${segment.id}`;
+      scene.add(line);
     }
 
     const destination = new Mesh(
