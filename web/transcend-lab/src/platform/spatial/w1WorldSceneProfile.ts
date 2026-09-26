@@ -6,6 +6,12 @@ export const W1_WORLD_SCENE_PROFILE: WorldSceneProfile = Object.freeze({
   groundSize: KINEMATIC_CONFIG.worldLimit * 2,
   fixtures: playableWorldLayout(KINEMATIC_CONFIG),
   destination: PLAYABLE_DESTINATION,
+  copy: Object.freeze({
+    canvasLabel: "W1 3D world. Use W A S D or arrow keys to move; drag to look.",
+    destinationAhead: "Grove station is on the gold circle ahead. Or open it with the station button.",
+    destinationNear: "At Grove station. Open the station when ready.",
+    destinationAway: "Grove station is on the gold circle. The station button is always available.",
+  }),
   camera: Object.freeze({
     seed: Object.freeze({
       yawRadians: -Math.PI / 12,

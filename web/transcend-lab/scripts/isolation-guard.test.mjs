@@ -56,7 +56,10 @@ test("playable renderer receives environment policy through the scene profile", 
   const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
   const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
   assert.match(stage, /platform\/spatial\/worldSceneProfile/);
-  assert.doesNotMatch(stage, /KINEMATIC_CONFIG|PLAYABLE_DESTINATION|playableWorldLayout/);
+  assert.doesNotMatch(
+    stage,
+    /KINEMATIC_CONFIG|PLAYABLE_DESTINATION|playableWorldLayout|W1 3D world|station button|Open the station/,
+  );
   assert.match(runtime, /W1_WORLD_SCENE_PROFILE/);
 });
 
