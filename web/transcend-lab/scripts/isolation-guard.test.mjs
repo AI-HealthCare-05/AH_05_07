@@ -159,3 +159,12 @@ test("Lab composition can inject an optional reusable scene overlay plan", () =>
   assert.match(stage, /WorldSceneOverlayPlan/);
   assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
 });
+
+test("playable renderer maps generic overlay markers into world-space marker meshes", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(stage, /overlay-marker:\$\{marker\.id\}/);
+  assert.match(stage, /marker\.position\.x/);
+  assert.match(stage, /marker\.position\.y/);
+  assert.match(stage, /marker\.position\.z/);
+  assert.doesNotMatch(stage, /livingWeek|LIVING_WEEK/i);
+});

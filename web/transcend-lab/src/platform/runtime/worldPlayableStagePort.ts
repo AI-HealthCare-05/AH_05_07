@@ -20,6 +20,8 @@ export type WorldPlayableDiagnostics = Readonly<{
   destinationNear: boolean;
   overlayMarkerCount: number;
   overlaySegmentCount: number;
+  renderedOverlayMarkerCount: number;
+  renderedOverlaySegmentCount: number;
 }>;
 
 export type WorldPlayableMountOptions = Readonly<{
