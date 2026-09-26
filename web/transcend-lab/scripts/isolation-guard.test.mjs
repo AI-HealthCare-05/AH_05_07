@@ -41,3 +41,11 @@ test("world renderer and touch input depend on the reusable runtime port", () =>
     assert.doesNotMatch(source, /type KinematicWorld/);
   }
 });
+
+test("playable renderer receives environment policy through the scene profile", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  assert.match(stage, /platform\/spatial\/worldSceneProfile/);
+  assert.doesNotMatch(stage, /KINEMATIC_CONFIG|PLAYABLE_DESTINATION|playableWorldLayout/);
+  assert.match(runtime, /W1_WORLD_SCENE_PROFILE/);
+});

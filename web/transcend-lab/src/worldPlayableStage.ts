@@ -27,10 +27,9 @@ import { mountWorldTouchControls } from "./worldTouchControls";
 
 import type { VerifiedPinnedAsset } from "./platform/embodiment/labAssetAdmission";
 import { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
-import { KINEMATIC_CONFIG } from "./platform/spatial/kinematicWorld";
+import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
-
-import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "./platform/spatial/playableWorldLayout";
+import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
 
 export type WorldPlayableClip = "idle" | "move";
 
@@ -58,22 +57,6 @@ type MountOptions = Readonly<{
   reducedMotion: boolean;
   onFailure: (error: Error) => void;
 }>;
-
-const CAMERA_SEED = Object.freeze({
-  // Spawn with a clear boom; the near-edge pillar remains a deliberate fixture.
-  yawRadians: -Math.PI / 12,
-  pitchRadians: 0.28,
-  minPitchRadians: -0.22,
-  maxPitchRadians: 0.58,
-  desiredDistance: 5,
-  minDistance: 0.8,
-  obstructionClearance: 0.08,
-});
-const CAMERA_RADIUS = 0.25;
-const CAMERA_DISTANCE_LIMITS = Object.freeze({ min: 2.5, max: 8 });
-const LOOK_SENSITIVITY = 0.005;
-const MODEL_HEIGHT = 1.45;
-const CAPSULE_FOOT_OFFSET = KINEMATIC_CONFIG.capsuleHalfHeight + KINEMATIC_CONFIG.capsuleRadius;
 
 function editableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -111,14 +94,14 @@ function disposeObject(root: Object3D): void {
   });
 }
 
-function normalizeModel(model: Group): Group {
+function normalizeModel(model: Group, modelHeight: number): Group {
   model.updateMatrixWorld(true);
   let bounds = new Box3().setFromObject(model);
   if (bounds.isEmpty()) throw new Error("playable bear has no renderable bounds");
   const height = bounds.getSize(new Vector3()).y;
   if (!Number.isFinite(height) || height <= 0) throw new Error("playable bear height is invalid");
 
-  model.scale.multiplyScalar(MODEL_HEIGHT / height);
+  model.scale.multiplyScalar(modelHeight / height);
   model.updateMatrixWorld(true);
   bounds = new Box3().setFromObject(model);
   const center = bounds.getCenter(new Vector3());
@@ -132,6 +115,7 @@ function normalizeModel(model: Group): Group {
 }
 
 export class WorldPlayableStage {
+  readonly #profile: WorldSceneProfile;
   #host: HTMLElement | null = null;
   #root: HTMLDivElement | null = null;
   #renderer: WebGLRenderer | null = null;
@@ -145,21 +129,28 @@ export class WorldPlayableStage {
   #world: WorldRuntimePort | null = null;
   #resources: LabResourceLedger | null = null;
   #reducedMotion = false;
-  #yaw: number = CAMERA_SEED.yawRadians;
-  #pitch: number = CAMERA_SEED.pitchRadians;
+  #yaw: number;
+  #pitch: number;
   #pointerId: number | null = null;
   #pointerX = 0;
   #pointerY = 0;
   #previousFrameTime: number | null = null;
   #renderCount = 0;
   #cameraOccluded = false;
-  #desiredCameraDistance: number = CAMERA_SEED.desiredDistance;
+  #desiredCameraDistance: number;
   #resolvedCameraDistance: number | null = null;
   #disposed = false;
   #hostPointerEvents = "";
   #hostZIndex = "";
   #destinationStatus: HTMLElement | null = null;
   #destinationNear = false;
+
+  constructor(profile: WorldSceneProfile) {
+    this.#profile = profile;
+    this.#yaw = profile.camera.seed.yawRadians;
+    this.#pitch = profile.camera.seed.pitchRadians;
+    this.#desiredCameraDistance = profile.camera.seed.desiredDistance;
+  }
 
   diagnostics(): WorldPlayableDiagnostics {
     return Object.freeze({
@@ -234,13 +225,13 @@ export class WorldPlayableStage {
     scene.add(key);
 
     const ground = new Mesh(
-      new PlaneGeometry(KINEMATIC_CONFIG.worldLimit * 2, KINEMATIC_CONFIG.worldLimit * 2),
+      new PlaneGeometry(this.#profile.groundSize, this.#profile.groundSize),
       new MeshStandardMaterial({ color: new Color("#b8cba8"), roughness: 0.92 }),
     );
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
 
-    for (const shape of playableWorldLayout(KINEMATIC_CONFIG)) {
+    for (const shape of this.#profile.fixtures) {
       let geometry: BufferGeometry;
       if (shape.kind === "box") {
         geometry = new BoxGeometry(shape.width, shape.height, shape.depth);
@@ -259,20 +250,20 @@ export class WorldPlayableStage {
     }
 
     const destination = new Mesh(
-      new CircleGeometry(PLAYABLE_DESTINATION.radius, 40),
+      new CircleGeometry(this.#profile.destination.radius, 40),
       new MeshStandardMaterial({ color: 0xf3c86a, roughness: 0.8 }),
     );
-    destination.name = PLAYABLE_DESTINATION.id;
+    destination.name = this.#profile.destination.id;
     destination.rotation.x = -Math.PI / 2;
-    destination.position.set(PLAYABLE_DESTINATION.x, 0.012, PLAYABLE_DESTINATION.z);
+    destination.position.set(this.#profile.destination.x, 0.012, this.#profile.destination.z);
     scene.add(destination);
     const status = document.createElement("p");
     status.className = "world-destination-status";
     status.dataset.testid = "world-destination-status";
-    status.dataset.destinationId = PLAYABLE_DESTINATION.id;
+    status.dataset.destinationId = this.#profile.destination.id;
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
-    status.textContent = "Grove station is on the gold circle ahead. Or open it with the station button.";
+    status.textContent = `${this.#profile.destination.label} is on the gold circle ahead. Or open it with the station button.`;
     root.append(status);
     this.#destinationStatus = status;
     root.dataset.destinationNear = "false";
@@ -296,7 +287,7 @@ export class WorldPlayableStage {
         throw new Error("playable bear requires verified idle and move clips");
       }
 
-      const actor = normalizeModel(gltf.scene);
+      const actor = normalizeModel(gltf.scene, this.#profile.actor.modelHeight);
       actor.rotation.y = this.#yaw + Math.PI; // Begin facing away from the camera.
       this.#actor = actor;
       scene.add(actor);
@@ -357,10 +348,10 @@ export class WorldPlayableStage {
       const dy = event.clientY - this.#pointerY;
       this.#pointerX = event.clientX;
       this.#pointerY = event.clientY;
-      this.#yaw -= dx * LOOK_SENSITIVITY;
+      this.#yaw -= dx * this.#profile.camera.lookSensitivity;
       // Direct look: drag up to look up, drag down to look down.
       // Orbit pitch moves opposite the requested screen-view direction.
-      this.#pitch += dy * LOOK_SENSITIVITY;
+      this.#pitch += dy * this.#profile.camera.lookSensitivity;
       options.world.setYaw(this.#yaw);
       event.preventDefault();
     });
@@ -392,9 +383,9 @@ export class WorldPlayableStage {
     mountWorldTouchControls({
       root, canvas: renderer.domElement, resources: options.resources, world: options.world,
       look: (dx, dy) => {
-        this.#yaw -= dx * LOOK_SENSITIVITY;
-        this.#pitch = Math.max(CAMERA_SEED.minPitchRadians,
-          Math.min(CAMERA_SEED.maxPitchRadians, this.#pitch + dy * LOOK_SENSITIVITY));
+        this.#yaw -= dx * this.#profile.camera.lookSensitivity;
+        this.#pitch = Math.max(this.#profile.camera.seed.minPitchRadians,
+          Math.min(this.#profile.camera.seed.maxPitchRadians, this.#pitch + dy * this.#profile.camera.lookSensitivity));
         options.world.setYaw(this.#yaw);
       },
     });
@@ -417,16 +408,16 @@ export class WorldPlayableStage {
   zoomCamera(deltaMetres: number): boolean {
     if (!Number.isFinite(deltaMetres) || !this.#world || this.#disposed
       || document.hidden || this.#world.snapshot.input.suspended) return false;
-    this.#desiredCameraDistance = Math.max(CAMERA_DISTANCE_LIMITS.min,
-      Math.min(CAMERA_DISTANCE_LIMITS.max, this.#desiredCameraDistance + deltaMetres));
+    this.#desiredCameraDistance = Math.max(this.#profile.camera.distanceLimits.min,
+      Math.min(this.#profile.camera.distanceLimits.max, this.#desiredCameraDistance + deltaMetres));
     this.#updateCamera(); // The Rapier shape cast may shorten the requested boom.
     return true;
   }
 
   resetCamera(): void {
-    this.#yaw = CAMERA_SEED.yawRadians;
-    this.#pitch = CAMERA_SEED.pitchRadians;
-    this.#desiredCameraDistance = CAMERA_SEED.desiredDistance;
+    this.#yaw = this.#profile.camera.seed.yawRadians;
+    this.#pitch = this.#profile.camera.seed.pitchRadians;
+    this.#desiredCameraDistance = this.#profile.camera.seed.desiredDistance;
     this.#world?.setYaw(this.#yaw);
     this.#updateCamera();
   }
@@ -468,7 +459,7 @@ export class WorldPlayableStage {
     const snapshot = world.snapshot;
     const position = snapshot.position;
     if (position && this.#actor) {
-      this.#actor.position.set(position.x, position.y - CAPSULE_FOOT_OFFSET, position.z);
+      this.#actor.position.set(position.x, position.y - this.#profile.actor.footOffset, position.z);
       const previous = snapshot.previousPosition;
       if (previous) {
         const dx = position.x - previous.x;
@@ -477,13 +468,17 @@ export class WorldPlayableStage {
       }
     }
 
-    const near = position !== null && Math.hypot(position.x - PLAYABLE_DESTINATION.x, position.z - PLAYABLE_DESTINATION.z) <= PLAYABLE_DESTINATION.radius;
+    const near = position !== null
+      && Math.hypot(
+        position.x - this.#profile.destination.x,
+        position.z - this.#profile.destination.z,
+      ) <= this.#profile.destination.radius;
     if (near !== this.#destinationNear) {
       this.#destinationNear = near;
       if (this.#root) this.#root.dataset.destinationNear = String(near);
       if (this.#destinationStatus) this.#destinationStatus.textContent = near
-        ? "At Grove station. Open the station when ready."
-        : "Grove station is on the gold circle. The station button is always available.";
+        ? `At ${this.#profile.destination.label}. Open the station when ready.`
+        : `${this.#profile.destination.label} is on the gold circle. The station button is always available.`;
     }
     const moving = snapshot.input.intent.magnitude > 1e-3;
     this.#switchClip(moving ? "move" : "idle");
@@ -502,11 +497,11 @@ export class WorldPlayableStage {
     const camera = this.#camera;
     if (!world || !camera) return;
     const result = world.camera({
-      ...CAMERA_SEED,
+      ...this.#profile.camera.seed,
       desiredDistance: this.#desiredCameraDistance,
       yawRadians: this.#yaw,
       pitchRadians: this.#pitch,
-    }, CAMERA_RADIUS);
+    }, this.#profile.camera.shapeRadius);
     if (!result) return;
     this.#pitch = result.pitchRadians;
     this.#cameraOccluded = result.occluded;
