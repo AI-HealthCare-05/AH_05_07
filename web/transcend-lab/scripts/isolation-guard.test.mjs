@@ -57,3 +57,10 @@ test("world renderer and touch input depend on the reusable resource scope", () 
     assert.doesNotMatch(source, /LabResourceLedger/);
   }
 });
+
+test("playable renderer depends on generic render bytes and profile-owned clip names", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(stage, /platform\/embodiment\/worldRenderableAsset/);
+  assert.match(stage, /profile\.actor\.clips/);
+  assert.doesNotMatch(stage, /VerifiedPinnedAsset|labAssetAdmission/);
+});

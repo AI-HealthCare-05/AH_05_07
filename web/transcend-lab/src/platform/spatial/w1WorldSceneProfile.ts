@@ -23,5 +23,6 @@ export const W1_WORLD_SCENE_PROFILE: WorldSceneProfile = Object.freeze({
   actor: Object.freeze({
     modelHeight: 1.45,
     footOffset: KINEMATIC_CONFIG.capsuleHalfHeight + KINEMATIC_CONFIG.capsuleRadius,
+    clips: Object.freeze({ idle: "idle", move: "move" }),
   }),
 });
