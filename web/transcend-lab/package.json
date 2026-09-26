@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite --config vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify:guards": "node --test scripts/isolation-guard.test.mjs scripts/verify-module-graph.test.mjs scripts/verify-rapier-install.test.mjs",
+    "verify:guards": "node --test scripts/isolation-guard.test.mjs scripts/verify-module-graph.test.mjs scripts/verify-rapier-install.test.mjs scripts/physical-review-lib.test.mjs",
     "verify:graph": "node scripts/verify-module-graph.mjs",
     "build": "npm run typecheck && npm run verify:guards && vite build --config vite.config.ts && npm run verify:graph",
     "preview": "vite preview --config vite.config.ts",
+    "review:physical": "node scripts/run-physical-review.mjs",
     "verify:product-isolation": "node scripts/verify-product-isolation.mjs",
     "test:e2e": "npm run build && playwright test --config=../playwright.transcend-lab.config.ts",
     "test": "npm --prefix .. run build && npm run verify:product-isolation && npm run test:e2e",
