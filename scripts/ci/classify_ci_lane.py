@@ -6,8 +6,17 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-DOC_FILES = {"README.md", "AGENTS.md"}
+DOC_FILES = {"README.md"}
 DOC_PREFIXES = ("docs/",)
+
+POLICY_FILES = {
+    "AGENTS.md",
+    "scripts/ci/classify_ci_lane.py",
+}
+POLICY_PREFIXES = (
+    ".github/",
+    "scripts/git/",
+)
 
 FRONTEND_TOOL_PREFIXES = ("tools/character-preview/",)
 FRONTEND_TOOL_FILES = {
@@ -145,6 +154,10 @@ def is_docs(path: str) -> bool:
     return path in DOC_FILES or path.startswith(DOC_PREFIXES)
 
 
+def is_policy(path: str) -> bool:
+    return path in POLICY_FILES or path.startswith(POLICY_PREFIXES)
+
+
 def is_frontend_tool(path: str) -> bool:
     return path in FRONTEND_TOOL_FILES or path.startswith(FRONTEND_TOOL_PREFIXES)
 
@@ -184,7 +197,7 @@ def is_deployment(path: str) -> bool:
 
 
 def requires_full(path: str) -> bool:
-    if is_docs(path):
+    if is_docs(path) or is_policy(path):
         return False
     # Browser-only Model V2 test/config changes exercise the frozen product
     # contract but do not modify Python/AI/MySQL/deployment semantics.
@@ -210,10 +223,14 @@ def classify(files: list[str]) -> Result:
     deployment = any(is_deployment(f) for f in unique)
     full = any(requires_full(f) for f in unique)
 
+    policy = any(is_policy(f) for f in unique)
+
     if full:
         lane = "full"
     elif web:
         lane = "frontend"
+    elif policy:
+        lane = "policy"
     else:
         lane = "docs"
 
@@ -321,7 +338,19 @@ def self_test() -> None:
         ),
         (
             [".github/workflows/checks.yml"],
-            Result("full", False, False, False, False, True),
+            Result("policy", False, False, False, False, False),
+        ),
+        (
+            ["AGENTS.md", ".github/PULL_REQUEST_TEMPLATE.md"],
+            Result("policy", False, False, False, False, False),
+        ),
+        (
+            ["scripts/git/autopilot_guard.py"],
+            Result("policy", False, False, False, False, False),
+        ),
+        (
+            ["scripts/ci/classify_ci_lane.py"],
+            Result("policy", False, False, False, False, False),
         ),
         (
             ["web/wrangler.jsonc"],
