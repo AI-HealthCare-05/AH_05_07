@@ -62,10 +62,11 @@ import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } f
 import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
 import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
 import { SequentialBackendSelector } from "./labRenderers";
-import {
-  WorldPlayableStage,
-  type WorldPlayableDiagnostics,
-} from "./worldPlayableStage";
+import { WorldPlayableStage } from "./worldPlayableStage";
+import type {
+  WorldPlayableDiagnostics,
+  WorldPlayableStagePort,
+} from "./platform/runtime/worldPlayableStagePort";
 
 export type LabRoute = "grove" | "cove";
 export type LabLifecycle = "starting" | "running" | "stopped" | "comparing" | "error";
@@ -219,7 +220,7 @@ export class TranscendLabRuntime {
   readonly #kinematicWorld = new KinematicWorld();
   #resources = new LabResourceLedger();
   #playableResources: LabResourceLedger | null = null;
-  #playableStage: WorldPlayableStage | null = null;
+  #playableStage: WorldPlayableStagePort | null = null;
   #playable = false;
   #worldInteractionSuspended = false;
   #host: HTMLElement | null = null;
