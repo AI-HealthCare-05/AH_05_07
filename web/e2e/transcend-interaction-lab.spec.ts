@@ -403,7 +403,15 @@ test("W1 desktop playable moves the verified bear and preserves exclusive render
   await expect(page.locator('[data-lab-backend-mounted="true"]')).toHaveCount(0);
   await expect(canvas).toBeFocused();
   await expect(stage).toHaveAttribute("data-playable-clip", "idle");
+  await expect(stage).toHaveAttribute("data-camera-occluded", "false");
+  // Safe spawn does not remove the near-edge collision fixture: aim at it explicitly.
+  await page.evaluate(() => {
+    const api = window.__TRANSCEND_LAB__!;
+    api.playableCameraNudge(-api.playableDiagnostics()!.yawRadians);
+  });
   await expect(stage).toHaveAttribute("data-camera-occluded", "true");
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.playableCameraReset());
+  await expect(stage).toHaveAttribute("data-camera-occluded", "false");
 
   const started = await page.evaluate(() => ({
     state: window.__TRANSCEND_LAB__!.state(),
@@ -419,7 +427,7 @@ test("W1 desktop playable moves the verified bear and preserves exclusive render
     sha256: PINNED_ACTIVE_ASSET.sha256,
   });
   expect(started.physics.lifecycle).toBe("running");
-  expect(started.playable).toMatchObject({ mounted: true, clip: "idle", cameraOccluded: true });
+  expect(started.playable).toMatchObject({ mounted: true, clip: "idle", cameraOccluded: false });
   const startZ = started.physics.position!.z;
 
   await page.keyboard.down("w");
@@ -440,6 +448,7 @@ test("W1 desktop playable moves the verified bear and preserves exclusive render
   const afterDrag = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics());
   expect(afterDrag!.yawRadians).toBeLessThan(yawBefore);
 
+  await page.getByTestId("world-camera-toggle").click();
   await page.getByRole("button", { name: "Camera right" }).click();
   const cameraAfter = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics());
   expect(cameraAfter!.yawRadians).toBeLessThan(afterDrag!.yawRadians);
@@ -582,6 +591,7 @@ test("W1 touch cancellation focus and viewport changes never retain stale contac
   const h = await openTouchPlayable(browser, request, baseURL);
   try {
     const { page, move, look, first, second, send } = h;
+    await page.getByTestId("world-camera-toggle").click();
     for (const reason of ["cancel", "lostcapture", "blur", "focus", "visibility", "resize"] as const) {
       await send("touchStart", [first, second]);
       await send("touchMove", [{ ...first, y: first.y - 24 }, { ...second, x: second.x + 12 }]);
@@ -1523,4 +1533,133 @@ test("W1 live reduced motion freezes idle without remount and drains its listene
   expect((await diagnostics()).animationTimeSeconds).toBe(restarted.animationTimeSeconds);
   const drained = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(drained).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
+
+test("W1 high-DPR camera canvas stays in CSS pixels through viewport changes", async ({ browser, request, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 384, height: 718 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
+  try {
+    const page = await context.newPage();
+    const bytes = await fetchExactPinnedBytes(request);
+    await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, contentType: "model/gltf-binary", body: bytes }));
+    await openRunningLab(page);
+    await page.getByTestId("start-world-playable").click();
+    const canvas = page.getByTestId("world-playable-canvas");
+    await expect(canvas).toBeVisible();
+    for (const viewport of [{ width: 384, height: 718 }, { width: 844, height: 390 }]) {
+      await page.setViewportSize(viewport);
+      await expect.poll(async () => canvas.evaluate(element => {
+        const c = element as HTMLCanvasElement;
+        const r = c.getBoundingClientRect();
+        const v = window.visualViewport!;
+        return Math.max(Math.abs(r.width - v.width), Math.abs(r.height - v.height));
+      })).toBeLessThanOrEqual(1);
+      const geometry = await canvas.evaluate(element => {
+        const c = element as HTMLCanvasElement, r = c.getBoundingClientRect();
+        return { cssWidth: r.width, bufferWidth: c.width };
+      });
+      expect(geometry.bufferWidth / geometry.cssWidth).toBeCloseTo(1.5, 2);
+    }
+    const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+    expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+  } finally { await context.close(); }
+});
+
+
+test("W1 camera distance controls clamp intent without bypassing obstruction or steering the actor", async ({ page, request }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, contentType: "model/gltf-binary", body: bytes }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  const diagnostics = () => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!);
+  await expect.poll(async () => (await diagnostics())?.resolvedCameraDistance).toBe(5);
+  const initial = await diagnostics();
+  expect(initial.cameraOccluded).toBe(false);
+  expect(initial.actorYawRadians! - initial.yawRadians).toBeCloseTo(Math.PI, 6);
+  await page.getByTestId("world-camera-toggle").click();
+  await page.getByRole("button", { name: "Camera farther" }).click();
+  expect((await diagnostics()).desiredCameraDistance).toBe(5.5);
+  await page.getByRole("button", { name: "Camera closer" }).click();
+  expect((await diagnostics()).desiredCameraDistance).toBe(5);
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.playableCameraZoom(-1000));
+  expect((await diagnostics()).desiredCameraDistance).toBe(2.5);
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.playableCameraZoom(1000));
+  expect((await diagnostics()).desiredCameraDistance).toBe(8);
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.playableCameraZoom(Number.NaN));
+  expect((await diagnostics()).desiredCameraDistance).toBe(8);
+  await page.evaluate(() => {
+    const api = window.__TRANSCEND_LAB__!;
+    api.playableCameraNudge(-api.playableDiagnostics()!.yawRadians);
+  });
+  const obstructed = await diagnostics();
+  expect(obstructed.cameraOccluded).toBe(true);
+  expect(obstructed.resolvedCameraDistance!).toBeLessThan(obstructed.desiredCameraDistance);
+  expect(obstructed.actorYawRadians).toBe(initial.actorYawRadians);
+  await page.getByRole("button", { name: "Reset camera" }).click();
+  const reset = await diagnostics();
+  expect(reset.desiredCameraDistance).toBe(5);
+  expect(reset.resolvedCameraDistance).toBe(5);
+  expect(reset.yawRadians).toBe(initial.yawRadians);
+  await page.getByTestId("open-world-destination").click();
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.playableCameraZoom(1));
+  expect((await diagnostics()).desiredCameraDistance).toBe(5);
+  await page.getByRole("button", { name: "Return from station" }).click();
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
+
+test("W1 focused-canvas wheel adjusts distance but preserves browser zoom and outside scroll", async ({ page, request }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, contentType: "model/gltf-binary", body: bytes }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  const canvas = page.getByTestId("world-playable-canvas");
+  await expect(canvas).toBeFocused();
+  const before = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!);
+  const result = await canvas.evaluate(element => {
+    const api = window.__TRANSCEND_LAB__!;
+    const wheel = (deltaY: number, deltaMode = 0, modifiers = {}) => {
+      const event = new WheelEvent("wheel", { deltaY, deltaMode, ...modifiers, bubbles: true, cancelable: true });
+      element.dispatchEvent(event);
+      return { cancelled: event.defaultPrevented, distance: api.playableDiagnostics()!.desiredCameraDistance };
+    };
+    const pixel = wheel(120);
+    const line = wheel(3, WheelEvent.DOM_DELTA_LINE);
+    const pageUnit = wheel(1, WheelEvent.DOM_DELTA_PAGE);
+    const ctrl = wheel(-120, 0, { ctrlKey: true });
+    const meta = wheel(-120, 0, { metaKey: true });
+    const horizontal = wheel(0);
+    return { pixel, line, pageUnit, ctrl, meta, horizontal };
+  });
+  expect(result.pixel.cancelled).toBe(true);
+  expect(result.pixel.distance).toBeGreaterThan(before.desiredCameraDistance);
+  expect(result.line.distance).toBeGreaterThan(result.pixel.distance);
+  expect(result.pageUnit.distance).toBe(8);
+  for (const key of ["ctrl", "meta", "horizontal"] as const) {
+    expect(result[key]).toEqual({ cancelled: false, distance: 8 });
+  }
+  await page.getByTestId("world-camera-toggle").focus();
+  const unfocused = await canvas.evaluate(element => {
+    const event = new WheelEvent("wheel", { deltaY: -120, bubbles: true, cancelable: true });
+    element.dispatchEvent(event); return event.defaultPrevented;
+  });
+  expect(unfocused).toBe(false);
+  await canvas.focus();
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, -180);
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!.desiredCameraDistance)).toBeLessThan(8);
+  const after = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!);
+  expect(after.yawRadians).toBe(before.yawRadians);
+  expect(after.actorYawRadians).toBe(before.actorYawRadians);
+  const outside = await page.getByTestId("world-camera-toggle").evaluate(element => {
+    const event = new WheelEvent("wheel", { deltaY: 120, bubbles: true, cancelable: true });
+    element.dispatchEvent(event); return event.defaultPrevented;
+  });
+  expect(outside).toBe(false);
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+  await page.getByTestId("start-world-playable").click();
+  await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()?.desiredCameraDistance)).toBe(5);
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
 });

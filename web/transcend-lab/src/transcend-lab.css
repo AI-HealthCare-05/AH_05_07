@@ -327,13 +327,22 @@ code {
   background: rgb(24 49 40 / 90%);
   box-shadow: 0 1rem 3rem rgb(0 0 0 / 18%);
   backdrop-filter: blur(14px);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
 }
 
-.world-playable-controls > span {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.82rem;
+.world-playable-primary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
+
+.world-playable-primary strong { margin-right: auto; }
+.world-playable-primary button { padding-inline: 0.75rem; }
+.world-camera-settings summary { min-height: 2.75rem; padding-block: 0.7rem; cursor: pointer; }
+.world-camera-settings summary:focus-visible { outline: 3px solid #f3c86a; outline-offset: 2px; }
+.world-camera-settings p { margin: 0.25rem 0; font-size: 0.82rem; line-height: 1.5; }
 
 .world-playable-controls .control-row {
   margin-top: 0.65rem;

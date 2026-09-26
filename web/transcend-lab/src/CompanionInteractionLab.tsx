@@ -273,18 +273,25 @@ export function CompanionInteractionLab() {
 
       {state.playable ? (
         <aside className="world-playable-controls" aria-label="W1 playable controls">
-          <strong>W1 Playable</strong>
-          <span>WASD / arrows move · drag to look · touch: left Move / right Look</span>
-          <div className="control-row">
-            <button type="button" onClick={() => runtime.playableCameraNudge(Math.PI / 12)}>Camera left</button>
-            <button type="button" onClick={() => runtime.playableCameraReset()}>Reset camera</button>
-            <button type="button" onClick={() => runtime.playableCameraNudge(-Math.PI / 12)}>Camera right</button>
-            <button type="button" data-testid="open-world-destination"
-              onClick={(event) => openDestination(event.currentTarget)}>Open Grove station</button>
+          <div className="world-playable-primary">
+            <strong>W1</strong>
+            <button type="button" data-testid="open-world-destination" aria-label="Open Grove station"
+              onClick={(event) => openDestination(event.currentTarget)}>Grove station</button>
             <button type="button" data-testid="exit-world-playable" onClick={() => void runtime.exitPlayable()}>
               Exit playable
             </button>
           </div>
+          <details className="world-camera-settings">
+            <summary data-testid="world-camera-toggle">Camera controls</summary>
+            <p>WASD / arrows move. Drag to look; focus the world and use the wheel for distance. Touch: Move / Look.</p>
+            <div className="control-row">
+              <button type="button" onClick={() => runtime.playableCameraNudge(Math.PI / 12)}>Camera left</button>
+              <button type="button" onClick={() => runtime.playableCameraNudge(-Math.PI / 12)}>Camera right</button>
+              <button type="button" onClick={() => runtime.playableCameraZoom(-0.5)}>Camera closer</button>
+              <button type="button" onClick={() => runtime.playableCameraZoom(0.5)}>Camera farther</button>
+              <button type="button" onClick={() => runtime.playableCameraReset()}>Reset camera</button>
+            </div>
+          </details>
         </aside>
       ) : null}
 
