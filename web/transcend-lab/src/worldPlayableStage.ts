@@ -25,38 +25,14 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { mountWorldTouchControls } from "./worldTouchControls";
 
-import type { WorldRenderableAsset } from "./platform/embodiment/worldRenderableAsset";
-import type { WorldResourceScope } from "./platform/runtime/worldResourceScope";
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
-import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
-
-export type WorldPlayableClip = "idle" | "move";
-
-export type WorldPlayableDiagnostics = Readonly<{
-  mounted: boolean;
-  clip: WorldPlayableClip | null;
-  cameraOccluded: boolean;
-  yawRadians: number;
-  pitchRadians: number;
-  renderCount: number;
-  desiredCameraDistance: number;
-  resolvedCameraDistance: number | null;
-  actorYawRadians: number | null;
-  reducedMotion: boolean;
-  animationTimeSeconds: number;
-  fixtureIds: readonly string[];
-  destinationNear: boolean;
-}>;
-
-type MountOptions = Readonly<{
-  host: HTMLElement;
-  resources: WorldResourceScope;
-  world: WorldRuntimePort;
-  asset: WorldRenderableAsset;
-  reducedMotion: boolean;
-  onFailure: (error: Error) => void;
-}>;
+import type {
+  WorldPlayableClip,
+  WorldPlayableDiagnostics,
+  WorldPlayableMountOptions,
+  WorldPlayableStagePort,
+} from "./platform/runtime/worldPlayableStagePort";
 
 function editableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -114,7 +90,7 @@ function normalizeModel(model: Group, modelHeight: number): Group {
   return root;
 }
 
-export class WorldPlayableStage {
+export class WorldPlayableStage implements WorldPlayableStagePort {
   readonly #profile: WorldSceneProfile;
   #host: HTMLElement | null = null;
   #root: HTMLDivElement | null = null;
@@ -126,8 +102,8 @@ export class WorldPlayableStage {
   #idle: AnimationAction | null = null;
   #move: AnimationAction | null = null;
   #clip: WorldPlayableClip | null = null;
-  #world: WorldRuntimePort | null = null;
-  #resources: WorldResourceScope | null = null;
+  #world: WorldPlayableMountOptions["world"] | null = null;
+  #resources: WorldPlayableMountOptions["resources"] | null = null;
   #reducedMotion = false;
   #yaw: number;
   #pitch: number;
@@ -170,7 +146,7 @@ export class WorldPlayableStage {
     });
   }
 
-  async mount(options: MountOptions): Promise<void> {
+  async mount(options: WorldPlayableMountOptions): Promise<void> {
     if (this.#root) throw new Error("WorldPlayableStage is already mounted");
     if (options.world.snapshot.lifecycle !== "running") throw new Error("playable physics world must be running first");
     this.#world = options.world;

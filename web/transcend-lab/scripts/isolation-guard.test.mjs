@@ -35,11 +35,16 @@ test("rejects a symlink alias to web/dist", () => {
 });
 
 test("world renderer and touch input depend on the reusable runtime port", () => {
-  for (const relativePath of ["src/worldPlayableStage.ts", "src/worldTouchControls.ts"]) {
-    const source = readFileSync(path.join(LAB_ROOT, relativePath), "utf8");
-    assert.match(source, /platform\/spatial\/worldRuntimePort/);
-    assert.doesNotMatch(source, /type KinematicWorld/);
-  }
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  const stagePort = readFileSync(
+    path.join(LAB_ROOT, "src/platform/runtime/worldPlayableStagePort.ts"),
+    "utf8",
+  );
+  const touch = readFileSync(path.join(LAB_ROOT, "src/worldTouchControls.ts"), "utf8");
+  assert.match(stage, /platform\/runtime\/worldPlayableStagePort/);
+  assert.match(stagePort, /spatial\/worldRuntimePort/);
+  assert.match(touch, /platform\/spatial\/worldRuntimePort/);
+  assert.doesNotMatch(stage + stagePort + touch, /type KinematicWorld/);
 });
 
 test("playable renderer receives environment policy through the scene profile", () => {
@@ -51,16 +56,32 @@ test("playable renderer receives environment policy through the scene profile", 
 });
 
 test("world renderer and touch input depend on the reusable resource scope", () => {
-  for (const relativePath of ["src/worldPlayableStage.ts", "src/worldTouchControls.ts"]) {
-    const source = readFileSync(path.join(LAB_ROOT, relativePath), "utf8");
-    assert.match(source, /platform\/runtime\/worldResourceScope/);
-    assert.doesNotMatch(source, /LabResourceLedger/);
-  }
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  const stagePort = readFileSync(
+    path.join(LAB_ROOT, "src/platform/runtime/worldPlayableStagePort.ts"),
+    "utf8",
+  );
+  const touch = readFileSync(path.join(LAB_ROOT, "src/worldTouchControls.ts"), "utf8");
+  assert.match(stage, /platform\/runtime\/worldPlayableStagePort/);
+  assert.match(stagePort, /runtime\/worldResourceScope/);
+  assert.match(touch, /platform\/runtime\/worldResourceScope/);
+  assert.doesNotMatch(stage + stagePort + touch, /LabResourceLedger/);
 });
 
 test("playable renderer depends on generic render bytes and profile-owned clip names", () => {
   const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
-  assert.match(stage, /platform\/embodiment\/worldRenderableAsset/);
+  const stagePort = readFileSync(
+    path.join(LAB_ROOT, "src/platform/runtime/worldPlayableStagePort.ts"),
+    "utf8",
+  );
+  assert.match(stagePort, /embodiment\/worldRenderableAsset/);
   assert.match(stage, /profile\.actor\.clips/);
-  assert.doesNotMatch(stage, /VerifiedPinnedAsset|labAssetAdmission/);
+  assert.doesNotMatch(stage + stagePort, /VerifiedPinnedAsset|labAssetAdmission/);
+});
+
+test("Lab orchestration retains the playable renderer through its stage port", () => {
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  assert.match(runtime, /WorldPlayableStagePort/);
+  assert.match(runtime, /new WorldPlayableStage\(/);
+  assert.doesNotMatch(runtime, /#playableStage:\s*WorldPlayableStage\s*\|/);
 });
