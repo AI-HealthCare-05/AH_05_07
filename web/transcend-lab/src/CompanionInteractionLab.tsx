@@ -17,6 +17,7 @@ import {
 } from "../../src/ui/companionReviewCatalog";
 import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embodiment/labEmbodimentPort";
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
+import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
 
 const reviewEligibleEntries = Object.freeze(
   companionReviewCatalog.entries.filter((entry) => entry.reviewEligible),
@@ -35,8 +36,12 @@ function px(value: number): string {
 export function CompanionInteractionLab() {
   const runtimeRef = useRef<TranscendLabRuntime | null>(null);
   if (!runtimeRef.current) {
+    const params = new URLSearchParams(window.location.search);
     runtimeRef.current = new TranscendLabRuntime({
-      forceRendererFailure: new URLSearchParams(window.location.search).get("rendererFailure") === "1",
+      forceRendererFailure: params.get("rendererFailure") === "1",
+      playableSceneProfile: params.get("sceneProfile") === "synthetic"
+        ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
+        : undefined,
     });
   }
   const runtime = runtimeRef.current;

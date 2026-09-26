@@ -61,6 +61,7 @@ import {
 import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
 import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
 import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
+import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
 import { SequentialBackendSelector } from "./labRenderers";
 import { WorldPlayableStage } from "./worldPlayableStage";
 import { mountWorldTouchControls } from "./worldTouchControls";
@@ -219,6 +220,7 @@ export class TranscendLabRuntime {
   readonly #selector = new SequentialBackendSelector();
   readonly #rapierSpike = new RapierIsolationSpike();
   readonly #kinematicWorld = new KinematicWorld();
+  readonly #playableSceneProfile: WorldSceneProfile;
   #resources = new LabResourceLedger();
   #playableResources: LabResourceLedger | null = null;
   #playableStage: WorldPlayableStagePort | null = null;
@@ -249,8 +251,12 @@ export class TranscendLabRuntime {
   #error: string | null = null;
   #state: LabPublicState;
 
-  constructor(options: Readonly<{ forceRendererFailure?: boolean }> = {}) {
+  constructor(options: Readonly<{
+    forceRendererFailure?: boolean;
+    playableSceneProfile?: WorldSceneProfile;
+  }> = {}) {
     this.#forceRendererFailure = options.forceRendererFailure ?? false;
+    this.#playableSceneProfile = options.playableSceneProfile ?? W1_WORLD_SCENE_PROFILE;
     this.#builder = new ArenaSnapshotBuilder(() => this.#currentMeasurementViewport());
     this.#builder.registerAnchorProvider("synthetic-route-anchors", () =>
       syntheticAnchors(this.#route, this.#currentMeasurementViewport()),
@@ -393,7 +399,7 @@ export class TranscendLabRuntime {
     this.#pointer = null;
 
     const resources = new LabResourceLedger();
-    const stage = new WorldPlayableStage(W1_WORLD_SCENE_PROFILE, mountWorldTouchControls);
+    const stage = new WorldPlayableStage(this.#playableSceneProfile, mountWorldTouchControls);
     this.#resources = resources;
     this.#playableResources = resources;
     this.#playableStage = stage;

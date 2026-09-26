@@ -104,5 +104,13 @@ test("playable renderer receives its touch surface from Lab composition", () => 
   const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
   assert.match(stage, /WorldTouchSurfaceInstaller/);
   assert.doesNotMatch(stage, /worldTouchControls/);
-  assert.match(runtime, /new WorldPlayableStage\(W1_WORLD_SCENE_PROFILE, mountWorldTouchControls\)/);
+  assert.match(runtime, /new WorldPlayableStage\(this\.#playableSceneProfile, mountWorldTouchControls\)/);
+});
+
+test("Lab composition can inject an alternate world scene profile", () => {
+  const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  assert.match(component, /sceneProfile/);
+  assert.match(component, /W2_SYNTHETIC_WORLD_SCENE_PROFILE/);
+  assert.match(runtime, /playableSceneProfile/);
 });
