@@ -26,7 +26,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mountWorldTouchControls } from "./worldTouchControls";
 
 import type { VerifiedPinnedAsset } from "./platform/embodiment/labAssetAdmission";
-import { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
+import type { WorldResourceScope } from "./platform/runtime/worldResourceScope";
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
@@ -51,7 +51,7 @@ export type WorldPlayableDiagnostics = Readonly<{
 
 type MountOptions = Readonly<{
   host: HTMLElement;
-  resources: LabResourceLedger;
+  resources: WorldResourceScope;
   world: WorldRuntimePort;
   asset: VerifiedPinnedAsset;
   reducedMotion: boolean;
@@ -127,7 +127,7 @@ export class WorldPlayableStage {
   #move: AnimationAction | null = null;
   #clip: WorldPlayableClip | null = null;
   #world: WorldRuntimePort | null = null;
-  #resources: LabResourceLedger | null = null;
+  #resources: WorldResourceScope | null = null;
   #reducedMotion = false;
   #yaw: number;
   #pitch: number;

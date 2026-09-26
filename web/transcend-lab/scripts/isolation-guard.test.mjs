@@ -49,3 +49,11 @@ test("playable renderer receives environment policy through the scene profile", 
   assert.doesNotMatch(stage, /KINEMATIC_CONFIG|PLAYABLE_DESTINATION|playableWorldLayout/);
   assert.match(runtime, /W1_WORLD_SCENE_PROFILE/);
 });
+
+test("world renderer and touch input depend on the reusable resource scope", () => {
+  for (const relativePath of ["src/worldPlayableStage.ts", "src/worldTouchControls.ts"]) {
+    const source = readFileSync(path.join(LAB_ROOT, relativePath), "utf8");
+    assert.match(source, /platform\/runtime\/worldResourceScope/);
+    assert.doesNotMatch(source, /LabResourceLedger/);
+  }
+});
