@@ -550,6 +550,42 @@ test("W2 alternate scene and physics sessions mount through the reusable world c
   });
 });
 
+test("W3 synthetic spatial movement publishes a semantic destination status", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await openRunningLab(page, "/?sceneProfile=synthetic&worldProfile=synthetic");
+  await page.getByTestId("start-world-playable").click();
+
+  const stage = page.getByTestId("world-playable-stage");
+  const status = page.getByTestId("world-destination-status");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(stage).toHaveAttribute("data-destination-near", "false");
+  await expect(status).toHaveAttribute("role", "status");
+  await expect(status).toHaveAttribute("aria-live", "polite");
+  await expect(status).toHaveText("Synthetic marker is ahead.");
+
+  await page.keyboard.down("w");
+  await expect(stage).toHaveAttribute("data-destination-near", "true", { timeout: 10_000 });
+  await page.keyboard.up("w");
+  await expect(status).toHaveText("At synthetic marker.");
+
+  const position = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState().position);
+  expect(position).not.toBeNull();
+  expect(Math.hypot(position!.x, position!.z + 1)).toBeLessThanOrEqual(0.75);
+
+  await page.getByTestId("exit-world-playable").click();
+  await expect(stage).toHaveCount(0);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState())).lifecycle)
+    .toBe("stopped");
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
 test("W1 desktop playable cancellation and overlapping starts retain only the latest owner", async ({ page, request }) => {
   const pinnedBytes = await fetchExactPinnedBytes(request);
   await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
