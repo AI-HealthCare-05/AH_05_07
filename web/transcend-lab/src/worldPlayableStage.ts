@@ -8,6 +8,7 @@ import {
   Float32BufferAttribute,
   CircleGeometry,
   Color,
+  CylinderGeometry,
   DirectionalLight,
   Group,
   Mesh,
@@ -153,6 +154,12 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       destinationNear: this.#destinationNear,
       overlayMarkerCount: this.#overlayPlan?.markers.length ?? 0,
       overlaySegmentCount: this.#overlayPlan?.segments.length ?? 0,
+      renderedOverlayMarkerCount: this.#scene?.children.filter(
+        (child) => child.name.startsWith("overlay-marker:"),
+      ).length ?? 0,
+      renderedOverlaySegmentCount: this.#scene?.children.filter(
+        (child) => child.name.startsWith("overlay-segment:"),
+      ).length ?? 0,
     });
   }
 
@@ -229,6 +236,16 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
         color: shape.id.includes("blocked") ? 0xac7f68 : 0x7c8e78, roughness: 0.86,
       }));
       mesh.name = `fixture:${shape.id}`;
+      scene.add(mesh);
+    }
+
+    for (const marker of this.#overlayPlan?.markers ?? []) {
+      const mesh = new Mesh(
+        new CylinderGeometry(0.18, 0.18, 0.08, 20),
+        new MeshStandardMaterial({ color: 0x62789a, roughness: 0.78, metalness: 0.04 }),
+      );
+      mesh.name = `overlay-marker:${marker.id}`;
+      mesh.position.set(marker.position.x, marker.position.y + 0.04, marker.position.z);
       scene.add(mesh);
     }
 

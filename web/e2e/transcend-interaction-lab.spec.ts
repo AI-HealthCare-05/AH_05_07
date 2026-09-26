@@ -657,6 +657,31 @@ test("W4 Living Week overlay plan reaches reusable renderer diagnostics without 
   });
 });
 
+test("W4 Living Week overlay renders seven marker beacons without segment lines yet", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await openRunningLab(page, "/?overlayPlan=living-week");
+  await page.getByTestId("start-world-playable").click();
+  await expect(page.getByTestId("world-playable-stage")).toBeVisible({ timeout: 30_000 });
+
+  const diagnostics = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics());
+  expect(diagnostics).toMatchObject({
+    overlayMarkerCount: 7,
+    overlaySegmentCount: 6,
+    renderedOverlayMarkerCount: 7,
+    renderedOverlaySegmentCount: 0,
+  });
+
+  await page.getByTestId("exit-world-playable").click();
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
 test("W3 synthetic spatial movement publishes a semantic destination status", async ({ page, request }) => {
   const pinnedBytes = await fetchExactPinnedBytes(request);
   await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
