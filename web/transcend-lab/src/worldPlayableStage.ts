@@ -43,6 +43,8 @@ export type WorldPlayableDiagnostics = Readonly<{
   yawRadians: number;
   pitchRadians: number;
   renderCount: number;
+  reducedMotion: boolean;
+  animationTimeSeconds: number;
   fixtureIds: readonly string[];
   destinationNear: boolean;
 }>;
@@ -162,6 +164,8 @@ export class WorldPlayableStage {
       yawRadians: this.#yaw,
       pitchRadians: this.#pitch,
       renderCount: this.#renderCount,
+      reducedMotion: this.#reducedMotion,
+      animationTimeSeconds: this.#mixer?.time ?? 0,
       fixtureIds: Object.freeze(this.#scene?.children.filter((child) => child.name.startsWith("fixture:")).map((child) => child.name.slice(8)) ?? []),
       destinationNear: this.#destinationNear,
     });
@@ -308,6 +312,13 @@ export class WorldPlayableStage {
       if (!(event instanceof KeyboardEvent)) return;
       if (options.world.key(event.code, false)) event.preventDefault();
     });
+    // Follow the current preference, including changes after async asset loading.
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.#reducedMotion = motionPreference.matches;
+    options.resources.listen(motionPreference, "change", () => {
+      this.#reducedMotion = motionPreference.matches;
+    });
+
     options.resources.listen(window, "blur", () => options.world.blur());
     options.resources.listen(document, "visibilitychange", () => {
       options.world.setHidden(document.hidden);
