@@ -14,6 +14,8 @@ import {
   livingWeekSegments,
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
 import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
+import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/w4LivingWeekWorldSceneProfile";
+import { W4_LIVING_WEEK_WORLD_LIMIT_METRES } from "../transcend-lab/src/platform/spatial/w4LivingWeekPlayableWorldSession";
 import type { WorldSceneOverlayPlan } from "../transcend-lab/src/platform/spatial/worldSceneOverlayPlan";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
@@ -724,6 +726,53 @@ test("W4 Living Week overlay renders seven weekday billboard labels", async ({ p
   });
 
   await page.getByTestId("exit-world-playable").click();
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
+test("W4 Living Week mounts in its own bounded blank world shell", async ({ page, request }) => {
+  const maxLandmarkCoordinate = Math.max(...LIVING_WEEK_LANDMARKS.flatMap((landmark) => [
+    Math.abs(landmark.position.x),
+    Math.abs(landmark.position.z),
+  ]));
+  expect(W4_LIVING_WEEK_WORLD_SCENE_PROFILE.groundSize).toBe(LIVING_WEEK_BOUND_METRES * 2);
+  expect(W4_LIVING_WEEK_WORLD_LIMIT_METRES).toBeGreaterThan(maxLandmarkCoordinate);
+  expect(W4_LIVING_WEEK_WORLD_LIMIT_METRES).toBeLessThanOrEqual(LIVING_WEEK_BOUND_METRES);
+
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await openRunningLab(page, "/?worldTrack=living-week");
+  await page.getByTestId("start-world-playable").click();
+
+  const stage = page.getByTestId("world-playable-stage");
+  const canvas = page.getByTestId("world-playable-canvas");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(canvas).toHaveAttribute(
+    "aria-label",
+    "Living Week world. Seven weekday landmarks are connected in sequence.",
+  );
+
+  const mounted = await page.evaluate(() => ({
+    playable: window.__TRANSCEND_LAB__!.playableDiagnostics(),
+    world: window.__TRANSCEND_LAB__!.playableWorldState(),
+    w1Harness: window.__TRANSCEND_LAB__!.kinematic.state(),
+  }));
+  expect(mounted.playable).toMatchObject({
+    renderedOverlayMarkerCount: 7,
+    renderedOverlaySegmentCount: 6,
+    renderedOverlayLabelCount: 7,
+  });
+  expect(mounted.world.lifecycle).toBe("running");
+  expect(mounted.w1Harness.lifecycle).toBe("stopped");
+
+  await page.getByTestId("exit-world-playable").click();
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState())).lifecycle)
+    .toBe("stopped");
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(stopped).toMatchObject({
     listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,

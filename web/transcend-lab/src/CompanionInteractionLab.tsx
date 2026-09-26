@@ -19,6 +19,8 @@ import { PINNED_ACTIVE_ASSET, TRANSCEND_SCENARIO_FIXTURE } from "./platform/embo
 import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
 import { LIVING_WEEK_SCENE_PLAN } from "./platform/spatial/livingWeekScenePlan";
+import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "./platform/spatial/w4LivingWeekWorldSceneProfile";
+import { createW4LivingWeekPlayableWorldSession } from "./platform/spatial/w4LivingWeekPlayableWorldSession";
 import { createW2SyntheticPlayableWorldSession } from "./platform/spatial/w2SyntheticPlayableWorldSession";
 
 const reviewEligibleEntries = Object.freeze(
@@ -39,15 +41,20 @@ export function CompanionInteractionLab() {
   const runtimeRef = useRef<TranscendLabRuntime | null>(null);
   if (!runtimeRef.current) {
     const params = new URLSearchParams(window.location.search);
+    const livingWeek = params.get("worldTrack") === "living-week";
     runtimeRef.current = new TranscendLabRuntime({
       forceRendererFailure: params.get("rendererFailure") === "1",
-      playableSceneProfile: params.get("sceneProfile") === "synthetic"
-        ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
-        : undefined,
-      playableWorldSession: params.get("worldProfile") === "synthetic"
-        ? createW2SyntheticPlayableWorldSession()
-        : undefined,
-      playableOverlayPlan: params.get("overlayPlan") === "living-week"
+      playableSceneProfile: livingWeek
+        ? W4_LIVING_WEEK_WORLD_SCENE_PROFILE
+        : params.get("sceneProfile") === "synthetic"
+          ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
+          : undefined,
+      playableWorldSession: livingWeek
+        ? createW4LivingWeekPlayableWorldSession()
+        : params.get("worldProfile") === "synthetic"
+          ? createW2SyntheticPlayableWorldSession()
+          : undefined,
+      playableOverlayPlan: livingWeek || params.get("overlayPlan") === "living-week"
         ? LIVING_WEEK_SCENE_PLAN
         : undefined,
     });
