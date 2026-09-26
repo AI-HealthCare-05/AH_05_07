@@ -1,5 +1,4 @@
-import type { WorldResourceScope } from "./platform/runtime/worldResourceScope";
-import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
+import type { WorldTouchSurfaceOptions } from "./platform/runtime/worldTouchSurfacePort";
 import { isUsablePointerId } from "./platform/behavior/worldMovementIntent";
 
 type Contact = {
@@ -12,16 +11,8 @@ type Contact = {
   radius: number;
 };
 
-type TouchOptions = Readonly<{
-  root: HTMLElement;
-  canvas: HTMLCanvasElement;
-  resources: WorldResourceScope;
-  world: WorldRuntimePort;
-  look: (dx: number, dy: number) => void;
-}>;
-
 /** Two bounded touch surfaces, not a page-wide scroll/zoom interceptor. */
-export function mountWorldTouchControls(options: TouchOptions): void {
+export function mountWorldTouchControls(options: WorldTouchSurfaceOptions): void {
   const { root, canvas, resources, world } = options;
   const overlay = document.createElement("div");
   overlay.className = "world-touch-controls";

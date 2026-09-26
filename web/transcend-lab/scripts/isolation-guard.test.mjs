@@ -41,10 +41,15 @@ test("world renderer and touch input depend on the reusable runtime port", () =>
     "utf8",
   );
   const touch = readFileSync(path.join(LAB_ROOT, "src/worldTouchControls.ts"), "utf8");
+  const touchPort = readFileSync(
+    path.join(LAB_ROOT, "src/platform/runtime/worldTouchSurfacePort.ts"),
+    "utf8",
+  );
   assert.match(stage, /platform\/runtime\/worldPlayableStagePort/);
   assert.match(stagePort, /spatial\/worldRuntimePort/);
-  assert.match(touch, /platform\/spatial\/worldRuntimePort/);
-  assert.doesNotMatch(stage + stagePort + touch, /type KinematicWorld/);
+  assert.match(touch, /platform\/runtime\/worldTouchSurfacePort/);
+  assert.match(touchPort, /spatial\/worldRuntimePort/);
+  assert.doesNotMatch(stage + stagePort + touch + touchPort, /type KinematicWorld/);
 });
 
 test("playable renderer receives environment policy through the scene profile", () => {
@@ -62,10 +67,15 @@ test("world renderer and touch input depend on the reusable resource scope", () 
     "utf8",
   );
   const touch = readFileSync(path.join(LAB_ROOT, "src/worldTouchControls.ts"), "utf8");
+  const touchPort = readFileSync(
+    path.join(LAB_ROOT, "src/platform/runtime/worldTouchSurfacePort.ts"),
+    "utf8",
+  );
   assert.match(stage, /platform\/runtime\/worldPlayableStagePort/);
   assert.match(stagePort, /runtime\/worldResourceScope/);
-  assert.match(touch, /platform\/runtime\/worldResourceScope/);
-  assert.doesNotMatch(stage + stagePort + touch, /LabResourceLedger/);
+  assert.match(touch, /platform\/runtime\/worldTouchSurfacePort/);
+  assert.match(touchPort, /worldResourceScope/);
+  assert.doesNotMatch(stage + stagePort + touch + touchPort, /LabResourceLedger/);
 });
 
 test("playable renderer depends on generic render bytes and profile-owned clip names", () => {
@@ -84,4 +94,12 @@ test("Lab orchestration retains the playable renderer through its stage port", (
   assert.match(runtime, /WorldPlayableStagePort/);
   assert.match(runtime, /new WorldPlayableStage\(/);
   assert.doesNotMatch(runtime, /#playableStage:\s*WorldPlayableStage\s*\|/);
+});
+
+test("playable renderer receives its touch surface from Lab composition", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  assert.match(stage, /WorldTouchSurfaceInstaller/);
+  assert.doesNotMatch(stage, /worldTouchControls/);
+  assert.match(runtime, /new WorldPlayableStage\(W1_WORLD_SCENE_PROFILE, mountWorldTouchControls\)/);
 });

@@ -23,8 +23,6 @@ import {
 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { mountWorldTouchControls } from "./worldTouchControls";
-
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
 import type {
@@ -33,6 +31,7 @@ import type {
   WorldPlayableMountOptions,
   WorldPlayableStagePort,
 } from "./platform/runtime/worldPlayableStagePort";
+import type { WorldTouchSurfaceInstaller } from "./platform/runtime/worldTouchSurfacePort";
 
 function editableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -92,6 +91,7 @@ function normalizeModel(model: Group, modelHeight: number): Group {
 
 export class WorldPlayableStage implements WorldPlayableStagePort {
   readonly #profile: WorldSceneProfile;
+  readonly #installTouchSurface: WorldTouchSurfaceInstaller;
   #host: HTMLElement | null = null;
   #root: HTMLDivElement | null = null;
   #renderer: WebGLRenderer | null = null;
@@ -121,8 +121,12 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
   #destinationStatus: HTMLElement | null = null;
   #destinationNear = false;
 
-  constructor(profile: WorldSceneProfile) {
+  constructor(
+    profile: WorldSceneProfile,
+    installTouchSurface: WorldTouchSurfaceInstaller,
+  ) {
     this.#profile = profile;
+    this.#installTouchSurface = installTouchSurface;
     this.#yaw = profile.camera.seed.yawRadians;
     this.#pitch = profile.camera.seed.pitchRadians;
     this.#desiredCameraDistance = profile.camera.seed.desiredDistance;
@@ -358,7 +362,7 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       if (this.zoomCamera(delta)) event.preventDefault();
     }, { passive: false });
 
-    mountWorldTouchControls({
+    this.#installTouchSurface({
       root, canvas: renderer.domElement, resources: options.resources, world: options.world,
       look: (dx, dy) => {
         this.#yaw -= dx * this.#profile.camera.lookSensitivity;
