@@ -1670,3 +1670,45 @@ test("W1 focused-canvas wheel adjusts distance but preserves browser zoom and ou
   await expect.poll(() => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()?.desiredCameraDistance)).toBe(5);
   await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
 });
+
+
+test("W1 direct look vertical drag follows screen direction for mouse and touch", async ({ browser, page, request, baseURL }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({ status: 200, contentType: "model/gltf-binary", body: bytes }));
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  const canvas = page.getByTestId("world-playable-canvas");
+  const box = (await canvas.boundingBox())!;
+  const startPitch = (await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 40);
+  await page.mouse.up();
+  const mouseUpPitch = (await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+  // Direct manipulation: dragging upward should tilt the view upward.
+  // In the orbit representation that means lowering the camera pitch.
+  expect(mouseUpPitch).toBeLessThan(startPitch);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 40);
+  await page.mouse.up();
+  const mouseDownPitch = (await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+  expect(mouseDownPitch).toBeGreaterThan(mouseUpPitch);
+  await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+
+  const h = await openTouchPlayable(browser, request, baseURL);
+  try {
+    const { page: touchPage, second, send } = h;
+    const touchStartPitch = (await touchPage.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+    await send("touchStart", [second]);
+    await send("touchMove", [{ ...second, y: second.y - 36 }]);
+    const touchUpPitch = (await touchPage.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+    expect(touchUpPitch).toBeLessThan(touchStartPitch);
+    await send("touchMove", [{ ...second, y: second.y + 36 }]);
+    const touchDownPitch = (await touchPage.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))!.pitchRadians;
+    expect(touchDownPitch).toBeGreaterThan(touchUpPitch);
+    await send("touchEnd", []);
+  } finally {
+    await h.context.close();
+  }
+});

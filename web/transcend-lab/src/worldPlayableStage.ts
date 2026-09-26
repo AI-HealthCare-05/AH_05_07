@@ -360,7 +360,9 @@ export class WorldPlayableStage {
       this.#pointerX = event.clientX;
       this.#pointerY = event.clientY;
       this.#yaw -= dx * LOOK_SENSITIVITY;
-      this.#pitch -= dy * LOOK_SENSITIVITY;
+      // Direct look: drag up to look up, drag down to look down.
+      // Orbit pitch moves opposite the requested screen-view direction.
+      this.#pitch += dy * LOOK_SENSITIVITY;
       options.world.setYaw(this.#yaw);
       event.preventDefault();
     });
@@ -394,7 +396,7 @@ export class WorldPlayableStage {
       look: (dx, dy) => {
         this.#yaw -= dx * LOOK_SENSITIVITY;
         this.#pitch = Math.max(CAMERA_SEED.minPitchRadians,
-          Math.min(CAMERA_SEED.maxPitchRadians, this.#pitch - dy * LOOK_SENSITIVITY));
+          Math.min(CAMERA_SEED.maxPitchRadians, this.#pitch + dy * LOOK_SENSITIVITY));
         options.world.setYaw(this.#yaw);
       },
     });
