@@ -6,4 +6,3 @@
 export interface WorldRenderableAsset {
   readonly bytes: ArrayBuffer;
 }
-
