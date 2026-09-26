@@ -1559,6 +1559,11 @@ test("W1 high-DPR camera canvas stays in CSS pixels through viewport changes", a
         return { cssWidth: r.width, bufferWidth: c.width };
       });
       expect(geometry.bufferWidth / geometry.cssWidth).toBeCloseTo(1.5, 2);
+      if (viewport.width > viewport.height) {
+        // Closed camera settings must fit one row instead of covering the actor's head.
+        const controls = await page.getByRole("complementary", { name: "W1 playable controls" }).boundingBox();
+        expect(controls!.height).toBeLessThanOrEqual(70);
+      }
     }
     const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
     expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });

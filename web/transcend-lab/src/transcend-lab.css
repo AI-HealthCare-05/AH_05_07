@@ -348,6 +348,13 @@ code {
   margin-top: 0.65rem;
 }
 
+/* Keep the collapsed HUD above the actor on short landscape viewports. */
+@media (min-width: 640px) and (max-height: 480px) {
+  .world-playable-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 0.75rem; padding: 0.4rem 0.75rem; }
+  .world-playable-primary { flex: 1; }
+  .world-camera-settings[open] { flex-basis: 100%; }
+}
+
 .renderer-host,
 .transcend-renderer {
   position: fixed;
