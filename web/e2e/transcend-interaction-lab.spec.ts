@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { KinematicWorld, KINEMATIC_CONFIG } from "../transcend-lab/src/platform/spatial/kinematicWorld";
+import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
 import {
@@ -839,6 +840,80 @@ test("W1 physics out-of-bounds recovery clears movement and oversized frames are
   expect(result.stalled.clock.stepCount).toBe(result.recovered.clock.stepCount);
   expect(result.after.clock.stepCount).toBe(result.recovered.clock.stepCount + 1);
   expect(result.after.position!.x).toBe(0);
+});
+
+test("W2 kinematic kernel accepts an injected environment profile", async () => {
+  const populated: string[] = [];
+  let worldsFreed = 0;
+  let controllersRemoved = 0;
+
+  class Descriptor {
+    setTranslation() { return this; }
+    static capsule() { return new Descriptor(); }
+    static kinematicPositionBased() { return new Descriptor(); }
+  }
+  class SyntheticBody {
+    translation() { return { x: 3, y: 2, z: 1 }; }
+    setTranslation() {}
+    setNextKinematicTranslation() {}
+  }
+  class SyntheticController {
+    setUp() {}
+    enableAutostep() {}
+    enableSnapToGround() {}
+    setMaxSlopeClimbAngle() {}
+    setMinSlopeSlideAngle() {}
+    computeColliderMovement() {}
+    computedMovement() { return { x: 0, y: 0, z: 0 }; }
+    computedGrounded() { return true; }
+  }
+  class SyntheticWorld {
+    timestep = 0;
+    characterControllers = { size: 1 };
+    bodies = { len: () => 1 };
+    colliders = { len: () => 1 };
+    createRigidBody() { return new SyntheticBody(); }
+    createCollider() { return {}; }
+    createCharacterController() { return new SyntheticController(); }
+    removeCharacterController() { controllersRemoved += 1; }
+    step() {}
+    free() { worldsFreed += 1; }
+  }
+
+  const synthetic = {
+    World: SyntheticWorld,
+    ColliderDesc: Descriptor,
+    RigidBodyDesc: Descriptor,
+    version: () => "w2-synthetic",
+  } as unknown as RapierModule;
+  const profile = Object.freeze({
+    fixtures: Object.freeze(["empty", "offset"] as const),
+    defaultFixture: "empty" as const,
+    recoveryPoint: worldPoint(0, 0.8, 0),
+    config: KINEMATIC_CONFIG,
+    populate: ({ fixture }: { fixture: "empty" | "offset" }) => {
+      populated.push(fixture);
+      return fixture === "offset" ? worldPoint(3, 2, 1) : worldPoint(0, 0.8, 0);
+    },
+  });
+  const kernel = new KinematicWorldKernel(profile, async () => synthetic);
+
+  await expect(kernel.start("offset")).resolves.toBe(true);
+  expect(populated).toEqual(["offset"]);
+  expect(kernel.snapshot).toMatchObject({
+    lifecycle: "running",
+    fixture: "offset",
+    runtimeVersion: "w2-synthetic",
+    position: { space: WORLD_SPACE, kind: "point", x: 3, y: 2, z: 1 },
+    resources: { worlds: 1, controllers: 1, bodies: 1, colliders: 1, pendingLoads: 0 },
+  });
+
+  kernel.stop();
+  expect(kernel.snapshot.resources).toEqual({
+    worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0,
+  });
+  expect(controllersRemoved).toBe(1);
+  expect(worldsFreed).toBe(1);
 });
 
 test("W1 physics partial construction and rejected initialization release resources", async () => {
