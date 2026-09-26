@@ -25,6 +25,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
 import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
+import type { WorldSceneOverlayPlan } from "./platform/spatial/worldSceneOverlayPlan";
 import type {
   WorldPlayableClip,
   WorldPlayableDiagnostics,
@@ -92,6 +93,7 @@ function normalizeModel(model: Group, modelHeight: number): Group {
 export class WorldPlayableStage implements WorldPlayableStagePort {
   readonly #profile: WorldSceneProfile;
   readonly #installTouchSurface: WorldTouchSurfaceInstaller;
+  readonly #overlayPlan: WorldSceneOverlayPlan | null;
   #host: HTMLElement | null = null;
   #root: HTMLDivElement | null = null;
   #renderer: WebGLRenderer | null = null;
@@ -124,9 +126,11 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
   constructor(
     profile: WorldSceneProfile,
     installTouchSurface: WorldTouchSurfaceInstaller,
+    overlayPlan: WorldSceneOverlayPlan | null = null,
   ) {
     this.#profile = profile;
     this.#installTouchSurface = installTouchSurface;
+    this.#overlayPlan = overlayPlan;
     this.#yaw = profile.camera.seed.yawRadians;
     this.#pitch = profile.camera.seed.pitchRadians;
     this.#desiredCameraDistance = profile.camera.seed.desiredDistance;
@@ -147,6 +151,8 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       animationTimeSeconds: this.#mixer?.time ?? 0,
       fixtureIds: Object.freeze(this.#scene?.children.filter((child) => child.name.startsWith("fixture:")).map((child) => child.name.slice(8)) ?? []),
       destinationNear: this.#destinationNear,
+      overlayMarkerCount: this.#overlayPlan?.markers.length ?? 0,
+      overlaySegmentCount: this.#overlayPlan?.segments.length ?? 0,
     });
   }
 
