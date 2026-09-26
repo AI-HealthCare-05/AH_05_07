@@ -1563,6 +1563,8 @@ test("W1 high-DPR camera canvas stays in CSS pixels through viewport changes", a
         // Closed camera settings must fit one row instead of covering the actor's head.
         const controls = await page.getByRole("complementary", { name: "W1 playable controls" }).boundingBox();
         expect(controls!.height).toBeLessThanOrEqual(70);
+        const status = await page.getByTestId("world-destination-status").boundingBox();
+        expect(status!.y).toBeGreaterThan(viewport.height * 0.65);
       }
     }
     const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
