@@ -22,4 +22,3 @@ export interface WorldResourceScope {
   beginLoad(): WorldResourceLoad;
   trackWebglContext(dispose: () => void): () => void;
 }
-
