@@ -1482,3 +1482,45 @@ test("W1 playable first frame uses only the monotonic RAF clock", async ({ page,
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });
+
+test("W1 live reduced motion freezes idle without remount and drains its listener", async ({ page, request }) => {
+  const bytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, route => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: bytes,
+  }));
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await openRunningLab(page);
+  await page.getByTestId("start-world-playable").click();
+  const diagnostics = () => page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!);
+  await expect.poll(async () => (await diagnostics())?.animationTimeSeconds ?? 0).toBeGreaterThan(0);
+  const advanceFrames = () => page.evaluate(() => new Promise<void>(resolve => {
+    let frames = 0;
+    const frame = () => { if (++frames === 6) resolve(); else requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+  }));
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect.poll(async () => (await diagnostics()).reducedMotion).toBe(true);
+  const reduced = await diagnostics();
+  await advanceFrames();
+  const paused = await diagnostics();
+  expect(paused.animationTimeSeconds).toBe(reduced.animationTimeSeconds);
+  expect(paused.renderCount).toBeGreaterThan(reduced.renderCount);
+  await page.getByTestId("open-world-destination").click();
+  await expect(page.getByTestId("world-destination-dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Return from station" }).click();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect.poll(async () => (await diagnostics()).animationTimeSeconds)
+    .toBeGreaterThan(paused.animationTimeSeconds);
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.state())).lifecycle).toBe("stopped");
+  await page.getByTestId("start-world-playable").click();
+  await expect.poll(async () => (await diagnostics())?.reducedMotion).toBe(true);
+  const restarted = await diagnostics();
+  await advanceFrames();
+  expect((await diagnostics()).animationTimeSeconds).toBe(restarted.animationTimeSeconds);
+  const drained = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(drained).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
+});
