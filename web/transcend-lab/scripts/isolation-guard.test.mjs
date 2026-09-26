@@ -131,6 +131,7 @@ test("W2 world kernel facade exports only reusable world contracts", () => {
     "kinematicWorldKernel",
     "worldRuntimePort",
     "worldSceneProfile",
+    "worldSceneOverlayPlan",
     "worldPlayableSession",
     "worldPlayableStagePort",
     "worldTouchSurfacePort",
