@@ -25,4 +25,3 @@ export const W1_WORLD_SCENE_PROFILE: WorldSceneProfile = Object.freeze({
     footOffset: KINEMATIC_CONFIG.capsuleHalfHeight + KINEMATIC_CONFIG.capsuleRadius,
   }),
 });
-

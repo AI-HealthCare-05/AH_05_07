@@ -24,4 +24,3 @@ export type WorldSceneProfile = Readonly<{
     footOffset: number;
   }>;
 }>;
-
