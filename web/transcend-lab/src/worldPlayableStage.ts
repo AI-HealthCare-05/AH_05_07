@@ -27,10 +27,8 @@ import { mountWorldTouchControls } from "./worldTouchControls";
 
 import type { VerifiedPinnedAsset } from "./platform/embodiment/labAssetAdmission";
 import { LabResourceLedger } from "./platform/embodiment/labEmbodimentPort";
-import {
-  KINEMATIC_CONFIG,
-  type KinematicWorld,
-} from "./platform/spatial/kinematicWorld";
+import { KINEMATIC_CONFIG } from "./platform/spatial/kinematicWorld";
+import type { WorldRuntimePort } from "./platform/spatial/worldRuntimePort";
 
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "./platform/spatial/playableWorldLayout";
 
@@ -55,7 +53,7 @@ export type WorldPlayableDiagnostics = Readonly<{
 type MountOptions = Readonly<{
   host: HTMLElement;
   resources: LabResourceLedger;
-  world: KinematicWorld;
+  world: WorldRuntimePort;
   asset: VerifiedPinnedAsset;
   reducedMotion: boolean;
   onFailure: (error: Error) => void;
@@ -144,7 +142,7 @@ export class WorldPlayableStage {
   #idle: AnimationAction | null = null;
   #move: AnimationAction | null = null;
   #clip: WorldPlayableClip | null = null;
-  #world: KinematicWorld | null = null;
+  #world: WorldRuntimePort | null = null;
   #resources: LabResourceLedger | null = null;
   #reducedMotion = false;
   #yaw: number = CAMERA_SEED.yawRadians;
