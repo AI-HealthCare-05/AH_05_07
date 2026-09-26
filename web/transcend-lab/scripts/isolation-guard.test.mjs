@@ -114,3 +114,13 @@ test("Lab composition can inject an alternate world scene profile", () => {
   assert.match(component, /W2_SYNTHETIC_WORLD_SCENE_PROFILE/);
   assert.match(runtime, /playableSceneProfile/);
 });
+
+test("Lab composition can inject an alternate playable world session", () => {
+  const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  const runtime = readFileSync(path.join(LAB_ROOT, "src/labRuntime.ts"), "utf8");
+  assert.match(component, /worldProfile/);
+  assert.match(component, /createW2SyntheticPlayableWorldSession/);
+  assert.match(runtime, /WorldPlayableSession/);
+  assert.match(runtime, /#playableWorldSession/);
+  assert.doesNotMatch(runtime, /#kinematicWorld\.start\("playable"\)/);
+});

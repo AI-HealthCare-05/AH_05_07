@@ -496,13 +496,13 @@ test("W1 desktop playable moves the verified bear and preserves exclusive render
   expect(stopped).toMatchObject({ listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0 });
 });
 
-test("W2 alternate scene profile mounts through the reusable world composition", async ({ page, request }) => {
+test("W2 alternate scene and physics sessions mount through the reusable world composition", async ({ page, request }) => {
   const pinnedBytes = await fetchExactPinnedBytes(request);
   await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
     status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
   }));
 
-  await openRunningLab(page, "/?sceneProfile=synthetic");
+  await openRunningLab(page, "/?sceneProfile=synthetic&worldProfile=synthetic");
   await page.getByTestId("start-world-playable").click();
 
   const stage = page.getByTestId("world-playable-stage");
@@ -519,7 +519,8 @@ test("W2 alternate scene profile mounts through the reusable world composition",
   const mounted = await page.evaluate(() => ({
     state: window.__TRANSCEND_LAB__!.state(),
     playable: window.__TRANSCEND_LAB__!.playableDiagnostics(),
-    physics: window.__TRANSCEND_LAB__!.kinematic.state(),
+    playableWorld: window.__TRANSCEND_LAB__!.playableWorldState(),
+    w1Harness: window.__TRANSCEND_LAB__!.kinematic.state(),
   }));
   expect(mounted.state.playable).toBe(true);
   expect(mounted.playable).toMatchObject({
@@ -527,10 +528,20 @@ test("W2 alternate scene profile mounts through the reusable world composition",
     fixtureIds: [],
     destinationNear: false,
   });
-  expect(mounted.physics.lifecycle).toBe("running");
+  expect(mounted.playableWorld.lifecycle).toBe("running");
+  expect(mounted.w1Harness.lifecycle).toBe("stopped");
+  const startZ = mounted.playableWorld.position!.z;
+
+  await page.keyboard.down("w");
+  await expect.poll(async () => (
+    await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState().position!.z)
+  )).toBeLessThan(startZ - 0.1);
+  await page.keyboard.up("w");
 
   await page.getByTestId("exit-world-playable").click();
   await expect(stage).toHaveCount(0);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState())).lifecycle)
+    .toBe("stopped");
   expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.kinematic.state())).resources)
     .toEqual({ worlds: 0, controllers: 0, bodies: 0, colliders: 0, pendingLoads: 0 });
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
