@@ -223,9 +223,7 @@ def main() -> int:
         print("autopilot decision: no change detected")
         return 0
 
-    print(
-        "autopilot decision: routine lane; Issue/PR flow is allowed and agent merge follows required CI"
-    )
+    print("autopilot decision: routine lane; Issue/PR flow is allowed and agent merge follows required CI")
     return 0
 
 
