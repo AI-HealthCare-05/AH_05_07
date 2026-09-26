@@ -60,6 +60,7 @@ import {
 } from "./platform/embodiment/labEmbodimentPort";
 import { RapierIsolationSpike, type RapierSpikeResult, type RapierSpikeState } from "./platform/spatial/rapierIsolationSpike";
 import { KinematicWorld, type KinematicWorldTestApi, type WorldFixtureName } from "./platform/spatial/kinematicWorld";
+import { W1_WORLD_SCENE_PROFILE } from "./platform/spatial/w1WorldSceneProfile";
 import { SequentialBackendSelector } from "./labRenderers";
 import {
   WorldPlayableStage,
@@ -390,7 +391,7 @@ export class TranscendLabRuntime {
     this.#pointer = null;
 
     const resources = new LabResourceLedger();
-    const stage = new WorldPlayableStage();
+    const stage = new WorldPlayableStage(W1_WORLD_SCENE_PROFILE);
     this.#resources = resources;
     this.#playableResources = resources;
     this.#playableStage = stage;
