@@ -3,6 +3,12 @@ import { createHash } from "node:crypto";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { KinematicWorld, KINEMATIC_CONFIG } from "../transcend-lab/src/platform/spatial/kinematicWorld";
+import {
+  LIVING_WEEK_BOUND_METRES,
+  LIVING_WEEK_CONNECTIONS,
+  LIVING_WEEK_DAYS,
+  LIVING_WEEK_LANDMARKS,
+} from "../transcend-lab/src/platform/spatial/livingWeekLandmarks";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
@@ -61,6 +67,39 @@ async function fetchExactReviewBytes(
   expect(createHash("sha256").update(bytes).digest("hex")).toBe(asset.sha256);
   return bytes;
 }
+
+test("W4 Living Week topology is seven ordered connected bounded landmarks", () => {
+  expect(LIVING_WEEK_DAYS).toEqual([
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+  ]);
+  expect(LIVING_WEEK_LANDMARKS).toHaveLength(7);
+  expect(LIVING_WEEK_CONNECTIONS).toHaveLength(6);
+  expect(new Set(LIVING_WEEK_LANDMARKS.map((landmark) => landmark.id)).size).toBe(7);
+  expect(new Set(LIVING_WEEK_LANDMARKS.map((landmark) => landmark.day)).size).toBe(7);
+  for (const [index, landmark] of LIVING_WEEK_LANDMARKS.entries()) {
+    expect(landmark.ordinal).toBe(index);
+    expect(landmark.day).toBe(LIVING_WEEK_DAYS[index]);
+    expect(landmark.id).toBe(`weekday:${landmark.day}`);
+    expect(landmark.position.space).toBe(WORLD_SPACE);
+    expect(Math.abs(landmark.position.x)).toBeLessThanOrEqual(LIVING_WEEK_BOUND_METRES);
+    expect(Math.abs(landmark.position.z)).toBeLessThanOrEqual(LIVING_WEEK_BOUND_METRES);
+    expect(Object.isFrozen(landmark)).toBe(true);
+  }
+  expect(LIVING_WEEK_CONNECTIONS).toEqual(
+    LIVING_WEEK_LANDMARKS.slice(0, -1).map((landmark, index) => ({
+      from: landmark.id,
+      to: LIVING_WEEK_LANDMARKS[index + 1].id,
+    })),
+  );
+  const reachable = new Set([LIVING_WEEK_LANDMARKS[0].id]);
+  for (const edge of LIVING_WEEK_CONNECTIONS) {
+    expect(reachable.has(edge.from)).toBe(true);
+    reachable.add(edge.to);
+  }
+  expect(reachable.size).toBe(LIVING_WEEK_LANDMARKS.length);
+  expect(Object.isFrozen(LIVING_WEEK_LANDMARKS)).toBe(true);
+  expect(Object.isFrozen(LIVING_WEEK_CONNECTIONS)).toBe(true);
+});
 
 test("W1 WorldSpace remains metre-tagged and explicit", () => {
   const start = worldPoint(1, 2, 3);
