@@ -1,20 +1,28 @@
+## Issue
+
+- Closes #
+
 ## Change
 
 - What changed:
 - Why:
 
-## Risk lane
-
-- [ ] Routine product change — no protected boundary changed; Issue optional
-- [ ] Protected-boundary change — Issue/link:
-
 ## Verification
 
-- Affected checks run:
+- Local checks:
+- Required hosted checks: `lint`, `test`
 - Not run and why:
 
-## Boundary notes
+## Boundaries
 
-List any API, DB, auth/RLS, retention, Model V2, dependency, deployment, or
-secret impact. Write `None` when there is none. Add screenshots only when they
-materially help review a visual change.
+- Protected product/API/DB/auth/model/dependency impact:
+- External production side effects performed: None / describe explicit authorization
+
+## Merge
+
+- [ ] Conflict-free
+- [ ] Required `lint` and `test` are green
+- [ ] Task-owned review threads are resolved
+- [ ] Ready for agent squash-merge / auto-merge
+
+Cloudflare mirror/build/deployment verification is owner-operated and is not a PR merge gate.

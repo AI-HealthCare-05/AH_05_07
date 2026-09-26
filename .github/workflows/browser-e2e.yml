@@ -5,128 +5,20 @@ on:
   schedule:
     # Broad confidence once per night (03:30 Asia/Seoul).
     - cron: "30 18 * * *"
-  pull_request:
-    branches: [main]
-    paths:
-      - "web/**"
-      - "tools/character-preview/**"
-      - "tools/question-review/**"
-      - "tools/mvp1-capture.cjs"
-      - "tools/submission-*"
-      - "docs/adr/0006-local-character-preview.md"
-      - "docs/character-preview-verification.md"
-      - "docs/input-question-review.md"
-      - ".github/workflows/browser-e2e.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: browser-e2e-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: browser-e2e-${{ github.ref }}
   cancel-in-progress: true
 
+# Broad browser confidence is deliberately outside the PR/main merge path.
+# Required PR merge checks are owned by checks.yml: lint + test.
+
 jobs:
-  browser-e2e-classify:
-    name: browser-e2e classify
-    if: github.event_name == 'pull_request'
-    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
-    outputs:
-      modules: ${{ steps.select.outputs.browser_modules }}
-      profile: ${{ steps.select.outputs.browser_profile }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - name: Verify CI concern selector
-        run: node --test web/scripts/select-pr-browser-suites.test.mjs
-      - name: Select affected browser modules
-        id: select
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
-      - name: Summarize browser selection
-        env:
-          SELECTED_MODULES: ${{ steps.select.outputs.browser_modules }}
-          SELECTED_PROFILE: ${{ steps.select.outputs.browser_profile }}
-        run: |
-          {
-            echo "### Browser E2E selection"
-            echo
-            echo "| Profile | Modules |"
-            echo "| --- | --- |"
-            echo "| $SELECTED_PROFILE | \`$SELECTED_MODULES\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  browser-e2e-pr:
-    name: browser-e2e-pr (${{ matrix.module }})
-    if: ${{ github.event_name == 'pull_request' && needs.browser-e2e-classify.outputs.modules != '["policy"]' }}
-    needs: browser-e2e-classify
-    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 35
-    strategy:
-      fail-fast: false
-      matrix:
-        module: ${{ fromJSON(needs.browser-e2e-classify.outputs.modules) }}
-    container:
-      image: mcr.microsoft.com/playwright:v1.62.1-noble
-      options: --user 1001
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - name: Set up Python for character asset checks
-        if: matrix.module == 'assets'
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: .python-version
-      - name: Install dependencies once for the selected module
-        if: matrix.module != 'policy'
-        run: npm ci
-      - name: Run ${{ matrix.module }} browser module
-        run: node scripts/browser-ci-modules.mjs "${{ matrix.module }}"
-      - name: Upload failed Playwright results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-e2e-pr-${{ matrix.module }}-${{ github.run_attempt }}
-          path: web/test-results/
-          if-no-files-found: ignore
-          retention-days: 3
-
-  browser-e2e:
-    name: browser-e2e
-    if: always() && github.event_name == 'pull_request'
-    needs: [browser-e2e-classify, browser-e2e-pr]
-    runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 5
-    steps:
-      - name: Verify PR browser modules
-        env:
-          CLASSIFY_RESULT: ${{ needs.browser-e2e-classify.result }}
-          PR_BROWSER_RESULT: ${{ needs.browser-e2e-pr.result }}
-        run: |
-          test "$CLASSIFY_RESULT" = "success"
-          test "$PR_BROWSER_RESULT" = "success" || test "$PR_BROWSER_RESULT" = "skipped"
-
   nightly-core:
     name: nightly-core
-    if: github.event_name != 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 60
     container:
@@ -159,7 +51,6 @@ jobs:
 
   nightly-scene:
     name: nightly-scene
-    if: github.event_name != 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 45
     container:
@@ -189,7 +80,6 @@ jobs:
 
   nightly-model:
     name: nightly-model
-    if: github.event_name != 'pull_request'
     runs-on: ${{ vars.SK7_CLOUD_RUNNER == 'blacksmith-4vcpu-ubuntu-2404' && vars.SK7_CLOUD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 35
     container:

@@ -1,40 +1,6 @@
 name: Evidence controls
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - ".gitattributes"
-      - ".python-version"
-      - "pyproject.toml"
-      - "uv.lock"
-      - "data/manifest/**"
-      - "docs/adr/0006-local-character-preview.md"
-      - "docs/api-p95-verification-preflight.md"
-      - "docs/asset-register.md"
-      - "docs/character-preview-verification.md"
-      - "docs/evidence/companion-r2-v1.json"
-      - "docs/evidence/local-reliability.json"
-      - "docs/evidence/model-*.json"
-      - "docs/model-*-runbook.md"
-      - "docs/upgrade-local-reliability.md"
-      - "scripts/ci/verify_api_p95_evidence.py"
-      - "scripts/ci/verify_model_*.py"
-      - "scripts/data/**"
-      - "scripts/model/**"
-      - "scripts/ops/measure_api_p95.py"
-      - "tests/data/**"
-      - "tests/model/**"
-      - "tools/character-preview/**"
-      - "tools/companions/**"
-      - "tools/local-reliability/**"
-      - "web/playwright.companion-asset.config.ts"
-      - "web/scripts/generate-companion-manifest.mjs"
-      - "web/scripts/select-pr-browser-suites.mjs"
-      - "web/scripts/select-pr-browser-suites.test.mjs"
-      - "web/scripts/verify-companion-*.mjs"
-      - "web/src/ui/companionAssets.generated.ts"
-      - ".github/workflows/evidence-controls.yml"
   workflow_dispatch:
     inputs:
       module:
@@ -61,7 +27,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: evidence-controls-${{ github.event.pull_request.number || github.ref }}
+  group: evidence-controls-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -79,18 +45,12 @@ jobs:
           node-version: 24
       - name: Verify shared concern selector
         run: node --test web/scripts/select-pr-browser-suites.test.mjs
-      - name: Select affected evidence modules
+      - name: Select requested evidence modules
         id: select
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REQUESTED_MODULE: ${{ inputs.module }}
         run: |
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            node web/scripts/select-pr-browser-suites.mjs "$BASE_SHA" "$HEAD_SHA" > /tmp/sk7-ci-modules
-            modules=$(sed -n 's/^evidence_modules=//p' /tmp/sk7-ci-modules)
-          elif [ "$REQUESTED_MODULE" = "all" ]; then
+          if [ "$REQUESTED_MODULE" = "all" ]; then
             modules='["model-data","companion-assets","local-reliability","browser-compatibility"]'
           else
             modules="[\"$REQUESTED_MODULE\"]"
