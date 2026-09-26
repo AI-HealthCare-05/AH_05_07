@@ -187,3 +187,13 @@ test("playable renderer maps generic overlay marker labels into billboard sprite
   assert.match(stage, /SpriteMaterial/);
   assert.doesNotMatch(stage, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday/);
 });
+
+test("Lab composition can select the bounded Living Week world shell", () => {
+  const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(component, /worldTrack/);
+  assert.match(component, /W4_LIVING_WEEK_WORLD_SCENE_PROFILE/);
+  assert.match(component, /createW4LivingWeekPlayableWorldSession/);
+  assert.match(component, /LIVING_WEEK_SCENE_PLAN/);
+  assert.doesNotMatch(stage, /W4_LIVING_WEEK|Living Week|living-week/);
+});
