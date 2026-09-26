@@ -16,6 +16,12 @@ export {
 } from "./spatial/worldSceneProfile";
 
 export {
+  type WorldSceneOverlayMarker,
+  type WorldSceneOverlayPlan,
+  type WorldSceneOverlaySegment,
+} from "./spatial/worldSceneOverlayPlan";
+
+export {
   RAMP_TRIANGLES,
   rampVertices,
   type WorldFixture,

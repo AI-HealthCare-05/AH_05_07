@@ -14,6 +14,7 @@ import {
   livingWeekSegments,
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
 import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
+import type { WorldSceneOverlayPlan } from "../transcend-lab/src/platform/spatial/worldSceneOverlayPlan";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
@@ -130,6 +131,8 @@ test("W4 Living Week render projection preserves ordered marker and segment geom
 });
 
 test("W4 Living Week scene plan composes bounded immutable render-neutral geometry", () => {
+  const genericPlan: WorldSceneOverlayPlan = LIVING_WEEK_SCENE_PLAN;
+  expect(genericPlan).toBe(LIVING_WEEK_SCENE_PLAN);
   expect(LIVING_WEEK_SCENE_PLAN.boundMetres).toBe(LIVING_WEEK_BOUND_METRES);
   expect(LIVING_WEEK_SCENE_PLAN.groundSizeMetres).toBe(LIVING_WEEK_BOUND_METRES * 2);
   expect(LIVING_WEEK_SCENE_PLAN.markers).toEqual(livingWeekMarkers());

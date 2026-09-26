@@ -1,4 +1,5 @@
 import { LIVING_WEEK_BOUND_METRES } from "./livingWeekLandmarks";
+import type { WorldSceneOverlayPlan } from "./worldSceneOverlayPlan";
 import {
   livingWeekMarkers,
   livingWeekSegments,
@@ -6,9 +7,7 @@ import {
   type LivingWeekSegmentDescriptor,
 } from "./livingWeekRenderProjection";
 
-export type LivingWeekScenePlan = Readonly<{
-  boundMetres: number;
-  groundSizeMetres: number;
+export type LivingWeekScenePlan = Readonly<WorldSceneOverlayPlan & {
   markers: readonly LivingWeekMarkerDescriptor[];
   segments: readonly LivingWeekSegmentDescriptor[];
 }>;
