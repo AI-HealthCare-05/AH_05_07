@@ -5,7 +5,10 @@ import { expect, test, type APIRequestContext, type Browser, type Page } from "@
 import { KinematicWorld, KINEMATIC_CONFIG } from "../transcend-lab/src/platform/spatial/kinematicWorld";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
-import { WorldMovementIntentController } from "../transcend-lab/src/platform/behavior/worldMovementIntent";
+import {
+  isUsablePointerId,
+  WorldMovementIntentController,
+} from "../transcend-lab/src/platform/behavior/worldMovementIntent";
 import {
   cameraObstacle,
   cameraRelativeMovement,
@@ -161,6 +164,29 @@ test("W1 input fences exact pointer ownership and fail-closes abnormal pointer l
   expect(input.lostPointerCapture(9)).toBe(true);
   expect(input.snapshot.intent.magnitude).toBe(0);
   expect(input.snapshot.lastClearReason).toBe("lost-pointer-capture");
+});
+
+test("W1 accepts signed UA pointer IDs while reserving -1", () => {
+  const iosPointerId = -1065718448;
+  expect(isUsablePointerId(iosPointerId)).toBe(true);
+  expect(isUsablePointerId(-1)).toBe(false);
+  expect(isUsablePointerId(7)).toBe(true);
+  expect(isUsablePointerId(Number.NaN)).toBe(false);
+  expect(isUsablePointerId(1.5)).toBe(false);
+
+  const input = new WorldMovementIntentController();
+  expect(input.beginPointer(iosPointerId)).toBe(true);
+  expect(input.updatePointer(iosPointerId, 0.25, 0.75)).toBe(true);
+  expect(input.snapshot).toMatchObject({
+    pointerId: iosPointerId,
+    intent: { source: "pointer" },
+  });
+  expect(input.snapshot.intent.magnitude).toBeGreaterThan(0);
+  expect(input.endPointer(iosPointerId)).toBe(true);
+  expect(input.snapshot).toMatchObject({
+    pointerId: null,
+    intent: { lateral: 0, forward: 0, magnitude: 0, source: "none" },
+  });
 });
 
 test("W1 input blur visibility and semantic suspension never restore stale movement", () => {

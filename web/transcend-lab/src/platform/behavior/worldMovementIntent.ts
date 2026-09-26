@@ -34,8 +34,9 @@ const KEY_AXES: Readonly<Record<string, readonly [number, number]>> = Object.fre
   ArrowDown: [0, -1],
 });
 
-function validPointerId(pointerId: number): boolean {
-  return Number.isSafeInteger(pointerId) && pointerId >= 0;
+/** Pointer Events uses a signed long; only -1 is reserved for a non-pointing-device event. */
+export function isUsablePointerId(pointerId: number): boolean {
+  return Number.isSafeInteger(pointerId) && pointerId !== -1;
 }
 
 function normalized(lateral: number, forward: number, source: MovementIntentSource): MovementIntent {
@@ -99,7 +100,7 @@ export class WorldMovementIntentController {
   }
 
   beginPointer(pointerId: number): boolean {
-    if (this.#suspended || !validPointerId(pointerId) || this.#pointerId !== null) return false;
+    if (this.#suspended || !isUsablePointerId(pointerId) || this.#pointerId !== null) return false;
     this.#pointerId = pointerId;
     this.#pointerIntent = normalized(0, 0, "pointer");
     this.#lastClearReason = null;
