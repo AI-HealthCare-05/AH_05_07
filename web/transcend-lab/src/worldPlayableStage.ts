@@ -43,6 +43,9 @@ export type WorldPlayableDiagnostics = Readonly<{
   yawRadians: number;
   pitchRadians: number;
   renderCount: number;
+  desiredCameraDistance: number;
+  resolvedCameraDistance: number | null;
+  actorYawRadians: number | null;
   reducedMotion: boolean;
   animationTimeSeconds: number;
   fixtureIds: readonly string[];
@@ -59,22 +62,24 @@ type MountOptions = Readonly<{
 }>;
 
 const CAMERA_SEED = Object.freeze({
-  yawRadians: 0,
-  pitchRadians: 0.18,
+  // Spawn with a clear boom; the near-edge pillar remains a deliberate fixture.
+  yawRadians: -Math.PI / 12,
+  pitchRadians: 0.28,
   minPitchRadians: -0.22,
   maxPitchRadians: 0.58,
-  desiredDistance: 4,
+  desiredDistance: 5,
   minDistance: 0.8,
   obstructionClearance: 0.08,
 });
 const CAMERA_RADIUS = 0.25;
+const CAMERA_DISTANCE_LIMITS = Object.freeze({ min: 2.5, max: 8 });
 const LOOK_SENSITIVITY = 0.005;
 const MODEL_HEIGHT = 1.45;
 const CAPSULE_FOOT_OFFSET = KINEMATIC_CONFIG.capsuleHalfHeight + KINEMATIC_CONFIG.capsuleRadius;
 
 function editableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
-  return target.matches("input, textarea, select, button, [contenteditable=true]");
+  return target.matches("input, textarea, select, button, summary, [contenteditable=true]");
 }
 
 function disposeMaterial(material: Material, textures: Set<Texture>): void {
@@ -150,6 +155,8 @@ export class WorldPlayableStage {
   #previousFrameTime: number | null = null;
   #renderCount = 0;
   #cameraOccluded = false;
+  #desiredCameraDistance: number = CAMERA_SEED.desiredDistance;
+  #resolvedCameraDistance: number | null = null;
   #disposed = false;
   #hostPointerEvents = "";
   #hostZIndex = "";
@@ -164,6 +171,9 @@ export class WorldPlayableStage {
       yawRadians: this.#yaw,
       pitchRadians: this.#pitch,
       renderCount: this.#renderCount,
+      desiredCameraDistance: this.#desiredCameraDistance,
+      resolvedCameraDistance: this.#resolvedCameraDistance,
+      actorYawRadians: this.#actor?.rotation.y ?? null,
       reducedMotion: this.#reducedMotion,
       animationTimeSeconds: this.#mixer?.time ?? 0,
       fixtureIds: Object.freeze(this.#scene?.children.filter((child) => child.name.startsWith("fixture:")).map((child) => child.name.slice(8)) ?? []),
@@ -289,6 +299,7 @@ export class WorldPlayableStage {
       }
 
       const actor = normalizeModel(gltf.scene);
+      actor.rotation.y = this.#yaw + Math.PI; // Begin facing away from the camera.
       this.#actor = actor;
       scene.add(actor);
       const mixer = new AnimationMixer(gltf.scene);
@@ -364,6 +375,20 @@ export class WorldPlayableStage {
     options.resources.listen(renderer.domElement, "pointercancel", finishPointer);
     options.resources.listen(renderer.domElement, "lostpointercapture", finishPointer);
 
+    // Only a focused world canvas owns an unmodified wheel. Browser zoom and
+    // scroll on semantic controls/outside the canvas remain browser-owned.
+    options.resources.listen(renderer.domElement, "wheel", (event) => {
+      if (!(event instanceof WheelEvent) || !event.cancelable
+        || document.activeElement !== renderer.domElement
+        || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+        || !Number.isFinite(event.deltaY) || event.deltaY === 0) return;
+      const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
+      const pixels = Math.max(-600, Math.min(600, event.deltaY * unit));
+      const delta = this.#desiredCameraDistance * (Math.exp(pixels * 0.001) - 1);
+      if (this.zoomCamera(delta)) event.preventDefault();
+    }, { passive: false });
+
     mountWorldTouchControls({
       root, canvas: renderer.domElement, resources: options.resources, world: options.world,
       look: (dx, dy) => {
@@ -389,9 +414,19 @@ export class WorldPlayableStage {
     this.#updateCamera();
   }
 
+  zoomCamera(deltaMetres: number): boolean {
+    if (!Number.isFinite(deltaMetres) || !this.#world || this.#disposed
+      || document.hidden || this.#world.snapshot.input.suspended) return false;
+    this.#desiredCameraDistance = Math.max(CAMERA_DISTANCE_LIMITS.min,
+      Math.min(CAMERA_DISTANCE_LIMITS.max, this.#desiredCameraDistance + deltaMetres));
+    this.#updateCamera(); // The Rapier shape cast may shorten the requested boom.
+    return true;
+  }
+
   resetCamera(): void {
     this.#yaw = CAMERA_SEED.yawRadians;
     this.#pitch = CAMERA_SEED.pitchRadians;
+    this.#desiredCameraDistance = CAMERA_SEED.desiredDistance;
     this.#world?.setYaw(this.#yaw);
     this.#updateCamera();
   }
@@ -468,12 +503,14 @@ export class WorldPlayableStage {
     if (!world || !camera) return;
     const result = world.camera({
       ...CAMERA_SEED,
+      desiredDistance: this.#desiredCameraDistance,
       yawRadians: this.#yaw,
       pitchRadians: this.#pitch,
     }, CAMERA_RADIUS);
     if (!result) return;
     this.#pitch = result.pitchRadians;
     this.#cameraOccluded = result.occluded;
+    this.#resolvedCameraDistance = result.resolvedDistance;
     camera.position.set(result.position.x, result.position.y, result.position.z);
     camera.lookAt(result.focus.x, result.focus.y, result.focus.z);
     camera.updateMatrixWorld();
@@ -491,7 +528,8 @@ export class WorldPlayableStage {
     const visual = window.visualViewport;
     const width = Math.max(1, Math.round(visual?.width ?? window.innerWidth));
     const height = Math.max(1, Math.round(visual?.height ?? window.innerHeight));
-    renderer.setSize(width, height, false);
+    // Drawing-buffer pixels include DPR; the displayed canvas must not.
+    renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   }

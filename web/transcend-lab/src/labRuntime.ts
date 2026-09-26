@@ -468,6 +468,10 @@ export class TranscendLabRuntime {
     this.#playableStage?.nudgeCamera(deltaYawRadians);
   }
 
+  playableCameraZoom(deltaMetres: number): void {
+    this.#playableStage?.zoomCamera(deltaMetres);
+  }
+
   playableCameraReset(): void {
     this.#playableStage?.resetCamera();
   }
@@ -968,6 +972,7 @@ export class TranscendLabRuntime {
       playableDiagnostics: () => this.#playableStage?.diagnostics() ?? null,
       playableCameraNudge: (deltaYawRadians) => this.playableCameraNudge(deltaYawRadians),
       playableCameraReset: () => this.playableCameraReset(),
+      playableCameraZoom: (deltaMetres: number) => this.playableCameraZoom(deltaMetres),
       runRapierSpike: () => {
         this.#kinematicWorld.stop();
         return this.#rapierSpike.run();
