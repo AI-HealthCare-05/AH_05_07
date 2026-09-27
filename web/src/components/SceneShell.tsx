@@ -139,15 +139,6 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
         </div>
       </header>
 
-      <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
-
-      <div ref={viewportRef} id="scene-content" className="scene-viewport" tabIndex={-1}>
-        {!inlineCompanion && companion}
-        <SceneCompanionContext.Provider value={inlineCompanion ? companion : null}>
-          {children}
-        </SceneCompanionContext.Provider>
-      </div>
-
       <nav className="primary-nav" aria-label="주요 화면" style={{ gridTemplateColumns: `repeat(${primaryNavigation.length}, minmax(0, 1fr))` }}>
         {primaryNavigation.map((item) => (
           <button
@@ -164,6 +155,17 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
           </button>
         ))}
       </nav>
+
+      <div className="clay-horizon" aria-hidden="true"><span /><span /><span /></div>
+
+      <div ref={viewportRef} id="scene-content" className="scene-viewport" tabIndex={-1}>
+        {!inlineCompanion && companion}
+        <SceneCompanionContext.Provider value={inlineCompanion ? companion : null}>
+          {children}
+        </SceneCompanionContext.Provider>
+      </div>
+
+
       </SceneFirstPaintVisitContext.Provider>
       </SceneFirstPaintDispatchContext.Provider>
       </PresenceSceneActorRuntimeProvider>

@@ -7,6 +7,7 @@ export type MySpaceEntryDisplay = { href: string; returning: boolean; browserOnl
 /** Display only: App supplies bounded intent; the destination verifies storage. */
 export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay }) {
   return <nav className="today-my-space" aria-label="내 공간 · Living City">
+    <span className="today-space-landmark" aria-hidden="true"><i /><i /><i /></span>
     <div className="section-header"><strong>내 공간 <span>· Living City</span></strong>
       <p>{destination.browserOnly ? "이 브라우저에 꾸며 둔 공간에서 쉬어가요." : "동반자와 함께, 나만의 광장과 정원에서 쉬어가요."}</p>
     </div>

@@ -328,7 +328,7 @@ test('journey candidate uses the shared hierarchy without a nested surface stack
 
   expect(hierarchy.stageToWeekGap).toBeGreaterThanOrEqual(23);
   expect(hierarchy.leadBackground).toBe('rgba(0, 0, 0, 0)');
-  expect(hierarchy.leadBorders).toEqual(['1px', '0px', '0px', '0px']);
+  expect(hierarchy.leadBorders).toEqual(['0px', '0px', '0px', '0px']);
   expect(hierarchy.leadRadius).toBe('0px');
   expect(hierarchy.leadShadow).toBe('none');
   expect(hierarchy.weekBorders).toEqual(['1px', '0px', '1px', '0px']);
@@ -353,11 +353,14 @@ test('journey scene failure keeps the bounded surface and semantic task path usa
   const fallback = await frame.evaluate(element => {
     const box = element.getBoundingClientRect();
     const styles = getComputedStyle(element);
-    return { width: box.width, height: box.height, backgroundImage: styles.backgroundImage };
+    return { width: box.width, height: box.height, backgroundColor: styles.backgroundColor,
+      surface: getComputedStyle(document.documentElement).getPropertyValue('--sk7-surface-subtle').trim() };
   });
   expect(fallback.width).toBeGreaterThan(0);
   expect(fallback.height).toBeGreaterThanOrEqual(200);
-  expect(fallback.backgroundImage).toContain('gradient');
+  // Missing media retains a quiet, opaque destination surface, without requiring decorative gradients.
+  expect(fallback.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(fallback.surface).not.toBe('');
   await expect(page.locator('[data-trail-date]')).toHaveCount(7);
   await expect(page.locator('.journey-facts')).toContainText('혈압 관찰');
   await expect(page.locator('.journey-facts')).toContainText('챌린지 참여');

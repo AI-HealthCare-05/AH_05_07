@@ -62,7 +62,7 @@ export function JourneyToday({ mySpaceEntry, staticLandscape, today, days, lead,
         <div className="today-desk today-showcase-copy">
           <div className="scene-copy screen-header">
             <p className="eyebrow"><UiIcon name="morning" className="today-sun" size={18} /><time dateTime={today}>{formatTrailDate(today)}</time> · 오늘의 기록</p>
-            <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 혈압 기록을,<br />날짜별로 이어봐요.<UiIcon name="leaf" className="today-wave" size={24} /></h1>
+            <h1 ref={headingRef} tabIndex={-1} id="S02-title">오늘의 기록,<br />나의 속도로.</h1>
           </div>
           <section className="home-lead" data-home-concept={lead.key} aria-labelledby="home-lead-title">
             <div className="home-lead-copy section-header">
