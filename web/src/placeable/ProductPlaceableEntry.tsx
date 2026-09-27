@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { readCompanionIdentity } from "../ui/companionIdentity";
+import { getMySpaceCompanion } from "../ui/mySpaceCompanion";
 import { readLivingChoice } from "../ui/livingChoice";
 import PlaceableExperience from "./PlaceableExperience";
 import { VerifiedAccountBinding, type AccountBindingStatus } from "./accountBinding";
@@ -12,6 +14,7 @@ export default function ProductPlaceableEntry() {
   const params = new URLSearchParams(window.location.search);
   const account = params.get("storage") === "account";
   const world = params.get("view") === "3d";
+  const [companion] = useState(() => getMySpaceCompanion(readCompanionIdentity()));
   const [browser] = useState(() => browserPersistence());
   const [adapter, setAdapter] = useState<PlaceablePersistence | null>(account ? null : browser);
   const [status, setStatus] = useState<AccountBindingStatus>("checking");
@@ -71,5 +74,5 @@ export default function ProductPlaceableEntry() {
     <p><a href="/">Return to sign in</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>Choose browser-only storage</a></p>
   </main>;
-  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} choice={readLivingChoice(window.location.search)} accountAvailable />;
+  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable />;
 }

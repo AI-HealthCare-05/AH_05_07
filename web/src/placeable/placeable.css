@@ -65,3 +65,5 @@
 .placeable-keepsake button { justify-self: start; }
 
 .placeable-keepsake-caption { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.placeable-companion { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sk7-space-sm); margin-top: var(--sk7-space-md); }
+.placeable-companion p { font-size: var(--sk7-type-label); }

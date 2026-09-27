@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { Component, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
 import { classicTodayHref } from "../ui/mySpaceReturn";
 import { ASSET, COLORS, cosmeticLayout, SOCKETS, type Keepsake, type Selection } from "./contract";
@@ -86,7 +87,8 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
   </div>;
 }
 
-export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, choice = null }: {
+export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, choice = null, companion = null }: {
+  companion?: CompanionAsset | null;
   choice?: LivingChoice | null;
   adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean;
 }) {
@@ -170,7 +172,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         </div>
         {(preview || state.pending) && <p className="placeable-handoff-note">Confirm or cancel your preview before visiting Today. If the save is uncertain, check its saved state first.</p>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">Loading 3D plaza… Classic plaza is available above.</p>}>
-          <PlaceableWorld choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
+          <PlaceableWorld companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
             suspended={preview || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}

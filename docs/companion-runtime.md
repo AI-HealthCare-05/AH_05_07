@@ -48,6 +48,39 @@ identity remains a separate deployment-SSOT/control-plane question.
 - `off`와 reduced motion/failure 경계는 기존 semantic HTML/CSS와 poster/static
   fallback을 보존한다.
 
+## My Space / Living City companion (E5)
+
+The opt-in My Space 3D plaza replaces its primitive visitor with the selected
+companion. `ProductPlaceableEntry` reads the existing browser-local preference
+and projects an exact active `lite` descriptor through `mySpaceCompanion.ts`.
+Invalid or blocked preferences use the existing bear default without repairing
+storage. Account placeable storage does not turn this preference into an account
+setting, and companion identity is not part of the placeable v2 snapshot.
+
+`MySpaceCompanionActor` owns only the visit's GLB, normalized grounded wrapper,
+clip validation and mixer. It reuses generated/scene membership and `disposeScene`;
+it does not import S02 presence, the review renderer or product state. The initial
+anchor leaves the Gate, pinwheel sockets and keepsake visible. Existing focused
+walking controls move this character within the plaza's existing bounds.
+
+Idle is ambient; a direct click/tap or the semantic greeting button (Enter/Space)
+plays the existing greet clip once and returns to idle. Reactions consume only
+explicit input and visit-local state, never health or challenge facts, and cause
+no persistence/API write. Reduced motion retains a stable neutral character and
+the same textual greeting. Failed/missing clips, invalid geometry or a bounded
+12-second load timeout leave the plaza and semantic product path usable. Failed
+visits do not automatically retry; re-entry starts a new visit. Late GLBs are
+disposed after exit/failure; final teardown stops/uncaches animation and releases
+geometry, materials, textures and skeleton resources before the WebGL context.
+
+Verification lives in the existing `placeable-world.contract.spec.ts` and
+`placeable-classic.spec.ts`: all 11 descriptor memberships, representative real
+bear/rabbit GLBs, inputs, motion policy, failure and coexistence. These targeted
+placeable tests run locally and are discovered by the existing scheduled/manual
+`nightly-core` suite. Required hosted `lint`/`test` gates build the web client;
+they do not execute this placeable browser suite. No new visual CI is added. This
+source change does not attest to production deployment or physical-device verification.
+
 ## Historical S3 rollout status
 
 - S3A: 사람 사용 범위·동작 제한·권리 결정 완료.

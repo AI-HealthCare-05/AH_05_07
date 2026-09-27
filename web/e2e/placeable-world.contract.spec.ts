@@ -4,6 +4,146 @@ import { Box3, Mesh, Vector3, type CylinderGeometry, type BufferGeometry, type M
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
 import { PlaceableScene, PINWHEEL_RADIUS, type PlaceableProjection } from "../src/placeable/worldScene";
 import { PlaceableWorldInput } from "../src/placeable/worldInput";
+import { AnimationClip, Bone, BoxGeometry, Float32BufferAttribute, Group, MeshStandardMaterial, NumberKeyframeTrack, Skeleton, SkinnedMesh, Texture, Uint16BufferAttribute } from "three";
+import type { GLTF } from "three/addons/loaders/GLTFLoader.js";
+import { MySpaceCompanionActor, validateCompanionClips } from "../src/placeable/companionActor";
+import { companionClips, companionSpecies } from "../src/ui/companion";
+import { getCompanionAsset } from "../src/ui/companionAssets.generated";
+import { readCompanionIdentity } from "../src/ui/companionIdentity";
+import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
+
+function companionFixture() {
+  const model = new Group(); model.name = "companion";
+  const mesh = new Mesh(new BoxGeometry(2, 4, 2), new MeshStandardMaterial({ map: new Texture() }));
+  mesh.position.y = 2; model.add(mesh);
+  const clips = companionClips.map((name) => new AnimationClip(name, 0.2,
+    [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
+  return { scene: model, animations: clips } as GLTF;
+}
+
+test("E5 browser preference normalization and every active member resolve exact lite only", () => {
+  expect(readCompanionIdentity(null)).toBe("bear");
+  expect(readCompanionIdentity({ getItem: () => { throw new Error("blocked"); } })).toBe("bear");
+  for (const raw of [null, "", "seal", "https://forged.invalid/asset.glb"]) {
+    expect(getMySpaceCompanion(readCompanionIdentity({ getItem: () => raw }))?.species).toBe("bear");
+  }
+  for (const species of companionSpecies) {
+    const asset = getMySpaceCompanion(readCompanionIdentity({ getItem: () => species }))!;
+    expect(asset).toBe(getCompanionAsset(species, "lite"));
+    expect(validateMySpaceCompanion(asset)).toBe(asset);
+    expect(() => validateMySpaceCompanion(getCompanionAsset(species, "standard"))).toThrow();
+    for (const field of ["url", "sha256", "assetId", "version", "bytes"] as const) {
+      expect(() => validateMySpaceCompanion({ ...asset, [field]: "forged" } as never)).toThrow();
+    }
+  }
+});
+
+test("E5 normalizes grounded bounds, actually advances idle/greet and returns to idle; reduced motion restores neutral", () => {
+  const asset = getMySpaceCompanion("bear")!, gltf = companionFixture();
+  const actor = new MySpaceCompanionActor();
+  actor.start(asset, (_url, done) => done(gltf));
+  const bounds = new Box3().setFromObject(actor.root);
+  expect(bounds.min.y).toBeCloseTo(0); expect(bounds.max.y).toBeCloseTo(1.05);
+  actor.step(0.05); expect(gltf.scene.rotation.z).toBeGreaterThan(0);
+  expect(actor.greet()).toBe(true); expect(actor.greet()).toBe(false); expect(actor.pose).toBe("greet");
+  for (let n = 0; n < 5; n++) actor.step(0.05);
+  expect(actor.pose).toBe("idle");
+  actor.greet(); actor.step(0.05); actor.setReducedMotion(true);
+  expect(actor.pose).toBe("neutral"); expect(gltf.scene.rotation.z).toBe(0);
+  expect(actor.greet()).toBe(true); actor.step(0.05); expect(gltf.scene.rotation.z).toBe(0);
+  actor.setReducedMotion(false); expect(actor.pose).toBe("idle"); actor.dispose();
+});
+
+test("E5 clips fail closed for missing, duplicate, empty, invalid duration and nonfinite tracks", () => {
+  for (const change of [
+    (g: GLTF) => { g.animations.pop(); },
+    (g: GLTF) => { g.animations[1].name = "idle"; },
+    (g: GLTF) => { g.animations[0].duration = NaN; },
+    (g: GLTF) => { g.animations[0].tracks = []; },
+    (g: GLTF) => { g.animations[0].tracks[0].values[0] = Infinity; },
+  ]) {
+    const gltf = companionFixture(); change(gltf);
+    expect(() => validateCompanionClips(gltf.animations)).toThrow();
+    let released = 0;
+    (gltf.scene.children[0] as Mesh).geometry.addEventListener("dispose", () => released++);
+    const actor = new MySpaceCompanionActor(); actor.start(getMySpaceCompanion("bear"), (_url, done) => done(gltf));
+    expect(actor.pose).toBe("unavailable"); expect(actor.root.children).toHaveLength(0);
+    expect(actor.greet()).toBe(false); actor.dispose(); expect(released).toBe(1);
+  }
+});
+
+test("E5 late load/failure after exit cannot publish and disposes model resources exactly once", () => {
+  for (const late of [false, true]) {
+    const gltf = companionFixture(), mesh = gltf.scene.children[0] as Mesh<BoxGeometry, MeshStandardMaterial>;
+    const resources = [mesh.geometry, mesh.material, mesh.material.map!];
+    const counts = new Map<object, number>();
+    resources.forEach((value) => value.addEventListener("dispose", () => counts.set(value, (counts.get(value) ?? 0) + 1)));
+    const published: string[] = [], actor = new MySpaceCompanionActor((pose) => published.push(pose));
+    let loaded!: (value: GLTF) => void, failure!: () => void;
+    actor.start(getMySpaceCompanion("rabbit"), (_url, done, fail) => { loaded = done; failure = fail; });
+    if (!late) { loaded(gltf); actor.greet(); }
+    const before = [...published]; actor.dispose(); actor.dispose();
+    if (late) loaded(gltf);
+    failure(); actor.step(1); expect(actor.greet()).toBe(false);
+    expect(published).toEqual(before); expect(actor.root.children).toHaveLength(0);
+    expect(resources.map((r) => counts.get(r))).toEqual([1, 1, 1]);
+  }
+});
+
+test("E5 failed media leaves pinwheel, keepsake and scene usable; descriptors reject before network", () => {
+  const scene = new PlaceableScene(), actor = new MySpaceCompanionActor(); scene.actor.add(actor.root);
+  actor.start(getMySpaceCompanion("bear"), (_url, _done, fail) => fail());
+  scene.update(projection({ keepsake: "quiet-moon-v1", pulse: 1 }), false); scene.step(0.05, still);
+  expect(actor.pose).toBe("unavailable"); expect(scene.pinwheel.visible).toBe(true);
+  expect(scene.choiceMarker.visible).toBe(true); expect(scene.rotor.rotation.z).not.toBe(0);
+  let requests = 0; const forged = new MySpaceCompanionActor();
+  forged.start({ ...getMySpaceCompanion("bear")!, url: "https://forged.invalid" }, () => requests++);
+  expect(requests).toBe(0); expect(forged.pose).toBe("unavailable");
+  actor.dispose(); forged.dispose(); scene.dispose();
+});
+
+test("E5 bounded timeout latches failure and releases a late valid GLB", () => {
+  const original = globalThis.setTimeout;
+  let expire!: () => void, loaded!: (gltf: GLTF) => void;
+  const actor = new MySpaceCompanionActor(), gltf = companionFixture();
+  let disposed = 0;
+  (gltf.scene.children[0] as Mesh).geometry.addEventListener("dispose", () => disposed++);
+  try {
+    globalThis.setTimeout = ((callback: () => void, delay: number) => {
+      expect(delay).toBe(12000); expire = callback; return undefined;
+    }) as unknown as typeof setTimeout;
+    actor.start(getMySpaceCompanion("bear"), (_url, done) => { loaded = done; });
+    expire(); loaded(gltf);
+    expect(actor.pose).toBe("unavailable"); expect(actor.root.children).toHaveLength(0); expect(disposed).toBe(1);
+  } finally { globalThis.setTimeout = original; actor.dispose(); }
+});
+
+test("E5 broken track targets and empty geometry fail closed before animation ownership", () => {
+  for (const empty of [false, true]) {
+    const gltf = companionFixture();
+    if (empty) gltf.scene.clear(); else gltf.animations[0].tracks[0].name = "missing.position[x]";
+    const actor = new MySpaceCompanionActor();
+    actor.start(getMySpaceCompanion("bear"), (_url, done) => done(gltf));
+    expect(actor.pose).toBe("unavailable"); expect(actor.greet()).toBe(false); actor.dispose();
+  }
+});
+
+test("E5 skinned companion teardown releases bone texture and detaches from the plaza", () => {
+  const gltf = companionFixture(), mesh = gltf.scene.children[0] as Mesh;
+  const count = mesh.geometry.getAttribute("position").count;
+  mesh.geometry.setAttribute("skinIndex", new Uint16BufferAttribute(new Uint16Array(count * 4), 4));
+  const weights = new Float32Array(count * 4); for (let n = 0; n < count; n++) weights[n * 4] = 1;
+  mesh.geometry.setAttribute("skinWeight", new Float32BufferAttribute(weights, 4));
+  const skinned = new SkinnedMesh(mesh.geometry, mesh.material), bone = new Bone();
+  skinned.position.copy(mesh.position); skinned.add(bone); skinned.bind(new Skeleton([bone]));
+  skinned.skeleton.computeBoneTexture(); let released = 0;
+  skinned.skeleton.boneTexture!.addEventListener("dispose", () => released++);
+  gltf.scene.remove(mesh); gltf.scene.add(skinned);
+  const actor = new MySpaceCompanionActor(), scene = new PlaceableScene(); scene.actor.add(actor.root);
+  actor.start(getMySpaceCompanion("bear"), (_url, done) => done(gltf));
+  expect(actor.pose).toBe("idle"); actor.dispose(); scene.dispose(); actor.dispose();
+  expect(released).toBe(1); expect(actor.root.parent).toBeNull();
+});
 
 const coral: Selection = { assetId: ASSET, color: "coral", socketId: "gate-left" };
 const projection = (change: Partial<PlaceableProjection> = {}): PlaceableProjection => ({
@@ -89,8 +229,9 @@ test("interaction spins only the projected object, reduced motion keeps static v
 test("frames never move while preview/saving suspended; focused input clears held keyboard and pointer intent", () => {
   const scene = new PlaceableScene(), input = new PlaceableWorldInput();
   input.suspend(false); input.focus(true); input.movement.keyDown("KeyW");
+  const origin = scene.actor.position.clone();
   scene.update(projection(), false); scene.step(0.05, input.movement.snapshot.intent);
-  const moved = scene.actor.position.clone(); expect(moved.z).toBeLessThan(0);
+  const moved = scene.actor.position.clone(); expect(moved.z).toBeLessThan(origin.z);
   // Focus leaves the world for controls. Resume never replays held keys.
   input.focus(false); expect(input.movement.snapshot.suspended).toBe(true);
   scene.step(0.05, input.movement.snapshot.intent); expect(scene.actor.position.equals(moved)).toBe(true);

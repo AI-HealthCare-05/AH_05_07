@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { emptySnapshot, fingerprint, type Operation, type Snapshot } from "../src/placeable/contract";
 import { STORAGE_KEY } from "../src/placeable/persistence";
+import { PlaceableScene } from "../src/placeable/worldScene";
+import { Vector3 } from "three";
+import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 
 const browserRoute = "/?experience=e2&view=classic&storage=browser";
 const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
@@ -10,6 +13,123 @@ const confirm = async (page: Page) => {
   await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
   await expect(page.getByTestId("save-status")).toContainText("Saved");
 };
+
+const companionRoute = "/?experience=e2&view=3d&storage=browser";
+async function companionPoint(page: Page) {
+  const canvas = page.getByTestId("placeable-world-canvas"); await canvas.scrollIntoViewIfNeeded();
+  const rect = (await canvas.boundingBox())!, scene = new PlaceableScene();
+  scene.resize(rect.width / rect.height);
+  const point = new Vector3(scene.actor.position.x, 0.5, scene.actor.position.z).project(scene.camera);
+  scene.dispose();
+  return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 };
+}
+
+test("E5 actual default lite: pointer and keyboard greet return to idle without writes; cosmetics and re-entry survive", async ({ page }) => {
+  const snapshot = await saved({ operationId: "00000000-0000-4000-8000-000000000818", expectedRevision: 0, schemaVersion: "placeable.v2", layoutId: "e1-plaza.v2",
+    selection: { pinwheel: { assetId: "welcome-pinwheel-v1", color: "teal", socketId: "gate-right" }, keepsake: "quiet-moon-v1" } });
+  await page.addInitScript(({ key, value }) => {
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(value));
+    const original = Storage.prototype.setItem;
+    Object.assign(window, { e5Writes: [] });
+    Storage.prototype.setItem = function (key, value) {
+      (window as unknown as { e5Writes: string[] }).e5Writes.push(key); original.call(this, key, value);
+    };
+  }, { key: STORAGE_KEY, value: snapshot });
+  const requests: string[] = [], writes: string[] = [], errors: string[] = [];
+  page.on("request", (r) => { if (new URL(r.url()).pathname.endsWith(".glb")) requests.push(r.url()); if (!["GET", "HEAD"].includes(r.method())) writes.push(r.url()); });
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(companionRoute + "&livingChoice=walk-10-minutes&companionSpecies=fox&assetUrl=https://forged.invalid/a.glb");
+  const world = page.getByTestId("placeable-world"), button = page.getByRole("button", { name: "동반자에게 인사하기" });
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  expect(requests).toEqual([getMySpaceCompanion("bear")!.url]);
+  // The existing auth SDK may probe browser storage during entry initialization.
+  // Only explicit companion interactions are under the no-write assertion.
+  const initialWrites = await page.evaluate(() => (window as unknown as { e5Writes: string[] }).e5Writes);
+  const before = await readLocal(page), point = await companionPoint(page);
+  await page.mouse.click(point.x, point.y); await expect(world).toHaveAttribute("data-companion-pose", "greet");
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 10000 });
+  await button.focus(); await page.keyboard.press("Enter"); await expect(world).toHaveAttribute("data-companion-pose", "greet");
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 10000 });
+  await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
+  expect(await readLocal(page)).toEqual(before);
+  expect(await page.evaluate(() => (window as unknown as { e5Writes: string[] }).e5Writes)).toEqual(initialWrites);
+  expect(writes).toEqual([]); expect(errors).toEqual([]);
+  await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+  await expect(world).toHaveAttribute("data-color", "teal");
+  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-keepsake")).toBeVisible();
+  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  await expect(page.getByTestId("companion-response")).toContainText("함께 있어요");
+  expect(await readLocal(page)).toEqual(before);
+});
+
+test("E5 actual non-default lite supports touch, live reduced-motion changes and desktop/mobile framing", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "rabbit"));
+    await page.goto(companionRoute);
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute("data-companion", "rabbit");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
+    const point = await companionPoint(page); await page.touchscreen.tap(point.x, point.y);
+    await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral");
+    expect(await readLocal(page)).toBeNull();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(world).toHaveAttribute("data-companion-pose", "idle");
+    const active = await companionPoint(page); await page.touchscreen.tap(active.x, active.y);
+    await expect(world).toHaveAttribute("data-companion-pose", "greet");
+    await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 10000 });
+    for (const viewport of [{ width: 1366, height: 900 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(viewport);
+      await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath(`e5-rabbit-${viewport.width}.png`) });
+      const point = await companionPoint(page); await page.touchscreen.tap(point.x, point.y);
+      await expect(world).toHaveAttribute("data-companion-pose", "greet");
+      await page.emulateMedia({ reducedMotion: "reduce" }); await expect(world).toHaveAttribute("data-companion-pose", "neutral");
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+    }
+  } finally { await context.close(); }
+});
+
+for (const preference of ["invalid", "blocked"]) test(`E5 ${preference} preference uses safe bear without repairing storage`, async ({ page }) => {
+  await page.addInitScript((kind) => {
+    localStorage.setItem("sk7-companion-species", "invalid");
+    if (kind === "blocked") {
+      const original = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (key) { if (key === "sk7-companion-species") throw new Error("blocked"); return original.call(this, key); };
+    }
+  }, preference);
+  await page.goto(companionRoute);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion", "bear");
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  expect(await readLocal(page)).toBeNull();
+  if (preference === "invalid") expect(await page.evaluate(() => localStorage.getItem("sk7-companion-species"))).toBe("invalid");
+});
+
+for (const failure of ["network", "clips"]) test(`E5 ${failure} failure is local and preserves placement, Gate and Classic`, async ({ page }) => {
+  await page.route("**/companion/v1/**", async (route) => {
+    if (failure === "network") await route.abort("failed");
+    else await route.fulfill({ contentType: "model/gltf+json", body: JSON.stringify({ asset: { version: "2.0" }, scene: 0, scenes: [{ nodes: [] }], nodes: [], animations: [] }) });
+  });
+  await page.goto(companionRoute);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "unavailable");
+  await expect(page.getByTestId("companion-response")).toContainText("Today Gate");
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  expect(await readLocal(page)).toBeNull();
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+  const before = await readLocal(page);
+  await expect(page.getByRole("link", { name: /Classic Today/ })).toHaveAttribute("aria-disabled", "false");
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-pinwheel")).toBeVisible(); expect(await readLocal(page)).toEqual(before);
+});
 
 test("browser experience previews, cancels, confirms, interacts, leaves/returns, moves, recolors and removes", async ({ page }) => {
   await page.goto(browserRoute);
