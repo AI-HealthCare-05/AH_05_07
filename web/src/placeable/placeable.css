@@ -179,7 +179,7 @@
   .placeable-world-view .placeable-garden-path { right: 12px; top: 61%; }
   .placeable-world-view .placeable-garden-path button { font-size: .7rem; padding: 9px 10px; }
   .placeable-world-view .placeable-twilight { top: max(88px, calc(env(safe-area-inset-top) + 76px)); right: 12px; }
-  .placeable-world-view .placeable-companion { left: 14px; bottom: max(120px, calc(env(safe-area-inset-bottom) + 106px)); }
+  .placeable-world-view .placeable-companion { left: 14px; bottom: max(146px, calc(env(safe-area-inset-bottom) + 132px)); }
   .placeable-world-view .placeable-walk-pad { right: 14px; bottom: max(70px, calc(env(safe-area-inset-bottom) + 56px)); width: 72px; height: 72px; }
   .placeable-world-view .plaza-help { left: auto; right: 12px; transform: none; bottom: max(12px, env(safe-area-inset-bottom)); }
   .plaza-save-summary { top: 142px; left: 12px; width: calc(100% - 24px); font-size: .75rem; }
@@ -188,6 +188,12 @@
   .placeable-world-view[data-editing=true] .placeable-destination { top: 88px; bottom: auto; }
   .placeable-world-view[data-editing=true] .placeable-destination > div { display: none; }
   .placeable-world-view[data-editing=true] .placeable-garden-path { visibility: hidden; }
+}
+@media (max-width: 360px) {
+  .placeable-world-view .placeable-twilight { top: max(112px, calc(env(safe-area-inset-top) + 100px)); }
+  .placeable-world-view .plaza-save-summary { top: 164px; }
+  .placeable-world-view[data-editing=true] .placeable-destination { top: 112px; }
+  .placeable-world-view[data-editing=true] .placeable-world-host { top: 100px; height: calc(48dvh - 100px); }
 }
 @media (max-height: 500px) {
   .placeable-world-view .placeable-controls { top: 76px; bottom: 8px; left: auto; width: 340px; max-height: none; }

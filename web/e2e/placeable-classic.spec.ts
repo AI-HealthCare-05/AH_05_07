@@ -55,6 +55,18 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     await confirm(page); await expect(editor).toBeHidden(); await expect(open).toBeFocused();
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
     const before = await readLocal(page);
+    if (mobile) {
+      await page.setViewportSize({ width: 320, height: 844 });
+      const exit = (await page.getByRole("link", { name: "Leave plaza" }).boundingBox())!;
+      const light = (await page.getByRole("button", { name: "광장의 불빛 켜기" }).boundingBox())!;
+      const spin = (await page.getByRole("button", { name: "Spin pinwheel", exact: true }).boundingBox())!;
+      const walk = (await page.getByRole("button", { name: "Drag to walk", exact: false }).boundingBox())!;
+      expect(light.y).toBeGreaterThanOrEqual(exit.y + exit.height);
+      expect(spin.y + spin.height).toBeLessThanOrEqual(walk.y);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+      await page.screenshot({ path: test.info().outputPath("plaza-320.png"), scale: "css" });
+      await page.setViewportSize({ width: 390, height: 844 });
+    }
     await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
     await expect(page.getByTestId("placeable-feedback")).toContainText("answers");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-daylight.png`) });
