@@ -15,7 +15,7 @@ export class PlaceableAudio {
       return generation === this.#generation && context.state === "running" ? "ready" : "unavailable";
     } catch { this.dispose(); return "unavailable"; }
   }
-  play(): boolean {
+  play(cue: "pinwheel" | "twilight" = "pinwheel"): boolean {
     const context = this.#context;
     if (!context || context.state !== "running") return false;
     try {
@@ -24,7 +24,8 @@ export class PlaceableAudio {
       master.gain.setValueAtTime(0.09, start);
       master.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
       master.connect(context.destination);
-      [659.25, 880, 987.77].forEach((frequency, index) => {
+      const notes = cue === "twilight" ? [392, 493.88, 587.33] : [659.25, 880, 987.77];
+      notes.forEach((frequency, index) => {
         const voice = context.createOscillator();
         voice.frequency.value = frequency; voice.connect(master);
         voice.onended = () => { voice.disconnect(); if (index === 2) master.disconnect(); };

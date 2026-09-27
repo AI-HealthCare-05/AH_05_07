@@ -12,6 +12,7 @@ export function createLivingChoiceMarker() {
   const disc = new Mesh(new CylinderGeometry(0.29, 0.29, 0.13, 40), stone);
   disc.rotation.x = Math.PI / 2; disc.position.set(0, 0.36, 0); marker.add(disc);
   const inset = new Mesh(new CylinderGeometry(0.235, 0.235, 0.016, 40), face);
+  inset.name = "keepsake-face";
   inset.rotation.x = Math.PI / 2; inset.position.set(0, 0.36, 0.075); marker.add(inset);
   const motifs = [
     { id: "plaza-ribbon-v1", color: keepsakeMedia["plaza-ribbon-v1"].accent, paths: [[[-0.13, -0.12], [0.08, -0.07], [0, 0], [-0.08, 0.07], [0.13, 0.12]]] },

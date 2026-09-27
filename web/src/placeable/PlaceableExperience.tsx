@@ -173,6 +173,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {(preview || state.pending) && <p className="placeable-handoff-note">Confirm or cancel your preview before visiting Today. If the save is uncertain, check its saved state first.</p>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">Loading 3D plaza… Classic plaza is available above.</p>}>
           <PlaceableWorld companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
+            onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}

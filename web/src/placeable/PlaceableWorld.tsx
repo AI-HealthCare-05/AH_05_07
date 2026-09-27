@@ -5,7 +5,7 @@ import { PlaceableWorldInput } from "./worldInput";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 
-type Props = PlaceableProjection & { companion: CompanionAsset | null; onInteract: () => void };
+type Props = PlaceableProjection & { companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
 /** Opt-in scene lifetime. No Lab shell, auth client, persistence, or health stores. */
 export default function PlaceableWorld(props: Props) {
@@ -23,6 +23,16 @@ export default function PlaceableWorld(props: Props) {
   const [focused, setFocused] = useState(false);
   const [pose, setPose] = useState<CompanionPose>("loading");
   const [greetings, setGreetings] = useState(0);
+  const [twilight, setTwilight] = useState(false);
+  const [welcomePhase, setWelcomePhase] = useState<PlaceableScene["welcomePhase"]>("daylight");
+  const toggleTwilight = () => {
+    if (!sceneRef.current || error) return;
+    const enabled = !twilight;
+    sceneRef.current.setTwilight(enabled); setTwilight(enabled);
+    setWelcomePhase(sceneRef.current.welcomePhase);
+    // Audio is optional and stays in the existing parent lifecycle, on this gesture only.
+    if (enabled) latest.current.onTwilight();
+  };
   const greet = () => {
     if (companionRef.current?.greet()) setGreetings((count) => count + 1);
   };
@@ -51,6 +61,7 @@ export default function PlaceableWorld(props: Props) {
     const fail = () => { dispose(); setError(true); };
     setError(false);
     setPose("loading"); setGreetings(0);
+    setTwilight(false); setWelcomePhase("daylight");
     try {
       scene = new PlaceableScene(); sceneRef.current = scene;
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
@@ -98,12 +109,15 @@ export default function PlaceableWorld(props: Props) {
       canvas.addEventListener("webglcontextlost", lost);
       cleanup.push(() => canvas.removeEventListener("webglcontextlost", lost));
       let previous: number | null = null;
+      let lastPhase = scene.welcomePhase;
       const frame = (time: number) => {
         if (disposed) return;
         try {
           const dt = previous === null ? 0 : (time - previous) / 1000; previous = time;
           if (!document.hidden) {
-            scene!.step(dt, input.movement.snapshot.intent);
+            if (scene!.step(dt, input.movement.snapshot.intent)) greet();
+            const phase = scene!.welcomePhase;
+            if (phase !== lastPhase) { lastPhase = phase; setWelcomePhase(phase); }
             companion!.step(dt);
             renderer!.render(scene!.scene, scene!.camera);
           } else previous = null;
@@ -119,9 +133,17 @@ export default function PlaceableWorld(props: Props) {
     data-keepsake={props.keepsake ?? "none"} data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
     data-suspended={props.suspended || !focused} data-reduced-motion={reducedMotion}
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
+    data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
     }}>
+    <div className="placeable-twilight">
+      <button type="button" onClick={toggleTwilight} disabled={error} aria-pressed={twilight}
+        aria-describedby="twilight-help">{twilight ? "낮의 광장으로 돌아가기" : "광장의 불빛 켜기"}</button>
+      <p role="status" data-testid="twilight-status">{error ? "조명을 볼 수 없어도 Classic plaza와 Today는 이용할 수 있어요."
+        : twilight ? "Today Gate의 불빛을 따라, 해질녘 광장에 오신 것을 환영해요." : "따뜻한 낮의 광장 · 원할 때 불빛을 켜 보세요."}</p>
+      <p id="twilight-help">이번 방문의 분위기만 바뀌어요. 배치나 활동 기록은 변경되지 않아요.</p>
+    </div>
     <div className="placeable-world-host" ref={host}>
       {!error && labels.map((label) => <span key={label.id} className="placeable-world-label" aria-hidden="true"
         style={{ left: `${label.left}%`, top: `${label.top}%` }}>{label.label}</span>)}

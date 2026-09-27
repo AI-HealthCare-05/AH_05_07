@@ -24,6 +24,17 @@ export type PlaceableProjection = Readonly<{
 }>;
 export const PINWHEEL_RADIUS = 0.4;
 const material = (color: string | number) => new MeshStandardMaterial({ color, roughness: 0.82 });
+const mood = {
+  sky: [new Color("#eee8db"), new Color("#202e58")],
+  ground: [new Color("#e0d7b9"), new Color("#465780")],
+  approach: [new Color("#f5ead4"), new Color("#8589aa")],
+  ambient: [new Color(0xe8ecff), new Color("#c4d0ff")],
+  sun: [new Color(0xffe4b8), new Color("#ccd9ff")],
+} as const;
+const ramp = (time: number, start: number, duration: number) => {
+  const value = Math.max(0, Math.min(1, (time - start) / duration));
+  return value * value * (3 - 2 * value);
+};
 
 export class PlaceableScene {
   readonly scene = new Scene();
@@ -34,6 +45,16 @@ export class PlaceableScene {
   readonly actor = new Group();
   readonly socketRings = new Group();
   readonly bladeMaterial = material(COLORS.coral);
+  readonly ambient = new AmbientLight(0xe8ecff, 1.5);
+  readonly sun = new DirectionalLight(0xffe4b8, 2.4);
+  readonly groundMaterial = material("#e0d7b9");
+  readonly gateMaterial = material("#6954b5");
+  readonly archLightMaterial = material("#f8d789");
+  readonly approachMaterial = material("#f5ead4");
+  #detailMaterials: MeshStandardMaterial[] = [];
+  #twilight = false;
+  #welcomeTime = 0;
+  #greetingPending = false;
   #pinwheelMaterials: MeshStandardMaterial[] = [];
   #pulse = 0;
   #feedbackLeft = 0;
@@ -43,14 +64,14 @@ export class PlaceableScene {
   #suspended = true;
 
   constructor() {
-    // One fixed daylight mood: warm stone, cool violet arch, a quiet garden edge.
+    // Daylight is the truthful default for every visit; no wall clock or stored mood.
     this.scene.background = new Color("#eee8db");
-    this.scene.add(new AmbientLight(0xe8ecff, 1.5));
-    const sun = new DirectionalLight(0xffe4b8, 2.4);
+    this.scene.add(this.ambient);
+    const sun = this.sun;
     sun.position.set(-3, 8, 5); this.scene.add(sun);
     // The circular foundation covers the unchanged square walking bounds, including corners.
     const groundRadius = PATH.boundMetres * Math.SQRT2;
-    const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), material("#e0d7b9"));
+    const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), this.groundMaterial);
     ground.position.y = -0.14; ground.name = "e1-plaza-ground"; this.scene.add(ground);
     // Preserve E1's authored route coordinates and all E2 sockets.
     for (const segment of PATH.segments) {
@@ -64,11 +85,11 @@ export class PlaceableScene {
       disc.position.set(marker.position.x, 0.05, marker.position.z);
       disc.name = marker.id; this.scene.add(disc);
     }
-    const approach = new Mesh(new BoxGeometry(1.25, 0.03, 4.7), material("#f5ead4"));
+    const approach = new Mesh(new BoxGeometry(1.25, 0.03, 4.7), this.approachMaterial);
     approach.position.set(0, 0.02, -0.2); this.scene.add(approach);
     const gate = new Group(); gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
-    const gateMaterial = material("#6954b5"), trimMaterial = material("#b4a3db");
+    const gateMaterial = this.gateMaterial, trimMaterial = material("#b4a3db");
     for (const x of [-0.85, 0.85]) {
       const post = new Mesh(new CylinderGeometry(0.25, 0.29, 1.65, 32), gateMaterial);
       post.position.set(x, 0.825, 0); gate.add(post);
@@ -77,7 +98,7 @@ export class PlaceableScene {
     }
     const arch = new Mesh(new TorusGeometry(0.85, 0.25, 24, 64, Math.PI), gateMaterial);
     arch.position.y = 1.65; gate.add(arch);
-    const innerArch = new Mesh(new TorusGeometry(0.85, 0.035, 12, 64, Math.PI), material("#f8d789"));
+    const innerArch = new Mesh(new TorusGeometry(0.85, 0.035, 12, 64, Math.PI), this.archLightMaterial);
     innerArch.position.set(0, 1.65, 0.25); gate.add(innerArch);
     this.scene.add(gate);
     // Low, broad planting frames the destination; it never competes with it.
@@ -96,6 +117,9 @@ export class PlaceableScene {
     this.scene.add(this.choiceMarker);
     this.pinwheel.name = ASSET; this.pinwheel.visible = false;
     const stemMaterial = material("#99744d"), hubMaterial = material("#fff8df");
+    this.#detailMaterials = [hubMaterial];
+    const face = this.choiceMarker.getObjectByName("keepsake-face") as Mesh<CylinderGeometry, MeshStandardMaterial>;
+    this.#detailMaterials.push(face.material);
     this.#pinwheelMaterials = [this.bladeMaterial, stemMaterial, hubMaterial];
     this.bladeMaterial.side = DoubleSide;
     const stem = new Mesh(new CylinderGeometry(0.023, 0.03, 1.02, 12), stemMaterial);
@@ -132,6 +156,10 @@ export class PlaceableScene {
       if (detail.name.startsWith("choice-detail:")) detail.visible = detail.name === `choice-detail:${choice}`;
     }
     this.#reducedMotion = reducedMotion; this.#preview = projection.preview; this.#suspended = projection.suspended;
+    if (reducedMotion && this.#welcomeTime !== (this.#twilight ? 2.1 : 0)) {
+      this.#welcomeTime = this.#twilight ? 2.1 : 0;
+      this.#lighting();
+    }
     if (reducedMotion) this.rotor.rotation.z = 0;
     const selection = projection.selection;
     this.pinwheel.visible = selection !== null;
@@ -158,6 +186,11 @@ export class PlaceableScene {
   step(seconds: number, intent: MovementIntent) {
     if (this.#disposed) return;
     const dt = Math.max(0, Math.min(seconds, 0.05));
+    const target = this.#twilight ? 2.1 : 0;
+    if (this.#welcomeTime !== target) {
+      this.#welcomeTime = this.#twilight ? Math.min(target, this.#welcomeTime + dt) : Math.max(0, this.#welcomeTime - dt * 2);
+      this.#lighting();
+    }
     if (!this.#suspended) {
       const bound = PATH.boundMetres - 0.35;
       this.actor.position.x = Math.max(-bound, Math.min(bound, this.actor.position.x + intent.lateral * dt * 1.8));
@@ -168,11 +201,53 @@ export class PlaceableScene {
       this.#feedbackLeft = Math.max(0, this.#feedbackLeft - dt);
     }
     this.#feedback();
+    if (this.#greetingPending && this.#welcomeTime >= 1.65) {
+      this.#greetingPending = false;
+      return true; // One optional greet; no replay if the companion is not ready.
+    }
+    return false;
+  }
+
+  get welcomePhase() {
+    return !this.#twilight ? "daylight" : this.#welcomeTime >= 2.1 ? "twilight"
+      : this.#welcomeTime >= 1.65 ? "companion" : this.#welcomeTime >= 1.05 ? "details"
+      : this.#welcomeTime >= 0.55 ? "route" : "gate";
+  }
+
+  setTwilight(enabled: boolean) {
+    if (this.#disposed || enabled === this.#twilight) return;
+    this.#twilight = enabled;
+    this.#greetingPending = enabled;
+    // A fresh activation starts its short authored sequence; reversal cancels it.
+    if (enabled) this.#welcomeTime = 0;
+    if (this.#reducedMotion) this.#welcomeTime = enabled ? 2.1 : 0;
+    this.#lighting();
+  }
+
+  #lighting() {
+    const environment = ramp(this.#welcomeTime, 0, 1.3);
+    const gate = ramp(this.#welcomeTime, 0, 0.55);
+    const route = ramp(this.#welcomeTime, 0.55, 0.6);
+    const detail = ramp(this.#welcomeTime, 1.05, 0.55);
+    (this.scene.background as Color).copy(mood.sky[0]).lerp(mood.sky[1], environment);
+    this.groundMaterial.color.copy(mood.ground[0]).lerp(mood.ground[1], environment);
+    this.ambient.color.copy(mood.ambient[0]).lerp(mood.ambient[1], environment);
+    this.ambient.intensity = 1.5 - 0.35 * environment;
+    this.sun.color.copy(mood.sun[0]).lerp(mood.sun[1], environment);
+    this.sun.intensity = 2.4 - 0.75 * environment;
+    this.gateMaterial.emissive.set("#785ad8"); this.gateMaterial.emissiveIntensity = gate * 0.65;
+    this.archLightMaterial.emissive.set("#ffd18a"); this.archLightMaterial.emissiveIntensity = gate * 1.6;
+    this.approachMaterial.emissive.set("#c5c9ff"); this.approachMaterial.emissiveIntensity = route * 0.12;
+    this.approachMaterial.color.copy(mood.approach[0]).lerp(mood.approach[1], environment);
+    for (const material of this.#detailMaterials) {
+      material.emissive.set("#f8dcb2"); material.emissiveIntensity = detail * 0.07;
+    }
   }
 
   #feedback() {
-    this.bladeMaterial.emissive.set(this.#feedbackLeft > 0 ? "#ffdc79" : "#000000");
-    this.bladeMaterial.emissiveIntensity = this.#feedbackLeft > 0 ? 0.45 : 0;
+    const detail = ramp(this.#welcomeTime, 1.05, 0.55);
+    this.bladeMaterial.emissive.set(this.#feedbackLeft > 0 || detail > 0 ? "#ffdc79" : "#000000");
+    this.bladeMaterial.emissiveIntensity = this.#feedbackLeft > 0 ? 0.45 : detail * 0.06;
   }
 
   labels() {

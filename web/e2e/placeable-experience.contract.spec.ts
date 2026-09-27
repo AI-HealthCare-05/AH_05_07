@@ -68,9 +68,10 @@ test("audio stays muted without a gesture, reports unavailable, and closes its c
   const audio = new PlaceableAudio();
   try {
     Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
-    expect(created).toBe(0); expect(audio.play()).toBe(false); expect(await audio.enable()).toBe("unavailable");
+    expect(created).toBe(0); expect(audio.play()).toBe(false); expect(audio.play("twilight")).toBe(false); expect(await audio.enable()).toBe("unavailable");
     Object.defineProperty(globalThis, "window", { configurable: true, value: { AudioContext: AudioFixture } });
     expect(await audio.enable()).toBe("ready"); expect(audio.play()).toBe(true); expect(tones).toBe(3);
+    expect(audio.play("twilight")).toBe(true); expect(tones).toBe(6); expect(created).toBe(1);
     audio.dispose(); audio.dispose(); expect(closed).toBe(1); expect(audio.play()).toBe(false);
   } finally {
     audio.dispose(); if (prior) Object.defineProperty(globalThis, "window", prior); else Reflect.deleteProperty(globalThis, "window");

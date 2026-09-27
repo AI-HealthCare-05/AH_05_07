@@ -234,7 +234,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "normal") {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "normal", confirmUnknownOnRead = true) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -250,7 +250,8 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (request.method() === "GET") {
       reads++;
       return route.fulfill({ status: behavior === "read-error" && reads === 1 ? 503 : 200, headers: cors, contentType: "application/json",
-        body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } } : snapshot) });
+        body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } }
+          : behavior === "unknown" && !confirmUnknownOnRead ? emptySnapshot() : snapshot) });
     }
     puts++; const op = request.postDataJSON() as Operation;
     if (behavior === "conflict" && puts === 1) {
@@ -261,7 +262,7 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (behavior === "unknown") return route.abort("failed");
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(snapshot) });
   });
-  return { get puts() { return puts; }, get reads() { return reads; } };
+  return { get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
 }
 
 for (const behavior of ["conflict", "unknown", "read-error"] as const) {
@@ -612,4 +613,148 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
     await page.getByRole("button", { name: "남긴 문양 제거" }).tap(); await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText("아직 남긴 문양이 없어요.");
   } finally { await context.close(); }
+});
+
+// E6 stays in the existing scheduled/manual placeable surface; no new visual CI.
+test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes zero storage writes", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(companionRoute + "&living_choice=sleep-routine");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  const before = await readLocal(page), status = await page.getByTestId("save-status").textContent();
+  const writes: string[] = [];
+  page.on("request", (request) => { if (!["GET", "HEAD"].includes(request.method())) writes.push(request.url()); });
+  await page.evaluate(() => {
+    Object.assign(window, { e6Writes: 0 }); const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      (window as unknown as { e6Writes: number }).e6Writes++; original.call(this, key, value);
+    };
+  });
+  await expect(world).toHaveAttribute("data-lighting", "daylight");
+  await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath("e6-daylight-desktop.png") });
+  const light = page.getByRole("button", { name: "광장의 불빛 켜기" });
+  await light.focus(); await page.keyboard.press("Enter");
+  await expect(world).toHaveAttribute("data-companion-pose", "greet");
+  await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+  await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
+  await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+  await expect(world).toHaveAttribute("data-color", "coral");
+  await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath("e6-twilight-desktop.png") });
+  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
+  await expect(world).toHaveAttribute("data-lighting", "daylight");
+  await light.focus(); await page.keyboard.press("Space");
+  await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+  expect(await readLocal(page)).toEqual(before); expect(writes).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { e6Writes: number }).e6Writes)).toBe(0);
+  await expect(page.getByTestId("save-status")).toHaveText(status!);
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-keepsake")).toBeVisible();
+  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await expect(world).toHaveAttribute("data-lighting", "daylight");
+  await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
+  expect(await readLocal(page)).toEqual(before);
+});
+
+test("E6 mobile touch and live reduced motion retain the final hierarchy without choreography", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await page.goto(companionRoute + "&living_choice=walk-10-minutes");
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+    const before = await readLocal(page);
+    await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
+    await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral");
+    await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath(`e6-twilight-mobile-${width}.png`) });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(page.getByRole("button", { name: "낮의 광장으로 돌아가기" })).toBeVisible();
+    }
+    await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).tap();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral");
+    expect(await readLocal(page)).toEqual(before);
+  } finally { await context.close(); }
+});
+
+test("E6 enabled audio plays one short motif per activation; muted and unavailable stay visual", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.assign(window, { e6Tones: 0 });
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (...args) {
+      (window as unknown as { e6Tones: number }).e6Tones++; start.apply(this, args);
+    };
+  });
+  await page.goto(companionRoute);
+  const light = page.getByRole("button", { name: "광장의 불빛 켜기" });
+  const day = page.getByRole("button", { name: "낮의 광장으로 돌아가기" });
+  await light.click(); await day.click();
+  expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(0);
+  await page.getByRole("button", { name: "Enable sound" }).click();
+  await expect(page.getByTestId("audio-status")).toHaveText("Sound: ready");
+  await light.click();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
+  expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
+  await page.getByRole("button", { name: "Mute sound" }).click(); await day.click(); await light.click();
+  expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
+  await page.reload();
+  await page.evaluate(() => {
+    Object.defineProperty(window, "AudioContext", { configurable: true, value: undefined });
+    Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
+  });
+  await page.getByRole("button", { name: "Enable sound" }).click();
+  await expect(page.getByTestId("audio-status")).toContainText("unavailable"); await light.click();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
+});
+
+for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E6 account ${behavior} preserves revisions and truthful save status`, async ({ page }) => {
+  const account = await accountRoute(page, behavior, false);
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
+  const writes = account.puts, reads = account.reads, revision = account.revision, browser = await readLocal(page);
+  const status = await page.getByTestId("save-status").textContent();
+  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
+  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
+  expect(account.puts).toBe(writes); expect(account.reads).toBe(reads); expect(await readLocal(page)).toEqual(browser);
+  expect(account.revision).toBe(revision);
+  await expect(page.getByTestId("save-status")).toHaveText(status!);
+  if (behavior !== "normal") {
+    await expect(page.getByTestId("save-status")).not.toContainText("Saved");
+    await expect(page.getByTestId("draft-placement")).toBeVisible();
+  }
+});
+
+test("E6 companion and WebGL failures stay independent; interrupted welcome cannot leak into retry", async ({ page }) => {
+  await page.route("**/companion/v1/**", (route) => route.abort("failed"));
+  await page.goto(companionRoute);
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-companion-pose", "unavailable");
+  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+  await expect(page.getByRole("link", { name: /Classic Today/ })).toHaveAttribute("aria-disabled", "false");
+  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
+  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => {
+    const gl = canvas.getContext("webgl2")!; gl.getExtension("WEBGL_lose_context")!.loseContext();
+  });
+  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(page.getByTestId("twilight-status")).toContainText("Classic plaza");
+  await page.getByRole("button", { name: "Retry 3D" }).click();
+  await expect(world).toHaveAttribute("data-lighting", "daylight");
+  await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
 });
