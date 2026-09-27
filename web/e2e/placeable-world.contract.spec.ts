@@ -11,6 +11,7 @@ import { companionClips, companionSpecies } from "../src/ui/companion";
 import { getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { readCompanionIdentity } from "../src/ui/companionIdentity";
 import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
+import { GardenScene } from "../src/placeable/gardenScene";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -20,6 +21,48 @@ function companionFixture() {
     [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
   return { scene: model, animations: clips } as GLTF;
 }
+
+test("E7 garden walking stays on its small front path, pavilion frames mobile and teardown is idempotent", () => {
+  const scene = new GardenScene();
+  expect(scene.atPavilion).toBe(false);
+  const before = scene.actor.position.clone();
+  scene.step(0.05, { lateral: 1, forward: 1, magnitude: 1, source: "keyboard" }, false);
+  expect(scene.actor.position.x).toBeGreaterThan(before.x); expect(scene.actor.position.z).toBeLessThan(before.z);
+  for (let n = 0; n < 200; n++) scene.step(1, { lateral: 1, forward: 1, magnitude: 1, source: "keyboard" }, false);
+  expect(scene.actor.position.x).toBe(1.65); expect(scene.actor.position.z).toBe(0.35);
+  scene.approach(); expect(scene.atPavilion).toBe(true);
+  const atRest = scene.actor.position.clone(); scene.step(1, { lateral: 1, forward: 1, magnitude: 1, source: "keyboard" }, true);
+  expect(scene.actor.position.equals(atRest)).toBe(true);
+  for (const aspect of [1.8, 0.95, 0.7]) {
+    scene.resize(aspect);
+    const bounds = new Box3().setFromObject(scene.pavilion);
+    for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
+      const point = new Vector3(x, y, z).project(scene.camera);
+      expect(Math.abs(point.x)).toBeLessThan(0.96); expect(Math.abs(point.y)).toBeLessThan(0.96);
+    }
+  }
+  const geometries = new Set<BufferGeometry>(), counts = new Map<BufferGeometry, number>();
+  scene.scene.traverse((object) => { if (object instanceof Mesh) geometries.add(object.geometry); });
+  geometries.forEach((geometry) => geometry.addEventListener("dispose", () => counts.set(geometry, (counts.get(geometry) ?? 0) + 1)));
+  scene.dispose(); scene.dispose(); scene.approach(); scene.step(1, { lateral: 1, forward: 1, magnitude: 1, source: "keyboard" }, false);
+  expect([...geometries].map((geometry) => counts.get(geometry))).toEqual([...geometries].map(() => 1));
+  expect(scene.actor.position.equals(atRest)).toBe(true);
+});
+
+test("E7 explicit rest advances a real clip once, bounds long clips, returns idle and keeps reduced motion neutral", () => {
+  for (const duration of [0.2, 20]) {
+    const gltf = companionFixture(); gltf.animations.find((clip) => clip.name === "rest")!.duration = duration;
+    const actor = new MySpaceCompanionActor(); actor.start(getMySpaceCompanion("bear"), (_url, done) => done(gltf));
+    expect(actor.pose).toBe("idle"); expect(actor.rest()).toBe(true); expect(actor.rest()).toBe(false);
+    actor.step(0.01); expect(gltf.scene.rotation.z).toBeGreaterThan(0);
+    for (let n = 0; n < 81; n++) actor.step(0.05);
+    expect(actor.pose).toBe("idle"); actor.rest(); actor.setReducedMotion(true);
+    expect(actor.pose).toBe("neutral"); expect(actor.rest()).toBe(true); actor.step(1);
+    expect(gltf.scene.rotation.z).toBe(0); expect(actor.pose).toBe("neutral");
+    actor.setReducedMotion(false); expect(actor.pose).toBe("idle");
+    actor.rest(); actor.dispose(); expect(actor.rest()).toBe(false);
+  }
+});
 
 test("E5 browser preference normalization and every active member resolve exact lite only", () => {
   expect(readCompanionIdentity(null)).toBe("bear");
