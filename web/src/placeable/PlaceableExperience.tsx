@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { Component, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
 import { classicTodayHref } from "../ui/mySpaceReturn";
 import { ASSET, COLORS, isSelection, SOCKETS, supported, type Selection } from "./contract";
 import { PlaceableController } from "./controller";
@@ -38,7 +39,8 @@ function Pinwheel({ selection, pulse }: { selection: Selection; pulse: number })
     </svg>
   </span>;
 }
-export function ClassicPlaza({ selection, preview, pulse, interact, canInteract }: {
+export function ClassicPlaza({ selection, preview, pulse, interact, canInteract, choice = null }: {
+  choice?: LivingChoice | null;
   selection: Selection | null; preview: boolean; pulse: number; interact: () => void; canInteract: boolean;
 }) {
   return <div className="placeable-map" data-testid="classic-plaza" data-preview={preview}>
@@ -54,6 +56,15 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract 
       <path d="M160 120 V77 a40 40 0 0 1 80 0 V120" fill="none" stroke="#eccc84" strokeWidth="3" />
       <ellipse cx="65" cy="156" rx="24" ry="14" fill="#829579" />
       <ellipse cx="335" cy="156" rx="24" ry="14" fill="#829579" />
+      {choice && <g transform="translate(76 199)" data-testid="classic-living-choice" data-choice={choice}>
+        <ellipse cy="16" rx="17" ry="6" fill="#c2b897" />
+        <circle r="15" fill="#d0c5a8" /><circle r="12" fill="#f5ead4" />
+        <g fill="none" stroke={choice === "walk-10-minutes" ? "#8d7970" : choice === "sleep-routine" ? "#82769a" : "#70856c"} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          {choice === "walk-10-minutes" ? <path d="M-7 6 Q8 4 0 0 Q-8 -4 7 -6" />
+            : choice === "sleep-routine" ? <path d="M3 -7 C-8 -9 -10 7 2 8 Q8 8 9 3 C0 8 -5 -3 3 -7Z" />
+            : <><path d="M-7 6 Q-10 -6 7 -7 Q10 6 -7 6Z" /><path d="M-7 6 L4 -3" /></>}
+        </g>
+      </g>}
       <circle cx="200" cy="210" r="12" fill="#697ba0" />
       <circle cx="200" cy="203" r="7" fill="#fff0cc" />
     </svg>
@@ -72,7 +83,8 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract 
   </div>;
 }
 
-export default function PlaceableExperience({ adapter, accountAvailable = false, world = false }: {
+export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, choice = null }: {
+  choice?: LivingChoice | null;
   adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean;
 }) {
   const [controller] = useState(() => new PlaceableController(adapter));
@@ -124,7 +136,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     const next = await audio.enable(); if (alive.current) setAudioStatus(next);
   }
   function route(view: string, storage = adapter.mode) {
-    return `?experience=e2&view=${view}&storage=${storage}`;
+    return `?experience=e2&view=${view}&storage=${storage}${livingChoiceQuery(choice)}`;
   }
   async function confirm() {
     await controller.confirm();
@@ -151,9 +163,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         </div>
         {(preview || state.pending) && <p className="placeable-handoff-note">Confirm or cancel your preview before visiting Today. If the save is uncertain, check its saved state first.</p>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">Loading 3D plaza… Classic plaza is available above.</p>}>
-          <PlaceableWorld selection={selection} preview={preview} pulse={state.pulse}
+          <PlaceableWorld choice={choice} selection={selection} preview={preview} pulse={state.pulse}
             suspended={preview || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
-        </Suspense></WorldBoundary> : <ClassicPlaza selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
+        </Suspense></WorldBoundary> : <ClassicPlaza choice={choice} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
+        {choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
         <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "A plaza breeze. Your pinwheel answers." : "A little breeze, a place of your own."}</p>
       </section>
       <section className="placeable-controls" aria-label="Pinwheel controls">

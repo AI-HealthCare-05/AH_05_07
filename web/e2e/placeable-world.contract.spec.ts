@@ -10,6 +10,32 @@ const projection = (change: Partial<PlaceableProjection> = {}): PlaceableProject
 });
 const still = { lateral: 0, forward: 0, magnitude: 0, source: "none" } as const;
 
+test("Living Choice is one bounded still family and never changes the plaza, actor or pinwheel", () => {
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+  const baseline = scene.scene.children.filter((object) => object !== scene.choiceMarker).map((object) => object.toJSON());
+  const children = scene.choiceMarker.children.length;
+  expect(scene.choiceMarker.visible).toBe(false);
+  for (const choice of ["walk-10-minutes", "sleep-routine", "low-sodium-meal"] as const) {
+    scene.update(projection({ choice }), false);
+    expect(scene.choiceMarker.visible).toBe(true);
+    expect(scene.choiceMarker.children.filter((part) => part.name.startsWith("choice-detail:") && part.visible).map((part) => part.name)).toEqual([`choice-detail:${choice}`]);
+    expect(scene.choiceMarker.children).toHaveLength(children);
+    const bounds = new Box3().setFromObject(scene.choiceMarker);
+    expect(bounds.max.y).toBeLessThan(0.75);
+    expect(bounds.getSize(new Vector3()).x).toBeLessThan(0.8);
+    const before = scene.choiceMarker.toJSON();
+    scene.step(0.05, still); scene.update(projection({ choice }), true); scene.step(0.05, still);
+    expect(scene.choiceMarker.toJSON()).toEqual(before);
+    expect(scene.scene.children.filter((object) => object !== scene.choiceMarker).map((object) => object.toJSON())).toEqual(baseline);
+  }
+  // Runtime firewall also protects an untyped caller, independently of URL parsing.
+  scene.update(projection({ choice: "completed" as never }), false);
+  expect(scene.choiceMarker.visible).toBe(false);
+  scene.update(projection(), false); expect(scene.choiceMarker.visible).toBe(false);
+  scene.dispose();
+});
+
 test("real scene projects all authored sockets, colors, preview, confirmed and explicit removal", () => {
   const scene = new PlaceableScene();
   expect(scene.socketRings.children.map((socket) => socket.name)).toEqual(SOCKETS.map((s) => s.id));

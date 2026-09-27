@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { livingChoice, livingChoiceQuery, readLivingChoice } from "../src/ui/livingChoice";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import PlaceableExperience, { ClassicPlaza } from "../src/placeable/PlaceableExperience";
@@ -88,6 +89,17 @@ test("return context accepts only explicit view/storage enums, never an arbitrar
   }
 });
 
+
+test("Living Choice accepts only three scalar hints; duplicate, arbitrary and domain-shaped inputs fail closed", () => {
+  for (const choice of ["walk-10-minutes", "sleep-routine", "low-sodium-meal"]) {
+    expect(readLivingChoice(`?experience=e2${livingChoiceQuery(choice)}`)).toBe(choice);
+    expect(readLivingChoice(`?living_choice=${choice}&living_choice=${choice}`)).toBeNull();
+  }
+  for (const value of [null, undefined, "", "completed", "skipped", "walk-10-minutes ", "__proto__", "https://evil.invalid", ["sleep-routine"], { action_id: "sleep-routine" }]) {
+    expect(livingChoice(value)).toBeNull(); expect(livingChoiceQuery(value)).toBe("");
+  }
+  expect(readLivingChoice("?action_id=sleep-routine&completed=true")).toBeNull();
+});
 
 test("Classic remount never replays an earlier interaction while preview or recovery disables interaction", () => {
   const selection = { assetId: ASSET, color: "teal", socketId: "gate-right" } as const;

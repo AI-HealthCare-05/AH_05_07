@@ -25,7 +25,7 @@ export function assertDefaultEntryIsolation(bundle) {
   const chunks = Object.values(bundle).filter((output) => output.type === "chunk");
   const byFile = new Map(chunks.map((chunk) => [chunk.fileName, chunk]));
   const isE2Runtime = (id) => /\/src\/placeable\/(?!contract\.ts$)/.test(normalize(id));
-  const isWorld = (id) => /\/src\/placeable\/(?:PlaceableWorld|worldScene|worldInput)\./.test(normalize(id))
+  const isWorld = (id) => /\/src\/placeable\/(?:PlaceableWorld|worldScene|worldInput|livingChoiceMarker)\./.test(normalize(id))
     || normalize(id).includes("/transcend-lab/src/");
   for (const entry of chunks.filter((chunk) => Object.keys(chunk.modules).some((id) =>
     /\/src\/(?:main|App|GuestJourneySandbox|placeable\/ProductPlaceableEntry)\.tsx$/.test(normalize(id))))) {
@@ -53,11 +53,12 @@ export function placeableBoundary() {
       assertPlaceableModule(module.id);
       // The scene/input can consume the value contract and generic world seams,
       // never the account composition, controller, API or health state.
-      if (/\/src\/placeable\/(?:PlaceableWorld|worldScene|worldInput|contract)\.(?:ts|tsx)$/.test(normalize(module.id))
+      if (/\/src\/placeable\/(?:PlaceableWorld|worldScene|worldInput|livingChoiceMarker|contract)\.(?:ts|tsx)$/.test(normalize(module.id))
+        || normalize(module.id).endsWith("/src/ui/livingChoice.ts")
         || normalize(module.id).includes("/transcend-lab/src/")) {
         for (const id of [...module.importedIds, ...module.dynamicallyImportedIds]) {
           const relative = normalize(id).slice(webRoot.length + 1);
-          if (relative.startsWith("src/") && !/^src\/placeable\/(?:contract|worldScene|worldInput)\.ts$/.test(relative)) {
+          if (relative.startsWith("src/") && !/^src\/(?:placeable\/(?:contract|worldScene|worldInput|livingChoiceMarker)|ui\/livingChoice)\.ts$/.test(relative)) {
             throw new Error(`E2 renderer imported product state: ${relative}`);
           }
         }

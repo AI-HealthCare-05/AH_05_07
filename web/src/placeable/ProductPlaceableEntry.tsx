@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { readLivingChoice } from "../ui/livingChoice";
 import PlaceableExperience from "./PlaceableExperience";
 import { VerifiedAccountBinding, type AccountBindingStatus } from "./accountBinding";
 import { accountPersistence, browserPersistence, type PlaceablePersistence } from "./persistence";
@@ -70,5 +71,5 @@ export default function ProductPlaceableEntry() {
     <p><a href="/">Return to sign in</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>Choose browser-only storage</a></p>
   </main>;
-  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} accountAvailable />;
+  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} choice={readLivingChoice(window.location.search)} accountAvailable />;
 }

@@ -39,6 +39,8 @@
 .placeable-experience[data-phase=unavailable] .placeable-status, .placeable-experience[data-phase=session] .placeable-status { color: var(--sk7-danger-text); background: var(--sk7-danger-soft); }
 .placeable-experience .placeable-storage { font-size: .85rem; margin: 0; }
 .placeable-storage-switch, .placeable-asset-id { font-size: .8rem; }
+.placeable-choice-note { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.placeable-choice-note span { font-size: var(--sk7-type-caption); }
 .placeable-feedback { min-height: 28px; text-align: center; font-weight: 600; }
 .placeable-experience footer { max-width: 1250px; margin: 28px auto 0; font-size: .85rem; }
 .placeable-world-host { position: relative; width: 100%; aspect-ratio: 1.15; border-radius: var(--sk7-radius-screen); overflow: hidden; isolation: isolate; background: #eee8db; }
