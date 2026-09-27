@@ -1,3 +1,4 @@
+import { keepsakeMedia } from "./keepsakeMedia";
 import { CatmullRomCurve3, CylinderGeometry, Group, Mesh, MeshStandardMaterial, TubeGeometry, Vector3 } from "three";
 
 /** One still, low stone medallion beside the garden. No reward, motion or world state. */
@@ -13,9 +14,9 @@ export function createLivingChoiceMarker() {
   const inset = new Mesh(new CylinderGeometry(0.235, 0.235, 0.016, 40), face);
   inset.rotation.x = Math.PI / 2; inset.position.set(0, 0.36, 0.075); marker.add(inset);
   const motifs = [
-    { id: "walk-10-minutes", color: "#8d7970", paths: [[[-0.13, -0.12], [0.08, -0.07], [0, 0], [-0.08, 0.07], [0.13, 0.12]]] },
-    { id: "sleep-routine", color: "#82769a", paths: [[[0.04, 0.15], [-0.13, 0.1], [-0.15, -0.06], [-0.03, -0.15], [0.13, -0.07], [0.01, -0.05], [-0.05, 0.05], [0.04, 0.15]]] },
-    { id: "low-sodium-meal", color: "#70856c", paths: [[[-0.13, -0.1], [-0.13, 0.06], [0, 0.13], [0.13, 0.13], [0.12, -0.03], [0, -0.1], [-0.13, -0.1]], [[-0.13, -0.1], [0.02, 0.04], [0.07, 0.08]]] },
+    { id: "plaza-ribbon-v1", color: keepsakeMedia["plaza-ribbon-v1"].accent, paths: [[[-0.13, -0.12], [0.08, -0.07], [0, 0], [-0.08, 0.07], [0.13, 0.12]]] },
+    { id: "quiet-moon-v1", color: keepsakeMedia["quiet-moon-v1"].accent, paths: [[[0.04, 0.15], [-0.13, 0.1], [-0.15, -0.06], [-0.03, -0.15], [0.13, -0.07], [0.01, -0.05], [-0.05, 0.05], [0.04, 0.15]]] },
+    { id: "garden-leaf-v1", color: keepsakeMedia["garden-leaf-v1"].accent, paths: [[[-0.13, -0.1], [-0.13, 0.06], [0, 0.13], [0.13, 0.13], [0.12, -0.03], [0, -0.1], [-0.13, -0.1]], [[-0.13, -0.1], [0.02, 0.04], [0.07, 0.08]]] },
   ];
   for (const motif of motifs) {
     const detail = new Group(); detail.name = `choice-detail:${motif.id}`; detail.visible = false;

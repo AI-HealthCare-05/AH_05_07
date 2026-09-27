@@ -113,3 +113,20 @@ Review is not production approval. Production cannot select arbitrary
 assets/species/clips through query parameters. Unknown recipes and unapproved
 assets fail to CSS/poster fallback. Existing asset identity and original
 provenance remain unchanged.
+
+## My First Keepsake exception (E4)
+
+Within the existing E2 plaza only, explicit keep confirmation converts the E3
+candidate to a cosmetic identity: walking → `plaza-ribbon-v1`, sleep routine →
+`quiet-moon-v1`, low-sodium meal → `garden-leaf-v1`. The source action and all
+completion/health facts remain outside persisted world state. See the
+[two-slot data contract](data-contract.md#my-space-cosmetic-snapshot-e4).
+
+One saved keepsake takes precedence over the transient visit marker, using the
+same still medallion family and location. Preview can replace/remove it; the
+confirmed pinwheel remains a separate slot. The renderer receives only the
+projected cosmetic identity, never persistence/Auth/API access. Classic exposes
+the same confirmed state and removal when 3D cannot start or loses its context.
+Neither saving nor rendering adds motion, audio, particles, rewards or a second
+hero. Existing UI Foundry tokens/control/focus grammar serve both slots without
+a new component framework.

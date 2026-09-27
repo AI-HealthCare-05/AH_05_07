@@ -4,7 +4,7 @@ import { STORAGE_KEY } from "../src/placeable/persistence";
 
 const browserRoute = "/?experience=e2&view=classic&storage=browser";
 const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
-  selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
+  schemaVersion: op.schemaVersion, layoutId: op.layoutId, selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
 const readLocal = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || "null"), STORAGE_KEY);
 const confirm = async (page: Page) => {
   await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
@@ -134,7 +134,7 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     }
     puts++; const op = request.postDataJSON() as Operation;
     if (behavior === "conflict" && puts === 1) {
-      snapshot = await saved({ ...op, operationId: crypto.randomUUID(), selection: null });
+      snapshot = await saved({ ...op, operationId: crypto.randomUUID(), selection: op.schemaVersion === "placeable.v2" ? { pinwheel: null, keepsake: null } : null });
       return route.fulfill({ status: 409, headers: cors, contentType: "application/json", body: JSON.stringify({ detail: { code: "revision_conflict" } }) });
     }
     snapshot = await saved(op);
@@ -234,7 +234,7 @@ test("no active choice and forged hints preserve the default plaza on direct ent
     await page.goto(`/?experience=e2&view=3d&storage=browser&living_choice=${hint}`);
     await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
     await expect(world).toHaveAttribute("data-choice", "none");
-    await expect(page.locator(".placeable-choice-note")).toHaveCount(0);
+    await expect(page.locator(".placeable-stage .placeable-choice-note")).toHaveCount(0);
     await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
     expect(await readLocal(page)).toBeNull();
   }
@@ -416,4 +416,80 @@ test("UNKNOWN cannot announce a breeze or hand off an unresolved write", async (
   await expect(page.getByRole("button", { name: "Spin pinwheel", exact: true })).toBeDisabled();
   await expect(page.getByTestId("placeable-feedback")).not.toContainText("answers");
   await expect(page.getByRole("button", { name: "Check saved state" })).toBeEnabled();
+});
+
+const keepsakeCases = [
+  ["walk-10-minutes", "plaza-ribbon-v1", "광장의 리본"],
+  ["sleep-routine", "quiet-moon-v1", "고요한 달"],
+  ["low-sodium-meal", "garden-leaf-v1", "정원의 잎"],
+] as const;
+for (const [choice, asset, label] of keepsakeCases) {
+  test(`E4 ${asset}: keep migrates v1, restores without hint, coexists and removes`, async ({ page }) => {
+    await page.goto(`${browserRoute}&living_choice=${choice}`);
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+    const v1 = await readLocal(page); expect(v1.schemaVersion).toBe("placeable.v1");
+    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).focus(); await page.keyboard.press("Enter");
+    await expect(page.getByTestId("keepsake-preview")).toContainText(label); expect(await readLocal(page)).toEqual(v1);
+    await page.getByRole("button", { name: "Confirm placement", exact: true }).focus(); await page.keyboard.press("Enter");
+    await expect(page.getByTestId("save-status")).toContainText("Saved");
+    const stored = await readLocal(page);
+    expect(stored).toMatchObject({ revision: 2, schemaVersion: "placeable.v2", selection: { pinwheel: v1.selection, keepsake: asset } });
+    expect(JSON.stringify(stored)).not.toContain(choice);
+    await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute); await page.reload();
+    await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", asset);
+    await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
+    await expect(page.getByTestId("confirmed-keepsake")).toHaveText(label);
+    await page.getByRole("button", { name: "남긴 문양 제거" }).click(); expect(await readLocal(page)).toEqual(stored);
+    await confirm(page); await page.reload();
+    await expect(page.getByTestId("classic-keepsake")).toHaveCount(0);
+    await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
+    expect((await readLocal(page)).selection).toEqual({ pinwheel: v1.selection, keepsake: null });
+  });
+}
+test("E4 replacement and WebGL failure retain keepsake with Classic removal", async ({ page }) => {
+  await page.goto(`${browserRoute}&living_choice=walk-10-minutes`);
+  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  await page.goto(`${browserRoute}&living_choice=sleep-routine`);
+  await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "plaza-ribbon-v1");
+  await page.getByRole("button", { name: "이 문양으로 바꾸기" }).click();
+  await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "quiet-moon-v1"); await confirm(page);
+  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+  const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible(); const before = await readLocal(page);
+  await canvas.evaluate((element) => (element as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
+  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("confirmed-keepsake")).toHaveText("고요한 달"); expect(await readLocal(page)).toEqual(before);
+  await page.getByRole("button", { name: "남긴 문양 제거" }).click(); await confirm(page);
+  expect((await readLocal(page)).selection.keepsake).toBeNull();
+});
+for (const behavior of ["normal", "conflict", "unknown"] as const) {
+  test(`E4 account ${behavior}: keep/reload stays separate from browser snapshot`, async ({ page }) => {
+    const account = await accountRoute(page, behavior);
+    await page.goto(`${browserRoute}&living_choice=walk-10-minutes`);
+    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page); const local = await readLocal(page);
+    await page.goto("/?experience=e2&view=classic&storage=account&living_choice=sleep-routine");
+    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click();
+    await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+    if (behavior === "conflict") {
+      await expect(page.getByTestId("save-status")).toContainText("newer placement");
+      await page.getByRole("button", { name: "Keep preview and use latest revision" }).click(); await confirm(page);
+    } else await expect(page.getByTestId("save-status")).toContainText("Saved to your account");
+    await page.reload(); await expect(page.getByTestId("confirmed-keepsake")).toHaveText("고요한 달");
+    expect(await readLocal(page)).toEqual(local); expect(account.puts).toBe(behavior === "conflict" ? 2 : 1);
+  });
+}
+test("E4 touch and reduced motion: keep/remove stays muted and fits narrow screen", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${browserRoute}&living_choice=low-sodium-meal`);
+    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).tap();
+    await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await expect(page.getByTestId("confirmed-keepsake")).toHaveText("정원의 잎");
+    await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByRole("button", { name: "남긴 문양 제거" }).tap(); await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await expect(page.getByTestId("confirmed-keepsake")).toHaveText("아직 남긴 문양이 없어요.");
+  } finally { await context.close(); }
 });

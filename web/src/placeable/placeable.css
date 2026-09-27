@@ -60,3 +60,8 @@
 @media (max-width: 760px) { .placeable-header { display: block; } .placeable-header nav { margin-top: 18px; } .placeable-layout { grid-template-columns: 1fr; } .placeable-controls { padding: var(--sk7-space-xl) 0 0; border-left: 0; border-top: 1px solid var(--sk7-border); } .placeable-world-host { aspect-ratio: .95; } }
 @media (max-width: 480px) { .placeable-destination { flex-wrap: wrap; gap: var(--sk7-space-xs); } .placeable-today { width: 100%; } .placeable-map-label { font-size: .7rem; } .placeable-experience .placeable-walk-pad { width: 68px; height: 68px; font-size: var(--sk7-type-caption); right: 12px; bottom: 12px; } }
 @media (prefers-reduced-motion: reduce) { .pinwheel-spin { animation: none; filter: brightness(1.2); } }
+.placeable-keepsake { display: grid; gap: var(--sk7-space-xs); padding-block: var(--sk7-space-md); border-block: 1px solid var(--sk7-border); }
+.placeable-keepsake h2 { font-size: var(--sk7-type-body); margin: 0; }
+.placeable-keepsake button { justify-self: start; }
+
+.placeable-keepsake-caption { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }

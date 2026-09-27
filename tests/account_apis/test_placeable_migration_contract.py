@@ -51,3 +51,20 @@ def test_rpc_grants_and_safe_integer_bounds():
         assert f"revoke all on function public.{signature} from public, anon, service_role" in SQL
         assert f"grant execute on function public.{signature} to authenticated" in SQL
     assert "set search_path = ''" in SQL
+
+
+def test_keepsake_evolves_same_row_and_blocks_downgrade():
+    root = Path(__file__).parents[2]
+    sql = next((root / "supabase/migrations").glob("*_my_first_keepsake.sql")).read_text().lower()
+    assert "create table" not in sql
+    assert "create or replace function public.save_my_placeable" in sql
+    assert "from auth.users where id = owner_id for update" in sql
+    assert "previous.schema_version = 'placeable.v2' and p_schema_version <> 'placeable.v2'" in sql
+    assert (
+        "not public.placeable_snapshot_supported(previous.schema_version, previous.layout_id, previous.selection)"
+        in sql
+    )
+    assert "value ?& array['pinwheel', 'keepsake']" in sql
+    assert "value - array['pinwheel', 'keepsake'] = '{}'::jsonb" in sql
+    assert "p_expected_revision + 1" in sql
+    assert "previous.latest_fingerprint = fingerprint" in sql

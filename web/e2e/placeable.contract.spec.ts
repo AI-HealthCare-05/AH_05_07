@@ -178,10 +178,12 @@ test("browser lock serializes concurrent contexts, idempotency matches fingerpri
   const local = browserStore(); const a = browserPersistence(local), b = browserPersistence(local);
   const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 0,
     schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral };
-  const results = await Promise.allSettled([a.save(op), b.save({ ...op, operationId: crypto.randomUUID(), selection: teal })]);
-  expect(results.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
-  expect(local.writes).toBe(1); expect((await b.save(op)).revision).toBe(1); expect(local.writes).toBe(1);
-  await expect(b.save({ ...op, selection: teal })).rejects.toMatchObject({ kind: "conflict" });
+  const other = { ...op, operationId: crypto.randomUUID(), selection: teal };
+  const results = await Promise.allSettled([a.save(op), b.save(other)]);
+  expect(results.map((r) => r.status).sort()).toEqual(["fulfilled", "rejected"]);
+  const winner = results[0].status === "fulfilled" ? op : other;
+  expect(local.writes).toBe(1); expect((await b.save(winner)).revision).toBe(1); expect(local.writes).toBe(1);
+  await expect(b.save({ ...winner, selection: null })).rejects.toMatchObject({ kind: "conflict" });
   const future = JSON.stringify({ ...await a.read(), schemaVersion: "placeable.v9", selection: { future: true } });
   local.values.set(STORAGE_KEY, future);
   const c = new PlaceableController(a); await c.load(); c.preview(null); await c.confirm();
@@ -280,4 +282,105 @@ test("an unavailable operation-id source stays recoverable without issuing a wri
     expect(c.getState()).toMatchObject({ phase: "unavailable", draft: coral, pending: null, saved: false });
     expect(db.calls).toHaveLength(0);
   } finally { if (descriptor) Object.defineProperty(globalThis, "crypto", descriptor); }
+});
+
+// E4 uses the actual browser adapter and controller with isolated in-memory storage.
+function cosmeticStore() {
+  let raw: string | null = null;
+  const adapter = browserPersistence({ storage: { getItem: () => raw, setItem: (_key, value) => { raw = value; } },
+    locks: { request: async (_name: string, run: () => unknown) => run() } as never });
+  return { adapter, raw: () => raw, seed: (snapshot: Snapshot) => { raw = JSON.stringify(snapshot); } };
+}
+test("E4 v1 unplaced/pinwheel reads are byte-preserving; explicit keep migrates without losing revision or pinwheel", async () => {
+  for (const pinwheel of [null, coral]) {
+    const db = cosmeticStore();
+    db.seed(await receipt({ operationId: crypto.randomUUID(), expectedRevision: 6, schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: pinwheel }));
+    const before = db.raw(); const c = new PlaceableController(db.adapter); await c.load();
+    expect(c.getState().phase).toBe("ready"); expect(db.raw()).toBe(before);
+    c.previewKeepsake("plaza-ribbon-v1"); expect(db.raw()).toBe(before); c.cancel(); expect(db.raw()).toBe(before);
+    c.previewKeepsake("plaza-ribbon-v1"); await c.confirm();
+    expect(c.getState().confirmed).toMatchObject({ revision: 8, schemaVersion: "placeable.v2", layoutId: "e1-plaza.v2",
+      selection: { pinwheel, keepsake: "plaza-ribbon-v1" } });
+    const returned = new PlaceableController(db.adapter); await returned.load();
+    expect(returned.getState().confirmed).toEqual(c.getState().confirmed);
+    returned.previewKeepsake("quiet-moon-v1"); await returned.confirm();
+    returned.previewKeepsake(null); await returned.confirm();
+    expect(returned.getState().confirmed).toMatchObject({ revision: 10, schemaVersion: "placeable.v2", selection: { pinwheel, keepsake: null } });
+    returned.preview(teal); await returned.confirm();
+    expect(returned.getState().confirmed?.selection).toEqual({ pinwheel: teal, keepsake: null });
+  }
+});
+test("E4 conflict review rebases only edited slot, never stale entire layout", async () => {
+  const db = cosmeticStore(); const a = new PlaceableController(db.adapter), b = new PlaceableController(db.adapter);
+  await Promise.all([a.load(), b.load()]); a.preview(coral); b.previewKeepsake("garden-leaf-v1");
+  await a.confirm(); await b.confirm(); expect(b.getState().phase).toBe("conflict");
+  b.reviewLatest(); await b.confirm();
+  expect(b.getState().confirmed?.selection).toEqual({ pinwheel: coral, keepsake: "garden-leaf-v1" });
+  a.preview(teal); await a.confirm(); expect(a.getState().phase).toBe("conflict");
+  a.reviewLatest(); await a.confirm();
+  expect(a.getState().confirmed?.selection).toEqual({ pinwheel: teal, keepsake: "garden-leaf-v1" });
+});
+test("E4 lost response reconciles v2 receipt; old reread retries frozen full operation", async () => {
+  for (const commitFirst of [true, false]) {
+    const db = cosmeticStore(); const save = db.adapter.save; let first: Operation | null = null;
+    db.adapter.save = async (operation) => {
+      if (!first) { first = operation; if (commitFirst) await save(operation); throw new PersistenceError("unknown"); }
+      expect(operation).toBe(first); expect(Object.isFrozen(operation.selection)).toBe(true); return save(operation);
+    };
+    const c = new PlaceableController(db.adapter); await c.load(); c.preview(coral); c.previewKeepsake("quiet-moon-v1"); await c.confirm();
+    if (!commitFirst) {
+      expect(c.getState().phase).toBe("unknown"); c.previewKeepsake("garden-leaf-v1");
+      expect(c.getState().keepsakeDraft).toBe("quiet-moon-v1"); await c.retryPending();
+    }
+    expect(c.getState()).toMatchObject({ phase: "ready", saved: true, confirmed: { revision: 1,
+      selection: { pinwheel: coral, keepsake: "quiet-moon-v1" } } });
+  }
+});
+test("E4 v2 downgrade, forged ids, version mismatch and future data fail closed", async () => {
+  const db = cosmeticStore(); const c = new PlaceableController(db.adapter); await c.load();
+  c.previewKeepsake("completed" as never); expect(c.getState().keepsakeDraft).toBeUndefined();
+  c.previewKeepsake("garden-leaf-v1"); await c.confirm(); const before = db.raw();
+  const v1: Operation = { operationId: crypto.randomUUID(), expectedRevision: 1, schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: null };
+  await expect(db.adapter.save(v1)).rejects.toMatchObject({ kind: "unsupported" }); expect(db.raw()).toBe(before);
+  for (const selection of [{ pinwheel: coral, keepsake: "forged" }, { pinwheel: coral, keepsake: null, completed: true }, { keepsake: null }, null]) {
+    await expect(db.adapter.save({ ...v1, schemaVersion: "placeable.v2", layoutId: "e1-plaza.v2", selection } as Operation)).rejects.toMatchObject({ kind: "unsupported" });
+  }
+  db.seed({ ...c.getState().confirmed!, selection: { pinwheel: coral, keepsake: "future-asset" } }); const future = db.raw();
+  const older = new PlaceableController(db.adapter); await older.load(); older.previewKeepsake(null); await older.confirm();
+  expect(older.getState().phase).toBe("unsupported"); expect(db.raw()).toBe(future);
+});
+test("E4 delayed v2 save cannot publish after disposal or account generation change", async () => {
+  const db = cosmeticStore(); let finish!: () => void;
+  const save = db.adapter.save;
+  db.adapter.save = async (op) => { await new Promise<void>((resolve) => { finish = resolve; }); return save(op); };
+  const c = new PlaceableController(db.adapter); await c.load(); c.previewKeepsake("quiet-moon-v1");
+  const pending = c.confirm(); await expect.poll(() => typeof finish).toBe("function"); c.dispose(); finish(); await pending;
+  expect(c.getState().saved).toBe(false); expect(c.getState().confirmed?.revision).toBe(0);
+  let current = { owner: "synthetic-A", token: "synthetic-token", generation: 1 };
+  const account = accountPersistence({ identity: current, currentIdentity: () => current, baseUrl: "https://synthetic.invalid",
+    fetcher: async () => { current = { ...current, generation: 2 }; return new Response(db.raw()); } });
+  await expect(account.read()).rejects.toMatchObject({ kind: "session" });
+});
+
+test("E4 account loss during a v2 save ignores the receipt and never falls back to browser storage", async () => {
+  let identity: { owner: string; token: string; generation: number } | null = { owner: "synthetic-A", token: "synthetic-A", generation: 1 };
+  const adapter = accountPersistence({ identity, currentIdentity: () => identity, baseUrl: "https://synthetic.invalid",
+    fetcher: async (_url, init) => {
+      if (init?.method === "GET") return new Response(JSON.stringify(emptySnapshot()));
+      const op = JSON.parse(String(init?.body)) as Operation;
+      identity = null;
+      return new Response(JSON.stringify({ ...await receipt(op), schemaVersion: op.schemaVersion, layoutId: op.layoutId }));
+    } });
+  const c = new PlaceableController(adapter); await c.load(); c.previewKeepsake("quiet-moon-v1"); await c.confirm();
+  expect(c.getState()).toMatchObject({ phase: "session", saved: false, confirmed: { revision: 0 }, keepsakeDraft: "quiet-moon-v1" });
+});
+test("E4 fingerprint matches PostgreSQL fixed-order fields and full receipt rejects another keepsake", async () => {
+  const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 1, schemaVersion: "placeable.v2", layoutId: "e1-plaza.v2",
+    selection: { pinwheel: coral, keepsake: "plaza-ribbon-v1" } };
+  const hash = await fingerprint(op);
+  const { createHash } = await import("node:crypto");
+  expect(hash).toBe(createHash("sha256").update("1|placeable.v2|e1-plaza.v2|welcome-pinwheel-v1|coral|gate-left|plaza-ribbon-v1").digest("hex"));
+  const saved = { ...await receipt(op), schemaVersion: op.schemaVersion, layoutId: op.layoutId };
+  expect(confirms(saved, op, hash)).toBe(true);
+  expect(confirms({ ...saved, selection: { pinwheel: coral, keepsake: "quiet-moon-v1" } }, op, hash)).toBe(false);
 });

@@ -3,16 +3,18 @@ import {
   DoubleSide, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
   RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type Material,
 } from "three";
-import { livingChoice, type LivingChoice } from "../ui/livingChoice";
+import { type LivingChoice } from "../ui/livingChoice";
+import { keepsakeCandidate } from "./keepsakeMedia";
 import { createLivingChoiceMarker } from "./livingChoiceMarker";
 import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE as PLAZA } from "../../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 import { LIVING_WEEK_SCENE_PLAN as PATH } from "../../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 import type { MovementIntent } from "../../transcend-lab/src/platform/behavior/worldMovementIntent";
-import { ASSET, COLORS, SOCKETS, type Selection } from "./contract";
+import { ASSET, COLORS, isKeepsake, SOCKETS, type Keepsake, type Selection } from "./contract";
 
 // Rendering receives a projection only. It has no storage, identity, API or health access.
 export type PlaceableProjection = Readonly<{
   choice?: LivingChoice | null;
+  keepsake?: Keepsake | null;
   selection: Selection | null;
   preview: boolean;
   pulse: number;
@@ -124,7 +126,8 @@ export class PlaceableScene {
 
   update(projection: PlaceableProjection, reducedMotion: boolean) {
     if (this.#disposed) return;
-    const choice = livingChoice(projection.choice);
+    const choice = isKeepsake(projection.keepsake) && projection.keepsake
+      ? projection.keepsake : keepsakeCandidate(projection.choice);
     this.choiceMarker.visible = choice !== null;
     for (const detail of this.choiceMarker.children) {
       if (detail.name.startsWith("choice-detail:")) detail.visible = detail.name === `choice-detail:${choice}`;

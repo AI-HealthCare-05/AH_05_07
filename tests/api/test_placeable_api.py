@@ -248,3 +248,61 @@ async def test_unplaced_save_and_future_read_roundtrip(session, monkeypatch):
     assert saved.status_code == read.status_code == 200
     assert saved.json()["selection"] is None
     assert read.json() == future
+
+
+@pytest.mark.parametrize("keepsake", [None, "plaza-ribbon-v1", "quiet-moon-v1", "garden-leaf-v1"])
+@pytest.mark.parametrize("pinwheel", [None, PAYLOAD["selection"]])
+async def test_v2_layout_roundtrip_uses_same_verified_rpc(session, monkeypatch, keepsake, pinwheel):
+    monkeypatch.setattr(config, "SUPABASE_URL", "https://synthetic.invalid")
+    monkeypatch.setattr(config, "SUPABASE_PUBLISHABLE_KEY", "synthetic-public")
+    payload = PAYLOAD | {
+        "expectedRevision": 9,
+        "schemaVersion": "placeable.v2",
+        "layoutId": "e1-plaza.v2",
+        "selection": {"pinwheel": pinwheel, "keepsake": keepsake},
+    }
+    snapshot = SNAPSHOT | {key: payload[key] for key in ("schemaVersion", "layoutId", "selection")} | {"revision": 10}
+    real_client = httpx.AsyncClient
+
+    def handle(request):
+        assert request.headers["authorization"] == "Bearer synthetic-verified-token"
+        assert request.url.path == "/rest/v1/rpc/save_my_placeable"
+        assert json.loads(request.content)["p_selection"] == payload["selection"]
+        assert json.loads(request.content)["p_expected_revision"] == 9
+        return httpx.Response(200, json=snapshot)
+
+    async with real_client(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        with patch(
+            "app.services.placeable_store.httpx.AsyncClient",
+            lambda **kwargs: real_client(transport=httpx.MockTransport(handle), **kwargs),
+        ):
+            response = await client.put("/api/v1/cosmetics/placeable", json=payload)
+    assert response.status_code == 200
+    assert response.json() == snapshot
+
+
+@pytest.mark.parametrize(
+    "selection",
+    [
+        None,
+        {},
+        {"pinwheel": None},
+        {"pinwheel": None, "keepsake": "walk-10-minutes"},
+        {"pinwheel": None, "keepsake": "future"},
+        {"pinwheel": None, "keepsake": "__proto__"},
+        {"pinwheel": None, "keepsake": {"assetId": "quiet-moon-v1"}},
+        {"pinwheel": None, "keepsake": "quiet-moon-v1", "completed": True},
+        {"pinwheel": PAYLOAD["selection"] | {"color": "future"}, "keepsake": None},
+    ],
+)
+def test_v2_closed_layout_rejects_forged_and_domain_payloads(selection):
+    with pytest.raises(ValidationError):
+        PlaceableSave(
+            **(PAYLOAD | {"schemaVersion": "placeable.v2", "layoutId": "e1-plaza.v2", "selection": selection})
+        )
+
+
+@pytest.mark.parametrize("schema,layout", [("placeable.v1", "e1-plaza.v2"), ("placeable.v2", "e1-plaza.v1")])
+def test_versions_cannot_be_mixed(schema, layout):
+    with pytest.raises(ValidationError):
+        PlaceableSave(**(PAYLOAD | {"schemaVersion": schema, "layoutId": layout}))
