@@ -1,0 +1,164 @@
+import { expect, test, type Page } from "@playwright/test";
+import { emptySnapshot, fingerprint, type Operation, type Snapshot } from "../src/placeable/contract";
+import { STORAGE_KEY } from "../src/placeable/persistence";
+
+const browserRoute = "/?experience=e2&view=classic&storage=browser";
+const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
+  selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
+const readLocal = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || "null"), STORAGE_KEY);
+const confirm = async (page: Page) => {
+  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await expect(page.getByTestId("save-status")).toContainText("Saved");
+};
+
+test("browser experience previews, cancels, confirms, interacts, leaves/returns, moves, recolors and removes", async ({ page }) => {
+  await page.goto(browserRoute);
+  await expect(page.getByTestId("storage-label")).toContainText("this browser and site, not your account");
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  expect(await readLocal(page)).toBeNull();
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await expect(page.getByTestId("classic-plaza")).toHaveAttribute("data-preview", "true");
+  await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
+  expect(await readLocal(page)).toBeNull();
+  await page.getByRole("button", { name: "Cancel preview" }).click();
+  await expect(page.getByTestId("classic-pinwheel")).toHaveCount(0);
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  const first = await readLocal(page);
+  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toHaveText("A bright little spin!");
+  expect(await readLocal(page)).toEqual(first);
+  await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute);
+  await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
+  await page.getByRole("button", { name: "Gate right", exact: true }).click();
+  await page.getByRole("button", { name: "teal", exact: true }).click();
+  expect(await readLocal(page)).toEqual(first); await confirm(page); await page.reload();
+  await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-socket", "gate-right");
+  await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
+  await page.getByRole("button", { name: "Remove pinwheel" }).click(); await confirm(page); await page.reload();
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  expect((await readLocal(page)).revision).toBe(3);
+});
+
+test("Classic keyboard, reduced motion and unavailable audio retain visual interaction", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "AudioContext", { configurable: true, value: undefined });
+    Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
+  });
+  await page.goto(browserRoute);
+  const choose = page.getByRole("button", { name: "Choose welcome pinwheel" });
+  await expect(choose).toBeEnabled(); await choose.focus(); await page.keyboard.press("Enter");
+  await confirm(page);
+  await page.getByRole("button", { name: "Enable sound" }).click();
+  await expect(page.getByTestId("audio-status")).toContainText("unavailable");
+  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("bright little spin");
+  await expect(page.locator(".pinwheel-spin")).toHaveCSS("animation-name", "none");
+});
+
+test("3D uses the same saved value, previews actual sockets, pauses controls and supports reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(browserRoute);
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  const world = page.getByTestId("placeable-world"), canvas = page.getByTestId("placeable-world-canvas");
+  await expect(canvas).toBeVisible(); await expect(world).toHaveAttribute("data-color", "coral");
+  await expect(world).toHaveAttribute("data-reduced-motion", "true");
+  await canvas.focus(); await expect(world).toHaveAttribute("data-suspended", "false");
+  const first = await readLocal(page); await page.keyboard.press("Enter");
+  await expect(page.getByTestId("placeable-feedback")).toContainText("bright little spin");
+  expect(await readLocal(page)).toEqual(first);
+  await page.getByRole("button", { name: "Plaza edge", exact: true }).click();
+  await page.getByRole("button", { name: "sunflower", exact: true }).click();
+  await expect(world).toHaveAttribute("data-preview", "true");
+  await expect(world).toHaveAttribute("data-socket", "plaza-edge");
+  await expect(world).toHaveAttribute("data-suspended", "true");
+  await expect(page.getByRole("button", { name: "Drag to walk", exact: false })).toBeDisabled();
+  expect(await readLocal(page)).toEqual(first); await confirm(page); await page.reload();
+  await expect(world).toHaveAttribute("data-color", "sunflower");
+  await expect(world).toHaveAttribute("data-socket", "plaza-edge");
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "sunflower");
+  await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-socket", "plaza-edge");
+});
+
+test("default and Classic URLs never request or mount E2", async ({ page }) => {
+  const requested: string[] = []; page.on("request", (request) => requested.push(request.url()));
+  for (const path of ["/", "/?screen=S02", "/?experience=e2&screen=S07"]) {
+    await page.goto(path); await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  }
+  expect(requested.filter((url) => /ProductPlaceableEntry|PlaceableWorld/.test(url))).toEqual([]);
+});
+
+test("lost WebGL context releases the scene and retries without changing the confirmed placement", async ({ page }) => {
+  await page.goto(browserRoute);
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  const before = await readLocal(page);
+  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible();
+  await canvas.evaluate((element) => {
+    const gl = (element as HTMLCanvasElement).getContext("webgl2");
+    const extension = gl?.getExtension("WEBGL_lose_context");
+    if (!extension) throw new Error("Context-loss exercise needs WEBGL_lose_context");
+    extension.loseContext();
+  });
+  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(canvas).toHaveCount(0); expect(await readLocal(page)).toEqual(before);
+  await page.getByRole("button", { name: "Retry 3D" }).click(); await expect(canvas).toBeVisible();
+  expect(await readLocal(page)).toEqual(before);
+});
+
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
+  "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error") {
+  const owner = "00000000-0000-4000-8000-000000000810";
+  const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
+  const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
+  await page.addInitScript(({ token, user }) => localStorage.setItem("sb-e2e-auth-token", JSON.stringify({
+    access_token: token, refresh_token: "synthetic-refresh", expires_at: 4102444800, expires_in: 3600, token_type: "bearer", user,
+  })), { token, user });
+  await page.route("https://e2e.invalid/auth/v1/**", (route) => route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
+    headers: cors, contentType: "application/json", body: route.request().method() === "OPTIONS" ? "" : JSON.stringify(user) }));
+  let snapshot = emptySnapshot(), puts = 0, reads = 0;
+  await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async (route) => {
+    const request = route.request();
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
+    if (request.method() === "GET") {
+      reads++;
+      return route.fulfill({ status: behavior === "read-error" && reads === 1 ? 503 : 200, headers: cors, contentType: "application/json",
+        body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } } : snapshot) });
+    }
+    puts++; const op = request.postDataJSON() as Operation;
+    if (behavior === "conflict" && puts === 1) {
+      snapshot = await saved({ ...op, operationId: crypto.randomUUID(), selection: null });
+      return route.fulfill({ status: 409, headers: cors, contentType: "application/json", body: JSON.stringify({ detail: { code: "revision_conflict" } }) });
+    }
+    snapshot = await saved(op);
+    if (behavior === "unknown") return route.abort("failed");
+    return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(snapshot) });
+  });
+  return { get puts() { return puts; }, get reads() { return reads; } };
+}
+
+for (const behavior of ["conflict", "unknown", "read-error"] as const) {
+  test(`verified account ${behavior} keeps browser storage separate and requires confirmation`, async ({ page }) => {
+    const account = await accountRoute(page, behavior);
+    await page.goto("/?experience=e2&view=classic&storage=account");
+    await expect(page.getByTestId("storage-label")).toContainText("Account storage");
+    if (behavior === "read-error") {
+      await expect(page.getByTestId("save-status")).toContainText("unavailable");
+      await page.getByRole("button", { name: "Check saved state" }).click();
+    }
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+    await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+    if (behavior === "conflict") {
+      await expect(page.getByTestId("save-status")).toContainText("newer placement");
+      expect(account.puts).toBe(1);
+      await page.getByRole("button", { name: "Keep preview and use latest revision" }).click(); await confirm(page);
+    }
+    await expect(page.getByTestId("save-status")).toHaveText("Saved to your account.");
+    expect(account.puts).toBe(behavior === "conflict" ? 2 : 1);
+    if (behavior === "unknown") expect(account.reads).toBe(2);
+    expect(await readLocal(page)).toBeNull();
+  });
+}
