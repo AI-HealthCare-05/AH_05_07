@@ -87,3 +87,14 @@ test("return context accepts only explicit view/storage enums, never an arbitrar
     expect(readMySpaceReturn(search)).toBeNull();
   }
 });
+
+
+test("Classic remount never replays an earlier interaction while preview or recovery disables interaction", () => {
+  const selection = { assetId: ASSET, color: "teal", socketId: "gate-right" } as const;
+  for (const preview of [true, false]) {
+    const html = renderToStaticMarkup(createElement(ClassicPlaza, {
+      selection, preview, pulse: 1, interact: () => {}, canInteract: false,
+    }));
+    expect(html).not.toContain("pinwheel-spin");
+  }
+});

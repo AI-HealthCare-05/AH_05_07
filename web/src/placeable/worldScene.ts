@@ -41,7 +41,9 @@ export class PlaceableScene {
     this.scene.add(new AmbientLight(0xe8ecff, 1.5));
     const sun = new DirectionalLight(0xffe4b8, 2.4);
     sun.position.set(-3, 8, 5); this.scene.add(sun);
-    const ground = new Mesh(new CylinderGeometry(4.5, 4.65, 0.25, 96), material("#e0d7b9"));
+    // The circular foundation covers the unchanged square walking bounds, including corners.
+    const groundRadius = PATH.boundMetres * Math.SQRT2;
+    const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), material("#e0d7b9"));
     ground.position.y = -0.14; ground.name = "e1-plaza-ground"; this.scene.add(ground);
     // Preserve E1's authored route coordinates and all E2 sockets.
     for (const segment of PATH.segments) {

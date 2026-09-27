@@ -64,7 +64,7 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract 
         data-testid="classic-pinwheel" data-color={selection.color} data-socket={socket.id}
         aria-label={preview ? `Preview: ${selection.color} pinwheel at ${socket.label}` : `Spin ${selection.color} pinwheel at ${socket.label}`}
         disabled={!canInteract} onClick={interact}>
-        <Pinwheel selection={selection} pulse={pulse} />
+        <Pinwheel selection={selection} pulse={canInteract ? pulse : 0} />
       </button>}
       <span className="placeable-map-label">{socket.label}</span>
     </div>)}

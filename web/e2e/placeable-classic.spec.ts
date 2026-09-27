@@ -27,6 +27,10 @@ test("browser experience previews, cancels, confirms, interacts, leaves/returns,
   await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
   await expect(page.getByTestId("placeable-feedback")).toHaveText("A plaza breeze. Your pinwheel answers.");
   expect(await readLocal(page)).toEqual(first);
+  await page.getByRole("button", { name: "Gate right", exact: true }).click();
+  await expect(page.locator(".pinwheel-spin")).toHaveCount(0);
+  await expect(page.getByTestId("save-status")).not.toContainText("Saved");
+  await page.getByRole("button", { name: "Cancel preview" }).click();
   await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute);
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
   await page.getByRole("button", { name: "Gate right", exact: true }).click();
