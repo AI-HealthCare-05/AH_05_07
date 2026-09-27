@@ -72,30 +72,11 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <div className="recap-week-overview">
           <header className="living-week-heading">
             <div>
-              <p className="eyebrow">최근 기록 다시 보기</p>
+              <p className="eyebrow">일곱 날의 흐름</p>
               <h2 id="living-week-title">날짜별 기록</h2>
               <p>혈압과 챌린지 기록은 따로 표시해요.</p>
             </div>
           </header>
-          <div className="recap-week-totals">
-            <p className="recap-summary-label">{periodName} 전체{freshness === 'refreshing' || freshness === 'refresh-error' ? ' · 마지막 확인 기록' : ''}</p>
-            <dl className="recap-week-summary" data-week-summary aria-label={`${periodName}의 사실 요약`}>
-              <div>
-                <dt><UiIcon name="observation" size={20} />혈압 관찰</dt>
-                <dd>
-                  <strong data-week-fact="observation-count">{factsKnown ? <>{summary.observationCount}<span>건</span></> : '—'}</strong>
-                  <span>{factsKnown ? `기록이 있는 날 ${summary.observationDateCount}일` : '기록 확인 전'}</span>
-                </dd>
-              </div>
-              <div>
-                <dt><UiIcon name="participation" size={20} />챌린지 체크인</dt>
-                <dd>
-                  <strong data-week-fact="participation-date-count">{factsKnown ? <>{summary.participationDateCount}<span>일</span></> : '—'}</strong>
-                  <span>{factsKnown ? '체크인을 남긴 날짜' : '기록 확인 전'}</span>
-                </dd>
-              </div>
-            </dl>
-          </div>
         </div>
       </div>
 
@@ -104,13 +85,32 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         <p>날짜를 선택하면 그날의 기록만 아래에서 확인할 수 있어요.</p>
         <button type="button" className="recap-show-week" aria-pressed={!focusedDate} aria-controls="recap-day-context recap-journal-records" onClick={() => setSelectedDate(null)}>7일 전체 보기</button>
       </div>
-      <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context" factsKnown={factsKnown} />
+      <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context recap-journal-records" factsKnown={factsKnown} />
       <div className="recap-day-focus" id="recap-day-context" data-day-focused={Boolean(selectedDay)}>
         {selectedDay ? <TrailDayDetail key={selectedDay.date} day={selectedDay} today={today} factsKnown={factsKnown}>
           <button type="button" className="recap-day-record-link" onClick={focusRecords}>이 날짜의 기록 목록 <UiIcon name="arrow-down" size={18} /></button>
         </TrailDayDetail> : factsKnown && summary.observationCount === 0 && summary.participationDateCount === 0 ? <p className="recap-overview-note">
           {readOnly ? '이 7일에는 혈압 관찰과 챌린지 참여 기록이 없어요. 날짜별 풍경은 둘러볼 수 있어요.' : '이 7일에는 아직 혈압 관찰과 챌린지 참여 기록이 없어요. 오늘 남길 사실부터 시작해 보세요.'}
         </p> : null}
+      </div>
+      <div className="recap-week-totals">
+        <p className="recap-summary-label">{periodName} 전체{freshness === 'refreshing' || freshness === 'refresh-error' ? ' · 마지막 확인 기록' : ''}</p>
+        <dl className="recap-week-summary" data-week-summary aria-label={`${periodName}의 사실 요약`}>
+          <div>
+            <dt><UiIcon name="observation" size={20} />혈압 관찰</dt>
+            <dd>
+              <strong data-week-fact="observation-count">{factsKnown ? <>{summary.observationCount}<span>건</span></> : '—'}</strong>
+              <span>{factsKnown ? `기록이 있는 날 ${summary.observationDateCount}일` : '기록 확인 전'}</span>
+            </dd>
+          </div>
+          <div>
+            <dt><UiIcon name="participation" size={20} />챌린지 체크인</dt>
+            <dd>
+              <strong data-week-fact="participation-date-count">{factsKnown ? <>{summary.participationDateCount}<span>일</span></> : '—'}</strong>
+              <span>{factsKnown ? '체크인을 남긴 날짜' : '기록 확인 전'}</span>
+            </dd>
+          </div>
+        </dl>
       </div>
       <div className="recap-week-notes">
         {factsKnown && hasPartialRecordedFacts && <p className="recap-week-coverage" data-recap-coverage>
@@ -125,15 +125,6 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
           혈압 기록 바로 보기 <UiIcon name="arrow-down" size={18} />
         </button>
       </div>
-      <aside className="recap-landscape" aria-label={staticLandscape && focusedDate ? '선택한 날짜의 풍경' : '오늘의 풍경'}>
-        <figure className="recap-view">
-          {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} companionSpecies={companionSpecies} companionAsset={companionAsset} productionS10Enabled={productionSceneEnabled} />}
-          <figcaption key={previewDate}>
-            <span>{staticLandscape && focusedDate ? '선택한 날의 풍경' : '모아와 잠깐, 오늘의 풍경'}</span>
-            <small><time dateTime={previewDate}>{formatTrailDate(previewDate)}</time>{staticLandscape && focusedDate ? ' · 날짜에 따라 펼쳐지는 풍경이에요.' : ' · 선택한 기록 기간과는 별개예요.'}</small>
-          </figcaption>
-        </figure>
-      </aside>
     </section>
 
     <div className="recap-journal" data-main-section="seven-day-dashboard" data-record-priority="blood-pressure" data-focused-date={focusedDate ?? undefined}>
@@ -149,7 +140,17 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
       </header>
       <div className="record-groups recap-record-groups" id="recap-journal-records" ref={recordsRef} tabIndex={-1} aria-label={focusedDate ? `${formatTrailDate(focusedDate)} 기록 목록` : '최근 7일 기록 목록'}>{records(focusedDate)}</div>
-      <footer className="recap-tools">
+    </div>
+    <aside className="recap-landscape" aria-label={staticLandscape && focusedDate ? '선택한 날짜의 풍경' : '오늘의 풍경'}>
+      <figure className="recap-view">
+        {staticLandscape ? <StaticJourneyLandscape screen="S10" calendarDate={previewDate} /> : <VisualStage screen="S10" calendarDate={today} companionSpecies={companionSpecies} companionAsset={companionAsset} productionS10Enabled={productionSceneEnabled} />}
+        <figcaption key={previewDate}>
+          <span>{staticLandscape && focusedDate ? '선택한 날의 풍경' : '모아와 잠깐, 오늘의 풍경'}</span>
+          <small><time dateTime={previewDate}>{formatTrailDate(previewDate)}</time>{staticLandscape && focusedDate ? ' · 날짜에 따라 펼쳐지는 풍경이에요.' : ' · 선택한 기록 기간과는 별개예요.'}</small>
+        </figcaption>
+      </figure>
+    </aside>
+    <footer className="recap-tools">
         <div className="recap-tools-intro">
           <UiObject name="book" className="recap-tools-object" />
           <h3>{reportOnly ? '리포트' : '리포트와 내보내기'}</h3>
@@ -164,8 +165,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
             : '내보낸 파일은 본인 기기에 보관해요.'}</p>
         {focusedDate && !readOnly && !reportOnly && <small className="recap-export-scope">하루만 펼쳐 보아도 내보내기에는 현재 7일 전체 기록이 담겨요.</small>}
         <div className="scene-actions utility-actions" data-recap-tools>{actions}</div>
-      </footer>
-    </div>
+    </footer>
     <div className="recap-current-challenge">
       <div className="recap-optional-intro">
         <strong>생활 챌린지는 별도 기록이에요</strong>

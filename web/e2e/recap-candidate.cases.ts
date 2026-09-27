@@ -992,15 +992,16 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
     expect(dayFocusBox).not.toBeNull();
     expect(landscapeBox).not.toBeNull();
     expect(journalBox).not.toBeNull();
-    if (width >= 390) expect(trailBox!.y).toBeLessThan(height);
+    if (width >= 390) {
+      const finalStopBox = await trail.locator('[data-trail-date]').last().getByRole('button').boundingBox();
+      expect(finalStopBox).not.toBeNull();
+      expect(finalStopBox!.y + finalStopBox!.height).toBeLessThan(height - (width < 600 ? 64 : 0));
+    }
     const tolerance = 8;
     expect(trailBox!.y + trailBox!.height).toBeLessThanOrEqual(dayFocusBox!.y + tolerance);
     expect(dayFocusBox!.y + dayFocusBox!.height).toBeLessThanOrEqual((notesBox ?? dayFocusBox)!.y + tolerance);
-    if (notesBox) {
-      expect(notesBox.y + notesBox.height).toBeLessThanOrEqual(landscapeBox!.y + tolerance);
-    }
-    expect(landscapeBox!.y + landscapeBox!.height).toBeLessThanOrEqual(journalBox!.y + tolerance);
-    expect(journalBox!.y - (landscapeBox!.y + landscapeBox!.height)).toBeGreaterThanOrEqual(19);
+    if (notesBox) expect(notesBox.y + notesBox.height).toBeLessThanOrEqual(journalBox!.y + tolerance);
+    expect(journalBox!.y + journalBox!.height).toBeLessThanOrEqual(landscapeBox!.y + tolerance);
     await page.locator('[data-trail-date="2026-09-11"] > button').click();
     const detail = page.locator('.trail-day-detail');
     await expect(detail).toBeVisible();
@@ -1012,10 +1013,8 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
     expect(landscapeBoxAfter).not.toBeNull();
     expect(journalBoxAfter).not.toBeNull();
     expect(detailBox!.y + detailBox!.height).toBeLessThanOrEqual((notesBoxAfter ?? dayFocusBox)!.y + tolerance);
-    if (notesBoxAfter) {
-      expect(notesBoxAfter.y + notesBoxAfter.height).toBeLessThanOrEqual(landscapeBoxAfter!.y + tolerance);
-    }
-    expect(landscapeBoxAfter!.y + landscapeBoxAfter!.height).toBeLessThanOrEqual(journalBoxAfter!.y + tolerance);
+    if (notesBoxAfter) expect(notesBoxAfter.y + notesBoxAfter.height).toBeLessThanOrEqual(journalBoxAfter!.y + tolerance);
+    expect(journalBoxAfter!.y + journalBoxAfter!.height).toBeLessThanOrEqual(landscapeBoxAfter!.y + tolerance);
     await noOverflow(page);
   });
 }
