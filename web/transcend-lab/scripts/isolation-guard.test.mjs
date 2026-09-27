@@ -227,3 +227,10 @@ test("E1 preview entry stays on the isolated W4 shell with an explicit semantic 
   assert.match(component, /startPlayable/);
   assert.doesNotMatch(component, /blood.?pressure|risk.?score|model.?v2/i);
 });
+
+test("generic world renderer supports gate destinations without E1 product coupling", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  assert.match(stage, /presentation !== "gate"/);
+  assert.match(stage, /destinationFeedbackScale/);
+  assert.doesNotMatch(stage, /Today Gate|Living City|E1/);
+});

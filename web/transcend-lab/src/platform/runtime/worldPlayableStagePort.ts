@@ -18,6 +18,7 @@ export type WorldPlayableDiagnostics = Readonly<{
   animationTimeSeconds: number;
   fixtureIds: readonly string[];
   destinationNear: boolean;
+  destinationFeedbackScale: number;
   overlayMarkerCount: number;
   overlaySegmentCount: number;
   renderedOverlayMarkerCount: number;

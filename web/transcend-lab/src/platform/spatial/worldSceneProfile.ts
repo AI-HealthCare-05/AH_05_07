@@ -7,6 +7,7 @@ export type WorldSceneDestination = Readonly<{
   x: number;
   z: number;
   radius: number;
+  presentation?: "disc" | "gate";
 }>;
 
 export type WorldSceneProfile = Readonly<{
