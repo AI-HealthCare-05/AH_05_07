@@ -1,17 +1,25 @@
 /* S10 keeps a signature seven-day composition while sharing the product foundation. */
 .journey-recap.scene {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
   align-content: start;
-  gap: var(--sk7-space-xl);
+  gap: var(--sk7-space-xl) var(--sk7-space-2xl);
   min-height: 0;
+  max-width: 68rem;
+  margin-inline: auto;
   overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-xl) 0 var(--sk7-space-2xl);
+  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
   box-shadow: none;
   animation: none;
 }
+
+.journey-recap.scene > .scene-copy { grid-column: 1; }
+
+.journey-recap.scene > .recap-period { grid-column: 2; }
+
+.journey-recap.scene > :not(.scene-copy):not(.recap-period) { grid-column: 1 / -1; }
 
 .journey-recap > .scene-visual-background,
 .journey-recap > .scene-visual-character,
@@ -29,9 +37,11 @@
   width: fit-content;
   max-width: 100%;
   color: var(--sk7-text);
-  font-size: var(--sk7-type-display);
+  font-size: clamp(2.625rem, 4.2vw, 3.75rem);
   font-weight: var(--sk7-weight-bold);
-  line-height: var(--sk7-leading-tight);
+  letter-spacing: -.055em;
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .journey-recap .scene-body {
@@ -45,14 +55,15 @@
 /* Period controls use the same rule-led hierarchy as U3C record browsing. */
 .journey-recap .recap-period {
   display: grid;
-  gap: var(--sk7-space-sm);
+  align-content: end;
+  gap: var(--sk7-space-xs);
   border-bottom: 1px solid var(--sk7-border);
-  padding-bottom: var(--sk7-space-lg);
+  padding-bottom: var(--sk7-space-sm);
 }
 
 .journey-recap .recap-period-label {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
+  color: var(--sk7-accent);
+  font-size: var(--sk7-type-caption);
   font-weight: var(--sk7-weight-bold);
   line-height: var(--sk7-leading-body);
 }
@@ -74,7 +85,8 @@
 
 .journey-recap .window-nav p strong {
   color: var(--sk7-text);
-  font-size: var(--sk7-type-body);
+  font-size: var(--sk7-type-subtitle);
+  letter-spacing: -.025em;
 }
 
 .journey-recap .window-nav p span { display: none; }
@@ -88,7 +100,9 @@
   min-width: 0;
   min-height: var(--sk7-target-min);
   max-width: 100%;
+  border-color: transparent;
   border-radius: var(--sk7-radius-control);
+  background: transparent;
   padding: var(--sk7-space-xs) var(--sk7-space-sm);
   font-size: var(--sk7-type-body);
   line-height: var(--sk7-leading-body);
@@ -97,32 +111,39 @@
 
 .journey-recap .window-nav button:disabled {
   border-color: transparent;
-  background: var(--sk7-surface-subtle);
+  background: transparent;
   color: var(--sk7-text-muted);
   opacity: 1;
 }
 
 /* Week overview is content and dividers, not another card inside the screen. */
 .journey-recap .recap-week-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  grid-template-areas:
+    "intro totals"
+    "fresh fresh"
+    "heading heading"
+    "trail trail"
+    "legend legend"
+    "focus focus"
+    "notes notes";
   min-width: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-sm) 0 0;
+  padding: 0;
   box-shadow: none;
   animation: none;
 }
 
 .journey-recap .recap-week-intro {
-  padding-bottom: var(--sk7-space-xl);
-  border-bottom: 1px solid var(--sk7-border);
+  grid-area: intro;
+  padding-bottom: var(--sk7-space-sm);
 }
 
 .journey-recap .recap-week-overview {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(18rem, .9fr);
-  align-items: start;
-  gap: var(--sk7-space-2xl);
+  display: block;
   min-width: 0;
 }
 
@@ -132,7 +153,8 @@
 
 .journey-recap .living-week-heading h2 {
   color: var(--sk7-text);
-  font-size: var(--sk7-type-heading);
+  font-size: var(--sk7-type-title);
+  letter-spacing: -.035em;
   line-height: var(--sk7-leading-tight);
 }
 
@@ -144,6 +166,7 @@
 }
 
 .journey-recap .recap-week-totals {
+  grid-area: totals;
   min-width: 0;
   border-left: 1px solid var(--sk7-border);
   padding-left: var(--sk7-space-xl);
@@ -207,6 +230,7 @@
 }
 
 .journey-recap .recap-freshness {
+  grid-area: fresh;
   margin-top: var(--sk7-space-md);
   border-left: 3px solid var(--sk7-warning);
   background: var(--sk7-warning-soft);
@@ -218,12 +242,14 @@
 
 /* Trail selection leads directly into a flattened day focus and journal. */
 .journey-recap .recap-trail-heading {
+  grid-area: heading;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--sk7-space-sm) var(--sk7-space-xl);
-  margin-top: var(--sk7-space-xl);
-  padding-bottom: var(--sk7-space-sm);
+  margin-top: var(--sk7-space-md);
+  border-top: 1px solid var(--sk7-border);
+  padding: var(--sk7-space-sm) 0;
 }
 
 .journey-recap .recap-trail-heading > p {
@@ -260,9 +286,12 @@
 }
 
 .journey-recap .seven-day-trail {
+  grid-area: trail;
   margin-top: 0;
   padding: var(--sk7-space-md) var(--sk7-space-2xs);
 }
+
+.journey-recap .trail-legend { grid-area: legend; }
 
 .journey-recap .trail-day-button {
   border-radius: var(--sk7-radius-control);
@@ -311,6 +340,7 @@
 }
 
 .journey-recap .recap-day-focus {
+  grid-area: focus;
   min-width: 0;
   min-height: 1px;
   margin-top: var(--sk7-space-md);
@@ -411,6 +441,7 @@
 }
 
 .journey-recap .recap-week-notes {
+  grid-area: notes;
   display: grid;
   gap: var(--sk7-space-xs);
   margin-top: var(--sk7-space-lg);
@@ -442,10 +473,10 @@
 
 .journey-recap .recap-summary-explainer p + p { margin-top: var(--sk7-space-2xs); }
 
-/* The scene remains S10's one intentional visual container. */
+/* Scenery follows the selected record context as a quiet date companion. */
 .journey-recap .recap-landscape {
   min-width: 0;
-  margin-top: var(--sk7-space-xl);
+  margin-top: 0;
   border-top: 1px solid var(--sk7-border);
   padding-top: var(--sk7-space-lg);
 }
@@ -496,7 +527,7 @@
 /* Journal rows inherit the U3C divider rhythm and action hierarchy. */
 .journey-recap .recap-journal {
   min-width: 0;
-  margin-top: var(--sk7-space-md);
+  margin-top: 0;
   border-top: 1px solid var(--sk7-border-strong);
   padding-top: var(--sk7-space-2xl);
 }
@@ -843,7 +874,28 @@
 }
 
 @media (max-width: 52rem) {
-  .journey-recap .recap-week-overview,
+  .journey-recap.scene {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sk7-space-lg);
+    padding-top: var(--sk7-space-lg);
+  }
+
+  .journey-recap.scene > .scene-copy,
+  .journey-recap.scene > .recap-period { grid-column: 1; }
+
+  .journey-recap .recap-week-sheet {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "intro"
+      "fresh"
+      "heading"
+      "trail"
+      "legend"
+      "focus"
+      "totals"
+      "notes";
+  }
+
   .journey-recap .recap-tools {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -928,11 +980,37 @@
 
 @media (max-width: 36rem) {
   .journey-recap.scene {
-    gap: var(--sk7-space-lg);
-    padding-top: var(--sk7-space-md);
+    gap: var(--sk7-space-md);
+    padding-top: var(--sk7-space-sm);
   }
 
-  .journey-recap .recap-week-sheet { padding-top: var(--sk7-space-xs); }
+  .journey-recap.scene #S10-title { font-size: clamp(2.25rem, 10vw, 2.625rem); }
+
+  .journey-recap .recap-period { gap: var(--sk7-space-2xs); }
+
+  .journey-recap .recap-week-overview { gap: var(--sk7-space-md); }
+
+  .journey-recap .recap-week-intro { padding-bottom: var(--sk7-space-sm); }
+
+  .journey-recap .living-week-heading > div { gap: var(--sk7-space-2xs); }
+
+  .journey-recap .recap-week-summary { margin-top: var(--sk7-space-xs); }
+
+  .journey-recap .recap-trail-heading {
+    margin-top: var(--sk7-space-sm);
+    padding-block: var(--sk7-space-2xs);
+  }
+
+  .journey-recap .seven-day-trail {
+    gap: var(--sk7-space-xs) var(--sk7-space-2xs);
+    padding-block: var(--sk7-space-xs);
+  }
+
+  .journey-recap .seven-day-trail .trail-day-button { padding-block: var(--sk7-space-2xs); }
+
+  .journey-recap .trail-place { height: 2.4rem; }
+
+  .journey-recap .trail-facts { gap: var(--sk7-space-2xs); margin-top: var(--sk7-space-2xs); }
 
   .journey-recap .recap-week-summary { gap: var(--sk7-space-xs); }
 
