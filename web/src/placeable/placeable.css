@@ -78,33 +78,42 @@
 .placeable-garden-path h2 { font-size: var(--sk7-type-body); margin: 0; }
 .placeable-garden-path p { font-size: var(--sk7-type-label); }
 
-/* Garden-only stage composition. My Space and the global shell keep their layout. */
-.garden-experience { background: #f3f1e9; padding: 20px clamp(16px, 2.6vw, 40px) 28px; color: #283e38; }
-.garden-experience .placeable-header { max-width: 1440px; margin-bottom: 18px; gap: 16px; }
-.garden-experience .placeable-eyebrow { color: #63716a; font-size: .68rem; margin: 0 0 2px; }
-.garden-experience h1 { font-size: clamp(1.65rem, 2.5vw, 2.2rem); }
-.garden-experience .placeable-header p:last-child { margin: 2px 0 0; font-size: .85rem; color: #5a6b62; }
-.garden-experience .placeable-header nav { gap: 18px; font-size: .85rem; }
-.garden-experience .placeable-header nav button { background: transparent; border-color: #b8c1b5; }
+/* Garden owns one app viewport; all chrome remains semantic HTML over the scene. */
+.garden-experience { position: fixed; inset: 0; height: 100dvh; min-height: 0; padding: 0; overflow: auto; isolation: isolate; background: #dce8e3; color: #283e38; }
+.garden-experience .placeable-header { position: absolute; z-index: 2; inset: 0 0 auto; max-width: none; margin: 0; padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) 16px max(24px, env(safe-area-inset-left)); gap: 16px; pointer-events: none; background: linear-gradient(#edf2e9f2, #edf2e900); }
+.garden-experience .placeable-header > * { pointer-events: auto; }
+.garden-experience .placeable-eyebrow { color: #4a6054; font-size: .65rem; margin: 0; }
+.garden-experience h1 { font-size: clamp(1.1rem, 2vw, 1.4rem); }
+.garden-experience .placeable-header nav { margin: 0; gap: 10px; font-size: .85rem; }
+.garden-experience .placeable-header nav button, .garden-experience .placeable-header nav a { background: #f3f1e9f2; border: 1px solid #a4b3a7; border-radius: var(--sk7-radius-control); padding: 9px 12px; }
 .garden-experience a { color: #345a4f; }
-.garden-stage { max-width: 1440px; margin: auto; }
-.garden-world-host { aspect-ratio: auto; height: clamp(460px, 67dvh, 760px); border-radius: 24px; background: #dce8e3; }
-.garden-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.garden-stage, .garden-stage > section { position: relative; width: 100%; height: 100%; }
+.garden-world-host { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; border-radius: 0; background: #dce8e3; }
+.garden-controls { position: absolute; z-index: 1; left: max(24px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); width: min(520px, calc(100% - 144px - env(safe-area-inset-left) - env(safe-area-inset-right))); padding: 12px 16px 4px; border-radius: 16px; background: #f3f1e9f2; }
+.garden-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .garden-experience .garden-actions button { background: transparent; border-color: #9eaea0; font-size: .9rem; }
 .garden-experience .garden-actions button:last-child:not(:disabled) { color: #fffaf0; background: #36574b; border-color: #36574b; }
 .garden-experience [data-testid=garden-response] { font-size: .85rem; color: #4a6054; }
-.garden-help { font-size: .8rem; color: #4a6054; max-width: 720px; }
+.garden-help { font-size: .8rem; color: #4a6054; }
 .garden-help summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; width: fit-content; }
-.garden-experience .placeable-walk-pad { width: 58px; height: 72px; right: 20px; bottom: 20px; border-radius: 28px; padding: 6px; border: 1px solid #ffffffb0; background: #f3f1e9df; color: #345348; display: grid; place-content: center; font-size: .7rem; }
+.garden-help[open] { max-height: 28dvh; overflow: auto; }
+.garden-experience .placeable-walk-pad { width: 72px; height: 84px; right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); border-radius: 36px; padding: 6px; border: 1px solid #ffffffb0; background: #f3f1e9f2; color: #345348; display: grid; place-content: center; font-size: .75rem; }
+.garden-world-host .placeable-world-message, .garden-stage > p { position: absolute; top: 35%; margin: 0 24px; max-width: 600px; padding: 20px; background: #f3f1e9; border-radius: 16px; }
 @media (max-width: 760px) {
-  .garden-experience { padding: 14px 12px 24px; }
-  .garden-experience .placeable-header { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-  .garden-experience .placeable-header nav { margin: 0; gap: 16px; }
-  .garden-experience .placeable-header p:last-child { font-size: .8rem; }
-  .garden-world-host { height: clamp(370px, 53dvh, 560px); border-radius: 18px; }
+  .garden-experience .placeable-header { display: flex; flex-wrap: wrap; gap: 8px; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 20px max(12px, env(safe-area-inset-left)); }
+  .garden-experience .placeable-header nav { gap: 8px; font-size: .75rem; }
+  .garden-experience .placeable-header nav button, .garden-experience .placeable-header nav a { padding: 9px 10px; }
+  .garden-controls { left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom)); width: calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)); padding: 10px 12px 2px; }
   .garden-actions { gap: 6px; }
   .garden-experience .garden-actions button { font-size: .8rem; padding: 9px 10px; }
+  .garden-experience [data-testid=garden-response] { font-size: .8rem; }
+  .garden-experience .placeable-walk-pad { right: max(14px, env(safe-area-inset-right)); bottom: auto; top: max(130px, calc(env(safe-area-inset-top) + 118px)); }
 }
 @media (pointer: coarse) {
-  .garden-experience .placeable-walk-pad { width: 84px; height: 84px; right: 14px; bottom: 14px; border-radius: 50%; background: #36574be8; color: #fffaf0; font-size: .8rem; }
+  .garden-experience .placeable-walk-pad { width: 84px; height: 84px; border-radius: 50%; background: #36574be8; color: #fffaf0; font-size: .8rem; }
 }
+@media (max-height: 500px) {
+  .garden-controls { width: min(520px, calc(100% - 132px - env(safe-area-inset-left) - env(safe-area-inset-right))); max-height: 40dvh; overflow: auto; }
+  .garden-experience .placeable-walk-pad { top: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+.garden-world-host canvas:focus-visible { outline-offset: -4px; }

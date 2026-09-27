@@ -12,6 +12,7 @@ import { getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { readCompanionIdentity } from "../src/ui/companionIdentity";
 import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { GardenScene } from "../src/placeable/gardenScene";
+import { gardenPixelRatio } from "../src/placeable/gardenRenderDensity";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -21,6 +22,34 @@ function companionFixture() {
     [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
   return { scene: model, animations: clips } as GLTF;
 }
+
+test("Garden immersive density bounds actual drawing pixels across resizing and high DPR", () => {
+  for (const [width, height] of [[390, 844], [844, 390], [1366, 900], [2560, 1440], [3840, 2160]]) {
+    for (const dpr of [1, 2, 3]) {
+      const ratio = gardenPixelRatio(width, height, dpr);
+      expect(ratio).toBeLessThanOrEqual(Math.min(dpr, 1.5));
+      expect(Math.floor(width * ratio) * Math.floor(height * ratio)).toBeLessThanOrEqual(2_000_000);
+    }
+  }
+  expect(gardenPixelRatio(390, 844, 3)).toBe(1.5);
+  expect(gardenPixelRatio(3840, 2160, 2)).toBeLessThan(1);
+  expect(gardenPixelRatio(390, 844, NaN)).toBe(1);
+});
+
+test("Garden local support ring joins all four capitals to the roof without changing shared pavilion", () => {
+  const scene = new GardenScene(), supports = scene.pavilion.getObjectByName("garden-pavilion-supports")!;
+  expect(supports.children).toHaveLength(4);
+  for (const x of [-0.61, 0.61]) for (const z of [-0.56, 0.22]) {
+    const crossing = supports.children.filter((object) => {
+      const mesh = object as Mesh;
+      mesh.geometry.computeBoundingBox();
+      const box = mesh.geometry.boundingBox!.clone().translate(mesh.position);
+      return box.containsPoint(new Vector3(x, 1.48, z)) && box.containsPoint(new Vector3(x, 1.72, z));
+    });
+    expect(crossing).toHaveLength(2);
+  }
+  scene.dispose();
+});
 
 test("E7 garden walking stays on its small front path, pavilion frames mobile and teardown is idempotent", () => {
   const scene = new GardenScene();
@@ -35,7 +64,7 @@ test("E7 garden walking stays on its small front path, pavilion frames mobile an
   expect(scene.actor.position.equals(atRest)).toBe(true);
   // Decorative terrain may continue beyond the frame. The actual roof/joinery
   // and every reachable companion position must stay visible at stage ratios.
-  for (const aspect of [2.52, 1.8, 0.95, 0.82, 0.66]) {
+  for (const aspect of [2.52, 1.8, 0.95, 0.82, 0.66, 390 / 844, 320 / 844]) {
     scene.resize(aspect); scene.scene.updateMatrixWorld(true);
     let roofMin = Infinity, roofMax = -Infinity, extentX = 0, extentY = 0;
     scene.pavilion.traverse((object) => {

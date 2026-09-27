@@ -771,8 +771,22 @@ async function gardenCompanionPoint(page: Page) {
   return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 };
 }
 
+async function expectImmersiveGarden(page: Page) {
+  const canvas = page.getByTestId("garden-canvas");
+  await expect.poll(async () => canvas.evaluate((element: HTMLCanvasElement) => {
+    const rect = element.getBoundingClientRect();
+    return Math.abs(rect.width - innerWidth) < 2 && Math.abs(rect.height - innerHeight) < 2;
+  })).toBe(true);
+  expect(await canvas.evaluate((element: HTMLCanvasElement) => element.width * element.height)).toBeLessThanOrEqual(2_000_000);
+  expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
+  for (const control of [returnGarden(page), page.getByRole("link", { name: "Classic Today" }),
+    page.getByRole("button", { name: "정자 앞으로 이동하기" }), gardenRest(page)]) {
+    await expect(control).toBeInViewport();
+  }
+}
+
 test("E7 desktop explicit entry, actual keyboard walking, pointer rest and return preserve browser cosmetics without writes", async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   const errors: string[] = [], requests: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "rabbit"));
@@ -792,6 +806,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   await expect(garden).toHaveAttribute("data-companion", "rabbit");
   await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
   await expect(gardenRest(page)).toBeDisabled();
+  await expectImmersiveGarden(page);
   await canvas.focus(); await page.keyboard.down("ArrowRight"); await page.waitForTimeout(400); await page.keyboard.up("ArrowRight");
   await page.keyboard.down("ArrowUp"); await expect(garden).toHaveAttribute("data-at-pavilion", "true"); await page.keyboard.up("ArrowUp");
   await page.keyboard.press("Enter"); await expect(garden).toHaveAttribute("data-companion-pose", "rest");
@@ -802,7 +817,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   const point = await gardenCompanionPoint(page); await page.mouse.click(point.x, point.y);
   await expect(garden).toHaveAttribute("data-companion-pose", "rest");
   await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 6000 });
-  await canvas.screenshot({ path: test.info().outputPath("e7-garden-desktop.png") });
+  await page.screenshot({ path: test.info().outputPath("e7-garden-desktop.png") });
   await returnGarden(page).click(); await expect(enterGarden(page)).toBeFocused();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-color", "coral");
@@ -812,7 +827,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
 });
 
 test("E7 mobile touch walking, rest, live reduced motion, 320px framing and semantic return", async ({ browser }) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
   const page = await context.newPage();
   try {
     await page.goto(companionRoute); await enterGarden(page).tap();
@@ -829,7 +844,8 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
     await expect(garden).toHaveAttribute("data-companion-pose", "neutral");
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 844 });
-      await page.getByTestId("garden-canvas").screenshot({ path: test.info().outputPath(`e7-garden-mobile-${width}.png`) });
+      await expectImmersiveGarden(page);
+      await page.screenshot({ path: test.info().outputPath(`e7-garden-mobile-${width}.png`) });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await expect(returnGarden(page)).toBeVisible();
     }

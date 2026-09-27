@@ -170,8 +170,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }
   if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
     <header className="placeable-header">
-      <div><p className="placeable-eyebrow">SK7 · Living City · Garden Path</p>
-        <h1 ref={gardenHeading} tabIndex={-1}>Garden Nook</h1><p>정자 아래, 동반자와 머무는 작은 정원.</p></div>
+      <div><p className="placeable-eyebrow">Living City</p>
+        <h1 ref={gardenHeading} tabIndex={-1}>Garden Nook</h1></div>
       <nav aria-label="Garden navigation">
         <button onClick={() => setSpace("plaza")}>Return to My Space</button>
         <a href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}>Classic Today ↗</a>

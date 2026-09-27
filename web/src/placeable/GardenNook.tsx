@@ -3,6 +3,7 @@ import { PCFShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { GardenScene } from "./gardenScene";
+import { gardenPixelRatio } from "./gardenRenderDensity";
 import { PlaceableWorldInput } from "./worldInput";
 
 /** Owns only this garden visit. Semantic exits live outside its failure boundary. */
@@ -41,7 +42,6 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap;
       // Static scenery casts the daylight shadows; the moving companion has a contact shade.
       renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       const canvas = renderer.domElement;
       canvas.tabIndex = 0; canvas.dataset.testid = "garden-canvas";
       canvas.setAttribute("aria-label", "Garden Nook. Arrow keys or W A S D to walk; Enter to rest at the pavilion.");
@@ -54,6 +54,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       const resize = () => {
         if (disposed) return;
         const width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
+        renderer!.setPixelRatio(gardenPixelRatio(width, height, window.devicePixelRatio));
         renderer!.setSize(width, height, false); scene!.resize(width / height);
       };
       resize(); const observer = new ResizeObserver(resize); observer.observe(container); cleanup.push(() => observer.disconnect());
@@ -98,6 +99,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       <button ref={pad} type="button" className="placeable-walk-pad" disabled={error}
         aria-label="Drag to walk in the garden, or use arrow keys"><span aria-hidden="true">↟</span><span>Walk</span><span aria-hidden="true">↞ · ↠</span></button>
     </div>
+    <div className="garden-controls">
     <div className="garden-actions">
       <button type="button" disabled={error || near || pose === "rest"}
         onClick={() => { sceneRef.current?.approach(); setNear(true); }}>정자 앞으로 이동하기</button>
@@ -113,5 +115,6 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
     <p id="garden-help" className="placeable-world-help">방향키 또는 W A S D로 이동하거나 Walk 패드를 드래그하세요.
       정자 앞으로 이동하기 버튼도 이용할 수 있어요. 정자 앞에서 동반자나 정자를 탭하거나, 쉬기 버튼을 선택하세요.
       쉬는 동안에는 제자리에 머물러요. 이번 방문에서만 이어지는 작은 놀이예요.</p></details>
+    </div>
   </section>;
 }
