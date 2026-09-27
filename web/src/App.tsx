@@ -2005,90 +2005,70 @@ function App() {
     }
 
       if (presentation.journey) return (
-        <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings surface">
+        <Scene id="S14" {...journeyCopy.S14} body="내 환경과 계정을 차분하게 관리해요." tone="base" className="journey-settings surface">
           <div className="journey-settings-list">
-            <section className="journey-settings-section journey-settings-display">
-              <div className="section-header">
-                <p className="eyebrow">화면</p>
-                <h2>화면 테마</h2>
-                <p>이 브라우저의 화면에만 적용돼요. 기록·분석에는 영향이 없어요.</p>
+            <section className="journey-settings-group" aria-labelledby="settings-display-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">화면</p><h2 id="settings-display-title">보이는 방식</h2><p>읽기 편한 화면을 선택하세요.</p></div>
+              <div className="journey-settings-group-content">
+                <section className="journey-settings-section journey-settings-display">
+                  <div className="section-header"><h3>화면 테마</h3><p>이 브라우저의 화면에만 적용돼요. 기록·분석에는 영향이 없어요.</p></div>
+                  <fieldset className="theme-preset-control">
+                    <legend>화면 테마</legend>
+                    {themePreferenceOptions.map((option) => <label key={option.value}>
+                      <input type="radio" name="sk7-theme-preset" value={option.value} checked={themePreference === option.value}
+                        onChange={(event) => {
+                          const theme = writeThemePreference(event.target.value);
+                          applyThemePreference(theme);
+                          setThemePreference(theme);
+                        }} />
+                      <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                    </label>)}
+                  </fieldset>
+                  <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
+                </section>
+                <dl className="journey-settings-facts"><div><dt>언어</dt><dd>한국어</dd></div><div><dt>시간</dt><dd>한국 시간</dd></div></dl>
               </div>
-              <fieldset className="theme-preset-control">
-                <legend>화면 테마</legend>
-                {themePreferenceOptions.map((option) => <label key={option.value}>
-                  <input
-                    type="radio"
-                    name="sk7-theme-preset"
-                    value={option.value}
-                    checked={themePreference === option.value}
-                    onChange={(event) => {
-                      const theme = writeThemePreference(event.target.value);
-                      applyThemePreference(theme);
-                      setThemePreference(theme);
-                    }}
-                  />
-                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
-                </label>)}
-              </fieldset>
-              <dl className="journey-settings-facts">
-                <div><dt>언어</dt><dd>한국어</dd></div>
-                <div><dt>시간</dt><dd>한국 시간</dd></div>
-              </dl>
-              <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
             </section>
-            {!evidenceMode && <StartingHomeControl />}
-            {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
-              <div className="section-header">
-                <p className="eyebrow">동반자</p>
-                <h2>내 동반자</h2>
-                <p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p>
+            {(!evidenceMode || companionMode !== "off") && <section className="journey-settings-group" aria-labelledby="settings-personal-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">개인화</p><h2 id="settings-personal-title">{evidenceMode ? "내 동반자" : "시작과 동반자"}</h2><p>{evidenceMode ? "화면의 동반자를 선택해요." : "내 공간에 들어오는 방식을 정해요."}</p></div>
+              <div className="journey-settings-group-content">
+                {!evidenceMode && <StartingHomeControl headingLevel={3} />}
+                {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
+                  <div className="section-header"><h3>내 동반자</h3><p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p></div>
+                  <label className="companion-identity-control" htmlFor="companion-species">
+                    <span>캐릭터 선택</span>
+                    <select id="companion-species" value={companionSpeciesPreference} onChange={(event) => {
+                      const species = event.target.value as CompanionSpecies;
+                      setCompanionSpeciesPreference(writeCompanionIdentity(species));
+                    }}>
+                      {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+                    </select>
+                  </label>
+                </section>}
               </div>
-              <label className="companion-identity-control" htmlFor="companion-species">
-                <span>캐릭터 선택</span>
-                <select
-                  id="companion-species"
-                  value={companionSpeciesPreference}
-                  onChange={(event) => {
-                    const species = event.target.value as CompanionSpecies;
-                    setCompanionSpeciesPreference(writeCompanionIdentity(species));
-                  }}
-                >
-                  {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
-                </select>
-              </label>
             </section>}
-            <section className="journey-settings-section">
-              <div className="section-header">
-                <p className="eyebrow">기록과 데이터</p>
-                <h2>30일 보관과 내보낸 파일</h2>
-                <p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p>
+            <section className="journey-settings-group" aria-labelledby="settings-data-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">기록과 데이터</p><h2 id="settings-data-title">보관과 내보내기</h2><p>저장된 기록과 기기의 파일을 구분해요.</p></div>
+              <div className="journey-settings-group-content">
+                <section className="journey-settings-section journey-settings-data-row">
+                  <div className="section-header"><h3>30일 보관</h3><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p></div>
+                  <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button>
+                </section>
+                <section className="journey-settings-section journey-settings-data-row">
+                  <div className="section-header"><h3>내보낸 파일</h3><p>내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p></div>
+                </section>
+                <details className="journey-settings-help"><summary>저장 여부가 확실하지 않을 때</summary><p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p></details>
               </div>
-              <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button>
-              <p className="journey-settings-note">내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p>
-              <details className="journey-settings-help">
-                <summary>저장 여부가 확실하지 않을 때</summary>
-                <p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p>
-              </details>
             </section>
-            <section className="journey-settings-section journey-settings-account">
-              <div className="section-header">
-                <p className="eyebrow">계정</p>
-                <h2>이메일 로그인 계정</h2>
-                <p>기기 연결과 계정 삭제를 여기에서 관리해요.</p>
-              </div>
-              <div className="journey-settings-account-actions">
+            <section className="journey-settings-group journey-settings-account" aria-labelledby="settings-account-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">계정</p><h2 id="settings-account-title">이메일 로그인 계정</h2><p>기기 연결과 계정 삭제를 여기에서 관리해요.</p></div>
+              <div className="journey-settings-group-content journey-settings-account-actions">
                 {!evidenceMode && <div className="journey-settings-account-row">
-                  <div className="section-header">
-                    <h3>이 기기에서 로그아웃</h3>
-                    <p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p>
-                  </div>
+                  <div className="section-header"><h3>이 기기에서 로그아웃</h3><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div>
                   <button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button>
                 </div>}
                 <div className="journey-settings-account-row journey-settings-account-danger">
-                  <div className="section-header">
-                    <h3>계정 삭제</h3>
-                    <p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p>
-                  </div>
+                  <div className="section-header"><h3>계정 삭제</h3><p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p></div>
                   <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button>
                 </div>
               </div>

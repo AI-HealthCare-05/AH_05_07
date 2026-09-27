@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { readStartingHomePreference, writeStartingHomePreference } from "./startingHomePreference";
 
-export function StartingHomeControl() {
+export function StartingHomeControl({ headingLevel = 2 }: { headingLevel?: 2 | 3 } = {}) {
   const [preference, setPreference] = useState(readStartingHomePreference);
   const [saveFailed, setSaveFailed] = useState(false);
-  return <section className="journey-settings-section journey-settings-display">
+  const Heading = headingLevel === 3 ? "h3" : "h2";
+  return <section className="journey-settings-section journey-settings-display starting-home-control">
     <div className="section-header">
-      <p className="eyebrow">화면</p>
-      <h2>시작 화면</h2>
+      <Heading>시작 화면</Heading>
       <p id="starting-home-help">이 브라우저에만 저장돼요. 건강 기록·분석에는 영향이 없으며 언제든 바꿀 수 있어요. 다음에 기본 주소로 들어올 때 로그인 상태라면 적용돼요.</p>
     </div>
     <fieldset className="theme-preset-control" aria-describedby="starting-home-help">
