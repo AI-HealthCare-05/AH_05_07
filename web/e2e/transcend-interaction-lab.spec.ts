@@ -18,6 +18,7 @@ import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/li
 import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/w4LivingWeekWorldSceneProfile";
 import { W4_LIVING_WEEK_WORLD_LIMIT_METRES } from "../transcend-lab/src/platform/spatial/w4LivingWeekPlayableWorldSession";
 import type { WorldSceneOverlayPlan } from "../transcend-lab/src/platform/spatial/worldSceneOverlayPlan";
+import { nearestActiveOverlayMarker } from "../transcend-lab/src/platform/spatial/worldOverlayProximity";
 import { KinematicWorldKernel } from "../transcend-lab/src/platform/spatial/kinematicWorldKernel";
 import { PLAYABLE_DESTINATION, playableWorldLayout, rampVertices, RAMP_TRIANGLES } from "../transcend-lab/src/platform/spatial/playableWorldLayout";
 import type { RapierModule } from "../transcend-lab/src/platform/spatial/rapierRuntime";
@@ -147,6 +148,16 @@ test("W4 Living Week scene plan composes bounded immutable render-neutral geomet
   expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN)).toBe(true);
   expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN.markers)).toBe(true);
   expect(Object.isFrozen(LIVING_WEEK_SCENE_PLAN.segments)).toBe(true);
+});
+
+test("W4 every Living Week landmark resolves through generic overlay proximity", () => {
+  for (const landmark of LIVING_WEEK_LANDMARKS) {
+    const active = nearestActiveOverlayMarker(LIVING_WEEK_SCENE_PLAN, landmark.position);
+    expect(active?.id).toBe(landmark.id);
+    expect(active?.label).toBe(landmark.label);
+  }
+  expect(nearestActiveOverlayMarker(LIVING_WEEK_SCENE_PLAN, worldPoint(0, 0, 0))).toBeNull();
+  expect(nearestActiveOverlayMarker(null, worldPoint(0, 0, 0))).toBeNull();
 });
 
 test("W1 WorldSpace remains metre-tagged and explicit", () => {
