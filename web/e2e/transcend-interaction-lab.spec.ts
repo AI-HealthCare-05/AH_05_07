@@ -78,6 +78,63 @@ async function fetchExactReviewBytes(
   return bytes;
 }
 
+test("E1 preview auto-enters Living City and keeps classic Today directly reachable", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  const requests: string[] = [];
+  page.on("request", (req) => requests.push(req.url()));
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await page.goto("/?experience=e1");
+
+  const lab = page.getByTestId("transcend-lab");
+  await expect(lab).toHaveAttribute("data-experience", "e1");
+  await expect(page.getByTestId("living-city-entry")).toBeVisible();
+  await expect(page.getByTestId("world-playable-stage")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("living-city-entry-status")).toHaveText("Living City ready.");
+  await expect(page.getByTestId("open-classic-today")).toHaveAttribute("href", "/?screen=S02");
+  await expect(page.getByTestId("renderer-host")).not.toHaveAttribute("aria-hidden", "true");
+  await expect(page.getByTestId("start-world-playable")).toBeHidden();
+  expect(requests.some((url) => /\/api\/|supabase|model-v2|auth/i.test(url))).toBe(false);
+
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
+test("E1 preview preserves classic Today and exposes retry when the world cannot start", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 503, contentType: "text/plain", body: "preview asset unavailable",
+  }));
+
+  await page.goto("/?experience=e1");
+
+  await expect(page.getByTestId("living-city-entry-status")).toHaveText(
+    "World preview unavailable. Classic Today is still available.",
+    { timeout: 30_000 },
+  );
+  await expect(page.getByTestId("open-classic-today")).toBeVisible();
+  await expect(page.getByTestId("retry-living-city")).toBeVisible();
+  await expect(page.getByTestId("world-playable-stage")).toHaveCount(0);
+
+  await page.unroute(PINNED_ACTIVE_ASSET.url);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+  await page.getByTestId("retry-living-city").click();
+
+  await expect(page.getByTestId("world-playable-stage")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("living-city-entry-status")).toHaveText("Living City ready.");
+
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
 test("W4 Living Week topology is seven ordered connected bounded landmarks", () => {
   expect(LIVING_WEEK_DAYS).toEqual([
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",

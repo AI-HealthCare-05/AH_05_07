@@ -562,3 +562,90 @@ code {
 }
 
 .world-destination-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+
+.transcend-lab[data-experience="e1"] > .lab-hero,
+.transcend-lab[data-experience="e1"] > .lab-panel,
+.transcend-lab[data-experience="e1"] > .synthetic-route,
+.transcend-lab[data-experience="e1"] > .world-playable-controls,
+.transcend-lab[data-experience="e1"] > .anchor-marker,
+.transcend-lab[data-experience="e1"] > .hard-zone-marker,
+.transcend-lab[data-experience="e1"] > .actor-interaction {
+  display: none;
+}
+
+.living-city-entry-hud {
+  position: fixed;
+  z-index: 90;
+  top: 1rem;
+  left: 50%;
+  display: flex;
+  width: min(64rem, calc(100% - 2rem));
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 1.4rem;
+  padding: 0.9rem 1rem;
+  background: rgb(247 244 232 / 88%);
+  box-shadow: 0 1rem 3rem rgb(20 35 29 / 18%);
+  backdrop-filter: blur(18px);
+  transform: translateX(-50%);
+}
+
+.living-city-entry-hud h1,
+.living-city-entry-hud p {
+  margin: 0;
+}
+
+.living-city-entry-hud h1 {
+  font-size: clamp(1.15rem, 3vw, 1.6rem);
+}
+
+.living-city-entry-hud [role="status"] {
+  margin-top: 0.25rem;
+  color: #42534a;
+  font-size: 0.9rem;
+}
+
+.living-city-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 0.6rem;
+}
+
+.living-city-classic-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border: 1px solid #315f4a;
+  border-radius: 999px;
+  padding: 0.62rem 1rem;
+  color: #123b2a;
+  background: #fffdf4;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.living-city-classic-link:focus-visible {
+  outline: 3px solid #bd4d2d;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .living-city-entry-hud {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .living-city-entry-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .living-city-classic-link,
+  .living-city-entry-actions button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
