@@ -1,3 +1,5 @@
+import { StartingHomeControl } from "./ui/StartingHomeControl";
+import { isDefaultHomeEntry, readStartingHomePreference, resolveStartingHomeDestination } from "./ui/startingHomePreference";
 import { LivingChoiceLink } from "./ui/LivingChoiceLink";
 import { MySpaceEntry, MySpaceReturn } from "./ui/SpaceReturnNavigation";
 import { readMySpaceReturn } from "./ui/mySpaceReturn";
@@ -291,6 +293,10 @@ function Login({
 }
 
 function App() {
+  // Capture entry intent before auth confirmation scrubs its URL. Never re-run
+  // this decision for a settings change or an in-app navigation.
+  const defaultHomeEntry = useRef(isDefaultHomeEntry(window.location.href));
+  const [startingHomeDestination, setStartingHomeDestination] = useState<string | null>(null);
   const initialSearch = useMemo(() => new URLSearchParams(window.location.search), []);
   const companionMode = useMemo(() => resolveCompanionMode(import.meta.env.VITE_SK7_COMPANION_MODE), []);
   const [companionSpeciesPreference, setCompanionSpeciesPreference] = useState<CompanionSpecies>(() => readCompanionIdentity());
@@ -409,6 +415,20 @@ function App() {
       return;
     }
 
+    const entryUrl = new URL(window.location.href);
+    const incomingScreen = currentIdentity.userId === null && nextUserId !== null
+      && (!window.history.state?.sk7UserId || window.history.state.sk7UserId === nextUserId);
+    if (currentIdentity.userId === null && nextUserId !== null) {
+      setStartingHomeDestination(resolveStartingHomeDestination({
+        defaultEntry: defaultHomeEntry.current && isDefaultHomeEntry(entryUrl.href),
+        signedIn: true,
+        evidenceMode: evidenceMode || allowsE2eFixture(),
+        preference: readStartingHomePreference(),
+      }));
+      defaultHomeEntry.current = false;
+    } else if (!nextUserId) {
+      setStartingHomeDestination(null);
+    }
     sessionIdentityRef.current = { userId: nextUserId, generation: currentIdentity.generation + 1 };
     sessionRef.current = nextSession;
     windowRequestId.current += 1;
@@ -434,16 +454,19 @@ function App() {
     setPendingBloodPressureDeletion(null);
     setEditingChallengeCheckin(null);
     setPendingChallengeCheckinDeletion(null);
-    setSelectedRecordKey(null);
-    setRequestedScreen("S02");
-    setDashboardWindow("current");
+    setSelectedRecordKey(incomingScreen ? entryUrl.searchParams.get("record") : null);
+    setRequestedScreen(incomingScreen ? parseScreen(entryUrl.searchParams.get("screen")) : "S02");
+    setDashboardWindow(incomingScreen ? parseDashboardWindow(entryUrl.searchParams.get("dashboard_window"), presentationRef.current.today) : "current");
     editOriginKey.current = null;
 
     const url = new URL(window.location.href);
-    url.searchParams.delete("screen");
-    url.searchParams.delete("record");
-    url.searchParams.delete("dashboard_window");
+    if (!incomingScreen) {
+      url.searchParams.delete("screen");
+      url.searchParams.delete("record");
+      url.searchParams.delete("dashboard_window");
+    }
     window.history.replaceState({ ...(window.history.state ?? {}), sk7UserId: nextUserId }, "", url);
+    if (!nextUserId) defaultHomeEntry.current = isDefaultHomeEntry(url.href);
   }
 
   function captureRequestContext(activeSession: Session | null = sessionRef.current): RequestContext | null {
@@ -552,6 +575,10 @@ function App() {
     return unsubscribe;
   }, [authEmailConfirmIntent, evidenceMode, e2eSession]);
 
+  useEffect(() => {
+    if (startingHomeDestination) window.location.replace(startingHomeDestination);
+  }, [startingHomeDestination]);
+
   const sessionUserId = session?.user.id ?? null;
   const sessionAccessToken = session?.access_token ?? null;
 
@@ -572,7 +599,7 @@ function App() {
       accessToken: sessionAccessToken,
     };
 
-    if (evidenceMode || !sessionUserId || !sessionAccessToken) return;
+    if (evidenceMode || startingHomeDestination || !sessionUserId || !sessionAccessToken) return;
 
     // While the very first window is still unresolved, a same-user token
     // refresh must not start a competing GET and invalidate that pending
@@ -590,6 +617,7 @@ function App() {
     evidenceMode,
     sessionAccessToken,
     sessionUserId,
+    startingHomeDestination,
     startOn,
   ]);
 
@@ -658,8 +686,8 @@ function App() {
       setWindowState("loading");
       setDashboardWindow("current");
     }
-    if (screen === "S02") url.searchParams.delete("screen");
-    else url.searchParams.set("screen", screen);
+    // Today selected through navigation is explicit, including after a reload.
+    url.searchParams.set("screen", screen);
     if (recordKey) url.searchParams.set("record", recordKey);
     else url.searchParams.delete("record");
     window.history[replace ? "replaceState" : "pushState"]({ ...(window.history.state ?? {}), sk7UserId: sessionIdentityRef.current.userId }, "", url);
@@ -1137,12 +1165,12 @@ function App() {
   if (!evidenceMode && !e2eSession && !supabaseConfigured) {
     return <main className="welcome-shell"><p className="notice notice-error">웹 환경변수를 설정한 뒤 시작할 수 있습니다.</p></main>;
   }
-  if (!evidenceMode && (authEmailConfirmPending || authBootstrapPending)) {
+  if (!evidenceMode && (authEmailConfirmPending || authBootstrapPending || startingHomeDestination)) {
     return (
       <main className="welcome-shell">
         <section className="welcome-card" aria-live="polite">
           <p className="eyebrow">SK7</p>
-          <h1>{authEmailConfirmPending ? "로그인 링크를 확인하고 있어요." : "로그인 상태를 확인하고 있어요."}</h1>
+          <h1>{startingHomeDestination ? "내 공간을 열고 있어요." : authEmailConfirmPending ? "로그인 링크를 확인하고 있어요." : "로그인 상태를 확인하고 있어요."}</h1>
           <p className="scene-body">잠시만 기다려 주세요.</p>
         </section>
       </main>
@@ -2008,6 +2036,7 @@ function App() {
               </dl>
               <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
             </section>
+            {!evidenceMode && <StartingHomeControl />}
             {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
               <div className="section-header">
                 <p className="eyebrow">동반자</p>
@@ -2067,7 +2096,7 @@ function App() {
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="base" className="surface"><div className="settings-list"><section><div className="section-header"><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div className="section-header"><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div className="section-header"><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div className="section-header"><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button></section><section><div className="section-header"><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section><section><div className="section-header"><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div className="section-header"><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="base" className="surface"><div className="settings-list">{!evidenceMode && <StartingHomeControl />}<section><div className="section-header"><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div className="section-header"><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div className="section-header"><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div className="section-header"><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button></section><section><div className="section-header"><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section><section><div className="section-header"><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div className="section-header"><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;

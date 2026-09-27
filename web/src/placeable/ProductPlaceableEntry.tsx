@@ -71,7 +71,7 @@ export default function ProductPlaceableEntry() {
       ? "Account storage is unavailable. Check your sign-in and connection, then retry."
       : "Sign in to use account storage."} No browser placement has been copied or changed.</p>
     {status !== "checking" && <button onClick={() => setAttempt((value) => value + 1)}>Retry account session</button>}
-    <p><a href="/">Return to sign in</a></p>
+    <p><a href="/?screen=S02">Return to sign in</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>Choose browser-only storage</a></p>
   </main>;
   return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable />;
