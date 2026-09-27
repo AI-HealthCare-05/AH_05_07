@@ -35,6 +35,7 @@ import type {
   WorldSceneOverlayMarker,
   WorldSceneOverlayPlan,
 } from "./platform/spatial/worldSceneOverlayPlan";
+import type { WorldPoint3 } from "./platform/spatial/worldSpaceClock";
 import type {
   WorldPlayableClip,
   WorldPlayableDiagnostics,
@@ -114,6 +115,31 @@ function createOverlayMarkerLabel(marker: WorldSceneOverlayMarker): Sprite {
   return sprite;
 }
 
+const NO_ACTIVE_OVERLAY_MARKER_TEXT = "No nearby landmark.";
+
+function nearestActiveOverlayMarker(
+  plan: WorldSceneOverlayPlan | null,
+  position: WorldPoint3,
+): WorldSceneOverlayMarker | null {
+  let nearest: WorldSceneOverlayMarker | null = null;
+  let nearestDistanceSquared = Number.POSITIVE_INFINITY;
+  for (const marker of plan?.markers ?? []) {
+    const radius = marker.interactionRadiusMetres;
+    if (!Number.isFinite(radius) || radius <= 0) continue;
+    const dx = position.x - marker.position.x;
+    const dz = position.z - marker.position.z;
+    const distanceSquared = dx * dx + dz * dz;
+    if (distanceSquared > radius * radius) continue;
+    const isCloser = distanceSquared < nearestDistanceSquared - 1e-12;
+    const isTie = Math.abs(distanceSquared - nearestDistanceSquared) <= 1e-12;
+    if (isCloser || (isTie && nearest !== null && marker.id < nearest.id) || nearest === null) {
+      nearest = marker;
+      nearestDistanceSquared = distanceSquared;
+    }
+  }
+  return nearest;
+}
+
 function normalizeModel(model: Group, modelHeight: number): Group {
   model.updateMatrixWorld(true);
   let bounds = new Box3().setFromObject(model);
@@ -166,6 +192,8 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
   #hostZIndex = "";
   #destinationStatus: HTMLElement | null = null;
   #destinationNear = false;
+  #overlayStatus: HTMLElement | null = null;
+  #activeOverlayMarkerId: string | null = null;
 
   constructor(
     profile: WorldSceneProfile,
@@ -206,6 +234,7 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       renderedOverlayLabelCount: this.#scene?.children.filter(
         (child) => child.name.startsWith("overlay-label:"),
       ).length ?? 0,
+      activeOverlayMarkerId: this.#activeOverlayMarkerId,
     });
   }
 
@@ -331,6 +360,25 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     root.append(status);
     this.#destinationStatus = status;
     root.dataset.destinationNear = "false";
+
+    if ((this.#overlayPlan?.markers.length ?? 0) > 0) {
+      const overlayStatus = document.createElement("p");
+      overlayStatus.className = "world-overlay-status";
+      overlayStatus.dataset.testid = "world-overlay-status";
+      overlayStatus.setAttribute("role", "status");
+      overlayStatus.setAttribute("aria-live", "polite");
+      overlayStatus.textContent = NO_ACTIVE_OVERLAY_MARKER_TEXT;
+      Object.assign(overlayStatus.style, {
+        position: "absolute",
+        width: "1px",
+        height: "1px",
+        overflow: "hidden",
+        clip: "rect(0 0 0 0)",
+        whiteSpace: "nowrap",
+      });
+      root.append(overlayStatus);
+      this.#overlayStatus = overlayStatus;
+    }
 
     const camera = new PerspectiveCamera(48, 1, 0.05, 60);
     this.#camera = camera;
@@ -500,6 +548,8 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     this.#root = null;
     this.#destinationStatus = null;
     this.#destinationNear = false;
+    this.#overlayStatus = null;
+    this.#activeOverlayMarkerId = null;
     this.#renderer = null;
     this.#scene = null;
     this.#camera = null;
@@ -531,6 +581,24 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
         const dx = position.x - previous.x;
         const dz = position.z - previous.z;
         if (Math.hypot(dx, dz) > 1e-5) this.#actor.rotation.y = Math.atan2(dx, dz);
+      }
+    }
+
+    const activeOverlayMarker = position === null
+      ? null
+      : nearestActiveOverlayMarker(this.#overlayPlan, position);
+    const activeOverlayMarkerId = activeOverlayMarker?.id ?? null;
+    if (activeOverlayMarkerId !== this.#activeOverlayMarkerId) {
+      this.#activeOverlayMarkerId = activeOverlayMarkerId;
+      if (this.#root) {
+        if (activeOverlayMarkerId === null) delete this.#root.dataset.activeOverlayMarkerId;
+        else this.#root.dataset.activeOverlayMarkerId = activeOverlayMarkerId;
+      }
+      if (this.#overlayStatus) {
+        this.#overlayStatus.dataset.markerId = activeOverlayMarkerId ?? "";
+        this.#overlayStatus.textContent = activeOverlayMarker
+          ? `Near ${activeOverlayMarker.label}.`
+          : NO_ACTIVE_OVERLAY_MARKER_TEXT;
       }
     }
 

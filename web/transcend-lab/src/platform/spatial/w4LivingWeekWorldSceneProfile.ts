@@ -1,5 +1,6 @@
 import { LIVING_WEEK_LANDMARKS } from "./livingWeekLandmarks";
 import { LIVING_WEEK_SCENE_PLAN } from "./livingWeekScenePlan";
+import { LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES } from "./livingWeekRenderProjection";
 import type { WorldSceneProfile } from "./worldSceneProfile";
 
 const MONDAY = LIVING_WEEK_LANDMARKS[0];
@@ -12,7 +13,7 @@ export const W4_LIVING_WEEK_WORLD_SCENE_PROFILE: WorldSceneProfile = Object.free
     label: MONDAY.label,
     x: MONDAY.position.x,
     z: MONDAY.position.z,
-    radius: 0.7,
+    radius: LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES,
   }),
   copy: Object.freeze({
     canvasLabel: "Living Week world. Seven weekday landmarks are connected in sequence.",

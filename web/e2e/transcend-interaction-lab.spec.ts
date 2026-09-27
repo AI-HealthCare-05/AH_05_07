@@ -10,6 +10,7 @@ import {
   LIVING_WEEK_LANDMARKS,
 } from "../transcend-lab/src/platform/spatial/livingWeekLandmarks";
 import {
+  LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES,
   livingWeekMarkers,
   livingWeekSegments,
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
@@ -116,6 +117,8 @@ test("W4 Living Week render projection preserves ordered marker and segment geom
   expect(segments).toHaveLength(6);
   expect(markers.map((marker) => marker.id)).toEqual(LIVING_WEEK_LANDMARKS.map((landmark) => landmark.id));
   expect(markers.map((marker) => marker.ordinal)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  expect(markers.every((marker) =>
+    marker.interactionRadiusMetres === LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES)).toBe(true);
   expect(segments.map((segment) => [segment.from, segment.to])).toEqual(
     LIVING_WEEK_CONNECTIONS.map((connection) => [connection.from, connection.to]),
   );
@@ -773,6 +776,57 @@ test("W4 Living Week mounts in its own bounded blank world shell", async ({ page
   await page.getByTestId("exit-world-playable").click();
   expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState())).lifecycle)
     .toBe("stopped");
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
+test("W4 spatial movement publishes the active weekday landmark semantic status", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await openRunningLab(page, "/?worldTrack=living-week");
+  await page.getByTestId("start-world-playable").click();
+
+  const stage = page.getByTestId("world-playable-stage");
+  const status = page.getByTestId("world-overlay-status");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(status).toHaveAttribute("role", "status");
+  await expect(status).toHaveAttribute("aria-live", "polite");
+  await expect(status).toHaveText("No nearby landmark.");
+  await expect(stage).not.toHaveAttribute("data-active-overlay-marker-id", /.+/);
+
+  const monday = LIVING_WEEK_LANDMARKS[0];
+  const targetYaw = Math.atan2(-monday.position.x, -monday.position.z);
+  await page.evaluate((yaw) => {
+    const api = window.__TRANSCEND_LAB__!;
+    const currentYaw = api.playableDiagnostics()!.yawRadians;
+    api.playableCameraNudge(yaw - currentYaw);
+  }, targetYaw);
+
+  await page.keyboard.down("w");
+  await expect(stage).toHaveAttribute(
+    "data-active-overlay-marker-id",
+    monday.id,
+    { timeout: 10_000 },
+  );
+  await page.keyboard.up("w");
+  await expect(status).toHaveText(`Near ${monday.label}.`);
+  await expect(status).toHaveAttribute("data-marker-id", monday.id);
+  expect((await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()))
+    ?.activeOverlayMarkerId).toBe(monday.id);
+
+  const position = await page.evaluate(() => window.__TRANSCEND_LAB__!.playableWorldState().position);
+  expect(position).not.toBeNull();
+  expect(Math.hypot(
+    position!.x - monday.position.x,
+    position!.z - monday.position.z,
+  )).toBeLessThanOrEqual(LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES);
+
+  await page.getByTestId("exit-world-playable").click();
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(stopped).toMatchObject({
     listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,

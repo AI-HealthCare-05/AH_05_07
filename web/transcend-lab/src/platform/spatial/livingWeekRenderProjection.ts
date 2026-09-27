@@ -6,11 +6,14 @@ import {
 } from "./livingWeekLandmarks";
 import type { WorldPoint3 } from "./worldSpaceClock";
 
+export const LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES = 0.7;
+
 export type LivingWeekMarkerDescriptor = Readonly<{
   id: LivingWeekLandmark["id"];
   label: string;
   ordinal: number;
   position: WorldPoint3;
+  interactionRadiusMetres: number;
 }>;
 
 export type LivingWeekSegmentDescriptor = Readonly<{
@@ -32,6 +35,7 @@ export function livingWeekMarkers(): readonly LivingWeekMarkerDescriptor[] {
     label: landmark.label,
     ordinal: landmark.ordinal,
     position: landmark.position,
+    interactionRadiusMetres: LIVING_WEEK_MARKER_INTERACTION_RADIUS_METRES,
   })));
 }
 
