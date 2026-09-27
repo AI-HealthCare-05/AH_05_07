@@ -4,6 +4,7 @@ export type WorldSceneOverlayMarker = Readonly<{
   id: string;
   label: string;
   position: WorldPoint3;
+  interactionRadiusMetres: number;
 }>;
 
 export type WorldSceneOverlaySegment = Readonly<{

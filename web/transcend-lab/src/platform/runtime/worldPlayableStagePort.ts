@@ -23,6 +23,7 @@ export type WorldPlayableDiagnostics = Readonly<{
   renderedOverlayMarkerCount: number;
   renderedOverlaySegmentCount: number;
   renderedOverlayLabelCount: number;
+  activeOverlayMarkerId: string | null;
 }>;
 
 export type WorldPlayableMountOptions = Readonly<{
