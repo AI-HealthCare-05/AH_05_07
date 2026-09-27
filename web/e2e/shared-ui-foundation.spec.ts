@@ -275,9 +275,9 @@ for (const viewport of [
       await expectFoundation(page, screen.id);
     }
 
-    const settingsRows = page.locator(".journey-settings-section");
-    if (await settingsRows.count()) {
-      const rowPresentation = await settingsRows.first().evaluate((element) => {
+    const settingsGroups = page.locator(".journey-settings-group");
+    if (await settingsGroups.count()) {
+      const rowPresentation = await settingsGroups.first().evaluate((element) => {
         const style = getComputedStyle(element);
         return { boxShadow: style.boxShadow, borderTopStyle: style.borderTopStyle };
       });
