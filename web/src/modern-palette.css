@@ -12,6 +12,70 @@ body,
   box-shadow: none;
 }
 
+/* Enterprise shell: one page frame, with navigation in document order.
+   Screen-specific composition remains in journey-today.css. */
+.app-shell .app-header {
+  min-height: 5.5rem;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--sk7-border);
+}
+.app-shell .brand-button strong { font-size: 1.25rem; letter-spacing: -.055em; }
+.app-shell .brand-button small { font-size: var(--sk7-type-caption); }
+.app-shell .brand-mark { border-radius: 50% 50% .65rem .65rem; box-shadow: none; }
+.app-shell .clay-horizon { display: none; }
+.app-shell .primary-nav {
+  position: relative;
+  inset: auto;
+  transform: none;
+  width: min(100%, var(--sk7-content-max));
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--sk7-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.app-shell .primary-nav button {
+  min-height: 3.5rem;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--sk7-text-muted);
+  box-shadow: none;
+}
+.app-shell .primary-nav button.is-active {
+  color: var(--sk7-accent);
+  border-bottom-color: currentColor;
+  background: transparent;
+  box-shadow: none;
+}
+.app-shell .scene-viewport { margin-top: var(--sk7-space-xl); }
+@media (hover: hover) and (pointer: fine) {
+  .app-shell .primary-nav button:hover:not(:disabled) { background: var(--sk7-surface-subtle); color: var(--sk7-accent-hover); }
+}
+@media (max-width: 767px) {
+  .app-shell .app-header { min-height: 4.25rem; padding-block: max(.5rem, env(safe-area-inset-top)) .5rem; }
+  .app-shell .primary-nav {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: auto;
+    min-height: calc(var(--sk7-mobile-nav-height) + env(safe-area-inset-bottom));
+    padding: .25rem max(.5rem, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(.5rem, env(safe-area-inset-left));
+    border-top: 1px solid var(--sk7-border);
+    background: var(--sk7-surface-solid);
+  }
+  .app-shell .primary-nav button { min-height: 3.6rem; border-top: 2px solid transparent; border-bottom: 0; }
+  .app-shell .primary-nav button.is-active { border-top-color: currentColor; }
+  .app-shell .scene-viewport { margin-top: 0; }
+}
+@media (forced-colors: active) {
+  .app-shell .primary-nav { background: Canvas; border-color: CanvasText; }
+  .app-shell .primary-nav button { border-color: Canvas; }
+  .app-shell .primary-nav button.is-active { color: Highlight; border-color: Highlight; text-decoration: underline; text-underline-offset: .3em; }
+}
+
 .primary-nav button {
   color: var(--sk7-text-muted);
 }

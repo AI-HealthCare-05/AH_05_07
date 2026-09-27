@@ -43,6 +43,7 @@ async function shellPresentation(page: Page) {
 for (const viewport of [
   { name: "320-short", width: 320, height: 568 },
   { name: "390", width: 390, height: 844 },
+  { name: "desktop", width: 1366, height: 768 },
 ]) {
   test(`primary tabs share one outer shell at ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -304,6 +305,35 @@ test("S12-S14 and account deletion dialog reflow with 200% text", async ({ page 
   expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   await dialog.getByRole("button", { name: "취소", exact: true }).click();
   await expect(trigger).toBeFocused();
+});
+
+test("shell navigation keeps document order, keyboard focus and current destination in forced colors", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
+  await page.goto("/?fixture=VP-10&screen=S02");
+  const nav = page.getByRole("navigation", { name: "주요 화면" });
+  expect(await nav.evaluate(element => Boolean(element.compareDocumentPosition(document.querySelector('#scene-content')!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+  const skip = page.getByRole("link", { name: "본문으로 건너뛰기" });
+  await skip.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator('#scene-content')).toBeFocused();
+  // Visit another destination before Today: reselecting the mounted screen
+  // intentionally leaves focus on its navigation button.
+  for (const screen of [...primaryTabs.slice(1), primaryTabs[0]]) {
+    const button = nav.locator(`button:has([data-nav-icon="${screen}"])`);
+    await button.focus();
+    expect(await button.evaluate(element => {
+      const style = getComputedStyle(element);
+      return element.matches(':focus-visible') && style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 3;
+    })).toBe(true);
+    await page.keyboard.press("Enter");
+    await expect(page.locator(`#${screen}-title`)).toBeFocused();
+    await expect(button).toHaveAttribute("aria-current", "page");
+    expect(await button.evaluate(element => {
+      const style = getComputedStyle(element);
+      return style.borderTopStyle !== 'none' && parseFloat(style.borderTopWidth) >= 2 && style.borderTopColor === style.color;
+    })).toBe(true);
+  }
 });
 
 test("desktop fine pointer still applies hover feedback to primary nav buttons", async ({ page }) => {
