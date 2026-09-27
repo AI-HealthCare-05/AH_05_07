@@ -1,3 +1,5 @@
+import { MySpaceReturn } from "./ui/SpaceReturnNavigation";
+import { readMySpaceReturn } from "./ui/mySpaceReturn";
 import { resolvePresentationPolicy } from "./ui/presentationPolicy";
 import type { FormEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -191,6 +193,8 @@ function Login({
   function enterGuestJourney() {
     const url = new URL(window.location.pathname, window.location.origin);
     url.searchParams.set("guest", "1");
+    const space = readMySpaceReturn(window.location.search);
+    if (space) url.searchParams.set("return_space", `${space.view}-${space.storage}`);
     window.location.assign(url);
   }
 
@@ -1144,7 +1148,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} />;
+    return <><MySpaceReturn /><Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} /></>;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
@@ -2056,6 +2060,8 @@ function App() {
   return (
     <>
     <div data-living-week-app hidden={reportVisible}>
+    {requestedScreen === "S02" && !readNavigationDisabled && !accountDeletionOpen
+      && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload && <MySpaceReturn />}
     <SceneShell
       staticJourneyUi={presentation.staticLandscape}
       journeyPresentation={presentation.journey}

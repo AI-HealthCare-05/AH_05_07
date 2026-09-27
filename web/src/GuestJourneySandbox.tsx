@@ -1,3 +1,4 @@
+import { MySpaceReturn } from "./ui/SpaceReturnNavigation";
 import type { ComponentProps, FormEvent } from "react";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
@@ -972,6 +973,7 @@ function GuestJourney({ today }: { today: string }) {
     data-guest-dashboard-window={dashboardWindow}
   >
     <div data-living-week-app hidden={reportVisible}>
+      {activeScreen === "S02" && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <MySpaceReturn />}
       <SceneShell
         staticJourneyUi={sceneGate === "off"}
         journeyPresentation

@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { Component, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { classicTodayHref } from "../ui/mySpaceReturn";
 import { ASSET, COLORS, isSelection, SOCKETS, supported, type Selection } from "./contract";
 import { PlaceableController } from "./controller";
 import { PlaceableAudio, type AudioStatus } from "./feedback";
@@ -42,16 +43,22 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract 
 }) {
   return <div className="placeable-map" data-testid="classic-plaza" data-preview={preview}>
     <svg className="placeable-map-ground" viewBox="0 0 400 360" aria-hidden="true">
-      <rect x="12" y="12" width="376" height="336" rx="100" fill="#e2ead6" />
-      <path d="M55 70 Q200 10 345 85 L355 220 L270 320 L130 320 L45 220 Z" fill="none" stroke="#c2cdb5" strokeWidth="12" />
-      <path d="M200 300 V90" stroke="#f6f0d8" strokeWidth="42" strokeLinecap="round" />
-      <path d="M173 86 V53 Q200 33 227 53 V86" fill="none" stroke="#537967" strokeWidth="12" />
-      <text x="200" y="27" textAnchor="middle" fill="#29493c" fontSize="13">Today Gate</text>
-      <circle cx="200" cy="180" r="13" fill="#fcf8e9" stroke="#b1bfa3" />
-      <text x="200" y="213" textAnchor="middle" fill="#48614c" fontSize="12">Welcome plaza</text>
+      <defs>
+        <linearGradient id="plaza-daylight" x2="0" y2="1"><stop stopColor="#f6eedc" /><stop offset="1" stopColor="#e0d7b9" /></linearGradient>
+      </defs>
+      <ellipse cx="200" cy="200" rx="188" ry="148" fill="url(#plaza-daylight)" />
+      <path d="M55 125 Q200 52 345 125 L350 230 L270 320 L130 320 L50 230 Z" fill="none" stroke="#bcb998" strokeWidth="3" />
+      <path d="M200 330 V120" stroke="#fff5df" strokeWidth="56" />
+      <ellipse cx="200" cy="124" rx="67" ry="12" fill="#c2b897" />
+      <path d="M153 120 V77 a47 47 0 0 1 94 0 V120" fill="none" stroke="#6954b5" strokeWidth="25" />
+      <path d="M160 120 V77 a40 40 0 0 1 80 0 V120" fill="none" stroke="#eccc84" strokeWidth="3" />
+      <ellipse cx="65" cy="156" rx="24" ry="14" fill="#829579" />
+      <ellipse cx="335" cy="156" rx="24" ry="14" fill="#829579" />
+      <circle cx="200" cy="210" r="12" fill="#697ba0" />
+      <circle cx="200" cy="203" r="7" fill="#fff0cc" />
     </svg>
     {SOCKETS.map((socket) => <div className="placeable-map-socket" key={socket.id}
-      style={{ left: `${50 + socket.x * 10}%`, top: `${50 + socket.z * 11.1}%` }} data-socket={socket.id}>
+      style={{ left: `${50 + socket.x * 14}%`, top: `${50 + socket.z * 11.1}%` }} data-socket={socket.id}>
       <span className="placeable-socket-ring" />
       {selection?.socketId === socket.id && <button className="placeable-object" type="button"
         data-testid="classic-pinwheel" data-color={selection.color} data-socket={socket.id}
@@ -127,19 +134,27 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"}>
     <header className="placeable-header">
       <div><p className="placeable-eyebrow">SK7 · Living City</p><h1>My first placeable</h1>
-        <p>A little color for your welcome plaza.</p></div>
+        <p>A place to pause. A little color that is yours.</p></div>
       <nav aria-label="Plaza navigation">
         <a href={route(world ? "classic" : "3d")}>{world ? "Classic plaza" : "Enter 3D plaza"}</a>
-        <a href="?screen=S02">Classic Today</a><a href="/">Leave plaza</a>
+        <a href="/">Leave plaza</a>
       </nav>
     </header>
     <div className="placeable-layout">
-      <section className="placeable-stage" aria-label="Placement preview">
+      <section className="placeable-stage" aria-label="Placement preview" data-breeze={feedback && canInteract}>
+        <div className="placeable-destination"><div><p className="placeable-eyebrow">Through the arch</p>
+          <h2>Today Gate</h2><p>Your day is just beyond the plaza.</p></div>
+          <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+            aria-disabled={preview || Boolean(state.pending)}
+            onClick={(event) => { if (preview || state.pending) { event.preventDefault(); statusRef.current?.focus(); } }}>
+            Classic Today <span aria-hidden="true">↗</span></a>
+        </div>
+        {(preview || state.pending) && <p className="placeable-handoff-note">Confirm or cancel your preview before visiting Today. If the save is uncertain, check its saved state first.</p>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">Loading 3D plaza… Classic plaza is available above.</p>}>
           <PlaceableWorld selection={selection} preview={preview} pulse={state.pulse}
             suspended={preview || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
-        <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback ? "A bright little spin!" : "Make this spot your own."}</p>
+        <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "A plaza breeze. Your pinwheel answers." : "A little breeze, a place of your own."}</p>
       </section>
       <section className="placeable-controls" aria-label="Pinwheel controls">
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"
@@ -147,7 +162,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           : "Account storage · follows your signed-in account. Browser placements are separate."}</p>
         {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}>
           {adapter.mode === "browser" ? "Use account storage" : "Use browser-only storage"}</a>}
-        <h2>Welcome pinwheel</h2><p className="placeable-asset-id">{ASSET}</p>
+        <h2>Welcome pinwheel</h2>
         <p data-testid="confirmed-placement">Confirmed: {state.confirmed
           ? state.phase === "unsupported" ? "Preserved newer placement" : confirmed ? `${confirmed.color} · ${SOCKETS.find((s) => s.id === confirmed.socketId)?.label}` : "Unplaced"
           : "Not read yet"}</p>
