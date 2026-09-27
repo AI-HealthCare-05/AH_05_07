@@ -333,7 +333,7 @@ def self_test() -> None:
             Result("full", False, False, False, False, True),
         ),
         (
-            ["docs/project-handoff.md", "README.md"],
+            ["docs/README.md", "README.md"],
             Result("docs", False, False, False, False, False),
         ),
         (

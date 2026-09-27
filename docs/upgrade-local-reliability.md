@@ -144,7 +144,7 @@ P95를 독립 재계산하지 않으며 HTTP/SQL을 재실행하지 않는다. s
 
 O1 운영 사용자 흐름, O3 실제 clean release/rollback 및 운영 P95는 승인된 환경·
 합성 계정·release SHA·측정 창·표본/부하 설계·정리 책임이 정해진 뒤 별도로 수행한다.
-[배포 SSOT](deployment-ssot.md)의 schema/release gate를 우회하지 않는다.
+[배포 절차](deployment.md)의 schema/release gate를 우회하지 않는다.
 
 O2는 실제 서버가 정한30일 deadline을 자연 경과시키고 **purge 전 물리 행이 있는
 동안** owner/cross-user/anonymous의 접근 차단을 관찰해야 한다. 이번 pgTAP는 transaction

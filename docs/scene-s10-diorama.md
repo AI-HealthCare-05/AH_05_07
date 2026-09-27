@@ -63,6 +63,6 @@ The delivery verifier is read-only against R2. New identities remain local until
 
 The manifest suite has 71 checks and the schema/manifest pass independent Draft 2020-12 validation. S10 browser coverage adds four viewport/network cases, all seven weekdays in realtime and poster form at three widths, intermediate widths, record/calendar independence, Seoul midnight, media/chunk failure, tier changes and route context disposal. A real browser CORS fetch checks the registered S10 bytes from a page that has not already loaded that URL as a no-CORS image; this avoids testing an unrelated image-memory-cache entry.
 
-The existing S02/date suite, default-off/policy and production S05 regression run alongside this increment. Current completed counts and CI status are maintained in [implementation status](scene-implementation-status.md) and PR #391. Existing S05 regression success does not establish S05 migration parity.
+The existing S02/date suite, default-off/policy and production S05 regression run alongside this increment. Recorded results belong to historical PR #391; live implementation and CI state are read from Git and the task PR. Existing S05 regression success does not establish S05 migration parity.
 
 Remaining: final visual acceptance, S05 confirmed-persistence/exactly-once migration parity, physical-device performance/accessibility, and controlled rollout with rollback. API/DB/auth/Model V2 and the existing production S05 implementation remain unchanged.

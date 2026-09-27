@@ -9,7 +9,7 @@
 Preserved from `docs/deployment-ssot.md` at source
 `f84cc8529f3021e0e15ad75f339d5bf34fe08307`. Extracted observations keep their
 original scope and wording; old “current”, pending, or next-action language is
-historical. Current operating instructions are in [Deployment SSOT](../deployment-ssot.md).
+historical. Current operating instructions are in [Deployment runbook](../deployment.md).
 No live control plane was inspected during this documentation cleanup.
 
 ## Recorded web production evidence — 2026-09-18
@@ -48,13 +48,13 @@ and has no server fallback; the authenticated server endpoint remains.
 
 This is a retained server-inference rollout record, not a live inventory. Current API
 revision/image/traffic and Worker version/build/source binding must be read from
-control planes at release time. [Fast start](../project-handoff.md#fast-start) owns
+control planes at release time. [AGENTS.md](../../AGENTS.md) owns
 source-task routing; the record below does not prove deployment of later main.
 
 
 **OPERATOR-VERIFIED PRODUCTION EVIDENCE (RECORDED ROLLOUT).** Recorded source is `f25fddfc442be63721daae671e4beb267ead5f5f`; the deployment mirror snapshot is `e390c343d87f032f278db0df22e9fbfb1bbb0b3a`; Cloud Run revision is `bp7-api-s11-f25fddf` with immutable image `sha256:b7c7627a9352f930b5371aa5ecc97b40427987e57585039cace3dd1b5ecb145c`; Cloudflare Worker is `8975da2f-2162-40ea-adf4-f5187c1cc5f2`; and Model V2 is `model-v2-r1-schema-v1` with artifact `d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84` and wording `입력 기반 위험군 선별 신호`. The API rollback identity is `bp7-api-00031-rel` / `sha256:a68b30ef6182f9d13a709008542ad248afd55a74664dc67a1616a5a3c6795ecf`; the web rollback Worker is `b5880118-4afe-4259-8ca9-d5157506b65c`.
 
-Operator rollout verification recorded candidate `/live`/`/ready` 200, OpenAPI endpoint presence, unauthenticated 401, authenticated synthetic 200, exact two-field output, no numeric exposure, generic non-echoing 422, sanitized candidate logs, CORS preflight, 100% API activation, production health/API checks, bundled endpoint/wording, signed-in browser submission, approved wording, absent numeric result, and under-19 error as PASS. This Codex session has not independently re-read runtime control planes; see [the canonical release contract](../architecture/RELEASE_CONTRACT.md). A documentation commit does not redeploy or re-verify runtime.
+Operator rollout verification recorded candidate `/live`/`/ready` 200, OpenAPI endpoint presence, unauthenticated 401, authenticated synthetic 200, exact two-field output, no numeric exposure, generic non-echoing 422, sanitized candidate logs, CORS preflight, 100% API activation, production health/API checks, bundled endpoint/wording, signed-in browser submission, approved wording, absent numeric result, and under-19 error as PASS. This Codex session has not independently re-read runtime control planes; see [the deployment runbook](../deployment.md). A documentation commit does not redeploy or re-verify runtime.
 
 ## Previous non-model activation record — 2026-09-08
 

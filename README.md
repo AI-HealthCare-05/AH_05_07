@@ -6,10 +6,9 @@
 > **개발·문서 원본:** `AI-HealthCare-05/AH_05_07`
 >
 > `emotigom/ah-05-07-pages`의 파일은 배포용 동기화 사본입니다. 수정은 원본에서만 합니다.
-> [AGENTS.md](AGENTS.md) → [문서 authority map](docs/README.md) →
-> [짧은 인계](docs/project-handoff.md#fast-start) → [배포 SSOT](docs/deployment-ssot.md)
-> 순서로 현재 작업의 기준을 찾습니다. `main` 병합, 미러 동기화,
-> 운영 배포, scene 활성화는 서로 다른 단계입니다.
+> 작업은 [AGENTS.md](AGENTS.md), 작업 GitHub Issue, 변경 경계에 필요한 도메인 계약·코드·테스트에서 시작합니다.
+> [문서 색인](docs/README.md)은 필요한 주제의 링크만 제공합니다.
+> `main` 병합, 미러 동기화, 운영 배포, scene 활성화는 서로 다른 단계입니다.
 
 **SK7**은 혈압 관찰값을 날짜와 시간대별로 이어서 남기고, 최근 7일을 다시 보는
 비진단형 웹 서비스입니다. 원하는 사용자는 7일 생활습관 챌린지와 선택형 생활정보 선별 참고
@@ -65,7 +64,7 @@ Three.js companion은 표현 계층일 뿐, 기록·인증·모델 의미를 바
 | Visual assets | 승인된 공개 companion·poster 자산만 Cloudflare R2에서 불변 manifest와 함께 제공합니다. 앱 배포 경계와는 분리됩니다. |
 
 자세한 구성과 ERD는 [Architecture](docs/architecture.md), 운영 토폴로지와 배포 시점 확인 절차는
-[Deployment SSOT](docs/deployment-ssot.md)를 기준으로 합니다.
+[Deployment runbook](docs/deployment.md)를 기준으로 합니다.
 
 ## 로컬 web 실행
 
@@ -106,6 +105,6 @@ npm run build
 
 ## 문서 안내
 
-문서 소유권과 lifecycle은 [docs/README.md](docs/README.md)에서 확인합니다.
+주제별 도메인 문서는 [문서 색인](docs/README.md)에서 찾을 수 있습니다.
 현재 작업의 authority만 읽고, 역사 기록은 필요할 때 Git history와 evidence/research/ADR에서
 찾습니다. 검색 결과에 나타난 오래된 상태를 현재 제품이나 운영 상태로 해석하지 않습니다.

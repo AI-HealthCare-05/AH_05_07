@@ -18,7 +18,7 @@
 
 Issue #225의 **역사적 준비 문서**다. 당시 작업에서 운영 변경·계정·행 조작은 실행하지 않았다.
 운영자가 환경·시간·합성 계정·대상 revision·정리 책임을 명시해 별도로 승인한 뒤에만
-아래 절차를 수행한다. [배포 SSOT](deployment-ssot.md), [RLS 계획](deployed-rls-verification-plan.md),
+아래 절차를 수행한다. [배포 절차](deployment.md), [RLS 계획](deployed-rls-verification-plan.md),
 [세션 체크리스트](email-link-session-verification.md)의 기존 경계를 유지한다.
 
 공통 기록은 commit, web version/API revision, migration 파일명, 명령/시나리오,
@@ -94,7 +94,7 @@ RLS를 별도 확인하고, API export는 로컬 SQL/모의 store 근거로만 �
 ## O3 — AC-10 깨끗한 환경 배포 재현
 
 로컬 API image build와 smoke는 운영 배포/rollback이 아니다. 미래 운영자는
-[SSOT](deployment-ssot.md)의 환경·시크릿 분류와 migration gate를 먼저 확인한다.
+[배포 절차](deployment.md)의 환경·시크릿 분류와 migration gate를 먼저 확인한다.
 `scripts/deployment.sh`의 legacy Docker Hub/ai-worker 경로를 사용하지 않는다.
 
 **선행 조건:** 사용자 승인된 release SHA, 별도의 깨끗한 checkout, Node/Python/uv 및

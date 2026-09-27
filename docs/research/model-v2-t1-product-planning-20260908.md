@@ -319,7 +319,7 @@ T1 does not change either switch or route.
 | T20 release | Approved release execution and verification, separately recorded from GO |
 
 These are future requirements, not completed gates. Follow the
-[deployment SSOT](../deployment-ssot.md) for source/runtime separation and release
+[deployment runbook](../deployment.md) for source/runtime separation and release
 classification. This documentation-only PR needs no deployment. T15/T16/T19/T20
 must not reinterpret readiness telemetry as permission to enable scoring.
 
@@ -339,7 +339,7 @@ single chronological override to every concern.
 | V2 product scope | [This contract](../model-v2-product-contract.md) | V1 [release-readiness](../model-release-readiness.md) and legacy DTO do not define V2 outputs |
 | Core product / UX | [Requirements](../requirements.md), [UX](../ux-flow.md), [visual contract](../visual-production-contract.md), [journey](../../web/src/ui/journey.ts) | V1/planned model portions have the conflicts in section 9; current S11 remains not ready |
 | Auth / data use | [Auth](../auth-contract.md), [lifecycle](../observation-data-lifecycle.md), [secret boundary](../secret-boundary-verification.md), README/AGENTS | Existing record retention is not Model V2 storage permission |
-| Release / prior operations | [Deployment SSOT](../deployment-ssot.md), [operations final state](../mvp1-operations-review.md) | Prior O1/O3, O2 and P95 evidence is not Round-2 GO |
+| Release / prior operations | [Deployment runbook](../deployment.md), [operations final state](../mvp1-operations-review.md) | Prior O1/O3, O2 and P95 evidence is not Round-2 GO |
 
 ## 15. Do not reopen
 
