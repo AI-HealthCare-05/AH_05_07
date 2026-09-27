@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { Box3, Mesh, Vector3, type BufferGeometry, type Material } from "three";
+import { Box3, Mesh, Vector3, type CylinderGeometry, type BufferGeometry, type Material } from "three";
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
 import { PlaceableScene, PINWHEEL_RADIUS, type PlaceableProjection } from "../src/placeable/worldScene";
 import { PlaceableWorldInput } from "../src/placeable/worldInput";
@@ -137,4 +137,16 @@ test("DOM input ownership releases capture/listeners on blur, hidden, cancellati
       if (descriptor) Object.defineProperty(globalThis, name, descriptor); else Reflect.deleteProperty(globalThis, name);
     }
   }
+});
+
+
+test("the authored round foundation supports every corner of the existing walking bounds", () => {
+  const scene = new PlaceableScene();
+  const ground = scene.scene.getObjectByName("e1-plaza-ground") as Mesh<CylinderGeometry>;
+  scene.update(projection(), false);
+  for (const lateral of [-1, 1]) for (const forward of [-1, 1]) {
+    for (let frame = 0; frame < 200; frame++) scene.step(0.05, { lateral, forward, magnitude: 1, source: "keyboard" });
+    expect(Math.hypot(scene.actor.position.x, scene.actor.position.z) + 0.2).toBeLessThan(ground.geometry.parameters.radiusTop);
+  }
+  scene.dispose();
 });

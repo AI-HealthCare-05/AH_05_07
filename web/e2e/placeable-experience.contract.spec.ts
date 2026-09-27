@@ -75,3 +75,26 @@ test("audio stays muted without a gesture, reports unavailable, and closes its c
     audio.dispose(); if (prior) Object.defineProperty(globalThis, "window", prior); else Reflect.deleteProperty(globalThis, "window");
   }
 });
+
+
+test("return context accepts only explicit view/storage enums, never an arbitrary redirect or placement", async () => {
+  const { readMySpaceReturn, classicTodayHref } = await import("../src/ui/mySpaceReturn");
+  for (const view of ["classic", "3d"] as const) for (const storage of ["browser", "account"] as const) {
+    expect(readMySpaceReturn(classicTodayHref(view, storage))).toEqual({ view, storage });
+  }
+  for (const search of ["", "?return_space=browser", "?return_space=https://evil.invalid", "?return_space=3d-unknown",
+    "?return_space=classic-browser&return_space=3d-account", "?return_space=3d-account-extra"]) {
+    expect(readMySpaceReturn(search)).toBeNull();
+  }
+});
+
+
+test("Classic remount never replays an earlier interaction while preview or recovery disables interaction", () => {
+  const selection = { assetId: ASSET, color: "teal", socketId: "gate-right" } as const;
+  for (const preview of [true, false]) {
+    const html = renderToStaticMarkup(createElement(ClassicPlaza, {
+      selection, preview, pulse: 1, interact: () => {}, canInteract: false,
+    }));
+    expect(html).not.toContain("pinwheel-spin");
+  }
+});

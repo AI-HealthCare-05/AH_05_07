@@ -1,7 +1,7 @@
 import {
   AmbientLight, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight,
   DoubleSide, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
-  RingGeometry, Scene, SphereGeometry, Vector3, type Material,
+  RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type Material,
 } from "three";
 import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE as PLAZA } from "../../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 import { LIVING_WEEK_SCENE_PLAN as PATH } from "../../transcend-lab/src/platform/spatial/livingWeekScenePlan";
@@ -36,35 +36,50 @@ export class PlaceableScene {
   #suspended = true;
 
   constructor() {
-    this.scene.background = new Color("#dce8d5");
-    this.scene.add(new AmbientLight(0xffffff, 2.2));
-    const sun = new DirectionalLight(0xfff2d1, 3);
+    // One fixed daylight mood: warm stone, cool violet arch, a quiet garden edge.
+    this.scene.background = new Color("#eee8db");
+    this.scene.add(new AmbientLight(0xe8ecff, 1.5));
+    const sun = new DirectionalLight(0xffe4b8, 2.4);
     sun.position.set(-3, 8, 5); this.scene.add(sun);
-    const ground = new Mesh(new BoxGeometry(PLAZA.groundSize, 0.16, PLAZA.groundSize), material("#d0dec0"));
-    ground.position.y = -0.08; ground.name = "e1-plaza-ground"; this.scene.add(ground);
-    // Use the actual E1 landmark/path coordinates, never persistence destinations.
+    // The circular foundation covers the unchanged square walking bounds, including corners.
+    const groundRadius = PATH.boundMetres * Math.SQRT2;
+    const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), material("#e0d7b9"));
+    ground.position.y = -0.14; ground.name = "e1-plaza-ground"; this.scene.add(ground);
+    // Preserve E1's authored route coordinates and all E2 sockets.
     for (const segment of PATH.segments) {
-      const path = new Mesh(new BoxGeometry(0.18, 0.025, segment.lengthMetres), material("#bacba9"));
+      const path = new Mesh(new BoxGeometry(0.12, 0.025, segment.lengthMetres), material("#bcb998"));
       path.position.set((segment.start.x + segment.end.x) / 2, 0.015, (segment.start.z + segment.end.z) / 2);
       path.rotation.y = Math.atan2(segment.end.x - segment.start.x, segment.end.z - segment.start.z);
       path.name = segment.id; this.scene.add(path);
     }
     for (const marker of PATH.markers) {
-      const disc = new Mesh(new CylinderGeometry(0.24, 0.3, 0.07, 24), material("#eff1d6"));
+      const disc = new Mesh(new CylinderGeometry(0.18, 0.24, 0.07, 24), material("#efdfb4"));
       disc.position.set(marker.position.x, 0.05, marker.position.z);
       disc.name = marker.id; this.scene.add(disc);
     }
-    const approach = new Mesh(new BoxGeometry(0.75, 0.03, 2.5), material("#f1e5c4"));
-    approach.position.set(0, 0.02, -0.9); this.scene.add(approach);
+    const approach = new Mesh(new BoxGeometry(1.25, 0.03, 4.7), material("#f5ead4"));
+    approach.position.set(0, 0.02, -0.2); this.scene.add(approach);
     const gate = new Group(); gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
-    const gateMaterial = material("#527961");
-    for (const x of [-0.56, 0.56]) {
-      const post = new Mesh(new BoxGeometry(0.16, 1.55, 0.16), gateMaterial);
-      post.position.set(x, 0.775, 0); gate.add(post);
+    const gateMaterial = material("#6954b5"), trimMaterial = material("#b4a3db");
+    for (const x of [-0.85, 0.85]) {
+      const post = new Mesh(new CylinderGeometry(0.25, 0.29, 1.65, 32), gateMaterial);
+      post.position.set(x, 0.825, 0); gate.add(post);
+      const foot = new Mesh(new CylinderGeometry(0.36, 0.39, 0.18, 32), trimMaterial);
+      foot.position.set(x, 0.09, 0); gate.add(foot);
     }
-    const beam = new Mesh(new BoxGeometry(1.4, 0.2, 0.2), gateMaterial);
-    beam.position.y = 1.55; gate.add(beam); this.scene.add(gate);
+    const arch = new Mesh(new TorusGeometry(0.85, 0.25, 24, 64, Math.PI), gateMaterial);
+    arch.position.y = 1.65; gate.add(arch);
+    const innerArch = new Mesh(new TorusGeometry(0.85, 0.035, 12, 64, Math.PI), material("#f8d789"));
+    innerArch.position.set(0, 1.65, 0.25); gate.add(innerArch);
+    this.scene.add(gate);
+    // Low, broad planting frames the destination; it never competes with it.
+    for (const x of [-3.2, 3.2]) {
+      const bed = new Mesh(new CylinderGeometry(0.75, 0.85, 0.16, 40), material("#c2c2a5"));
+      bed.position.set(x, 0.08, -1.1); this.scene.add(bed);
+      const foliage = new Mesh(new SphereGeometry(0.8, 32, 20), material("#829579"));
+      foliage.scale.set(0.85, 0.48, 1.2); foliage.position.set(x, 0.26, -1.1); this.scene.add(foliage);
+    }
     for (const socket of SOCKETS) {
       const ring = new Mesh(new RingGeometry(0.31, PINWHEEL_RADIUS, 40), material("#819f86"));
       ring.name = socket.id; ring.rotation.x = -Math.PI / 2;
@@ -97,9 +112,9 @@ export class PlaceableScene {
   resize(aspect: number) {
     this.camera.aspect = aspect;
     // Keep the authored sockets and plaza in view on portrait screens too.
-    const distance = Math.max(1, 0.95 / aspect);
-    this.camera.position.set(0, 7.5 * distance, 8.5 * distance);
-    this.camera.lookAt(0, 0, 0); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
+    const distance = Math.max(1, 0.85 / aspect);
+    this.camera.position.set(0, 5.8 * distance, 8.3 * distance);
+    this.camera.lookAt(0, 0.45, -0.5); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
   }
 
   update(projection: PlaceableProjection, reducedMotion: boolean) {
@@ -149,7 +164,7 @@ export class PlaceableScene {
   }
 
   labels() {
-    return [{ id: "today-gate", label: "Today Gate", x: PLAZA.destination.x, y: 1.85, z: PLAZA.destination.z },
+    return [{ id: "today-gate", label: "Today Gate", x: PLAZA.destination.x, y: 2.95, z: PLAZA.destination.z },
       ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
       return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50 };
