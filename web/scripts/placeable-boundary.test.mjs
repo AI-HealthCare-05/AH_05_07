@@ -40,9 +40,11 @@ test("built default/Classic/guest chunks may dynamically reach E2 but cannot eag
 
 test("renderer cannot import account, API, controller or health state", () => {
   const plugin = placeableBoundary(); plugin.configResolved({ root: "/web" });
-  const id = "/web/src/placeable/PlaceableWorld.tsx";
-  for (const imported of ["lib/supabase.ts", "lib/api.ts", "placeable/controller.ts", "placeable/persistence.ts", "App.tsx"]) {
-    assert.throws(() => plugin.moduleParsed({ id, importedIds: [`/web/src/${imported}`], dynamicallyImportedIds: [] }), /product state/);
+  for (const source of ["placeable/PlaceableWorld.tsx", "placeable/livingChoiceMarker.ts", "ui/livingChoice.ts"]) {
+    const id = `/web/src/${source}`;
+    for (const imported of ["lib/supabase.ts", "lib/api.ts", "placeable/controller.ts", "placeable/persistence.ts", "App.tsx", "ui/LivingChoiceLink.tsx"]) {
+      assert.throws(() => plugin.moduleParsed({ id, importedIds: [`/web/src/${imported}`], dynamicallyImportedIds: [] }), /product state/);
+    }
   }
 });
 

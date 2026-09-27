@@ -170,7 +170,7 @@ for (const behavior of ["conflict", "unknown", "read-error"] as const) {
 
 // The new experience uses this existing suite, which nightly-core already runs.
 // These API/session fixtures prove client behavior, not live account integration.
-async function classicTodaySession(page: Page) {
+async function classicTodaySession(page: Page, actionId: string | null = null) {
   const account = await accountRoute(page, "normal");
   await page.route("http://e2e.invalid/api/v1/observations/window**", (route) => {
     const url = new URL(route.request().url());
@@ -179,11 +179,113 @@ async function classicTodaySession(page: Page) {
         start_on: url.searchParams.get("start_on"), end_on: url.searchParams.get("end_on"),
         blood_pressure_observations: [{ id: "synthetic-existing", observed_on: url.searchParams.get("end_on"),
           period: "morning", systolic: 118, diastolic: 76 }],
-        challenge_events: [], active_challenge: null, challenge_checkins: [],
+        challenge_events: [], active_challenge: actionId ? {
+          id: "synthetic-choice", action_id: actionId, starts_on: url.searchParams.get("end_on"),
+          ends_on: "2099-12-31", first_checkin_on: null, status: "active",
+        } : null, challenge_checkins: [],
       }) });
   });
   return account;
 }
+
+for (const [index, choice] of ["walk-10-minutes", "sleep-routine", "low-sodium-meal"].entries()) {
+  test(`Living Choice ${choice}: explicit Today handoff, same visit, independent placement and return`, async ({ page }) => {
+    const account = await classicTodaySession(page, choice);
+    const mode = index === 1 ? "account" : "browser";
+    await page.goto(`/?screen=S02&return_space=3d-${mode}`); await expectClassicToday(page);
+    const bring = page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" });
+    await expect(bring).toHaveAttribute("href", `?experience=e2&view=3d&storage=${mode}&living_choice=${choice}`);
+    expect(account.puts).toBe(0); expect(await readLocal(page)).toBeNull();
+    // Keyboard and pointer both use the same explicit link, not automatic entry.
+    if (index === 0) { await bring.focus(); await page.keyboard.press("Enter"); } else await bring.click();
+    const world = page.getByTestId("placeable-world");
+    await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+    await expect(world).toHaveAttribute("data-choice", choice);
+    await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await page.getByRole("button", { name: "teal", exact: true }).click(); await confirm(page);
+    const stored = await readLocal(page), writes = account.puts;
+    await page.reload(); await expect(world).toHaveAttribute("data-choice", choice);
+    await expect(world).toHaveAttribute("data-color", "teal");
+    await expect(world).toHaveAttribute("data-socket", "gate-right");
+    await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+    await expect(page.getByTestId("classic-living-choice")).toHaveAttribute("data-choice", choice);
+    await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
+    await page.getByRole("link", { name: "Return to My Space" }).click();
+    await expect(page.getByTestId("classic-living-choice")).toHaveCount(0);
+    await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
+    expect(await readLocal(page)).toEqual(stored); expect(account.puts).toBe(writes);
+    expect(JSON.stringify(stored)).not.toContain("living_choice");
+    await page.getByRole("button", { name: "Remove pinwheel" }).click(); await confirm(page);
+    await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  });
+}
+
+test("no active choice and forged hints preserve the default plaza on direct entry and refresh", async ({ page }) => {
+  await classicTodaySession(page);
+  await page.goto("/?screen=S02&return_space=3d-browser"); await expectClassicToday(page);
+  await expect(page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Return to My Space" }).click();
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-choice", "none");
+  await page.reload(); await expect(world).toHaveAttribute("data-choice", "none");
+  for (const hint of ["completed", "https://evil.invalid", "walk-10-minutes&living_choice=sleep-routine"]) {
+    await page.goto(`/?experience=e2&view=3d&storage=browser&living_choice=${hint}`);
+    await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+    await expect(world).toHaveAttribute("data-choice", "none");
+    await expect(page.locator(".placeable-choice-note")).toHaveCount(0);
+    await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+    expect(await readLocal(page)).toBeNull();
+  }
+});
+
+test("Living Choice with WebGL failure retains Classic controls and Today", async ({ page }) => {
+  await classicTodaySession(page, "sleep-routine");
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
+      return type.startsWith("webgl") ? null : Reflect.apply(original, this, [type, ...args]);
+    } as typeof original;
+  });
+  await page.goto("/?screen=S02"); await expectClassicToday(page);
+  await page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-living-choice")).toHaveAttribute("data-choice", "sleep-routine");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
+  await page.getByRole("link", { name: "Return to My Space" }).click();
+  await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
+});
+
+test("touch and reduced motion retain the still choice, walk pad and placement controls", async ({ browser }) => {
+  const context = await browser.newContext({ baseURL: test.info().project.use.baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await classicTodaySession(page, "low-sodium-meal");
+    await page.goto("/?screen=S02"); await expectClassicToday(page);
+    await page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" }).tap();
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute("data-choice", "low-sodium-meal");
+    await expect(world).toHaveAttribute("data-reduced-motion", "true");
+    const pad = page.getByRole("button", { name: "Drag to walk" });
+    await pad.tap(); await expect(world).toHaveAttribute("data-suspended", "false");
+    const cdp = await context.newCDPSession(page), box = (await pad.boundingBox())!;
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: point.x + 15, y: point.y - 15 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).tap();
+    await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await expect(page.getByTestId("save-status")).toContainText("Saved");
+    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).tap();
+    await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+    await expect(world).toHaveAttribute("data-choice", "low-sodium-meal");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  } finally { await context.close(); }
+});
 
 async function expectClassicToday(page: Page) {
   await expect(page.locator('[data-scene="S01"], [data-scene="S02"]')).toBeVisible();

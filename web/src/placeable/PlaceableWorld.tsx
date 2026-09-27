@@ -99,7 +99,7 @@ export default function PlaceableWorld(props: Props) {
   }, [attempt]);
 
   return <div data-testid="placeable-world" data-preview={props.preview} data-color={props.selection?.color ?? "unplaced"}
-    data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
+    data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
     data-suspended={props.suspended || !focused} data-reduced-motion={reducedMotion}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);

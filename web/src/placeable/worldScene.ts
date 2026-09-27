@@ -3,6 +3,8 @@ import {
   DoubleSide, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
   RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type Material,
 } from "three";
+import { livingChoice, type LivingChoice } from "../ui/livingChoice";
+import { createLivingChoiceMarker } from "./livingChoiceMarker";
 import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE as PLAZA } from "../../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 import { LIVING_WEEK_SCENE_PLAN as PATH } from "../../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 import type { MovementIntent } from "../../transcend-lab/src/platform/behavior/worldMovementIntent";
@@ -10,6 +12,7 @@ import { ASSET, COLORS, SOCKETS, type Selection } from "./contract";
 
 // Rendering receives a projection only. It has no storage, identity, API or health access.
 export type PlaceableProjection = Readonly<{
+  choice?: LivingChoice | null;
   selection: Selection | null;
   preview: boolean;
   pulse: number;
@@ -22,6 +25,7 @@ const material = (color: string | number) => new MeshStandardMaterial({ color, r
 export class PlaceableScene {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(48, 1, 0.1, 60);
+  readonly choiceMarker = createLivingChoiceMarker();
   readonly pinwheel = new Group();
   readonly rotor = new Group();
   readonly actor = new Group();
@@ -86,6 +90,7 @@ export class PlaceableScene {
       ring.position.set(socket.x, 0.04, socket.z); this.socketRings.add(ring);
     }
     this.scene.add(this.socketRings);
+    this.scene.add(this.choiceMarker);
     this.pinwheel.name = ASSET; this.pinwheel.visible = false;
     const stemMaterial = material("#99744d"), hubMaterial = material("#fff8df");
     this.#pinwheelMaterials = [this.bladeMaterial, stemMaterial, hubMaterial];
@@ -119,6 +124,11 @@ export class PlaceableScene {
 
   update(projection: PlaceableProjection, reducedMotion: boolean) {
     if (this.#disposed) return;
+    const choice = livingChoice(projection.choice);
+    this.choiceMarker.visible = choice !== null;
+    for (const detail of this.choiceMarker.children) {
+      if (detail.name.startsWith("choice-detail:")) detail.visible = detail.name === `choice-detail:${choice}`;
+    }
     this.#reducedMotion = reducedMotion; this.#preview = projection.preview; this.#suspended = projection.suspended;
     if (reducedMotion) this.rotor.rotation.z = 0;
     const selection = projection.selection;

@@ -1,0 +1,5 @@
+.living-choice-link { display: grid; gap: var(--sk7-space-xs); padding-block: var(--sk7-space-md); border-top: 1px solid var(--sk7-border); color: var(--sk7-text); font-family: var(--sk7-font-sans); }
+.living-choice-link p { margin: 0; font-size: var(--sk7-type-label); }
+.living-choice-link a { display: inline-flex; align-items: center; gap: var(--sk7-space-sm); min-height: var(--sk7-target-min); color: var(--sk7-accent-hover); font-weight: var(--sk7-weight-bold); text-underline-offset: 4px; }
+.living-choice-link a:focus-visible { outline: 3px solid var(--sk7-focus); outline-offset: 4px; }
+.living-choice-link small { color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); }

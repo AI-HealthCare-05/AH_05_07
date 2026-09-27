@@ -17,6 +17,20 @@ presentation, and copy from domain facts. Those facts must not affect character
 pose, position, route, lighting, environment density, mood, or species
 selection. Record navigation does not move a character in time.
 
+## Living Choice visit exception (E3)
+
+Only the existing E2 plaza may display one supporting Living Choice marker after
+Classic Today offers an explicit handoff of `active_challenge.action_id`.
+The disposable `living_choice` URL hint accepts exactly `walk-10-minutes`,
+`sleep-routine`, or `low-sodium-meal`; absent, unknown or duplicate hints select
+no marker. A forged known hint has cosmetic meaning only, never selection,
+completion, storage or identity authority. Leaving for Today drops the hint.
+The renderer receives only the allowlisted hint, never API/auth/store access.
+One still marker family varies only its motif/accent. It changes no companion,
+lighting, destination, pinwheel, movement, or persistence behavior. Check-ins,
+streaks, BP, Model V2 and outcomes remain forbidden inputs. This exception does
+not apply to S02/S10 calendar scenery or the companion runtime.
+
 ## Companion identity firewall
 
 S01 narrator, S02 scene identity, confirmed S05, and the S10 unified scene use
