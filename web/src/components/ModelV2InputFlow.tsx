@@ -663,7 +663,7 @@ export function ModelV2InputFlow({
   }
 
   return (
-    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="이번 이용에만 생활정보를 살펴봐요" tone="secondary" className="signal-scene model-v2-flow">
+    <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="생활정보로 시작하는 AI 분석" tone="secondary" className="signal-scene model-v2-flow">
       <div className="model-v2-layout" data-model-v2-processed={processed ? "true" : undefined}>
         <aside className="model-v2-progress" aria-label="입력 진행 단계">
           <p className="model-v2-progress-caption">{processed ? "입력 과정 완료" : step === "intro" ? "시작 전 · 5단계" : `${progressIndex + 1} / 5 단계`}</p>
@@ -711,26 +711,9 @@ export function ModelV2InputFlow({
               {resultState === "temporarily_unavailable" && <p id="model-v2-unavailable" className="notice-warning status-notice" role="status" tabIndex={-1}>지금은 생활정보 분석을 완료할 수 없습니다. 자동으로 다시 요청하지 않습니다. 입력은 이 화면에 남아 있어요. 잠시 후 직접 다시 요청할 수 있습니다.</p>}
 
               {step === "intro" && <section className="model-v2-intro section-header" aria-labelledby={STEP_TITLE_ID}>
-                <div className="model-v2-intro-mark" aria-hidden="true" />
                 {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
-                <p>기본 정보·활동·수면·생활습관을 입력합니다.</p>
-                <p><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong></p>
-                {previewOpen ? (
-                  <>
-                    <p>{modelV2PreviewEndLabel}까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
-                    <p>이 값은 확률·진단·위험등급이 아니며 치료·예방 효과를 뜻하지 않습니다.</p>
-                  </>
-                ) : (
-                  <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
-                )}
-                <details className="model-v2-notice-details">
-                  <summary>입력 정보 이용 안내</summary>
-                  <p>질문은 기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주와 입력 확인으로 구성돼요.</p>
-                  <p>입력은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에만 사용해요.</p>
-                  <p>학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>
-                  <p>혈압 관찰, 챌린지 기록, 이전 결과, 다른 사용자의 정보와 자동으로 결합하지 않습니다.</p>
-                  <p>혈압 기록은 별도로 저장되며, 이 도구를 건너뛰어도 기록과 챌린지를 이용할 수 있어요.</p>
-                </details>
+                <p className="model-v2-intro-lead">기본 정보·활동·수면·생활습관을 입력합니다.</p>
+                <p className="model-v2-intro-privacy"><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong></p>
               </section>}
 
               {showOlderApplicabilityNotice && (step === "basics" || step === "review") && <p className="notice-warning status-notice" role="status">
@@ -796,6 +779,24 @@ export function ModelV2InputFlow({
                   : step === "review" ? <button key="submit" ref={submitRef} type="submit" disabled={pending}>{pending ? "생활정보 분석 중" : "생활정보 분석하기"}</button>
                     : <button key={step} type="button" disabled={pending} onClick={advance}>{editingReview ? "입력 확인으로 돌아가기" : isLastInputStep ? "입력 확인하기" : "다음"}</button>}
               </div>
+              {step === "intro" && <section className="model-v2-intro-support" aria-label="분석 이용 안내">
+                {previewOpen ? (
+                  <>
+                    <p>{modelV2PreviewEndLabel}까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
+                    <p>이 값은 확률·진단·위험등급이 아니며 치료·예방 효과를 뜻하지 않습니다.</p>
+                  </>
+                ) : (
+                  <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
+                )}
+                <details className="model-v2-notice-details">
+                  <summary>입력 정보 이용 안내</summary>
+                  <p>질문은 기본 정보, 최근 7일 활동, 평일·주말 수면, 흡연·음주와 입력 확인으로 구성돼요.</p>
+                  <p>입력은 생활정보 정리와 입력 기반 위험군 선별 신호 계산에만 사용해요.</p>
+                  <p>학습·재학습, 광고·마케팅, 프로필 보강에 사용하지 않습니다.</p>
+                  <p>혈압 관찰, 챌린지 기록, 이전 결과, 다른 사용자의 정보와 자동으로 결합하지 않습니다.</p>
+                  <p>혈압 기록은 별도로 저장되며, 이 도구를 건너뛰어도 기록과 챌린지를 이용할 수 있어요.</p>
+                </details>
+              </section>}
             </>
           )}
         </form>
