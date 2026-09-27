@@ -1,4 +1,4 @@
-import { BufferGeometry, CatmullRomCurve3, CircleGeometry, Color, CylinderGeometry, ExtrudeGeometry,
+import { BoxGeometry, BufferGeometry, CatmullRomCurve3, CircleGeometry, Color, CylinderGeometry, ExtrudeGeometry,
   Fog, Group, HemisphereLight, LatheGeometry, Mesh, MeshStandardMaterial, PerspectiveCamera,
   Scene, Shape, SphereGeometry, Vector2, Vector3, DirectionalLight, type WebGLRenderer } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -55,8 +55,7 @@ export class GardenScene {
     island(-0.26, [1.18, 1.1, 1.17], "edge");
     island(-0.02, [1.14, 0.75, 1.13], "lawn");
 
-    // The original roof, eaves and joinery stay authoritative. Recolor only this
-    // instance; shared S02/S10 geometry, materials and their posters are unchanged.
+    // Recolor this instance only; shared S02/S10 geometry and posters stay intact.
     this.pavilion.name = "garden-pavilion";
     this.pavilion.scale.setScalar(1.8); this.pavilion.position.set(0, 0, -1.3);
     this.pavilion.traverse((object) => {
@@ -67,6 +66,20 @@ export class GardenScene {
       if (material.color.getHex() === 0xb68b69) material.color.set("#a97548");
       if (material.color.getHex() === 0xeee2c6) material.color.set("#bec39b");
     });
+    // Local ring beams bridge column capitals (top 1.48) to the curved roof
+    // rafters (~1.7 at the support lines). Overlap both ends to avoid daylight gaps.
+    const supports = new Group(); supports.name = "garden-pavilion-supports";
+    const timber = new MeshStandardMaterial({ color: "#a97548", roughness: 0.9 });
+    for (const z of [-0.56, 0.22]) {
+      const beam = new Mesh(new BoxGeometry(1.5, 0.3, 0.18), timber);
+      beam.position.set(0, 1.6, z); supports.add(beam);
+    }
+    for (const x of [-0.61, 0.61]) {
+      const beam = new Mesh(new BoxGeometry(0.18, 0.3, 0.96), timber);
+      beam.position.set(x, 1.6, -0.17); supports.add(beam);
+    }
+    supports.traverse((object) => { if (object instanceof Mesh) { object.castShadow = true; object.receiveShadow = true; } });
+    this.pavilion.add(supports);
     this.scene.add(this.pavilion);
 
     const route = new CatmullRomCurve3([new Vector3(0.9, 0, 4.8), new Vector3(-0.45, 0, 3.2),
@@ -132,9 +145,9 @@ export class GardenScene {
 
   resize(aspect: number) {
     this.camera.aspect = aspect;
-    // Lower three-quarter view on wide stages; portrait pulls back just enough
-    // to keep the same landmark and walkable front garden in frame.
-    const distance = Math.max(1, 1.3 / aspect);
+    // Preserve the accepted wide view. Tall immersive screens stop retreating
+    // into the fog; side planting may crop, while roof and walkable path stay visible.
+    const distance = Math.max(1, Math.min(1.3 / aspect, 2.15));
     this.camera.position.set(2.1 * distance, 3.6 * distance, 8.6 * distance);
     this.camera.lookAt(0, 1.4, 0.1); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
   }
