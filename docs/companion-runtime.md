@@ -81,6 +81,27 @@ placeable tests run locally and are discovered by the existing scheduled/manual
 they do not execute this placeable browser suite. No new visual CI is added. This
 source change does not attest to production deployment or physical-device verification.
 
+### Twilight Welcome (E6)
+
+My Space's semantic “광장의 불빛 켜기” control starts one visit-local authored
+sequence: Today Gate first, then the subdued approach, small pinwheel/keepsake
+responses, and one optional existing greet. The stable twilight palette remains
+indigo with a readable companion silhouette; “낮의 광장으로 돌아가기” reverses
+it, and a new visit or renderer retry starts in daylight. Only direct input
+chooses the mood. Clock, health, challenge, save status and account/browser
+revisions cannot select it, and activation never writes placement or preferences.
+
+The existing scene RAF owns the bounded sequence and is cancelled on teardown.
+Reduced motion settles immediately into the same final hierarchy with a neutral
+companion and textual response. A loading/failed companion skips the optional
+greet without replay; plaza lighting stays available. The existing user-enabled
+audio context may play one short motif on activation, stays muted by default,
+and retains its mute/visibility/unmount cleanup. Audio failure cannot prevent the
+visual state; WebGL failure preserves Classic plaza and Today navigation.
+These cases extend the existing placeable contract/browser tests and retain the
+hosted coverage limits described above. No new visual CI or generic experience
+factory is introduced.
+
 ## Historical S3 rollout status
 
 - S3A: 사람 사용 범위·동작 제한·권리 결정 완료.

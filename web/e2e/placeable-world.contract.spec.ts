@@ -151,6 +151,52 @@ const projection = (change: Partial<PlaceableProjection> = {}): PlaceableProject
 });
 const still = { lateral: 0, forward: 0, magnitude: 0, source: "none" } as const;
 
+test("E6 Gate leads route/details, greets once, preserves placement and reverses to exact daylight", () => {
+  const scene = new PlaceableScene();
+  scene.update(projection({ keepsake: "quiet-moon-v1" }), false);
+  const day = { sky: scene.scene.background!.toJSON(), ground: scene.groundMaterial.color.toArray(),
+    ambient: scene.ambient.intensity, sun: scene.sun.intensity, path: scene.approachMaterial.color.toArray() };
+  const position = scene.pinwheel.position.toArray(), actor = scene.actor.position.toArray();
+  const phases: string[] = []; let greetings = 0;
+  scene.setTwilight(true);
+  for (let index = 0; index < 50; index++) {
+    if (scene.step(0.05, still)) greetings++;
+    if (phases.at(-1) !== scene.welcomePhase) phases.push(scene.welcomePhase);
+    if (index === 8) {
+      expect(scene.archLightMaterial.emissiveIntensity).toBeGreaterThan(1);
+      expect(scene.approachMaterial.emissiveIntensity).toBe(0);
+      expect(scene.bladeMaterial.emissiveIntensity).toBe(0);
+    }
+  }
+  expect(phases).toEqual(["gate", "route", "details", "companion", "twilight"]);
+  expect(greetings).toBe(1);
+  expect(scene.archLightMaterial.emissiveIntensity).toBeGreaterThan(scene.gateMaterial.emissiveIntensity);
+  expect(scene.gateMaterial.emissiveIntensity).toBeGreaterThan(scene.approachMaterial.emissiveIntensity * 4);
+  expect(scene.bladeMaterial.emissiveIntensity).toBeLessThan(scene.approachMaterial.emissiveIntensity);
+  expect(scene.pinwheel.position.toArray()).toEqual(position); expect(scene.actor.position.toArray()).toEqual(actor);
+  expect(scene.choiceMarker.visible).toBe(true); expect(scene.rotor.rotation.z).toBe(0);
+  scene.setTwilight(false);
+  for (let index = 0; index < 50; index++) expect(scene.step(0.05, still)).toBe(false);
+  expect({ sky: scene.scene.background!.toJSON(), ground: scene.groundMaterial.color.toArray(),
+    ambient: scene.ambient.intensity, sun: scene.sun.intensity, path: scene.approachMaterial.color.toArray() }).toEqual(day);
+  expect(scene.archLightMaterial.emissiveIntensity).toBe(0); expect(scene.bladeMaterial.emissiveIntensity).toBe(0);
+  scene.dispose();
+});
+
+test("E6 reduced motion settles immediately, cancels pending reversal and never replays after disposal", () => {
+  const scene = new PlaceableScene(); scene.update(projection(), true); scene.setTwilight(true);
+  expect(scene.welcomePhase).toBe("twilight"); expect(scene.archLightMaterial.emissiveIntensity).toBe(1.6);
+  expect(scene.step(0, still)).toBe(true); expect(scene.step(0, still)).toBe(false);
+  scene.setTwilight(false); expect(scene.welcomePhase).toBe("daylight");
+  scene.update(projection(), false); scene.setTwilight(true); scene.step(0.05, still);
+  scene.setTwilight(false);
+  for (let i = 0; i < 50; i++) expect(scene.step(0.05, still)).toBe(false);
+  scene.setTwilight(true); scene.update(projection(), true); expect(scene.welcomePhase).toBe("twilight");
+  const before = scene.archLightMaterial.emissiveIntensity;
+  scene.dispose(); expect(scene.step(0.05, still)).toBeUndefined(); scene.setTwilight(false);
+  expect(scene.archLightMaterial.emissiveIntensity).toBe(before);
+});
+
 test("Living Choice is one bounded still family and never changes the plaza, actor or pinwheel", () => {
   const scene = new PlaceableScene();
   scene.update(projection(), false);

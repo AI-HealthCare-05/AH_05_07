@@ -67,3 +67,9 @@
 .placeable-keepsake-caption { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
 .placeable-companion { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sk7-space-sm); margin-top: var(--sk7-space-md); }
 .placeable-companion p { font-size: var(--sk7-type-label); }
+
+.placeable-twilight { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sk7-space-md); margin-bottom: var(--sk7-space-md); }
+.placeable-twilight p { font-size: var(--sk7-type-label); }
+.placeable-twilight #twilight-help { flex-basis: 100%; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); margin-top: 0; }
+[data-lighting=twilight] .placeable-world-label { background: #253359e8; color: #f5ebd5; }
+[data-lighting=twilight] .placeable-world-label:first-of-type { background: #f4dfb8; color: #30294e; }
