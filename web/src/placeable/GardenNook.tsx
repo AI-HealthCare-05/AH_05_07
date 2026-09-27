@@ -3,7 +3,7 @@ import { PCFShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { GardenScene } from "./gardenScene";
-import { gardenPixelRatio } from "./gardenRenderDensity";
+import { livingCityPixelRatio } from "./livingCityRenderDensity";
 import { PlaceableWorldInput } from "./worldInput";
 
 /** Owns only this garden visit. Semantic exits live outside its failure boundary. */
@@ -54,7 +54,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       const resize = () => {
         if (disposed) return;
         const width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
-        renderer!.setPixelRatio(gardenPixelRatio(width, height, window.devicePixelRatio));
+        renderer!.setPixelRatio(livingCityPixelRatio(width, height, window.devicePixelRatio));
         renderer!.setSize(width, height, false); scene!.resize(width / height);
       };
       resize(); const observer = new ResizeObserver(resize); observer.observe(container); cleanup.push(() => observer.disconnect());

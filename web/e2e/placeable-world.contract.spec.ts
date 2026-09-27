@@ -12,7 +12,7 @@ import { getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { readCompanionIdentity } from "../src/ui/companionIdentity";
 import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { GardenScene } from "../src/placeable/gardenScene";
-import { gardenPixelRatio } from "../src/placeable/gardenRenderDensity";
+import { livingCityPixelRatio } from "../src/placeable/livingCityRenderDensity";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -23,17 +23,17 @@ function companionFixture() {
   return { scene: model, animations: clips } as GLTF;
 }
 
-test("Garden immersive density bounds actual drawing pixels across resizing and high DPR", () => {
+test("Living City immersive density bounds actual drawing pixels across resizing and high DPR", () => {
   for (const [width, height] of [[390, 844], [844, 390], [1366, 900], [2560, 1440], [3840, 2160]]) {
     for (const dpr of [1, 2, 3]) {
-      const ratio = gardenPixelRatio(width, height, dpr);
+      const ratio = livingCityPixelRatio(width, height, dpr);
       expect(ratio).toBeLessThanOrEqual(Math.min(dpr, 1.5));
       expect(Math.floor(width * ratio) * Math.floor(height * ratio)).toBeLessThanOrEqual(2_000_000);
     }
   }
-  expect(gardenPixelRatio(390, 844, 3)).toBe(1.5);
-  expect(gardenPixelRatio(3840, 2160, 2)).toBeLessThan(1);
-  expect(gardenPixelRatio(390, 844, NaN)).toBe(1);
+  expect(livingCityPixelRatio(390, 844, 3)).toBe(1.5);
+  expect(livingCityPixelRatio(3840, 2160, 2)).toBeLessThan(1);
+  expect(livingCityPixelRatio(390, 844, NaN)).toBe(1);
 });
 
 test("Garden local support ring joins all four capitals to the roof without changing shared pavilion", () => {
@@ -330,7 +330,7 @@ test("real scene projects all authored sockets, colors, preview, confirmed and e
 
 test("pinwheel is within its clearance footprint and visible in the camera at every socket", () => {
   const scene = new PlaceableScene();
-  for (const aspect of [0.6, 1, 1.6]) {
+  for (const aspect of [320 / 844, 390 / 844, 0.6, 1, 1.6, 2.2]) {
     scene.resize(aspect);
     for (const socket of SOCKETS) {
       scene.update(projection({ selection: { ...coral, socketId: socket.id } }), false);
@@ -340,6 +340,20 @@ test("pinwheel is within its clearance footprint and visible in the camera at ev
       const center = box.getCenter(new Vector3()).project(scene.camera);
       expect(Math.abs(center.x)).toBeLessThan(1); expect(Math.abs(center.y)).toBeLessThan(1);
       expect(center.z).toBeGreaterThan(-1); expect(center.z).toBeLessThan(1);
+    }
+  }
+  scene.dispose();
+});
+
+test("Plaza hero arch fits portrait, landscape and bounded editing frames", () => {
+  const scene = new PlaceableScene();
+  const gate = scene.scene.getObjectByName("e1-today-gate")!;
+  for (const aspect of [320 / 844, 390 / 844, 1, 1.5, 2.2]) {
+    scene.resize(aspect); scene.scene.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(gate);
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+      const point = new Vector3(x, y, z).project(scene.camera);
+      expect(Math.abs(point.x)).toBeLessThan(0.96); expect(Math.abs(point.y)).toBeLessThan(0.96);
     }
   }
   scene.dispose();

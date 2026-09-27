@@ -1,7 +1,7 @@
 import {
   AmbientLight, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight,
-  DoubleSide, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
-  RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
+  DoubleSide, Float32BufferAttribute, Fog, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
+  CircleGeometry, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
 } from "three";
 import { disposeScene } from "../components/scene/disposeScene";
 import { type LivingChoice } from "../ui/livingChoice";
@@ -66,13 +66,20 @@ export class PlaceableScene {
   constructor() {
     // Daylight is the truthful default for every visit; no wall clock or stored mood.
     this.scene.background = new Color("#eee8db");
+    this.scene.fog = new Fog("#eee8db", 22, 48);
     this.scene.add(this.ambient);
     const sun = this.sun;
     sun.position.set(-3, 8, 5); this.scene.add(sun);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 25 });
+    sun.shadow.bias = -0.001; sun.shadow.normalBias = 0.025;
     // The circular foundation covers the unchanged square walking bounds, including corners.
     const groundRadius = PATH.boundMetres * Math.SQRT2;
     const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), this.groundMaterial);
     ground.position.y = -0.14; ground.name = "e1-plaza-ground"; this.scene.add(ground);
+    // A civic square extends into its neighborhood, rather than floating in a void.
+    const surroundings = new Mesh(new CylinderGeometry(28, 28, 0.2, 96), material("#98a28b"));
+    surroundings.position.y = -0.3; this.scene.add(surroundings);
     // Preserve E1's authored route coordinates and all E2 sockets.
     for (const segment of PATH.segments) {
       const path = new Mesh(new BoxGeometry(0.12, 0.025, segment.lengthMetres), material("#bcb998"));
@@ -85,10 +92,27 @@ export class PlaceableScene {
       disc.position.set(marker.position.x, 0.05, marker.position.z);
       disc.name = marker.id; this.scene.add(disc);
     }
-    const approach = new Mesh(new BoxGeometry(1.25, 0.03, 4.7), this.approachMaterial);
-    approach.position.set(0, 0.02, -0.2); this.scene.add(approach);
+    const approach = new Mesh(new BoxGeometry(1.65, 0.03, 9), this.approachMaterial);
+    approach.position.set(0, 0.02, 0.8); this.scene.add(approach);
+    const stone = material("#c7bea8"), edging = material("#b4a28e");
+    for (let z = -3.3; z < 5; z += 0.65) {
+      const joint = new Mesh(new BoxGeometry(1.64, 0.008, 0.018), stone);
+      joint.position.set(0, 0.041, z); this.scene.add(joint);
+    }
+    // The side route bends toward the existing Garden visit; it is visual only.
+    const gardenRoute = new BufferGeometry();
+    gardenRoute.setAttribute("position", new Float32BufferAttribute([
+      0.7, 0.045, 2.2, 0.7, 0.045, 1.3, 3.1, 0.045, -0.1,
+      0.7, 0.045, 2.2, 3.1, 0.045, -0.1, 3.8, 0.045, 0.6,
+      3.8, 0.045, 0.6, 3.1, 0.045, -0.1, 5.7, 0.045, -3.3,
+      3.8, 0.045, 0.6, 5.7, 0.045, -3.3, 6.6, 0.045, -2.6,
+    ], 3));
+    gardenRoute.setIndex([0, 2, 1, 3, 5, 4, 6, 8, 7, 9, 11, 10]);
+    gardenRoute.computeVertexNormals();
+    this.scene.add(new Mesh(gardenRoute, this.approachMaterial));
     const gate = new Group(); gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
+    gate.scale.set(1.35, 1.45, 1.35);
     const gateMaterial = this.gateMaterial, trimMaterial = material("#b4a3db");
     for (const x of [-0.85, 0.85]) {
       const post = new Mesh(new CylinderGeometry(0.25, 0.29, 1.65, 32), gateMaterial);
@@ -100,13 +124,47 @@ export class PlaceableScene {
     arch.position.y = 1.65; gate.add(arch);
     const innerArch = new Mesh(new TorusGeometry(0.85, 0.035, 12, 64, Math.PI), this.archLightMaterial);
     innerArch.position.set(0, 1.65, 0.25); gate.add(innerArch);
+    // Stepped bases, imposts and a crown distinguish the arrival arch from a toy hoop.
+    for (const x of [-0.85, 0.85]) {
+      for (const [y, width, height] of [[0.12, 0.76, 0.24], [1.62, 0.65, 0.16]]) {
+        const block = new Mesh(new BoxGeometry(width, height, 0.64), trimMaterial);
+        block.position.set(x, y, 0); gate.add(block);
+      }
+      const inlay = new Mesh(new BoxGeometry(0.042, 1.28, 0.025), this.archLightMaterial);
+      inlay.position.set(x, 0.92, 0.3); gate.add(inlay);
+    }
+    const crown = new Mesh(new BoxGeometry(0.22, 0.38, 0.58), trimMaterial);
+    crown.position.set(0, 2.5, 0); gate.add(crown);
     this.scene.add(gate);
-    // Low, broad planting frames the destination; it never competes with it.
-    for (const x of [-3.2, 3.2]) {
-      const bed = new Mesh(new CylinderGeometry(0.75, 0.85, 0.16, 40), material("#c2c2a5"));
-      bed.position.set(x, 0.08, -1.1); this.scene.add(bed);
-      const foliage = new Mesh(new SphereGeometry(0.8, 32, 20), material("#829579"));
-      foliage.scale.set(0.85, 0.48, 1.2); foliage.position.set(x, 0.26, -1.1); this.scene.add(foliage);
+    const leaves = [material("#647d68"), material("#849276"), material("#a0a27b")];
+    const trunk = material("#84745e");
+    // Asymmetric clipped street trees and low terraces frame the one hero.
+    for (const [x, z, height, spread] of [[-3.6, -3.2, 3.4, 1.1], [3.8, -4.6, 3.9, 1.25], [-5.8, 0.5, 2.9, 1], [6.6, -2.4, 3, 1]]) {
+      const stem = new Mesh(new CylinderGeometry(0.1, 0.17, height - 0.7, 10), trunk);
+      stem.position.set(x, (height - 0.7) / 2, z); this.scene.add(stem);
+      for (let n = 0; n < 3; n++) {
+        const canopy = new Mesh(new SphereGeometry(spread, 12, 8), leaves[n]);
+        canopy.scale.set(1 - n * 0.12, 0.65, 0.85);
+        canopy.position.set(x + (n - 1) * 0.28, height - 0.65 + n * 0.4, z + n * 0.12); this.scene.add(canopy);
+      }
+    }
+    for (const [x, z, width] of [[-3.5, -1.1, 1.7], [3.5, -2, 1.5], [-3.4, 3.6, 2.4], [4.1, 3.1, 1.8], [-2.7, -4.8, 2.5], [2.9, -5.4, 2.1]]) {
+      const bed = new Mesh(new BoxGeometry(width, 0.3, 0.95), edging);
+      bed.position.set(x, 0.12, z); this.scene.add(bed);
+      for (let n = 0; n < 4; n++) {
+        const shrub = new Mesh(new SphereGeometry(0.46, 12, 8), leaves[n % 3]);
+        shrub.scale.set(0.9, 0.6 + (n % 2) * 0.25, 0.85);
+        shrub.position.set(x - width / 2 + 0.25 + n * (width - 0.5) / 3, 0.38, z); this.scene.add(shrub);
+      }
+    }
+    // A pair of quiet seats, with no extra actors or competing landmark.
+    for (const x of [-3.15, 3.2]) {
+      const seat = new Mesh(new BoxGeometry(1.25, 0.14, 0.48), trunk);
+      seat.position.set(x, 0.46, 0.2); this.scene.add(seat);
+      for (const offset of [-0.43, 0.43]) {
+        const leg = new Mesh(new BoxGeometry(0.16, 0.4, 0.38), stone);
+        leg.position.set(x + offset, 0.2, 0.2); this.scene.add(leg);
+      }
     }
     for (const socket of SOCKETS) {
       const ring = new Mesh(new RingGeometry(0.31, PINWHEEL_RADIUS, 40), material("#819f86"));
@@ -115,6 +173,7 @@ export class PlaceableScene {
     }
     this.scene.add(this.socketRings);
     this.scene.add(this.choiceMarker);
+    this.choiceMarker.position.x = -2.15;
     this.pinwheel.name = ASSET; this.pinwheel.visible = false;
     const stemMaterial = material("#99744d"), hubMaterial = material("#fff8df");
     this.#detailMaterials = [hubMaterial];
@@ -136,15 +195,22 @@ export class PlaceableScene {
     hub.position.z = 0.06; this.rotor.add(hub); this.pinwheel.add(this.rotor); this.scene.add(this.pinwheel);
     this.actor.name = "plaza-companion";
     this.actor.position.set(-1.3, 0, 1.25);
-    this.scene.add(this.actor); this.resize(1);
+    const contact = new Mesh(new CircleGeometry(0.33, 32), new MeshBasicMaterial({ color: "#433931", transparent: true, opacity: 0.17, depthWrite: false }));
+    contact.rotation.x = -Math.PI / 2; contact.position.y = 0.055; contact.scale.y = 0.75;
+    this.actor.add(contact);
+    this.scene.add(this.actor);
+    this.scene.traverse((object) => { if (object instanceof Mesh) { object.castShadow = true; object.receiveShadow = true; } });
+    contact.castShadow = false; contact.receiveShadow = false;
+    this.socketRings.traverse((object) => { object.castShadow = false; });
+    this.resize(1);
   }
 
   resize(aspect: number) {
     this.camera.aspect = aspect;
     // Keep the authored sockets and plaza in view on portrait screens too.
-    const distance = Math.max(1, 0.85 / aspect);
-    this.camera.position.set(0, 5.8 * distance, 8.3 * distance);
-    this.camera.lookAt(0, 0.45, -0.5); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
+    const distance = Math.max(1, 0.67 / aspect);
+    this.camera.position.set(0.45, 4.2 * distance, 9.5 * distance);
+    this.camera.lookAt(0, 1.1, -0.65); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
   }
 
   update(projection: PlaceableProjection, reducedMotion: boolean) {
@@ -230,6 +296,7 @@ export class PlaceableScene {
     const route = ramp(this.#welcomeTime, 0.55, 0.6);
     const detail = ramp(this.#welcomeTime, 1.05, 0.55);
     (this.scene.background as Color).copy(mood.sky[0]).lerp(mood.sky[1], environment);
+    (this.scene.fog as Fog).color.copy(this.scene.background as Color);
     this.groundMaterial.color.copy(mood.ground[0]).lerp(mood.ground[1], environment);
     this.ambient.color.copy(mood.ambient[0]).lerp(mood.ambient[1], environment);
     this.ambient.intensity = 1.5 - 0.35 * environment;
@@ -251,7 +318,7 @@ export class PlaceableScene {
   }
 
   labels() {
-    return [{ id: "today-gate", label: "Today Gate", x: PLAZA.destination.x, y: 2.95, z: PLAZA.destination.z },
+    return [{ id: "today-gate", label: "Today Gate", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
       ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
       return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50 };
