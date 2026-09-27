@@ -76,8 +76,26 @@ owns cosmetic reads through the existing adapters/controller. Account failure
 never silently reads, copies or merges browser state; sign-in/retry and explicit
 browser-only recovery remain available. My Space's Classic Today link carries
 only the known view/storage return context. Entry itself performs no cosmetic
-write or WebGL availability check. Guest routing, root/post-login defaults and
-production activation are unchanged.
+write or WebGL availability check. Guest routing and production activation remain
+unchanged.
+
+Signed-in S14 also offers a browser-local starting screen: `Classic Today`
+(default) or `My Space`, stored as `classic-today` / `my-space` under
+`sk7-starting-home`. Missing, invalid or unreadable storage means Classic Today;
+a failed write keeps the stored choice and reports failure. This presentation
+preference never enters account settings, health records or cosmetic snapshots.
+It takes effect on the next signed-in bare-root entry (`/` with no query/hash),
+including restored sessions and sign-in on a waiting root. My Space uses only
+`?experience=e2&view=3d&storage=account`, through the existing verified account
+entry; failures remain explicit with retry/sign-in and browser-only choices.
+
+Every explicit URL context wins over this preference, including S02/S10/S14,
+Classic return context, auth confirmation/recovery, guest and fixture/evidence
+entries. Auth confirmation keeps its existing completion even after URL scrubbing.
+In-app Today navigation retains `screen=S02`, so reload and history do not turn
+an explicit Classic choice into a default entry. The bootstrap shows a brief
+entry status rather than mounting confirmed Today content before My Space.
+Choosing My Space does not change the global default or authorize deployment.
 
 
 | Screen | Purpose |

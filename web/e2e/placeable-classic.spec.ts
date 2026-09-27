@@ -1019,7 +1019,7 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await page.getByRole("link", { name: "내 공간으로 가기" }).click();
   await expect(page.getByRole("status")).toContainText("Account storage is unavailable");
   await expect(page.getByRole("button", { name: "Retry account session" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Return to sign in" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Return to sign in" })).toHaveAttribute("href", "/?screen=S02");
   expect(account.reads).toBe(0); expect(account.puts).toBe(0);
   expect(await page.evaluate(() => (window as unknown as { e8BrowserReads: number }).e8BrowserReads)).toBe(0);
   await page.getByRole("link", { name: "Choose browser-only storage" }).click();
