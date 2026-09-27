@@ -6,6 +6,14 @@ import { Vector3 } from "three";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { GardenScene } from "../src/placeable/gardenScene";
 
+// Editing is explicit in immersive 3D; Classic retains its inline controls.
+async function editorButton(page: Page, name: string, exact?: boolean) {
+  await page.getByTestId("placeable-experience").waitFor();
+  const opener = page.getByRole("button", { name: "꾸미기", exact: true });
+  if (await opener.count() && await opener.getAttribute("aria-expanded") === "false") await opener.click();
+  return page.getByRole("button", { name, exact });
+}
+
 const browserRoute = "/?experience=e2&view=classic&storage=browser";
 const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
   schemaVersion: op.schemaVersion, layoutId: op.layoutId, selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
@@ -16,6 +24,91 @@ const confirm = async (page: Page) => {
 };
 
 const companionRoute = "/?experience=e2&view=3d&storage=browser";
+
+for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile touch" : "desktop keyboard"}: edit, preview, cancel, confirmed save and destinations`, async ({ browser }) => {
+  const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 960 }, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 2 });
+  const page = await context.newPage(), errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  try {
+    await page.goto(companionRoute + "&living_choice=sleep-routine");
+    const main = page.getByTestId("placeable-experience"), canvas = page.getByTestId("placeable-world-canvas");
+    const editor = page.getByRole("region", { name: "My Space controls", includeHidden: true });
+    const open = page.getByRole("button", { name: "꾸미기", exact: true });
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+    await expect(editor).toBeHidden();
+    const rect = (await canvas.boundingBox())!;
+    expect(rect.height).toBeGreaterThan((mobile ? 844 : 960) * 0.95);
+    expect(await canvas.evaluate((c: HTMLCanvasElement) => c.width * c.height)).toBeLessThanOrEqual(2_000_000);
+    if (mobile) await open.tap(); else { await open.focus(); await page.keyboard.press("Enter"); }
+    await expect(page.getByRole("heading", { name: "내 공간 꾸미기" })).toBeFocused();
+    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+    await expect(page.getByTestId("draft-placement")).toContainText("not saved");
+    expect(await readLocal(page)).toBeNull();
+    await page.getByRole("button", { name: "teal", exact: true }).click();
+    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-preview.png`) });
+    if (mobile) await page.getByRole("button", { name: "Cancel preview" }).tap(); else await page.keyboard.press("Escape");
+    await expect(editor).toBeHidden(); await expect(open).toBeFocused(); expect(await readLocal(page)).toBeNull();
+    await (await editorButton(page, "Choose welcome pinwheel")).click();
+    await page.getByRole("button", { name: "teal", exact: true }).click();
+    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await confirm(page); await expect(editor).toBeHidden(); await expect(open).toBeFocused();
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
+    const before = await readLocal(page);
+    if (mobile) {
+      await page.setViewportSize({ width: 320, height: 844 });
+      const exit = (await page.getByRole("link", { name: "Leave plaza" }).boundingBox())!;
+      const light = (await page.getByRole("button", { name: "광장의 불빛 켜기" }).boundingBox())!;
+      const spin = (await page.getByRole("button", { name: "Spin pinwheel", exact: true }).boundingBox())!;
+      const walk = (await page.getByRole("button", { name: "Drag to walk", exact: false }).boundingBox())!;
+      expect(light.y).toBeGreaterThanOrEqual(exit.y + exit.height);
+      expect(spin.y + spin.height).toBeLessThanOrEqual(walk.y);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+      await page.screenshot({ path: test.info().outputPath("plaza-320.png"), scale: "css" });
+      await page.setViewportSize({ width: 390, height: 844 });
+    }
+    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
+    await expect(page.getByTestId("placeable-feedback")).toContainText("answers");
+    await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-daylight.png`) });
+    await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
+    await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-twilight.png`) });
+    await page.getByRole("button", { name: "Enter Garden Nook" }).click();
+    await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await page.getByRole("button", { name: "Return to My Space" }).click();
+    await expect(main).toHaveAttribute("data-phase", "ready"); await expect(editor).toBeHidden();
+    expect(await readLocal(page)).toEqual(before);
+    await page.getByRole("link", { name: "Classic Today", exact: false }).click();
+    await expect(main).toHaveCount(0);
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
+});
+
+for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive ${behavior}: recovery stays visible and cannot become a saved response`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await accountRoute(page, behavior, false);
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await (await editorButton(page, "Choose welcome pinwheel")).click();
+  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior);
+  await expect(page.getByRole("region", { name: "My Space controls" })).toBeVisible();
+  await expect(page.getByTestId("save-status")).toBeInViewport();
+  await expect(page.getByTestId("save-status")).not.toContainText("Saved");
+  await expect(page.getByTestId("draft-placement")).toContainText("not saved");
+  await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("aria-disabled", "true");
+  if (behavior === "unknown") {
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("button", { name: "취소하고 닫기" })).toBeDisabled();
+    await page.getByRole("button", { name: "Check saved state" }).click();
+    await expect(page.getByTestId("save-status")).toContainText("unknown");
+  } else {
+    await page.getByRole("button", { name: "Keep preview and use latest revision" }).click();
+    await confirm(page);
+    await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "false");
+  }
+});
+
 async function companionPoint(page: Page) {
   const canvas = page.getByTestId("placeable-world-canvas"); await canvas.scrollIntoViewIfNeeded();
   const rect = (await canvas.boundingBox())!, scene = new PlaceableScene();
@@ -123,7 +216,7 @@ for (const failure of ["network", "clips"]) test(`E5 ${failure} failure is local
   await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
   await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
   const before = await readLocal(page);
@@ -137,29 +230,29 @@ test("browser experience previews, cancels, confirms, interacts, leaves/returns,
   await expect(page.getByTestId("storage-label")).toContainText("this browser and site, not your account");
   await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
   expect(await readLocal(page)).toBeNull();
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await (await editorButton(page, "Choose welcome pinwheel")).click();
   await expect(page.getByTestId("classic-plaza")).toHaveAttribute("data-preview", "true");
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
   expect(await readLocal(page)).toBeNull();
   await page.getByRole("button", { name: "Cancel preview" }).click();
   await expect(page.getByTestId("classic-pinwheel")).toHaveCount(0);
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   const first = await readLocal(page);
   await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
   await expect(page.getByTestId("placeable-feedback")).toHaveText("A plaza breeze. Your pinwheel answers.");
   expect(await readLocal(page)).toEqual(first);
-  await page.getByRole("button", { name: "Gate right", exact: true }).click();
+  await (await editorButton(page, "Gate right", true)).click();
   await expect(page.locator(".pinwheel-spin")).toHaveCount(0);
   await expect(page.getByTestId("save-status")).not.toContainText("Saved");
   await page.getByRole("button", { name: "Cancel preview" }).click();
   await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute);
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
-  await page.getByRole("button", { name: "Gate right", exact: true }).click();
-  await page.getByRole("button", { name: "teal", exact: true }).click();
+  await (await editorButton(page, "Gate right", true)).click();
+  await (await editorButton(page, "teal", true)).click();
   expect(await readLocal(page)).toEqual(first); await confirm(page); await page.reload();
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-socket", "gate-right");
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
-  await page.getByRole("button", { name: "Remove pinwheel" }).click(); await confirm(page); await page.reload();
+  await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page); await page.reload();
   await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
   expect((await readLocal(page)).revision).toBe(3);
 });
@@ -171,10 +264,10 @@ test("Classic keyboard, reduced motion and unavailable audio retain visual inter
     Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
   });
   await page.goto(browserRoute);
-  const choose = page.getByRole("button", { name: "Choose welcome pinwheel" });
+  const choose = (await editorButton(page, "Choose welcome pinwheel"));
   await expect(choose).toBeEnabled(); await choose.focus(); await page.keyboard.press("Enter");
   await confirm(page);
-  await page.getByRole("button", { name: "Enable sound" }).click();
+  await (await editorButton(page, "Enable sound")).click();
   await expect(page.getByTestId("audio-status")).toContainText("unavailable");
   await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
   await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
@@ -184,7 +277,7 @@ test("Classic keyboard, reduced motion and unavailable audio retain visual inter
 test("3D uses the same saved value, previews actual sockets, pauses controls and supports reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(browserRoute);
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   await page.getByRole("link", { name: "Enter 3D plaza" }).click();
   const world = page.getByTestId("placeable-world"), canvas = page.getByTestId("placeable-world-canvas");
   await expect(canvas).toBeVisible(); await expect(world).toHaveAttribute("data-color", "coral");
@@ -193,8 +286,8 @@ test("3D uses the same saved value, previews actual sockets, pauses controls and
   const first = await readLocal(page); await page.keyboard.press("Enter");
   await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
   expect(await readLocal(page)).toEqual(first);
-  await page.getByRole("button", { name: "Plaza edge", exact: true }).click();
-  await page.getByRole("button", { name: "sunflower", exact: true }).click();
+  await (await editorButton(page, "Plaza edge", true)).click();
+  await (await editorButton(page, "sunflower", true)).click();
   await expect(world).toHaveAttribute("data-preview", "true");
   await expect(world).toHaveAttribute("data-socket", "plaza-edge");
   await expect(world).toHaveAttribute("data-suspended", "true");
@@ -217,7 +310,7 @@ test("default and Classic URLs never request or mount E2", async ({ page }) => {
 
 test("lost WebGL context releases the scene and retries without changing the confirmed placement", async ({ page }) => {
   await page.goto(browserRoute);
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   const before = await readLocal(page);
   await page.getByRole("link", { name: "Enter 3D plaza" }).click();
   const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible();
@@ -275,7 +368,7 @@ for (const behavior of ["conflict", "unknown", "read-error"] as const) {
       await expect(page.getByTestId("save-status")).toContainText("unavailable");
       await page.getByRole("button", { name: "Check saved state" }).click();
     }
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+    await (await editorButton(page, "Choose welcome pinwheel")).click();
     await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
     if (behavior === "conflict") {
       await expect(page.getByTestId("save-status")).toContainText("newer placement");
@@ -324,9 +417,9 @@ for (const [index, choice] of ["walk-10-minutes", "sleep-routine", "low-sodium-m
     await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
     await expect(world).toHaveAttribute("data-choice", choice);
     await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
-    await page.getByRole("button", { name: "Gate right", exact: true }).click();
-    await page.getByRole("button", { name: "teal", exact: true }).click(); await confirm(page);
+    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+    await (await editorButton(page, "Gate right", true)).click();
+    await (await editorButton(page, "teal", true)).click(); await confirm(page);
     const stored = await readLocal(page), writes = account.puts;
     await page.reload(); await expect(world).toHaveAttribute("data-choice", choice);
     await expect(world).toHaveAttribute("data-color", "teal");
@@ -339,7 +432,7 @@ for (const [index, choice] of ["walk-10-minutes", "sleep-routine", "low-sodium-m
     await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
     expect(await readLocal(page)).toEqual(stored); expect(account.puts).toBe(writes);
     expect(JSON.stringify(stored)).not.toContain("living_choice");
-    await page.getByRole("button", { name: "Remove pinwheel" }).click(); await confirm(page);
+    await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page);
     await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
   });
 }
@@ -376,7 +469,7 @@ test("Living Choice with WebGL failure retains Classic controls and Today", asyn
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
   await expect(page.getByTestId("classic-living-choice")).toHaveAttribute("data-choice", "sleep-routine");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
   await page.getByRole("link", { name: "Return to My Space" }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
@@ -399,7 +492,7 @@ test("touch and reduced motion retain the still choice, walk pad and placement c
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: point.x + 15, y: point.y - 15 }] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).tap();
+    await (await editorButton(page, "Choose welcome pinwheel")).tap();
     await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
     await expect(page.getByTestId("save-status")).toContainText("Saved");
     await page.getByRole("button", { name: "Spin pinwheel", exact: true }).tap();
@@ -424,9 +517,9 @@ for (const mode of ["browser", "account"] as const) {
   test(`${mode} confirmed 3D placement completes keyboard Today round trip without changing storage`, async ({ page }) => {
     const account = await classicTodaySession(page);
     await page.goto(`/?experience=e2&view=3d&storage=${mode}`);
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
-    await page.getByRole("button", { name: "teal", exact: true }).click();
-    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await (await editorButton(page, "Choose welcome pinwheel")).click();
+    await (await editorButton(page, "teal", true)).click();
+    await (await editorButton(page, "Gate right", true)).click();
     await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("aria-disabled", "true");
     await confirm(page);
     const local = await readLocal(page), writes = account.puts, reads = account.reads;
@@ -444,11 +537,11 @@ for (const mode of ["browser", "account"] as const) {
     expect(account.reads).toBe(mode === "account" ? reads + 1 : 0);
     await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
     await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
-    await page.getByRole("button", { name: "Plaza edge", exact: true }).click();
-    await page.getByRole("button", { name: "coral", exact: true }).click(); await confirm(page);
+    await (await editorButton(page, "Plaza edge", true)).click();
+    await (await editorButton(page, "coral", true)).click(); await confirm(page);
     await expect(world).toHaveAttribute("data-socket", "plaza-edge");
     await expect(world).toHaveAttribute("data-color", "coral");
-    await page.getByRole("button", { name: "Remove pinwheel" }).click(); await confirm(page);
+    await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page);
     await expect(world).toHaveAttribute("data-color", "unplaced");
   });
 }
@@ -456,7 +549,7 @@ for (const mode of ["browser", "account"] as const) {
 test("WebGL failure retains Classic fallback and its Today return path", async ({ page }) => {
   await classicTodaySession(page);
   await page.goto(browserRoute);
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   const local = await readLocal(page);
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -494,7 +587,7 @@ test.describe("touch return", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await classicTodaySession(page);
     await page.goto(browserRoute);
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).tap();
+    await (await editorButton(page, "Choose welcome pinwheel")).tap();
     await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
     await expect(page.getByTestId("save-status")).toContainText("Saved");
     const local = await readLocal(page);
@@ -530,7 +623,7 @@ test("UNKNOWN cannot announce a breeze or hand off an unresolved write", async (
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(emptySnapshot()) });
   });
   await page.goto("/?experience=e2&view=classic&storage=account");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await (await editorButton(page, "Choose welcome pinwheel")).click();
   await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unknown");
   await expect(page.getByTestId("save-status")).not.toContainText("Saved");
@@ -548,9 +641,9 @@ const keepsakeCases = [
 for (const [choice, asset, label] of keepsakeCases) {
   test(`E4 ${asset}: keep migrates v1, restores without hint, coexists and removes`, async ({ page }) => {
     await page.goto(`${browserRoute}&living_choice=${choice}`);
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
     const v1 = await readLocal(page); expect(v1.schemaVersion).toBe("placeable.v1");
-    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).focus(); await page.keyboard.press("Enter");
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).focus(); await page.keyboard.press("Enter");
     await expect(page.getByTestId("keepsake-preview")).toContainText(label); expect(await readLocal(page)).toEqual(v1);
     await page.getByRole("button", { name: "Confirm placement", exact: true }).focus(); await page.keyboard.press("Enter");
     await expect(page.getByTestId("save-status")).toContainText("Saved");
@@ -561,7 +654,7 @@ for (const [choice, asset, label] of keepsakeCases) {
     await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", asset);
     await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText(label);
-    await page.getByRole("button", { name: "남긴 문양 제거" }).click(); expect(await readLocal(page)).toEqual(stored);
+    await (await editorButton(page, "남긴 문양 제거")).click(); expect(await readLocal(page)).toEqual(stored);
     await confirm(page); await page.reload();
     await expect(page.getByTestId("classic-keepsake")).toHaveCount(0);
     await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
@@ -570,10 +663,10 @@ for (const [choice, asset, label] of keepsakeCases) {
 }
 test("E4 replacement and WebGL failure retain keepsake with Classic removal", async ({ page }) => {
   await page.goto(`${browserRoute}&living_choice=walk-10-minutes`);
-  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
   await page.goto(`${browserRoute}&living_choice=sleep-routine`);
   await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "plaza-ribbon-v1");
-  await page.getByRole("button", { name: "이 문양으로 바꾸기" }).click();
+  await (await editorButton(page, "이 문양으로 바꾸기")).click();
   await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "quiet-moon-v1"); await confirm(page);
   await page.getByRole("link", { name: "Enter 3D plaza" }).click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
@@ -582,16 +675,16 @@ test("E4 replacement and WebGL failure retain keepsake with Classic removal", as
   await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
   await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
   await expect(page.getByTestId("confirmed-keepsake")).toHaveText("고요한 달"); expect(await readLocal(page)).toEqual(before);
-  await page.getByRole("button", { name: "남긴 문양 제거" }).click(); await confirm(page);
+  await (await editorButton(page, "남긴 문양 제거")).click(); await confirm(page);
   expect((await readLocal(page)).selection.keepsake).toBeNull();
 });
 for (const behavior of ["normal", "conflict", "unknown"] as const) {
   test(`E4 account ${behavior}: keep/reload stays separate from browser snapshot`, async ({ page }) => {
     const account = await accountRoute(page, behavior);
     await page.goto(`${browserRoute}&living_choice=walk-10-minutes`);
-    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page); const local = await readLocal(page);
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page); const local = await readLocal(page);
     await page.goto("/?experience=e2&view=classic&storage=account&living_choice=sleep-routine");
-    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click();
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).click();
     await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
     if (behavior === "conflict") {
       await expect(page.getByTestId("save-status")).toContainText("newer placement");
@@ -606,12 +699,12 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
   const page = await context.newPage();
   try {
     await page.goto(`${browserRoute}&living_choice=low-sodium-meal`);
-    await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).tap();
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).tap();
     await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText("정원의 잎");
     await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole("button", { name: "남긴 문양 제거" }).tap(); await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await (await editorButton(page, "남긴 문양 제거")).tap(); await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText("아직 남긴 문양이 없어요.");
   } finally { await context.close(); }
 });
@@ -620,8 +713,8 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
 test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes zero storage writes", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto(companionRoute + "&living_choice=sleep-routine");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
-  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
   const world = page.getByTestId("placeable-world");
   await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
   const before = await readLocal(page), status = await page.getByTestId("save-status").textContent();
@@ -665,7 +758,7 @@ test("E6 mobile touch and live reduced motion retain the final hierarchy without
     await page.goto(companionRoute + "&living_choice=walk-10-minutes");
     const world = page.getByTestId("placeable-world");
     await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
     const before = await readLocal(page);
     await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
     await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
@@ -700,19 +793,19 @@ test("E6 enabled audio plays one short motif per activation; muted and unavailab
   const day = page.getByRole("button", { name: "낮의 광장으로 돌아가기" });
   await light.click(); await day.click();
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(0);
-  await page.getByRole("button", { name: "Enable sound" }).click();
+  await (await editorButton(page, "Enable sound")).click();
   await expect(page.getByTestId("audio-status")).toHaveText("Sound: ready");
   await light.click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
-  await page.getByRole("button", { name: "Mute sound" }).click(); await day.click(); await light.click();
+  await (await editorButton(page, "Mute sound")).click(); await day.click(); await light.click();
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
   await page.reload();
   await page.evaluate(() => {
     Object.defineProperty(window, "AudioContext", { configurable: true, value: undefined });
     Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
   });
-  await page.getByRole("button", { name: "Enable sound" }).click();
+  await (await editorButton(page, "Enable sound")).click();
   await expect(page.getByTestId("audio-status")).toContainText("unavailable"); await light.click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
 });
@@ -720,7 +813,7 @@ test("E6 enabled audio plays one short motif per activation; muted and unavailab
 for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E6 account ${behavior} preserves revisions and truthful save status`, async ({ page }) => {
   const account = await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=3d&storage=account");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await (await editorButton(page, "Choose welcome pinwheel")).click();
   await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
   const writes = account.puts, reads = account.reads, revision = account.revision, browser = await readLocal(page);
@@ -755,7 +848,7 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
   await page.getByRole("button", { name: "Retry 3D" }).click();
   await expect(world).toHaveAttribute("data-lighting", "daylight");
   await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
   await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
 });
@@ -791,8 +884,8 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   page.on("pageerror", (error) => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "rabbit"));
   await page.goto(companionRoute + "&living_choice=sleep-routine");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
-  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
   const before = await readLocal(page);
   await page.evaluate(() => {
     Object.assign(window, { e7Writes: 0 }); const original = Storage.prototype.setItem;
@@ -860,11 +953,11 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
 for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E7 account ${behavior} retains revision, browser separation and pending guard`, async ({ page }) => {
   const account = await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=classic&storage=account&living_choice=walk-10-minutes");
-  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await (await editorButton(page, "Choose welcome pinwheel")).click();
   await expect(enterGarden(page)).toBeDisabled();
   await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
-  if (behavior === "normal") { await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page); }
+  if (behavior === "normal") { await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page); }
   const writes = account.puts, reads = account.reads, revision = account.revision, before = await readLocal(page);
   if (behavior === "normal") {
     await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
