@@ -1,0 +1,49 @@
+.placeable-experience { color: #253e35; background: #f8f6ec; min-height: 100dvh; padding: clamp(16px, 3vw, 40px); font: 16px/1.5 system-ui, sans-serif; }
+.placeable-experience * { box-sizing: border-box; }
+.placeable-experience h1 { font-size: clamp(1.9rem, 4vw, 3rem); margin: 0; letter-spacing: -.035em; }
+.placeable-experience h2 { margin: 12px 0 0; }
+.placeable-experience p { margin: 8px 0; }
+.placeable-experience a { color: #245f53; text-underline-offset: 4px; }
+.placeable-experience button { font: inherit; min-height: 44px; padding: 9px 14px; color: #253e35; border: 1px solid #a4b4a4; background: #fffdf6; border-radius: 12px; cursor: pointer; }
+.placeable-experience button:disabled { opacity: .5; cursor: default; }
+.placeable-experience button[aria-pressed=true] { background: #e0ebde; border: 2px solid #386c5a; padding: 8px 13px; }
+.placeable-experience :focus-visible { outline: 3px solid #226f94; outline-offset: 4px; }
+.placeable-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; max-width: 1250px; margin: 0 auto 28px; }
+.placeable-header nav { display: flex; flex-wrap: wrap; gap: 18px; }
+.placeable-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .8rem; }
+.placeable-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(310px, 1fr); gap: 28px; max-width: 1250px; margin: auto; align-items: start; }
+.placeable-stage { position: relative; min-width: 0; }
+.placeable-map { position: relative; aspect-ratio: 400 / 360; width: 100%; border: 1px solid #d7decc; border-radius: 32px; background: #edf0df; overflow: hidden; }
+.placeable-map-ground { position: absolute; inset: 0; width: 100%; height: 100%; }
+.placeable-map-socket { position: absolute; width: 1px; height: 1px; }
+.placeable-socket-ring { position: absolute; width: 42px; height: 19px; border: 2px dashed #678275; border-radius: 50%; transform: translate(-50%, -50%); }
+.placeable-map-label { position: absolute; white-space: nowrap; top: 16px; transform: translateX(-50%); font-size: .8rem; font-weight: 600; }
+.placeable-experience .placeable-object { position: absolute; width: 96px; height: 126px; left: -48px; bottom: 0; padding: 0; border: 0; background: transparent; }
+.placeable-experience .placeable-object:disabled { opacity: 1; }
+.placeable-map[data-preview=true] .placeable-object { opacity: .65; filter: drop-shadow(0 0 4px white); }
+.pinwheel { display: block; width: 100%; height: 100%; position: relative; }
+.pinwheel-stem { position: absolute; left: 46px; bottom: 0; height: 95px; width: 5px; border-radius: 4px; background: #a98454; }
+.pinwheel-blades { position: absolute; left: 0; top: 0; width: 96px; height: 96px; transform: rotate(-15deg); }
+.pinwheel-spin { animation: placeable-spin .8s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes placeable-spin { from { transform: rotate(-15deg); } to { transform: rotate(705deg); } }
+.placeable-map-caption { position: absolute; bottom: 15px; left: 20px; padding: 4px 10px; background: #fffdf3e8; border-radius: 10px; font-size: .85rem; }
+.placeable-controls { padding: 22px; border: 1px solid #d9dfce; border-radius: 24px; background: #fffdf6; display: grid; gap: 10px; }
+.placeable-controls fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.placeable-controls legend { font-weight: 600; margin-bottom: 8px; }
+.placeable-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.placeable-options button { flex: 1 0 auto; }
+.placeable-swatch { display: inline-block; width: 13px; height: 13px; border-radius: 50%; margin-right: 7px; border: 1px solid #0003; }
+.placeable-storage, .placeable-status, .placeable-draft { background: #eef2e6; border-radius: 12px; padding: 12px; }
+.placeable-experience .placeable-storage { font-size: .85rem; margin: 0; }
+.placeable-storage-switch, .placeable-asset-id { font-size: .8rem; }
+.placeable-feedback { min-height: 28px; text-align: center; font-weight: 600; }
+.placeable-experience footer { max-width: 1250px; margin: 28px auto 0; font-size: .85rem; }
+.placeable-world-host { position: relative; width: 100%; height: clamp(340px, 65vh, 700px); border-radius: 24px; overflow: hidden; isolation: isolate; background: #dbe7d2; }
+.placeable-world-host canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+.placeable-world-label { position: absolute; transform: translate(-50%, -50%); pointer-events: none; padding: 2px 6px; border-radius: 5px; background: #fffdf3d9; font-size: .7rem; white-space: nowrap; }
+.placeable-experience .placeable-walk-pad { position: absolute; bottom: 16px; right: 16px; width: 96px; height: 96px; border-radius: 50%; border: 2px solid #fff9; background: #253e35c4; color: #fff; touch-action: none; user-select: none; line-height: 1.15; }
+.placeable-world-caption { position: absolute; bottom: 16px; left: 16px; background: #fffdf3e8; padding: 4px 10px; border-radius: 10px; font-size: .8rem; pointer-events: none; }
+.placeable-world-help { font-size: .85rem; }
+.placeable-world-message { padding: 24px; }
+@media (max-width: 760px) { .placeable-header { display: block; } .placeable-header nav { margin-top: 18px; } .placeable-layout { grid-template-columns: 1fr; } .placeable-controls { padding: 16px; } }
+@media (prefers-reduced-motion: reduce) { .pinwheel-spin { animation: none; filter: brightness(1.2); } }
