@@ -67,6 +67,19 @@ by the [Model V2 product contract](model-v2-product-contract.md).
 Direct S11 URLs, authentication boundaries, and browser back/forward remain valid.
 Focused work screens remain reachable without introducing a router dependency.
 
+Signed-in Classic Today exposes `내 공간으로 가기` below the primary health
+activity, including its empty-record state. No prior `return_space` or Living
+Choice is needed. App supplies only the bounded My Space destination intent:
+3D/account by default; an existing explicit browser-only or Classic return
+context stays intact. ProductPlaceableEntry re-verifies the account session and
+owns cosmetic reads through the existing adapters/controller. Account failure
+never silently reads, copies or merges browser state; sign-in/retry and explicit
+browser-only recovery remain available. My Space's Classic Today link carries
+only the known view/storage return context. Entry itself performs no cosmetic
+write or WebGL availability check. Guest routing, root/post-login defaults and
+production activation are unchanged.
+
+
 | Screen | Purpose |
 |---|---|
 | S01 | Signed-out companion narrator/selector, email-link gate, and isolated guest-sandbox entry |

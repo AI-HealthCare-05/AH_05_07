@@ -235,7 +235,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "normal", confirmUnknownOnRead = true) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -244,7 +244,7 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
   })), { token, user });
   await page.route("https://e2e.invalid/auth/v1/**", (route) => route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
     headers: cors, contentType: "application/json", body: route.request().method() === "OPTIONS" ? "" : JSON.stringify(user) }));
-  let snapshot = emptySnapshot(), puts = 0, reads = 0;
+  let snapshot = initialSnapshot, puts = 0, reads = 0;
   await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async (route) => {
     const request = route.request();
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
@@ -292,8 +292,8 @@ for (const behavior of ["conflict", "unknown", "read-error"] as const) {
 
 // The new experience uses this existing suite, which nightly-core already runs.
 // These API/session fixtures prove client behavior, not live account integration.
-async function classicTodaySession(page: Page, actionId: string | null = null) {
-  const account = await accountRoute(page, "normal");
+async function classicTodaySession(page: Page, actionId: string | null = null, snapshot = emptySnapshot()) {
+  const account = await accountRoute(page, "normal", true, snapshot);
   await page.route("http://e2e.invalid/api/v1/observations/window**", (route) => {
     const url = new URL(route.request().url());
     return route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
@@ -928,4 +928,171 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
     window.dispatchEvent(new Event("vite:preloadError", { cancelable: true }));
   })]);
   expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).not.toBeNull();
+});
+
+
+// E8 stays in the existing nightly/manual core suite. Synthetic API/SDK fixtures
+// exercise the real entry/controller/renderers; they are not production proof.
+for (const mobile of [false, true]) test(`E8 ${mobile ? "mobile touch" : "desktop keyboard"}: ordinary Today enters verified account space and returns without writes`, async ({ browser }) => {
+  const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1366, height: 900 }, hasTouch: mobile, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    const snapshot = await saved({ operationId: "00000000-0000-4000-8000-000000000824", expectedRevision: 4,
+      schemaVersion: "placeable.v2", layoutId: "e1-plaza.v2",
+      selection: { pinwheel: { assetId: "welcome-pinwheel-v1", color: "teal", socketId: "gate-right" }, keepsake: "quiet-moon-v1" } });
+    const account = await classicTodaySession(page, null, snapshot);
+    await page.addInitScript((key) => {
+      if (!localStorage.getItem(key)) localStorage.setItem(key, "browser-state-must-stay-separate");
+      localStorage.setItem("sk7-companion-species", "rabbit");
+      const original = Storage.prototype.setItem;
+      Object.assign(window, { e8CosmeticWrites: 0 });
+      Storage.prototype.setItem = function (name, value) {
+        if (name === key || name === "sk7-companion-species") (window as unknown as { e8CosmeticWrites: number }).e8CosmeticWrites++;
+        original.call(this, name, value);
+      };
+    }, STORAGE_KEY);
+    let verified = 0;
+    page.on("response", response => { if (response.url().includes("/auth/v1/user") && response.status() === 200) verified++; });
+    await page.goto("/?screen=S02"); await expectClassicToday(page);
+    const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+    await expect(entry).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
+    await expect(page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" })).toHaveCount(0);
+    expect(account.reads).toBe(0); expect(account.puts).toBe(0);
+    await entry.scrollIntoViewIfNeeded();
+    const rect = (await entry.boundingBox())!; expect(rect.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.locator('.journey-view-frame img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode().catch(() => undefined))));
+    await page.screenshot({ path: test.info().outputPath(`e8-today-${mobile ? "mobile" : "desktop"}.png`) });
+    const enter = async () => { if (mobile) await entry.tap(); else { await entry.focus(); await page.keyboard.press("Enter"); } };
+    await enter();
+    const world = page.getByTestId("placeable-world");
+    await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+    await expect(world).toHaveAttribute("data-color", "teal");
+    await expect(world).toHaveAttribute("data-socket", "gate-right");
+    await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+    await expect(world).toHaveAttribute("data-companion", "rabbit");
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
+    expect(verified).toBeGreaterThan(0); expect(account.reads).toBe(1);
+    await page.getByRole("button", { name: "동반자에게 인사하기" }).click();
+    await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
+    await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+    await expect(world).toHaveAttribute("data-lighting", "twilight");
+    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await returnGarden(page).click();
+    await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+    await page.screenshot({ path: test.info().outputPath(`e8-my-space-${mobile ? "mobile" : "desktop"}.png`) });
+    const today = page.getByRole("link", { name: "Classic Today" });
+    if (mobile) await today.tap(); else { await today.focus(); await page.keyboard.press("Enter"); }
+    await expectClassicToday(page);
+    await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
+    await page.goBack(); await expect(world).toHaveAttribute("data-color", "teal");
+    await page.goForward(); await expectClassicToday(page);
+    await page.getByRole("link", { name: "Return to My Space" }).click();
+    await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+    expect(account.puts).toBe(0); expect(account.revision).toBe(5);
+    expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-state-must-stay-separate");
+    expect(await page.evaluate(() => localStorage.getItem("sk7-companion-species"))).toBe("rabbit");
+    expect(await page.evaluate(() => (window as unknown as { e8CosmeticWrites: number }).e8CosmeticWrites)).toBe(0);
+    if (mobile) {
+      await page.getByRole("link", { name: "Classic Today" }).tap(); await expectClassicToday(page);
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.getByRole("link", { name: "Return to My Space" }).scrollIntoViewIfNeeded();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: test.info().outputPath("e8-today-320.png") });
+    }
+  } finally { await context.close(); }
+});
+
+test("E8 account unavailable never reads browser placement; explicit browser-only recovery preserves its return", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.addInitScript(key => {
+    localStorage.setItem(key, JSON.stringify({ schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", revision: 0, selection: null, latestOperationId: null, latestFingerprint: null }));
+    const original = Storage.prototype.getItem;
+    Object.assign(window, { e8BrowserReads: 0 });
+    Storage.prototype.getItem = function (name) {
+      if (name === key) (window as unknown as { e8BrowserReads: number }).e8BrowserReads++;
+      return original.call(this, name);
+    };
+  }, STORAGE_KEY);
+  await page.goto("/?screen=S02"); await expectClassicToday(page);
+  await page.route("https://e2e.invalid/auth/v1/user", route => route.fulfill({ status: 503, headers: cors, contentType: "application/json", body: '{"message":"unavailable"}' }));
+  await page.getByRole("link", { name: "내 공간으로 가기" }).click();
+  await expect(page.getByRole("status")).toContainText("Account storage is unavailable");
+  await expect(page.getByRole("button", { name: "Retry account session" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Return to sign in" })).toHaveAttribute("href", "/");
+  expect(account.reads).toBe(0); expect(account.puts).toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { e8BrowserReads: number }).e8BrowserReads)).toBe(0);
+  await page.getByRole("link", { name: "Choose browser-only storage" }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
+  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
+  await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+});
+
+test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.goto("/?screen=S02"); await expectClassicToday(page);
+  await page.getByRole("link", { name: "내 공간으로 가기" }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  // Use the existing App logout in a second tab so the real SDK broadcasts loss.
+  const other = await page.context().newPage();
+  await classicTodaySession(other);
+  await other.goto("/?screen=S02"); await expectClassicToday(other);
+  await other.getByRole("button", { name: "설정", exact: true }).click();
+  await other.getByRole("button", { name: "이 기기에서 로그아웃", exact: true }).click();
+  await expect(other.locator('[data-scene="S01"]')).toBeVisible();
+  await other.close();
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText("Sign in to use account storage");
+  await expect(page.getByRole("link", { name: "Choose browser-only storage" })).toBeVisible();
+  expect(account.puts).toBe(0); expect(await readLocal(page)).toBeNull();
+});
+
+test("E8 WebGL failure retains account Classic plaza and Classic Today exits", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
+      return type.includes("webgl") ? null : original.apply(this, [type, ...args] as Parameters<typeof original>);
+    } as typeof original;
+  });
+  await page.goto("/?screen=S02"); await expectClassicToday(page);
+  await page.getByRole("link", { name: "내 공간으로 가기" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(page.getByRole("link", { name: "Classic Today" })).toBeVisible();
+  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByTestId("classic-plaza")).toBeVisible();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
+  await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=classic&storage=account");
+  expect(account.puts).toBe(0);
+});
+
+test("E8 guest and signed-out journeys gain no account entry or placeable requests", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", request => { if (/cosmetics\/placeable|ProductPlaceableEntry/.test(request.url())) requests.push(request.url()); });
+  for (const url of ["/?screen=S02", "/?guest=1"]) {
+    await page.goto(url);
+    await expect(page.locator('[data-scene="S01"], [data-scene="S02"]')).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "내 공간 · Living City" })).toHaveCount(0);
+  }
+  expect(requests).toEqual([]);
+});
+
+test("E8 empty Today still exposes account entry and ignores arbitrary return URLs", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.route("http://e2e.invalid/api/v1/observations/window**", route => {
+    const url = new URL(route.request().url());
+    return route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200, headers: cors,
+      contentType: "application/json", body: JSON.stringify({ start_on: url.searchParams.get("start_on"), end_on: url.searchParams.get("end_on"),
+        blood_pressure_observations: [], challenge_events: [], active_challenge: null, challenge_checkins: [] }) });
+  });
+  await page.goto("/?screen=S02&return_space=https://forged.invalid&return_url=https://forged.invalid");
+  await expect(page.locator('[data-scene="S01"], [data-scene="S12"]')).toBeVisible();
+  await page.evaluate(() => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    if (raw) window.dispatchEvent(new CustomEvent("sk7:e2e-session-change", { detail: JSON.parse(raw) }));
+  });
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await expect(page.getByRole("link", { name: "내 공간으로 가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
+  expect(account.reads).toBe(0); expect(account.puts).toBe(0);
 });

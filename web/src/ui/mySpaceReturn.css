@@ -5,3 +5,11 @@
 .my-space-return a { display: inline-flex; align-items: center; gap: var(--sk7-space-md); min-height: var(--sk7-target-min); color: var(--sk7-accent-hover); font-weight: var(--sk7-weight-bold); text-underline-offset: 5px; }
 .my-space-return a:focus-visible { outline: 3px solid var(--sk7-focus); outline-offset: 4px; }
 @media (max-width: 480px) { .my-space-return { align-items: start; flex-direction: column; padding: var(--sk7-space-md) var(--sk7-gutter-mobile); gap: var(--sk7-space-xs); } }
+
+/* A quiet destination alongside the primary health task, without another card. */
+.today-my-space { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sk7-space-xs) var(--sk7-space-md); color: var(--sk7-text); }
+.today-my-space strong { font-size: var(--sk7-type-label); }
+.today-my-space strong span { color: var(--sk7-text-muted); font-weight: var(--sk7-weight-medium); }
+.today-my-space p { margin: 0; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); line-height: var(--sk7-leading-body); }
+.today-my-space a { display: inline-flex; align-items: center; gap: var(--sk7-space-sm); min-height: var(--sk7-target-min); color: var(--sk7-accent-hover); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); text-underline-offset: 5px; }
+.today-my-space a:focus-visible { outline: 3px solid var(--sk7-focus); outline-offset: 4px; border-radius: var(--sk7-radius-control); }
