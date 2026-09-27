@@ -177,7 +177,7 @@ Issue #741에서 이 변경을 추적합니다. 별도 branch/PR과 기존 merge
 `746939b3a19e730294e9e60eaaea05d58db82653`로 fast-forward했습니다.
 어느 값도 다음 작업의 최신 main을 대체하지 않습니다.
 
-- Repository: AGENTS.md, docs/project-handoff.md, docs/README.md,
+- Repository workflow: AGENTS.md and the task Issue. Relevant domain contracts:
   docs/visual-production-contract.md, docs/visual-asset-runtime.md,
   ops/sk7-asset-gateway/README.md.
 - Cloudflare CLI: https://developers.cloudflare.com/workers/wrangler/commands/r2/

@@ -2,7 +2,7 @@
 
 **상태: HISTORICAL PRE-FLIGHT SNAPSHOT.** 최종 operator verification 결과는
 [운영 검증 기록](mvp1-operations-review.md)에 보존한다. 현재 release/runtime 판단은
-[배포 SSOT](deployment-ssot.md)와 live control-plane state를 사용한다.
+[배포 절차](deployment.md)와 live control-plane state를 사용한다.
 
 이 문서는 Talos의 external API P95 기준을 실제로 측정하기 전, 측정 대상과
 판정 계약을 고정하기 위한 DOCS / READ-ONLY ANALYSIS ONLY 기록이다. 이 문서와

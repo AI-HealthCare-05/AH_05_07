@@ -1,8 +1,11 @@
-# Living Journey review and release gates
+# Scene behavior qualification
 
-Continuation of Issue #390 / PR #391. Implementation authorization is recorded in [architecture](scene-architecture.md); it does not satisfy physical-device measurements. Current results and completed owner visual acceptance are in [implementation status](scene-implementation-status.md). This checklist prepares the remaining production work; no production gate is opened by this document.
+[AGENTS.md](../AGENTS.md) alone owns workflow and verification budget. This
+reference describes scene-specific behavior and measurement limits; it is not
+a release policy or live queue. Consult it only when the changed scene boundary
+needs it. Issue/PR/Git carry task state.
 
-## CURRENT QUALIFICATION — Verification Policy v0.2 (2026-09-13)
+## Scene contract checks
 
 This classification is based on upstream `main`
 `6abee8f7842fef9f9d2eea83ce7bbfe4a0ad4d16` (PR #465). That SHA is the
@@ -12,32 +15,23 @@ scope. A measurable value is not a release gate unless its failure presents a
 realistic risk to user function, correctness, storage meaning, accessibility or
 recovery.
 
-### REQUIRED before production scene activation
+### When scene activation or behavior changes
 
-1. Use a separately explicit, approved activation Issue and PR. Resolve the
-   current upstream `main`, identify the exact activation candidate and keep
+1. For the task-authorized activation candidate, keep
    `review` out of production. Verify that the intended production-mode mapping
    activates the qualified S02 realtime scene and confirmed-save S05 path.
    For S10, the unified full-scene owner must receive an explicit Journey-host
    production ownership decision and suppress the separate production companion.
    Never activate both S10 character renderers in the same production surface.
    Keep the missing/off scene-gate companion fallback correct.
-2. Pass the repository's required `lint` and `test` CI on the final activation
-   PR HEAD and the existing checks directly affected by the
-   activation/configuration diff. This classification creates no new test
-   requirement and does not require a broad browser matrix by default.
-3. On the final candidate, protect the core scene contract: confirmed persistence
+2. On the final candidate, protect the core scene contract: confirmed persistence
    can produce S05 once without replay or automatic write retry; save/recovery and
    navigation remain usable; and GLB, chunk or WebGL failure leaves semantic
    HTML/CSS content and controls available. Existing evidence may be reused while
    those boundaries are unchanged; a changed boundary needs a directly affected
    check.
-4. Follow the [deployment flow](deployment-ssot.md#deployment-flow): confirm the
-   activation build configuration and single-Worker topology, record exact source,
-   mirror and served Worker identities, run public deployment smoke plus the
-   signed-in synthetic affected flow, and capture a distinct current known-good
-   rollback target. Stop or restore on failed core semantics, inaccessible
-   controls or failed fallback, and verify rollback/restore capability.
+Publication and rollback follow [AGENTS.md](../AGENTS.md) and the
+[deployment runbook](deployment.md).
 
 ### CONDITIONAL verification
 
@@ -83,16 +77,13 @@ Require only the item tied to a changed boundary or an observed problem:
 - Repeating unchanged broad matrices/30-cycle probes or all poster captures, and
   refining the accepted S05 initial placement, do not block activation.
 
-Issue #390 has completed its review-candidate qualification role. Production
-activation is protected work and needs its own explicit approval record; it must
-not inherit every historical measurement below as a permanent gate. After this
-classification is merged, the recommendation is **CLOSE NOW** for Issue #390 and
-track only the four REQUIRED activation gates in that separate record.
+Issue #390 / PR #391 and the dated observations below are historical. Their
+acceptance conditions do not propagate to later releases.
 
 > **Historical reference notice:** The dated measurements and earlier checklist
 > below are retained without upgrading their old `OPEN`, `required` or `blocked`
-> wording into current gates. Where they conflict, CURRENT QUALIFICATION above
-> governs. Do not rerun them unless a CONDITIONAL trigger applies.
+> wording into current gates. AGENTS.md owns verification decisions; none of the
+> old rollout, replay or closeout steps below is a live workflow instruction.
 
 ## Samsung Internet qualification update — 2026-09-12–13
 
@@ -154,14 +145,3 @@ The [remaining-device continuation](scene-remaining-device-checks.md) now record
 Keep raw traces local if they contain unsanitized browser data. Commit only sanitized aggregate evidence with scope/unknowns stated. Do not label Playwright WebKit or software rendering as physical Safari/Android acceptance.
 
 After the smartphone HTTPS links were provided, the user reported “모두 정상 작동입니다!” on 2026-09-10 and subsequently gave final S05 visual approval. The [manual user report](evidence/scene-phone-user-check.json) records both decisions and the deferred placement polish. Device/browser identification and individual accessibility/network conditions have not been supplied. This report adds manual feedback without converting unmeasured device costs or the preview's no-store/same-origin GLB delivery into production acceptance. No Android repeat or CI check was rerun for this documentation update.
-
-## Historical controlled web rollout and rollback checklist
-
-1. Retain the recorded S02/S10 and S05 owner art acceptance and automated S05 parity evidence, then close the physical-device gates on the exact activation candidate revision. The review-only implementation may merge under the separate scope above; a later production-activation PR remains draft while its required release gates are open. Verify CI on each final PR HEAD.
-2. Prepare and review a separately explicit production activation change. `VITE_SK7_SCENE_MODE=production` currently selects no new scene; setting the build variable alone cannot activate this candidate. Do not deploy `review` as a shortcut. Preserve the independent companion production setting.
-3. After release authorization and passing gates, squash merge the verified PR into upstream `main`, following [deployment SSOT](deployment-ssot.md#deployment-flow). Record the complete upstream revision, current known-good Worker version, previous build variables and rollback target **at release time**; historical IDs in old documents are not current rollback evidence.
-4. Run the existing `Sync deployment branch` workflow in `emotigom/ah-05-07-pages`. Let the existing Cloudflare source build publish the web-only change. Record mirror revision, build configuration and complete Worker version. No direct branch upload, mirror edit, API deployment or database migration belongs to this web-only release.
-5. Run the existing public deployment smoke and signed-in synthetic browser checks on the deployed revision. Verify gated-on selected routes and a gated-off build. Confirm separate model output, measured blood pressure and challenge adherence facts and the wording `입력 기반 위험군 선별 신호`.
-6. Rehearse restoration of the captured known-good web Worker and verify the synthetic save, fallback, navigation and public smoke again. A variable change requires a new Vite build; it cannot change already-built assets. Stop rollout on failed save semantics, repeated celebration, inaccessible controls, failed asset delivery or unaccepted device cost. Record activation, rollback and any final restore as separate observations.
-
-The review-candidate merge performs none of these production actions. Asset upload is separate from application activation. API/DB/auth/Model V2 contracts and existing GLB identities remain unchanged.

@@ -46,7 +46,7 @@ DECIDED, 모델은 NO-GO / `model_not_ready`다.
   하나의 요구에 여러 상태가 있으면 모두 표시한다. 점수나 완료율로 합산하지 않는다.
 
 권위는 [저장소 지침](../AGENTS.md), [FR/NFR](requirements.md), [AC](acceptance-test-plan.md),
-실제 코드·migration·OpenAPI, [배포 SSOT](deployment-ssot.md) 순으로 대조한다.
+실제 코드·migration·OpenAPI, [배포 절차](deployment.md) 순으로 대조한다.
 발주사 요구 자체의 충족/변경 수용은 저장소의 내부 P0 결정과 구분한다.
 
 | 근거 | 적용 버전·범위 | 이번 처리 / 확대 해석 금지 |
@@ -55,7 +55,7 @@ DECIDED, 모델은 NO-GO / `model_not_ready`다.
 | [준비](model-gate-1b-evidence.md) / [비교](model-comparison-evidence.md) / [불확실성](model-uncertainty-evidence.md) | 실행 cb3a3f0… / 668a0d8… / 65ec302…; 문서와 JSON에 전체 SHA 보존 | 기존 승인 집계와 한계 참조. 실제 데이터·test 재접근/재실행 없음 |
 | [PR #224](https://github.com/AI-HealthCare-05/AH_05_07/pull/224) | 질문 패키지 CI 6개와 로컬 검증, 사용자 작동·표시 확인 | 질문 의미·번역 타당성·adapter 승인이 아님 |
 | [RLS 운영 증거](deployed-rls-verification-plan.md) | #149, 2026-09-04 합성 A/B 정상 경로; 당시 migration inventory 기준 | 익명·소유권·교차 사용자·첫 체크인 잠금·정리 완료만 승계. 만료 행은 미실행 |
-| [세션](email-link-session-verification.md) / [배포](deployment-ssot.md) | #182 로그인/새로고침/새 탭, #151 rollback/restore, #166 bounded log review | 강제 만료·최신 소스 전체 배포·clean environment 재현을 증명하지 않음 |
+| [세션](email-link-session-verification.md) / [배포](deployment.md) | #182 로그인/새로고침/새 탭, #151 rollback/restore, #166 bounded log review | 강제 만료·최신 소스 전체 배포·clean environment 재현을 증명하지 않음 |
 | [이번 검증·캡처](mvp1-validation.md) | 기준 commit의 기존 코드, 2026-09-06 로컬 합성 환경 | 운영 계정/데이터/배포와 분리. JSON 계약 검사는 실제 예측 재계산이 아님 |
 
 #213은 PR #214의 구현 완료 조건과 Windows/Linux 포함 당시 CI 10개 성공을

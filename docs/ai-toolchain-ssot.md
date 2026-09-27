@@ -9,11 +9,11 @@ runtime state. Use the concern-specific authorities below instead:
 
 | Concern | Authority |
 | --- | --- |
-| Contribution policy, risk lane, startup routing | [AGENTS.md](../AGENTS.md), [documentation authority map](README.md); [project handoff](project-handoff.md#fast-start) for restart context |
+| Repository workflow | [AGENTS.md](../AGENTS.md) and the task Issue |
 | Current product requirements | `docs/requirements.md` |
 | Frozen Model V2 product semantics and data-use boundary | `docs/model-v2-product-contract.md`, `docs/architecture/ARCHITECTURE_INVARIANTS.md` |
 | Current source implementation | canonical repository `main`, executable code, migrations, and tests |
-| Recorded deployment topology and operator gates | `docs/deployment-ssot.md`; re-check live control planes when current runtime identity matters |
+| Deployment topology and procedure | `docs/deployment.md`; re-check live control planes when current runtime identity matters |
 | Exact resolved package versions | `uv.lock` |
 | AI/data tool roles and replacement policy | this document and ADR-0002 |
 
@@ -136,9 +136,9 @@ transitive versions still requires normal review and passing affected checks.
 
 When reconstructing project context, do not infer current product/model/runtime
 status from historical Gate 1B, model-comparison, model-card, or readiness
-documents. Start from [AGENTS.md](../AGENTS.md) and the
-[documentation authority map](README.md), then open only the concern-specific
-authority. Use [project handoff](project-handoff.md#fast-start) for restart context.
+documents. Start from [AGENTS.md](../AGENTS.md), the task Issue and only the
+domain contract/code/tests relevant to the changed boundary. GitHub Issue/PR/Git
+carry live task state.
 
 If a historical record conflicts with a current authority, the historical record
 remains evidence for its recorded SHA and scope; it does not become a competing

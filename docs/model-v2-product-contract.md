@@ -7,7 +7,7 @@ architecture/scene guidance and AGENTS reference this decision rather than
 maintaining independent preview windows. [Issue #396](https://github.com/AI-HealthCare-05/AH_05_07/issues/396)
 records the human authorization; the 2026-09-19 instruction makes the already
 approved output visible by default. Source capability and deployed runtime are
-separate; follow [Deployment SSOT](deployment-ssot.md) for release verification.
+separate; follow [Deployment runbook](deployment.md) for release verification.
 
 ## Current S11 research/development preview
 

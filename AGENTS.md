@@ -1,98 +1,93 @@
 # SK7 Repository Operating Contract
 
-This file is the sole repository-workflow authority for SK7.
-Historical evidence, handoffs, completed audits, and design notes are not workflow SSOT.
-Domain contracts remain authoritative only for the product boundary they define.
+This file is the sole repository-workflow authority. Normal task startup is:
 
-Canonical development repository: `AI-HealthCare-05/AH_05_07`.
-The `emotigom/ah-05-07-pages` mirror is a deployment snapshot controlled by the human owner, not a development authority.
+1. Root `AGENTS.md`.
+2. The task's GitHub Issue.
+3. Only the domain contract, code and tests relevant to the changed boundary.
 
-## Default task flow
+GitHub Issue/PR/Git carry live task and release state. Live Git/process state
+outranks chat memory. Historical evidence is read only for a named need;
+Git history is the archive for deleted material. Do not create workflow,
+current-state, handoff, checkpoint or authority registries.
 
-1. Create a GitHub Issue for every requested task before repository mutation.
-2. Start from current `origin/main` in a short task branch/worktree linked to that Issue.
-3. Commit as often as useful. Prefer coherent, locally checked commits; there is no target commit count.
-4. Open a PR when the task is reviewable. The PR must reference or close its Issue.
-5. Merge as soon as the PR is conflict-free and the required hosted `lint` and `test` checks pass.
-6. Human review or human merge is not a default gate. The authorized agent may enable auto-merge or squash-merge directly.
-7. Delete the merged task branch. Do not rerun a post-merge full matrix by default.
+Canonical source: `AI-HealthCare-05/AH_05_07`. The
+`emotigom/ah-05-07-pages` deployment mirror is not development authority.
 
-The human owner is continuously observing and may interrupt, narrow, or stop any task.
+## Task flow and local execution
 
-## Merge and deployment are separate
-
-A merged PR is not authorization for an external production side effect.
-The agent does not trigger, wait for, or verify the personal mirror / Cloudflare build or deployment unless the user explicitly requests that as a separate task.
-The human owner controls mirror-to-Cloudflare publication.
-
-Do not use Cloudflare build status, a post-merge main matrix, scheduled browser confidence, or a manual trusted-runner job as a routine merge gate.
+- Create an Issue before repository mutation. Work from current `origin/main`
+  in one isolated short task branch/worktree; preserve unrelated work and keep
+  one writer per worktree. Do not reset, clean, stash or rewrite unrelated changes.
+- Normal routine local work uses ChatGPT Work Local + Repo Operator.
+  Remote Desktop Commander is not part of the default workflow; Codex is escalation only.
+- Accumulate coherent, locally checked commits; open a PR linked to the Issue.
+  Merge when conflict-free and required hosted `lint` and `test` pass.
+  The authorized agent may squash-merge or enable auto-merge; human review/merge
+  is not a default gate. The owner may interrupt, narrow or stop work at any time.
+- Keep `main` runnable. Delete the merged task branch and retire its unused
+  worktree. Do not replay a post-merge matrix or wait for deployment as a merge gate.
+- If interrupted, record unfinished paths, branch/worktree, HEAD/base, completed
+  checks and next action/blocker in the existing Issue or PR. Do not add a ledger.
+- Use `scripts/git/codex-commit` for Codex-contributed commits. Keep exactly one
+  `Co-authored-by: Codex <noreply@openai.com>` trailer in the final squash commit,
+  removing repeated constituent trailers from the generated squash body.
 
 ## Protected product boundaries
 
-- Use `입력 기반 위험군 선별 신호`; never diagnosis, treatment, prevention, or causal-improvement language.
-- Do not store real clinical records, names, contacts, original documents, free-text medical histories, credentials, or raw production output.
-- Keep model output, measured blood pressure, and challenge participation as separate facts.
-- Preserve authentication, RLS/ownership, retention, account deletion, request/session/uncertain-write protections, and secret boundaries.
-- Preserve the frozen Model V2 artifact, schema, 11-feature order, preprocessing, and target-leakage prohibition.
-- Do not add an LLM, OCR, Redis, worker, new server, or deployment topology without a measured requirement and an ADR.
+- Use `입력 기반 위험군 선별 신호`; never diagnosis, treatment, prevention,
+  or causal-improvement language.
+- Do not store real clinical records, names, contacts, original documents,
+  free-text medical histories, credentials or raw production output.
+- Keep model output, measured blood pressure and challenge participation separate.
+- Preserve authentication, session and RLS/ownership, retention, account deletion,
+  request/session/uncertain-write protections and secret boundaries.
+- Preserve the frozen Model V2 artifact, schema, 11-feature order, preprocessing
+  and target-leakage prohibition. User-visible output follows
+  [the Model V2 product contract](docs/model-v2-product-contract.md), including its
+  time-boxed research/development preview.
+- Preserve architecture invariants and the distinction between runtime rollback,
+  schema reconstruction and data recovery.
+- Do not add an LLM, OCR, Redis, worker, new server or deployment topology without
+  a measured requirement and an ADR.
 
-Protected-boundary code may still follow the normal Issue -> branch -> PR -> agent merge flow.
-Actual destructive database operations, production activation/deployment, credential changes, or other irreversible external effects require explicit current-task authorization before execution.
-Merging code alone does not perform those effects.
+## Verification and scope classification
 
-## Verification
+- Verify in proportion to changed behavior/contract. Run the smallest affected
+  checks; redirect verbose passing logs to `/tmp` and report concise results.
+  Lint and formatter checks are separate gates.
+- Before publishing, inspect all changed paths and the meaningful diff; run
+  `git diff --check` and `python3 scripts/git/autopilot_guard.py --base origin/main`.
+  Before generated edits/recovery, verify the reviewed SHA, branch/worktree state,
+  dirty-path ownership and all required anchors; failed preflight makes no writes.
+- The guard classifies scope, not merge authority: `routine` is ordinary UI/docs/
+  tests/tooling; `protected` includes backend/auth/data/model/dependency/governance/CI;
+  `deny` covers secret/credential containers or explicitly forbidden paths. Stop
+  on denied scope; do not weaken the guard. The current request plus Issue
+  authorizes scoped governance/workflow changes without another approval ledger.
+- Required hosted `lint`/`test` are path-aware; keep heavier payloads for affected
+  backend/auth/data/model boundaries. Skipped/unrouted suites are not PASS.
+- Do not replay unchanged auth/data/persistence/default-home/user-flow checks just
+  because another release occurred. Prior owner/operator evidence may be reused
+  for unchanged contracts only within its original scope.
+- Broad matrices, audits and evidence refreshes are milestone/decision tools,
+  not default release gates. Browser E2E is schedule/manual confidence; trusted
+  local runners are manual tools. Neither is a routine merge gate.
 
-During development, run the smallest checks that directly cover the diff.
-Before PR publication, run `git diff --check`, the affected local checks, and `python3 scripts/git/autopilot_guard.py --base origin/main`.
+## Publication and release evidence
 
-GitHub merge-time CI is intentionally small:
-- required `lint`
-- required `test`
-
-Those checks remain path-aware. Backend/auth/data/model changes may route to heavier payloads; routine frontend/docs changes should not inherit unrelated Python/AI/MySQL work.
-
-Broad Browser E2E is schedule/manual confidence only, not a PR or main merge gate.
-Trusted local runners are manual tools only.
-Do not replay the complete browser matrix after merge.
-
-## Risk classification
-
-The autopilot guard is a scope classifier, not merge authorization.
-
-- `routine`: ordinary UI/docs/tests/tooling changes.
-- `protected`: product contracts, backend/auth/data/model/dependency/governance/CI changes. These may still be merged by the authorized agent after required checks pass.
-- `deny`: tracked secret/credential containers or another explicitly forbidden path. Stop and ask rather than weakening the guard.
-
-A current user request plus its Issue is the authorization record for governance/workflow changes.
-Do not create a second approval ledger.
-
-## Restart and continuity
-
-The durable restart record is intentionally small:
-- Issue number
-- branch/worktree
-- HEAD and base
-- unfinished task-owned paths
-- checks already run
-- next action or blocker
-
-Use one concise handoff only when a task outlives the session.
-On restart, live Git/process state outranks chat memory or an old handoff.
-Do not replay completed external effects merely because a previous room forgot them.
-
-## No workflow-SSOT sprawl
-
-Do not create new workflow policy files or mandatory evidence ledgers.
-This file defines repository workflow.
-`docs/autopilot-lite.md` is explanatory only.
-`docs/project-handoff.md` is project context only.
-Domain contracts/tests define their own product semantics; historical evidence stays historical.
-
-## Shared defaults
-
-Keep `main` runnable and merge through PRs.
-Prefer squash merge for compact main history while allowing many useful branch commits.
-Preserve unrelated user changes; do not reset, clean, stash, or rewrite unrelated work.
-
-When Codex materially contributes to a commit, keep exactly one
-`Co-authored-by: Codex <noreply@openai.com>` trailer in the final main commit.
+- Merge is not deployment authorization. The human owner controls mirror-to-
+  Cloudflare publication by default. Agents may publish only with explicit
+  authorization in the CURRENT task; prior release permission is not standing authority.
+  Destructive DB operations, credential changes and irreversible external effects
+  also need explicit current-task authorization.
+- For authorized presentation/web-only releases that leave Auth/API/DB/RLS/
+  persistence/default-home semantics unchanged, default verification is exact
+  source classification, a compatible rollback identity captured before mutation,
+  one public deployment smoke and focused changed-surface sanity when decision-relevant.
+  Require signed-in replay only when that behavior changed or the owner asks.
+- Classify DB/API/web effects separately. Source, build and runtime are distinct
+  facts; read current runtime from live control planes. Operational steps are in
+  [deployment](docs/deployment.md); docs-only work performs no production deployment.
+- A sanitized release Issue may suffice as evidence. A docs evidence PR is not
+  required by default. Old Issue gates never propagate automatically to later releases.

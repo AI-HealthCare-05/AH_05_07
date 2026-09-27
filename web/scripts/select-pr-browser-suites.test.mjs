@@ -13,7 +13,7 @@ const browser = files => selectPrBrowserModules(files);
 const evidence = files => selectPrEvidenceModules(files);
 
 test('documentation-only changes use only the tiny policy lane', () => {
-  assert.deepEqual(browser(['docs/project-handoff.md']), ['policy']);
+  assert.deepEqual(browser(['docs/README.md']), ['policy']);
 });
 
 test('every fast-routed Journey path names focused protection selected by the fast config', () => {

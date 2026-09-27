@@ -24,7 +24,6 @@ DENY_PREFIXES: tuple[str, ...] = ()
 PROTECTED_EXACT = {
     ".github/CODEOWNERS",
     "AGENTS.md",
-    "docs/autopilot-lite.md",
     "scripts/git/autopilot_guard.py",
     "scripts/git/codex-commit",
     "Dockerfile",
@@ -36,7 +35,7 @@ PROTECTED_EXACT = {
     "wrangler.toml",
     "docs/ai-toolchain-ssot.md",
     "docs/data-contract.md",
-    "docs/deployment-ssot.md",
+    "docs/deployment.md",
     "docs/model-promotion.md",
     "docs/model-v2-product-contract.md",
 }
@@ -166,6 +165,7 @@ def self_test() -> None:
     assert classify_path("web/package-lock.json") == "protected"
     assert classify_path("scripts/ci/verify_secret_boundary.py") == "protected"
     assert classify_path("AGENTS.md") == "protected"
+    assert classify_path("docs/deployment.md") == "protected"
     assert classify_path(".github/workflows/checks.yml") == "protected"
     assert classify_path("scripts/git/autopilot_guard.py") == "protected"
     assert classify_path("web/.env.production") == "deny"

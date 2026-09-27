@@ -2,7 +2,7 @@
 
 Issue #390 · draft PR #391 · `codex/living-journey-hybrid`. This increment remains review-only. Production scene activation, merge and application deployment are not included.
 
-This document records the S02 increment and its historical validation. The current S02/S10 registration and shared runtime follow-up are in [S10 diorama](scene-s10-diorama.md) and [implementation status](scene-implementation-status.md). S02's 21 public file identities remain unchanged after the shared-source recapture.
+This document records the S02 increment and its historical validation. The S02/S10 registration is described in [S10 diorama](scene-s10-diorama.md); live implementation state is in Git and the task Issue/PR. S02's 21 public file identities remain unchanged after the shared-source recapture.
 
 ## Implementation
 

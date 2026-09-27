@@ -8,7 +8,7 @@ Accepted.
 > toolchain decision only. Model-selection, Model V2 product/release, and live
 > runtime statements in its original rationale are historical. Use
 > `docs/requirements.md`, `docs/model-v2-product-contract.md`, and
-> `docs/deployment-ssot.md` for those current concerns.
+> `docs/deployment.md` for those current concerns.
 
 ## Context
 

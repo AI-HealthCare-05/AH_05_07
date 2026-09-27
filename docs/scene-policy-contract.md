@@ -67,8 +67,8 @@ If the scene gate is missing/off, the independently qualified production
 companion remains the rollback/fallback behavior.
 
 This describes source capability, not proof of the deployed Cloudflare
-scene/UI variables. Runtime deployment identity and control-plane verification
-remain owned by [deployment SSOT](deployment-ssot.md).
+scene/UI variables. Read runtime identity from live control planes; publication
+follows [AGENTS.md](../AGENTS.md) and the [deployment runbook](deployment.md).
 
 ## S05 exception
 

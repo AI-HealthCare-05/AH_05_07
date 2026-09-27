@@ -5,7 +5,7 @@
 > release, or runtime authority. For current product requirements use
 > [requirements](requirements.md); for frozen Model V2 use the
 > [Model V2 product contract](model-v2-product-contract.md); for runtime/release
-> use the [deployment SSOT](deployment-ssot.md).
+> use the [deployment runbook](deployment.md).
 >
 > Any `current` / `현재` wording below is relative to this historical checkpoint,
 > not a statement about current canonical `main`.
