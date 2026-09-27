@@ -11,6 +11,11 @@ outranks chat memory. Historical evidence is read only for a named need;
 Git history is the archive for deleted material. Do not create workflow,
 current-state, handoff, checkpoint or authority registries.
 
+Search/index/history hits are discovery hints, not current authority. Before use,
+verify the path exists at the task ref and read that exact ref. Deleted paths,
+older-SHA hits and closed Issues supply no current gates unless the current Issue
+explicitly names them for a specific need.
+
 Canonical source: `AI-HealthCare-05/AH_05_07`. The
 `emotigom/ah-05-07-pages` deployment mirror is not development authority.
 
