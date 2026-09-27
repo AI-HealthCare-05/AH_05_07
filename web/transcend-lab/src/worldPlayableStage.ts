@@ -30,7 +30,10 @@ import {
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { rampVertices, RAMP_TRIANGLES } from "./platform/spatial/worldFixtureGeometry";
-import type { WorldSceneProfile } from "./platform/spatial/worldSceneProfile";
+import type {
+  WorldSceneDestination,
+  WorldSceneProfile,
+} from "./platform/spatial/worldSceneProfile";
 import type {
   WorldSceneOverlayMarker,
   WorldSceneOverlayPlan,
@@ -78,6 +81,56 @@ function disposeObject(root: Object3D): void {
     const skeleton = (object as unknown as { skeleton?: { dispose?: () => void } }).skeleton;
     skeleton?.dispose?.();
   });
+}
+
+function createWorldDestination(destination: WorldSceneDestination): Object3D {
+  if (destination.presentation !== "gate") {
+    const disc = new Mesh(
+      new CircleGeometry(destination.radius, 40),
+      new MeshStandardMaterial({ color: 0xf3c86a, roughness: 0.8 }),
+    );
+    disc.name = destination.id;
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.set(destination.x, 0.012, destination.z);
+    return disc;
+  }
+
+  const root = new Group();
+  root.name = destination.id;
+  root.position.set(destination.x, 0, destination.z);
+  const material = new MeshStandardMaterial({
+    color: 0xd9915f,
+    roughness: 0.72,
+    metalness: 0.02,
+  });
+  const pillarHeight = 1.55;
+  const pillarWidth = 0.18;
+  const halfSpan = Math.max(0.48, destination.radius * 0.62);
+
+  for (const x of [-halfSpan, halfSpan]) {
+    const pillar = new Mesh(
+      new BoxGeometry(pillarWidth, pillarHeight, pillarWidth),
+      material,
+    );
+    pillar.position.set(x, pillarHeight / 2, 0);
+    root.add(pillar);
+  }
+
+  const beam = new Mesh(
+    new BoxGeometry(halfSpan * 2 + pillarWidth, pillarWidth, pillarWidth),
+    material,
+  );
+  beam.position.set(0, pillarHeight, 0);
+  root.add(beam);
+
+  const threshold = new Mesh(
+    new CircleGeometry(destination.radius, 40),
+    new MeshStandardMaterial({ color: 0xf3c86a, roughness: 0.8 }),
+  );
+  threshold.rotation.x = -Math.PI / 2;
+  threshold.position.y = 0.012;
+  root.add(threshold);
+  return root;
 }
 
 function createOverlayMarkerLabel(marker: WorldSceneOverlayMarker): Sprite {
@@ -168,7 +221,9 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
   #hostPointerEvents = "";
   #hostZIndex = "";
   #destinationStatus: HTMLElement | null = null;
+  #destinationVisual: Object3D | null = null;
   #destinationNear = false;
+  #destinationFeedbackScale = 1;
   #overlayStatus: HTMLElement | null = null;
   #activeOverlayMarkerId: string | null = null;
 
@@ -200,6 +255,7 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       animationTimeSeconds: this.#mixer?.time ?? 0,
       fixtureIds: Object.freeze(this.#scene?.children.filter((child) => child.name.startsWith("fixture:")).map((child) => child.name.slice(8)) ?? []),
       destinationNear: this.#destinationNear,
+      destinationFeedbackScale: this.#destinationFeedbackScale,
       overlayMarkerCount: this.#overlayPlan?.markers.length ?? 0,
       overlaySegmentCount: this.#overlayPlan?.segments.length ?? 0,
       renderedOverlayMarkerCount: this.#scene?.children.filter(
@@ -319,13 +375,8 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       scene.add(createOverlayMarkerLabel(marker));
     }
 
-    const destination = new Mesh(
-      new CircleGeometry(this.#profile.destination.radius, 40),
-      new MeshStandardMaterial({ color: 0xf3c86a, roughness: 0.8 }),
-    );
-    destination.name = this.#profile.destination.id;
-    destination.rotation.x = -Math.PI / 2;
-    destination.position.set(this.#profile.destination.x, 0.012, this.#profile.destination.z);
+    const destination = createWorldDestination(this.#profile.destination);
+    this.#destinationVisual = destination;
     scene.add(destination);
     const status = document.createElement("p");
     status.className = "world-destination-status";
@@ -524,7 +575,9 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
     }
     this.#root = null;
     this.#destinationStatus = null;
+    this.#destinationVisual = null;
     this.#destinationNear = false;
+    this.#destinationFeedbackScale = 1;
     this.#overlayStatus = null;
     this.#activeOverlayMarkerId = null;
     this.#renderer = null;
@@ -593,6 +646,18 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
           : this.#profile.copy.destinationAway;
       }
     }
+    const destinationFeedbackScale = this.#profile.destination.presentation === "gate" && near
+      ? this.#reducedMotion
+        ? 1.04
+        : 1.04 + Math.sin(time / 140) * 0.025
+      : 1;
+    this.#destinationFeedbackScale = destinationFeedbackScale;
+    this.#destinationVisual?.scale.setScalar(destinationFeedbackScale);
+    if (this.#root) {
+      this.#root.dataset.destinationFeedback = near ? "active" : "idle";
+      this.#root.dataset.destinationFeedbackScale = destinationFeedbackScale.toFixed(4);
+    }
+
     const moving = snapshot.input.intent.magnitude > 1e-3;
     this.#switchClip(moving ? "move" : "idle");
     const delta = this.#previousFrameTime === null ? 0 : Math.min((time - this.#previousFrameTime) / 1000, 0.05);

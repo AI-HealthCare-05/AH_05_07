@@ -15,6 +15,7 @@ import {
   livingWeekSegments,
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
 import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
+import { E1_TODAY_GATE_ID } from "../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/w4LivingWeekWorldSceneProfile";
 import { W4_LIVING_WEEK_WORLD_LIMIT_METRES } from "../transcend-lab/src/platform/spatial/w4LivingWeekPlayableWorldSession";
 import type { WorldSceneOverlayPlan } from "../transcend-lab/src/platform/spatial/worldSceneOverlayPlan";
@@ -128,6 +129,41 @@ test("E1 preview preserves classic Today and exposes retry when the world cannot
 
   await expect(page.getByTestId("world-playable-stage")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("living-city-entry-status")).toHaveText("Living City ready.");
+
+  const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
+  expect(stopped).toMatchObject({
+    listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
+  });
+});
+
+test("E1 Today Gate is a real 3D destination with proximity motion feedback", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+
+  await page.goto("/?experience=e1");
+
+  const stage = page.getByTestId("world-playable-stage");
+  const status = page.getByTestId("world-destination-status");
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+  await expect(status).toHaveAttribute("data-destination-id", E1_TODAY_GATE_ID);
+  await expect(status).toHaveText("Today Gate is ahead. Walk toward it to activate the entry.");
+
+  await page.evaluate(() => {
+    const api = window.__TRANSCEND_LAB__!;
+    api.playableCameraNudge(-api.playableDiagnostics()!.yawRadians);
+  });
+  await page.keyboard.down("w");
+  await expect(stage).toHaveAttribute("data-destination-near", "true", { timeout: 10_000 });
+  await page.keyboard.up("w");
+
+  await expect(status).toHaveText("Today Gate active. Open classic Today when ready.");
+  await expect(stage).toHaveAttribute("data-destination-feedback", "active");
+  await expect.poll(async () => (
+    await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!.destinationFeedbackScale)
+  )).toBeGreaterThan(1.01);
+  await expect(page.getByTestId("open-classic-today")).toBeVisible();
 
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(stopped).toMatchObject({

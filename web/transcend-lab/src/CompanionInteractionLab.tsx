@@ -20,6 +20,7 @@ import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
 import { LIVING_WEEK_SCENE_PLAN } from "./platform/spatial/livingWeekScenePlan";
 import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "./platform/spatial/w4LivingWeekWorldSceneProfile";
+import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE } from "./platform/spatial/e1LivingCityEntrySceneProfile";
 import { createW4LivingWeekPlayableWorldSession } from "./platform/spatial/w4LivingWeekPlayableWorldSession";
 import { createW2SyntheticPlayableWorldSession } from "./platform/spatial/w2SyntheticPlayableWorldSession";
 
@@ -45,11 +46,13 @@ export function CompanionInteractionLab() {
     const livingWeek = e1Preview || params.get("worldTrack") === "living-week";
     runtimeRef.current = new TranscendLabRuntime({
       forceRendererFailure: params.get("rendererFailure") === "1",
-      playableSceneProfile: livingWeek
-        ? W4_LIVING_WEEK_WORLD_SCENE_PROFILE
-        : params.get("sceneProfile") === "synthetic"
-          ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
-          : undefined,
+      playableSceneProfile: e1Preview
+        ? E1_LIVING_CITY_ENTRY_SCENE_PROFILE
+        : livingWeek
+          ? W4_LIVING_WEEK_WORLD_SCENE_PROFILE
+          : params.get("sceneProfile") === "synthetic"
+            ? W2_SYNTHETIC_WORLD_SCENE_PROFILE
+            : undefined,
       playableWorldSession: livingWeek
         ? createW4LivingWeekPlayableWorldSession()
         : params.get("worldProfile") === "synthetic"
