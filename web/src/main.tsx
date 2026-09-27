@@ -9,6 +9,7 @@ import "./components/frontend-assets.css";
 import "./modern-palette.css";
 import "./theme-presets.css";
 import { applyThemePreference, readThemePreference } from "./ui/themePreference";
+import { isPlaceableRoute } from "./placeable/contract";
 
 applyThemePreference(readThemePreference());
 
@@ -46,14 +47,15 @@ window.addEventListener("vite:preloadError", (event) => {
 
 async function mountApplication() {
   const guestJourney = new URLSearchParams(window.location.search).get("guest") === "1";
-  const { default: Root } = guestJourney
+  const placeable = isPlaceableRoute(window.location.search, window.location.hash);
+  const { default: Root } = placeable
+    ? await import("./placeable/ProductPlaceableEntry")
+    : guestJourney
     ? await import("./GuestJourneySandbox")
     : await import("./App");
 
   createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <Root />
-    </StrictMode>,
+    placeable ? <Root /> : <StrictMode><Root /></StrictMode>,
   );
 }
 
