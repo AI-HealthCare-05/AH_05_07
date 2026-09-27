@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Raycaster, Vector2, WebGLRenderer } from "three";
+import { PCFShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { GardenScene } from "./gardenScene";
@@ -38,6 +38,9 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       actor = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
       actorRef.current = actor; scene.actor.add(actor.root);
       renderer = new WebGLRenderer({ antialias: true, alpha: false });
+      renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap;
+      // Static scenery casts the daylight shadows; the moving companion has a contact shade.
+      renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       const canvas = renderer.domElement;
       canvas.tabIndex = 0; canvas.dataset.testid = "garden-canvas";
@@ -93,7 +96,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
         <button onClick={() => setAttempt((value) => value + 1)}>Retry Garden Nook</button>
       </div>}
       <button ref={pad} type="button" className="placeable-walk-pad" disabled={error}
-        aria-label="Drag to walk in the garden, or use arrow keys">↟<br />Walk<br />↞ · ↠</button>
+        aria-label="Drag to walk in the garden, or use arrow keys"><span aria-hidden="true">↟</span><span>Walk</span><span aria-hidden="true">↞ · ↠</span></button>
     </div>
     <div className="garden-actions">
       <button type="button" disabled={error || near || pose === "rest"}
@@ -106,8 +109,9 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       : pose === "rest" ? "정자 앞에서 동반자와 잠깐 쉬고 있어요."
       : moments ? "동반자와 잠깐 쉬었어요. 원할 때 다시 정원을 둘러보세요."
       : near ? "정자에 도착했어요. 동반자와 잠깐 쉬어 볼까요?" : "짧은 정원 길을 따라 정자로 와 보세요."}</p>
+    <details className="garden-help"><summary>이동과 쉬기 안내</summary>
     <p id="garden-help" className="placeable-world-help">방향키 또는 W A S D로 이동하거나 Walk 패드를 드래그하세요.
       정자 앞으로 이동하기 버튼도 이용할 수 있어요. 정자 앞에서 동반자나 정자를 탭하거나, 쉬기 버튼을 선택하세요.
-      쉬는 동안에는 제자리에 머물러요. 이번 방문에서만 이어지는 작은 놀이예요.</p>
+      쉬는 동안에는 제자리에 머물러요. 이번 방문에서만 이어지는 작은 놀이예요.</p></details>
   </section>;
 }
