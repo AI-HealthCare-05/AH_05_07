@@ -1,5 +1,5 @@
 import { LivingChoiceLink } from "./ui/LivingChoiceLink";
-import { MySpaceReturn } from "./ui/SpaceReturnNavigation";
+import { MySpaceEntry, MySpaceReturn } from "./ui/SpaceReturnNavigation";
 import { readMySpaceReturn } from "./ui/mySpaceReturn";
 import { resolvePresentationPolicy } from "./ui/presentationPolicy";
 import type { FormEvent } from "react";
@@ -1215,6 +1215,15 @@ function App() {
         : requestedScreen === "S06" && !activeChallenge
           ? truthfulFallback
         : automaticallyEmpty ? "S12" : requestedScreen;
+  // Destination intent only. ProductPlaceableEntry owns verification and reads.
+  // A bounded return context preserves an explicit browser-only visit.
+  const returnSpace = readMySpaceReturn(window.location.search);
+  const mySpaceEntry = session && !evidenceMode && requestedScreen === "S02"
+    && (activeScreen === "S02" || activeScreen === "S12")
+    && !readNavigationDisabled && !signOutPending && !accountDeletionOpen
+    && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload
+    ? { href: `?experience=e2&view=${returnSpace?.view ?? "3d"}&storage=${returnSpace?.storage ?? "account"}`,
+      returning: Boolean(returnSpace), browserOnly: returnSpace?.storage === "browser" } : undefined;
   const blockingLoading = windowState === "loading" && requiresObservationWindow(activeScreen);
   const companionContext: CompanionSelectionContext | undefined = activeScreen === "S05" && confirmedSave
     ? "save_success"
@@ -1550,22 +1559,23 @@ function App() {
               </aside>
             </>
           )}
+          {mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}
           <div className="empty-garden" aria-hidden="true"><i /><i /><i /></div>
         </Scene>
       );
-      return <Scene id="S12" {...journeyCopy.S12} tone="subtle" className="state-scene surface"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions action-group"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div></Scene>;
+      return <Scene id="S12" {...journeyCopy.S12} tone="subtle" className="state-scene surface"><div className="empty-garden" aria-hidden="true"><i /><i /><i /></div><div className="split-actions action-group"><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></div>{mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}</Scene>;
     }
 
     if (activeScreen === "S02") {
       const choiceLink = windowState === "ready" && !controlsDisabled && !accountDeletionOpen
         && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload
         ? <LivingChoiceLink actionId={activeChallenge?.action_id} search={window.location.search} /> : null;
-      if (presentation.journey) return <JourneyToday key={`${today}:${endOn}`} staticLandscape={s02SceneOwnsDecoration ? false : presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset}>
+      if (presentation.journey) return <JourneyToday mySpaceEntry={mySpaceEntry} key={`${today}:${endOn}`} staticLandscape={s02SceneOwnsDecoration ? false : presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset}>
         {renderCycleActions()}
         {choiceLink}
         {previousCycleEnd && !activeChallengeEnded && <button type="button" className="secondary" onClick={() => openCycleReview(previousCycleEnd)}>종료된 7일 돌아보기</button>}
       </JourneyToday>;
-      return <Scene id="S02" {...journeyCopy.S02} tone="base" className="home-scene">{renderCycleActions()}{choiceLink}<div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayBloodPressureStatus}</strong><strong>{activeChallengeEnded ? "챌린지 종료" : activeChallenge ? challengeLabel(activeChallenge.action_id) : "챌린지 미선택"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav><VisualStage screen="S02" calendarDate={today} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
+      return <Scene id="S02" {...journeyCopy.S02} tone="base" className="home-scene">{renderCycleActions()}{choiceLink}<div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayBloodPressureStatus}</strong><strong>{activeChallengeEnded ? "챌린지 종료" : activeChallenge ? challengeLabel(activeChallenge.action_id) : "챌린지 미선택"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav>{mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}<VisualStage screen="S02" calendarDate={today} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
     }
 
     if (activeScreen === "S03") {
@@ -2065,7 +2075,7 @@ function App() {
   return (
     <>
     <div data-living-week-app hidden={reportVisible}>
-    {requestedScreen === "S02" && !readNavigationDisabled && !accountDeletionOpen
+    {!mySpaceEntry && requestedScreen === "S02" && !readNavigationDisabled && !accountDeletionOpen
       && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload && <MySpaceReturn />}
     <SceneShell
       staticJourneyUi={presentation.staticLandscape}

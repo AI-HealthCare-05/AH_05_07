@@ -30,6 +30,10 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
       if (/home-window-garden-v2\.webp|\/scene-review\/s02\/v1\/.*\.webp(?:\?|$)/.test(request.url())) heroAssetRequests.push(request.url());
     });
     const posts = await candidate(page);
+    const mySpace = page.getByRole('link', { name: '내 공간으로 가기' });
+    await expect(mySpace).toBeVisible();
+    await expect(mySpace).toHaveAttribute('href', '?experience=e2&view=3d&storage=account');
+    expect((await mySpace.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     const hero = page.locator('.today-hero');
     const sceneFrame = page.locator('[data-scene-reserved-box="true"]');
     const primary = page.locator('.home-lead button');
@@ -64,7 +68,14 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     if (width === 320 && height === 568) {
       const legendBox = await page.locator('.home-trail-legend').boundingBox();
       expect(legendBox).not.toBeNull();
-      expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(navBox.y);
+      // The first-class destination follows the health CTA in this short viewport.
+      // Recent-history detail remains reachable by scrolling below those entries.
+      const entryBox = (await mySpace.boundingBox())!;
+      expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(entryBox.y);
+      expect(entryBox.y + entryBox.height).toBeLessThanOrEqual(navBox.y);
+      await page.locator('.home-trail-legend').scrollIntoViewIfNeeded();
+      await expect(page.locator('.home-trail-legend')).toBeInViewport();
+      await page.evaluate(() => window.scrollTo(0, 0));
       await expect(page.locator('.journey-view-frame')).toBeHidden();
       await expect(page.locator('.journey-view-caption')).toBeHidden();
     } else {

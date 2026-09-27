@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { UiIcon } from './UiIcon';
+import { MySpaceEntry, type MySpaceEntryDisplay } from '../ui/SpaceReturnNavigation';
 import { UiObject } from './UiObject';
 import { StaticJourneyLandscape } from './StaticSceneFallback';
 import { VisualStage } from './VisualStage';
@@ -15,6 +16,7 @@ import type { CompanionAsset } from '../ui/companionAssets.generated';
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
 type JourneyTodayProps = {
+  mySpaceEntry?: MySpaceEntryDisplay;
   staticLandscape: boolean;
   today: string;
   days: TrailDay[];
@@ -28,7 +30,7 @@ type JourneyTodayProps = {
 };
 
 /** The selection is disposable UI state. Facts and action destinations still belong to App. */
-export function JourneyToday({ staticLandscape, today, days, lead, secondary, freshness, children, onNavigate, companionSpecies, companionAsset }: JourneyTodayProps) {
+export function JourneyToday({ mySpaceEntry, staticLandscape, today, days, lead, secondary, freshness, children, onNavigate, companionSpecies, companionAsset }: JourneyTodayProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -70,6 +72,7 @@ export function JourneyToday({ staticLandscape, today, days, lead, secondary, fr
             </div>
             <button type="button" className="ui-control" aria-describedby="home-lead-support" onClick={() => onNavigate(lead.screen)}>{lead.action}<UiIcon name="arrow-right" size={20} /></button>
           </section>
+          {mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}
         </div>
         <figure className="journey-view today-showcase-scene" data-preview-date={landscapeDate} data-previewing={previewing} data-showcase-art-owner="scene">
           <div className="journey-view-label">
