@@ -73,3 +73,11 @@
 .placeable-twilight #twilight-help { flex-basis: 100%; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); margin-top: 0; }
 [data-lighting=twilight] .placeable-world-label { background: #253359e8; color: #f5ebd5; }
 [data-lighting=twilight] .placeable-world-label:first-of-type { background: #f4dfb8; color: #30294e; }
+
+.placeable-garden-path { border-top: 1px solid var(--sk7-border); padding-block: var(--sk7-space-lg); display: flex; align-items: center; flex-wrap: wrap; gap: var(--sk7-space-md); }
+.placeable-garden-path h2 { font-size: var(--sk7-type-body); margin: 0; }
+.placeable-garden-path p { font-size: var(--sk7-type-label); }
+.garden-stage { max-width: 900px; margin: auto; }
+.garden-world-host { aspect-ratio: 1.8; }
+.garden-actions { display: flex; flex-wrap: wrap; gap: var(--sk7-space-sm); margin-top: var(--sk7-space-lg); }
+@media (max-width: 760px) { .garden-world-host { aspect-ratio: .95; } .garden-experience .placeable-header { margin-bottom: 18px; } }

@@ -10,6 +10,14 @@ import { PlaceableAudio, type AudioStatus } from "./feedback";
 import type { PlaceablePersistence } from "./persistence";
 
 const PlaceableWorld = lazy(() => import("./PlaceableWorld"));
+const GardenNook = lazy(() => import("./GardenNook"));
+class GardenBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    return this.state.failed ? <p role="alert">Garden Nook을 열 수 없어요. 위의 My Space 복귀 또는 Classic Today를 이용해 주세요.</p> : this.props.children;
+  }
+}
 class WorldBoundary extends Component<{ children: ReactNode; classicHref: string }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
@@ -100,6 +108,15 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const alive = useRef(true);
   const chooseRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
+  // No URL destination, visit flag, storage write or account identity enters the scene.
+  const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
+  const gardenHeading = useRef<HTMLHeadingElement>(null), gardenEntry = useRef<HTMLButtonElement>(null);
+  const changedSpace = useRef(false);
+  useEffect(() => {
+    if (!changedSpace.current) return;
+    if (space === "garden-nook") gardenHeading.current?.focus(); else gardenEntry.current?.focus();
+  }, [space]);
   useEffect(() => {
     alive.current = true;
     void controller.load();
@@ -151,6 +168,20 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     await controller.confirm();
     if (alive.current) statusRef.current?.focus({ preventScroll: true });
   }
+  if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
+    <header className="placeable-header">
+      <div><p className="placeable-eyebrow">SK7 · Living City · Garden Path</p>
+        <h1 ref={gardenHeading} tabIndex={-1}>Garden Nook</h1><p>정자 아래, 동반자와 머무는 작은 정원.</p></div>
+      <nav aria-label="Garden navigation">
+        <button onClick={() => setSpace("plaza")}>Return to My Space</button>
+        <a href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}>Classic Today ↗</a>
+      </nav>
+    </header>
+    <div className="garden-stage"><GardenBoundary><Suspense fallback={<p role="status">정원을 열고 있어요… 위의 복귀 경로는 바로 이용할 수 있어요.</p>}>
+      <GardenNook companion={companion} />
+    </Suspense></GardenBoundary></div>
+  </main>;
+
   return <main className={`placeable-experience ${world ? "placeable-world-view" : ""}`} data-testid="placeable-experience"
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"}>
     <header className="placeable-header">
@@ -179,6 +210,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}
         {!keepsake && choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
         <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "A plaza breeze. Your pinwheel answers." : "A little breeze, a place of your own."}</p>
+        <div className="placeable-garden-path">
+          <div><p className="placeable-eyebrow">Garden Path</p><h2>정원으로 이어지는 작은 길</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
+          <button ref={gardenEntry} type="button" disabled={preview || Boolean(state.pending)}
+            onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>Enter Garden Nook →</button>
+          {(preview || state.pending) && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
+        </div>
       </section>
       <section className="placeable-controls" aria-label="My Space controls">
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"

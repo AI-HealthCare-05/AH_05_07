@@ -8,7 +8,7 @@ import { companionClips } from "../ui/companion";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { validateMySpaceCompanion } from "../ui/mySpaceCompanion";
 
-export type CompanionPose = "loading" | "idle" | "greet" | "neutral" | "unavailable";
+export type CompanionPose = "loading" | "idle" | "greet" | "rest" | "neutral" | "unavailable";
 type Load = (url: string, loaded: (gltf: GLTF) => void, failed: () => void) => void;
 const load: Load = (url, loaded, failed) => { new GLTFLoader().load(url, loaded, undefined, failed); };
 
@@ -31,6 +31,7 @@ export class MySpaceCompanionActor {
   #mixer: AnimationMixer | null = null;
   #idle: AnimationAction | null = null;
   #greet: AnimationAction | null = null;
+  #rest: AnimationAction | null = null;
   #reduced = false;
   #disposed = false;
   #started = false;
@@ -75,6 +76,7 @@ export class MySpaceCompanionActor {
           this.#mixer = new AnimationMixer(gltf.scene);
           this.#idle = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "idle")!);
           this.#greet = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "greet")!);
+          this.#rest = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "rest")!);
           this.#mixer.addEventListener("finished", this.#finished);
           this.setReducedMotion(this.#reduced);
         } catch {
@@ -88,7 +90,7 @@ export class MySpaceCompanionActor {
   }
 
   #finished = (event: { action: AnimationAction }) => {
-    if (!this.#disposed && event.action === this.#greet) this.#playIdle();
+    if (!this.#disposed && (event.action === this.#greet || event.action === this.#rest)) this.#playIdle();
   };
   #playIdle() {
     this.#mixer?.stopAllAction();
@@ -112,6 +114,16 @@ export class MySpaceCompanionActor {
     this.#set("greet");
     return true;
   }
+  rest(): boolean {
+    if (this.#disposed || !this.#mixer || !["idle", "neutral"].includes(this.pose)) return false;
+    if (this.#reduced) return true;
+    this.#mixer.stopAllAction();
+    // One authored cycle, capped at four seconds even for a longer registered clip.
+    this.#rest!.reset().setLoop(LoopOnce, 1).setDuration(Math.min(4, this.#rest!.getClip().duration)).play();
+    this.#rest!.clampWhenFinished = true;
+    this.#set("rest");
+    return true;
+  }
   step(seconds: number) {
     if (!this.#disposed && !this.#reduced) this.#mixer?.update(Math.max(0, Math.min(seconds, 0.05)));
   }
@@ -119,7 +131,7 @@ export class MySpaceCompanionActor {
     this.#mixer?.removeEventListener("finished", this.#finished);
     this.#mixer?.stopAllAction();
     if (this.#model) this.#mixer?.uncacheRoot(this.#model);
-    this.#mixer = null; this.#idle = null; this.#greet = null; this.#model = null;
+    this.#mixer = null; this.#idle = null; this.#greet = null; this.#rest = null; this.#model = null;
   }
   dispose(renderer?: WebGLRenderer) {
     if (this.#disposed) return;

@@ -4,6 +4,7 @@ import { STORAGE_KEY } from "../src/placeable/persistence";
 import { PlaceableScene } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
+import { GardenScene } from "../src/placeable/gardenScene";
 
 const browserRoute = "/?experience=e2&view=classic&storage=browser";
 const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
@@ -757,4 +758,174 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
   await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
   await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
+});
+
+// E7 inherits nightly/manual core discovery through this existing spec; no new CI gate.
+const enterGarden = (page: Page) => page.getByRole("button", { name: "Enter Garden Nook" });
+const returnGarden = (page: Page) => page.getByRole("button", { name: "Return to My Space" });
+const gardenRest = (page: Page) => page.getByRole("button", { name: "여기서 잠깐 쉬기" });
+async function gardenCompanionPoint(page: Page) {
+  const canvas = page.getByTestId("garden-canvas"); await canvas.scrollIntoViewIfNeeded();
+  const rect = (await canvas.boundingBox())!, scene = new GardenScene(); scene.resize(rect.width / rect.height); scene.approach();
+  const point = new Vector3(0, 0.65, 0.4).project(scene.camera); scene.dispose();
+  return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 };
+}
+
+test("E7 desktop explicit entry, actual keyboard walking, pointer rest and return preserve browser cosmetics without writes", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const errors: string[] = [], requests: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "rabbit"));
+  await page.goto(companionRoute + "&living_choice=sleep-routine");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click(); await confirm(page);
+  await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page);
+  const before = await readLocal(page);
+  await page.evaluate(() => {
+    Object.assign(window, { e7Writes: 0 }); const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) { (window as unknown as { e7Writes: number }).e7Writes++; original.call(this, key, value); };
+  });
+  page.on("request", (request) => { if (!["GET", "HEAD"].includes(request.method())) requests.push(request.url()); });
+  await enterGarden(page).focus(); await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Garden Nook", exact: true })).toBeFocused();
+  await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
+  const garden = page.getByTestId("garden-nook"), canvas = page.getByTestId("garden-canvas");
+  await expect(garden).toHaveAttribute("data-companion", "rabbit");
+  await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  await expect(gardenRest(page)).toBeDisabled();
+  await canvas.focus(); await page.keyboard.down("ArrowRight"); await page.waitForTimeout(400); await page.keyboard.up("ArrowRight");
+  await page.keyboard.down("ArrowUp"); await expect(garden).toHaveAttribute("data-at-pavilion", "true"); await page.keyboard.up("ArrowUp");
+  await page.keyboard.press("Enter"); await expect(garden).toHaveAttribute("data-companion-pose", "rest");
+  await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 6000 });
+  // Recenter by walking away and taking the accessible approach, then hit the actual GLB.
+  await canvas.focus(); await page.keyboard.down("ArrowDown"); await expect(garden).toHaveAttribute("data-at-pavilion", "false"); await page.keyboard.up("ArrowDown");
+  await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click();
+  const point = await gardenCompanionPoint(page); await page.mouse.click(point.x, point.y);
+  await expect(garden).toHaveAttribute("data-companion-pose", "rest");
+  await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 6000 });
+  await canvas.screenshot({ path: test.info().outputPath("e7-garden-desktop.png") });
+  await returnGarden(page).click(); await expect(enterGarden(page)).toBeFocused();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-color", "coral");
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-choice", "sleep-routine");
+  expect(await readLocal(page)).toEqual(before); expect(requests).toEqual([]); expect(errors).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { e7Writes: number }).e7Writes)).toBe(0);
+});
+
+test("E7 mobile touch walking, rest, live reduced motion, 320px framing and semantic return", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await page.goto(companionRoute); await enterGarden(page).tap();
+    const garden = page.getByTestId("garden-nook");
+    await expect(garden).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
+    const pad = page.getByRole("button", { name: "Drag to walk in the garden" });
+    const rect = (await pad.boundingBox())!;
+    const session = await context.newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }] });
+    await session.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: rect.x + rect.width * 0.7, y: rect.y + 1 }] });
+    await expect(garden).toHaveAttribute("data-at-pavilion", "true");
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await gardenRest(page).tap(); await expect(page.getByTestId("garden-response")).toContainText("잠깐 쉬었어요");
+    await expect(garden).toHaveAttribute("data-companion-pose", "neutral");
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.getByTestId("garden-canvas").screenshot({ path: test.info().outputPath(`e7-garden-mobile-${width}.png`) });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(returnGarden(page)).toBeVisible();
+    }
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await gardenRest(page).tap(); await expect(garden).toHaveAttribute("data-companion-pose", "rest");
+    await page.emulateMedia({ reducedMotion: "reduce" }); await expect(garden).toHaveAttribute("data-companion-pose", "neutral");
+    await returnGarden(page).tap(); expect(await readLocal(page)).toBeNull();
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-reduced-motion", "true");
+  } finally { await context.close(); }
+});
+
+for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E7 account ${behavior} retains revision, browser separation and pending guard`, async ({ page }) => {
+  const account = await accountRoute(page, behavior, false);
+  await page.goto("/?experience=e2&view=classic&storage=account&living_choice=walk-10-minutes");
+  await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
+  await expect(enterGarden(page)).toBeDisabled();
+  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
+  if (behavior === "normal") { await page.getByRole("button", { name: "이 문양을 내 공간에 남기기" }).click(); await confirm(page); }
+  const writes = account.puts, reads = account.reads, revision = account.revision, before = await readLocal(page);
+  if (behavior === "normal") {
+    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await returnGarden(page).click();
+    await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
+    await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "plaza-ribbon-v1");
+  } else await expect(enterGarden(page)).toBeDisabled();
+  expect(account.puts).toBe(writes); expect(account.reads).toBe(reads); expect(account.revision).toBe(revision);
+  expect(await readLocal(page)).toEqual(before);
+});
+
+test("E7 companion failure and real context loss isolate the garden, retry and return without persistence error", async ({ page }) => {
+  await page.route("**/companion/v1/**", (route) => route.abort("failed"));
+  await page.goto(companionRoute); await enterGarden(page).click();
+  const garden = page.getByTestId("garden-nook"), canvas = page.getByTestId("garden-canvas");
+  await expect(garden).toHaveAttribute("data-companion-pose", "unavailable");
+  await expect(canvas).toBeVisible(); await expect(gardenRest(page)).toBeDisabled();
+  await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click();
+  await expect(garden).toHaveAttribute("data-at-pavilion", "true");
+  await canvas.evaluate((canvas: HTMLCanvasElement) => canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
+  await expect(page.getByRole("alert")).toContainText("Garden Nook의 3D 공간"); await expect(canvas).toHaveCount(0);
+  await expect(returnGarden(page)).toBeEnabled(); await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("href", "?screen=S02&return_space=3d-browser");
+  await page.getByRole("button", { name: "Retry Garden Nook" }).click(); await expect(canvas).toBeVisible();
+  await expect(garden).toHaveAttribute("data-at-pavilion", "false");
+  await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  expect(await readLocal(page)).toBeNull();
+});
+
+test("E7 repeated scene teardown leaves one renderer, one RAF and no stale rest", async ({ page }) => {
+  await page.addInitScript(() => {
+    const pending = new Set<number>(), request = window.requestAnimationFrame, cancel = window.cancelAnimationFrame;
+    Object.assign(window, { e7Rafs: pending });
+    window.requestAnimationFrame = (callback) => {
+      const id = request.call(window, (time) => { pending.delete(id); callback(time); }); pending.add(id); return id;
+    };
+    window.cancelAnimationFrame = (id) => { pending.delete(id); cancel.call(window, id); };
+  });
+  await page.goto(companionRoute);
+  for (let visit = 0; visit < 3; visit++) {
+    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await expect(page.locator("canvas")).toHaveCount(1);
+    if (visit === 1) {
+      await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+      await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click(); await gardenRest(page).click();
+    }
+    await returnGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toHaveCount(0);
+    await expect(page.getByTestId("placeable-world-canvas")).toBeVisible(); await expect(page.locator("canvas")).toHaveCount(1);
+    expect(await page.evaluate(() => (window as unknown as { e7Rafs: Set<number> }).e7Rafs.size)).toBe(1);
+  }
+  await enterGarden(page).click(); await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-at-pavilion", "false");
+  expect(await readLocal(page)).toBeNull();
+});
+
+test("E7 lazy chunk and renderer startup failure keep independent semantic exits", async ({ page }) => {
+  const chunks: string[] = [];
+  page.on("request", (request) => { if (/GardenNook-.*\.js/.test(request.url())) chunks.push(request.url()); });
+  await page.goto(browserRoute);
+  await expect(enterGarden(page)).toBeVisible(); expect(chunks).toEqual([]);
+  await page.route("**/GardenNook-*.js", (route) => route.abort("failed"));
+  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("Garden Nook을 열 수 없어요");
+  expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).toBeNull();
+  await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser");
+  await returnGarden(page).click(); await expect(page.getByTestId("classic-plaza")).toBeVisible();
+  await page.unroute("**/GardenNook-*.js"); await page.reload();
+  await page.evaluate(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind: string, ...args: unknown[]) {
+      return kind === "webgl2" ? null : original.call(this, kind, ...args);
+    } as typeof original;
+  });
+  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("Garden Nook의 3D 공간");
+  await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  expect(await readLocal(page)).toBeNull();
+  // Outside this optional visit, the existing one-shot stale-bundle recovery still owns errors.
+  await Promise.all([page.waitForEvent("framenavigated"), page.evaluate(() => {
+    window.dispatchEvent(new Event("vite:preloadError", { cancelable: true }));
+  })]);
+  expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).not.toBeNull();
 });
