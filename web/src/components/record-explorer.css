@@ -1,15 +1,17 @@
 /* S08/S09 share the canonical UI foundation; this file owns only record layout. */
 .scene.record-explorer-scene[data-scene="S08"] {
+  --sk7-accent: var(--sk7-accent-active);
+  --sk7-focus: var(--sk7-accent-active);
   align-content: start;
   min-height: 0;
-  max-width: 58rem;
+  max-width: 68rem;
   margin-inline: auto;
-  gap: var(--sk7-space-lg);
+  gap: var(--sk7-space-xl);
   overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
   box-shadow: none;
 }
 
@@ -19,11 +21,27 @@
   display: none;
 }
 
+.scene.record-explorer-scene[data-scene="S08"] > .screen-header {
+  gap: var(--sk7-space-sm);
+  max-width: 32rem;
+}
+
+.scene.record-explorer-scene[data-scene="S08"] > .screen-header .eyebrow {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-medium);
+  letter-spacing: .04em;
+}
+
 .scene.record-explorer-scene[data-scene="S08"] .scene-copy h1 {
   width: fit-content;
-  max-width: 100%;
-  font-size: var(--sk7-type-display);
-  line-height: var(--sk7-leading-tight);
+  max-width: 11em;
+  color: var(--sk7-text);
+  font-size: clamp(2.625rem, 4.2vw, 3.75rem);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: -.055em;
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .scene.record-explorer-scene .scene-toolbar {
@@ -63,10 +81,10 @@
   align-items: center;
   gap: var(--sk7-space-xs);
   border: 0;
-  border-bottom: 1px solid var(--sk7-border);
+  border-block: 1px solid var(--sk7-border);
   border-radius: 0;
   background: transparent;
-  padding: 0 0 var(--sk7-space-sm);
+  padding: var(--sk7-space-md) 0;
   box-shadow: none;
 }
 
@@ -110,14 +128,14 @@
 .record-explorer {
   display: grid;
   min-width: 0;
-  gap: var(--sk7-space-xl);
+  gap: var(--sk7-space-2xl);
   color: var(--sk7-text);
 }
 
 .record-explorer-overview {
   gap: var(--sk7-space-xs);
-  max-width: none;
-  padding-bottom: var(--sk7-space-sm);
+  max-width: 42rem;
+  padding: 0 0 var(--sk7-space-lg);
   border-bottom: 1px solid var(--sk7-border);
   color: var(--sk7-text-muted);
   line-height: var(--sk7-leading-body);
@@ -132,8 +150,10 @@
 
 .record-explorer-overview strong {
   color: var(--sk7-text);
-  font-size: var(--sk7-type-body);
+  font-size: var(--sk7-type-title);
   font-weight: var(--sk7-weight-bold);
+  letter-spacing: -.035em;
+  line-height: var(--sk7-leading-tight);
 }
 
 .record-explorer-overview span,
@@ -175,10 +195,10 @@
   min-width: var(--sk7-target-min);
   min-height: var(--sk7-target-min);
   max-width: 100%;
-  border: 1px solid var(--sk7-border-strong);
+  border: 1px solid transparent;
   border-radius: var(--sk7-radius-control);
-  background: var(--sk7-surface-control);
-  color: var(--sk7-text);
+  background: transparent;
+  color: var(--sk7-text-muted);
   padding: var(--sk7-space-xs) var(--sk7-space-sm);
   font-size: var(--sk7-type-label);
   line-height: var(--sk7-leading-body);
@@ -188,14 +208,14 @@
 }
 
 .record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
-  border-color: var(--sk7-accent);
+  border-color: transparent;
   background: var(--sk7-accent-soft);
   color: var(--sk7-accent-hover);
-  box-shadow: inset 0 0 0 1px var(--sk7-accent);
+  box-shadow: none;
 }
 
 .record-explorer .record-explorer-buttons > button:hover:not(:disabled) {
-  border-color: var(--sk7-accent);
+  border-color: transparent;
   background: var(--sk7-surface-subtle);
   color: var(--sk7-accent-hover);
   box-shadow: none;
@@ -286,8 +306,10 @@
   margin: 0;
   padding: 0 var(--sk7-space-sm) 0 var(--sk7-space-md);
   color: var(--sk7-text);
-  font-size: var(--sk7-type-body);
-  line-height: var(--sk7-leading-body);
+  font-size: var(--sk7-type-subtitle);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: -.025em;
+  line-height: var(--sk7-leading-tight);
 }
 
 .record-explorer-day > h2::before {
@@ -353,7 +375,7 @@
 .record-explorer-row > span { min-width: 0; }
 .record-explorer-type { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
 .record-explorer-facts { display: grid; gap: var(--sk7-space-2xs); }
-.record-explorer-facts > strong { font-size: var(--sk7-type-body); font-weight: var(--sk7-weight-bold); font-variant-numeric: tabular-nums; }
+.record-explorer-facts > strong { font-size: var(--sk7-type-subtitle); font-weight: var(--sk7-weight-bold); letter-spacing: -.02em; line-height: var(--sk7-leading-tight); font-variant-numeric: tabular-nums; }
 .record-explorer-facts > span,
 .record-explorer-access { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
 .record-explorer-open { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
@@ -403,16 +425,18 @@
 }
 
 .record-explorer-detail-context {
-  max-width: none;
-  padding-bottom: var(--sk7-space-sm);
+  max-width: 42rem;
+  gap: var(--sk7-space-xs);
+  padding: var(--sk7-space-md) 0 var(--sk7-space-lg);
   border-bottom: 1px solid var(--sk7-border);
 }
 
 .record-explorer-detail-selection {
   color: var(--sk7-text);
-  font-size: var(--sk7-type-body);
+  font-size: var(--sk7-type-title);
   font-weight: var(--sk7-weight-bold);
-  line-height: var(--sk7-leading-body);
+  letter-spacing: -.035em;
+  line-height: var(--sk7-leading-tight);
 }
 
 .record-explorer-detail-period {
@@ -423,16 +447,18 @@
 
 /* S09 gives the selected fact hierarchy without adding another card surface. */
 .scene.journey-record-detail[data-scene="S09"] {
+  --sk7-accent: var(--sk7-accent-active);
+  --sk7-focus: var(--sk7-accent-active);
   align-content: start;
   min-height: 0;
-  max-width: 46rem;
+  max-width: 58rem;
   margin-inline: auto;
-  gap: var(--sk7-space-lg);
+  gap: var(--sk7-space-xl);
   overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
   box-shadow: none;
 }
 
@@ -442,16 +468,36 @@
   display: none;
 }
 
+.journey-record-detail > .screen-header {
+  gap: var(--sk7-space-sm);
+  max-width: 32rem;
+}
+
+.journey-record-detail > .screen-header .eyebrow {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-medium);
+  letter-spacing: .04em;
+}
+
+.journey-record-detail > .screen-header h1 {
+  max-width: 11em;
+  color: var(--sk7-text);
+  font-size: clamp(2.625rem, 4.2vw, 3.75rem);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: -.055em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
 .journey-record-detail .record-detail {
   display: grid;
-  gap: var(--sk7-space-md);
+  gap: var(--sk7-space-xl);
   min-width: 0;
   border: 0;
-  border-top: 1px solid var(--sk7-border);
-  border-bottom: 1px solid var(--sk7-border);
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-lg) 0;
+  padding: 0;
   box-shadow: none;
 }
 
@@ -466,23 +512,26 @@
 
 .journey-record-detail .record-detail-facts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   margin: 0;
-  border-top: 1px solid var(--sk7-border);
+  border-block: 1px solid var(--sk7-border);
 }
 
 .journey-record-detail .record-detail-facts > div {
-  display: grid;
-  grid-template-columns: minmax(5rem, .65fr) minmax(0, 1.35fr);
-  gap: var(--sk7-space-sm) var(--sk7-space-md);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--sk7-space-xs);
   border: 0;
-  border-bottom: 1px solid var(--sk7-border);
-  padding: var(--sk7-space-sm) 0;
+  padding: var(--sk7-space-lg) var(--sk7-space-md);
+}
+
+.journey-record-detail .record-detail-facts > div + div {
+  border-left: 1px solid var(--sk7-border);
 }
 
 .journey-record-detail .record-detail-facts dt {
-  align-self: center;
   color: var(--sk7-text-muted);
   font-size: var(--sk7-type-caption);
   font-weight: var(--sk7-weight-bold);
@@ -499,8 +548,10 @@
 }
 
 .journey-record-detail [data-record-detail-kind="blood-pressure"] .record-detail-facts > div:last-child dd {
-  font-size: var(--sk7-type-subtitle);
+  font-size: var(--sk7-type-heading);
   font-weight: var(--sk7-weight-bold);
+  letter-spacing: -.035em;
+  line-height: 1.1;
 }
 
 .journey-record-detail .notice {
@@ -577,14 +628,27 @@
 }
 
 @media (max-width: 42rem) {
+  .scene.record-explorer-scene[data-scene="S08"],
+  .scene.journey-record-detail[data-scene="S09"] {
+    gap: var(--sk7-space-lg);
+    padding: var(--sk7-space-xl) 0 var(--sk7-space-3xl);
+  }
+
+  .scene.record-explorer-scene[data-scene="S08"] .scene-copy h1,
+  .journey-record-detail > .screen-header h1 {
+    font-size: 2rem;
+    line-height: 1.13;
+  }
+
   .scene.record-explorer-scene .scene-toolbar {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
   .scene.record-explorer-scene .journey-continuation-actions--compact {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
   }
 
@@ -623,9 +687,18 @@
     justify-content: space-between;
   }
 
+  .journey-record-detail .record-detail-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .journey-record-detail .record-detail-facts > div {
-    grid-template-columns: minmax(4.25rem, .55fr) minmax(0, 1.45fr);
     gap: var(--sk7-space-xs);
+    padding: var(--sk7-space-md) 0;
+  }
+
+  .journey-record-detail .record-detail-facts > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--sk7-border);
   }
 
   .journey-record-detail .record-detail-primary-actions {
