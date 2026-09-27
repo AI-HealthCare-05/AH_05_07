@@ -5,6 +5,14 @@ Baseline: `9e0fe2ba9434b6762167dbc349ed29860e6196f3` (resolved from actual `orig
 Program name: **SK7 Transcend**
 Platform name: **SK7 Living Companion Platform**
 
+> **Direction note (2026-09):** This Revision 2 document remains useful implementation and
+> ownership provenance for the Presence/Interaction-Lab foundation. The current product
+> direction is now 3D-first Living City. For entry/fallback, stable-world-shell,
+> product-bridge, growth-input and Experience-Slice authority, see
+> [SK7 Living City — 3D-first product architecture contract](SK7_LIVING_CITY_3D_FIRST_PRODUCT_CONTRACT.md)
+> and [Transcend program](../transcend/PROGRAM.md). Where product-direction wording here
+> conflicts with those current contracts, the newer contracts win.
+
 Revision 2 closes the three blocking ambiguities found by the clean-room Phase 1
 gate without shrinking the North Star. It makes the Lab non-deployable by
 construction, replaces per-registration Arena revisioning with one immutable
