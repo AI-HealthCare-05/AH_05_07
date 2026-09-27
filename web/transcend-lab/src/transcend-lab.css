@@ -632,6 +632,24 @@ code {
   outline-offset: 3px;
 }
 
+.living-city-gate-link {
+  border-color: #184a35;
+  color: #fffdf4;
+  background: #245a42;
+  box-shadow: 0 0.5rem 1.4rem rgb(36 90 66 / 22%);
+}
+
+.living-city-gate-link:hover {
+  background: #173f2e;
+}
+
+.living-city-semantic-unavailable {
+  max-width: 18rem;
+  color: #7a372a;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 640px) {
   .living-city-entry-hud {
     align-items: flex-start;

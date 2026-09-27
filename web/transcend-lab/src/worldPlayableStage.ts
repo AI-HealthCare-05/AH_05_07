@@ -45,6 +45,7 @@ import type {
   WorldPlayableMountOptions,
   WorldPlayableStagePort,
 } from "./platform/runtime/worldPlayableStagePort";
+import { worldDestinationProximityEvent } from "./platform/runtime/worldDestinationEvent";
 import type { WorldTouchSurfaceInstaller } from "./platform/runtime/worldTouchSurfacePort";
 
 function editableTarget(target: EventTarget | null): boolean {
@@ -639,7 +640,10 @@ export class WorldPlayableStage implements WorldPlayableStagePort {
       ) <= this.#profile.destination.radius;
     if (near !== this.#destinationNear) {
       this.#destinationNear = near;
-      if (this.#root) this.#root.dataset.destinationNear = String(near);
+      if (this.#root) {
+        this.#root.dataset.destinationNear = String(near);
+        this.#root.dispatchEvent(worldDestinationProximityEvent(this.#profile.destination.id, near));
+      }
       if (this.#destinationStatus) {
         this.#destinationStatus.textContent = near
           ? this.#profile.copy.destinationNear

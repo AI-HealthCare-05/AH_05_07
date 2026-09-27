@@ -16,6 +16,11 @@ import {
 } from "../transcend-lab/src/platform/spatial/livingWeekRenderProjection";
 import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 import { E1_TODAY_GATE_ID } from "../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
+import {
+  TODAY_SEMANTIC_INTENT,
+  resolveProductOrigin,
+  worldSemanticIntentHref,
+} from "../transcend-lab/src/platform/bridge/worldSemanticIntent";
 import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/w4LivingWeekWorldSceneProfile";
 import { W4_LIVING_WEEK_WORLD_LIMIT_METRES } from "../transcend-lab/src/platform/spatial/w4LivingWeekPlayableWorldSession";
 import type { WorldSceneOverlayPlan } from "../transcend-lab/src/platform/spatial/worldSceneOverlayPlan";
@@ -79,6 +84,24 @@ async function fetchExactReviewBytes(
   return bytes;
 }
 
+test("E1 semantic Today intent resolves only registered http(s) product origins", () => {
+  expect(resolveProductOrigin("http://127.0.0.1:4179")).toBe("http://127.0.0.1:4173");
+  expect(worldSemanticIntentHref(
+    TODAY_SEMANTIC_INTENT,
+    "http://127.0.0.1:4179",
+    "http://127.0.0.1:4999",
+  )).toBe("http://127.0.0.1:4999/?screen=S02");
+  expect(() => resolveProductOrigin("http://127.0.0.1:4179", "javascript:alert(1)")).toThrow(
+    "product origin must use http or https",
+  );
+  expect(() => resolveProductOrigin("http://127.0.0.1:4179", "https://product.example.test")).toThrow(
+    "product origin override must share the current hostname",
+  );
+  expect(() => resolveProductOrigin("http://127.0.0.1:4179", "https://user:secret@127.0.0.1:4999")).toThrow(
+    "product origin must not include credentials",
+  );
+});
+
 test("E1 preview auto-enters Living City and keeps classic Today directly reachable", async ({ page, request }) => {
   const pinnedBytes = await fetchExactPinnedBytes(request);
   const requests: string[] = [];
@@ -94,7 +117,10 @@ test("E1 preview auto-enters Living City and keeps classic Today directly reacha
   await expect(page.getByTestId("living-city-entry")).toBeVisible();
   await expect(page.getByTestId("world-playable-stage")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("living-city-entry-status")).toHaveText("Living City ready.");
-  await expect(page.getByTestId("open-classic-today")).toHaveAttribute("href", "/?screen=S02");
+  await expect(page.getByTestId("open-classic-today"))
+    .toHaveAttribute("href", "http://127.0.0.1:4173/?screen=S02");
+  await expect(page.getByTestId("open-classic-today"))
+    .toHaveAttribute("data-semantic-intent", "navigate:today");
   await expect(page.getByTestId("renderer-host")).not.toHaveAttribute("aria-hidden", "true");
   await expect(page.getByTestId("start-world-playable")).toBeHidden();
   expect(requests.some((url) => /\/api\/|supabase|model-v2|auth/i.test(url))).toBe(false);
@@ -103,6 +129,28 @@ test("E1 preview auto-enters Living City and keeps classic Today directly reacha
   expect(stopped).toMatchObject({
     listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
   });
+});
+
+test("E1 semantic Today action navigates to the configured product origin", async ({ page, request }) => {
+  const pinnedBytes = await fetchExactPinnedBytes(request);
+  await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
+    status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
+  }));
+  await page.route("http://127.0.0.1:4999/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: "<title>Classic Today target</title><main>Classic Today target</main>",
+  }));
+
+  await page.goto("/?experience=e1&productOrigin=http%3A%2F%2F127.0.0.1%3A4999");
+  const classicToday = page.getByTestId("open-classic-today");
+  await expect(classicToday).toHaveAttribute(
+    "href",
+    "http://127.0.0.1:4999/?screen=S02",
+  );
+  await classicToday.click();
+  await expect(page).toHaveURL("http://127.0.0.1:4999/?screen=S02");
+  await expect(page.getByText("Classic Today target")).toBeVisible();
 });
 
 test("E1 preview preserves classic Today and exposes retry when the world cannot start", async ({ page, request }) => {
@@ -136,7 +184,43 @@ test("E1 preview preserves classic Today and exposes retry when the world cannot
   });
 });
 
-test("E1 Today Gate is a real 3D destination with proximity motion feedback", async ({ page, request }) => {
+test("E1 Today Gate completes motion, semantic action, and user-enabled audio feedback", async ({ page, request }) => {
+  await page.addInitScript(() => {
+    const target = window as Window & { __e1AudioStarts?: number };
+    target.__e1AudioStarts = 0;
+
+    class FakeAudioParam {
+      setValueAtTime() {}
+      exponentialRampToValueAtTime() {}
+    }
+    class FakeNode {
+      connect() { return this; }
+    }
+    class FakeGain extends FakeNode {
+      gain = new FakeAudioParam();
+    }
+    class FakeOscillator extends FakeNode {
+      type = "sine";
+      frequency = new FakeAudioParam();
+      start() { target.__e1AudioStarts = (target.__e1AudioStarts ?? 0) + 1; }
+      stop() {}
+    }
+    class FakeAudioContext {
+      state = "running";
+      currentTime = 0;
+      destination = new FakeNode();
+      createGain() { return new FakeGain(); }
+      createOscillator() { return new FakeOscillator(); }
+      async resume() { this.state = "running"; }
+      async close() { this.state = "closed"; }
+    }
+
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: FakeAudioContext,
+    });
+  });
+
   const pinnedBytes = await fetchExactPinnedBytes(request);
   await page.route(PINNED_ACTIVE_ASSET.url, (route) => route.fulfill({
     status: 200, contentType: "model/gltf-binary", body: pinnedBytes,
@@ -144,10 +228,18 @@ test("E1 Today Gate is a real 3D destination with proximity motion feedback", as
 
   await page.goto("/?experience=e1");
 
+  const lab = page.getByTestId("transcend-lab");
   const stage = page.getByTestId("world-playable-stage");
   const status = page.getByTestId("world-destination-status");
   await expect(stage).toBeVisible({ timeout: 30_000 });
   await expect(status).toHaveAttribute("data-destination-id", E1_TODAY_GATE_ID);
+  const soundToggle = page.getByTestId("living-city-sound-toggle");
+  await soundToggle.click();
+  await expect(lab).toHaveAttribute("data-e1-audio-status", "ready");
+  await expect(soundToggle).toBeFocused();
+  const canvas = page.getByTestId("world-playable-canvas");
+  await canvas.click();
+  await expect(canvas).toBeFocused();
   await expect(status).toHaveText("Today Gate is ahead. Walk toward it to activate the entry.");
 
   await page.evaluate(() => {
@@ -160,15 +252,25 @@ test("E1 Today Gate is a real 3D destination with proximity motion feedback", as
 
   await expect(status).toHaveText("Today Gate active. Open classic Today when ready.");
   await expect(stage).toHaveAttribute("data-destination-feedback", "active");
+  await expect(lab).toHaveAttribute("data-e1-gate-near", "true");
   await expect.poll(async () => (
     await page.evaluate(() => window.__TRANSCEND_LAB__!.playableDiagnostics()!.destinationFeedbackScale)
   )).toBeGreaterThan(1.01);
-  await expect(page.getByTestId("open-classic-today")).toBeVisible();
+
+  const gateAction = page.getByTestId("today-gate-semantic-action");
+  await expect(gateAction).toBeVisible();
+  await expect(gateAction).toHaveAttribute("data-semantic-intent", "navigate:today");
+  await expect(gateAction).toHaveAttribute("href", "http://127.0.0.1:4173/?screen=S02");
+  await expect.poll(async () => page.evaluate(
+    () => (window as Window & { __e1AudioStarts?: number }).__e1AudioStarts ?? 0,
+  )).toBe(2);
 
   const stopped = await page.evaluate(() => window.__TRANSCEND_LAB__!.stop());
   expect(stopped).toMatchObject({
     listeners: 0, timers: 0, rafLoops: 0, pendingLoads: 0, liveWebglContexts: 0,
   });
+  await expect(lab).toHaveAttribute("data-e1-gate-near", "false");
+  await expect(page.getByTestId("today-gate-semantic-action")).toHaveCount(0);
 });
 
 test("W4 Living Week topology is seven ordered connected bounded landmarks", () => {
