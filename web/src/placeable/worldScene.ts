@@ -1,8 +1,9 @@
 import {
   AmbientLight, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight,
   DoubleSide, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
-  RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type Material,
+  RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
 } from "three";
+import { disposeScene } from "../components/scene/disposeScene";
 import { type LivingChoice } from "../ui/livingChoice";
 import { keepsakeCandidate } from "./keepsakeMedia";
 import { createLivingChoiceMarker } from "./livingChoiceMarker";
@@ -109,10 +110,8 @@ export class PlaceableScene {
     }
     const hub = new Mesh(new SphereGeometry(0.045, 16, 12), hubMaterial);
     hub.position.z = 0.06; this.rotor.add(hub); this.pinwheel.add(this.rotor); this.scene.add(this.pinwheel);
-    const body = new Mesh(new CylinderGeometry(0.16, 0.2, 0.35, 20), material("#5e7896"));
-    body.position.y = 0.23; this.actor.add(body);
-    const head = new Mesh(new SphereGeometry(0.16, 20, 16), material("#fff0cc"));
-    head.position.y = 0.52; this.actor.add(head); this.actor.name = "plaza-visitor";
+    this.actor.name = "plaza-companion";
+    this.actor.position.set(-1.3, 0, 1.25);
     this.scene.add(this.actor); this.resize(1);
   }
 
@@ -184,16 +183,10 @@ export class PlaceableScene {
     });
   }
 
-  dispose() {
+  dispose(renderer?: WebGLRenderer) {
     if (this.#disposed) return;
     this.#disposed = true;
-    const geometries = new Set<BufferGeometry>(), materials = new Set<Material>();
-    this.scene.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
-      geometries.add(object.geometry);
-      for (const m of Array.isArray(object.material) ? object.material : [object.material]) materials.add(m);
-    });
-    geometries.forEach((geometry) => geometry.dispose()); materials.forEach((m) => m.dispose());
+    disposeScene(this.scene, renderer);
     this.scene.clear();
   }
 }

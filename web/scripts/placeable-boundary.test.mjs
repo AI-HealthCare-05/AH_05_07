@@ -40,11 +40,19 @@ test("built default/Classic/guest chunks may dynamically reach E2 but cannot eag
 
 test("renderer cannot import account, API, controller or health state", () => {
   const plugin = placeableBoundary(); plugin.configResolved({ root: "/web" });
-  for (const source of ["placeable/PlaceableWorld.tsx", "placeable/livingChoiceMarker.ts", "ui/livingChoice.ts"]) {
+  for (const source of ["placeable/PlaceableWorld.tsx", "placeable/livingChoiceMarker.ts", "placeable/companionActor.ts", "ui/mySpaceCompanion.ts", "ui/livingChoice.ts"]) {
     const id = `/web/src/${source}`;
-    for (const imported of ["lib/supabase.ts", "lib/api.ts", "placeable/controller.ts", "placeable/persistence.ts", "App.tsx", "ui/LivingChoiceLink.tsx"]) {
+    for (const imported of ["lib/supabase.ts", "lib/api.ts", "placeable/controller.ts", "placeable/persistence.ts", "App.tsx", "ui/LivingChoiceLink.tsx", "ui/companionIdentity.ts", "components/CompanionReviewRenderer.tsx", "components/scene/s02SceneActor.ts"]) {
       assert.throws(() => plugin.moduleParsed({ id, importedIds: [`/web/src/${imported}`], dynamicallyImportedIds: [] }), /product state/);
     }
+  }
+});
+
+test("E5 permits only existing pure media authority and disposal seams", () => {
+  const plugin = placeableBoundary(); plugin.configResolved({ root: "/web" });
+  for (const imported of ["ui/companion.ts", "ui/mySpaceCompanion.ts", "components/scene/disposeScene.ts"]) {
+    assert.doesNotThrow(() => plugin.moduleParsed({ id: "/web/src/placeable/companionActor.ts",
+      importedIds: [`/web/src/${imported}`], dynamicallyImportedIds: [] }));
   }
 });
 
