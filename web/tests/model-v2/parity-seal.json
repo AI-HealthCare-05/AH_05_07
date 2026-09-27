@@ -2,17 +2,17 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "4a2153bdcfd69c1c7dea02b917b0052104100df6",
-    "tree": "6bd0b3926d69930d7d77c5075192f19500a9b63e"
+    "commit": "4f60c9147ef5c0e6ecddfa2f74ca24e2d5188f76",
+    "tree": "662fc7908f61a4f7bc1625b9254ea21817e7413b"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
     ".gitattributes": "a4799901d8bd2797b0ea643eea06b92b3ca2fbf909de3071ce56794592c94bdc",
-    ".github/workflows/checks.yml": "91db34c8ae410c6d380e37e406e29b5319e83931b4bd942a85c6dc111445e519",
+    ".github/workflows/checks.yml": "f1d9992c2eea662bd90832b4489469ae80aba190d5a13aee2e7e81b2bbdf2135",
     ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
     "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "app/apis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "app/apis/v1/__init__.py": "45009051c9ea46794b6545096396ae3ecb2192f623d61097aed4193fb3edf597",
+    "app/apis/v1/__init__.py": "b781eb4d69c419323b1bc9adfd53bd9c65d5097d7ba15342ec72d5c9ca6a8bd4",
     "app/apis/v1/model_v2_routers.py": "d21999597993b44f3d10120522ba64d6f4185373d150a586801f251c38780433",
     "app/core/__init__.py": "1b68b17b8982fb53c031036d8126419a05ada8a425cbe4b3198137130b1a7088",
     "app/core/config.py": "3b71ebb8e175c6483a5e267859cdb7e124aa17b21a9e84c1d0d368610bb566fa",
@@ -62,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 20.400000005960464,
+        "coldLoadMs": 6.800000000745058,
         "warm": {
           "n": 30,
-          "medianMs": 0.0036000000089406966,
-          "p95Ms": 0.005299999997019768,
-          "minMs": 0.0035,
-          "maxMs": 0.005300000011920929
+          "medianMs": 0.003600000001490116,
+          "p95Ms": 0.004699999999254942,
+          "minMs": 0.003400000002235174,
+          "maxMs": 0.005200000002980232
         }
       },
       {
@@ -79,11 +79,11 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 20,
+        "coldLoadMs": 18,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
-          "p95Ms": 0.009,
+          "p95Ms": 0.008,
           "minMs": 0.004,
           "maxMs": 0.009
         }
@@ -96,13 +96,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 6,
+        "coldLoadMs": 5,
         "warm": {
           "n": 30,
-          "medianMs": 0.005,
+          "medianMs": 0.004,
           "p95Ms": 0.005,
           "minMs": 0.004,
-          "maxMs": 0.006
+          "maxMs": 0.005
         }
       }
     ]
