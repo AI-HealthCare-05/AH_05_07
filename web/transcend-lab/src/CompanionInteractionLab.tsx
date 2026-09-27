@@ -38,10 +38,11 @@ function px(value: number): string {
 }
 
 export function CompanionInteractionLab() {
+  const params = new URLSearchParams(window.location.search);
+  const e1Preview = params.get("experience") === "e1";
   const runtimeRef = useRef<TranscendLabRuntime | null>(null);
   if (!runtimeRef.current) {
-    const params = new URLSearchParams(window.location.search);
-    const livingWeek = params.get("worldTrack") === "living-week";
+    const livingWeek = e1Preview || params.get("worldTrack") === "living-week";
     runtimeRef.current = new TranscendLabRuntime({
       forceRendererFailure: params.get("rendererFailure") === "1",
       playableSceneProfile: livingWeek
@@ -90,12 +91,13 @@ export function CompanionInteractionLab() {
     if (!host) return;
     runtime.attachHost(host);
     window.__TRANSCEND_LAB__ = runtime.testApi();
-    void runtime.start();
+    if (e1Preview) void runtime.startPlayable();
+    else void runtime.start();
     return () => {
       delete window.__TRANSCEND_LAB__;
       void runtime.stop().finally(() => runtime.detachHost(host));
     };
-  }, [runtime]);
+  }, [runtime, e1Preview]);
 
   useEffect(() => {
     if (state.activePointerId !== null) return;
@@ -219,7 +221,34 @@ export function CompanionInteractionLab() {
       data-route={state.route}
       data-arena-revision={state.snapshot?.revision ?? "retired"}
       data-route-epoch={state.routeEpoch}
+      data-experience={e1Preview ? "e1" : undefined}
     >
+      {e1Preview ? (
+        <section className="living-city-entry-hud" data-testid="living-city-entry" aria-label="Living City entry preview">
+          <div>
+            <p className="section-kicker">SK7 Living City · E1 preview</p>
+            <h1>Enter your Living City</h1>
+            <p data-testid="living-city-entry-status" role="status" aria-live="polite">
+              {state.playable
+                ? "Living City ready."
+                : state.lifecycle === "error"
+                  ? "World preview unavailable. Classic Today is still available."
+                  : "Entering Living City…"}
+            </p>
+          </div>
+          <div className="living-city-entry-actions">
+            <a className="living-city-classic-link" data-testid="open-classic-today" href="/?screen=S02">
+              Open classic Today
+            </a>
+            {state.lifecycle === "error" ? (
+              <button type="button" data-testid="retry-living-city" onClick={() => void runtime.startPlayable()}>
+                Retry world
+              </button>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       <header className="lab-hero">
         <p className="eyebrow">SK7 Transcend · isolated Phase 2 preparation A</p>
         <h1>Companion Interaction Lab</h1>
@@ -487,7 +516,12 @@ export function CompanionInteractionLab() {
         <pre data-testid="evidence-json">{JSON.stringify(state.evidence, null, 2)}</pre>
       </section>
 
-      <div ref={rendererHostRef} className="renderer-host" data-testid="renderer-host" aria-hidden="true" />
+      <div
+        ref={rendererHostRef}
+        className="renderer-host"
+        data-testid="renderer-host"
+        aria-hidden={e1Preview ? undefined : true}
+      />
 
       {state.snapshot?.anchors.map((anchor) => (
         <div

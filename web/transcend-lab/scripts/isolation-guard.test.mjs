@@ -218,3 +218,12 @@ test("playable renderer consumes the reusable overlay proximity resolver", () =>
   assert.match(proximity, /interactionRadiusMetres/);
   assert.doesNotMatch(proximity, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Living Week/);
 });
+
+test("E1 preview entry stays on the isolated W4 shell with an explicit semantic fallback", () => {
+  const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  assert.match(component, /experience/);
+  assert.match(component, /living-city-entry/);
+  assert.match(component, /screen=S02/);
+  assert.match(component, /startPlayable/);
+  assert.doesNotMatch(component, /blood.?pressure|risk.?score|model.?v2/i);
+});
