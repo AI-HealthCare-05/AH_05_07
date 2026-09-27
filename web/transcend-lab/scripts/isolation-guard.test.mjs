@@ -219,13 +219,22 @@ test("playable renderer consumes the reusable overlay proximity resolver", () =>
   assert.doesNotMatch(proximity, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Living Week/);
 });
 
-test("E1 preview entry stays on the isolated W4 shell with an explicit semantic fallback", () => {
+test("E1 preview entry stays isolated and resolves Classic Today through the semantic bridge", () => {
   const component = readFileSync(path.join(LAB_ROOT, "src/CompanionInteractionLab.tsx"), "utf8");
+  const bridge = readFileSync(
+    path.join(LAB_ROOT, "src/platform/bridge/worldSemanticIntent.ts"),
+    "utf8",
+  );
   assert.match(component, /experience/);
   assert.match(component, /living-city-entry/);
-  assert.match(component, /screen=S02/);
+  assert.match(component, /TODAY_SEMANTIC_INTENT/);
+  assert.match(component, /worldSemanticIntentHref/);
+  assert.doesNotMatch(component, /screen=S02/);
+  assert.match(bridge, /screen=S02/);
+  assert.match(bridge, /navigate/);
   assert.match(component, /startPlayable/);
   assert.doesNotMatch(component, /blood.?pressure|risk.?score|model.?v2/i);
+  assert.doesNotMatch(bridge, /blood.?pressure|risk.?score|model.?v2/i);
 });
 
 test("generic world renderer supports gate destinations without E1 product coupling", () => {

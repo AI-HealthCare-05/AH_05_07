@@ -20,7 +20,19 @@ import { LAB_ENVELOPES, TranscendLabRuntime } from "./labRuntime";
 import { W2_SYNTHETIC_WORLD_SCENE_PROFILE } from "./platform/spatial/w2SyntheticWorldSceneProfile";
 import { LIVING_WEEK_SCENE_PLAN } from "./platform/spatial/livingWeekScenePlan";
 import { W4_LIVING_WEEK_WORLD_SCENE_PROFILE } from "./platform/spatial/w4LivingWeekWorldSceneProfile";
-import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE } from "./platform/spatial/e1LivingCityEntrySceneProfile";
+import {
+  E1_LIVING_CITY_ENTRY_SCENE_PROFILE,
+  E1_TODAY_GATE_ID,
+} from "./platform/spatial/e1LivingCityEntrySceneProfile";
+import {
+  TODAY_SEMANTIC_INTENT,
+  worldSemanticIntentHref,
+} from "./platform/bridge/worldSemanticIntent";
+import { E1LivingCityAudio, type E1AudioStatus } from "./platform/experience/e1LivingCityAudio";
+import {
+  WORLD_DESTINATION_PROXIMITY_EVENT,
+  type WorldDestinationProximityDetail,
+} from "./platform/runtime/worldDestinationEvent";
 import { createW4LivingWeekPlayableWorldSession } from "./platform/spatial/w4LivingWeekPlayableWorldSession";
 import { createW2SyntheticPlayableWorldSession } from "./platform/spatial/w2SyntheticPlayableWorldSession";
 
@@ -76,10 +88,34 @@ export function CompanionInteractionLab() {
   const destinationDialogRef = useRef<HTMLDialogElement | null>(null);
   const destinationOpenerRef = useRef<HTMLButtonElement | null>(null);
   const destinationFallbackRef = useRef<HTMLButtonElement | null>(null);
+  const e1AudioRef = useRef<E1LivingCityAudio | null>(null);
+  const e1ChimePlayedRef = useRef(false);
+  const e1GateNearRef = useRef(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
+  const [e1GateNear, setE1GateNear] = useState(false);
+  const [e1AudioStatus, setE1AudioStatus] = useState<E1AudioStatus>("muted");
   const [reviewAssetId, setReviewAssetId] = useState(defaultReviewEntry?.assetId ?? "");
   const [reviewClip, setReviewClip] = useState<CompanionReviewClip>("idle");
   const selectedReviewEntry = reviewEntry(reviewAssetId);
+  let e1ClassicTodayHref: string | null = null;
+  if (e1Preview) {
+    e1ClassicTodayHref = worldSemanticIntentHref(
+      TODAY_SEMANTIC_INTENT,
+      window.location.origin,
+    );
+    const explicitProductOrigin = params.get("productOrigin");
+    if (explicitProductOrigin) {
+      try {
+        e1ClassicTodayHref = worldSemanticIntentHref(
+          TODAY_SEMANTIC_INTENT,
+          window.location.origin,
+          explicitProductOrigin,
+        );
+      } catch {
+        // An untrusted or malformed override must never remove the safe fallback.
+      }
+    }
+  }
 
   useLayoutEffect(() => runtime.registerControlGeometryProvider(() =>
     [labControlsRef.current, relocationControlsRef.current, assetPanelRef.current]
@@ -101,6 +137,50 @@ export function CompanionInteractionLab() {
       void runtime.stop().finally(() => runtime.detachHost(host));
     };
   }, [runtime, e1Preview]);
+
+  useEffect(() => {
+    if (!e1Preview) return;
+    const host = rendererHostRef.current;
+    if (!host) return;
+
+    const onDestinationProximity = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const detail = event.detail as WorldDestinationProximityDetail;
+      if (detail.destinationId !== E1_TODAY_GATE_ID) return;
+
+      e1GateNearRef.current = detail.near;
+      setE1GateNear(detail.near);
+      if (!detail.near) {
+        e1ChimePlayedRef.current = false;
+        return;
+      }
+      if (
+        e1AudioStatus === "ready"
+        && !e1ChimePlayedRef.current
+        && e1AudioRef.current?.playTodayGateChime()
+      ) {
+        e1ChimePlayedRef.current = true;
+      }
+    };
+
+    host.addEventListener(WORLD_DESTINATION_PROXIMITY_EVENT, onDestinationProximity);
+    return () => host.removeEventListener(WORLD_DESTINATION_PROXIMITY_EVENT, onDestinationProximity);
+  }, [e1Preview, e1AudioStatus]);
+
+  useEffect(() => {
+    if (state.lifecycle !== "stopped" && state.lifecycle !== "error") return;
+    e1GateNearRef.current = false;
+    e1ChimePlayedRef.current = false;
+    setE1GateNear(false);
+    e1AudioRef.current?.dispose();
+    e1AudioRef.current = null;
+    setE1AudioStatus("muted");
+  }, [state.lifecycle]);
+
+  useEffect(() => () => {
+    e1AudioRef.current?.dispose();
+    e1AudioRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (state.activePointerId !== null) return;
@@ -216,6 +296,32 @@ export function CompanionInteractionLab() {
     runtime.relocateToNormalized((x ?? Number.NaN) / 100, (y ?? Number.NaN) / 100);
   }
 
+  async function toggleE1Audio() {
+    if (e1AudioStatus === "ready") {
+      e1AudioRef.current?.dispose();
+      e1AudioRef.current = null;
+      e1ChimePlayedRef.current = false;
+      setE1AudioStatus("muted");
+      return;
+    }
+
+    const audio = e1AudioRef.current ?? new E1LivingCityAudio();
+    e1AudioRef.current = audio;
+    let status: E1AudioStatus = "unavailable";
+    try {
+      status = await audio.enable();
+    } catch {
+      status = "unavailable";
+    }
+    setE1AudioStatus(status);
+    if (status !== "ready") {
+      audio.dispose();
+      e1AudioRef.current = null;
+      return;
+    }
+    if (e1GateNearRef.current && audio.playTodayGateChime()) e1ChimePlayedRef.current = true;
+  }
+
   return (
     <main
       className="transcend-lab"
@@ -225,6 +331,8 @@ export function CompanionInteractionLab() {
       data-arena-revision={state.snapshot?.revision ?? "retired"}
       data-route-epoch={state.routeEpoch}
       data-experience={e1Preview ? "e1" : undefined}
+      data-e1-gate-near={e1Preview ? String(e1GateNear) : undefined}
+      data-e1-audio-status={e1Preview ? e1AudioStatus : undefined}
     >
       {e1Preview ? (
         <section className="living-city-entry-hud" data-testid="living-city-entry" aria-label="Living City entry preview">
@@ -240,9 +348,43 @@ export function CompanionInteractionLab() {
             </p>
           </div>
           <div className="living-city-entry-actions">
-            <a className="living-city-classic-link" data-testid="open-classic-today" href="/?screen=S02">
-              Open classic Today
-            </a>
+            {e1ClassicTodayHref ? (
+              <a
+                className="living-city-classic-link"
+                data-testid="open-classic-today"
+                data-semantic-intent="navigate:today"
+                href={e1ClassicTodayHref}
+              >
+                Open classic Today
+              </a>
+            ) : (
+              <span className="living-city-semantic-unavailable" role="alert">
+                Classic Today is unavailable in this preview.
+              </span>
+            )}
+            {e1GateNear && e1ClassicTodayHref ? (
+              <a
+                className="living-city-classic-link living-city-gate-link"
+                data-testid="today-gate-semantic-action"
+                data-semantic-intent="navigate:today"
+                href={e1ClassicTodayHref}
+              >
+                Continue through Today Gate
+              </a>
+            ) : null}
+            <button
+              type="button"
+              data-testid="living-city-sound-toggle"
+              aria-pressed={e1AudioStatus === "ready"}
+              disabled={e1AudioStatus === "unavailable"}
+              onClick={() => void toggleE1Audio()}
+            >
+              {e1AudioStatus === "ready"
+                ? "Sound on"
+                : e1AudioStatus === "unavailable"
+                  ? "Sound unavailable"
+                  : "Turn sound on"}
+            </button>
             {state.lifecycle === "error" ? (
               <button type="button" data-testid="retry-living-city" onClick={() => void runtime.startPlayable()}>
                 Retry world
