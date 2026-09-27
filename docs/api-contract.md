@@ -208,3 +208,27 @@ no-automatic-write-retry boundary.
 | `/api/openapi.json` | Executable API source of truth |
 | `/api/docs` | Swagger UI |
 | `/api/redoc` | ReDoc |
+
+## My Space cosmetics (E4 source contract)
+
+Issue [#816](https://github.com/AI-HealthCare-05/AH_05_07/issues/816), single-writer
+E4 owner, 2026-09-27 baseline `3ff16e1`. No new route. Existing GET/PUT
+`/api/v1/cosmetics/placeable` remains a verified Supabase JWT surface with `200`
+and `Cache-Control: no-store`. Source-connected; matching DB/API release is
+required for account v2 writes. No production migration or activation is claimed.
+
+PUT retains `operationId`, `expectedRevision`, `schemaVersion`, `layoutId`,
+`selection`. The [versioned data contract](data-contract.md#my-space-cosmetic-snapshot-e4)
+defines v1/v2 selection shapes and migration. Caller-supplied owner, extra fields,
+unknown assets and mixed versions fail validation with `422 validation_error`;
+unsupported stored state or downgrade returns `422 unsupported_snapshot`.
+GET preserves unknown versions/assets. Both return the same minimal snapshot:
+revision, schema/layout, selection and latest operation/fingerprint.
+
+Verified session ownership supplies the user; no service key or health fact is
+accepted or returned. `401/403` session errors and `410 owner_deleted` fence the
+account. `409 revision_conflict` / `operation_changed` require reread and explicit
+review; `503 save_unknown` never reports saved or retries a different operation.
+Errors remain generic and no raw upstream body/token is exposed or newly logged.
+The DTO/OpenAPI and same RPC forwarding tests cover both versions. This surface
+is cosmetic only, without reward or health-outcome semantics.

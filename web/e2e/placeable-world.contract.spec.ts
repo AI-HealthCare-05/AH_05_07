@@ -1,3 +1,4 @@
+import { keepsakeCandidate } from "../src/placeable/keepsakeMedia";
 import { expect, test } from "@playwright/test";
 import { Box3, Mesh, Vector3, type CylinderGeometry, type BufferGeometry, type Material } from "three";
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
@@ -19,7 +20,7 @@ test("Living Choice is one bounded still family and never changes the plaza, act
   for (const choice of ["walk-10-minutes", "sleep-routine", "low-sodium-meal"] as const) {
     scene.update(projection({ choice }), false);
     expect(scene.choiceMarker.visible).toBe(true);
-    expect(scene.choiceMarker.children.filter((part) => part.name.startsWith("choice-detail:") && part.visible).map((part) => part.name)).toEqual([`choice-detail:${choice}`]);
+    expect(scene.choiceMarker.children.filter((part) => part.name.startsWith("choice-detail:") && part.visible).map((part) => part.name)).toEqual([`choice-detail:${keepsakeCandidate(choice)}`]);
     expect(scene.choiceMarker.children).toHaveLength(children);
     const bounds = new Box3().setFromObject(scene.choiceMarker);
     expect(bounds.max.y).toBeLessThan(0.75);
@@ -174,5 +175,16 @@ test("the authored round foundation supports every corner of the existing walkin
     for (let frame = 0; frame < 200; frame++) scene.step(0.05, { lateral, forward, magnitude: 1, source: "keyboard" });
     expect(Math.hypot(scene.actor.position.x, scene.actor.position.z) + 0.2).toBeLessThan(ground.geometry.parameters.radiusTop);
   }
+  scene.dispose();
+});
+
+test("keepsake is one bounded still marker beside the existing pinwheel; unknown identity has no rendering authority", () => {
+  const scene = new PlaceableScene();
+  for (const keepsake of ["plaza-ribbon-v1", "quiet-moon-v1", "garden-leaf-v1"] as const) {
+    scene.update(projection({ keepsake, choice: "sleep-routine", selection: { assetId: ASSET, color: "teal", socketId: "gate-left" } }), true);
+    expect(scene.pinwheel.visible).toBe(true);
+    expect(scene.choiceMarker.children.filter((part) => part.name.startsWith("choice-detail:") && part.visible).map((part) => part.name)).toEqual([`choice-detail:${keepsake}`]);
+  }
+  scene.update(projection({ keepsake: "forged" as never }), false); expect(scene.choiceMarker.visible).toBe(false);
   scene.dispose();
 });

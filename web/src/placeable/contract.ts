@@ -1,5 +1,10 @@
 export const SCHEMA = "placeable.v1";
 export const LAYOUT = "e1-plaza.v1";
+export const SCHEMA_V2 = "placeable.v2";
+export const LAYOUT_V2 = "e1-plaza.v2";
+export const KEEPSAKES = ["plaza-ribbon-v1", "quiet-moon-v1", "garden-leaf-v1"] as const;
+export type Keepsake = (typeof KEEPSAKES)[number];
+export type CosmeticLayout = Readonly<{ pinwheel: Selection | null; keepsake: Keepsake | null }>;
 export const ASSET = "welcome-pinwheel-v1";
 export const COLORS = { coral: "#ee765f", teal: "#238b88", sunflower: "#dfb641" } as const;
 // Authored in E1 world metres. Clear of spawn, gate approach, weekday markers,
@@ -25,9 +30,9 @@ export type Snapshot = Readonly<{
 export type Operation = Readonly<{
   operationId: string;
   expectedRevision: number;
-  schemaVersion: typeof SCHEMA;
-  layoutId: typeof LAYOUT;
-  selection: Selection | null;
+  schemaVersion: typeof SCHEMA | typeof SCHEMA_V2;
+  layoutId: typeof LAYOUT | typeof LAYOUT_V2;
+  selection: Selection | CosmeticLayout | null;
 }>;
 export const emptySnapshot = (): Snapshot => ({
   revision: 0, schemaVersion: SCHEMA, layoutId: LAYOUT,
@@ -46,7 +51,24 @@ export function isSelection(value: unknown): value is Selection | null {
     && SOCKETS.some((socket) => socket.id === value.socketId));
 }
 export function supported(snapshot: Snapshot): boolean {
-  return snapshot.schemaVersion === SCHEMA && snapshot.layoutId === LAYOUT && isSelection(snapshot.selection);
+  return supportedValue(snapshot.schemaVersion, snapshot.layoutId, snapshot.selection);
+}
+export function isKeepsake(value: unknown): value is Keepsake | null {
+  return value === null || KEEPSAKES.some((id) => id === value);
+}
+export function isCosmeticLayout(value: unknown): value is CosmeticLayout {
+  return record(value) && Object.keys(value).length === 2 && Object.hasOwn(value, "pinwheel")
+    && Object.hasOwn(value, "keepsake") && isSelection(value.pinwheel) && isKeepsake(value.keepsake);
+}
+export function supportedValue(schema: string, layout: string, selection: unknown): boolean {
+  return (schema === SCHEMA && layout === LAYOUT && isSelection(selection))
+    || (schema === SCHEMA_V2 && layout === LAYOUT_V2 && isCosmeticLayout(selection));
+}
+// Projection only; callers must gate writes with supported(). No read migrates storage.
+export function cosmeticLayout(snapshot: Snapshot | null): CosmeticLayout {
+  if (!snapshot || !supported(snapshot)) return { pinwheel: null, keepsake: null };
+  return isCosmeticLayout(snapshot.selection) ? snapshot.selection
+    : { pinwheel: snapshot.selection as Selection | null, keepsake: null };
 }
 export function readSnapshot(value: unknown): Snapshot {
   if (!record(value) || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0
@@ -65,13 +87,19 @@ export function readSnapshot(value: unknown): Snapshot {
 }
 export function sameSelection(left: unknown, right: unknown): boolean {
   if (left === null || right === null) return left === right;
+  if (isCosmeticLayout(left) && isCosmeticLayout(right)) {
+    return sameSelection(left.pinwheel, right.pinwheel) && left.keepsake === right.keepsake;
+  }
   return isSelection(left) && isSelection(right) && left.assetId === right.assetId
     && left.color === right.color && left.socketId === right.socketId;
 }
 export async function fingerprint(operation: Operation): Promise<string> {
   const { expectedRevision, schemaVersion, layoutId, selection } = operation;
-  const text = [expectedRevision, schemaVersion, layoutId, selection?.assetId ?? "-",
-    selection?.color ?? "-", selection?.socketId ?? "-"].join("|");
+  const pinwheel = isCosmeticLayout(selection) ? selection.pinwheel : selection;
+  const fields = [expectedRevision, schemaVersion, layoutId, pinwheel?.assetId ?? "-",
+    pinwheel?.color ?? "-", pinwheel?.socketId ?? "-"];
+  if (schemaVersion === SCHEMA_V2) fields.push(isCosmeticLayout(selection) ? selection.keepsake ?? "-" : "-");
+  const text = fields.join("|");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

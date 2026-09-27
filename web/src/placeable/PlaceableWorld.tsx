@@ -99,7 +99,7 @@ export default function PlaceableWorld(props: Props) {
   }, [attempt]);
 
   return <div data-testid="placeable-world" data-preview={props.preview} data-color={props.selection?.color ?? "unplaced"}
-    data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
+    data-keepsake={props.keepsake ?? "none"} data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
     data-suspended={props.suspended || !focused} data-reduced-motion={reducedMotion}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
@@ -113,7 +113,7 @@ export default function PlaceableWorld(props: Props) {
       </div>}
       <button type="button" ref={pad} className="placeable-walk-pad" aria-label="Drag to walk, or focus here and use arrow keys"
         disabled={error || props.suspended}>↟<br />Walk<br />↞ · ↠</button>
-      <span className="placeable-world-caption">{props.preview ? "Preview · not saved" : props.selection ? "Confirmed placement" : "Unplaced"}</span>
+      <span className="placeable-world-caption">{props.preview ? "Preview · not saved" : props.selection || props.keepsake ? "Confirmed placement" : "Unplaced"}</span>
     </div>
     <p className="placeable-world-help">Focus the plaza, then use arrow keys or W A S D to walk. Drag the Walk pad on touch screens.
       Tap the pinwheel or press Enter to spin it. Movement pauses while previewing, saving, or using other controls.</p>

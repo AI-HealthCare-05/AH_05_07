@@ -1,4 +1,4 @@
-import { emptySnapshot, fingerprint, readSnapshot, supported, type Operation, type Snapshot } from "./contract";
+import { emptySnapshot, fingerprint, readSnapshot, supported, supportedValue, SCHEMA_V2, type Operation, type Snapshot } from "./contract";
 
 export type Failure = "conflict" | "unsupported" | "session" | "unavailable" | "unknown";
 export class PersistenceError extends Error {
@@ -24,6 +24,9 @@ export function browserPersistence(options: {
   return {
     mode: "browser", read,
     async save(operation) {
+      if (!supportedValue(operation.schemaVersion, operation.layoutId, operation.selection)
+        || !Number.isSafeInteger(operation.expectedRevision) || operation.expectedRevision < 0
+        || operation.expectedRevision >= Number.MAX_SAFE_INTEGER) throw new PersistenceError("unsupported");
       // Web Locks serializes the compare/write across tabs. Without it we refuse
       // to claim a race-prone localStorage write was saved.
       const locks = Object.hasOwn(options, "locks") ? options.locks : navigator.locks;
@@ -36,6 +39,7 @@ export function browserPersistence(options: {
           throw new PersistenceError("conflict");
         }
         if (!supported(previous)) throw new PersistenceError("unsupported");
+        if (previous.schemaVersion === SCHEMA_V2 && operation.schemaVersion !== SCHEMA_V2) throw new PersistenceError("unsupported");
         if (previous.revision !== operation.expectedRevision) throw new PersistenceError("conflict");
         const next = readSnapshot({ revision: previous.revision + 1, schemaVersion: operation.schemaVersion,
           layoutId: operation.layoutId, selection: operation.selection,
