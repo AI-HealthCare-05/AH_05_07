@@ -200,9 +200,21 @@ test("Lab composition can select the bounded Living Week world shell", () => {
 
 test("playable renderer publishes generic overlay proximity semantics without W4 coupling", () => {
   const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
-  assert.match(stage, /interactionRadiusMetres/);
+  assert.match(stage, /worldOverlayProximity/);
   assert.match(stage, /activeOverlayMarkerId/);
   assert.match(stage, /world-overlay-status/);
   assert.match(stage, /Near \$\{activeOverlayMarker\.label\}\./);
   assert.doesNotMatch(stage, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Living Week/);
+});
+
+test("playable renderer consumes the reusable overlay proximity resolver", () => {
+  const stage = readFileSync(path.join(LAB_ROOT, "src/worldPlayableStage.ts"), "utf8");
+  const proximity = readFileSync(
+    path.join(LAB_ROOT, "src/platform/spatial/worldOverlayProximity.ts"),
+    "utf8",
+  );
+  assert.match(stage, /worldOverlayProximity/);
+  assert.match(stage, /nearestActiveOverlayMarker/);
+  assert.match(proximity, /interactionRadiusMetres/);
+  assert.doesNotMatch(proximity, /Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Living Week/);
 });
