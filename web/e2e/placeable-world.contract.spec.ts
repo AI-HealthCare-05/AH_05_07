@@ -33,10 +33,26 @@ test("E7 garden walking stays on its small front path, pavilion frames mobile an
   scene.approach(); expect(scene.atPavilion).toBe(true);
   const atRest = scene.actor.position.clone(); scene.step(1, { lateral: 1, forward: 1, magnitude: 1, source: "keyboard" }, true);
   expect(scene.actor.position.equals(atRest)).toBe(true);
-  for (const aspect of [1.8, 0.95, 0.7]) {
-    scene.resize(aspect);
-    const bounds = new Box3().setFromObject(scene.pavilion);
-    for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
+  // Decorative terrain may continue beyond the frame. The actual roof/joinery
+  // and every reachable companion position must stay visible at stage ratios.
+  for (const aspect of [2.52, 1.8, 0.95, 0.82, 0.66]) {
+    scene.resize(aspect); scene.scene.updateMatrixWorld(true);
+    let roofMin = Infinity, roofMax = -Infinity, extentX = 0, extentY = 0;
+    scene.pavilion.traverse((object) => {
+      if (!(object instanceof Mesh)) return;
+      const vertices = object.geometry.attributes.position;
+      for (let i = 0; i < vertices.count; i++) {
+        const point = new Vector3().fromBufferAttribute(vertices, i);
+        if (point.y < 0.4) continue; // shared landmark's decorative island/pebbles
+        const roof = point.y > 1.5;
+        point.applyMatrix4(object.matrixWorld).project(scene.camera);
+        extentX = Math.max(extentX, Math.abs(point.x)); extentY = Math.max(extentY, Math.abs(point.y));
+        if (roof) { roofMin = Math.min(roofMin, point.x); roofMax = Math.max(roofMax, point.x); }
+      }
+    });
+    expect(extentX).toBeLessThan(0.96); expect(extentY).toBeLessThan(0.96);
+    expect((roofMax - roofMin) / 2).toBeGreaterThan(aspect > 2 ? 0.2 : 0.28);
+    for (const x of [-1.65, 1.65]) for (const z of [0.35, 2.75]) for (const y of [0.17, 1.22]) {
       const point = new Vector3(x, y, z).project(scene.camera);
       expect(Math.abs(point.x)).toBeLessThan(0.96); expect(Math.abs(point.y)).toBeLessThan(0.96);
     }
