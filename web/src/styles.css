@@ -252,6 +252,23 @@ ul, ol { margin: 0; padding: 0; }
 .delete-dialog .notice { margin: 0; }
 .delete-dialog .recovery-panel { grid-template-columns: minmax(0, 1fr); }
 .delete-dialog .recovery-panel__icon { display: none; }
+.account-delete-scope { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sk7-space-md); }
+.account-delete-scope section { display: grid; align-content: start; gap: var(--sk7-space-xs); border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-control); padding: var(--sk7-space-md); }
+.account-delete-scope section:first-child { border-color: var(--sk7-danger-border); background: var(--sk7-danger-soft); }
+.account-delete-scope h3 { color: var(--sk7-text); font-size: var(--sk7-type-body); }
+.account-delete-scope ul { display: grid; gap: var(--sk7-space-xs); margin: var(--sk7-space-xs) 0 0; padding-left: 1.15rem; color: var(--sk7-text); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.account-delete-export-note, .account-delete-final-summary { border-left: 3px solid var(--sk7-accent); padding: var(--sk7-space-sm) var(--sk7-space-md); background: var(--sk7-accent-soft); color: var(--sk7-text); font-size: var(--sk7-type-label); }
+.account-delete-final-summary { display: grid; gap: var(--sk7-space-xs); }
+.browser-reset-boundary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--sk7-border); background: var(--sk7-border); }
+.browser-reset-boundary > div { display: grid; align-content: start; gap: var(--sk7-space-xs); background: var(--sk7-surface-solid); padding: var(--sk7-space-md); }
+.browser-reset-boundary strong { color: var(--sk7-text); font-size: var(--sk7-type-label); }
+.browser-reset-boundary span { color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); line-height: var(--sk7-leading-body); }
+.anonymous-completion { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sk7-space-md); border: 1px solid var(--sk7-success-border); border-left-width: 4px; border-radius: var(--sk7-radius-control); background: var(--sk7-success-soft); padding: var(--sk7-space-md); color: var(--sk7-text); }
+.anonymous-completion > div { display: grid; gap: var(--sk7-space-xs); }
+.anonymous-completion h2, .anonymous-completion h3 { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); }
+.anonymous-completion p { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.anonymous-completion .anonymous-completion-reset { color: var(--sk7-success-text); font-weight: var(--sk7-weight-bold); }
+.anonymous-completion > button { white-space: normal; }
 .confirmation { display: flex; align-items: center; justify-content: space-between; gap: var(--sk7-space-4); border: 1px solid var(--sk7-selection-border); border-radius: var(--sk7-radius-md); background: var(--sk7-selection-surface); color: var(--sk7-selection-text); padding: 1rem; }
 
 .today-ribbon { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 1rem; border-bottom: 1px solid var(--sk7-border); padding: .2rem 0 1rem; }
@@ -438,6 +455,7 @@ ul, ol { margin: 0; padding: 0; }
   .today-ribbon strong { border-top: 1px solid var(--sk7-border); border-left: 0; padding-top: .7rem; padding-left: 0; }
   .field-grid, .record-detail-facts, .recap-summary { grid-template-columns: 1fr; }
   .delete-dialog-facts { grid-template-columns: minmax(0, 1fr); }
+  .account-delete-scope, .browser-reset-boundary, .anonymous-completion { grid-template-columns: minmax(0, 1fr); }
   .recap-summary > div { padding: .8rem 0; }
   .recap-summary > div + div { border-top: 1px solid var(--sk7-border); border-left: 0; padding-left: 0; }
   .today-date, .scene-toolbar, .window-nav, .confirmation, .notice { align-items: flex-start; flex-direction: column; }
@@ -466,6 +484,7 @@ ul, ol { margin: 0; padding: 0; }
   .recovery-panel, .recovery-panel__icon { border: 2px solid CanvasText; background: Canvas; color: CanvasText; }
   .recovery-panel:focus { outline-color: Highlight; }
   .recovery-panel__facts > div { border-color: CanvasText; }
+  .account-delete-scope section, .browser-reset-boundary, .browser-reset-boundary > div, .anonymous-completion { border: 2px solid CanvasText; background: Canvas; color: CanvasText; }
 }
 
 @media (max-width: 350px) {

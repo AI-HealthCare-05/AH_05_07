@@ -347,7 +347,10 @@ test('E9 signed-out and guest unchanged; sign-in and sign-out preserve chosen ho
   await page.goto('/?screen=S14');
   await page.getByRole('button', { name: '이 기기에서 로그아웃', exact: true }).click();
   await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '이 기기에서 로그아웃했어요', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBe('my-space');
   await page.reload(); await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '이 기기에서 로그아웃했어요', exact: true })).toHaveCount(0);
   await page.getByLabel('이메일', { exact: true }).fill('synthetic@example.invalid');
   await page.getByRole('button', { name: /로그인 링크/ }).click();
   { // Email confirmation in another tab updates the waiting root via the SDK.
