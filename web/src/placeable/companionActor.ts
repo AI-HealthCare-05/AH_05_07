@@ -8,7 +8,7 @@ import { companionClips } from "../ui/companion";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { validateMySpaceCompanion } from "../ui/mySpaceCompanion";
 
-export type CompanionPose = "loading" | "idle" | "greet" | "rest" | "neutral" | "unavailable";
+export type CompanionPose = "loading" | "idle" | "move" | "greet" | "rest" | "neutral" | "unavailable";
 type Load = (url: string, loaded: (gltf: GLTF) => void, failed: () => void) => void;
 const load: Load = (url, loaded, failed) => { new GLTFLoader().load(url, loaded, undefined, failed); };
 
@@ -32,6 +32,10 @@ export class MySpaceCompanionActor {
   #idle: AnimationAction | null = null;
   #greet: AnimationAction | null = null;
   #rest: AnimationAction | null = null;
+  #move: AnimationAction | null = null;
+  #moving = false;
+  #locomotionUsed = false;
+  #active: AnimationAction | null = null;
   #reduced = false;
   #disposed = false;
   #started = false;
@@ -77,6 +81,8 @@ export class MySpaceCompanionActor {
           this.#idle = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "idle")!);
           this.#greet = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "greet")!);
           this.#rest = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "rest")!);
+          this.#move = this.#mixer.clipAction(gltf.animations.find((clip) => clip.name === "move")!);
+          this.#move.setDuration(1.1);
           this.#mixer.addEventListener("finished", this.#finished);
           this.setReducedMotion(this.#reduced);
         } catch {
@@ -90,38 +96,53 @@ export class MySpaceCompanionActor {
   }
 
   #finished = (event: { action: AnimationAction }) => {
-    if (!this.#disposed && (event.action === this.#greet || event.action === this.#rest)) this.#playIdle();
+    if (!this.#disposed && event.action === this.#active && (event.action === this.#greet || event.action === this.#rest)) this.#playIdle();
   };
+  #transition(action: AnimationAction, pose: CompanionPose, once = false) {
+    if (this.#active === action) return;
+    // Garden keeps its existing idle/greet/rest presentation until it adopts locomotion.
+    if (!this.#locomotionUsed) this.#mixer?.stopAllAction();
+    for (const previous of [this.#idle, this.#move, this.#greet, this.#rest]) {
+      if (previous && previous !== action) previous.fadeOut(0.2);
+    }
+    action.reset().setEffectiveWeight(1).setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity).play();
+    if (this.#locomotionUsed) action.fadeIn(0.2);
+    action.clampWhenFinished = once;
+    this.#active = action; this.#set(pose);
+  }
   #playIdle() {
-    this.#mixer?.stopAllAction();
-    this.#idle?.reset().setLoop(LoopRepeat, Infinity).play();
+    if (this.#moving && this.#move) this.#transition(this.#move, "move");
+    else if (this.#idle) this.#transition(this.#idle, "idle");
     this.#mixer?.update(0);
-    this.#set("idle");
+  }
+  setMoving(moving: boolean) {
+    if (this.#disposed || this.#moving === moving) return;
+    this.#moving = moving;
+    if (moving) this.#locomotionUsed = true;
+    if (!this.#mixer || this.#reduced) return;
+    if (moving) this.#transition(this.#move!, "move");
+    else if (this.pose === "move") this.#playIdle();
   }
   setReducedMotion(reduced: boolean) {
     this.#reduced = reduced;
     if (!this.#mixer || this.#disposed) return;
     // stopAllAction restores the original neutral pose, including interrupted greetings.
     this.#mixer.stopAllAction();
+    this.#active = null;
     if (reduced) this.#set("neutral"); else this.#playIdle();
   }
   greet(): boolean {
-    if (this.#disposed || !this.#mixer || this.pose === "greet") return false;
+    if (this.#disposed || !this.#mixer || this.pose === "greet" || this.#moving) return false;
     if (this.#reduced) return true; // The semantic response remains available without motion.
-    this.#mixer.stopAllAction();
-    this.#greet!.reset().setLoop(LoopOnce, 1).play();
-    this.#greet!.clampWhenFinished = true;
-    this.#set("greet");
+    this.#transition(this.#greet!, "greet", true);
     return true;
   }
   rest(): boolean {
     if (this.#disposed || !this.#mixer || !["idle", "neutral"].includes(this.pose)) return false;
     if (this.#reduced) return true;
-    this.#mixer.stopAllAction();
     // One authored cycle, capped at four seconds even for a longer registered clip.
-    this.#rest!.reset().setLoop(LoopOnce, 1).setDuration(Math.min(4, this.#rest!.getClip().duration)).play();
-    this.#rest!.clampWhenFinished = true;
-    this.#set("rest");
+    this.#rest!.setDuration(Math.min(4, this.#rest!.getClip().duration));
+    this.#transition(this.#rest!, "rest", true);
     return true;
   }
   step(seconds: number) {
@@ -131,7 +152,7 @@ export class MySpaceCompanionActor {
     this.#mixer?.removeEventListener("finished", this.#finished);
     this.#mixer?.stopAllAction();
     if (this.#model) this.#mixer?.uncacheRoot(this.#model);
-    this.#mixer = null; this.#idle = null; this.#greet = null; this.#rest = null; this.#model = null;
+    this.#mixer = null; this.#idle = null; this.#greet = null; this.#rest = null; this.#move = null; this.#active = null; this.#model = null;
   }
   dispose(renderer?: WebGLRenderer) {
     if (this.#disposed) return;

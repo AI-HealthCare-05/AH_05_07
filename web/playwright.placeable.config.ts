@@ -6,7 +6,7 @@ import path from "node:path";
 // started here. Account fixtures expect the existing e2e.invalid public env.
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "placeable-classic.spec.ts",
+  testMatch: ["placeable-classic.spec.ts", "plaza-spatial.spec.ts"],
   workers: 1,
   outputDir: path.join(tmpdir(), "sk7-placeable-browser-results"),
   use: { baseURL: process.env.SK7_PLACEABLE_BASE_URL || "http://127.0.0.1:4173" },

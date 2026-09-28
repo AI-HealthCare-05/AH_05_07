@@ -1,7 +1,7 @@
 import {
   AmbientLight, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight,
   DoubleSide, Float32BufferAttribute, Fog, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
-  CircleGeometry, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
+  Box3, CircleGeometry, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
 } from "three";
 import { disposeScene } from "../components/scene/disposeScene";
 import { type LivingChoice } from "../ui/livingChoice";
@@ -11,6 +11,10 @@ import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE as PLAZA } from "../../transcend-lab
 import { LIVING_WEEK_SCENE_PLAN as PATH } from "../../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 import type { MovementIntent } from "../../transcend-lab/src/platform/behavior/worldMovementIntent";
 import { ASSET, COLORS, isKeepsake, SOCKETS, type Keepsake, type Selection } from "./contract";
+import { PlazaLocomotion } from "./plazaLocomotion";
+import { PlazaCameraRig } from "./plazaCamera";
+import { cameraObstacle, type CameraObstacle } from "../../transcend-lab/src/platform/spatial/thirdPersonCamera";
+import { worldPoint } from "../../transcend-lab/src/platform/spatial/worldSpaceClock";
 
 // Rendering receives a projection only. It has no storage, identity, API or health access.
 export type PlaceableProjection = Readonly<{
@@ -43,6 +47,9 @@ export class PlaceableScene {
   readonly pinwheel = new Group();
   readonly rotor = new Group();
   readonly actor = new Group();
+  readonly locomotion = new PlazaLocomotion();
+  readonly cameraRig = new PlazaCameraRig();
+  #cameraObstacles: CameraObstacle[] = [];
   readonly socketRings = new Group();
   readonly bladeMaterial = material(COLORS.coral);
   readonly ambient = new AmbientLight(0xe8ecff, 1.5);
@@ -166,6 +173,18 @@ export class PlaceableScene {
         leg.position.set(x + offset, 0.2, 0.2); this.scene.add(leg);
       }
     }
+    // Browser review reproduced gate/tree occlusion at 180/270 degrees. Static
+    // mesh bounds are a conservative camera-only proxy, never actor collision.
+    // Capture before adding interactive objects or the companion; ground/path
+    // surfaces cannot obstruct the eye-height boom.
+    this.scene.updateMatrixWorld(true);
+    this.scene.traverse((object) => {
+      if (!(object instanceof Mesh)) return;
+      const box = new Box3().setFromObject(object);
+      if (box.max.y < 0.6) return;
+      this.#cameraObstacles.push(cameraObstacle(`plaza-${this.#cameraObstacles.length}`,
+        worldPoint(box.min.x, box.min.y, box.min.z), worldPoint(box.max.x, box.max.y, box.max.z)));
+    });
     for (const socket of SOCKETS) {
       const ring = new Mesh(new RingGeometry(0.31, PINWHEEL_RADIUS, 40), material("#819f86"));
       ring.name = socket.id; ring.rotation.x = -Math.PI / 2;
@@ -207,10 +226,15 @@ export class PlaceableScene {
 
   resize(aspect: number) {
     this.camera.aspect = aspect;
-    // Keep the authored sockets and plaza in view on portrait screens too.
-    const distance = Math.max(1, 0.67 / aspect);
-    this.camera.position.set(0.45, 4.2 * distance, 9.5 * distance);
-    this.camera.lookAt(0, 1.1, -0.65); this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
+    this.cameraRig.resize(aspect);
+    this.camera.updateProjectionMatrix(); this.#camera(0);
+  }
+
+  stopSpatial() { this.locomotion.stop(); this.cameraRig.stop(); }
+  #camera(dt: number) {
+    const { position, focus } = this.cameraRig.step(this.actor.position, dt, this.#reducedMotion, this.#cameraObstacles);
+    this.camera.position.set(position.x, position.y, position.z);
+    this.camera.lookAt(focus.x, focus.y, focus.z); this.camera.updateMatrixWorld();
   }
 
   update(projection: PlaceableProjection, reducedMotion: boolean) {
@@ -222,6 +246,7 @@ export class PlaceableScene {
       if (detail.name.startsWith("choice-detail:")) detail.visible = detail.name === `choice-detail:${choice}`;
     }
     this.#reducedMotion = reducedMotion; this.#preview = projection.preview; this.#suspended = projection.suspended;
+    if (this.#suspended) this.stopSpatial();
     if (reducedMotion && this.#welcomeTime !== (this.#twilight ? 2.1 : 0)) {
       this.#welcomeTime = this.#twilight ? 2.1 : 0;
       this.#lighting();
@@ -251,17 +276,19 @@ export class PlaceableScene {
 
   step(seconds: number, intent: MovementIntent) {
     if (this.#disposed) return;
-    const dt = Math.max(0, Math.min(seconds, 0.05));
+    const dt = Number.isFinite(seconds) ? Math.max(0, Math.min(seconds, 0.05)) : 0;
     const target = this.#twilight ? 2.1 : 0;
     if (this.#welcomeTime !== target) {
       this.#welcomeTime = this.#twilight ? Math.min(target, this.#welcomeTime + dt) : Math.max(0, this.#welcomeTime - dt * 2);
       this.#lighting();
     }
     if (!this.#suspended) {
-      const bound = PATH.boundMetres - 0.35;
-      this.actor.position.x = Math.max(-bound, Math.min(bound, this.actor.position.x + intent.lateral * dt * 1.8));
-      this.actor.position.z = Math.max(-bound, Math.min(bound, this.actor.position.z - intent.forward * dt * 1.8));
+      if (intent.magnitude) this.cameraRig.engage();
+      const position = this.locomotion.step(this.actor.position, intent, this.cameraRig.yaw, dt, this.#reducedMotion);
+      this.actor.position.x = position.x; this.actor.position.z = position.z;
+      this.actor.rotation.y = this.locomotion.yaw;
     }
+    this.#camera(dt);
     if (this.#feedbackLeft > 0) {
       if (!this.#reducedMotion && !this.#preview) this.rotor.rotation.z -= dt * 14 * (this.#feedbackLeft / 0.9);
       this.#feedbackLeft = Math.max(0, this.#feedbackLeft - dt);
@@ -321,7 +348,8 @@ export class PlaceableScene {
     return [{ id: "today-gate", label: "오늘의 기록", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
       ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
-      return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50 };
+      const visible = point.z >= -1 && point.z <= 1 && Math.abs(point.x) < 0.9 && Math.abs(point.y) < 0.94;
+      return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50, visible };
     });
   }
 

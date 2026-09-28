@@ -55,6 +55,11 @@
 .placeable-entry-recovery > p { max-width: 52ch; }
 .placeable-world-host { position: relative; width: 100%; aspect-ratio: 1.15; border-radius: var(--sk7-radius-screen); overflow: hidden; isolation: isolate; background: #eee8db; }
 .placeable-world-host canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+.placeable-world-view .placeable-world-host canvas { touch-action: none; cursor: grab; }
+.plaza-camera-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
+.plaza-camera-controls legend { padding: 0 0 8px; font-weight: 650; }
+.placeable-experience .plaza-camera-controls button { min-height: 44px; padding: 8px; font-size: .8rem; }
+.plaza-camera-reset { grid-column: 1 / -1; }
 .placeable-world-label { position: absolute; transform: translate(-50%, -50%); pointer-events: none; padding: 2px 6px; border-radius: 5px; background: #fffdf3d9; font-size: .7rem; white-space: nowrap; }
 .placeable-experience .placeable-walk-pad { position: absolute; bottom: 16px; right: 16px; width: 96px; height: 96px; border-radius: 50%; border: 2px solid #fff9; background: #253e35c4; color: #fff; touch-action: none; user-select: none; line-height: 1.15; }
 .placeable-world-caption { position: absolute; bottom: 16px; left: 16px; background: #fffdf3e8; padding: 4px 10px; border-radius: 10px; font-size: .8rem; pointer-events: none; }
@@ -176,6 +181,7 @@
 .placeable-world-view .plaza-help { position: absolute; z-index: 2; bottom: max(25px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); font-size: .8rem; max-width: 360px; width: max-content; }
 .plaza-help summary { min-height: 44px; align-content: center; cursor: pointer; padding: 8px 12px; border-radius: 12px; background: #fcf7eced; }
 .plaza-help[open] { background: #fcf7ec; border-radius: 12px; padding: 12px; max-height: 40dvh; overflow: auto; width: min(360px, 90vw); }
+.plaza-help[open] summary { position: sticky; top: -12px; z-index: 1; background: #fcf7ec; border-bottom: 1px solid #d8d0c2; margin-bottom: 8px; }
 .placeable-world-view .placeable-walk-pad { right: max(28px, env(safe-area-inset-right)); bottom: max(28px, env(safe-area-inset-bottom)); width: 80px; height: 80px; font-size: .75rem; background: #54416cde; }
 .placeable-world-view .placeable-world-message, .placeable-world-view .placeable-stage > p[role], .placeable-world-view .placeable-stage > p:has(a) { position: absolute; z-index: 2; top: 30%; left: 15%; width: 70%; background: #fcf7ec; padding: 24px; border-radius: 16px; }
 .plaza-save-summary { position: absolute; z-index: 3; top: 94px; left: max(28px, env(safe-area-inset-left)); width: min(370px, calc(100% - 56px)); font-size: .8rem; }
@@ -211,7 +217,8 @@
   .placeable-world-view[data-editing=true] .placeable-twilight { right: 12px; left: auto; top: max(162px, calc(env(safe-area-inset-top) + 150px)); }
   .placeable-world-view .placeable-companion { left: 14px; bottom: max(146px, calc(env(safe-area-inset-bottom) + 132px)); }
   .placeable-world-view .placeable-walk-pad { right: 14px; bottom: max(70px, calc(env(safe-area-inset-bottom) + 56px)); width: 72px; height: 72px; }
-  .placeable-world-view .plaza-help { left: auto; right: 12px; transform: none; bottom: max(220px, calc(env(safe-area-inset-bottom) + 208px)); }
+  .placeable-world-view .plaza-help { left: 14px; right: auto; transform: none; bottom: max(220px, calc(env(safe-area-inset-bottom) + 208px)); }
+  .placeable-world-view .plaza-help[open] { z-index: 4; bottom: max(156px, calc(env(safe-area-inset-bottom) + 144px)); max-height: min(40dvh, calc(100dvh - 350px)); }
   .plaza-save-summary { top: 142px; left: 12px; width: calc(100% - 24px); font-size: .75rem; }
   .placeable-world-view .placeable-handoff-note { top: max(142px, calc(env(safe-area-inset-top) + 130px)); left: 12px; width: calc(100% - 24px); }
   .placeable-world-view .placeable-controls { top: auto; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); width: auto; max-height: 52dvh; padding: 16px; border-radius: 20px; }
