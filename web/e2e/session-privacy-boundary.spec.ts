@@ -496,6 +496,95 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("PDF");
   await expect(settings).toContainText("인쇄물");
   await expect(settings).toContainText("계정과 별개");
+  await expect(settings).toContainText("이 브라우저에만 저장");
+  await expect(settings).toContainText("이번 이용에만 사용");
+  await expect(settings).toContainText("Model V2 분석");
+  await expect(settings).toContainText("계정 전체 백업이 아니며");
+});
+
+test("S14 exports the exact recent 30-calendar-date range without mutating records", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-09-28T03:00:00Z"));
+  const requests: Array<{ method: string; url: string }> = [];
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+      "Access-Control-Expose-Headers": "Content-Disposition",
+    };
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    requests.push({ method: request.method(), url: request.url() });
+    if (url.pathname === "/api/v1/observations/window") return route.fulfill({ status: 200, headers, contentType: "application/json", body: JSON.stringify(emptyWindow) });
+    if (url.pathname === "/api/v1/observations/export") return route.fulfill({ status: 200, headers: { ...headers, "Content-Disposition": 'attachment; filename="recent-30-days.json"' }, contentType: "application/json", body: JSON.stringify(emptyWindow) });
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S14");
+  const settings = page.locator('[data-scene="S14"]');
+  await expect(settings).toContainText("2026-08-30");
+  await expect(settings).toContainText("2026-09-28");
+  const download = page.waitForEvent("download");
+  await settings.getByRole("button", { name: "최근 30일 날짜 범위 JSON 내려받기", exact: true }).click();
+  await download;
+
+  const exportRequest = requests.find(({ url }) => new URL(url).pathname === "/api/v1/observations/export");
+  expect(exportRequest?.method).toBe("GET");
+  expect(new URL(exportRequest!.url).searchParams.get("start_on")).toBe("2026-08-30");
+  expect(new URL(exportRequest!.url).searchParams.get("end_on")).toBe("2026-09-28");
+  expect(requests.every(({ method }) => method === "GET")).toBe(true);
+  await expect(page.getByText("최근 30일 날짜 범위 JSON을 준비했어요.")).toBeVisible();
+});
+
+test("browser personalization reset clears only the four allowlisted local keys", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-ui-theme", "warm");
+    localStorage.setItem("sk7-starting-home", "my-space");
+    localStorage.setItem("sk7-companion-species", "rabbit");
+    localStorage.setItem("sk7:placeable:v1", "browser-space");
+    localStorage.setItem("unrelated-preference-sentinel", "keep");
+  });
+  await routeWindow(page, () => emptyWindow);
+  await page.goto("/?e2e=signed-in&screen=S14");
+
+  await page.getByRole("button", { name: "초기화 범위 확인", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("로그인, 계정, 서버 기록, 계정 My Space, 내려받은 파일");
+  await dialog.getByRole("button", { name: "이 브라우저만 초기화", exact: true }).click();
+
+  expect(await page.evaluate(() => ({
+    theme: localStorage.getItem("sk7-ui-theme"),
+    home: localStorage.getItem("sk7-starting-home"),
+    companion: localStorage.getItem("sk7-companion-species"),
+    space: localStorage.getItem("sk7:placeable:v1"),
+    unrelated: localStorage.getItem("unrelated-preference-sentinel"),
+    renderedTheme: document.documentElement.dataset.sk7Theme,
+  }))).toEqual({ theme: null, home: null, companion: null, space: null, unrelated: "keep", renderedTheme: "cloud" });
+  await expect(page.locator('[data-scene="S14"]')).toBeVisible();
+  await expect(page.getByRole("radio", { name: /오늘의 기록/ })).toBeChecked();
+  const companion = page.getByLabel("캐릭터 선택");
+  if (await companion.count()) await expect(companion).toHaveValue("bear");
+  await expect(page.getByText("계정과 서버 기록은 변경되지 않았어요.")).toBeVisible();
+});
+
+test("browser personalization reset reports storage failure without claiming completion", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sk7-ui-theme", "warm");
+    localStorage.setItem("sk7-starting-home", "my-space");
+    const removeItem = Storage.prototype.removeItem;
+    Storage.prototype.removeItem = function (key) {
+      if (key === "sk7-starting-home") throw new Error("blocked");
+      return removeItem.call(this, key);
+    };
+  });
+  await routeWindow(page, () => emptyWindow);
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.getByRole("button", { name: "초기화 범위 확인", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "이 브라우저만 초기화", exact: true }).click();
+  await expect(dialog).toContainText("초기화를 완료하지 못했어요");
+  await expect(page.getByText("이 브라우저의 개인화를 초기화했어요.")).toHaveCount(0);
 });
 
 test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {

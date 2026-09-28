@@ -31,6 +31,7 @@ import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDr
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
+import { BrowserPersonalizationResetConfirmation } from "./components/BrowserPersonalizationResetConfirmation";
 import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
 import { createModelV2SessionGuard } from "./components/modelV2ExecutionGuard";
 import {
@@ -64,6 +65,7 @@ import { getActiveCompanionAsset } from "./ui/companionActiveAsset";
 import { companionIdentityOptions, readCompanionIdentity, writeCompanionIdentity } from "./ui/companionIdentity";
 import { applyThemePreference, readThemePreference, themePreferenceOptions, writeThemePreference } from "./ui/themePreference";
 import { journeyCopy, parseScreen, type ScreenId } from "./ui/journey";
+import { resetBrowserPersonalization } from "./ui/browserPersonalization";
 import { requiresObservationWindow } from "./ui/journeyAvailability";
 import {
   getSyntheticModelV2ResultView,
@@ -118,6 +120,12 @@ type LoginFeedback = {
   kind: "sent" | "error";
   message: string;
 } | null;
+type AnonymousCompletion = "signed-out" | "account-deleted" | null;
+type ExportRequest = {
+  scope: "selected-seven-day" | "recent-thirty-day";
+  startOn: string;
+  endOn: string;
+};
 
 function makeNotice(
   kind: Notice["kind"],
@@ -219,6 +227,9 @@ function Login({
   companionMode,
   companionSpecies,
   onCompanionSpeciesChange,
+  completion,
+  browserResetCompleted,
+  onResetBrowserPersonalization,
 }: {
   onSession: (session: Session) => void;
   recoveryMessage?: string;
@@ -227,6 +238,9 @@ function Login({
   companionMode: CompanionMode;
   companionSpecies: CompanionSpecies;
   onCompanionSpeciesChange: (species: CompanionSpecies) => void;
+  completion: AnonymousCompletion;
+  browserResetCompleted: boolean;
+  onResetBrowserPersonalization: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [feedback, setFeedback] = useState<LoginFeedback>(null);
@@ -262,6 +276,17 @@ function Login({
   const visibleFeedback = feedback ?? (recoveryMessage
     ? { kind: "error" as const, message: recoveryMessage }
     : null);
+  const completionContent = completion === "signed-out"
+    ? {
+        title: "이 기기에서 로그아웃했어요",
+        body: "현재 계정 연결만 종료했어요. 계정과 서버 기록은 삭제되지 않았고, 이 브라우저의 개인화와 내 기기에 저장한 파일도 그대로예요.",
+      }
+    : completion === "account-deleted"
+      ? {
+          title: "계정을 삭제했어요",
+          body: "계정과 계정에 연결된 SK7 서버 데이터가 삭제됐어요. 내 기기에 저장한 파일과 이 브라우저의 개인화는 별도로 남을 수 있어요.",
+        }
+      : null;
 
   if (journey) return (
     <main className="welcome-shell journey-login" data-scene="S01">
@@ -279,6 +304,15 @@ function Login({
             <h2>이메일로 로그인해 첫 혈압을 남겨요</h2>
             <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 혈압 기록</p>
           </div>
+          {completionContent && <section className="anonymous-completion" aria-labelledby="anonymous-completion-title">
+            <div role="status">
+              <p className="eyebrow">완료</p>
+              <h3 id="anonymous-completion-title">{completionContent.title}</h3>
+              <p>{completionContent.body}</p>
+              {browserResetCompleted && <p className="anonymous-completion-reset">이 브라우저의 개인화도 기본값으로 초기화했어요.</p>}
+            </div>
+            {!browserResetCompleted && <button className="secondary" type="button" onClick={onResetBrowserPersonalization}>이 브라우저의 개인화 초기화</button>}
+          </section>}
           <form className="journey-login-form section-header" onSubmit={submit} aria-busy={pending}>
             <label htmlFor="email">이메일</label>
             <input ref={emailRef} id="email" type="email" autoComplete="email" aria-describedby="login-help" value={email} onChange={(event) => setEmail(event.target.value)} required />
@@ -332,6 +366,12 @@ function Login({
         <p className="eyebrow">{journeyCopy.S01.eyebrow}</p>
         <h1 id="login-title">{journeyCopy.S01.title}</h1>
         <p className="scene-body">{journeyCopy.S01.body}</p>
+        {completionContent && <section className="anonymous-completion" aria-labelledby="anonymous-completion-title">
+          <div role="status"><h2 id="anonymous-completion-title">{completionContent.title}</h2><p>{completionContent.body}</p></div>
+          {browserResetCompleted
+            ? <p>이 브라우저의 개인화도 기본값으로 초기화했어요.</p>
+            : <button className="secondary" type="button" onClick={onResetBrowserPersonalization}>이 브라우저의 개인화 초기화</button>}
+        </section>}
         <form onSubmit={submit}>
           <label htmlFor="email">이메일</label>
           <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
@@ -403,6 +443,8 @@ function App() {
   const [recapSelectedDate, setRecapSelectedDate] = useState<string | null>(null);
   const reportTriggerRef = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [anonymousCompletion, setAnonymousCompletion] = useState<AnonymousCompletion>(null);
+  const [browserResetCompleted, setBrowserResetCompleted] = useState(false);
   const [newBloodPressureRecovery, setNewBloodPressureRecovery] = useState<Notice | null>(null);
   const [previousCycleEnd, setPreviousCycleEnd] = useState<string | null>(null);
   const [challengeNeedsReload, setChallengeNeedsReload] = useState(false);
@@ -410,6 +452,7 @@ function App() {
   const challengeRequestRef = useRef<RequestContext | null>(null);
   const navigationVersionRef = useRef(0);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const exportRequestRef = useRef<ExportRequest | null>(null);
   const [confirmedSave, setConfirmedSave] = useState(
     () => companionMode === "review" && Boolean(fixture) && allowsE2eFixture() && initialSearch.get("companion_context") === "save_success",
   );
@@ -445,6 +488,9 @@ function App() {
   const [accountDeletionOpen, setAccountDeletionOpen] = useState(false);
   const [accountDeletionPending, setAccountDeletionPending] = useState(false);
   const [accountDeletionRecovery, setAccountDeletionRecovery] = useState<AccountDeletionRecovery>(null);
+  const [browserResetOpen, setBrowserResetOpen] = useState(false);
+  const [browserResetError, setBrowserResetError] = useState<string | null>(null);
+  const [browserPersonalizationVersion, setBrowserPersonalizationVersion] = useState(0);
   const presentationRef = useRef({ today, startOn, endOn, windowData, accountDeletionPending });
 
   useLayoutEffect(() => {
@@ -479,6 +525,8 @@ function App() {
     const incomingScreen = currentIdentity.userId === null && nextUserId !== null
       && (!window.history.state?.sk7UserId || window.history.state.sk7UserId === nextUserId);
     if (currentIdentity.userId === null && nextUserId !== null) {
+      setAnonymousCompletion(null);
+      setBrowserResetCompleted(false);
       setStartingHomeDestination(resolveStartingHomeDestination({
         defaultEntry: defaultHomeEntry.current && isDefaultHomeEntry(entryUrl.href),
         signedIn: true,
@@ -508,6 +556,7 @@ function App() {
     setNotice(null);
     setNewBloodPressureRecovery(null);
     setPendingAction(null);
+    exportRequestRef.current = null;
     setConfirmedSave(false);
     savedScene.clear();
     setBloodPressureEditDraft(emptyBloodPressureDraft(presentationRef.current.today));
@@ -954,6 +1003,8 @@ function App() {
     setAccountDeletionPending(false);
     setAccountDeletionOpen(false);
     setAccountDeletionRecovery(null);
+    setAnonymousCompletion("account-deleted");
+    setBrowserResetCompleted(false);
     applySession(null);
   }
 
@@ -1016,20 +1067,47 @@ function App() {
     if (!activeSession || !requestContext || signOutPending || accountDeletionPending || !supabase) return;
     setSignOutPending(true);
     setNotice(null);
+    setAnonymousCompletion("signed-out");
+    setBrowserResetCompleted(false);
     try {
       const { error } = await supabase.auth.signOut({ scope: "local" });
       if (!isCurrentRequestContext(requestContext)) return;
       if (error) {
+        setAnonymousCompletion(null);
         setNotice(makeNotice("warning", "로그아웃을 완료하지 못했어요. 다시 시도해 주세요.", { origin: "session" }));
         return;
       }
       applySession(null);
     } catch {
       if (isCurrentRequestContext(requestContext)) {
+        setAnonymousCompletion(null);
         setNotice(makeNotice("warning", "로그아웃을 완료하지 못했어요. 다시 시도해 주세요.", { origin: "session" }));
       }
     } finally {
       if (isCurrentRequestContext(requestContext)) setSignOutPending(false);
+    }
+  }
+
+  function openBrowserPersonalizationReset() {
+    setBrowserResetError(null);
+    setBrowserResetOpen(true);
+  }
+
+  function confirmBrowserPersonalizationReset() {
+    if (!resetBrowserPersonalization()) {
+      setBrowserResetError("브라우저 저장 공간에 접근하지 못해 초기화를 완료하지 못했어요. 브라우저 설정을 확인한 뒤 다시 시도해 주세요.");
+      return;
+    }
+
+    setThemePreference(applyThemePreference("cloud"));
+    setCompanionSpeciesPreference("bear");
+    setBrowserPersonalizationVersion((version) => version + 1);
+    setBrowserResetError(null);
+    setBrowserResetOpen(false);
+    if (sessionRef.current) {
+      setNotice(makeNotice("success", "이 브라우저의 개인화를 초기화했어요. 계정과 서버 기록은 변경되지 않았어요.", { origin: "mutation-success" }));
+    } else {
+      setBrowserResetCompleted(true);
     }
   }
 
@@ -1328,13 +1406,14 @@ function App() {
     }
   }
 
-  async function exportRecentRecords() {
+  async function exportRecords(request: ExportRequest) {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
     if (!activeSession || !requestContext || evidenceMode || pendingAction || accountDeletionPending) return;
+    exportRequestRef.current = request;
     setPendingAction("export");
     try {
-      const exported = await exportObservations(activeSession, startOn, endOn);
+      const exported = await exportObservations(activeSession, request.startOn, request.endOn);
       if (!isCurrentRequestContext(requestContext)) return;
       const objectUrl = URL.createObjectURL(exported.blob);
       const link = document.createElement("a");
@@ -1344,12 +1423,31 @@ function App() {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
-      setNotice(makeNotice("success", "내보내기 파일을 준비했어요. 본인 기기에 안전하게 보관해 주세요.", { origin: "export-success" }));
+      setNotice(makeNotice(
+        "success",
+        request.scope === "recent-thirty-day"
+          ? "최근 30일 날짜 범위 JSON을 준비했어요. 내 기기에 저장한 사본은 직접 안전하게 관리해 주세요."
+          : "내보내기 파일을 준비했어요. 본인 기기에 안전하게 보관해 주세요.",
+        { origin: "export-success" },
+      ));
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) presentRequestError(error, "export", requestContext);
     } finally {
       if (isCurrentRequestContext(requestContext)) setPendingAction(null);
     }
+  }
+
+  function exportRecentRecords() {
+    return exportRecords({ scope: "selected-seven-day", startOn, endOn });
+  }
+
+  function exportRecentThirtyDayRecords() {
+    return exportRecords({ scope: "recent-thirty-day", startOn: shiftDate(today, -29), endOn: today });
+  }
+
+  function retryExport() {
+    const request = exportRequestRef.current;
+    return request ? exportRecords(request) : exportRecentRecords();
   }
 
   const presentation = resolvePresentationPolicy(import.meta.env.VITE_SK7_UI_MODE, import.meta.env.VITE_SK7_SCENE_MODE);
@@ -1369,7 +1467,26 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <><MySpaceReturn /><Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" && !notice.recovery ? notice.message : undefined} recovery={notice?.recovery} /></>;
+    return <>
+      <MySpaceReturn />
+      <Login
+        journey={presentation.journey}
+        companionMode={companionMode}
+        companionSpecies={companionSpeciesPreference}
+        onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))}
+        onSession={applySession}
+        recoveryMessage={notice?.kind === "warning" && !notice.recovery ? notice.message : undefined}
+        recovery={notice?.recovery}
+        completion={anonymousCompletion}
+        browserResetCompleted={browserResetCompleted}
+        onResetBrowserPersonalization={openBrowserPersonalizationReset}
+      />
+      {browserResetOpen && <BrowserPersonalizationResetConfirmation
+        error={browserResetError}
+        onCancel={() => { setBrowserResetOpen(false); setBrowserResetError(null); }}
+        onConfirm={confirmBrowserPersonalizationReset}
+      />}
+    </>;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
@@ -2280,13 +2397,51 @@ function App() {
     }
 
       if (presentation.journey) return (
-        <Scene id="S14" {...journeyCopy.S14} body="내 환경과 계정을 차분하게 관리해요." tone="base" className="journey-settings surface">
+        <Scene id="S14" {...journeyCopy.S14} body="내 기록이 어디에 있고, 떠날 때 무엇이 달라지는지 한눈에 확인해요." tone="base" className="journey-settings surface">
+          <section className="lifecycle-boundary-map" aria-labelledby="lifecycle-boundary-title">
+            <div className="lifecycle-boundary-heading">
+              <p className="eyebrow">Data map</p>
+              <h2 id="lifecycle-boundary-title">내 데이터가 머무는 네 곳</h2>
+            </div>
+            <div className="lifecycle-boundary-grid">
+              <article data-boundary="account"><span>계정에 저장</span><strong>기록과 계정 공간</strong><p>혈압 관찰, 챌린지 기록, account mode My Space 꾸미기 상태</p></article>
+              <article data-boundary="browser"><span>이 브라우저에만 저장</span><strong>화면 개인화</strong><p>테마, 시작 화면, 동반자, browser-only My Space 배치</p></article>
+              <article data-boundary="transient"><span>이번 이용에만 사용</span><strong>Model V2 분석</strong><p>입력과 결과는 브라우저 메모리에만 있고 화면 이탈·새로고침 시 사라져요.</p></article>
+              <article data-boundary="device"><span>내 기기에 저장한 사본</span><strong>JSON · PDF · 인쇄물</strong><p>SK7 계정과 별개이며 직접 보관하거나 삭제해요.</p></article>
+            </div>
+          </section>
           <div className="journey-settings-list">
-            <section className="journey-settings-group" aria-labelledby="settings-display-title">
-              <div className="journey-settings-group-heading"><p className="eyebrow">화면</p><h2 id="settings-display-title">보이는 방식</h2><p>읽기 편한 화면을 선택하세요.</p></div>
+            <section className="journey-settings-group" aria-labelledby="settings-records-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">01 · 내 기록</p><h2 id="settings-records-title">계정에 저장되는 것</h2><p>7일 경험과 서버 보관 기간은 서로 달라요.</p></div>
+              <div className="journey-settings-group-content">
+                <section className="journey-settings-section journey-settings-data-row">
+                  <div className="section-header"><h3>혈압 관찰과 챌린지 기록</h3><p>각 기록은 저장한 시점부터 30일 후 접근할 수 없게 돼요. 화면의 현재·이전·종료된 7일 돌아보기와는 다른 서버 보관 기준이에요.</p></div>
+                  <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button>
+                </section>
+                <section className="journey-settings-section journey-settings-data-row">
+                  <div className="section-header"><h3>계정 My Space 꾸미기 상태</h3><p>건강 기록의 30일 보관 대상이 아니라, 이메일 로그인 계정이 유지되는 동안의 별도 꾸미기 상태예요.</p></div>
+                </section>
+              </div>
+            </section>
+            <section className="journey-settings-group" aria-labelledby="settings-copies-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">02 · 내 기기의 사본</p><h2 id="settings-copies-title">필요한 기록 내려받기</h2><p>서버 기록과 내려받은 파일을 구분해요.</p></div>
+              <div className="journey-settings-group-content">
+                <section className="journey-settings-section journey-settings-data-row lifecycle-export-row">
+                  <div className="section-header"><h3>최근 30일 날짜 범위 JSON</h3><p><time dateTime={shiftDate(today, -29)}>{shiftDate(today, -29)}</time>부터 <time dateTime={today}>{today}</time>까지, 오늘을 포함한 최근 30개 달력 날짜 범위에서 현재 접근 가능한 혈압 관찰 기록을 내려받아요.</p><p className="journey-settings-note">계정 전체 백업이 아니며, 저장 시점부터 30일 보관과 같은 뜻이 아니에요. 삭제되었거나 이미 만료된 기록을 복구하지 않습니다.</p></div>
+                  <button type="button" onClick={() => void exportRecentThirtyDayRecords()} disabled={settingsControlsDisabled} aria-busy={pendingAction === "export"}>{pendingAction === "export" ? "내보내는 중" : "최근 30일 날짜 범위 JSON 내려받기"}</button>
+                </section>
+                <section className="journey-settings-section journey-settings-data-row">
+                  <div className="section-header"><h3>7일 리포트와 PDF</h3><p>현재·이전·종료된 7일의 읽기 좋은 리포트와 PDF는 7일 돌아보기에서 확인해요.</p></div>
+                  <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 리포트 / PDF 보기</button>
+                </section>
+                <p className="lifecycle-copy-note">내려받은 JSON, 저장한 PDF, 인쇄물은 로그아웃이나 계정 삭제로 자동 삭제되지 않아요.</p>
+              </div>
+            </section>
+            <section className="journey-settings-group" aria-labelledby="settings-personal-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">03 · 이 브라우저의 개인화</p><h2 id="settings-personal-title">화면과 시작 위치</h2><p>계정 데이터와 자동으로 합치지 않아요.</p></div>
               <div className="journey-settings-group-content">
                 <section className="journey-settings-section journey-settings-display">
-                  <div className="section-header"><h3>화면 테마</h3><p>이 브라우저의 화면에만 적용돼요. 기록·분석에는 영향이 없어요.</p></div>
+                  <div className="section-header"><h3>화면 테마</h3><p>이 브라우저의 화면에만 적용되며 기록·분석에는 영향이 없어요.</p></div>
                   <fieldset className="theme-preset-control">
                     <legend>화면 테마</legend>
                     {themePreferenceOptions.map((option) => <label key={option.value}>
@@ -2299,59 +2454,33 @@ function App() {
                       <span><strong>{option.label}</strong><small>{option.description}</small></span>
                     </label>)}
                   </fieldset>
-                  <p className="journey-settings-note">선택은 이 기기·브라우저에만 저장되며, 사이트 데이터를 지우면 Cloud로 돌아갈 수 있어요.</p>
                 </section>
-                <dl className="journey-settings-facts"><div><dt>언어</dt><dd>한국어</dd></div><div><dt>시간</dt><dd>한국 시간</dd></div></dl>
-              </div>
-            </section>
-            {(!evidenceMode || companionMode !== "off") && <section className="journey-settings-group" aria-labelledby="settings-personal-title">
-              <div className="journey-settings-group-heading"><p className="eyebrow">개인화</p><h2 id="settings-personal-title">{evidenceMode ? "내 동반자" : "시작과 동반자"}</h2><p>{evidenceMode ? "화면의 동반자를 선택해요." : "내 공간에 들어오는 방식을 정해요."}</p></div>
-              <div className="journey-settings-group-content">
-                {!evidenceMode && <StartingHomeControl headingLevel={3} />}
+                {!evidenceMode && <StartingHomeControl key={browserPersonalizationVersion} headingLevel={3} />}
                 {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
                   <div className="section-header"><h3>내 동반자</h3><p>화면의 캐릭터만 바뀌며 기록·분석에는 영향이 없어요.</p></div>
-                  <label className="companion-identity-control" htmlFor="companion-species">
-                    <span>캐릭터 선택</span>
-                    <select id="companion-species" value={companionSpeciesPreference} onChange={(event) => {
-                      const species = event.target.value as CompanionSpecies;
-                      setCompanionSpeciesPreference(writeCompanionIdentity(species));
-                    }}>
-                      {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
-                    </select>
-                  </label>
+                  <label className="companion-identity-control" htmlFor="companion-species"><span>캐릭터 선택</span><select id="companion-species" value={companionSpeciesPreference} onChange={(event) => {
+                    const species = event.target.value as CompanionSpecies;
+                    setCompanionSpeciesPreference(writeCompanionIdentity(species));
+                  }}>{companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}</select></label>
+                </section>}
+                {!evidenceMode && <section className="journey-settings-section journey-settings-browser-reset">
+                  <div className="section-header"><h3>이 브라우저의 개인화 초기화</h3><p>테마는 Cloud, 시작 화면은 오늘의 기록, 동반자는 기본값, browser-only My Space는 빈 기본 상태로 되돌려요. 계정과 서버 기록은 변경하지 않아요.</p></div>
+                  <button className="secondary" type="button" onClick={openBrowserPersonalizationReset} disabled={settingsControlsDisabled}>초기화 범위 확인</button>
                 </section>}
               </div>
-            </section>}
-            <section className="journey-settings-group" aria-labelledby="settings-data-title">
-              <div className="journey-settings-group-heading"><p className="eyebrow">기록과 데이터</p><h2 id="settings-data-title">보관과 내보내기</h2><p>저장된 기록과 기기의 파일을 구분해요.</p></div>
-              <div className="journey-settings-group-content">
-                <section className="journey-settings-section journey-settings-data-row">
-                  <div className="section-header"><h3>30일 보관</h3><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요.</p></div>
-                  <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button>
-                </section>
-                <section className="journey-settings-section journey-settings-data-row">
-                  <div className="section-header"><h3>내보낸 파일</h3><p>내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고, 인쇄물도 계정과 별개이므로 직접 관리해요.</p></div>
-                </section>
-                <details className="journey-settings-help"><summary>저장 여부가 확실하지 않을 때</summary><p>같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.</p></details>
-              </div>
             </section>
+            {!evidenceMode && <section className="journey-settings-group journey-settings-signout" aria-labelledby="settings-signout-title">
+              <div className="journey-settings-group-heading"><p className="eyebrow">04 · 이 기기에서 로그아웃</p><h2 id="settings-signout-title">현재 계정 연결 끝내기</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기라면 사용을 마친 뒤 선택하세요.</p></div>
+              <div className="journey-settings-group-content"><div className="journey-settings-account-row"><div className="section-header"><h3>삭제하지 않고 로그아웃</h3><p>Auth 계정, 서버의 제품 기록, 계정 My Space, 내 기기의 파일, 이 브라우저의 개인화는 삭제하지 않아요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></div></div>
+            </section>}
             <section className="journey-settings-group journey-settings-account" aria-labelledby="settings-account-title">
-              <div className="journey-settings-group-heading"><p className="eyebrow">계정</p><h2 id="settings-account-title">이메일 로그인 계정</h2><p>기기 연결과 계정 삭제를 여기에서 관리해요.</p></div>
-              <div className="journey-settings-group-content journey-settings-account-actions">
-                {!evidenceMode && <div className="journey-settings-account-row">
-                  <div className="section-header"><h3>이 기기에서 로그아웃</h3><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div>
-                  <button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button>
-                </div>}
-                <div className="journey-settings-account-row journey-settings-account-danger">
-                  <div className="section-header"><h3>계정 삭제</h3><p>계정과 저장된 혈압 관찰·챌린지 기록이 삭제되며, 되돌릴 수 없어요. 이미 내보낸 JSON, 저장한 PDF, 인쇄물은 별개로 남을 수 있어요.</p></div>
-                  <button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button>
-                </div>
-              </div>
+              <div className="journey-settings-group-heading"><p className="eyebrow">05 · 계정 영구 삭제</p><h2 id="settings-account-title">계정과 연결된 서버 데이터 삭제</h2><p>일반 설정과 분리된 되돌릴 수 없는 작업이에요.</p></div>
+              <div className="journey-settings-group-content journey-settings-account-actions"><div className="journey-settings-account-row journey-settings-account-danger"><div className="section-header"><h3>삭제 범위를 먼저 확인</h3><p>Auth 계정, 계정 소유 제품 기록, 계정 My Space 꾸미기 상태가 삭제돼요. 내 기기의 파일과 이 브라우저의 개인화는 자동 삭제되지 않아요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></div></div>
             </section>
           </div>
         </Scene>
       );
-      return <Scene id="S14" {...journeyCopy.S14} tone="base" className="surface"><div className="settings-list">{!evidenceMode && <StartingHomeControl />}<section><div className="section-header"><p className="eyebrow">계정</p><h2>이메일 로그인 계정</h2></div></section>{!evidenceMode && <section><div className="section-header"><p className="eyebrow">기기 연결</p><h2>이 기기에서 로그아웃</h2><p>개인 기기에서는 로그인 상태를 유지해도 괜찮아요. 공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div className="section-header"><p className="eyebrow">언어와 시간대</p><h2>한국어 · Asia/Seoul</h2></div></section><section><div className="section-header"><p className="eyebrow">내 기록</p><h2>30일 보관</h2><p>혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관됩니다.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")} disabled={settingsControlsDisabled}>7일 기록 보기</button></section><section><div className="section-header"><p className="eyebrow">계정 관리</p><h2>계정 삭제</h2><p>계정을 삭제하면 저장된 혈압 관찰과 챌린지 기록도 함께 삭제됩니다. 삭제 후 되돌릴 수 없어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section><section><div className="section-header"><p className="eyebrow">내보낸 파일</p><h2>JSON·PDF는 계정과 별개예요</h2><p>내보낸 JSON과 브라우저에서 저장한 PDF, 인쇄물은 서버 보관 기간과 별개이므로 직접 안전하게 관리해 주세요.</p></div></section><section><div className="section-header"><p className="eyebrow">도움말</p><h2>저장 여부 확인</h2><p>불확실하면 목록을 새로고침해 먼저 확인해 주세요.</p></div></section></div></Scene>;
+      return <Scene id="S14" {...journeyCopy.S14} tone="base" className="surface"><div className="settings-list"><section><div className="section-header"><p className="eyebrow">데이터 경계</p><h2>계정 · 브라우저 · 이번 이용 · 내 기기</h2><p>계정 기록과 계정 My Space는 계정에, 화면 개인화는 이 브라우저에만 저장돼요. Model V2 입력과 결과는 이번 이용에만 쓰고, JSON·PDF·인쇄물은 내 기기의 별도 사본이에요.</p></div></section><section><div className="section-header"><p className="eyebrow">내 기록</p><h2>계정에 저장되는 것</h2><p>혈압 관찰과 챌린지 기록은 저장 시점부터 30일, 계정 My Space는 별도 계정 수명 주기를 따라요.</p></div><button className="secondary" type="button" onClick={() => navigate("S10")}>7일 기록 보기</button></section><section><div className="section-header"><p className="eyebrow">내 기기의 사본</p><h2>최근 30일 날짜 범위 JSON</h2><p>{shiftDate(today, -29)}부터 {today}까지 현재 접근 가능한 기록 사본이며 전체 계정 백업이 아니에요.</p></div><button type="button" onClick={() => void exportRecentThirtyDayRecords()} disabled={settingsControlsDisabled}>{pendingAction === "export" ? "내보내는 중" : "최근 30일 날짜 범위 JSON 내려받기"}</button></section>{!evidenceMode && <StartingHomeControl key={browserPersonalizationVersion} />}<section><div className="section-header"><p className="eyebrow">이 브라우저의 개인화</p><h2>브라우저에만 저장</h2><p>테마, 시작 화면, 동반자, browser-only My Space는 계정과 자동 병합되지 않아요.</p></div><button className="secondary" type="button" onClick={openBrowserPersonalizationReset}>개인화 초기화</button></section>{!evidenceMode && <section><div className="section-header"><p className="eyebrow">이 기기에서 로그아웃</p><h2>현재 계정 연결 끝내기</h2><p>계정, 서버 기록, 브라우저 개인화, 내려받은 파일은 삭제하지 않아요.</p></div><button className="secondary" type="button" onClick={() => void handleSignOut()} disabled={signOutPending || accountDeletionPending}>{signOutPending ? "로그아웃 중" : "이 기기에서 로그아웃"}</button></section>}<section><div className="section-header"><p className="eyebrow">계정 영구 삭제</p><h2>삭제 범위 확인</h2><p>계정과 계정 소유 서버 데이터는 삭제되지만 브라우저 개인화와 내 기기의 파일은 남을 수 있어요.</p></div><button className="danger" type="button" onClick={() => { setAccountDeletionRecovery(null); setAccountDeletionOpen(true); }} disabled={settingsControlsDisabled}>계정 삭제</button></section></div></Scene>;
   }
 
   const visibleNotice = activeScreen === "S04" && !editingBloodPressureId ? newBloodPressureRecovery ?? notice : notice;
@@ -2365,7 +2494,7 @@ function App() {
       staticJourneyUi={presentation.staticLandscape}
       journeyPresentation={presentation.journey}
       feedbackPhase={blockingLoading ? "loading" : activeScreen === "S13" ? "error" : "content"}
-      feedbackSuspended={reportVisible || accountDeletionOpen || Boolean(pendingBloodPressureDeletion) || Boolean(pendingChallengeCheckinDeletion)}
+      feedbackSuspended={reportVisible || accountDeletionOpen || browserResetOpen || Boolean(pendingBloodPressureDeletion) || Boolean(pendingChallengeCheckinDeletion)}
       sessionGeneration={sessionIdentityRef.current.generation}
       activeScreen={activeScreen}
       evidenceLabel={fixture?.name}
@@ -2382,7 +2511,7 @@ function App() {
         focusOnMount
         actions={postMutationRead?.kind === "blood-pressure-edit" || postMutationRead?.kind === "challenge-edit"
           ? <button type="button" onClick={() => void finishPostMutationRead()} disabled={pendingAction !== null}>{pendingAction ? "확인 중" : "다시 불러와 확인"}</button>
-          : visibleNotice.recovery.kind === "export-failure" ? <button type="button" onClick={() => void exportRecentRecords()} disabled={pendingAction === "export"}>{pendingAction === "export" ? "내보내는 중" : "내보내기 다시 시도"}</button> : visibleNotice.reload ? <>
+          : visibleNotice.recovery.kind === "export-failure" ? <button type="button" onClick={() => void retryExport()} disabled={pendingAction === "export"}>{pendingAction === "export" ? "내보내는 중" : "내보내기 다시 시도"}</button> : visibleNotice.reload ? <>
           <button type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>
           <button className="secondary" type="button" onClick={() => void refreshThenOpenRecords()} disabled={windowState === "loading" || windowState === "refreshing"}>기록에서 확인하기</button>
         </> : undefined}
@@ -2428,6 +2557,7 @@ function App() {
         onOpenRecords={postMutationRead?.kind === "challenge-delete" ? undefined : () => { setPendingChallengeCheckinDeletion(null); void refreshThenOpenRecords(); }}
       />}
       {accountDeletionOpen && <AccountDeletionConfirmation pending={accountDeletionPending} recovery={accountDeletionRecovery} onCancel={() => { if (!accountDeletionPending) { setAccountDeletionOpen(false); setAccountDeletionRecovery(null); } }} onConfirm={() => void confirmAccountDeletion()} />}
+      {browserResetOpen && <BrowserPersonalizationResetConfirmation error={browserResetError} onCancel={() => { setBrowserResetOpen(false); setBrowserResetError(null); }} onConfirm={confirmBrowserPersonalizationReset} />}
       {renderScene()}
     </SceneShell>
     </div>

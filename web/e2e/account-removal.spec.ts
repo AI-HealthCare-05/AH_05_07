@@ -52,6 +52,10 @@ test("account removal needs two confirmations, freezes mutations, clears history
 
   await page.addInitScript((session) => {
     window.localStorage.setItem("sb-e2e-auth-token", JSON.stringify(session));
+    window.localStorage.setItem("sk7-ui-theme", "warm");
+    window.localStorage.setItem("sk7-starting-home", "my-space");
+    window.localStorage.setItem("sk7-companion-species", "rabbit");
+    window.localStorage.setItem("sk7:placeable:v1", "browser-only-space");
   }, accountA);
 
   await page.route("**://e2e.invalid/**", async (route) => {
@@ -91,9 +95,16 @@ test("account removal needs two confirmations, freezes mutations, clears history
 
   releaseDelete();
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "계정을 삭제했어요", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/127\.0\.0\.1:4173\/\?e2e=signed-in$/);
   expect(await page.evaluate(() => ({ state: window.history.state, search: window.location.search }))).toEqual({ state: { sk7UserId: null }, search: "?e2e=signed-in" });
   expect(await page.evaluate(() => window.localStorage.getItem("sb-e2e-auth-token"))).toBeNull();
+  expect(await page.evaluate(() => ({
+    theme: window.localStorage.getItem("sk7-ui-theme"),
+    home: window.localStorage.getItem("sk7-starting-home"),
+    companion: window.localStorage.getItem("sk7-companion-species"),
+    space: window.localStorage.getItem("sk7:placeable:v1"),
+  }))).toEqual({ theme: "warm", home: "my-space", companion: "rabbit", space: "browser-only-space" });
   expect(deleteRequests).toBe(1);
 });
 

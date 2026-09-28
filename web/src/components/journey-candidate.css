@@ -1300,6 +1300,24 @@
   padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
 }
 
+.lifecycle-boundary-map {
+  display: grid;
+  gap: var(--sk7-space-lg);
+  border-block: 1px solid var(--sk7-border);
+  padding-block: var(--sk7-space-xl);
+}
+
+.lifecycle-boundary-heading { display: grid; gap: var(--sk7-space-xs); }
+.lifecycle-boundary-heading .eyebrow { color: var(--sk7-accent); }
+.lifecycle-boundary-heading h2 { font-size: var(--sk7-type-title); letter-spacing: -.035em; }
+.lifecycle-boundary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--sk7-border); background: var(--sk7-border); }
+.lifecycle-boundary-grid article { display: grid; align-content: start; gap: var(--sk7-space-xs); min-width: 0; min-height: 11rem; background: var(--sk7-surface-solid); padding: var(--sk7-space-lg); }
+.lifecycle-boundary-grid article > span { color: var(--sk7-accent); font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-bold); }
+.lifecycle-boundary-grid article > strong { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); line-height: var(--sk7-leading-tight); }
+.lifecycle-boundary-grid article > p { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.lifecycle-boundary-grid article[data-boundary="transient"] > span { color: var(--sk7-success-text); }
+.lifecycle-boundary-grid article[data-boundary="device"] > span { color: var(--sk7-warning-text); }
+
 .journey-settings:not(.guest-settings) > .scene-copy {
   gap: var(--sk7-space-sm);
   max-width: 34rem;
@@ -1458,6 +1476,12 @@
   padding: 0;
 }
 
+.journey-settings-group .lifecycle-export-row { align-items: start; }
+.journey-settings-group .lifecycle-export-row .journey-settings-note { margin-top: var(--sk7-space-xs); }
+.lifecycle-copy-note { border-left: 3px solid var(--sk7-accent); padding: var(--sk7-space-sm) var(--sk7-space-md); background: var(--sk7-accent-soft); color: var(--sk7-text); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.journey-settings-browser-reset { margin-top: var(--sk7-space-sm); border-top: 1px solid var(--sk7-border) !important; padding-top: var(--sk7-space-lg) !important; }
+.journey-settings-signout .journey-settings-account-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sk7-space-xl); }
+
 .journey-settings-group .journey-settings-facts {
   grid-column: auto;
   border-top: 1px solid var(--sk7-border);
@@ -1518,9 +1542,10 @@
 }
 
 .journey-settings-group .journey-settings-account-danger {
-  margin-top: var(--sk7-space-3xl);
-  border-top: 1px solid var(--sk7-border);
-  padding-top: var(--sk7-space-xl);
+  border: 1px solid var(--sk7-danger-border);
+  border-radius: var(--sk7-radius-panel);
+  background: color-mix(in srgb, var(--sk7-danger-border) 8%, var(--sk7-surface-solid));
+  padding: var(--sk7-space-lg);
 }
 
 @media (max-width: 760px) {
@@ -1535,6 +1560,8 @@
     padding: var(--sk7-space-xl) 0;
   }
 
+  .lifecycle-boundary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
   .journey-settings-group-heading p:not(.eyebrow) {
     max-width: 26rem;
   }
@@ -1546,6 +1573,8 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sk7-space-sm);
   }
+
+  .journey-settings-signout .journey-settings-account-row { grid-template-columns: minmax(0, 1fr); }
 
   .journey-settings-group .theme-preset-control,
   .journey-settings-group .starting-home-control .theme-preset-control {
@@ -1569,7 +1598,16 @@
   }
 }
 
+@media (max-width: 520px) {
+  .lifecycle-boundary-grid { grid-template-columns: minmax(0, 1fr); }
+  .lifecycle-boundary-grid article { min-height: 0; }
+}
+
 @media (forced-colors: active) {
+  .lifecycle-boundary-grid,
+  .lifecycle-boundary-grid article,
+  .journey-settings-group .journey-settings-account-danger,
+  .lifecycle-copy-note { border: 2px solid CanvasText; background: Canvas; color: CanvasText; }
   .journey-settings-group .theme-preset-control label:has(input:checked) {
     outline: 2px solid Highlight;
     outline-offset: -2px;

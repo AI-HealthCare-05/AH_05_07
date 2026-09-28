@@ -100,6 +100,19 @@ an explicit Classic choice into a default entry. The bootstrap shows a brief
 entry status rather than mounting confirmed Today content before My Space.
 Choosing My Space does not change the global default or authorize deployment.
 
+Signed-in S14 is the Data & Account Lifecycle surface. It distinguishes account
+records and account-mode My Space cosmetics, the four allowlisted browser-only
+presentation keys, transient Model V2 input/result, and user-managed JSON/PDF/
+printed copies. Its record-copy action reuses the existing observation export for
+the exact recent 30-calendar-date range (`today - 29 days` through `today`) and
+does not describe that copy as an account backup or the server's record-age
+retention. A separately confirmed browser-personalization reset removes only
+`sk7-ui-theme`, `sk7-starting-home`, `sk7-companion-species`, and
+`sk7:placeable:v1`; it does not sign out or mutate account data. Successful
+logout and terminal account deletion return to S01 with a one-time, in-memory
+completion that states what changed and what remains. Account deletion retains
+its two-step confirmation and uncertain-result guards.
+
 
 | Screen | Purpose |
 |---|---|
@@ -113,7 +126,7 @@ Choosing My Space does not change the global default or authorize deployment.
 | S10 | Current/prior seven-day recap, partial-record coverage, human-readable report/PDF, and export |
 | S11 | Primary `AI 분석` capability with an optional browser-local Model V2 result, transient `오늘의 시작점` lifestyle summary, and one app-state continuation; input, result and continuation are not persisted |
 | S12–S13 | Confirmed empty and initial-load failure; current S12 keeps BP recording primary while exposing S11 as a lower-priority optional path |
-| S14 | Settings: account and retention/help |
+| S14 | Data & Account Lifecycle: record copies, browser personalization, logout, and account deletion |
 
 ## Accepted P0 flow
 

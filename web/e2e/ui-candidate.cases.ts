@@ -1444,13 +1444,13 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
 
   await page.goto('/?e2e=signed-in&screen=S14');
   const settings = page.locator('.journey-settings');
-  await expect(settings).toContainText('저장한 시점부터 30일 동안 보관돼요.');
-  await expect(settings).toContainText('내보낸 JSON과 브라우저에서 저장한 PDF는 기기에 남고');
-  await expect(settings).toContainText('인쇄물도 계정과 별개이므로 직접 관리해요.');
+  await expect(settings).toContainText('저장한 시점부터 30일 후 접근할 수 없게 돼요.');
+  await expect(settings.locator('[data-boundary]')).toHaveCount(4);
+  await expect(settings).toContainText('이번 이용에만 사용');
+  await expect(settings).toContainText('내려받은 JSON, 저장한 PDF, 인쇄물은 로그아웃이나 계정 삭제로 자동 삭제되지 않아요.');
   await expect(settings).toContainText('이메일 로그인 계정');
-  await settings.locator('summary').click();
-  await expect(settings).toContainText('같은 요청을 반복하기 전에 기록 목록과 새로고침으로 반영 여부를 확인해 주세요.');
-  await page.screenshot({ path: testInfo.outputPath('s14-desktop-1440-help-open.png'), fullPage: true });
+  await expect(settings.getByRole('button', { name: '최근 30일 날짜 범위 JSON 내려받기', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('s14-desktop-1440-data-lifecycle.png'), fullPage: true });
   await page.getByRole('button', { name: '계정 삭제', exact: true }).focus();
   await page.keyboard.press('Enter');
   const dialog = page.getByRole('dialog');
@@ -1465,7 +1465,7 @@ test('Journey S14 groups guidance without writes and keeps account deletion behi
   await deleteControl.focus();
   await expect(deleteControl).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-  await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-help-open-200-viewport.png') });
+  await page.screenshot({ path: testInfo.outputPath('s14-mobile-360-data-lifecycle-200-viewport.png') });
 });
 
 test('past-dated BP confirmation points to record history instead of today', async ({ page }) => {
