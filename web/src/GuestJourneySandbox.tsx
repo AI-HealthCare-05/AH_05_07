@@ -880,13 +880,6 @@ function GuestJourney({ today }: { today: string }) {
 
     if (activeScreen === "S08") {
       return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="secondary" className="record-explorer-scene surface journey-candidate journey-records">
-        <div className="scene-toolbar action-group">
-          <span className="utility-label">조회 기간</span>
-          <div className="journey-continuation-actions journey-continuation-actions--compact">
-            <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘 화면으로 돌아가기</button>
-            <button className="secondary" type="button" onClick={() => navigate("S10")}>최근 7일 돌아보기</button>
-          </div>
-        </div>
         {renderWindowNavigation()}
         <RecordExplorer
           items={recordBrowseItems}
@@ -902,6 +895,12 @@ function GuestJourney({ today }: { today: string }) {
           displayMeasurement={displayMeasurement}
           isReadOnly={(item) => isPriorDashboard || item.kind === "legacy" || (item.kind === "challenge-checkin" && item.record.challenge_id !== activeChallenge?.id)}
         />
+        <div className="scene-toolbar action-group">
+          <div className="journey-continuation-actions journey-continuation-actions--compact">
+            <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘 화면으로 돌아가기</button>
+            <button className="secondary" type="button" onClick={() => navigate("S10")}>최근 7일 돌아보기</button>
+          </div>
+        </div>
       </Scene>;
     }
 
@@ -928,8 +927,14 @@ function GuestJourney({ today }: { today: string }) {
         {selectedRecordMissing ? <div className="record-detail-empty state-error status-notice" role="alert"><h2>현재 불러온 기간에서 선택한 기록을 찾을 수 없어요.</h2><p>기간이 바뀌었거나 현재 체험 메모리의 목록에 포함되지 않을 수 있어요. 삭제됐다고 단정하지 않습니다.</p><button className="secondary" type="button" onClick={returnFromRecordDetail}>현재 맥락으로 돌아가기</button></div> : selectedRecord ? <article className="record-detail" data-record-detail-kind={selectedRecord.kind}>
           <div className="record-detail-heading section-header"><div><p className="eyebrow">체험 메모리의 사실</p><h2>{recordTypeLabel}</h2></div><span className="record-detail-access" data-record-access={readOnlyReason ? "read-only" : "editable"}>{readOnlyReason ? "읽기 전용" : "수정 가능"}</span></div>
           <dl className="record-detail-facts">
+            <div className="record-detail-primary-value">
+              <dt>{selectedRecord.kind === "blood-pressure" ? "저장된 측정값" : "저장된 상태"}</dt>
+              <dd>{selectedRecord.kind === "blood-pressure" ? displayMeasurement(selectedRecord.record) : checkinLabel(selectedRecord.record.status)}</dd>
+            </div>
             <div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div>
-            {selectedRecord.kind === "blood-pressure" ? <><div><dt>저장된 시간대</dt><dd>{periodLabel(selectedRecord.record.period)}</dd></div><div className="record-detail-primary-value"><dt>저장된 측정값</dt><dd>{displayMeasurement(selectedRecord.record)}</dd></div></> : <><div><dt>챌린지 행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div><div className="record-detail-primary-value"><dt>저장된 상태</dt><dd>{checkinLabel(selectedRecord.record.status)}</dd></div></>}
+            {selectedRecord.kind === "blood-pressure"
+              ? <div><dt>저장된 시간대</dt><dd>{periodLabel(selectedRecord.record.period)}</dd></div>
+              : <div><dt>챌린지 행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div>}
           </dl>
           {readOnlyReason ? <div className="record-read-only status-notice" role="note"><strong>이 기록은 읽기 전용이에요.</strong><p>{readOnlyReason}</p></div> : editingChallengeCheckin ? <section className="record-correction-panel confirmation status-notice" role="status" aria-labelledby="guest-challenge-correction-title">
             <div className="section-header"><p className="eyebrow">체험 상태 수정</p><h3 id="guest-challenge-correction-title">참여 상태만 바로잡아요</h3><p>{dateLabel(editingChallengeCheckin.observed_on)} · {challengeLabel(editingChallengeCheckin.action_id)} 상태의 날짜와 행동은 그대로 두고 상태만 바꿉니다.</p></div>

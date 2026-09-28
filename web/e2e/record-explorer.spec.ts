@@ -146,11 +146,14 @@ test("S08 supports a zero-count record class and distinguishes an entirely empty
 });
 
 test("S08 to S09 restores local filters and the opened row on explicit return and browser history", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 700 });
   const requests = await mockWindow(page);
   await openExplorer(page);
   await page.getByRole("button", { name: "혈압 3개", exact: true }).click();
   await dateFilter(page, 10).click();
+  await eveningDetail(page).scrollIntoViewIfNeeded();
   await eveningDetail(page).focus();
+  const openerScroll = await page.evaluate(() => window.scrollY);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/screen=S09&record=blood-pressure%3Aexplorer-bp-evening/);
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
@@ -161,15 +164,25 @@ test("S08 to S09 restores local filters and the opened row on explicit return an
   await expect(eveningDetail(page)).toBeFocused();
   await expect(dateFilter(page, 10)).toHaveAttribute("aria-pressed", "true");
   await expect(rows(page)).toHaveCount(2);
-  await eveningDetail(page).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeCloseTo(openerScroll, 0);
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#S09-title")).toBeFocused();
   await page.goBack();
   await expect(eveningDetail(page)).toBeFocused();
   await expect(page.getByRole("button", { name: "혈압 3개", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(dateFilter(page, 10)).toHaveAttribute("aria-pressed", "true");
   await page.goForward();
   await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("121/79 mmHg");
+  await expect(page.locator("#S09-title")).toBeFocused();
   await page.goBack();
   await expect(eveningDetail(page)).toBeFocused();
+  // History uses the existing offscreen-opener centering fallback. Layout
+  // density can change that pixel offset; the opened fact must stay in view.
+  await expect(eveningDetail(page)).toBeInViewport();
+  expect(await eveningDetail(page).evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= innerHeight;
+  })).toBe(true);
   expect(requests).toEqual(["GET /api/v1/observations/window"]);
 });
 
@@ -379,6 +392,10 @@ test("BP correction is distinct from new entry, cancels without a write, and ret
   await expect(page.getByText("혈압 기록을 수정했습니다.", { exact: true })).toBeVisible();
   await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
   expect(writes).toEqual([{ method: "PUT", body: { observed_on: "2026-09-10", period: "evening", systolic: 124, diastolic: 81 } }]);
+  await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
+  await expect(eveningDetail(page)).toBeFocused();
+  await expect(eveningDetail(page)).toBeInViewport();
+  await expect(eveningDetail(page)).toHaveAccessibleDescription(/124\/81 mmHg.*저녁.*수정 가능/);
 });
 
 test("successful BP mutation waits for a fresh reread and cannot be repeated while confirmation is unavailable", async ({ page }) => {
@@ -588,3 +605,26 @@ for (const width of [320, 390, 768, 1366]) {
     }
   });
 }
+
+test("forced colors keeps selected filter scope and record actions keyboard-visible", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ forcedColors: "active" });
+  await mockWindow(page);
+  await openExplorer(page);
+  const pressure = page.getByRole("group", { name: "기록 종류", exact: true }).getByRole("button", { name: "혈압 3개", exact: true });
+  await pressure.focus();
+  await page.keyboard.press("Space");
+  await expect(pressure).toHaveAttribute("aria-pressed", "true");
+  expect(await pressure.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+  await expect(rows(page)).toHaveCount(3);
+  await eveningDetail(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".record-detail-primary-value")).toContainText("121/79 mmHg");
+  await expect(page.locator(".record-detail-access")).toHaveText("수정 가능");
+  const remove = page.getByRole("button", { name: "삭제", exact: true });
+  await remove.focus();
+  expect(await remove.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog")).toContainText("121/79 mmHg");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
