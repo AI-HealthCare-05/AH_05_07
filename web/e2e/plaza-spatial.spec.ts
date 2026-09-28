@@ -3,6 +3,7 @@ import { companionSpecies } from "../src/ui/companion";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { MODEL_FORWARD_YAW_OFFSET } from "../src/placeable/plazaLocomotion";
 import { createHash } from "node:crypto";
+import { companionIdentityStorageKey } from "../src/ui/companionIdentity";
 
 const route = "/?experience=e2&view=3d&storage=browser";
 type Sample = { x: number; z: number; facing: number; yaw: number; moving: boolean; engaged: boolean;
@@ -173,4 +174,64 @@ test("R2 exact active GLBs calibrate +Z forward and retain existing move capabil
     for (const eye of result.positions) { expect(eye[2]).toBeGreaterThan(0.25); expect(Math.abs(eye[0])).toBeLessThan(eye[2]); }
     expect(result.names).toContain("move"); expect(result.duration).toBeCloseTo(4); expect(result.tracks).toBeGreaterThan(0);
   }
+});
+
+test("R3 actual companion materials remain readable in both atmospheres with one bounded canvas", async ({ page }) => {
+  test.setTimeout(180000);
+  await page.setViewportSize({ width: 1000, height: 760 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(route);
+  for (const species of companionSpecies) {
+    await page.evaluate(({ key, species }) => localStorage.setItem(key, species), { key: companionIdentityStorageKey, species });
+    await page.reload();
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute("data-companion", species);
+    await expect(world).toHaveAttribute("data-companion-pose", "neutral");
+    await expect(page.locator("canvas")).toHaveCount(1);
+    expect(await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => canvas.width * canvas.height)).toBeLessThanOrEqual(2_000_000);
+    // Still GLBs and exact arrival camera make these human visual-review artifacts.
+    await page.screenshot({ path: test.info().outputPath(`${species}-daylight.png`) });
+    await page.getByRole("button", { name: "광장의 불빛 켜기", exact: true }).click();
+    await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+    await page.screenshot({ path: test.info().outputPath(`${species}-twilight.png`) });
+    const glbs = await page.evaluate(() => performance.getEntriesByType("resource").map(entry => entry.name).filter(name => /\.glb(?:\?|$)/.test(name)));
+    expect(glbs).toEqual([new URL(getMySpaceCompanion(species)!.url, page.url()).href]);
+  }
+  expect(errors).toEqual([]);
+});
+
+for (const width of [390, 320]) test(`R3 ${width}px chrome, 200% text and safe-area controls remain reachable`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "neutral");
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: 44, bottom: 34, left: 0, right: 0 } });
+  const pad = (await page.locator(".placeable-walk-pad").boundingBox())!;
+  expect(pad.y + pad.height).toBeLessThanOrEqual(844 - 34);
+  await page.screenshot({ path: test.info().outputPath(`safe-area-${width}.png`) });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  const today = page.getByRole("link", { name: "오늘의 기록", exact: true });
+  await today.focus(); await expect(today).toBeFocused(); await expect(today).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  await page.screenshot({ path: test.info().outputPath(`text-200-${width}.png`) });
+  const surfaces = [".placeable-header", ".placeable-twilight", ".placeable-destination", ".placeable-companion",
+    ".plaza-help", ".placeable-walk-pad", ".placeable-garden-path"];
+  const boxes = await Promise.all(surfaces.map(selector => page.locator(selector).boundingBox()));
+  for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) {
+    expect(a && b).toBeTruthy();
+    expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y,
+      `${surfaces[i]} overlaps another control: ${JSON.stringify({ a, b })}`).toBe(true);
+  }
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "내 공간 꾸미기", exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "정원 쉼터로 가기", exact: false }).click();
+  await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
+  await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
+  await today.click();
+  await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
 });

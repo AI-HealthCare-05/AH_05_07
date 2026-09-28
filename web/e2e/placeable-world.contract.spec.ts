@@ -255,7 +255,7 @@ test("E6 Gate leads route/details, greets once, preserves placement and reverses
     if (scene.step(0.05, still)) greetings++;
     if (phases.at(-1) !== scene.welcomePhase) phases.push(scene.welcomePhase);
     if (index === 8) {
-      expect(scene.archLightMaterial.emissiveIntensity).toBeGreaterThan(1);
+      expect(scene.archLightMaterial.emissiveIntensity).toBeGreaterThan(0.7);
       expect(scene.approachMaterial.emissiveIntensity).toBe(0);
       expect(scene.bladeMaterial.emissiveIntensity).toBe(0);
     }
@@ -277,7 +277,7 @@ test("E6 Gate leads route/details, greets once, preserves placement and reverses
 
 test("E6 reduced motion settles immediately, cancels pending reversal and never replays after disposal", () => {
   const scene = new PlaceableScene(); scene.update(projection(), true); scene.setTwilight(true);
-  expect(scene.welcomePhase).toBe("twilight"); expect(scene.archLightMaterial.emissiveIntensity).toBe(1.6);
+  expect(scene.welcomePhase).toBe("twilight"); expect(scene.archLightMaterial.emissiveIntensity).toBe(0.85);
   expect(scene.step(0, still)).toBe(true); expect(scene.step(0, still)).toBe(false);
   scene.setTwilight(false); expect(scene.welcomePhase).toBe("daylight");
   scene.update(projection(), false); scene.setTwilight(true); scene.step(0.05, still);
@@ -397,11 +397,14 @@ test("frames never move while preview/saving suspended; focused input clears hel
 
 test("unmount disposes every geometry and shared material exactly once", () => {
   const scene = new PlaceableScene();
-  const owned = new Set<BufferGeometry | Material>();
+  const owned = new Set<BufferGeometry | Material | Texture>();
   scene.scene.traverse((object) => {
     if (!(object instanceof Mesh)) return;
     owned.add(object.geometry);
-    (Array.isArray(object.material) ? object.material : [object.material]).forEach((m) => owned.add(m));
+    (Array.isArray(object.material) ? object.material : [object.material]).forEach((m) => {
+      owned.add(m);
+      Object.values(m).forEach((value) => { if (value instanceof Texture) owned.add(value); });
+    });
   });
   const counts = new Map<object, number>();
   owned.forEach((resource) => resource.addEventListener("dispose", () => counts.set(resource, (counts.get(resource) ?? 0) + 1)));

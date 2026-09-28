@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { PCFSoftShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
+import { ACESFilmicToneMapping, PCFSoftShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import { livingCityPixelRatio } from "./livingCityRenderDensity";
 import { PlaceableScene, type PlaceableProjection } from "./worldScene";
 import { PlaceableWorldInput } from "./worldInput";
@@ -70,6 +70,7 @@ export default function PlaceableWorld(props: Props) {
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
       companionRef.current = companion; scene.actor.add(companion.root);
       renderer = new WebGLRenderer({ antialias: true, alpha: false });
+      renderer.toneMapping = ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFSoftShadowMap;
       const canvas = renderer.domElement;
       canvas.tabIndex = 0;
@@ -170,10 +171,10 @@ export default function PlaceableWorld(props: Props) {
         <p>저장된 꾸미기와 미리보기는 그대로예요. 위에서 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요.</p>
         <button onClick={() => setAttempt((value) => value + 1)}>3D 다시 열기</button>
       </div>}
-      <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
-        disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
       <span className="placeable-world-caption">{props.preview ? "저장 전 미리보기" : props.selection || props.keepsake ? "저장된 꾸미기" : "꾸미기 전"}</span>
     </div>
+    <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
+      disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
     <div className="placeable-companion" aria-label="내 동반자" data-unavailable={error || pose === "unavailable"}>
       <button type="button" disabled={error || pose === "loading" || pose === "unavailable" || pose === "greet" || pose === "move"}
         onClick={greet}>동반자에게 인사하기</button>
