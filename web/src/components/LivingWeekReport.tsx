@@ -45,10 +45,6 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
       <button className="secondary week-report-back" type="button" onClick={onClose}>
         <span aria-hidden="true">←</span> 7일 돌아보기로 돌아가기
       </button>
-      <div className="week-report-print-action">
-        <p><strong>사용자가 직접 관리하는 사본</strong><span>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장해요.</span></p>
-        <button type="button" onClick={() => window.print()}>인쇄 / PDF로 저장</button>
-      </div>
     </nav>
 
     <article className="week-report-document" data-living-week-report>
@@ -85,9 +81,6 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
             </div>
           </aside>
         </div>
-        <p className="week-report-purpose">{guestLocal
-          ? '현재 체험 메모리에 반영된 7일 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.'
-          : `표시된 ${completedCycle ? '종료된 7일' : '현재 7일'} 구간에 저장되어 현재 불러온 기록이에요. 혈압 관찰과 챌린지 참여는 서로 섞지 않았어요.`} 필요하면 PDF로 저장하거나 인쇄해 진료·상담 때 이 기록을 직접 보여줄 수 있어요.</p>
       </header>
 
       <section className="week-report-summary" aria-labelledby="week-report-summary-title">
@@ -103,7 +96,7 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
           <h3 id="week-report-bp-title" className="week-report-visually-hidden">혈압 관찰 핵심 사실</h3>
           <dl className="week-report-bp-metrics" data-report-summary="blood-pressure">
             <div className="is-primary"><dt>전체 관찰</dt><dd>{bloodPressure.observationCount}<small>건</small></dd></div>
-            <div><dt>관찰이 있는 날짜</dt><dd>{bloodPressure.observationDateCount}<small>일</small></dd></div>
+            <div className="is-observed"><dt>관찰이 있는 날짜</dt><dd>{bloodPressure.observationDateCount}<small>일</small></dd></div>
             <div><dt>현재 불러온 관찰 없음</dt><dd>{datesWithoutLoadedObservations}<small>일</small></dd></div>
             <div><dt>아침 기록</dt><dd>{bloodPressure.morningCount}<small>건</small></dd></div>
             <div><dt>저녁 기록</dt><dd>{bloodPressure.eveningCount}<small>건</small></dd></div>
@@ -112,7 +105,7 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
           <div className={`week-report-mean ${bloodPressure.mean ? '' : 'is-empty'}`} data-report-mean={bloodPressure.mean ? true : undefined}>
             <p>단순 산술 평균 <span>수축기 / 이완기</span></p>
             {bloodPressure.mean
-              ? <><strong>{bloodPressure.mean.systolic.toFixed(1)}<span>/</span>{bloodPressure.mean.diastolic.toFixed(1)} <small>mmHg</small></strong><p>이 기간에 저장되어 현재 불러온 {bloodPressure.observationCount}건의 단순 산술 평균이에요. 각 기록을 같은 비중으로 계산해요.</p></>
+              ? <><strong><span className="week-report-mean-value">{bloodPressure.mean.systolic.toFixed(1)}</span><span className="week-report-mean-divider">/</span><span className="week-report-mean-value">{bloodPressure.mean.diastolic.toFixed(1)}</span> <small>mmHg</small></strong><p>이 기간에 저장되어 현재 불러온 {bloodPressure.observationCount}건의 단순 산술 평균이에요. 각 기록을 같은 비중으로 계산해요.</p></>
               : <p className="week-report-mean-empty">관찰이 2건 이상일 때만 표시해요.</p>}
           </div>
         </section>
@@ -123,6 +116,16 @@ export function LivingWeekReport({ days, observations, checkins, hasLegacyRecord
           <p>‘현재 불러온 관찰 없음’은 이 리포트에 표시할 혈압 기록이 없는 날짜예요. 측정하지 않았다는 뜻은 아니며, 미입력·삭제·만료 중 어떤 이유인지는 알 수 없어요.</p>
         </div>
       </section>
+
+      <aside className="week-report-copy" aria-label="리포트 활용과 사본 관리">
+        <p className="week-report-purpose">{guestLocal
+          ? '현재 체험 메모리에 반영된 7일 기록이에요. 혈압 관찰과 챌린지 참여를 각각 정리했어요.'
+          : `표시된 ${completedCycle ? '종료된 7일' : '현재 7일'} 구간에 저장되어 현재 불러온 기록이에요. 혈압 관찰과 챌린지 참여는 서로 섞지 않았어요.`} 필요하면 PDF로 저장하거나 인쇄해 진료·상담 때 이 기록을 직접 보여줄 수 있어요.</p>
+        <div className="week-report-print-action">
+          <p><strong>사용자가 직접 관리하는 사본</strong><span>브라우저 인쇄 창에서 인쇄하거나 PDF로 저장해요.</span></p>
+          <button className="secondary" type="button" onClick={() => window.print()}>인쇄 / PDF로 저장</button>
+        </div>
+      </aside>
 
       <section className="week-report-challenge-summary" aria-labelledby="week-report-challenge-title">
         <div>

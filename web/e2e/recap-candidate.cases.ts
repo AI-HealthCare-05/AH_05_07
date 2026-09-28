@@ -561,7 +561,7 @@ test('seven-day report stays readable at 320px and 200% text', async ({ page }) 
     name: '7일 돌아보기로 돌아가기',
     exact: true,
   });
-  const print = toolbar.getByRole('button', {
+  const print = page.getByRole('button', {
     name: '인쇄 / PDF로 저장',
     exact: true,
   });
@@ -578,6 +578,40 @@ test('seven-day report stays readable at 320px and 200% text', async ({ page }) 
   await expect(back).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(print).toBeFocused();
+});
+
+for (const width of [1366, 390, 320]) test(`report reference exposes primary facts and aligned date lanes at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });
+  await fixture(page);
+  await reportAction(page).click();
+  const document = report(page);
+  for (const selector of ['.week-report-range', '[data-report-freshness]', '.week-report-bp-metrics .is-primary', '[data-report-mean] > strong']) {
+    const box = await document.locator(selector).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y + box!.height).toBeLessThan(844);
+  }
+  const dates = document.locator('[data-report-date]');
+  await expect(dates).toHaveCount(7);
+  for (const day of await dates.all()) {
+    const date = (await day.locator('header').boundingBox())!;
+    const bp = (await day.locator('.week-report-day-bp').boundingBox())!;
+    const challenge = (await day.locator('.week-report-day-challenge').boundingBox())!;
+    if (width === 1366) {
+      expect(date.x + date.width).toBeLessThan(bp.x);
+      expect(bp.x + bp.width).toBeLessThan(challenge.x);
+      expect(Math.abs(bp.y - challenge.y)).toBeLessThan(1);
+    } else {
+      expect(date.y + date.height).toBeLessThan(bp.y);
+      expect(bp.y + bp.height).toBeLessThan(challenge.y);
+    }
+  }
+  await noOverflow(page);
+  await page.emulateMedia({ forcedColors: 'active' });
+  await expect(document.locator('[data-report-freshness]')).toBeVisible();
+  await expect(document.getByRole('heading', { name: '날짜별 기록', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '인쇄 / PDF로 저장', exact: true })).toBeFocused();
 });
 
 test('living week report preserves the complete selected week with separate facts and no private metadata', async ({ page }) => {
@@ -784,6 +818,14 @@ for (const width of [320, 390, 430]) test(`living week report reflows at ${width
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);
   await expect(report(page).locator('[data-report-mean]')).toContainText('119.0/79.0 mmHg');
   await expect(report(page).getByText('10분 걷기 · 기록함', { exact: true })).toBeVisible();
+  // A mean can wrap between values, but a decimal value must remain intact.
+  for (const value of await report(page).locator('.week-report-mean-value').all()) {
+    expect(await value.evaluate(element => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return range.getClientRects().length;
+    })).toBe(1);
+  }
   await noOverflow(page);
   for (const day of await report(page).locator('[data-report-date]').all()) {
     expect(await day.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
@@ -827,7 +869,7 @@ test('living week report prints only semantic report content through an explicit
   await expect(report(page).getByText('저녁 · 118/78 mmHg', { exact: true })).toBeVisible();
   await expect(report(page).getByText('10분 걷기 · 건너뜀', { exact: true })).toBeVisible();
   await expect(report(page).getByText(/측정하지 않았다는 뜻은 아니며/)).toBeVisible();
-  await expect(report(page).getByText(/현재 7일.*현재 불러온/)).toBeVisible();
+  await expect(report(page).getByText(/^표시된 현재 7일.*현재 불러온/)).toBeVisible();
   await expect(report(page).getByText(/진료·상담 때 이 기록을 직접/)).toBeVisible();
   const footer = report(page).locator('footer');
   await expect(footer).toBeVisible();
@@ -847,6 +889,7 @@ test('living week report prints only semantic report content through an explicit
   const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
   expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
   expect(pdf.byteLength).toBeGreaterThan(10_000);
+  expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(2);
   const selectableText = await report(page).evaluate(node => {
     const range = document.createRange();
     range.selectNodeContents(node);
