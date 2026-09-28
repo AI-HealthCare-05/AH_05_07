@@ -1,884 +1,305 @@
-/* S08/S09 share the canonical UI foundation; this file owns only record layout. */
-.scene.record-explorer-scene[data-scene="S08"] {
+/* S08/S09 follow R4's date rail, factual lanes and quiet document utilities. */
+.scene.record-explorer-scene[data-scene="S08"],
+.scene.journey-record-detail[data-scene="S09"] {
   --sk7-accent: var(--sk7-accent-active);
   --sk7-focus: var(--sk7-accent-active);
   align-content: start;
   min-height: 0;
   max-width: 68rem;
   margin-inline: auto;
-  gap: var(--sk7-space-xl);
+  gap: 1.25rem;
   overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
+  padding: 1.5rem 0 3rem;
   box-shadow: none;
+  font-variant-numeric: tabular-nums;
 }
 
+.scene.journey-record-detail[data-scene="S09"] { max-width: 58rem; }
 .scene.record-explorer-scene > .scene-visual-background,
 .scene.record-explorer-scene > .scene-visual-character,
-.scene.record-explorer-scene::after {
-  display: none;
-}
-
-.scene.record-explorer-scene[data-scene="S08"] > .screen-header {
-  gap: var(--sk7-space-sm);
-  max-width: 32rem;
-}
-
-.scene.record-explorer-scene[data-scene="S08"] > .screen-header .eyebrow {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-caption);
-  font-weight: var(--sk7-weight-medium);
-  letter-spacing: .04em;
-}
-
-.scene.record-explorer-scene[data-scene="S08"] .scene-copy h1 {
-  width: fit-content;
-  max-width: 11em;
-  color: var(--sk7-text);
-  font-size: clamp(2.625rem, 4.2vw, 3.75rem);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.055em;
-  line-height: 1.18;
-  text-wrap: balance;
-}
-
-.scene.record-explorer-scene .scene-toolbar {
-  justify-content: space-between;
-  gap: var(--sk7-space-xs) var(--sk7-space-sm);
-  padding-bottom: var(--sk7-space-sm);
-}
-
-.scene.record-explorer-scene .scene-toolbar button {
-  min-width: 0;
-  max-width: 100%;
-  padding: var(--sk7-space-xs) var(--sk7-space-sm);
-  text-align: left;
-}
-
-.scene.record-explorer-scene .journey-continuation-actions--compact {
-  justify-content: flex-end;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.scene.record-explorer-scene .journey-continuation-actions--compact > button {
-  min-height: var(--sk7-target-min);
-  padding: var(--sk7-space-xs) var(--sk7-space-sm);
-}
-
-.scene.record-explorer-scene .journey-continuation-actions--compact > button.secondary {
-  border-color: var(--sk7-border-strong);
-  background: var(--sk7-surface-subtle);
-}
-
-/* Window controls are one utility row, separated by a rule instead of a card. */
-.scene.record-explorer-scene .window-nav {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--sk7-space-xs);
-  border: 0;
-  border-block: 1px solid var(--sk7-border);
-  border-radius: 0;
-  background: transparent;
-  padding: var(--sk7-space-md) 0;
-  box-shadow: none;
-}
-
-.scene.record-explorer-scene .window-nav p {
-  order: 0;
-  gap: var(--sk7-space-2xs);
-  text-align: center;
-}
-
-.scene.record-explorer-scene .window-nav p strong {
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-body);
-}
-
-.scene.record-explorer-scene .window-nav p span,
-.scene.record-explorer-scene .window-nav p small {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
-}
-
-.scene.record-explorer-scene .window-nav button {
-  min-width: 0;
-  min-height: var(--sk7-target-min);
-  border-color: transparent;
-  background: transparent;
-  color: var(--sk7-accent);
-  padding: var(--sk7-space-xs) var(--sk7-space-sm);
-  font-size: var(--sk7-type-body);
-  line-height: var(--sk7-leading-body);
-  white-space: normal;
-  box-shadow: none;
-}
-
-.scene.record-explorer-scene .window-nav button:disabled {
-  border-color: transparent;
-  background: transparent;
-  color: var(--sk7-text-muted);
-  opacity: 1;
-}
-
-.record-explorer {
-  display: grid;
-  min-width: 0;
-  gap: var(--sk7-space-2xl);
-  color: var(--sk7-text);
-}
-
-.record-explorer-overview {
-  gap: var(--sk7-space-xs);
-  max-width: 42rem;
-  padding: 0 0 var(--sk7-space-lg);
-  border-bottom: 1px solid var(--sk7-border);
-  color: var(--sk7-text-muted);
-  line-height: var(--sk7-leading-body);
-}
-
-.record-explorer-overview > div {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sk7-space-2xs) var(--sk7-space-sm);
-}
-
-.record-explorer-overview strong {
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-title);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.035em;
-  line-height: var(--sk7-leading-tight);
-}
-
-.record-explorer-overview span,
-.record-explorer-overview p {
-  font-size: var(--sk7-type-label);
-}
-
-.record-explorer-tools {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: end;
-  gap: var(--sk7-space-sm) var(--sk7-space-md);
-  min-width: 0;
-}
-
-.record-explorer .record-explorer-filter {
-  min-width: 0;
-  margin: 0;
-  border: 0;
-  padding: 0;
-}
-
-.record-explorer-filter legend {
-  margin-bottom: var(--sk7-space-2xs);
-  padding: 0;
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
-  font-weight: var(--sk7-weight-bold);
-}
-
-.record-explorer-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sk7-space-2xs);
-  min-width: 0;
-}
-
-.record-explorer .record-explorer-buttons > button {
-  min-width: var(--sk7-target-min);
-  min-height: var(--sk7-target-min);
-  max-width: 100%;
-  border: 1px solid transparent;
-  border-radius: var(--sk7-radius-control);
-  background: transparent;
-  color: var(--sk7-text-muted);
-  padding: var(--sk7-space-xs) var(--sk7-space-sm);
-  font-size: var(--sk7-type-label);
-  line-height: var(--sk7-leading-body);
-  white-space: normal;
-  box-shadow: none;
-  transform: none;
-}
-
-.record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
-  border-color: transparent;
-  background: var(--sk7-accent-soft);
-  color: var(--sk7-accent-hover);
-  box-shadow: none;
-}
-
-.record-explorer .record-explorer-buttons > button:hover:not(:disabled) {
-  border-color: transparent;
-  background: var(--sk7-surface-subtle);
-  color: var(--sk7-accent-hover);
-  box-shadow: none;
-  transform: none;
-}
-
-.record-explorer .record-explorer-buttons > button[aria-pressed="true"]:hover:not(:disabled) {
-  background: var(--sk7-accent-soft);
-  color: var(--sk7-accent-hover);
-}
-
-.record-explorer-summary {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: end;
-  gap: var(--sk7-space-2xs) var(--sk7-space-sm);
-  border-bottom: 1px solid var(--sk7-border);
-  padding-bottom: var(--sk7-space-xs);
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
-  line-height: var(--sk7-leading-body);
-}
-
-.record-explorer-summary > div {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sk7-space-2xs) var(--sk7-space-sm);
-  min-width: 0;
-}
-
-.record-explorer-summary [role="status"] {
-  color: var(--sk7-text);
-  font-weight: var(--sk7-weight-bold);
-}
-
-.record-explorer-scope[data-record-filter-active="true"] {
-  color: var(--sk7-accent);
-  font-weight: var(--sk7-weight-bold);
-}
-
-.record-explorer-summary-actions {
-  justify-content: flex-end;
-}
-
-.record-explorer .record-explorer-reset {
-  min-width: 0;
-  min-height: var(--sk7-target-min);
-  border: 0;
-  background: transparent;
-  color: var(--sk7-accent);
-  padding: var(--sk7-space-2xs);
-  box-shadow: none;
-  font-size: var(--sk7-type-label);
-  text-decoration: underline;
-  text-underline-offset: var(--sk7-space-2xs);
-}
-
-.record-explorer .record-explorer-reset:hover:not(:disabled) {
-  background: transparent;
-  color: var(--sk7-accent-hover);
-  transform: none;
-}
-
-.record-explorer-groups {
-  display: grid;
-  gap: var(--sk7-space-2xl);
-  min-width: 0;
-}
-
-.record-explorer-day {
-  position: relative;
-  grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
-  align-items: start;
-  gap: 0;
-  max-width: none;
-}
-
-.record-explorer-day > h2 {
-  grid-column: 1;
-  grid-row: 1;
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sk7-space-2xs) var(--sk7-space-xs);
-  margin: 0;
-  padding: 0 var(--sk7-space-sm) 0 var(--sk7-space-md);
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-subtitle);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.025em;
-  line-height: var(--sk7-leading-tight);
-}
-
-.record-explorer-day > h2::before {
-  position: absolute;
-  top: var(--sk7-space-xs);
-  left: 0;
-  width: var(--sk7-space-xs);
-  height: var(--sk7-space-xs);
-  border-radius: 50%;
-  background: var(--sk7-success);
-  content: "";
-}
-
-.record-explorer-day > h2 > span {
-  flex-basis: 100%;
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
-  font-weight: var(--sk7-weight-medium);
-}
-
-.record-explorer-list {
-  grid-column: 2;
-  grid-row: 1;
-  list-style: none;
-  min-width: 0;
-  margin: 0;
-  padding: 0 0 0 var(--sk7-space-xl);
-  border-left: 1px solid var(--sk7-border);
-}
-
-.record-explorer-list > li {
-  min-width: 0;
-  border-bottom: 1px solid var(--sk7-border);
-}
-
-.record-explorer .record-explorer-list button.record-explorer-row {
-  display: grid;
-  grid-template-columns: minmax(7rem, .75fr) minmax(0, 2fr) auto auto;
-  align-items: center;
-  gap: var(--sk7-space-xs) var(--sk7-space-md);
-  width: 100%;
-  min-width: 0;
-  min-height: calc(var(--sk7-target-min) + var(--sk7-space-sm));
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--sk7-text);
-  padding: var(--sk7-space-sm) var(--sk7-space-2xs);
-  text-align: left;
-  line-height: var(--sk7-leading-body);
-  font-weight: var(--sk7-weight-medium);
-  box-shadow: none;
-  transform: none;
-}
-
-.record-explorer .record-explorer-list button.record-explorer-row:hover:not(:disabled) {
-  background: var(--sk7-surface-subtle);
-  color: var(--sk7-text);
-  box-shadow: none;
-  transform: none;
-}
-
-.record-explorer-row > span { min-width: 0; }
-.record-explorer-type { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
-.record-explorer-facts { display: grid; gap: var(--sk7-space-2xs); }
-.record-explorer-facts > strong { font-size: var(--sk7-type-subtitle); font-weight: var(--sk7-weight-bold); letter-spacing: -.02em; line-height: var(--sk7-leading-tight); font-variant-numeric: tabular-nums; }
-.record-explorer-facts > span,
-.record-explorer-access { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
-.record-explorer-open { color: var(--sk7-success-text); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
-
-.record-explorer-empty,
-.record-detail-empty {
-  display: grid;
-  justify-items: start;
-  gap: var(--sk7-space-sm);
-  color: var(--sk7-text-muted);
-}
-
-.record-explorer-empty h2,
-.record-detail-empty h2 {
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-subtitle);
-  line-height: var(--sk7-leading-tight);
-}
-
-.record-explorer-empty button { max-width: 100%; }
-
-.record-explorer button:focus-visible,
-.scene.record-explorer-scene button:focus-visible,
-.record-explorer-detail-return:focus-visible {
-  outline: 3px solid var(--sk7-focus);
-  outline-offset: 3px;
-}
-
-.record-explorer-detail-return {
-  justify-self: start;
-  min-height: var(--sk7-target-min);
-  max-width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--sk7-accent);
-  padding: var(--sk7-space-xs) var(--sk7-space-2xs);
-  text-align: left;
-  text-decoration: underline;
-  text-underline-offset: var(--sk7-space-2xs);
-}
-
-.record-explorer-detail-return:hover:not(:disabled) {
-  background: transparent;
-  color: var(--sk7-accent-hover);
-  box-shadow: none;
-  transform: none;
-}
-
-.record-explorer-detail-context {
-  max-width: 42rem;
-  gap: var(--sk7-space-xs);
-  padding: var(--sk7-space-md) 0 var(--sk7-space-lg);
-  border-bottom: 1px solid var(--sk7-border);
-}
-
-.record-explorer-detail-selection {
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-title);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.035em;
-  line-height: var(--sk7-leading-tight);
-}
-
-.record-explorer-detail-period {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-label);
-  line-height: var(--sk7-leading-body);
-}
-
-/* S09 gives the selected fact hierarchy without adding another card surface. */
-.scene.journey-record-detail[data-scene="S09"] {
-  --sk7-accent: var(--sk7-accent-active);
-  --sk7-focus: var(--sk7-accent-active);
-  align-content: start;
-  min-height: 0;
-  max-width: 58rem;
-  margin-inline: auto;
-  gap: var(--sk7-space-xl);
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
-  box-shadow: none;
-}
-
+.scene.record-explorer-scene::after,
 .scene.journey-record-detail > .scene-visual-background,
 .scene.journey-record-detail > .scene-visual-character,
-.scene.journey-record-detail::after {
-  display: none;
-}
+.scene.journey-record-detail::after { display: none; }
 
-.journey-record-detail > .screen-header {
-  gap: var(--sk7-space-sm);
-  max-width: 32rem;
-}
-
+.scene.record-explorer-scene[data-scene="S08"] > .screen-header,
+.journey-record-detail > .screen-header { gap: .3rem; max-width: none; }
+.scene.record-explorer-scene[data-scene="S08"] > .screen-header .eyebrow,
 .journey-record-detail > .screen-header .eyebrow {
   color: var(--sk7-text-muted);
   font-size: var(--sk7-type-caption);
   font-weight: var(--sk7-weight-medium);
   letter-spacing: .04em;
 }
-
+.scene.record-explorer-scene[data-scene="S08"] .scene-copy h1,
 .journey-record-detail > .screen-header h1 {
-  max-width: 11em;
+  width: fit-content;
+  max-width: 100%;
   color: var(--sk7-text);
-  font-size: clamp(2.625rem, 4.2vw, 3.75rem);
+  font-size: 2.25rem;
   font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.055em;
-  line-height: 1.18;
+  letter-spacing: -.05em;
+  line-height: 1.2;
   text-wrap: balance;
 }
 
-.journey-record-detail .record-detail {
-  display: grid;
-  gap: var(--sk7-space-xl);
+/* Window identity precedes discovery; continuation actions follow the index. */
+.scene.record-explorer-scene .scene-toolbar {
+  justify-content: flex-end;
+  gap: .5rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--sk7-border);
+  border-bottom: 0;
+}
+.scene.record-explorer-scene .scene-toolbar button,
+.scene.record-explorer-scene .journey-continuation-actions--compact > button {
   min-width: 0;
+  min-height: var(--sk7-target-min);
+  max-width: 100%;
+  border-color: transparent;
+  background: transparent;
+  padding: .5rem;
+  text-align: left;
+  box-shadow: none;
+  font-size: var(--sk7-type-label);
+}
+.scene.record-explorer-scene .journey-continuation-actions--compact {
+  justify-content: flex-end;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
   border: 0;
+}
+.scene.record-explorer-scene .window-nav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+  border: 0;
+  border-block: 1px solid var(--sk7-border);
   border-radius: 0;
   background: transparent;
-  padding: 0;
+  padding: .75rem 0;
   box-shadow: none;
 }
-
-.journey-record-detail .record-detail-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--sk7-space-md);
-  max-width: none;
-}
-
-.journey-record-detail .record-detail-heading .eyebrow,
-.record-maintenance .eyebrow,
-.record-correction-panel .eyebrow,
-.correction-identity .eyebrow {
-  margin: 0 0 var(--sk7-space-2xs);
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-caption);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: .04em;
-}
-
-.journey-record-detail .record-detail-heading h2 {
-  color: var(--sk7-text);
-  font-size: var(--sk7-type-title);
-}
-
-.record-detail-access {
-  flex: none;
-  border: 1px solid var(--sk7-border);
-  border-radius: 999px;
-  padding: var(--sk7-space-2xs) var(--sk7-space-sm);
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-caption);
-  font-weight: var(--sk7-weight-bold);
-}
-
-.record-detail-access[data-record-access="editable"] {
-  border-color: var(--sk7-selection-border);
-  background: var(--sk7-selection-surface);
-  color: var(--sk7-selection-text);
-}
-
-.journey-record-detail .record-detail-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
-  margin: 0;
-  border-block: 1px solid var(--sk7-border);
-}
-
-.journey-record-detail .record-detail-facts > div {
-  display: flex;
+.scene.record-explorer-scene .window-nav p { order: 0; gap: .15rem; text-align: center; }
+.scene.record-explorer-scene .window-nav p strong { color: var(--sk7-text); font-size: var(--sk7-type-body); }
+.scene.record-explorer-scene .window-nav p span,
+.scene.record-explorer-scene .window-nav p small { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.scene.record-explorer-scene .window-nav button {
   min-width: 0;
-  flex-direction: column;
-  gap: var(--sk7-space-xs);
-  border: 0;
-  padding: var(--sk7-space-lg) var(--sk7-space-md);
-}
-
-.journey-record-detail .record-detail-facts > div + div {
-  border-left: 1px solid var(--sk7-border);
-}
-
-.journey-record-detail .record-detail-facts dt {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-caption);
-  font-weight: var(--sk7-weight-bold);
-}
-
-.journey-record-detail .record-detail-facts dd {
-  margin: 0;
-  color: var(--sk7-text);
-  overflow-wrap: anywhere;
-}
-
-.journey-record-detail [data-record-detail-kind="blood-pressure"] .record-detail-facts dd:last-child {
-  font-variant-numeric: tabular-nums;
-}
-
-.journey-record-detail .record-detail-primary-value dd {
-  font-size: var(--sk7-type-heading);
-  font-weight: var(--sk7-weight-bold);
-  letter-spacing: -.035em;
-  line-height: 1.1;
-}
-
-.journey-record-detail .notice {
-  margin: 0;
-}
-
-.journey-record-detail .record-detail-primary-actions {
-  padding-top: var(--sk7-space-2xs);
-}
-
-.journey-record-detail .record-detail-primary-actions .danger {
-  margin-left: auto;
-}
-
-.journey-record-detail .confirmation {
-  align-items: flex-start;
-  border: 0;
-  border-inline-start: 3px solid currentColor;
-  border-radius: 0 var(--sk7-radius-control) var(--sk7-radius-control) 0;
+  min-height: var(--sk7-target-min);
+  border-color: transparent;
+  background: transparent;
+  color: var(--sk7-accent);
+  padding: .5rem;
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+  white-space: normal;
   box-shadow: none;
 }
+.scene.record-explorer-scene .window-nav button:disabled { color: var(--sk7-text-muted); opacity: 1; }
 
-.journey-record-detail .record-read-only {
-  display: grid;
-  gap: var(--sk7-space-xs);
-  margin: 0;
-  border: 1px solid var(--sk7-border);
-  border-radius: var(--sk7-radius-control);
-  background: var(--sk7-surface-subtle);
-  padding: var(--sk7-space-md);
-  color: var(--sk7-text);
-}
-
-.journey-record-detail .record-read-only p {
-  margin: 0;
+.record-explorer { display: grid; min-width: 0; gap: 1rem; color: var(--sk7-text); }
+.record-explorer-overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .35rem 1rem;
+  max-width: none;
+  padding: 0;
   color: var(--sk7-text-muted);
   line-height: var(--sk7-leading-body);
 }
-
-.journey-record-detail .record-maintenance.record-detail-primary-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sk7-space-md);
-  border-top: 1px solid var(--sk7-border);
-  padding-top: var(--sk7-space-lg);
-}
-
-.record-maintenance-heading,
-.record-maintenance-delete {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sk7-space-lg);
-}
-
-.record-maintenance-heading > div {
-  display: grid;
-  gap: var(--sk7-space-2xs);
-}
-
-.record-maintenance-delete {
-  border-top: 1px dashed var(--sk7-border);
-  padding-top: var(--sk7-space-md);
-  color: var(--sk7-text-muted);
-}
-
-.record-maintenance-delete p { margin: 0; }
-
-.journey-record-detail .record-maintenance .record-delete-action {
-  flex: none;
-  margin-left: 0;
+.record-explorer-overview > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .65rem; }
+.record-explorer-overview strong { color: var(--sk7-text); font-size: 1.2rem; letter-spacing: -.035em; }
+.record-explorer-overview span,
+.record-explorer-overview p { margin: 0; font-size: var(--sk7-type-label); }
+.record-explorer-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; min-width: 0; }
+.record-explorer .record-explorer-filter { min-width: 0; margin: 0; border: 0; padding: 0; }
+.record-explorer-filter legend { float: left; width: 5rem; padding: .75rem 0; color: var(--sk7-text-muted); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-medium); }
+.record-explorer-buttons { display: flex; flex-wrap: wrap; gap: .15rem; min-width: 0; }
+.record-explorer .record-explorer-buttons > button {
+  position: relative;
+  min-width: var(--sk7-target-min);
+  min-height: var(--sk7-target-min);
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: .25rem;
   background: transparent;
+  color: var(--sk7-text-muted);
+  padding: .5rem .6rem;
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+  white-space: normal;
+  box-shadow: none;
+  transform: none;
+}
+.record-explorer .record-explorer-buttons > button[aria-pressed] > .record-filter-check { display: none; }
+.record-explorer .record-explorer-buttons > button[aria-pressed="true"] {
+  border-bottom-color: currentColor;
+  background: var(--sk7-accent-soft);
+  color: var(--sk7-accent-hover);
   box-shadow: none;
 }
+.record-explorer .record-explorer-buttons > button:hover:not(:disabled) { background: var(--sk7-surface-subtle); color: var(--sk7-accent-hover); box-shadow: none; transform: none; }
+.record-explorer .record-explorer-buttons > button[aria-pressed="true"]:hover:not(:disabled) { background: var(--sk7-accent-soft); }
+.record-explorer-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .25rem .75rem; padding-top: .25rem; color: var(--sk7-text-muted); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.record-explorer-summary > div { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; min-width: 0; }
+.record-explorer-summary [role="status"] { color: var(--sk7-text); font-weight: var(--sk7-weight-bold); }
+.record-explorer-scope[data-record-filter-active="true"] { color: var(--sk7-accent); font-weight: var(--sk7-weight-bold); }
+.record-explorer-summary-actions { justify-content: flex-end; }
+.record-explorer .record-explorer-reset { min-width: 0; min-height: var(--sk7-target-min); border: 0; background: transparent; color: var(--sk7-accent); padding: .25rem; box-shadow: none; font-size: var(--sk7-type-label); text-decoration: underline; text-underline-offset: .2em; }
+.record-explorer .record-explorer-reset:hover:not(:disabled) { background: transparent; color: var(--sk7-accent-hover); transform: none; }
 
-.journey-record-detail .record-correction-panel {
+/* Every date uses the same rail width, including groups with longer labels. */
+.record-explorer-groups { display: grid; min-width: 0; border-top: 2px solid var(--sk7-text); }
+.record-explorer-day { position: relative; grid-template-columns: 9rem minmax(0, 1fr); align-items: start; gap: 1.25rem; max-width: none; padding-block: .8rem; border-bottom: 1px solid var(--sk7-border); }
+.record-explorer-day > h2 { grid-column: 1; grid-row: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .5rem; margin: 0; padding: .65rem 0; color: var(--sk7-text); font-size: 1rem; font-weight: var(--sk7-weight-bold); letter-spacing: -.025em; line-height: 1.5; }
+.record-explorer-day > h2 > span { flex-basis: 100%; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-medium); }
+.record-explorer-list { grid-column: 2; grid-row: 1; list-style: none; min-width: 0; margin: 0; padding: 0; }
+.record-explorer-list > li { min-width: 0; }
+.record-explorer-list > li + li { border-top: 1px solid var(--sk7-border); }
+.record-explorer .record-explorer-list button.record-explorer-row {
   display: grid;
-  gap: var(--sk7-space-md);
-  margin: 0;
-  border: 1px solid var(--sk7-selection-border);
-  border-radius: var(--sk7-radius-md);
-  background: var(--sk7-selection-surface);
-  padding: var(--sk7-space-lg);
-  color: var(--sk7-selection-text);
+  grid-template-columns: minmax(0, .75fr) minmax(0, 2fr) auto auto;
+  align-items: center;
+  gap: .4rem 1rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 3.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--sk7-text);
+  padding: .65rem .25rem;
+  text-align: left;
+  line-height: var(--sk7-leading-body);
+  font-weight: var(--sk7-weight-medium);
+  box-shadow: none;
+  transform: none;
 }
+.record-explorer .record-explorer-list button.record-explorer-row:hover:not(:disabled) { background: var(--sk7-surface-subtle); color: var(--sk7-text); box-shadow: none; transform: none; }
+.record-explorer-row > span { min-width: 0; }
+.record-explorer-type { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.record-explorer-facts { display: grid; gap: .15rem; }
+.record-explorer-facts > strong { font-size: 1.2rem; font-weight: var(--sk7-weight-bold); letter-spacing: -.025em; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.record-explorer-facts > span,
+.record-explorer-access { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.record-explorer-open { justify-self: end; color: var(--sk7-accent); font-size: var(--sk7-type-label); }
+.record-explorer-empty,
+.record-detail-empty { display: grid; justify-items: start; gap: .75rem; color: var(--sk7-text-muted); }
+.record-explorer-empty h2,
+.record-detail-empty h2 { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); line-height: var(--sk7-leading-tight); }
+.record-explorer-empty button { max-width: 100%; }
+.record-explorer .record-explorer-empty.status-notice { min-height: 0; border: 0; border-top: 1px solid var(--sk7-border); border-radius: 0; background: transparent; padding: 1.25rem 0; }
+.record-explorer .record-explorer-empty-object { display: none; }
+.record-explorer button:focus-visible,
+.scene.record-explorer-scene button:focus-visible,
+.journey-record-detail button:focus-visible { outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
 
-.record-correction-panel .section-header { gap: var(--sk7-space-xs); }
+/* S09: the saved value leads, supporting facts follow, maintenance is separate. */
+.record-explorer-detail-return { justify-self: start; min-height: var(--sk7-target-min); max-width: 100%; border: 0; background: transparent; color: var(--sk7-accent); padding: .5rem 0; text-align: left; text-decoration: underline; text-underline-offset: .2em; }
+.record-explorer-detail-return:hover:not(:disabled) { background: transparent; color: var(--sk7-accent-hover); box-shadow: none; transform: none; }
+.record-explorer-detail-context { max-width: none; gap: .3rem; padding: 0 0 1rem; border-bottom: 1px solid var(--sk7-border); }
+.record-explorer-detail-selection { color: var(--sk7-text); font-size: 1rem; font-weight: var(--sk7-weight-bold); letter-spacing: -.025em; line-height: 1.5; }
+.record-explorer-detail-period { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.journey-record-detail .record-detail { display: grid; gap: 1.25rem; min-width: 0; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
+.journey-record-detail .record-detail-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .5rem 1rem; max-width: none; }
+.journey-record-detail .record-detail-heading .eyebrow,
+.record-maintenance .eyebrow,
+.record-correction-panel .eyebrow,
+.correction-identity .eyebrow { margin: 0 0 .25rem; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-bold); letter-spacing: .04em; }
+.journey-record-detail .record-detail-heading h2 { color: var(--sk7-text); font-size: 1.2rem; }
+.record-detail-access { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-medium); }
+.record-detail-access[data-record-access="editable"] { color: var(--sk7-accent); }
+.journey-record-detail .record-detail-facts { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr)); align-items: start; gap: 1rem 1.5rem; margin: 0; padding: .5rem 0 1.5rem; }
+.journey-record-detail .record-detail-facts > div { display: flex; min-width: 0; flex-direction: column; gap: .5rem; border: 0; padding: 0; }
+.journey-record-detail .record-detail-facts dt { color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-medium); }
+.journey-record-detail .record-detail-facts dd { margin: 0; color: var(--sk7-text); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.journey-record-detail .record-detail-primary-value dd { font-size: 2.6rem; font-weight: var(--sk7-weight-bold); letter-spacing: -.05em; line-height: 1.2; }
+.journey-record-detail .notice { margin: 0; }
+.journey-record-detail .confirmation { align-items: flex-start; border: 0; border-inline-start: 3px solid currentColor; border-radius: 0; box-shadow: none; }
+.journey-record-detail .record-read-only { display: grid; gap: .4rem; margin: 0; border: 0; border-top: 1px solid var(--sk7-border); border-radius: 0; background: transparent; padding: 1rem 0; color: var(--sk7-text); }
+.journey-record-detail .record-read-only p { margin: 0; color: var(--sk7-text-muted); line-height: var(--sk7-leading-body); }
+.journey-record-detail .record-maintenance.record-detail-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; border-top: 1px solid var(--sk7-border); padding-top: 1.25rem; }
+.record-maintenance-heading,
+.record-maintenance-delete { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.record-maintenance-heading > div { display: grid; gap: .25rem; }
+.record-maintenance-heading strong { font-size: var(--sk7-type-body); }
+.record-maintenance-delete { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
+.record-maintenance-delete p { margin: 0; }
+.journey-record-detail .record-maintenance .record-delete-action { flex: none; margin-left: 0; border-color: transparent; background: transparent; color: var(--sk7-danger); box-shadow: none; text-decoration: underline; text-underline-offset: .2em; }
+.journey-record-detail .record-maintenance .record-delete-action:hover:not(:disabled) { border-color: currentColor; background: transparent; color: var(--sk7-danger); }
+.journey-record-detail .record-correction-panel { display: grid; gap: 1rem; margin: 0; border: 0; border-inline-start: 3px solid var(--sk7-selection-border); border-radius: 0; background: var(--sk7-selection-surface); padding: 1rem; color: var(--sk7-selection-text); }
+.record-correction-panel .section-header { gap: .5rem; }
 .record-correction-panel .section-header p,
 .record-correction-panel small { margin: 0; line-height: var(--sk7-leading-body); }
 .record-correction-choices [aria-pressed="true"] { box-shadow: inset 0 0 0 2px currentColor; }
 
-.journey-correction .correction-identity {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--sk7-space-xs) var(--sk7-space-lg);
-  border: 1px solid var(--sk7-selection-border);
-  border-radius: var(--sk7-radius-md);
-  background: var(--sk7-selection-surface);
-  padding: var(--sk7-space-lg);
-  color: var(--sk7-selection-text);
-}
-
+.journey-correction .correction-identity { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sk7-space-xs) var(--sk7-space-lg); border: 1px solid var(--sk7-selection-border); border-radius: var(--sk7-radius-md); background: var(--sk7-selection-surface); padding: var(--sk7-space-lg); color: var(--sk7-selection-text); }
 .correction-identity h2 { margin: 0; font-size: var(--sk7-type-subtitle); }
 .correction-identity > strong { font-size: var(--sk7-type-title); font-variant-numeric: tabular-nums; }
 .correction-identity > p { grid-column: 1 / -1; margin: 0; line-height: var(--sk7-leading-body); }
+.journey-record-detail .record-detail-utility-actions { justify-content: flex-end; padding-top: .5rem; border-top: 1px solid var(--sk7-border); }
+.journey-record-detail .record-detail-utility-actions .text-button { min-height: var(--sk7-target-min); padding-inline: .25rem; border-color: transparent; background: transparent; color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
 
-.journey-record-detail .record-detail-utility-actions {
-  justify-content: flex-end;
-  padding-top: var(--sk7-space-sm);
-  border-top: 1px solid var(--sk7-border);
-}
-
-.journey-record-detail .record-detail-utility-actions .text-button {
-  min-height: var(--sk7-target-min);
-  padding-inline: var(--sk7-space-2xs);
-}
-
-@media (max-width: 52rem) {
-  .record-explorer-tools {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .record-explorer-day {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .record-explorer-day > h2 {
-    margin-bottom: var(--sk7-space-xs);
-    padding: 0;
-    font-size: var(--sk7-type-subtitle);
-  }
-
-  .record-explorer-day > h2::before {
-    display: none;
-  }
-
-  .record-explorer-day > h2 > span {
-    flex-basis: auto;
-  }
-
-  .record-explorer-list {
-    grid-column: 1;
-    grid-row: 2;
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .record-explorer .record-explorer-list button.record-explorer-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--sk7-space-2xs) var(--sk7-space-xs);
-    padding: var(--sk7-space-sm) var(--sk7-space-2xs);
-  }
-
+@media (max-width: 62rem) {
+  .record-explorer-day { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .record-explorer-day > h2 { padding-block: .3rem; }
+  .record-explorer-day > h2 > span { flex-basis: auto; }
+  .record-explorer-list { grid-column: 1; grid-row: 2; }
+  .record-explorer .record-explorer-list button.record-explorer-row { grid-template-columns: minmax(0, 1fr) auto; gap: .3rem .5rem; padding: .65rem .25rem; }
   .record-explorer-row .record-explorer-type { grid-column: 1; grid-row: 1; }
   .record-explorer-row .record-explorer-access { grid-column: 2; grid-row: 1; text-align: right; }
-  .record-explorer-row .record-explorer-facts { grid-column: 1; grid-row: 2; }
-  .record-explorer-row .record-explorer-open { grid-column: 2; grid-row: 2; align-self: end; justify-self: end; }
+  .record-explorer-row .record-explorer-facts { display: contents; }
+  .record-explorer-facts > strong { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+  .record-explorer-facts > span { grid-column: 1; grid-row: 3; min-width: 0; }
+  .record-explorer-row .record-explorer-open { grid-column: 2; grid-row: 3; align-self: end; }
 }
-
 @media (max-width: 42rem) {
   .scene.record-explorer-scene[data-scene="S08"],
-  .scene.journey-record-detail[data-scene="S09"] {
-    gap: var(--sk7-space-lg);
-    padding: var(--sk7-space-xl) 0 var(--sk7-space-3xl);
-  }
-
+  .scene.journey-record-detail[data-scene="S09"] { gap: 1rem; padding: 1rem 0 2rem; }
   .scene.record-explorer-scene[data-scene="S08"] .scene-copy h1,
-  .journey-record-detail > .screen-header h1 {
-    font-size: 2rem;
-    line-height: 1.13;
-  }
-
-  .scene.record-explorer-scene .scene-toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .scene.record-explorer-scene .journey-continuation-actions--compact {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
-  }
-
-  .scene.record-explorer-scene .scene-toolbar > button,
-  .scene.record-explorer-scene .journey-continuation-actions--compact > button {
-    width: 100%;
-    height: 100%;
-  }
-
-  .scene.record-explorer-scene .window-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sk7-space-sm);
-  }
-
-  .scene.record-explorer-scene .window-nav p {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    text-align: left;
-  }
-
-  .scene.record-explorer-scene .window-nav button {
-    width: 100%;
-    padding-inline: var(--sk7-space-xs);
-  }
-
+  .journey-record-detail > .screen-header h1 { font-size: 1.85rem; }
+  .scene.record-explorer-scene .window-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem; padding-block: .6rem; }
+  .scene.record-explorer-scene .window-nav p { grid-column: 1 / -1; grid-row: 1; text-align: left; }
+  .scene.record-explorer-scene .window-nav button { width: 100%; padding-inline: .25rem; }
+  .record-explorer-tools { gap: .6rem; }
+  .record-explorer-filter legend { float: none; width: auto; padding: 0 0 .15rem; }
   .record-explorer-summary,
-  .record-explorer-summary > div {
-    align-items: flex-start;
-  }
-
-  .record-explorer-summary {
-    display: grid;
-  }
-
-  .record-explorer-summary-actions {
-    justify-content: space-between;
-  }
-
-  .journey-record-detail .record-detail-facts {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .journey-record-detail .record-detail-facts > div {
-    gap: var(--sk7-space-xs);
-    padding: var(--sk7-space-md) 0;
-  }
-
-  .journey-record-detail .record-detail-facts > div + div {
-    border-left: 0;
-    border-top: 1px solid var(--sk7-border);
-  }
-
-  .journey-record-detail .record-detail-primary-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .journey-record-detail .record-maintenance.record-detail-primary-actions,
+  .record-explorer-summary > div { align-items: flex-start; }
+  .record-explorer-summary { display: grid; gap: .35rem; }
+  .record-explorer-summary-actions { justify-content: space-between; }
+  .journey-record-detail .record-detail-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 1rem; padding-bottom: .5rem; }
+  .journey-record-detail .record-detail-primary-value { grid-column: 1 / -1; padding-bottom: .5rem; }
+  .journey-record-detail .record-detail-primary-value dd { font-size: 2.25rem; }
   .record-maintenance-heading,
-  .record-maintenance-delete,
-  .journey-record-detail .record-detail-heading {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .record-maintenance-heading,
-  .record-maintenance-delete,
-  .journey-record-detail .record-detail-heading {
-    display: grid;
-  }
-
-  .journey-correction .correction-identity {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+  .record-maintenance-delete { flex-wrap: wrap; gap: .5rem; }
+  .record-maintenance-delete { align-items: baseline; }
+  .record-maintenance-heading > button,
+  .record-maintenance-delete > button { max-width: 100%; }
+  .journey-correction .correction-identity { grid-template-columns: minmax(0, 1fr); }
   .correction-identity > p { grid-column: 1; }
-
-  .record-correction-choices {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .journey-record-detail .record-detail-primary-actions > button,
-  .journey-record-detail .record-detail-utility-actions > button {
-    width: 100%;
-  }
-
-  .journey-record-detail .record-detail-primary-actions .danger {
-    margin-left: 0;
-  }
-
-  .journey-record-detail .record-detail-utility-actions {
-    justify-content: stretch;
-  }
-
+  .record-correction-choices { display: grid; grid-template-columns: minmax(0, 1fr); }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .record-explorer button { transition: none; }
+  .record-explorer button,
+  .journey-record-detail button { transition: none; }
 }
-
 @media (forced-colors: active) {
-  .record-detail-access,
+  .record-explorer-groups,
+  .record-explorer-day,
+  .record-explorer-list > li,
   .record-read-only,
   .record-correction-panel,
   .correction-identity,
-  .record-maintenance-delete,
-  .delete-dialog-facts > div {
-    border-color: CanvasText;
-  }
-
-  .record-detail-access[data-record-access="editable"],
-  .record-correction-choices button[aria-pressed="true"] {
-    outline: 2px solid Highlight;
-    outline-offset: 2px;
-  }
+  .record-maintenance,
+  .delete-dialog-facts > div { border-color: CanvasText; }
+  .record-explorer .record-explorer-buttons > button[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -2px; }
+  .record-correction-choices button[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: 2px; }
 }

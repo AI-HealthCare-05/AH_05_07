@@ -2210,17 +2210,6 @@ function App() {
 
     if (activeScreen === "S08") {
       return <Scene id="S08" eyebrow="기록" title={journeyCopy.S08.title} tone="secondary" className={`record-explorer-scene surface${presentation.journey ? " journey-candidate journey-records" : ""}`}>
-        <div className="scene-toolbar action-group">
-          <span className="utility-label">조회 기간</span>
-          {presentation.journey ? (
-            <div className="journey-continuation-actions journey-continuation-actions--compact" aria-label="기록 탐색 다음 행동">
-              <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
-              <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
-            </div>
-          ) : (
-            <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button>
-          )}
-        </div>
         {renderWindowNavigation()}
         <RecordExplorer
           items={recordBrowseItems}
@@ -2236,6 +2225,16 @@ function App() {
           displayMeasurement={displayMeasurement}
           isReadOnly={item => evidenceMode || isPriorDashboard || item.kind === "legacy" || (item.kind === "challenge-checkin" && (item.record.challenge_id !== activeChallenge?.id || activeChallengeEnded))}
         />
+        <div className="scene-toolbar action-group">
+          {presentation.journey ? (
+            <div className="journey-continuation-actions journey-continuation-actions--compact" aria-label="기록 탐색 다음 행동">
+              <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘 화면으로 돌아가기</button>
+              <button className="secondary" type="button" onClick={() => navigate("S10")} disabled={readNavigationDisabled}>최근 7일 돌아보기</button>
+            </div>
+          ) : (
+            <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button>
+          )}
+        </div>
       </Scene>;
     }
 
@@ -2287,12 +2286,14 @@ function App() {
                 <span className="record-detail-access" data-record-access={readOnlyReason ? "read-only" : "editable"}>{readOnlyReason ? "읽기 전용" : "수정 가능"}</span>
               </div>
               <dl className="record-detail-facts">
+                <div className="record-detail-primary-value">
+                  <dt>{selectedRecord.kind === "blood-pressure" ? "저장된 측정값" : "저장된 상태"}</dt>
+                  <dd>{selectedRecord.kind === "blood-pressure" ? displayMeasurement(selectedRecord.record) : checkinLabel(selectedRecord.record.status)}</dd>
+                </div>
                 <div><dt>날짜</dt><dd>{dateLabel(selectedRecord.record.observed_on)}</dd></div>
-                {selectedRecord.kind === "blood-pressure" ? (
-                  <><div><dt>저장된 시간대</dt><dd>{periodLabel(selectedRecord.record.period)}</dd></div><div className="record-detail-primary-value"><dt>저장된 측정값</dt><dd>{displayMeasurement(selectedRecord.record)}</dd></div></>
-                ) : (
-                  <><div><dt>챌린지 행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div><div className="record-detail-primary-value"><dt>저장된 상태</dt><dd>{checkinLabel(selectedRecord.record.status)}</dd></div></>
-                )}
+                {selectedRecord.kind === "blood-pressure"
+                  ? <div><dt>저장된 시간대</dt><dd>{periodLabel(selectedRecord.record.period)}</dd></div>
+                  : <div><dt>챌린지 행동</dt><dd>{challengeLabel(selectedRecord.record.action_id)}</dd></div>}
               </dl>
               {readOnlyReason ? <div className="record-read-only status-notice" role="note"><strong>이 기록은 읽기 전용이에요.</strong><p>{readOnlyReason}</p></div> : !evidenceMode && editingChallengeCheckin ? (
                 <section className="record-correction-panel confirmation status-notice" role="status" aria-labelledby="challenge-correction-title">
