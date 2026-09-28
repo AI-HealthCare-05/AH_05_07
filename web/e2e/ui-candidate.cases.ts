@@ -46,18 +46,13 @@ async function save(page: Page) {
 async function probe(page: Page) { return page.evaluate(() => (window as unknown as { __uiProbe: () => { attempts: number; frames: number; canvases: number } }).__uiProbe()); }
 
 async function completeS11LifestyleSurvey(page: Page) {
-  await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
-  await page.getByLabel('만 나이', { exact: true }).fill('35');
-  await page.getByLabel('성별', { exact: true }).selectOption('1');
+  await page.locator('#model-age').fill('35');
+  await page.locator('#model-sex').check();
   await page.locator('#model-height').fill('170');
   await page.locator('#model-weight').fill('68');
-  await page.getByRole('button', { name: '다음', exact: true }).click();
-
-  await page.getByLabel('최근 7일 동안 걸은 날은 며칠인가요?', { exact: true }).fill('4');
-  await page.locator('#model-walking-hours').fill('0');
-  await page.locator('#model-walking-minutes').fill('40');
-  await page.getByLabel('최근 7일 동안 근력운동을 한 날은 며칠인가요?', { exact: true }).selectOption('2_days');
-  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.locator('#model-walking-days-4').check();
+  await page.locator('#model-walking-total-minutes').fill('40');
+  await page.locator('#model-strength-2_days').check();
 
   for (const [id, value] of [
     ['model-weekday-bed', '23:30'],
@@ -66,13 +61,10 @@ async function completeS11LifestyleSurvey(page: Page) {
     ['model-weekend-wake', '08:00'],
   ] as const) await chooseTime(page, id, value);
 
-  await page.getByRole('button', { name: '다음', exact: true }).click();
-  await page.getByLabel('일반담배(궐련) 흡연 상태는 어떤가요?', { exact: true }).selectOption('never_smoked');
-  await page.getByLabel('최근 1년 동안 술을 얼마나 자주 마셨나요?', { exact: true }).selectOption('lt_monthly');
-  await page.getByLabel('술을 마실 때, 보통 한 번에 몇 잔 마시나요?', { exact: true }).selectOption('1_2_drinks');
-  await page.getByRole('button', { name: '입력 확인하기', exact: true }).click();
-  await page.getByLabel('입력과 결과가 저장되지 않는다는 안내를 확인했어요.').check();
-  await page.getByRole('button', { name: '생활정보 분석하기', exact: true }).click();
+  await page.locator('#model-smoking-never_smoked').check();
+  await page.locator('#model-alcohol-frequency').selectOption('lt_monthly');
+  await page.locator('#model-alcohol-amount').selectOption('1_2_drinks');
+  await page.getByRole('button', { name: 'Model V2로 분석하기', exact: true }).click();
   await expect(page.locator('[data-model-v2-user-result="processed"]')).toBeVisible();
 }
 
@@ -215,7 +207,7 @@ for (const state of s11ContinuationCases) test(`S11 continuation ${state.name}`,
   const result = page.locator('[data-model-v2-user-result="processed"]');
   await expect(page.locator('#model-v2-result-title')).toBeFocused();
   await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
-  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도');
   await expect(result.getByRole('heading', { name: '다음 한 걸음', exact: true })).toBeVisible();
   const continuation = result.locator('[data-model-v2-continuation]');
   await expect(continuation).toHaveAttribute('data-model-v2-continuation', state.key);
@@ -257,7 +249,7 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await expect(result.locator('[data-model-v2-preview-value]')).toBeVisible();
   await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
   await expect(result).toBeVisible();
-  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 이번 이용에만');
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도');
 
   await page.getByRole('button', { name: '혈압 기록 남기기', exact: true }).click();
   await expect(page.locator('#S04-title')).toBeFocused();
@@ -279,7 +271,7 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await expect(page.locator('[data-model-v2-user-result="processed"]')).toHaveCount(0);
   await expect(page.locator('[data-model-v2-feature]')).toHaveCount(0);
 
-  await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
+  await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
   await expect(page.locator('#model-age')).toHaveValue('');
   await expect(page.locator('#model-height')).toHaveValue('');
   await expect(page.locator('#model-weight')).toHaveValue('');
@@ -1354,7 +1346,7 @@ test('S11 and S14 remain available while the observation window is loading, and 
 
     await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-    await expect(page.getByRole('button', { name: '입력 시작하기', exact: true })).toBeEnabled();
+    await expect(page.locator('#model-age')).toBeEnabled();
     await expect(page.locator('[data-scene="S12"], [data-scene="S13"]')).toHaveCount(0);
 
     await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
@@ -1812,11 +1804,10 @@ test.describe('B9 journey feedback', () => {
     await routeWindow(page, () => gate.promise);
 
     await page.goto('/?e2e=signed-in&screen=S11');
-    await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
-    await page.getByLabel('만 나이', { exact: true }).fill('35');
+    await page.locator('#model-age').fill('35');
     gate.release();
-    await expect(page.getByLabel('만 나이', { exact: true })).toHaveValue('35');
-    await expect(page.locator('[data-model-v2-step="basics"]')).toBeVisible();
+    await expect(page.locator('#model-age')).toHaveValue('35');
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
 
     gate = deferred();
@@ -2026,8 +2017,7 @@ test.describe('B9 journey feedback', () => {
 
       if (width <= 580) {
         await page.getByRole('button', { name: 'AI 분석', exact: true }).click();
-        await page.getByRole('button', { name: '입력 시작하기', exact: true }).click();
-        const actions = page.locator('[data-model-v2-step="basics"] .model-v2-actions');
+        const actions = page.locator('[data-model-v2-step="intake"] .model-v2-final-action');
         await actions.scrollIntoViewIfNeeded();
         const actionsBox = (await actions.boundingBox())!;
         const navBox = (await page.locator('.primary-nav').boundingBox())!;

@@ -24,26 +24,24 @@ async function routeGuestModel(page: Page) {
 }
 
 const step = (page: Page, value: string) => page.locator(`[data-model-v2-step="${value}"]`);
-const submit = (page: Page) => page.getByRole("button", { name: "생활정보 분석하기", exact: true });
+const submit = (page: Page) => page.getByRole("button", { name: "Model V2로 분석하기", exact: true });
 const result = (page: Page) => page.locator('[data-model-v2-user-result="processed"]');
 
 async function begin(page: Page) {
-  await page.getByRole("button", { name: "입력 시작하기" }).click();
-  await expect(step(page, "basics")).toBeVisible();
+  await expect(step(page, "intake")).toBeVisible();
 }
 
 async function fillBasics(page: Page, age = "35") {
-  await page.getByLabel("만 나이", { exact: true }).fill(age);
-  await page.getByLabel("성별", { exact: true }).selectOption("1");
+  await page.locator("#model-age").fill(age);
+  await page.locator("#model-sex").check();
   await page.locator("#model-height").fill("170");
   await page.locator("#model-weight").fill("68");
 }
 
 async function fillActivity(page: Page) {
-  await page.getByLabel("최근 7일 동안 걸은 날은 며칠인가요?", { exact: true }).fill("4");
-  await page.locator("#model-walking-hours").fill("0");
-  await page.locator("#model-walking-minutes").fill("40");
-  await page.getByLabel("최근 7일 동안 근력운동을 한 날은 며칠인가요?", { exact: true }).selectOption("2_days");
+  await page.locator("#model-walking-days-4").check();
+  await page.locator("#model-walking-total-minutes").fill("40");
+  await page.locator("#model-strength-2_days").check();
 }
 
 async function fillSleep(page: Page) {
@@ -51,26 +49,18 @@ async function fillSleep(page: Page) {
 }
 
 async function fillHabits(page: Page) {
-  await page.getByLabel("일반담배(궐련) 흡연 상태는 어떤가요?", { exact: true }).selectOption("never_smoked");
-  await page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true }).selectOption("lt_monthly");
-  await page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true }).selectOption("1_2_drinks");
+  await page.locator("#model-smoking-never_smoked").check();
+  await page.locator("#model-alcohol-frequency").selectOption("lt_monthly");
+  await page.locator("#model-alcohol-amount").selectOption("1_2_drinks");
 }
 
-async function toReview(page: Page) {
+async function fillIntake(page: Page) {
   await begin(page);
   await fillBasics(page);
-  await page.getByRole("button", { name: "다음", exact: true }).click();
-  await expect(step(page, "activity")).toBeVisible();
   await fillActivity(page);
-  await page.getByRole("button", { name: "다음", exact: true }).click();
-  await expect(step(page, "sleep")).toBeVisible();
   await fillSleep(page);
-  await page.getByRole("button", { name: "다음", exact: true }).click();
-  await expect(step(page, "habits")).toBeVisible();
   await fillHabits(page);
-  await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
-  await expect(step(page, "review")).toBeVisible();
-  await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
+  await expect(step(page, "intake")).toBeVisible();
 }
 
 async function holdGuestModel(page: Page) {
@@ -547,7 +537,7 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
   await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
   await expect(page).toHaveURL(/screen=S11/);
   await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-  await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+  await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
   await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
   await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
   await expect(page.locator('[data-guest-model-v2-demo="available"]')).toHaveCount(0);
@@ -733,9 +723,9 @@ async function captureGuestS11Visuals(page: Page, testInfo: TestInfo, width: num
   await page.setViewportSize({ width, height });
   await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
   await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath(`guest-S11-intro-${width}x${height}.png`), animations: "disabled" });
-  await toReview(page);
+  await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath(`guest-S11-intake-${width}x${height}.png`), animations: "disabled" });
+  await fillIntake(page);
   await submit(page).click();
   await expect(result(page)).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath(`guest-S11-result-${width}x${height}.png`), animations: "disabled" });
@@ -757,7 +747,7 @@ test.describe("guest S11 real local model flow", () => {
     await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(page).toHaveURL(/screen=S11/);
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
     await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
     await expect(page.locator('[data-guest-model-v2-demo="available"]')).toHaveCount(0);
@@ -765,7 +755,7 @@ test.describe("guest S11 real local model flow", () => {
     await expect(page.getByText("검증된 모델이 준비되기 전에는 결과를 표시하지 않습니다.")).toHaveCount(0);
 
     await audits.network.startSensitivePhase();
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     expect(modelRequests).toEqual([{
@@ -803,12 +793,12 @@ test.describe("guest S11 real local model flow", () => {
 
     await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
     await expect(page.locator('[data-scene="S11"]')).toBeVisible();
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
     await expect(page.getByText("로그인 없이 체험하는 중이에요.")).toBeVisible();
 
     await audits.network.startSensitivePhase();
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
@@ -836,10 +826,10 @@ test.describe("guest S11 real local model flow", () => {
     await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
 
     await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
 
     await audits.network.startSensitivePhase();
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     await expect(result(page).locator("[data-model-v2-preview]")).toHaveCount(0);
@@ -865,7 +855,7 @@ test.describe("guest S11 real local model flow", () => {
     await page.clock.setFixedTime("2026-09-23T12:00:00+09:00");
     await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
 
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(result(page)).toBeVisible();
     await expect(result(page).locator("[data-model-v2-preview-value]")).toHaveText("0.055");
@@ -877,14 +867,14 @@ test.describe("guest S11 real local model flow", () => {
 
     await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(page).toHaveURL(/screen=S11/);
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(result(page)).toHaveCount(0);
     await expect(page.locator('[data-scene="S11"] form')).toBeVisible();
 
     await begin(page);
     await page.locator("#model-age").fill("35");
     await page.reload();
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(result(page)).toHaveCount(0);
     expect(modelRequests).toHaveLength(afterFirstSubmit);
 
@@ -903,7 +893,7 @@ test.describe("guest S11 real local model flow", () => {
     await page.goto("/?guest=1&screen=S11&dashboard_window=current", { waitUntil: "domcontentloaded" });
 
     await audits.network.startSensitivePhase();
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(page.locator("#model-v2-pending")).toBeVisible();
     expect(modelRequests).toHaveLength(1);
@@ -921,7 +911,7 @@ test.describe("guest S11 real local model flow", () => {
     });
     await expect(page.locator('[data-guest-dashboard-window="prior"]')).toBeVisible();
     // S11 stayed mounted and the flow instance did not reset.
-    await expect(page.locator('[data-model-v2-step="review"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(page.locator("#model-v2-pending")).toBeVisible();
     expect(modelRequests).toHaveLength(1);
 
@@ -952,7 +942,7 @@ test.describe("guest S11 real local model flow", () => {
     await page.goto("/?guest=1&screen=S11", { waitUntil: "domcontentloaded" });
 
     await audits.network.startSensitivePhase();
-    await toReview(page);
+    await fillIntake(page);
     await submit(page).click();
     await expect(page.locator("#model-v2-pending")).toBeVisible();
     expect(firstRequests).toHaveLength(1);
@@ -965,7 +955,7 @@ test.describe("guest S11 real local model flow", () => {
     // Re-enter S11: a fresh flow mounts with blank inputs.
     await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();
     await expect(page).toHaveURL(/screen=S11/);
-    await expect(page.locator('[data-model-v2-step="intro"]')).toBeVisible();
+    await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     await expect(result(page)).toHaveCount(0);
     await begin(page);
     await expect(page.locator("#model-age")).toHaveValue("");
