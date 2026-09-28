@@ -513,6 +513,13 @@ export function ModelV2InputFlow({
   const isLastInputStep = inputStep === INPUT_STEPS[INPUT_STEPS.length - 1];
   const progressIndex = PROGRESS_STEPS.findIndex((item) => item === step);
   const timeCompleteCount = TIME_FIELD_KEYS.filter((key) => clockParts(draft[key])).length;
+  const progressCaption = processed
+    ? "입력 과정 5단계 완료"
+    : step === "intro"
+      ? "시작 전 · 입력 5단계"
+      : step === "review"
+        ? "5 / 5 · 마지막 확인"
+        : `${progressIndex + 1} / 5 · ${5 - (progressIndex + 1)}단계 남음`;
 
   function clearFeedback() {
     setResultState("idle");
@@ -666,18 +673,26 @@ export function ModelV2InputFlow({
     <Scene id="S11" eyebrow="입력 기반 위험군 선별 신호" title="생활정보로 시작하는 AI 분석" tone="secondary" className="signal-scene model-v2-flow">
       <div className="model-v2-layout" data-model-v2-processed={processed ? "true" : undefined}>
         <aside className="model-v2-progress" aria-label="입력 진행 단계">
-          <p className="model-v2-progress-caption">{processed ? "입력 과정 완료" : step === "intro" ? "시작 전 · 5단계" : `${progressIndex + 1} / 5 단계`}</p>
+          <div className="model-v2-progress-heading">
+            <p className="model-v2-progress-eyebrow">AI 분석 여정</p>
+            <p className="model-v2-progress-caption">{progressCaption}</p>
+          </div>
           <ol>
             {PROGRESS_STEPS.map((item, index) => {
               const done = item === "review" ? processed : completed.includes(item);
-              return <li key={item} aria-current={step === item && !processed ? "step" : undefined} data-complete={done}>
+              const canRevisit = !pending && !processed && index < progressIndex;
+              return <li key={item} aria-current={step === item && !processed ? "step" : undefined}
+                data-complete={done} data-revisitable={canRevisit || undefined}>
                 <span className="model-v2-step-marker" aria-hidden="true">{done ? "✓" : index + 1}</span>
                 <span>{STEPS[item].label}</span>
                 {done && <span className="sr-only">완료</span>}
+                {canRevisit && <button type="button" className="model-v2-step-jump"
+                  aria-label={`${STEPS[item].label} 단계로 돌아가기`}
+                  onClick={() => goTo(item, step === "review")}>돌아가기</button>}
               </li>;
             })}
           </ol>
-          <p className="model-v2-privacy-note">이번 입력에만 사용 · 입력과 결과 저장 안 함</p>
+          <p className="model-v2-privacy-note"><strong>이번 이용에만</strong><span>입력·결과 서버 추론 전송 없음</span><span>저장 안 함</span></p>
         </aside>
 
         <form ref={formRef} className="measurement-panel model-v2-panel" data-model-v2-step={step}
@@ -701,31 +716,50 @@ export function ModelV2InputFlow({
           ) : (
             <>
               <header className="model-v2-step-heading section-header">
-                <p className="model-v2-kicker">{step === "intro" ? "입력 전에 잠깐" : step === "review" ? "분석 전 마지막 확인" : `${progressIndex + 1}번째 이야기`}</p>
+                <div className="model-v2-stage-meta" aria-label={step === "intro" ? "입력 시작 전" : step === "review" ? "마지막 입력 확인 단계" : `전체 5단계 중 ${progressIndex + 1}단계`}>
+                  <p className="model-v2-kicker">{step === "intro" ? "입력 전에 잠깐" : step === "review" ? "분석 전 마지막 확인" : `${progressIndex + 1}번째 입력`}</p>
+                  {step !== "intro" && <span>{step === "review" ? "입력 4개 영역 확인" : `${5 - (progressIndex + 1)}단계 남음`}</span>}
+                </div>
                 <h2 id={STEP_TITLE_ID} tabIndex={-1}>{step === "intro" ? "생활정보를 입력해요" : STEPS[step].label}</h2>
                 {step !== "intro" && <p>{STEPS[step].description}</p>}
               </header>
 
               {resultState === "input_invalid" && <p id={INPUT_ERROR_ID} className="notice-error status-notice" role="alert" tabIndex={-1}>{message}</p>}
-              {pending && <p id="model-v2-pending" className="status-notice" role="status" tabIndex={-1}>생활정보 분석 중입니다. 잠시 기다려 주세요.</p>}
-              {resultState === "temporarily_unavailable" && <p id="model-v2-unavailable" className="notice-warning status-notice" role="status" tabIndex={-1}>지금은 생활정보 분석을 완료할 수 없습니다. 자동으로 다시 요청하지 않습니다. 입력은 이 화면에 남아 있어요. 잠시 후 직접 다시 요청할 수 있습니다.</p>}
+              {pending && <div id="model-v2-pending" className="model-v2-processing status-notice" role="status" tabIndex={-1}>
+                <span className="model-v2-processing-mark" aria-hidden="true"><i /><i /><i /></span>
+                <span><strong>이 브라우저에서 계산하고 있어요</strong><small>현재 입력을 잠시 고정합니다. 완료될 때까지 반복 실행하지 않아요.</small></span>
+              </div>}
+              {resultState === "temporarily_unavailable" && <div id="model-v2-unavailable" className="model-v2-unavailable notice-warning status-notice" role="status" tabIndex={-1}>
+                <strong>지금은 분석을 완료할 수 없어요</strong>
+                <p>자동으로 다시 요청하지 않습니다. 입력은 이 화면에 그대로 남아 있어요.</p>
+                <small>준비가 되면 아래의 ‘생활정보 분석하기’를 직접 눌러 주세요.</small>
+              </div>}
 
               {step === "intro" && <section className="model-v2-intro section-header" aria-labelledby={STEP_TITLE_ID}>
-                {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
-                <p className="model-v2-intro-lead">기본 정보·활동·수면·생활습관을 입력합니다.</p>
-                <p className="model-v2-intro-privacy"><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong></p>
+                <div className="model-v2-intro-copy">
+                  {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
+                  <p className="model-v2-intro-lead">기본 정보·활동·수면·생활습관을 입력합니다.</p>
+                  <p className="model-v2-intro-supporting">생활정보를 이 브라우저에서 처리하는 선택형 도구예요. 진단·판정·치료 제안이나 미래 고혈압 확률이 아니며, 분석 입력·결과는 서버 추론 요청으로 보내거나 저장하지 않아요.</p>
+                </div>
+                <div className="model-v2-actions action-group model-v2-intro-actions">
+                  <button type="button" onClick={() => goTo("basics")}>입력 시작하기</button>
+                </div>
+                <div className="model-v2-intro-privacy">
+                  <span className="model-v2-privacy-symbol" aria-hidden="true">✓</span>
+                  <p><strong>이번 입력과 결과는 저장되지 않으며 화면을 나가거나 새로고침하면 사라집니다.</strong><small>분석 입력·결과를 서버 추론 요청으로 보내지 않아요.</small></p>
+                </div>
               </section>}
 
               {showOlderApplicabilityNotice && (step === "basics" || step === "review") && <p className="notice-warning status-notice" role="status">
                 만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
               </p>}
 
-              {step === "basics" && <>
+              {step === "basics" && <section className="model-v2-step-body" aria-label="기본 정보 입력">
                 <p id="model-v2-measurement-help" className="model-v2-field-help">키와 몸무게는 알고 있는 측정값을 입력해 주세요.</p>
                 <div className="field-grid">{STEPS.basics.fields.map((key) => renderField(key, key === "height" || key === "weight" ? "model-v2-measurement-help" : undefined))}</div>
-              </>}
+              </section>}
 
-              {step === "activity" && <>
+              {step === "activity" && <section className="model-v2-step-body" aria-label="최근 7일 활동 입력">
                 {renderField("walkingDays")}
                 <fieldset className="model-v2-question-group section-header" aria-describedby="model-v2-walking-help model-v2-walking-zero-help">
                   <legend>그중 걷는 날에는 하루 평균 얼마나 걸었나요?</legend>
@@ -737,9 +771,9 @@ export function ModelV2InputFlow({
                   <p id="model-v2-walking-zero-help" className="model-v2-field-help">걷기 일수가 0일이면 시간과 분도 모두 0으로 입력해 주세요.</p>
                 </fieldset>
                 {renderField("strengthDays")}
-              </>}
+              </section>}
 
-              {step === "sleep" && <>
+              {step === "sleep" && <section className="model-v2-step-body" aria-label="평일과 주말 수면 입력">
                 <p id="model-v2-sleep-help" className="model-v2-sleep-caption">시간 선택 {timeCompleteCount} / 4 · 각 시각의 오전·오후를 확인해 주세요. 자정은 오전 12:00이에요.</p>
                 <fieldset className="model-v2-question-group section-header">
                   <legend>평일에는 보통 몇 시에 취침하고 기상하나요?</legend>
@@ -750,9 +784,11 @@ export function ModelV2InputFlow({
                   <div className="field-grid">{renderField("weekendBed", "model-v2-sleep-help")}{renderField("weekendWake", "model-v2-sleep-help")}</div>
                 </fieldset>
                 <p className="model-v2-field-help">일정이 자주 바뀐다면 시간을 억지로 정하지 않아도 돼요. 네 시각을 정하기 어려운 경우에는 이 도구를 건너뛰어도 혈압 기록과 다른 기능은 그대로 이용할 수 있어요.</p>
-              </>}
+              </section>}
 
-              {step === "habits" && <div className="field-grid model-v2-fields-single">{STEPS.habits.fields.map((key) => renderField(key))}</div>}
+              {step === "habits" && <section className="model-v2-step-body" aria-label="흡연과 음주 입력">
+                <div className="field-grid model-v2-fields-single">{STEPS.habits.fields.map((key) => renderField(key))}</div>
+              </section>}
 
               {step === "review" && <>
                 <div className="model-v2-review">
@@ -762,6 +798,7 @@ export function ModelV2InputFlow({
                   </section>)}
                 </div>
                 <div className="model-v2-review-notice status-notice">
+                  <strong>이 내용만 분석에 사용해요</strong>
                   <p>이번 입력과 결과는 저장되지 않아요. 화면을 나가거나 새로고침하면 사라져요.</p>
                   <p>혈압 기록과 7일 생활 챌린지는 별도로 이용할 수 있어요.</p>
                   <label className="signal-consent" htmlFor="model-notice-accepted">
@@ -773,18 +810,27 @@ export function ModelV2InputFlow({
                 </div>
               </>}
 
-              <div className="model-v2-actions action-group">
-                {step !== "intro" && <button type="button" className="secondary" disabled={pending} onClick={() => goTo(progressIndex === 0 ? "intro" : PROGRESS_STEPS[progressIndex - 1])}>이전</button>}
-                {step === "intro" ? <button key="intro" type="button" onClick={() => goTo("basics")}>입력 시작하기</button>
-                  : step === "review" ? <button key="submit" ref={submitRef} type="submit" disabled={pending}>{pending ? "생활정보 분석 중" : "생활정보 분석하기"}</button>
-                    : <button key={step} type="button" disabled={pending} onClick={advance}>{editingReview ? "입력 확인으로 돌아가기" : isLastInputStep ? "입력 확인하기" : "다음"}</button>}
-              </div>
+              {step !== "intro" && <div className="model-v2-actions action-group">
+                <button type="button" className="secondary" disabled={pending} onClick={() => goTo(progressIndex === 0 ? "intro" : PROGRESS_STEPS[progressIndex - 1])}>이전</button>
+                {step === "review" ? <button key="submit" ref={submitRef} type="submit" disabled={pending}>{pending ? "생활정보 분석 중" : "생활정보 분석하기"}</button>
+                  : <button key={step} type="button" disabled={pending} onClick={advance}>{editingReview ? "입력 확인으로 돌아가기" : isLastInputStep ? "입력 확인하기" : "다음"}</button>}
+              </div>}
               {step === "intro" && <section className="model-v2-intro-support" aria-label="분석 이용 안내">
+                <div className="model-v2-intro-route" aria-label="분석 처리 흐름">
+                  <div><span aria-hidden="true">01</span><strong>생활정보 입력</strong><small>5단계 · 필수 생활정보</small></div>
+                  <i aria-hidden="true">→</i>
+                  <div><span aria-hidden="true">02</span><strong>브라우저에서 처리</strong><small>서버 추론 요청 없음</small></div>
+                  <i aria-hidden="true">→</i>
+                  <div><span aria-hidden="true">03</span><strong>이번 이용의 결과</strong><small>나가면 사라짐</small></div>
+                </div>
                 {previewOpen ? (
-                  <>
+                  <div className="model-v2-intro-boundary">
+                    <span aria-hidden="true">i</span>
+                    <div>
                     <p>{modelV2PreviewEndLabel}까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다.</p>
                     <p>이 값은 확률·진단·위험등급이 아니며 치료·예방 효과를 뜻하지 않습니다.</p>
-                  </>
+                    </div>
+                  </div>
                 ) : (
                   <p>이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다.</p>
                 )}
