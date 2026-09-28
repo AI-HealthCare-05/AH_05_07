@@ -1,8 +1,8 @@
-.my-space-return { display: flex; align-items: center; justify-content: space-between; gap: var(--sk7-space-md); padding: var(--sk7-space-md) var(--sk7-gutter-desktop); color: var(--sk7-text); background: var(--sk7-surface-solid); border-bottom: 1px solid var(--sk7-border); font-family: var(--sk7-font-sans); }
+.my-space-return { display: flex; align-items: center; justify-content: space-between; gap: var(--sk7-space-md); padding: var(--sk7-space-sm) var(--sk7-gutter-desktop); color: var(--sk7-text); background: color-mix(in srgb, var(--sk7-surface-solid) 92%, var(--sk7-accent-soft)); border-bottom: 1px solid var(--sk7-border); font-family: var(--sk7-font-sans); }
 .my-space-return div { display: grid; gap: var(--sk7-space-2xs); }
 .my-space-return strong { font-size: var(--sk7-type-label); }
 .my-space-return div span { font-size: var(--sk7-type-caption); color: var(--sk7-text-muted); }
-.my-space-return a { display: inline-flex; align-items: center; gap: var(--sk7-space-md); min-height: var(--sk7-target-min); color: var(--sk7-accent-hover); font-weight: var(--sk7-weight-bold); text-underline-offset: 5px; }
+.my-space-return a { display: inline-flex; align-items: center; gap: var(--sk7-space-sm); min-height: var(--sk7-target-min); padding-inline: var(--sk7-space-md); color: var(--sk7-accent-hover); border: 1px solid var(--sk7-border-strong); border-radius: var(--sk7-radius-control); background: var(--sk7-surface-solid); font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); text-decoration: none; }
 .my-space-return a:focus-visible { outline: 3px solid var(--sk7-focus); outline-offset: 4px; }
 @media (max-width: 480px) { .my-space-return { align-items: start; flex-direction: column; padding: var(--sk7-space-md) var(--sk7-gutter-mobile); gap: var(--sk7-space-xs); } }
 
@@ -19,7 +19,7 @@
   display: grid;
   grid-template-columns: 3rem minmax(0, 1fr);
   gap: .25rem var(--sk7-space-md);
-  padding: var(--sk7-space-md) 0 0;
+  padding: var(--sk7-space-lg) 0 0;
   border-top: 1px solid var(--sk7-border);
 }
 .today-space-landmark {

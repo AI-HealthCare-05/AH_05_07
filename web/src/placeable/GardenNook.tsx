@@ -44,7 +44,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
       const canvas = renderer.domElement;
       canvas.tabIndex = 0; canvas.dataset.testid = "garden-canvas";
-      canvas.setAttribute("aria-label", "Garden Nook. Arrow keys or W A S D to walk; Enter to rest at the pavilion.");
+      canvas.setAttribute("aria-label", "정원 쉼터. 방향키 또는 W A S D로 걷고 정자에서 Enter를 눌러 쉬세요.");
       canvas.setAttribute("aria-describedby", "garden-help"); container.prepend(canvas);
       input.mount(canvas, pad.current, rest); input.suspend(false);
       const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -89,15 +89,16 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
     return dispose;
   }, [asset, attempt]);
 
-  return <section aria-label="Garden Nook pavilion" data-testid="garden-nook" data-companion={asset?.species ?? "unavailable"}
+  return <section aria-label="정원 쉼터 정자" data-testid="garden-nook" data-companion={asset?.species ?? "unavailable"}
     data-companion-pose={pose} data-at-pavilion={near} data-reduced-motion={reduced}>
     <div ref={host} className="placeable-world-host garden-world-host">
       {error && <div className="placeable-world-message" role="alert">
-        <p>Garden Nook의 3D 공간을 열 수 없어요. My Space로 돌아가거나 Classic Today를 이용할 수 있어요.</p>
-        <button onClick={() => setAttempt((value) => value + 1)}>Retry Garden Nook</button>
+        <h2>정원 쉼터를 열지 못했어요</h2>
+        <p>꾸미기 상태는 그대로예요. 광장으로 돌아가거나 오늘의 기록으로 이동할 수 있어요.</p>
+        <button onClick={() => setAttempt((value) => value + 1)}>정원 다시 열기</button>
       </div>}
       <button ref={pad} type="button" className="placeable-walk-pad" disabled={error}
-        aria-label="Drag to walk in the garden, or use arrow keys"><span aria-hidden="true">↟</span><span>Walk</span><span aria-hidden="true">↞ · ↠</span></button>
+        aria-label="정원에서 드래그하거나 방향키로 걷기"><span aria-hidden="true">↟</span><span>걷기</span><span aria-hidden="true">↞ · ↠</span></button>
     </div>
     <div className="garden-controls">
     <div className="garden-actions">
@@ -112,7 +113,7 @@ export default function GardenNook({ companion: asset }: { companion: CompanionA
       : moments ? "동반자와 잠깐 쉬었어요. 원할 때 다시 정원을 둘러보세요."
       : near ? "정자에 도착했어요. 동반자와 잠깐 쉬어 볼까요?" : "짧은 정원 길을 따라 정자로 와 보세요."}</p>
     <details className="garden-help"><summary>이동과 쉬기 안내</summary>
-    <p id="garden-help" className="placeable-world-help">방향키 또는 W A S D로 이동하거나 Walk 패드를 드래그하세요.
+    <p id="garden-help" className="placeable-world-help">방향키 또는 W A S D로 이동하거나 걷기 패드를 드래그하세요.
       정자 앞으로 이동하기 버튼도 이용할 수 있어요. 정자 앞에서 동반자나 정자를 탭하거나, 쉬기 버튼을 선택하세요.
       쉬는 동안에는 제자리에 머물러요. 이번 방문에서만 이어지는 작은 놀이예요.</p></details>
     </div>

@@ -8,13 +8,13 @@ export function StartingHomeControl({ headingLevel = 2 }: { headingLevel?: 2 | 3
   return <section className="journey-settings-section journey-settings-display starting-home-control">
     <div className="section-header">
       <Heading>시작 화면</Heading>
-      <p id="starting-home-help">이 브라우저에만 저장돼요. 건강 기록·분석에는 영향이 없으며 언제든 바꿀 수 있어요. 다음에 기본 주소로 들어올 때 로그인 상태라면 적용돼요.</p>
+      <p id="starting-home-help">두 홈 중 어디에서 시작할지 이 브라우저에만 저장해요. 건강 기록·분석이나 계정 설정에는 영향을 주지 않으며, 다음에 기본 주소로 들어올 때 적용돼요.</p>
     </div>
     <fieldset className="theme-preset-control" aria-describedby="starting-home-help">
       <legend>로그인 후 시작 화면</legend>
       {([
-        ["classic-today", "Classic Today", "오늘의 기록부터 시작"],
-        ["my-space", "My Space", "내 공간에서 시작"],
+        ["classic-today", "오늘의 기록", "건강 기록과 확인부터 시작"],
+        ["my-space", "내 공간 · My Space", "휴식과 꾸미기 공간에서 시작"],
       ] as const).map(([value, label, description]) => <label key={value}>
         <input type="radio" name="sk7-starting-home" value={value} checked={preference === value}
           onChange={() => {

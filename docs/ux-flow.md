@@ -67,21 +67,24 @@ by the [Model V2 product contract](model-v2-product-contract.md).
 Direct S11 URLs, authentication boundaries, and browser back/forward remain valid.
 Focused work screens remain reachable without introducing a router dependency.
 
-Signed-in Classic Today exposes `내 공간으로 가기` below the primary health
-activity, including its empty-record state. No prior `return_space` or Living
+The signed-in product presents two intentional homes: `오늘의 기록` owns health
+work, while `내 공간 · My Space` owns rest and cosmetic play. Today exposes
+`내 공간으로 가기` below the primary health activity, including its empty-record
+state. No prior `return_space` or Living
 Choice is needed. App supplies only the bounded My Space destination intent:
 3D/account by default; an existing explicit browser-only or Classic return
 context stays intact. ProductPlaceableEntry re-verifies the account session and
 owns cosmetic reads through the existing adapters/controller. Account failure
 never silently reads, copies or merges browser state; sign-in/retry and explicit
-browser-only recovery remain available. My Space's Classic Today link carries
-only the known view/storage return context. Entry itself performs no cosmetic
+browser-only recovery remain available. My Space's `오늘의 기록으로 가기`
+action uses an explicit S02 URL and carries only the known view/storage return
+context; it never uses bare `/`. Entry itself performs no cosmetic
 write or WebGL availability check. Guest routing and production activation remain
 unchanged.
 
-Signed-in S14 also offers a browser-local starting screen: `Classic Today`
-(default) or `My Space`, stored as `classic-today` / `my-space` under
-`sk7-starting-home`. Missing, invalid or unreadable storage means Classic Today;
+Signed-in S14 also offers a browser-local starting screen: `오늘의 기록`
+(default) or `내 공간 · My Space`, stored as `classic-today` / `my-space` under
+`sk7-starting-home`. Missing, invalid or unreadable storage means `오늘의 기록`;
 a failed write keeps the stored choice and reports failure. This presentation
 preference never enters account settings, health records or cosmetic snapshots.
 It takes effect on the next signed-in bare-root entry (`/` with no query/hash),

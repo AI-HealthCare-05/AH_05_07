@@ -13,11 +13,13 @@ test("product's first render is unplaced/loading with disabled confirmation and 
     const adapter: PlaceablePersistence = { mode, read: async () => { throw new Error("render must not read"); },
       save: async () => { throw new Error("render must not save"); } };
     const html = renderToStaticMarkup(createElement(PlaceableExperience, { adapter }));
-    expect(html).toContain('data-phase="loading"'); expect(html).toContain("Not read yet");
-    expect(html).toContain("Unplaced"); expect(html).toContain("Reading your saved placement");
-    expect(html).not.toContain("Saved in this browser only.");
+    expect(html).toContain('data-phase="loading"'); expect(html).toContain("아직 확인 전");
+    expect(html).toContain("꾸미기 전"); expect(html).toContain("저장된 꾸미기를 불러오고 있어요");
+    expect(html).not.toContain("이 브라우저에 저장했어요.");
     expect(html).not.toContain('data-testid="classic-pinwheel"');
-    expect(html).toContain(mode === "browser" ? "this browser and site, not your account" : "follows your signed-in account");
+    expect(html).toContain(mode === "browser" ? "이 브라우저에만 저장" : "계정 공간에 저장");
+    expect(html).toContain(`href="?screen=S02&amp;return_space=classic-${mode}"`);
+    expect(html).not.toContain('href="/"');
   }
 });
 
@@ -26,11 +28,11 @@ test("Classic surface renders the same selected asset/socket/color as the world 
   for (const preview of [true, false]) {
     const html = renderToStaticMarkup(createElement(ClassicPlaza, { selection, preview, pulse: 0, interact: () => {}, canInteract: !preview }));
     expect(html).toContain('data-color="teal"'); expect(html).toContain('data-socket="plaza-edge"');
-    expect(html).toContain(preview ? "Preview · not saved" : "Confirmed placement");
-    expect(html).toContain(preview ? "Preview: teal pinwheel at Plaza edge" : "Spin teal pinwheel at Plaza edge");
+    expect(html).toContain(preview ? "저장 전 미리보기" : "저장된 꾸미기");
+    expect(html).toContain(preview ? "미리보기: 청록 바람개비 · 광장 가장자리" : "청록 바람개비 돌리기 · 광장 가장자리");
   }
   const removed = renderToStaticMarkup(createElement(ClassicPlaza, { selection: null, preview: false, pulse: 0, interact: () => {}, canInteract: false }));
-  expect(removed).not.toContain('data-testid="classic-pinwheel"'); expect(removed).toContain("Unplaced");
+  expect(removed).not.toContain('data-testid="classic-pinwheel"'); expect(removed).toContain("꾸미기 전");
 });
 
 test("only verified matching owner publishes an account binding; delayed verification and logout cannot rebind", async () => {

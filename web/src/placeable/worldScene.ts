@@ -318,7 +318,7 @@ export class PlaceableScene {
   }
 
   labels() {
-    return [{ id: "today-gate", label: "Today Gate", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
+    return [{ id: "today-gate", label: "오늘의 기록", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
       ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
       return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50 };
