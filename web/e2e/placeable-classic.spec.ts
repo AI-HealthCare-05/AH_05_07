@@ -19,8 +19,8 @@ const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(),
   schemaVersion: op.schemaVersion, layoutId: op.layoutId, selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
 const readLocal = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || "null"), STORAGE_KEY);
 const confirm = async (page: Page) => {
-  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
-  await expect(page.getByTestId("save-status")).toContainText("Saved");
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+  await expect(page.getByTestId("save-status")).toContainText("저장했어요");
 };
 
 const companionRoute = "/?experience=e2&view=3d&storage=browser";
@@ -32,7 +32,7 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
   try {
     await page.goto(companionRoute + "&living_choice=sleep-routine");
     const main = page.getByTestId("placeable-experience"), canvas = page.getByTestId("placeable-world-canvas");
-    const editor = page.getByRole("region", { name: "My Space controls", includeHidden: true });
+    const editor = page.getByRole("region", { name: "내 공간 꾸미기", includeHidden: true });
     const open = page.getByRole("button", { name: "꾸미기", exact: true });
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
     await expect(editor).toBeHidden();
@@ -41,44 +41,44 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     expect(await canvas.evaluate((c: HTMLCanvasElement) => c.width * c.height)).toBeLessThanOrEqual(2_000_000);
     if (mobile) await open.tap(); else { await open.focus(); await page.keyboard.press("Enter"); }
     await expect(page.getByRole("heading", { name: "내 공간 꾸미기" })).toBeFocused();
-    await page.getByRole("button", { name: "Choose welcome pinwheel" }).click();
-    await expect(page.getByTestId("draft-placement")).toContainText("not saved");
+    await page.getByRole("button", { name: "환영 바람개비 고르기" }).click();
+    await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
     expect(await readLocal(page)).toBeNull();
-    await page.getByRole("button", { name: "teal", exact: true }).click();
-    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await page.getByRole("button", { name: "청록", exact: true }).click();
+    await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click();
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-preview.png`) });
-    if (mobile) await page.getByRole("button", { name: "Cancel preview" }).tap(); else await page.keyboard.press("Escape");
+    if (mobile) await page.getByRole("button", { name: "미리보기 취소" }).tap(); else await page.keyboard.press("Escape");
     await expect(editor).toBeHidden(); await expect(open).toBeFocused(); expect(await readLocal(page)).toBeNull();
-    await (await editorButton(page, "Choose welcome pinwheel")).click();
-    await page.getByRole("button", { name: "teal", exact: true }).click();
-    await page.getByRole("button", { name: "Gate right", exact: true }).click();
+    await (await editorButton(page, "환영 바람개비 고르기")).click();
+    await page.getByRole("button", { name: "청록", exact: true }).click();
+    await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click();
     await confirm(page); await expect(editor).toBeHidden(); await expect(open).toBeFocused();
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
     const before = await readLocal(page);
     if (mobile) {
       await page.setViewportSize({ width: 320, height: 844 });
-      const exit = (await page.getByRole("link", { name: "Leave plaza" }).boundingBox())!;
+      const exit = (await page.getByRole("link", { name: "오늘의 기록", exact: true }).boundingBox())!;
       const light = (await page.getByRole("button", { name: "광장의 불빛 켜기" }).boundingBox())!;
-      const spin = (await page.getByRole("button", { name: "Spin pinwheel", exact: true }).boundingBox())!;
-      const walk = (await page.getByRole("button", { name: "Drag to walk", exact: false }).boundingBox())!;
+      const spin = (await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).boundingBox())!;
+      const walk = (await page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기", exact: false }).boundingBox())!;
       expect(light.y).toBeGreaterThanOrEqual(exit.y + exit.height);
       expect(spin.y + spin.height).toBeLessThanOrEqual(walk.y);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
       await page.screenshot({ path: test.info().outputPath("plaza-320.png"), scale: "css" });
       await page.setViewportSize({ width: 390, height: 844 });
     }
-    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-    await expect(page.getByTestId("placeable-feedback")).toContainText("answers");
+    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+    await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-daylight.png`) });
     await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-twilight.png`) });
-    await page.getByRole("button", { name: "Enter Garden Nook" }).click();
+    await page.getByRole("button", { name: "정원 쉼터로 가기" }).click();
     await expect(page.getByTestId("garden-canvas")).toBeVisible();
-    await page.getByRole("button", { name: "Return to My Space" }).click();
+    await page.getByRole("button", { name: "광장으로 돌아가기" }).click();
     await expect(main).toHaveAttribute("data-phase", "ready"); await expect(editor).toBeHidden();
     expect(await readLocal(page)).toEqual(before);
-    await page.getByRole("link", { name: "Classic Today", exact: false }).click();
+    await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: false }).click();
     await expect(main).toHaveCount(0);
     expect(errors).toEqual([]);
   } finally { await context.close(); }
@@ -88,22 +88,23 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await page.setViewportSize({ width: 390, height: 844 });
   await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=3d&storage=account");
-  await (await editorButton(page, "Choose welcome pinwheel")).click();
-  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior);
-  await expect(page.getByRole("region", { name: "My Space controls" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "내 공간 꾸미기" })).toBeVisible();
   await expect(page.getByTestId("save-status")).toBeInViewport();
-  await expect(page.getByTestId("save-status")).not.toContainText("Saved");
-  await expect(page.getByTestId("draft-placement")).toContainText("not saved");
-  await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
+  await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toHaveAttribute("aria-disabled", "true");
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "true");
     await expect(page.getByRole("button", { name: "취소하고 닫기" })).toBeDisabled();
-    await page.getByRole("button", { name: "Check saved state" }).click();
-    await expect(page.getByTestId("save-status")).toContainText("unknown");
+    await page.getByRole("button", { name: "저장된 상태 확인" }).click();
+    await expect(page.getByTestId("save-status")).toContainText("저장 결과를 확인할 수 없어요");
   } else {
-    await page.getByRole("button", { name: "Keep preview and use latest revision" }).click();
+    await page.getByRole("button", { name: "미리보기를 유지하고 최근 저장 상태 사용" }).click();
     await confirm(page);
     await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "false");
   }
@@ -151,11 +152,11 @@ test("E5 actual default lite: pointer and keyboard greet return to idle without 
   expect(writes).toEqual([]); expect(errors).toEqual([]);
   await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(world).toHaveAttribute("data-color", "teal");
-  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-keepsake")).toBeVisible();
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
   await expect(page.getByTestId("companion-response")).toContainText("함께 있어요");
   expect(await readLocal(page)).toEqual(before);
@@ -212,48 +213,48 @@ for (const failure of ["network", "clips"]) test(`E5 ${failure} failure is local
   });
   await page.goto(companionRoute);
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "unavailable");
-  await expect(page.getByTestId("companion-response")).toContainText("Today Gate");
+  await expect(page.getByTestId("companion-response")).toContainText("오늘의 기록");
   await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
-  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   const before = await readLocal(page);
-  await expect(page.getByRole("link", { name: /Classic Today/ })).toHaveAttribute("aria-disabled", "false");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByRole("link", { name: /오늘의 기록으로 가기/ })).toHaveAttribute("aria-disabled", "false");
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible(); expect(await readLocal(page)).toEqual(before);
 });
 
 test("browser experience previews, cancels, confirms, interacts, leaves/returns, moves, recolors and removes", async ({ page }) => {
   await page.goto(browserRoute);
-  await expect(page.getByTestId("storage-label")).toContainText("this browser and site, not your account");
-  await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  await expect(page.getByTestId("storage-label")).toContainText("이 브라우저에만 저장");
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
   expect(await readLocal(page)).toBeNull();
-  await (await editorButton(page, "Choose welcome pinwheel")).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
   await expect(page.getByTestId("classic-plaza")).toHaveAttribute("data-preview", "true");
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
   expect(await readLocal(page)).toBeNull();
-  await page.getByRole("button", { name: "Cancel preview" }).click();
+  await page.getByRole("button", { name: "미리보기 취소" }).click();
   await expect(page.getByTestId("classic-pinwheel")).toHaveCount(0);
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   const first = await readLocal(page);
-  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-  await expect(page.getByTestId("placeable-feedback")).toHaveText("A plaza breeze. Your pinwheel answers.");
+  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toHaveText("광장에 바람이 불어 바람개비가 돌아가요.");
   expect(await readLocal(page)).toEqual(first);
-  await (await editorButton(page, "Gate right", true)).click();
+  await (await editorButton(page, "입구 오른쪽", true)).click();
   await expect(page.locator(".pinwheel-spin")).toHaveCount(0);
-  await expect(page.getByTestId("save-status")).not.toContainText("Saved");
-  await page.getByRole("button", { name: "Cancel preview" }).click();
-  await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute);
+  await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
+  await page.getByRole("button", { name: "미리보기 취소" }).click();
+  await page.getByRole("link", { name: "오늘의 기록", exact: true }).click(); await page.goto(browserRoute);
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
-  await (await editorButton(page, "Gate right", true)).click();
-  await (await editorButton(page, "teal", true)).click();
+  await (await editorButton(page, "입구 오른쪽", true)).click();
+  await (await editorButton(page, "청록", true)).click();
   expect(await readLocal(page)).toEqual(first); await confirm(page); await page.reload();
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-socket", "gate-right");
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
-  await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page); await page.reload();
-  await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  await (await editorButton(page, "바람개비 치우기")).click(); await confirm(page); await page.reload();
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
   expect((await readLocal(page)).revision).toBe(3);
 });
 
@@ -264,38 +265,38 @@ test("Classic keyboard, reduced motion and unavailable audio retain visual inter
     Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
   });
   await page.goto(browserRoute);
-  const choose = (await editorButton(page, "Choose welcome pinwheel"));
+  const choose = (await editorButton(page, "환영 바람개비 고르기"));
   await expect(choose).toBeEnabled(); await choose.focus(); await page.keyboard.press("Enter");
   await confirm(page);
-  await (await editorButton(page, "Enable sound")).click();
-  await expect(page.getByTestId("audio-status")).toContainText("unavailable");
-  await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+  await (await editorButton(page, "소리 켜기")).click();
+  await expect(page.getByTestId("audio-status")).toContainText("사용할 수 없음");
+  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   await expect(page.locator(".pinwheel-spin")).toHaveCSS("animation-name", "none");
 });
 
 test("3D uses the same saved value, previews actual sockets, pauses controls and supports reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(browserRoute);
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   const world = page.getByTestId("placeable-world"), canvas = page.getByTestId("placeable-world-canvas");
   await expect(canvas).toBeVisible(); await expect(world).toHaveAttribute("data-color", "coral");
   await expect(world).toHaveAttribute("data-reduced-motion", "true");
   await canvas.focus(); await expect(world).toHaveAttribute("data-suspended", "false");
   const first = await readLocal(page); await page.keyboard.press("Enter");
-  await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+  await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   expect(await readLocal(page)).toEqual(first);
-  await (await editorButton(page, "Plaza edge", true)).click();
-  await (await editorButton(page, "sunflower", true)).click();
+  await (await editorButton(page, "광장 가장자리", true)).click();
+  await (await editorButton(page, "해바라기", true)).click();
   await expect(world).toHaveAttribute("data-preview", "true");
   await expect(world).toHaveAttribute("data-socket", "plaza-edge");
   await expect(world).toHaveAttribute("data-suspended", "true");
-  await expect(page.getByRole("button", { name: "Drag to walk", exact: false })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기", exact: false })).toBeDisabled();
   expect(await readLocal(page)).toEqual(first); await confirm(page); await page.reload();
   await expect(world).toHaveAttribute("data-color", "sunflower");
   await expect(world).toHaveAttribute("data-socket", "plaza-edge");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "sunflower");
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-socket", "plaza-edge");
 });
@@ -310,9 +311,9 @@ test("default and Classic URLs never request or mount E2", async ({ page }) => {
 
 test("lost WebGL context releases the scene and retries without changing the confirmed placement", async ({ page }) => {
   await page.goto(browserRoute);
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   const before = await readLocal(page);
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible();
   await canvas.evaluate((element) => {
     const gl = (element as HTMLCanvasElement).getContext("webgl2");
@@ -320,9 +321,9 @@ test("lost WebGL context releases the scene and retries without changing the con
     if (!extension) throw new Error("Context-loss exercise needs WEBGL_lose_context");
     extension.loseContext();
   });
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
   await expect(canvas).toHaveCount(0); expect(await readLocal(page)).toEqual(before);
-  await page.getByRole("button", { name: "Retry 3D" }).click(); await expect(canvas).toBeVisible();
+  await page.getByRole("button", { name: "3D 다시 열기" }).click(); await expect(canvas).toBeVisible();
   expect(await readLocal(page)).toEqual(before);
 });
 
@@ -363,19 +364,19 @@ for (const behavior of ["conflict", "unknown", "read-error"] as const) {
   test(`verified account ${behavior} keeps browser storage separate and requires confirmation`, async ({ page }) => {
     const account = await accountRoute(page, behavior);
     await page.goto("/?experience=e2&view=classic&storage=account");
-    await expect(page.getByTestId("storage-label")).toContainText("Account storage");
+    await expect(page.getByTestId("storage-label")).toContainText("계정 공간");
     if (behavior === "read-error") {
-      await expect(page.getByTestId("save-status")).toContainText("unavailable");
-      await page.getByRole("button", { name: "Check saved state" }).click();
+      await expect(page.getByTestId("save-status")).toContainText("꾸미기 저장소에 연결할 수 없어요");
+      await page.getByRole("button", { name: "저장된 상태 확인" }).click();
     }
-    await (await editorButton(page, "Choose welcome pinwheel")).click();
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+    await (await editorButton(page, "환영 바람개비 고르기")).click();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
     if (behavior === "conflict") {
-      await expect(page.getByTestId("save-status")).toContainText("newer placement");
+      await expect(page.getByTestId("save-status")).toContainText("더 최근에 저장된 꾸미기");
       expect(account.puts).toBe(1);
-      await page.getByRole("button", { name: "Keep preview and use latest revision" }).click(); await confirm(page);
+      await page.getByRole("button", { name: "미리보기를 유지하고 최근 저장 상태 사용" }).click(); await confirm(page);
     }
-    await expect(page.getByTestId("save-status")).toHaveText("Saved to your account.");
+    await expect(page.getByTestId("save-status")).toHaveText("계정 공간에 저장했어요.");
     expect(account.puts).toBe(behavior === "conflict" ? 2 : 1);
     if (behavior === "unknown") expect(account.reads).toBe(2);
     expect(await readLocal(page)).toBeNull();
@@ -416,24 +417,24 @@ for (const [index, choice] of ["walk-10-minutes", "sleep-routine", "low-sodium-m
     const world = page.getByTestId("placeable-world");
     await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
     await expect(world).toHaveAttribute("data-choice", choice);
-    await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
-    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
-    await (await editorButton(page, "Gate right", true)).click();
-    await (await editorButton(page, "teal", true)).click(); await confirm(page);
+    await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
+    await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+    await (await editorButton(page, "입구 오른쪽", true)).click();
+    await (await editorButton(page, "청록", true)).click(); await confirm(page);
     const stored = await readLocal(page), writes = account.puts;
     await page.reload(); await expect(world).toHaveAttribute("data-choice", choice);
     await expect(world).toHaveAttribute("data-color", "teal");
     await expect(world).toHaveAttribute("data-socket", "gate-right");
-    await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+    await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
     await expect(page.getByTestId("classic-living-choice")).toHaveAttribute("data-choice", choice);
-    await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
-    await page.getByRole("link", { name: "Return to My Space" }).click();
+    await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
+    await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
     await expect(page.getByTestId("classic-living-choice")).toHaveCount(0);
     await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "teal");
     expect(await readLocal(page)).toEqual(stored); expect(account.puts).toBe(writes);
     expect(JSON.stringify(stored)).not.toContain("living_choice");
-    await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page);
-    await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+    await (await editorButton(page, "바람개비 치우기")).click(); await confirm(page);
+    await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
   });
 }
 
@@ -441,7 +442,7 @@ test("no active choice and forged hints preserve the default plaza on direct ent
   await classicTodaySession(page);
   await page.goto("/?screen=S02&return_space=3d-browser"); await expectClassicToday(page);
   await expect(page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Return to My Space" }).click();
+  await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
   const world = page.getByTestId("placeable-world");
   await expect(world).toHaveAttribute("data-choice", "none");
   await page.reload(); await expect(world).toHaveAttribute("data-choice", "none");
@@ -465,13 +466,13 @@ test("Living Choice with WebGL failure retains Classic controls and Today", asyn
   });
   await page.goto("/?screen=S02"); await expectClassicToday(page);
   await page.getByRole("link", { name: "이 선택을 내 공간에 가져가기" }).click();
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-living-choice")).toHaveAttribute("data-choice", "sleep-routine");
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
-  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
-  await page.getByRole("link", { name: "Return to My Space" }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+  await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
+  await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
 });
 
@@ -485,18 +486,18 @@ test("touch and reduced motion retain the still choice, walk pad and placement c
     const world = page.getByTestId("placeable-world");
     await expect(world).toHaveAttribute("data-choice", "low-sodium-meal");
     await expect(world).toHaveAttribute("data-reduced-motion", "true");
-    const pad = page.getByRole("button", { name: "Drag to walk" });
+    const pad = page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기" });
     await pad.tap(); await expect(world).toHaveAttribute("data-suspended", "false");
     const cdp = await context.newCDPSession(page), box = (await pad.boundingBox())!;
     const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: point.x + 15, y: point.y - 15 }] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-    await (await editorButton(page, "Choose welcome pinwheel")).tap();
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
-    await expect(page.getByTestId("save-status")).toContainText("Saved");
-    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).tap();
-    await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
+    await (await editorButton(page, "환영 바람개비 고르기")).tap();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).tap();
+    await expect(page.getByTestId("save-status")).toContainText("저장했어요");
+    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).tap();
+    await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
     await expect(world).toHaveAttribute("data-choice", "low-sodium-meal");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   } finally { await context.close(); }
@@ -517,16 +518,16 @@ for (const mode of ["browser", "account"] as const) {
   test(`${mode} confirmed 3D placement completes keyboard Today round trip without changing storage`, async ({ page }) => {
     const account = await classicTodaySession(page);
     await page.goto(`/?experience=e2&view=3d&storage=${mode}`);
-    await (await editorButton(page, "Choose welcome pinwheel")).click();
-    await (await editorButton(page, "teal", true)).click();
-    await (await editorButton(page, "Gate right", true)).click();
-    await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("aria-disabled", "true");
+    await (await editorButton(page, "환영 바람개비 고르기")).click();
+    await (await editorButton(page, "청록", true)).click();
+    await (await editorButton(page, "입구 오른쪽", true)).click();
+    await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
     await confirm(page);
     const local = await readLocal(page), writes = account.puts, reads = account.reads;
-    await page.getByRole("link", { name: "Classic Today" }).focus(); await page.keyboard.press("Enter");
+    await page.getByRole("link", { name: "오늘의 기록으로 가기" }).focus(); await page.keyboard.press("Enter");
     await expectClassicToday(page);
     await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
-    const back = page.getByRole("link", { name: "Return to My Space" });
+    const back = page.getByRole("link", { name: "내 공간으로 돌아가기" });
     await expect(back).toHaveAttribute("href", `?experience=e2&view=3d&storage=${mode}`);
     await back.focus(); await page.keyboard.press("Enter");
     const world = page.getByTestId("placeable-world");
@@ -535,13 +536,13 @@ for (const mode of ["browser", "account"] as const) {
     await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", mode);
     expect(await readLocal(page)).toEqual(local); expect(account.puts).toBe(writes);
     expect(account.reads).toBe(mode === "account" ? reads + 1 : 0);
-    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).click();
-    await expect(page.getByTestId("placeable-feedback")).toContainText("Your pinwheel answers");
-    await (await editorButton(page, "Plaza edge", true)).click();
-    await (await editorButton(page, "coral", true)).click(); await confirm(page);
+    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+    await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
+    await (await editorButton(page, "광장 가장자리", true)).click();
+    await (await editorButton(page, "코랄", true)).click(); await confirm(page);
     await expect(world).toHaveAttribute("data-socket", "plaza-edge");
     await expect(world).toHaveAttribute("data-color", "coral");
-    await (await editorButton(page, "Remove pinwheel")).click(); await confirm(page);
+    await (await editorButton(page, "바람개비 치우기")).click(); await confirm(page);
     await expect(world).toHaveAttribute("data-color", "unplaced");
   });
 }
@@ -549,7 +550,7 @@ for (const mode of ["browser", "account"] as const) {
 test("WebGL failure retains Classic fallback and its Today return path", async ({ page }) => {
   await classicTodaySession(page);
   await page.goto(browserRoute);
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   const local = await readLocal(page);
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -558,25 +559,25 @@ test("WebGL failure retains Classic fallback and its Today return path", async (
       return Reflect.apply(original, this, [type, ...args]);
     } as typeof original;
   });
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
-  await page.getByRole("link", { name: "Classic Today" }).click();
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
+  await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click();
   await expectClassicToday(page);
-  await page.getByRole("link", { name: "Return to My Space" }).click();
+  await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
   await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
   expect(await readLocal(page)).toEqual(local);
 });
 
 test("signed-out Today keeps a semantic return; an account return never falls back to browser", async ({ page }) => {
   await page.goto(browserRoute);
-  await page.getByRole("link", { name: "Classic Today" }).click();
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toBeVisible();
-  await page.getByRole("link", { name: "Return to My Space" }).click();
-  await expect(page.getByTestId("confirmed-placement")).toHaveText("Confirmed: Unplaced");
+  await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click();
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toBeVisible();
+  await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
   await page.goto("/?screen=S02&return_space=3d-account");
-  await page.getByRole("link", { name: "Return to My Space" }).click();
-  await expect(page.getByRole("status")).toContainText("Sign in to use account storage");
+  await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
+  await expect(page.getByRole("status")).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요");
   await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
   expect(await readLocal(page)).toBeNull();
 });
@@ -587,15 +588,15 @@ test.describe("touch return", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await classicTodaySession(page);
     await page.goto(browserRoute);
-    await (await editorButton(page, "Choose welcome pinwheel")).tap();
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
-    await expect(page.getByTestId("save-status")).toContainText("Saved");
+    await (await editorButton(page, "환영 바람개비 고르기")).tap();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).tap();
+    await expect(page.getByTestId("save-status")).toContainText("저장했어요");
     const local = await readLocal(page);
-    await page.getByRole("link", { name: "Classic Today" }).tap();
+    await page.getByRole("link", { name: "오늘의 기록으로 가기" }).tap();
     await expectClassicToday(page);
-    await page.getByRole("link", { name: "Return to My Space" }).tap();
-    await page.getByRole("button", { name: "Spin pinwheel", exact: true }).tap();
-    await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
+    await page.getByRole("link", { name: "내 공간으로 돌아가기" }).tap();
+    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).tap();
+    await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
     await expect(page.locator(".pinwheel-spin")).toHaveCSS("animation-name", "none");
     expect(await readLocal(page)).toEqual(local);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -607,12 +608,12 @@ test("Today return is absent while editing a record and survives the existing in
   await classicTodaySession(page);
   await page.goto("/?screen=S02&return_space=classic-browser");
   await expectClassicToday(page);
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toBeVisible();
   await page.locator('button[data-home-destination="S04"]').click();
   await expect(page.locator('[data-scene="S04"]')).toBeVisible();
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveCount(0);
   await page.getByRole("button", { name: "SK7 · 하루의 사실을 차분하게 · 오늘의 기록으로 이동", exact: true }).click();
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toBeVisible();
 });
 
 test("UNKNOWN cannot announce a breeze or hand off an unresolved write", async ({ page }) => {
@@ -623,14 +624,14 @@ test("UNKNOWN cannot announce a breeze or hand off an unresolved write", async (
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(emptySnapshot()) });
   });
   await page.goto("/?experience=e2&view=classic&storage=account");
-  await (await editorButton(page, "Choose welcome pinwheel")).click();
-  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unknown");
-  await expect(page.getByTestId("save-status")).not.toContainText("Saved");
-  await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByRole("button", { name: "Spin pinwheel", exact: true })).toBeDisabled();
-  await expect(page.getByTestId("placeable-feedback")).not.toContainText("answers");
-  await expect(page.getByRole("button", { name: "Check saved state" })).toBeEnabled();
+  await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("button", { name: "바람개비 돌리기", exact: true })).toBeDisabled();
+  await expect(page.getByTestId("placeable-feedback")).not.toContainText("바람개비가 돌아가요");
+  await expect(page.getByRole("button", { name: "저장된 상태 확인" })).toBeEnabled();
 });
 
 const keepsakeCases = [
@@ -641,16 +642,16 @@ const keepsakeCases = [
 for (const [choice, asset, label] of keepsakeCases) {
   test(`E4 ${asset}: keep migrates v1, restores without hint, coexists and removes`, async ({ page }) => {
     await page.goto(`${browserRoute}&living_choice=${choice}`);
-    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+    await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
     const v1 = await readLocal(page); expect(v1.schemaVersion).toBe("placeable.v1");
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).focus(); await page.keyboard.press("Enter");
     await expect(page.getByTestId("keepsake-preview")).toContainText(label); expect(await readLocal(page)).toEqual(v1);
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).focus(); await page.keyboard.press("Enter");
-    await expect(page.getByTestId("save-status")).toContainText("Saved");
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).focus(); await page.keyboard.press("Enter");
+    await expect(page.getByTestId("save-status")).toContainText("저장했어요");
     const stored = await readLocal(page);
     expect(stored).toMatchObject({ revision: 2, schemaVersion: "placeable.v2", selection: { pinwheel: v1.selection, keepsake: asset } });
     expect(JSON.stringify(stored)).not.toContain(choice);
-    await page.getByRole("link", { name: "Leave plaza" }).click(); await page.goto(browserRoute); await page.reload();
+    await page.getByRole("link", { name: "오늘의 기록", exact: true }).click(); await page.goto(browserRoute); await page.reload();
     await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", asset);
     await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText(label);
@@ -668,12 +669,12 @@ test("E4 replacement and WebGL failure retain keepsake with Classic removal", as
   await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "plaza-ribbon-v1");
   await (await editorButton(page, "이 문양으로 바꾸기")).click();
   await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "quiet-moon-v1"); await confirm(page);
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible(); const before = await readLocal(page);
   await canvas.evaluate((element) => (element as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("confirmed-keepsake")).toHaveText("고요한 달"); expect(await readLocal(page)).toEqual(before);
   await (await editorButton(page, "남긴 문양 제거")).click(); await confirm(page);
   expect((await readLocal(page)).selection.keepsake).toBeNull();
@@ -685,11 +686,11 @@ for (const behavior of ["normal", "conflict", "unknown"] as const) {
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page); const local = await readLocal(page);
     await page.goto("/?experience=e2&view=classic&storage=account&living_choice=sleep-routine");
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).click();
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
     if (behavior === "conflict") {
-      await expect(page.getByTestId("save-status")).toContainText("newer placement");
-      await page.getByRole("button", { name: "Keep preview and use latest revision" }).click(); await confirm(page);
-    } else await expect(page.getByTestId("save-status")).toContainText("Saved to your account");
+      await expect(page.getByTestId("save-status")).toContainText("더 최근에 저장된 꾸미기");
+      await page.getByRole("button", { name: "미리보기를 유지하고 최근 저장 상태 사용" }).click(); await confirm(page);
+    } else await expect(page.getByTestId("save-status")).toContainText("계정 공간에 저장했어요");
     await page.reload(); await expect(page.getByTestId("confirmed-keepsake")).toHaveText("고요한 달");
     expect(await readLocal(page)).toEqual(local); expect(account.puts).toBe(behavior === "conflict" ? 2 : 1);
   });
@@ -700,11 +701,11 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
   try {
     await page.goto(`${browserRoute}&living_choice=low-sodium-meal`);
     await (await editorButton(page, "이 문양을 내 공간에 남기기")).tap();
-    await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).tap();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText("정원의 잎");
-    await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
+    await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await (await editorButton(page, "남긴 문양 제거")).tap(); await page.getByRole("button", { name: "Confirm placement", exact: true }).tap();
+    await (await editorButton(page, "남긴 문양 제거")).tap(); await page.getByRole("button", { name: "배치 확정하기", exact: true }).tap();
     await expect(page.getByTestId("confirmed-keepsake")).toHaveText("아직 남긴 문양이 없어요.");
   } finally { await context.close(); }
 });
@@ -713,7 +714,7 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
 test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes zero storage writes", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto(companionRoute + "&living_choice=sleep-routine");
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
   const world = page.getByTestId("placeable-world");
   await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
@@ -732,7 +733,7 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   await light.focus(); await page.keyboard.press("Enter");
   await expect(world).toHaveAttribute("data-companion-pose", "greet");
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
-  await expect(page.getByTestId("audio-status")).toHaveText("Sound: muted");
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
   await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(world).toHaveAttribute("data-color", "coral");
   await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath("e6-twilight-desktop.png") });
@@ -743,9 +744,9 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   expect(await readLocal(page)).toEqual(before); expect(writes).toEqual([]);
   expect(await page.evaluate(() => (window as unknown as { e6Writes: number }).e6Writes)).toBe(0);
   await expect(page.getByTestId("save-status")).toHaveText(status!);
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-keepsake")).toBeVisible();
-  await page.getByRole("link", { name: "Enter 3D plaza" }).click();
+  await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   await expect(world).toHaveAttribute("data-lighting", "daylight");
   await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
   expect(await readLocal(page)).toEqual(before);
@@ -758,7 +759,7 @@ test("E6 mobile touch and live reduced motion retain the final hierarchy without
     await page.goto(companionRoute + "&living_choice=walk-10-minutes");
     const world = page.getByTestId("placeable-world");
     await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
-    await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+    await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
     const before = await readLocal(page);
     await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
     await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
@@ -793,28 +794,28 @@ test("E6 enabled audio plays one short motif per activation; muted and unavailab
   const day = page.getByRole("button", { name: "낮의 광장으로 돌아가기" });
   await light.click(); await day.click();
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(0);
-  await (await editorButton(page, "Enable sound")).click();
-  await expect(page.getByTestId("audio-status")).toHaveText("Sound: ready");
+  await (await editorButton(page, "소리 켜기")).click();
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 켜짐");
   await light.click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
-  await (await editorButton(page, "Mute sound")).click(); await day.click(); await light.click();
+  await (await editorButton(page, "소리 끄기")).click(); await day.click(); await light.click();
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(3);
   await page.reload();
   await page.evaluate(() => {
     Object.defineProperty(window, "AudioContext", { configurable: true, value: undefined });
     Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
   });
-  await (await editorButton(page, "Enable sound")).click();
-  await expect(page.getByTestId("audio-status")).toContainText("unavailable"); await light.click();
+  await (await editorButton(page, "소리 켜기")).click();
+  await expect(page.getByTestId("audio-status")).toContainText("사용할 수 없음"); await light.click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
 });
 
 for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E6 account ${behavior} preserves revisions and truthful save status`, async ({ page }) => {
   const account = await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=3d&storage=account");
-  await (await editorButton(page, "Choose welcome pinwheel")).click();
-  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
   const writes = account.puts, reads = account.reads, revision = account.revision, browser = await readLocal(page);
   const status = await page.getByTestId("save-status").textContent();
@@ -825,7 +826,7 @@ for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E6 acco
   expect(account.revision).toBe(revision);
   await expect(page.getByTestId("save-status")).toHaveText(status!);
   if (behavior !== "normal") {
-    await expect(page.getByTestId("save-status")).not.toContainText("Saved");
+    await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
     await expect(page.getByTestId("draft-placement")).toBeVisible();
   }
 });
@@ -837,25 +838,25 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
   await expect(world).toHaveAttribute("data-companion-pose", "unavailable");
   await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
-  await expect(page.getByRole("link", { name: /Classic Today/ })).toHaveAttribute("aria-disabled", "false");
+  await expect(page.getByRole("link", { name: /오늘의 기록으로 가기/ })).toHaveAttribute("aria-disabled", "false");
   await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
   await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
   await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => {
     const gl = canvas.getContext("webgl2")!; gl.getExtension("WEBGL_lose_context")!.loseContext();
   });
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
-  await expect(page.getByTestId("twilight-status")).toContainText("Classic plaza");
-  await page.getByRole("button", { name: "Retry 3D" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await expect(page.getByTestId("twilight-status")).toContainText("간단한 광장");
+  await page.getByRole("button", { name: "3D 다시 열기" }).click();
   await expect(world).toHaveAttribute("data-lighting", "daylight");
   await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-pinwheel")).toBeVisible();
 });
 
 // E7 inherits nightly/manual core discovery through this existing spec; no new CI gate.
-const enterGarden = (page: Page) => page.getByRole("button", { name: "Enter Garden Nook" });
-const returnGarden = (page: Page) => page.getByRole("button", { name: "Return to My Space" });
+const enterGarden = (page: Page) => page.getByRole("button", { name: "정원 쉼터로 가기" });
+const returnGarden = (page: Page) => page.getByRole("button", { name: "광장으로 돌아가기" });
 const gardenRest = (page: Page) => page.getByRole("button", { name: "여기서 잠깐 쉬기" });
 async function gardenCompanionPoint(page: Page) {
   const canvas = page.getByTestId("garden-canvas"); await canvas.scrollIntoViewIfNeeded();
@@ -872,7 +873,7 @@ async function expectImmersiveGarden(page: Page) {
   })).toBe(true);
   expect(await canvas.evaluate((element: HTMLCanvasElement) => element.width * element.height)).toBeLessThanOrEqual(2_000_000);
   expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
-  for (const control of [returnGarden(page), page.getByRole("link", { name: "Classic Today" }),
+  for (const control of [returnGarden(page), page.getByRole("link", { name: "오늘의 기록으로 가기" }),
     page.getByRole("button", { name: "정자 앞으로 이동하기" }), gardenRest(page)]) {
     await expect(control).toBeInViewport();
   }
@@ -884,7 +885,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   page.on("pageerror", (error) => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "rabbit"));
   await page.goto(companionRoute + "&living_choice=sleep-routine");
-  await (await editorButton(page, "Choose welcome pinwheel")).click(); await confirm(page);
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
   const before = await readLocal(page);
   await page.evaluate(() => {
@@ -893,7 +894,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   });
   page.on("request", (request) => { if (!["GET", "HEAD"].includes(request.method())) requests.push(request.url()); });
   await enterGarden(page).focus(); await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "Garden Nook", exact: true })).toBeFocused();
+  await expect(page.getByRole("heading", { name: /정원 쉼터/ })).toBeFocused();
   await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
   const garden = page.getByTestId("garden-nook"), canvas = page.getByTestId("garden-canvas");
   await expect(garden).toHaveAttribute("data-companion", "rabbit");
@@ -926,7 +927,7 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
     await page.goto(companionRoute); await enterGarden(page).tap();
     const garden = page.getByTestId("garden-nook");
     await expect(garden).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
-    const pad = page.getByRole("button", { name: "Drag to walk in the garden" });
+    const pad = page.getByRole("button", { name: "정원에서 드래그하거나 방향키로 걷기" });
     const rect = (await pad.boundingBox())!;
     const session = await context.newCDPSession(page);
     await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }] });
@@ -953,9 +954,9 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
 for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E7 account ${behavior} retains revision, browser separation and pending guard`, async ({ page }) => {
   const account = await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=classic&storage=account&living_choice=walk-10-minutes");
-  await (await editorButton(page, "Choose welcome pinwheel")).click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
   await expect(enterGarden(page)).toBeDisabled();
-  await page.getByRole("button", { name: "Confirm placement", exact: true }).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
   if (behavior === "normal") { await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page); }
   const writes = account.puts, reads = account.reads, revision = account.revision, before = await readLocal(page);
@@ -978,9 +979,9 @@ test("E7 companion failure and real context loss isolate the garden, retry and r
   await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click();
   await expect(garden).toHaveAttribute("data-at-pavilion", "true");
   await canvas.evaluate((canvas: HTMLCanvasElement) => canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
-  await expect(page.getByRole("alert")).toContainText("Garden Nook의 3D 공간"); await expect(canvas).toHaveCount(0);
-  await expect(returnGarden(page)).toBeEnabled(); await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("href", "?screen=S02&return_space=3d-browser");
-  await page.getByRole("button", { name: "Retry Garden Nook" }).click(); await expect(canvas).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요"); await expect(canvas).toHaveCount(0);
+  await expect(returnGarden(page)).toBeEnabled(); await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=3d-browser");
+  await page.getByRole("button", { name: "정원 다시 열기" }).click(); await expect(canvas).toBeVisible();
   await expect(garden).toHaveAttribute("data-at-pavilion", "false");
   await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
@@ -1018,9 +1019,9 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
   await page.goto(browserRoute);
   await expect(enterGarden(page)).toBeVisible(); expect(chunks).toEqual([]);
   await page.route("**/GardenNook-*.js", (route) => route.abort("failed"));
-  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("Garden Nook을 열 수 없어요");
+  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).toBeNull();
-  await expect(page.getByRole("link", { name: "Classic Today" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser");
   await returnGarden(page).click(); await expect(page.getByTestId("classic-plaza")).toBeVisible();
   await page.unroute("**/GardenNook-*.js"); await page.reload();
   await page.evaluate(() => {
@@ -1029,7 +1030,7 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
       return kind === "webgl2" ? null : original.call(this, kind, ...args);
     } as typeof original;
   });
-  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("Garden Nook의 3D 공간");
+  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
   // Outside this optional visit, the existing one-shot stale-bundle recovery still owns errors.
@@ -1090,22 +1091,22 @@ for (const mobile of [false, true]) test(`E8 ${mobile ? "mobile touch" : "deskto
     await returnGarden(page).click();
     await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
     await page.screenshot({ path: test.info().outputPath(`e8-my-space-${mobile ? "mobile" : "desktop"}.png`) });
-    const today = page.getByRole("link", { name: "Classic Today" });
+    const today = page.getByRole("link", { name: "오늘의 기록으로 가기" });
     if (mobile) await today.tap(); else { await today.focus(); await page.keyboard.press("Enter"); }
     await expectClassicToday(page);
-    await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
+    await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
     await page.goBack(); await expect(world).toHaveAttribute("data-color", "teal");
     await page.goForward(); await expectClassicToday(page);
-    await page.getByRole("link", { name: "Return to My Space" }).click();
+    await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
     await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
     expect(account.puts).toBe(0); expect(account.revision).toBe(5);
     expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-state-must-stay-separate");
     expect(await page.evaluate(() => localStorage.getItem("sk7-companion-species"))).toBe("rabbit");
     expect(await page.evaluate(() => (window as unknown as { e8CosmeticWrites: number }).e8CosmeticWrites)).toBe(0);
     if (mobile) {
-      await page.getByRole("link", { name: "Classic Today" }).tap(); await expectClassicToday(page);
+      await page.getByRole("link", { name: "오늘의 기록으로 가기" }).tap(); await expectClassicToday(page);
       await page.setViewportSize({ width: 320, height: 640 });
-      await page.getByRole("link", { name: "Return to My Space" }).scrollIntoViewIfNeeded();
+      await page.getByRole("link", { name: "내 공간으로 돌아가기" }).scrollIntoViewIfNeeded();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.screenshot({ path: test.info().outputPath("e8-today-320.png") });
     }
@@ -1126,15 +1127,15 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await page.goto("/?screen=S02"); await expectClassicToday(page);
   await page.route("https://e2e.invalid/auth/v1/user", route => route.fulfill({ status: 503, headers: cors, contentType: "application/json", body: '{"message":"unavailable"}' }));
   await page.getByRole("link", { name: "내 공간으로 가기" }).click();
-  await expect(page.getByRole("status")).toContainText("Account storage is unavailable");
-  await expect(page.getByRole("button", { name: "Retry account session" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Return to sign in" })).toHaveAttribute("href", "/?screen=S02");
+  await expect(page.getByRole("status")).toContainText("계정 공간을 불러올 수 없어요");
+  await expect(page.getByRole("button", { name: "계정 공간 다시 확인" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 돌아가기" })).toHaveAttribute("href", "/?screen=S02");
   expect(account.reads).toBe(0); expect(account.puts).toBe(0);
   expect(await page.evaluate(() => (window as unknown as { e8BrowserReads: number }).e8BrowserReads)).toBe(0);
-  await page.getByRole("link", { name: "Choose browser-only storage" }).click();
+  await page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
-  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+  await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
 });
 
 test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
@@ -1151,12 +1152,12 @@ test("E8 live account session loss removes the space without browser fallback", 
   await expect(other.locator('[data-scene="S01"]')).toBeVisible();
   await other.close();
   await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
-  await expect(page.getByRole("status")).toContainText("Sign in to use account storage");
-  await expect(page.getByRole("link", { name: "Choose browser-only storage" })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요");
+  await expect(page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" })).toBeVisible();
   expect(account.puts).toBe(0); expect(await readLocal(page)).toBeNull();
 });
 
-test("E8 WebGL failure retains account Classic plaza and Classic Today exits", async ({ page }) => {
+test("E8 WebGL failure retains account 간단한 광장으로 보기 and 오늘의 기록으로 가기 exits", async ({ page }) => {
   const account = await classicTodaySession(page);
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -1166,13 +1167,13 @@ test("E8 WebGL failure retains account Classic plaza and Classic Today exits", a
   });
   await page.goto("/?screen=S02"); await expectClassicToday(page);
   await page.getByRole("link", { name: "내 공간으로 가기" }).click();
-  await expect(page.getByRole("alert")).toContainText("3D plaza could not start");
-  await expect(page.getByRole("link", { name: "Classic Today" })).toBeVisible();
-  await page.getByRole("link", { name: "Classic plaza", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toBeVisible();
+  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-plaza")).toBeVisible();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
-  await page.getByRole("link", { name: "Classic Today" }).click(); await expectClassicToday(page);
-  await expect(page.getByRole("link", { name: "Return to My Space" })).toHaveAttribute("href", "?experience=e2&view=classic&storage=account");
+  await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=classic&storage=account");
   expect(account.puts).toBe(0);
 });
 
@@ -1182,7 +1183,7 @@ test("E8 guest and signed-out journeys gain no account entry or placeable reques
   for (const url of ["/?screen=S02", "/?guest=1"]) {
     await page.goto(url);
     await expect(page.locator('[data-scene="S01"], [data-scene="S02"]')).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "내 공간 · Living City" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "SK7 홈 전환" })).toHaveCount(0);
   }
   expect(requests).toEqual([]);
 });

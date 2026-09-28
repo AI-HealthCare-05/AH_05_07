@@ -287,7 +287,7 @@ for (const mobile of [false, true]) test(`E9 ${mobile ? 'mobile touch' : 'deskto
   try {
     const account = await startingHomeSession(page, null);
     await page.goto('/?screen=S14');
-    const classic = page.getByRole('radio', { name: /Classic Today/ }), space = page.getByRole('radio', { name: /My Space/ });
+    const classic = page.getByRole('radio', { name: /오늘의 기록/ }), space = page.getByRole('radio', { name: /My Space/ });
     await expect(classic).toBeChecked();
     if (mobile) await space.tap(); else { await classic.focus(); await page.keyboard.press('ArrowRight'); }
     await expect(space).toBeChecked();
@@ -311,7 +311,7 @@ for (const mobile of [false, true]) test(`E9 ${mobile ? 'mobile touch' : 'deskto
     expect(account.windows).toBe(windows);
     expect(await page.evaluate(() => sessionStorage.getItem('e9-saw-today'))).toBeNull();
     await page.screenshot({ path: test.info().outputPath(`e9-home-${mobile ? 'mobile' : 'desktop'}.png`) });
-    await page.getByRole('link', { name: 'Classic Today', exact: true }).click();
+    await page.getByRole('link', { name: '오늘의 기록', exact: true }).click();
     await expect(page.locator('[data-scene="S02"]')).toBeVisible();
     await page.goBack(); await expect(world).toBeVisible();
     await page.goForward(); await expect(page.locator('[data-scene="S02"]')).toBeVisible();
@@ -375,14 +375,14 @@ test('E9 failed account verification stays truthful; explicit recovery cannot lo
   const account = await startingHomeSession(page);
   await page.route('https://auth.ui-candidate.invalid/auth/v1/user', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
   await page.goto('/');
-  await expect(page.getByRole('status')).toContainText('Account storage is unavailable');
-  await expect(page.getByRole('button', { name: 'Retry account session' })).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('계정 공간을 불러올 수 없어요');
+  await expect(page.getByRole('button', { name: '계정 공간 다시 확인' })).toBeVisible();
   expect(account.reads).toBe(0); expect(account.writes).toBe(0);
-  await page.getByRole('link', { name: 'Return to sign in' }).click();
+  await page.getByRole('link', { name: '오늘의 기록으로 돌아가기' }).click();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page).toHaveURL(/screen=S02/);
-  await page.goto('/'); await expect(page.getByRole('status')).toContainText('Account storage is unavailable');
-  await page.getByRole('link', { name: 'Choose browser-only storage' }).click();
+  await page.goto('/'); await expect(page.getByRole('status')).toContainText('계정 공간을 불러올 수 없어요');
+  await page.getByRole('link', { name: '이 브라우저의 공간으로 계속하기' }).click();
   await expect(page.getByTestId('placeable-experience')).toHaveAttribute('data-mode', 'browser');
   expect(account.reads).toBe(0); expect(account.writes).toBe(0);
 });
@@ -394,7 +394,7 @@ test('E9 blocked preference writes remain Classic and report failure', async ({ 
     Storage.prototype.setItem = function (key, value) { if (key === 'sk7-starting-home') throw new Error('blocked'); original.call(this, key, value); };
   });
   await page.goto('/?screen=S14'); await page.getByRole('radio', { name: /My Space/ }).click();
-  await expect(page.getByRole('radio', { name: /Classic Today/ })).toBeChecked();
+  await expect(page.getByRole('radio', { name: /오늘의 기록/ })).toBeChecked();
   await expect(page.getByRole('status')).toContainText('저장하지 못했어요');
   await page.goto('/'); await expect(page.locator('[data-scene="S02"]')).toBeVisible();
 });
@@ -407,9 +407,9 @@ test('E9 unavailable account read requires retry without copying browser state',
     contentType: 'application/json', body: JSON.stringify({ detail: { code: 'read_unavailable' } }),
   }));
   await page.goto('/');
-  await expect(page.getByTestId('save-status')).toContainText('unavailable');
+  await expect(page.getByTestId('save-status')).toContainText('꾸미기 저장소에 연결할 수 없어요');
   await expect(page.getByTestId('placeable-experience')).toHaveAttribute('data-mode', 'account');
-  await expect(page.getByRole('button', { name: 'Check saved state' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '저장된 상태 확인' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('sk7:placeable:v1'))).toBe('separate-browser-sentinel');
   expect(account.writes).toBe(0);
 });
@@ -424,8 +424,8 @@ test('E9 live session loss removes automatic account space and returns to sign-i
     channel.postMessage({ event: 'SIGNED_OUT', session: null }); channel.close();
   });
   await expect(page.getByTestId('placeable-world')).toHaveCount(0);
-  await expect(page.getByRole('status')).toContainText('Sign in to use account storage');
-  await page.getByRole('link', { name: 'Return to sign in' }).click();
+  await expect(page.getByRole('status')).toContainText('계정 공간을 이용하려면 다시 로그인해 주세요');
+  await page.getByRole('link', { name: '오늘의 기록으로 돌아가기' }).click();
   await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
   expect(account.writes).toBe(0);
 });

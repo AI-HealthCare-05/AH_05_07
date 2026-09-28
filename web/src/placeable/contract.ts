@@ -10,9 +10,9 @@ export const COLORS = { coral: "#ee765f", teal: "#238b88", sunflower: "#dfb641" 
 // Authored in E1 world metres. Clear of spawn, gate approach, weekday markers,
 // paths and the world boundary. Cosmetics never add movement colliders.
 export const SOCKETS = [
-  { id: "gate-left", label: "Gate left", x: -1.55, z: -1.6 },
-  { id: "gate-right", label: "Gate right", x: 1.55, z: -1.6 },
-  { id: "plaza-edge", label: "Plaza edge", x: 1.8, z: 1.25 },
+  { id: "gate-left", label: "입구 왼쪽", x: -1.55, z: -1.6 },
+  { id: "gate-right", label: "입구 오른쪽", x: 1.55, z: -1.6 },
+  { id: "plaza-edge", label: "광장 가장자리", x: 1.8, z: 1.25 },
 ] as const;
 export type Selection = Readonly<{
   assetId: typeof ASSET;

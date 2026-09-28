@@ -15,27 +15,28 @@ class GardenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <p role="alert">Garden Nook을 열 수 없어요. 위의 My Space 복귀 또는 Classic Today를 이용해 주세요.</p> : this.props.children;
+    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>정원 쉼터를 열지 못했어요</h2><p>꾸미기 상태는 그대로예요. 위의 광장 복귀 또는 오늘의 기록 이동을 이용해 주세요.</p></div> : this.props.children;
   }
 }
 class WorldBoundary extends Component<{ children: ReactNode; classicHref: string }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <p role="alert">The 3D plaza could not load. <a href={this.props.classicHref}>Open Classic plaza</a> to continue with your saved placement.</p>
+    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p></div>
       : this.props.children;
   }
 }
 const phaseCopy = {
-  loading: "Reading your saved placement…",
-  ready: "Choose a color and a spot, then preview before confirming.",
-  saving: "Confirming your placement… Please keep this page open.",
-  unknown: "Save status is unknown. Your preview is kept. Check the saved state before making another change.",
-  conflict: "A newer placement was found. Your preview is kept. Review the confirmed placement before trying again.",
-  unavailable: "Storage is unavailable. Your preview is kept. Check the connection or browser storage, then retry the read.",
-  unsupported: "This saved placement uses a version this page cannot edit. It is preserved unchanged.",
-  session: "This account session is no longer available. Sign in again to read the account placement. Your preview has not been copied to browser storage.",
+  loading: "저장된 꾸미기를 불러오고 있어요…",
+  ready: "색과 자리를 고른 뒤 미리보기를 확인해 주세요.",
+  saving: "꾸미기를 저장하고 있어요. 잠시 이 화면을 유지해 주세요.",
+  unknown: "저장 결과를 확인할 수 없어요. 미리보기는 유지했어요. 다른 변경 전에 저장된 상태를 확인해 주세요.",
+  conflict: "더 최근에 저장된 꾸미기가 있어요. 미리보기는 유지했어요. 저장된 상태를 확인한 뒤 다시 시도해 주세요.",
+  unavailable: "꾸미기 저장소에 연결할 수 없어요. 미리보기는 유지했어요. 연결이나 브라우저 저장 설정을 확인해 주세요.",
+  unsupported: "이 페이지에서 편집할 수 없는 버전의 꾸미기예요. 저장된 상태를 변경하지 않고 보존해요.",
+  session: "계정 연결이 끝났어요. 계정 공간을 다시 확인하려면 로그인해 주세요. 미리보기는 브라우저 공간으로 복사하지 않았어요.",
 } as const;
+const colorLabel: Record<keyof typeof COLORS, string> = { coral: "코랄", teal: "청록", sunflower: "해바라기" };
 
 function Pinwheel({ selection, pulse }: { selection: Selection; pulse: number }) {
   return <span className="pinwheel" style={{ "--pinwheel-color": COLORS[selection.color] } as CSSProperties} aria-hidden="true">
@@ -85,13 +86,13 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
       <span className="placeable-socket-ring" />
       {selection?.socketId === socket.id && <button className="placeable-object" type="button"
         data-testid="classic-pinwheel" data-color={selection.color} data-socket={socket.id}
-        aria-label={preview ? `Preview: ${selection.color} pinwheel at ${socket.label}` : `Spin ${selection.color} pinwheel at ${socket.label}`}
+        aria-label={preview ? `미리보기: ${colorLabel[selection.color]} 바람개비 · ${socket.label}` : `${colorLabel[selection.color]} 바람개비 돌리기 · ${socket.label}`}
         disabled={!canInteract} onClick={interact}>
         <Pinwheel selection={selection} pulse={canInteract ? pulse : 0} />
       </button>}
       <span className="placeable-map-label">{socket.label}</span>
     </div>)}
-    <span className="placeable-map-caption">{preview ? "Preview · not saved" : selection || keepsake ? "Confirmed placement" : "Unplaced"}</span>
+    <span className="placeable-map-caption">{preview ? "저장 전 미리보기" : selection || keepsake ? "저장된 꾸미기" : "꾸미기 전"}</span>
   </div>;
 }
 
@@ -112,6 +113,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const alive = useRef(true);
   const chooseRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const handoffRef = useRef<HTMLDivElement>(null);
   // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
   // No URL destination, visit flag, storage write or account identity enters the scene.
   const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
@@ -186,7 +188,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (world) editRef.current?.focus({ preventScroll: true }); else chooseRef.current?.focus();
   }
   const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status">
-    {state.saved ? adapter.mode === "browser" ? "Saved in this browser only." : "Saved to your account." : phaseCopy[state.phase]}
+    {state.saved ? adapter.mode === "browser" ? "이 브라우저에 저장했어요." : "계정 공간에 저장했어요." : phaseCopy[state.phase]}
   </p>;
   async function confirm() {
     await controller.confirm();
@@ -194,11 +196,11 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }
   if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
     <header className="placeable-header">
-      <div><p className="placeable-eyebrow">Living City</p>
-        <h1 ref={gardenHeading} tabIndex={-1}>Garden Nook</h1></div>
-      <nav aria-label="Garden navigation">
-        <button onClick={() => setSpace("plaza")}>Return to My Space</button>
-        <a href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}>Classic Today ↗</a>
+      <div className="placeable-home-title"><p className="placeable-eyebrow">SK7 · 내 공간 · My Space</p>
+        <h1 ref={gardenHeading} tabIndex={-1}>정원 쉼터 <span>Garden Nook</span></h1></div>
+      <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
+        <button onClick={() => setSpace("plaza")}>광장으로 돌아가기</button>
+        <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}>오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
       </nav>
     </header>
     <div className="garden-stage"><GardenBoundary><Suspense fallback={<p role="status">정원을 열고 있어요… 위의 복귀 경로는 바로 이용할 수 있어요.</p>}>
@@ -210,99 +212,103 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"} data-editing={editing}
     onKeyDown={(event) => { if (world && editing && event.key === "Escape") { event.preventDefault(); cancelEditing(); } }}>
     <header className="placeable-header">
-      <div><p className="placeable-eyebrow">SK7 · Living City</p><h1>My Space</h1>
-        <p>A place to pause. A little color that is yours.</p></div>
-      <nav aria-label="Plaza navigation">
+      <div className="placeable-home-title"><p className="placeable-eyebrow">SK7 · 두 개의 홈</p><h1>내 공간 <span>My Space</span></h1>
+        <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p></div>
+      <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
+        <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
         {world && <button ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
           onClick={() => { setEditing(true); editHeading.current?.focus(); }}>꾸미기</button>}
-        <a href={route(world ? "classic" : "3d")}>{world ? "Classic plaza" : "Enter 3D plaza"}</a>
-        <a href="/">Leave plaza</a>
+        <a href={route(world ? "classic" : "3d")}>{world ? "간단한 광장으로 보기" : "3D 광장으로 보기"}</a>
+        <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+          aria-disabled={preview || Boolean(state.pending)}
+          onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
+          오늘의 기록 <span aria-hidden="true">→</span></a>
       </nav>
     </header>
     <div className="placeable-layout">
-      <section className="placeable-stage" aria-label="Placement preview" data-breeze={feedback && canInteract}>
-        <div className="placeable-destination"><div><p className="placeable-eyebrow">Through the arch</p>
-          <h2>Today Gate</h2><p>Your day is just beyond the plaza.</p></div>
+      <section className="placeable-stage" aria-label="내 공간 미리보기" data-breeze={feedback && canInteract}>
+        <div className="placeable-destination"><div><p className="placeable-eyebrow">다른 홈 · 건강 기록</p>
+          <h2>오늘의 기록</h2><p>혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
           <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-disabled={preview || Boolean(state.pending)}
-            onClick={(event) => { if (preview || state.pending) { event.preventDefault(); statusRef.current?.focus(); } }}>
-            Classic Today <span aria-hidden="true">↗</span></a>
+            onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
+            오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
         </div>
-        {(preview || state.pending) && <p className="placeable-handoff-note">Confirm or cancel your preview before visiting Today. If the save is uncertain, check its saved state first.</p>}
-        {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">Loading 3D plaza… Classic plaza is available above.</p>}>
+        {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
+        {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}
         {!keepsake && choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
-        <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "A plaza breeze. Your pinwheel answers." : "A little breeze, a place of your own."}</p>
+        <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "광장에 바람이 불어 바람개비가 돌아가요." : "잠시 쉬어가는 나만의 광장이에요."}</p>
         <div className="placeable-garden-path">
-          <div><p className="placeable-eyebrow">Garden Path</p><h2>정원으로 이어지는 작은 길</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
+          <div><p className="placeable-eyebrow">내 공간 안의 쉼터</p><h2>정원 쉼터 · Garden Nook</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
           <button ref={gardenEntry} type="button" disabled={preview || Boolean(state.pending)}
-            onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>Enter Garden Nook →</button>
+            onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>정원 쉼터로 가기 →</button>
           {(preview || state.pending) && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
         </div>
       </section>
       {world && <div className="plaza-save-summary" data-quiet={state.phase === "ready" && (preview || !state.saved)}>
         {saveStatus}
-        {preview && <p>Preview · not saved</p>}
+        {preview && <p>저장 전 미리보기</p>}
       </div>}
-      <section id="plaza-editor" className="placeable-controls" aria-label="My Space controls" hidden={world && !editing}>
-        {world && <div className="plaza-editor-heading"><div><p className="placeable-eyebrow">Make it yours</p>
+      <section id="plaza-editor" className="placeable-controls" aria-label="내 공간 꾸미기" hidden={world && !editing}>
+        {world && <div className="plaza-editor-heading"><div><p className="placeable-eyebrow">나만의 공간</p>
           <h2 ref={editHeading} tabIndex={-1}>내 공간 꾸미기</h2></div>
           <button type="button" disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>
             {preview ? "취소하고 닫기" : "닫기"}</button></div>}
         {world && <p className="plaza-editor-state" role="status">{state.saved ? "확인된 배치를 보여 드려요." : phaseCopy[state.phase]}</p>}
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"
-          ? "Browser-only · saved on this browser and site, not your account."
-          : "Account storage · follows your signed-in account. Browser placements are separate."}</p>
+          ? "이 브라우저에만 저장 · 계정 공간과 분리돼요."
+          : "계정 공간에 저장 · 이 브라우저의 공간과 분리돼요."}</p>
         {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}>
-          {adapter.mode === "browser" ? "Use account storage" : "Use browser-only storage"}</a>}
+          {adapter.mode === "browser" ? "계정 공간 사용하기" : "이 브라우저의 공간 사용하기"}</a>}
         {!world && saveStatus}
-        {state.phase === "conflict" && <button onClick={() => controller.reviewLatest()}>Keep preview and use latest revision</button>}
-        {["unknown", "unavailable", "unsupported"].includes(state.phase) && <button onClick={() => void controller.load()}>Check saved state</button>}
-        {state.phase === "unknown" && state.pending && <button onClick={() => void controller.retryPending()}>Retry same save</button>}
-        {state.phase === "session" && <a href="/">Return to sign in</a>}
+        {state.phase === "conflict" && <button onClick={() => controller.reviewLatest()}>미리보기를 유지하고 최근 저장 상태 사용</button>}
+        {["unknown", "unavailable", "unsupported"].includes(state.phase) && <button onClick={() => void controller.load()}>저장된 상태 확인</button>}
+        {state.phase === "unknown" && state.pending && <button onClick={() => void controller.retryPending()}>같은 저장 다시 시도</button>}
+        {state.phase === "session" && <a href="/?screen=S02">오늘의 기록으로 돌아가기</a>}
         {preview && <div className="placeable-draft" data-testid="draft-placement">
           {state.keepsakeDraft !== undefined && <p data-testid="keepsake-preview">{keepsake ? `${keepsakeMedia[keepsake].label} · 저장 전 미리보기` : "문양 제거 · 저장 전 미리보기"}</p>}
-          {state.draft !== undefined && <p>{selection ? `Preview: ${selection.color} · ${SOCKETS.find((s) => s.id === selection.socketId)?.label}` : "Preview: remove pinwheel (unplaced)"} · not saved</p>}
-          <div className="placeable-options"><button disabled={!canEdit} onClick={() => void confirm()}>Confirm placement</button>
-            <button disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>Cancel preview</button></div>
+          {state.draft !== undefined && <p>{selection ? `미리보기: ${colorLabel[selection.color]} · ${SOCKETS.find((s) => s.id === selection.socketId)?.label}` : "미리보기: 바람개비 치우기"} · 저장 전</p>}
+          <div className="placeable-options"><button disabled={!canEdit} onClick={() => void confirm()}>배치 확정하기</button>
+            <button disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>미리보기 취소</button></div>
         </div>}
-        <h2>Welcome pinwheel</h2>
-        <p data-testid="confirmed-placement">Confirmed: {state.confirmed
-          ? state.phase === "unsupported" ? "Preserved newer placement" : confirmed ? `${confirmed.color} · ${SOCKETS.find((s) => s.id === confirmed.socketId)?.label}` : "Unplaced"
-          : "Not read yet"}</p>
-        <button ref={chooseRef} disabled={!canEdit} onClick={() => change({})}>Choose welcome pinwheel</button>
-        <fieldset disabled={!canEdit}><legend>Color</legend><div className="placeable-options">
+        <h2>환영 바람개비</h2>
+        <p data-testid="confirmed-placement">저장 상태: {state.confirmed
+          ? state.phase === "unsupported" ? "새 형식 그대로 보존" : confirmed ? `${colorLabel[confirmed.color]} · ${SOCKETS.find((s) => s.id === confirmed.socketId)?.label}` : "바람개비 없음"
+          : "아직 확인 전"}</p>
+        <button ref={chooseRef} disabled={!canEdit} onClick={() => change({})}>환영 바람개비 고르기</button>
+        <fieldset disabled={!canEdit}><legend>색</legend><div className="placeable-options">
           {(Object.keys(COLORS) as (keyof typeof COLORS)[]).map((color) => <button type="button" key={color}
             aria-pressed={selection?.color === color} onClick={() => change({ color })}>
-            <span className="placeable-swatch" style={{ background: COLORS[color] }} />{color}
+            <span className="placeable-swatch" style={{ background: COLORS[color] }} />{colorLabel[color]}
           </button>)}
         </div></fieldset>
-        <fieldset disabled={!canEdit}><legend>Place in the plaza</legend><div className="placeable-options">
+        <fieldset disabled={!canEdit}><legend>광장에 놓을 자리</legend><div className="placeable-options">
           {SOCKETS.map((socket) => <button type="button" key={socket.id} aria-pressed={selection?.socketId === socket.id}
             onClick={() => change({ socketId: socket.id })}>{socket.label}</button>)}
         </div></fieldset>
-        <div className="placeable-options">{!world && <button disabled={!canInteract} onClick={interact}>Spin pinwheel</button>}
-          <button disabled={!canEdit || !confirmed} onClick={() => controller.preview(null)}>Remove pinwheel</button></div>
+        <div className="placeable-options">{!world && <button disabled={!canInteract} onClick={interact}>바람개비 돌리기</button>}
+          <button disabled={!canEdit || !confirmed} onClick={() => controller.preview(null)}>바람개비 치우기</button></div>
         <section className="placeable-keepsake" aria-labelledby="keepsake-title">
-          <p className="placeable-eyebrow">My first keepsake</p><h2 id="keepsake-title">내 공간에 남긴 문양</h2>
+          <p className="placeable-eyebrow">첫 번째 기념 문양</p><h2 id="keepsake-title">내 공간에 남긴 문양</h2>
           <p data-testid="confirmed-keepsake">{state.phase === "unsupported" ? "알 수 없는 저장 형식을 그대로 보존하고 있어요."
             : !state.confirmed ? "저장된 문양을 읽고 있어요…" : layout.keepsake ? keepsakeMedia[layout.keepsake].label : "아직 남긴 문양이 없어요."}</p>
           <p className="placeable-choice-note">바람개비 곁에 두는 작은 장식이에요. 활동 기록이나 달성 표시가 아니에요.</p>
           {candidate && <><p>이번 방문의 문양 · {keepsakeMedia[candidate].label}</p>
             <button disabled={!canEdit || keepsake === candidate} onClick={() => controller.previewKeepsake(candidate)}>
               {layout.keepsake ? "이 문양으로 바꾸기" : "이 문양을 내 공간에 남기기"}</button></>}
-          {!candidate && <p className="placeable-choice-note">Today에서 Living Choice 문양을 가져올 수 있어요.</p>}
+          {!candidate && <p className="placeable-choice-note">오늘의 기록에서 Living Choice 문양을 가져올 수 있어요.</p>}
           <button disabled={!canEdit || !layout.keepsake} onClick={() => controller.previewKeepsake(null)}>남긴 문양 제거</button>
         </section>
         <button onClick={() => void toggleAudio()} aria-pressed={audioStatus === "ready"}>
-          {audioStatus === "ready" ? "Mute sound" : "Enable sound"}</button>
-        <p data-testid="audio-status">Sound: {audioStatus}{audioStatus === "unavailable" ? " · visual feedback is still available" : ""}</p>
+          {audioStatus === "ready" ? "소리 끄기" : "소리 켜기"}</button>
+        <p data-testid="audio-status">소리: {audioStatus === "ready" ? "켜짐" : audioStatus === "unavailable" ? "사용할 수 없음 · 화면 반응은 계속 보여요" : "꺼짐"}</p>
       </section>
     </div>
-    <footer>Cosmetic placement only. Preview changes are saved only when you confirm.</footer>
+    <footer>내 공간은 휴식과 꾸미기를 위한 공간이에요. 미리보기 변경은 확정할 때만 저장돼요.</footer>
   </main>;
 }
