@@ -545,8 +545,8 @@ test('review companion identity preference persists without health semantics', a
   await page.goto('/?e2e=signed-in&screen=S14');
   const select = page.getByLabel('캐릭터 선택');
   await expect(page.getByRole('group', { name: '화면 테마' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '보관과 내보내기' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '이메일 로그인 계정' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '필요한 기록 내려받기' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '계정과 연결된 서버 데이터 삭제' })).toBeVisible();
   await expect(page.getByRole('button', { name: '계정 삭제' })).toBeVisible();
   if (await select.count() === 0) {
     await expect(page.locator('.companion-identity-settings')).toHaveCount(0);
@@ -578,11 +578,11 @@ test('Settings keeps everyday controls above data guidance and account removal',
     await page.goto('/?e2e=signed-in&screen=S14');
     const settings = page.locator('[data-scene="S14"]');
     await expect(settings.locator('.journey-settings-group > .journey-settings-group-heading h2'))
-      .toHaveText(['보이는 방식', '시작과 동반자', '보관과 내보내기', '이메일 로그인 계정']);
+      .toHaveText(['계정에 저장되는 것', '필요한 기록 내려받기', '화면과 시작 위치', '현재 계정 연결 끝내기', '계정과 연결된 서버 데이터 삭제']);
     await expect(settings.getByRole('group', { name: '화면 테마' })).toBeVisible();
     await expect(settings.getByRole('group', { name: '로그인 후 시작 화면' })).toBeVisible();
-    await expect(settings.getByText('30일 보관', { exact: true })).toBeVisible();
-    await expect(settings.getByText('내보낸 파일', { exact: true })).toBeVisible();
+    await expect(settings.getByText('각 기록은 저장한 시점부터 30일 후 접근할 수 없게 돼요.', { exact: false })).toBeVisible();
+    await expect(settings.getByText('내려받은 JSON, 저장한 PDF, 인쇄물은 로그아웃이나 계정 삭제로 자동 삭제되지 않아요.', { exact: true })).toBeVisible();
     const signOut = settings.getByRole('button', { name: '이 기기에서 로그아웃', exact: true });
     const remove = settings.getByRole('button', { name: '계정 삭제', exact: true });
     expect((await remove.boundingBox())!.y).toBeGreaterThan((await signOut.boundingBox())!.y + (await signOut.boundingBox())!.height);

@@ -113,8 +113,8 @@
 }
 
 * { box-sizing: border-box; }
-html { min-width: 320px; background: var(--sk7-canvas); }
-body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--sk7-text); background: var(--sk7-canvas); font-family: var(--sk7-font-sans); font-synthesis: none; word-break: keep-all; overflow-wrap: anywhere; }
+html { min-width: 0; background: var(--sk7-canvas); }
+body { margin: 0; min-width: 0; min-height: 100vh; color: var(--sk7-text); background: var(--sk7-canvas); font-family: var(--sk7-font-sans); font-synthesis: none; word-break: keep-all; overflow-wrap: anywhere; }
 button, input, select { font: inherit; }
 button { min-height: var(--sk7-target-min); border: 1px solid transparent; border-radius: var(--sk7-radius-sm); background: var(--sk7-accent); color: var(--sk7-text-on-accent); cursor: pointer; padding: .72rem 1.05rem; font-weight: var(--sk7-weight-bold); transition: transform var(--sk7-motion-fast) var(--sk7-ease-standard), background var(--sk7-motion-fast), box-shadow var(--sk7-motion-fast); }
 button:active:not(:disabled) { transform: translateY(0); }

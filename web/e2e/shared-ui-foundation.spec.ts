@@ -121,7 +121,7 @@ async function expectFoundation(page: Page, id: FoundationScreenId) {
   await expect(scene).toHaveClass(/\bsurface\b/);
   await expect(scene.locator(":scope > .screen-header")).toHaveCount(1);
   if (id === "S12") await expect(scene.locator(".action-group")).toHaveCount(1);
-  if (id === "S13") await expect(scene.locator(".status-notice")).toHaveCount(1);
+  if (id === "S13") await expect(scene.locator(".recovery-panel")).toHaveCount(1);
   if (id === "S14") expect(await scene.locator(".section-header").count()).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }

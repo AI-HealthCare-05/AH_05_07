@@ -210,7 +210,7 @@ test('recap prior window keeps current scenery and challenge context with read-o
   await expect(page.getByRole('button', { name: '이전 7일 내보내기' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '새로고침', exact: true })).toBeDisabled();
   await page.locator('[data-record-lane="blood-pressure"] .record-action').first().click();
-  await expect(page.getByText('이전 7일의 기록은 읽기 전용입니다.', { exact: true })).toBeVisible();
+  await expect(page.locator('.record-read-only')).toContainText('이전 7일의 기록은 읽기 전용입니다.');
   await expect(page.getByRole('button', { name: '수정', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
   await expect(page.locator('#S10-title')).toBeFocused();
