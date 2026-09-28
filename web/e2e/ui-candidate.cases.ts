@@ -988,6 +988,8 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   await expect(page.getByRole('heading', { name: '측정한 혈압을 기록하고, 최근 7일을 확인해요.' })).toBeVisible();
   await expect(page.locator('.journey-login-intro')).toContainText('혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요.');
   await expect(page.locator('.journey-login-intro')).toContainText('한 건부터 바로 시작할 수 있어요.');
+  await expect(page.locator('.journey-login-auth')).toContainText('실제 기록 시작');
+  await expect(page.locator('.journey-login-auth')).toContainText('체험 입력은 이 탭의 메모리에만 남고, 로그인해도 계정으로 옮겨지지 않아요.');
   await expect(page.locator('.journey-login-demo')).toContainText('30일 동안 보관돼요.');
   await expect(page.locator('.journey-login-demo')).toContainText('보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.');
   await expect(page.getByText('합성 데이터 체험용입니다.', { exact: false })).toHaveCount(0);
@@ -1003,9 +1005,11 @@ for (const width of [360, 1440]) test(`S01 purpose and accessible OTP feedback a
   expect(posts).toBe(1); held.release();
   await expect(page.getByRole('status')).toContainText('로그인 링크를 보냈어요.');
   await expect(page.getByRole('status')).toHaveClass(/\bstatus-notice\b/);
+  await expect(page.getByRole('status')).toHaveAttribute('data-login-feedback', 'sent');
   fail = true;
   await page.getByRole('button', { name: '로그인 링크 받기', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('로그인 링크를 보내지 못했습니다.');
+  await expect(page.getByRole('status')).toHaveAttribute('data-login-feedback', 'error');
   await expect(page.getByText('synthetic-private-error')).toHaveCount(0);
   expect(posts).toBe(2);
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
@@ -1030,11 +1034,18 @@ for (const viewport of [
   const auth = login.locator('.journey-login-auth.surface');
   await expect(login).toBeVisible();
   await expect(intro.locator(':scope > .screen-header')).toHaveCount(1);
-  await expect(intro.locator('.journey-login-companion.section-header')).toHaveCount(1);
-  await expect(intro.locator('.journey-login-preview-entry.section-header .action-group')).toHaveCount(1);
+  await expect(intro.locator('.journey-login-companion')).toHaveCount(0);
+  await expect(login.locator(':scope > .journey-login-layout > .journey-login-companion.section-header')).toHaveCount(1);
+  await expect(intro.locator('.journey-login-preview-entry')).toHaveCount(0);
   await expect(auth.locator('.journey-login-auth-header.section-header')).toHaveCount(1);
   await expect(auth.locator('.journey-login-form.section-header .entry-auth-wrap.action-group')).toHaveCount(1);
+  await expect(auth.locator('.journey-login-preview-entry.section-header .action-group')).toHaveCount(1);
   await expect(auth.locator('.journey-login-policy.section-header')).toHaveCount(1);
+  expect(await auth.evaluate(element => {
+    const form = element.querySelector('.journey-login-form')!;
+    const preview = element.querySelector('.journey-login-preview-entry')!;
+    return Boolean(form.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })).toBe(true);
 
   const introBox = await intro.boundingBox();
   const authBox = await auth.boundingBox();
@@ -1102,6 +1113,9 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
     expect(windows).toEqual(['2026-08-29', '2026-09-05']); await expect(page).not.toHaveURL(/dashboard_window/);
   }
   if (!prior) {
+    await expect(page.locator('[data-loop-mode="first-record"]')).toContainText('혈압 기록');
+    await expect(page.locator('[data-loop-mode="first-record"]')).toContainText('저장 확인');
+    await expect(page.locator('[data-loop-mode="first-record"]')).toContainText('오늘 확인');
     const signal = page.locator('.journey-empty-signal');
     await expect(signal).toContainText('생활정보를 먼저 정리할 수도 있어요');
     await expect(signal).toContainText('활동·수면·생활습관을 이번 이용에만 정리해요.');
@@ -1119,11 +1133,65 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   expect(await bp.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); })).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await bp.press('Enter'); await expect(page.locator('#S04-title')).toBeFocused();
+  if (!prior) await expect(page.locator('[data-loop-mode="first-record"] [aria-current="step"]')).toContainText('혈압 기록');
   await page.getByRole('button', { name: '오늘의 기록', exact: true }).click();
   await page.getByRole('button', { name: '7일 챌린지 시작하기', exact: true }).click();
   await expect(page.locator('#S03-title')).toBeFocused(); expect(writes).toBe(0);
   fail = true; await page.reload();
   await expect(page.locator('[data-scene="S13"]')).toBeVisible(); await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+});
+
+test('first confirmed-empty session continues through S04, confirmed S05, and immediate S07 review', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.setFixedTime(new Date('2026-09-11T03:00:00Z'));
+  let saved = false;
+  let writes = 0;
+
+  await page.route('http://e2e.invalid/**', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (url.pathname.endsWith('/blood-pressure') && request.method() === 'POST') {
+      writes += 1;
+      saved = true;
+      return route.fulfill({ status: 201, headers, contentType: 'application/json', body: JSON.stringify({
+        id: 'activation-first-bp',
+        ...request.postDataJSON(),
+      }) });
+    }
+    if (url.pathname.endsWith('/window') && request.method() === 'GET') {
+      return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+        start_on: url.searchParams.get('start_on'),
+        end_on: url.searchParams.get('end_on'),
+        blood_pressure_observations: saved ? [{
+          id: 'activation-first-bp', observed_on: '2026-09-11', period: 'morning', systolic: 120, diastolic: 80,
+        }] : [],
+        challenge_checkins: [],
+        challenge_events: [],
+        active_challenge: null,
+      }) });
+    }
+    return route.abort();
+  });
+
+  await page.goto('/?e2e=signed-in');
+  const firstRecordLoop = page.locator('[data-loop-mode="first-record"]');
+  await expect(page.locator('[data-scene="S12"]')).toBeVisible();
+  await expect(firstRecordLoop.locator('[aria-current="step"]')).toContainText('혈압 기록');
+
+  await page.getByRole('button', { name: '혈압 기록하기', exact: true }).click();
+  await expect(page.locator('[data-scene="S04"]')).toBeVisible();
+  await expect(firstRecordLoop.locator('[aria-current="step"]')).toContainText('혈압 기록');
+  await save(page);
+
+  await expect(page.locator('[data-scene="S05"]')).toBeVisible();
+  await expect(firstRecordLoop.locator('[aria-current="step"]')).toContainText('저장 확인');
+  await page.getByRole('button', { name: '방금 기록한 혈압 확인', exact: true }).click();
+
+  await expect(page.locator('[data-scene="S07"]')).toContainText('120/80 mmHg');
+  await expect(firstRecordLoop.locator('[aria-current="step"]')).toContainText('오늘 확인');
+  expect(writes).toBe(1);
 });
 
 test('Journey record browsing keeps distinct facts, exact detail targets, and read-only meaning', async ({ page }, testInfo) => {
@@ -1432,6 +1500,8 @@ test('S01 opens the isolated memory-only guest journey and returns through setti
   const guest = page.locator('[data-guest-journey="memory-only"]');
   await expect(guest).toBeVisible();
   await expect(guest).toContainText('체험 중 입력은 서버로 보내거나 저장하지 않아요.');
+  await expect(guest).toContainText('로그인해도 계정으로 옮겨지지 않아요.');
+  await expect(guest.getByRole('button', { name: '실제 기록은 로그인으로', exact: true })).toBeVisible();
   await expect(guest.locator('.journey-today')).toBeVisible();
   await expect(guest.locator('.home-trail-date')).toHaveCount(7);
   expect(apiRequests).toEqual([]);
@@ -1502,8 +1572,10 @@ test('S01 guest journey keeps selected companion identity and opens memory-only 
 
   await page.goto('/');
 
+  await expect(page.getByRole('button', { name: '로그인 링크 받기', exact: true })).toBeInViewport({ ratio: 1 });
   const preview = page.getByRole('button', { name: '로그인 없이 30초 맛보기', exact: true });
   await expect(preview).toBeVisible();
+  await preview.scrollIntoViewIfNeeded();
   await expect(preview).toBeInViewport({ ratio: 1 });
 
   await preview.click();

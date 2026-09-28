@@ -185,6 +185,10 @@ function GuestJourney({ today }: { today: string }) {
     && windowData.challenge_checkins.length === 0
     && windowData.challenge_events.length === 0
     && !windowData.active_challenge;
+  const firstBloodPressureWindow = windowData.blood_pressure_observations.length === 1
+    && windowData.challenge_checkins.length === 0
+    && windowData.challenge_events.length === 0
+    && !windowData.active_challenge;
   const activeScreen: ScreenId = requestedScreen === "S05" && !confirmation
     ? "S02"
     : requestedScreen === "S06" && !activeChallenge
@@ -594,9 +598,10 @@ function GuestJourney({ today }: { today: string }) {
     if (activeScreen === "S12") {
       return <Scene id="S12" eyebrow="체험 기록 없음" title="측정한 혈압부터 기록해요" tone="subtle" className="journey-empty surface">
         <p className="journey-empty-period"><time dateTime={startOn}>{dateLabel(startOn)}</time> ~ <time dateTime={endOn}>{dateLabel(endOn)}</time></p>
+        <DailyActionLoop current="S12" guest firstSession />
         <div className="journey-empty-actions action-group">
-          <section className="journey-empty-action"><h2>혈압 기록</h2><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button></section>
-          <section className="journey-empty-action"><h2>7일 챌린지</h2><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></section>
+          <section className="journey-empty-action journey-empty-action--primary"><div><p className="eyebrow">체험 첫 행동</p><h2>혈압 한 건 입력하기</h2></div><p>반영 확인 뒤 방금 입력한 기록을 바로 볼 수 있어요.</p><button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button></section>
+          <section className="journey-empty-action journey-empty-action--secondary"><div><p className="eyebrow">선택</p><h2>7일 챌린지</h2></div><p>선택 기능 · 체험 안에서만 반영돼요.</p><button className="secondary" type="button" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button></section>
         </div>
       </Scene>;
     }
@@ -655,7 +660,7 @@ function GuestJourney({ today }: { today: string }) {
         tone="emphasis"
         className="journey-candidate journey-entry journey-sheet surface"
       >
-        <DailyActionLoop current="S04" guest />
+        <DailyActionLoop current="S04" guest firstSession={confirmedWindowEmpty && !editingBloodPressureId} />
         <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
           <div className="bp-sheet-fields">
             <div className="bp-sheet-context">
@@ -753,7 +758,7 @@ function GuestJourney({ today }: { today: string }) {
     if (activeScreen === "S05" && confirmation) {
       const bloodPressureIsToday = confirmation.kind === "blood-pressure" && confirmation.observedOn === today;
       return <Scene id="S05" eyebrow="체험에 반영됨" title="입력한 기록을 이 체험에 반영했어요" tone="subtle" className="saved-scene journey-candidate journey-saved guest-local-confirmation">
-        <DailyActionLoop current="S05" guest />
+        <DailyActionLoop current="S05" guest firstSession={firstBloodPressureWindow && confirmation.kind === "blood-pressure"} />
         <div className="save-ripple" aria-hidden="true"><div className="save-ripple-landscape"><i /><i /></div><span>✓</span></div>
         <section className="save-next-step section-header" aria-labelledby="guest-save-next-step-title">
           <p className="eyebrow">다음 확인</p>
@@ -798,7 +803,7 @@ function GuestJourney({ today }: { today: string }) {
 
     if (activeScreen === "S07") {
       return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="base" className="journey-candidate journey-today-review surface">
-        <DailyActionLoop current="S07" guest />
+        <DailyActionLoop current="S07" guest firstSession={firstBloodPressureWindow} />
         <div className="today-date"><strong>{dateLabel(today)}</strong><span>혈압·챌린지 기록을 따로 확인해요.</span></div>
         <div className="journey-today-detail" data-today-scope="current" data-record-priority="blood-pressure">
           <div className="fact-lanes">
@@ -994,7 +999,14 @@ function GuestJourney({ today }: { today: string }) {
         companionAsset={activeCompanionAsset}
         savedSceneEvent={null}
       >
-        <p className="guest-journey-disclosure" role="note">체험 중 입력은 서버로 보내거나 저장하지 않아요.</p>
+        <aside className="guest-activation-bar" role="note" aria-label="체험 데이터 안내">
+          <div>
+            <strong>30초 미리보기</strong>
+            <span>체험 중 입력은 서버로 보내거나 저장하지 않아요.</span>
+            <span>로그인해도 계정으로 옮겨지지 않아요.</span>
+          </div>
+          <button className="secondary" type="button" onClick={endGuestJourney}>실제 기록은 로그인으로</button>
+        </aside>
         {pendingBloodPressureDeletion && <DeleteConfirmation
           title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 체험에서 지울까요?`}
           pending={false}

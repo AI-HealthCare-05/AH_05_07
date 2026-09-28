@@ -680,10 +680,11 @@
 .journey-empty > .scene-visual-background, .journey-empty > .scene-visual-character, .journey-empty::after { display: none; }
 .journey-empty .scene-body { font-size: var(--sk7-type-body); }
 .journey-empty .journey-empty-period { color: var(--sk7-text-muted); line-height: 1.65; }
-.journey-empty .journey-empty-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--sk7-border); }
-.journey-empty .journey-empty-action { display: grid; grid-template-rows: auto 1fr auto; gap: var(--sk7-space-md); padding: var(--sk7-space-lg) 0; }
-.journey-empty .journey-empty-action + .journey-empty-action { border-left: 1px solid var(--sk7-border); padding-left: var(--sk7-space-lg); }
-.journey-empty .journey-empty-action:first-child { padding-right: var(--sk7-space-lg); }
+.journey-empty .journey-empty-actions { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(15rem, .65fr); align-items: stretch; gap: var(--sk7-space-md); }
+.journey-empty .journey-empty-action { display: grid; grid-template-rows: auto 1fr auto; gap: var(--sk7-space-md); min-width: 0; padding: var(--sk7-space-lg); }
+.journey-empty .journey-empty-action--primary { border-radius: var(--sk7-radius-panel); background: var(--sk7-surface-subtle); }
+.journey-empty .journey-empty-action--secondary { border-left: 1px solid var(--sk7-border); padding-right: 0; }
+.journey-empty .journey-empty-action > div { display: grid; gap: var(--sk7-space-2xs); }
 .journey-empty .journey-empty-action h2 { font-size: var(--sk7-type-subtitle); }
 .journey-empty .journey-empty-action p { color: var(--sk7-text-muted); line-height: 1.65; }
 
@@ -719,9 +720,8 @@
 .journey-empty .empty-garden i:nth-child(2) { width: 2.2rem; height: 2rem; }
 @media (max-width: 760px) {
   .journey-empty .journey-empty-actions { grid-template-columns: minmax(0, 1fr); }
-  .journey-empty .journey-empty-action { padding: var(--sk7-space-md) 0; gap: var(--sk7-space-sm); }
-  .journey-empty .journey-empty-action + .journey-empty-action { border-top: 1px solid var(--sk7-border); border-left: 0; padding-left: 0; }
-  .journey-empty .journey-empty-action:first-child { padding-right: 0; }
+  .journey-empty .journey-empty-action { padding: var(--sk7-space-md); gap: var(--sk7-space-sm); }
+  .journey-empty .journey-empty-action--secondary { border-top: 1px solid var(--sk7-border); border-left: 0; padding-inline: 0; }
   .journey-empty .journey-empty-signal {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
@@ -792,12 +792,16 @@
 .journey-login .journey-login-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(20rem, .92fr);
-  align-items: center;
+  grid-template-areas:
+    "intro auth"
+    "companion auth";
+  align-items: start;
   gap: clamp(var(--sk7-space-2xl), 6vw, var(--sk7-space-4xl));
   width: min(100%, 64rem);
 }
 
 .journey-login .journey-login-intro {
+  grid-area: intro;
   display: grid;
   align-content: center;
   gap: var(--sk7-space-xl);
@@ -816,6 +820,7 @@
 }
 
 .journey-login-companion {
+  grid-area: companion;
   gap: var(--sk7-space-sm);
 }
 
@@ -839,7 +844,7 @@
 }
 
 .journey-login-preview-entry {
-  width: min(100%, var(--sk7-form-max));
+  width: 100%;
   min-width: 0;
   gap: var(--sk7-space-xs);
   border-top: 1px solid var(--sk7-border);
@@ -858,13 +863,19 @@
   line-height: var(--sk7-leading-body);
 }
 
+.journey-login-preview-entry h3 {
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-body);
+}
+
 .journey-login .journey-login-auth {
+  grid-area: auth;
   width: 100%;
   gap: var(--sk7-space-lg);
   border-color: var(--sk7-border);
-  border-radius: var(--sk7-radius-screen);
+  border-radius: var(--sk7-radius-panel);
   background: var(--sk7-surface);
-  box-shadow: var(--sk7-shadow-surface);
+  box-shadow: none;
   padding: clamp(var(--sk7-space-lg), 3vw, var(--sk7-space-2xl));
   animation: none;
 }
@@ -1050,6 +1061,10 @@
 
   .journey-login .journey-login-layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "intro"
+      "auth"
+      "companion";
     gap: var(--sk7-space-xl);
     width: min(100%, var(--sk7-form-max));
   }
@@ -1490,7 +1505,8 @@
 }
 
 /* S03–S07: one quiet wayfinding line; the optional steps are never gates. */
-.journey-candidate .daily-action-loop {
+.journey-candidate .daily-action-loop,
+.journey-empty .daily-action-loop {
   display: grid;
   gap: var(--sk7-space-xs);
   width: 100%;
@@ -1512,6 +1528,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.daily-action-loop[data-loop-mode="first-record"] ol {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .daily-action-loop li {
