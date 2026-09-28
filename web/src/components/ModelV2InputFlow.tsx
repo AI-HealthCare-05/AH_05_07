@@ -61,6 +61,17 @@ function canonicalTime(selection: TimeSelection): string | null {
   return `${String(hour).padStart(2, "0")}:${String(selection.minute).padStart(2, "0")}`;
 }
 
+const DEFAULT_TIME_SELECTION: Readonly<Required<TimeSelection>> = Object.freeze({
+  period: 0,
+  hour: 12,
+  minute: 0,
+});
+
+function selectionForPicker(value: string): TimeSelection {
+  const restored = selectionFromTime(value);
+  return clockParts(value) ? restored : { ...DEFAULT_TIME_SELECTION };
+}
+
 function PeriodSelector({ selected, label, disabled, onSelect }: {
   selected: 0 | 1 | undefined; label: string; disabled: boolean; onSelect: (value: 0 | 1) => void;
 }) {
@@ -237,7 +248,7 @@ function HourDetentWheel({ selected, label, disabled, onSelect }: {
         data-wheel-row data-wheel-value={value} data-offset={offset}
         data-selected={selected === value || undefined}
         onClick={() => selectIndex(index)}>
-        {value}시
+        <span className="model-v2-wheel-value">{value}시</span>
       </button>;
     })}
   </div>;
@@ -380,7 +391,7 @@ function MinuteDetentWheel({ selected, label, disabled, onSelect }: {
         data-wheel-row data-wheel-value={value} data-offset={offset}
         data-selected={selected === value || undefined}
         onClick={() => selectIndex(index)}>
-        {String(value).padStart(2, "0")}분
+        <span className="model-v2-wheel-value">{String(value).padStart(2, "0")}분</span>
       </button>;
     })}
   </div>;
@@ -390,7 +401,7 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
   id: string; label: string; value: string; invalid: boolean; describedBy?: string; disabled: boolean; open: boolean;
   onOpen: () => void; onClose: () => void; onChange: (value: string) => void;
 }) {
-  const selectionRef = useRef<TimeSelection>(selectionFromTime(value));
+  const selectionRef = useRef<TimeSelection>(selectionForPicker(value));
   const [selection, setSelection] = useState<TimeSelection>(() => selectionRef.current);
 
   useEffect(() => {
@@ -408,7 +419,7 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
 
   useEffect(() => {
     if (open) return;
-    const restored = selectionFromTime(value);
+    const restored = selectionForPicker(value);
     selectionRef.current = restored;
     setSelection(restored);
   }, [open, value]);
@@ -438,6 +449,14 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
     const canonical = canonicalTime(updated);
     if (canonical) onChange(canonical);
   };
+
+  const acceptDisplayedTime = () => {
+    const canonical = canonicalTime(selectionRef.current);
+    if (!canonical) return;
+    onChange(canonical);
+    onClose();
+  };
+
   return <div className="model-v2-time-field" data-open={open}
     onPointerDown={open ? (event) => event.stopPropagation() : undefined}>
     <span id={`${id}-label`} className="model-v2-field-label">{label}</span>
@@ -451,7 +470,10 @@ function TimeWheelPicker({ id, label, value, invalid, describedBy, disabled, ope
       <PeriodSelector selected={selection.period} label={label} disabled={disabled} onSelect={(next) => choose("period", next)} />
       <HourDetentWheel selected={selection.hour} label={`${label} 시`} disabled={disabled} onSelect={chooseHour} />
       <MinuteDetentWheel selected={selection.minute} label={`${label} 분`} disabled={disabled} onSelect={(next) => choose("minute", next)} />
-      {!canonicalTime(selection) && <p className="model-v2-time-editing" role="status">시간을 모두 선택하면 적용됩니다.</p>}
+      {!complete && <div className="model-v2-time-default">
+        <p className="model-v2-time-editing" role="status">기본 표시값이에요. 실제 시각으로 조정하거나 그대로 사용하세요.</p>
+        <button type="button" className="secondary model-v2-time-apply" disabled={disabled} onClick={acceptDisplayedTime}>이 시간 사용</button>
+      </div>}
     </div>}
     <span id={`${id}-status`} className={`model-v2-time-status${invalid ? " field-error" : ""}`} data-complete={complete}>
       {complete ? "선택 완료" : open ? "시간 선택 중" : "시간 선택 필요"}
