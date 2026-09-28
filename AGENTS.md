@@ -56,6 +56,33 @@ Canonical source: `AI-HealthCare-05/AH_05_07`. The
 - Do not add an LLM, OCR, Redis, worker, new server or deployment topology without
   a measured requirement and an ADR.
 
+## Product experience autonomy
+
+- Protected product boundaries protect semantics, data truth, safety and system
+  contracts. They do not protect the current DOM, layout, visual composition or
+  component arrangement.
+- For an approved user-facing Experience Slice, exercise strong product-design
+  judgment inside those boundaries. Proactively redesign information hierarchy,
+  section ordering, layout, responsive composition, typography, spacing, density,
+  CTA hierarchy, interaction affordances and UI state presentation when that
+  produces a more coherent product experience.
+- Markup and presentation components may be restructured when the current shape
+  limits the experience. Improve loading, pending, empty, error, recovery,
+  success, hover, focus, pressed, disabled, motion and progressive-disclosure
+  behavior as part of the slice when relevant.
+- Existing UI is not a protected artifact. An accepted enterprise screen is a
+  quality bar and product-language reference, not a pixel template or a
+  requirement to preserve its DOM.
+- Do not wait for the owner to specify CSS values, breakpoints or component
+  structure. Infer those professionally from the product goal, current design
+  language and changed user journey.
+- "Smallest complete slice" constrains scope, not ambition inside that scope.
+  Prefer a coherent, release-quality experience over a minimal diff; preserving
+  the existing structure is not a completion criterion when the result is
+  visibly weaker than the accepted product reference.
+- This autonomy does not relax named semantic, accessibility, safety,
+  persistence, Auth/API/data or protected architecture contracts.
+
 ## Verification and scope classification
 
 - Verify in proportion to changed behavior/contract. Run the smallest affected
