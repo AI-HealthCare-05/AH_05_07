@@ -2,7 +2,6 @@ import { expect, test, type Page, type Request } from "@playwright/test";
 
 import type { ObservationWindow } from "../src/lib/api-contract";
 import { e2eSessionEventName } from "../src/lib/e2eHarness";
-import { chooseTime as chooseTimeWheel } from "./model-v2-time-wheel";
 
 const beforeMidnight = new Date("2026-09-13T14:59:59Z"); // Sunday in Seoul, morning in LA.
 const oldBounds = { start_on: "2026-09-07", end_on: "2026-09-13" };
@@ -217,30 +216,10 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
       await page.getByLabel(/수축기/).fill("125");
       await page.getByLabel(/이완기/).fill("82");
     } else {
-      await page.getByRole("button", { name: "입력 시작하기" }).click();
-      await page.getByLabel("나이").fill("35");
-      await page.getByLabel("성별", { exact: true }).selectOption("1");
-      await page.getByLabel(/키/).fill("170");
-      await page.getByLabel(/몸무게/).fill("68");
-      await page.getByRole("button", { name: "다음", exact: true }).click();
-      await page.getByLabel("최근 7일 동안 걸은 날은 며칠인가요?", { exact: true }).fill("4");
-      await page.locator("#model-walking-hours").fill("0");
-      await page.locator("#model-walking-minutes").fill("40");
-      await page.getByLabel("최근 7일 동안 근력운동을 한 날은 며칠인가요?", { exact: true }).selectOption("2_days");
-      await page.getByRole("button", { name: "다음", exact: true }).click();
-      await chooseTimeWheel(page, "model-weekday-bed", "23:30");
-      await chooseTimeWheel(page, "model-weekday-wake", "07:00");
-      await chooseTimeWheel(page, "model-weekend-bed", "23:30");
-      await chooseTimeWheel(page, "model-weekend-wake", "08:00");
-      await page.getByRole("button", { name: "다음", exact: true }).click();
-      await page.getByLabel("일반담배(궐련) 흡연 상태는 어떤가요?", { exact: true }).selectOption("never_smoked");
-      await page.getByLabel("최근 1년 동안 술을 얼마나 자주 마셨나요?", { exact: true }).selectOption("lt_monthly");
-      await page.getByLabel("술을 마실 때, 보통 한 번에 몇 잔 마시나요?", { exact: true }).selectOption("1_2_drinks");
-      await page.getByRole("button", { name: "입력 확인하기", exact: true }).click();
-      await page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.").check();
-      await page.getByRole("button", { name: "기본 정보 수정", exact: true }).click();
+      await page.locator("#model-age").fill("35");
+      await page.locator("#model-height").fill("170");
     }
-    const field = draft === "blood-pressure" ? page.getByLabel(/수축기/) : page.getByLabel("나이");
+    const field = draft === "blood-pressure" ? page.getByLabel(/수축기/) : page.locator("#model-age");
     await field.evaluate(element => element.setAttribute("data-draft-node", "original"));
     await page.clock.runFor(1000);
     await expect.poll(() => api.reads.length).toBe(2);
@@ -257,9 +236,8 @@ for (const draft of ["blood-pressure", "model-v2"] as const) {
       await expect(page.getByLabel(/이완기/)).toHaveValue("82");
     } else {
       await expect(field).toHaveValue("35");
-      await expect(page.getByLabel(/키/)).toHaveValue("170");
-      await page.getByRole("button", { name: "입력 확인으로 돌아가기", exact: true }).click();
-      await expect(page.getByLabel("입력과 결과가 저장되지 않는다는 안내를 확인했어요.")).toBeChecked();
+      await expect(page.locator("#model-height")).toHaveValue("170");
+      await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
     }
     expect(api.writes).toHaveLength(0);
   });

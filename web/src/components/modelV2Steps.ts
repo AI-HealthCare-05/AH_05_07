@@ -1,16 +1,13 @@
 import { clockParts, finiteNumber, type Draft } from "./modelV2Draft";
 
 export type InputStep = "basics" | "habits" | "activity" | "sleep";
-export type Step = "intro" | InputStep | "review";
 
-export const INPUT_STEPS: readonly InputStep[] = ["basics", "activity", "sleep", "habits"];
-export const PROGRESS_STEPS = [...INPUT_STEPS, "review"] as const;
+export const INPUT_STEPS: readonly InputStep[] = ["basics", "habits", "activity", "sleep"];
 export const STEPS = {
   basics: { label: "기본 정보", description: "이번 생활정보 계산에 필요한 기본 항목이에요.", fields: ["age", "sex", "height", "weight"] },
   habits: { label: "흡연·음주", description: "일반담배를 피우는 현재 상태와 최근 1년의 음주 경험을 알려 주세요.", fields: ["smoking", "alcoholFrequency", "alcoholAmount"] },
   activity: { label: "최근 7일 활동", description: "최근 7일 동안 걸은 날과 근력운동을 한 날을 떠올려 주세요.", fields: ["walkingDays", "walkingHours", "walkingMinutes", "strengthDays"] },
   sleep: { label: "평일·주말 수면", description: "평일과 주말에 보통 취침하고 기상하는 시각을 알려 주세요.", fields: ["weekdayBed", "weekdayWake", "weekendBed", "weekendWake"] },
-  review: { label: "입력 확인", description: "입력한 내용이 맞는지 확인해 주세요. 수정한 뒤 이 화면으로 돌아올 수 있어요." },
 } as const;
 
 type Field = {
@@ -62,6 +59,82 @@ export const FIELDS: Record<keyof Draft, Field> = {
   weekendBed: { id: "model-weekend-bed", label: "주말 취침 시간", type: "time" },
   weekendWake: { id: "model-weekend-wake", label: "주말 기상 시간", type: "time" },
 };
+
+export const INTAKE_QUESTIONS = [
+  { id: "age", label: "만 나이", section: "basics", fields: ["age"] },
+  { id: "sex", label: "성별", section: "basics", fields: ["sex"] },
+  { id: "body", label: "키 · 몸무게", section: "basics", fields: ["height", "weight"] },
+  { id: "smoking", label: "일반담배 흡연", section: "habits", fields: ["smoking"] },
+  { id: "alcoholFrequency", label: "최근 1년 음주 빈도", section: "habits", fields: ["alcoholFrequency"] },
+  { id: "alcoholAmount", label: "한 번 마실 때 음주량", section: "habits", fields: ["alcoholAmount"] },
+  { id: "walkingDays", label: "최근 7일 걷기", section: "activity", fields: ["walkingDays"] },
+  { id: "walkingDuration", label: "걷는 날 하루 평균", section: "activity", fields: ["walkingHours", "walkingMinutes"] },
+  { id: "strengthDays", label: "최근 7일 근력운동", section: "activity", fields: ["strengthDays"] },
+  { id: "weekdaySleep", label: "평일 수면", section: "sleep", fields: ["weekdayBed", "weekdayWake"] },
+  { id: "weekendSleep", label: "주말 수면", section: "sleep", fields: ["weekendBed", "weekendWake"] },
+] as const;
+
+export type IntakeQuestion = typeof INTAKE_QUESTIONS[number];
+
+function optionSelected(key: keyof Draft, value: string): boolean {
+  return Boolean(FIELDS[key].options?.some(([option]) => option === value));
+}
+
+function sleepPairComplete(bed: string, wake: string): boolean {
+  const bedParts = clockParts(bed);
+  const wakeParts = clockParts(wake);
+  if (!bedParts || !wakeParts) return false;
+  const [bedHour, bedMinute] = bedParts;
+  const [wakeHour, wakeMinute] = wakeParts;
+  return !(wakeHour === 0 && ((bedHour >= 1 && bedHour <= 12) || (bedHour === 0 && wakeMinute < bedMinute)));
+}
+
+export function questionComplete(question: IntakeQuestion, draft: Draft): boolean {
+  switch (question.id) {
+    case "age": return finiteNumber(draft.age) !== null && finiteNumber(draft.age)! >= 19;
+    case "sex": return optionSelected("sex", draft.sex);
+    case "body": return finiteNumber(draft.height) !== null && finiteNumber(draft.height)! > 0
+      && finiteNumber(draft.weight) !== null && finiteNumber(draft.weight)! > 0;
+    case "smoking": return optionSelected("smoking", draft.smoking);
+    case "alcoholFrequency": return optionSelected("alcoholFrequency", draft.alcoholFrequency);
+    case "alcoholAmount": return isNonDrinking(draft.alcoholFrequency)
+      ? draft.alcoholAmount === "none"
+      : draft.alcoholAmount !== "none" && optionSelected("alcoholAmount", draft.alcoholAmount);
+    case "walkingDays": {
+      const days = finiteNumber(draft.walkingDays);
+      return days !== null && Number.isInteger(days) && days >= 0 && days <= 7;
+    }
+    case "walkingDuration": {
+      const days = finiteNumber(draft.walkingDays);
+      const hours = finiteNumber(draft.walkingHours);
+      const minutes = finiteNumber(draft.walkingMinutes);
+      if (days === 0) return hours === 0 && minutes === 0;
+      return days !== null && days > 0 && days <= 7 && hours !== null && minutes !== null
+        && Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && hours <= 24
+        && minutes >= 0 && minutes <= 59 && hours * 60 + minutes <= 1440;
+    }
+    case "strengthDays": return optionSelected("strengthDays", draft.strengthDays);
+    case "weekdaySleep": return sleepPairComplete(draft.weekdayBed, draft.weekdayWake);
+    case "weekendSleep": return sleepPairComplete(draft.weekendBed, draft.weekendWake);
+  }
+}
+
+function isNonDrinking(value: string): boolean {
+  return value === "none_past_year" || value === "lifetime_nonapplicable";
+}
+
+export function questionFocusId(question: IntakeQuestion, draft: Draft): string {
+  if (question.id === "walkingDuration") return "model-walking-total-minutes";
+  const problemField = stepProblem(question.section, draft)?.fields.find((field) =>
+    (question.fields as readonly string[]).includes(field));
+  if (problemField) return FIELDS[problemField].id;
+  const firstMissing = question.fields.find((field) => {
+    if (FIELDS[field].type === "time") return clockParts(draft[field]) === null;
+    if (FIELDS[field].type === "number") return finiteNumber(draft[field]) === null;
+    return !draft[field];
+  });
+  return FIELDS[firstMissing ?? question.fields[0]].id;
+}
 
 export type StepProblem = { step: InputStep; fields: (keyof Draft)[]; message: string };
 

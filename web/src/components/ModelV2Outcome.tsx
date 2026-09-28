@@ -64,7 +64,7 @@ export function ModelV2Outcome({
 
   return <div className="model-v2-outcome" data-model-v2-user-result="processed">
     <header className="model-v2-outcome-heading section-header">
-      <p className="model-v2-result-overline">이번 이용의 분석</p>
+      <p className="model-v2-result-overline">Model V2 분석 완료</p>
       <h2 id="model-v2-result-title" tabIndex={-1}>{hasPreview ? "연구 모델 분석 결과" : "생활정보 처리를 완료했어요"}</h2>
       {hasPreview ? (
         <div className="model-v2-preview status-notice" data-model-v2-preview>
@@ -86,6 +86,15 @@ export function ModelV2Outcome({
           <small>입력한 사실을 정리한 ‘오늘의 시작점’과 현재 기록 기준 다음 행동은 계속 확인할 수 있어요.</small>
         </div>
       )}
+      <section className="model-v2-execution-receipt" aria-label="분석 실행 확인" data-model-v2-execution-receipt>
+        <h3>분석 실행 확인</h3>
+        <dl>
+          <div><dt>모델</dt><dd>Model V2</dd></div>
+          <div><dt>입력</dt><dd>모델 입력 11 / 11 사용</dd></div>
+          <div><dt>처리</dt><dd>브라우저 계산 완료</dd></div>
+          <div><dt>전송</dt><dd>분석 입력·결과 서버 추론 전송 없음</dd></div>
+        </dl>
+      </section>
       <p className="model-v2-local-privacy status-notice">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
       {Number(draft.age) >= 80 && <p className="notice-warning status-notice">
         만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
@@ -93,7 +102,7 @@ export function ModelV2Outcome({
     </header>
 
     <div className="model-v2-summary-heading section-header">
-      <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
+      <p className="model-v2-outcome-kicker">오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도</p>
       <h3>오늘의 생활 패턴을 정리했어요</h3>
       <p>아래 내용은 방금 입력한 사실을 읽기 쉽게 바꾼 것이며, 위 분석값의 원인이나 해석이 아니에요.</p>
     </div>
@@ -184,9 +193,9 @@ export function ModelV2Outcome({
     <section className="model-v2-result-model-note section-header" aria-labelledby="model-v2-research-title">
       <h3 id="model-v2-research-title">처리 방식과 입력 상세</h3>
       <details className="model-v2-notice-details" data-model-v2-research>
-        <summary>Model V2 처리 안내</summary>
+        <summary>왜 바로 끝났나요?</summary>
         <p>Model V2 처리가 완료됐어요.</p>
-        <p>계산에 필요한 모델 파일은 네트워크에서 받을 수 있어요. 이 분석의 생활정보와 결과값은 서버 추론 요청으로 전송하지 않고, 이 브라우저에서 일시적으로 처리합니다.</p>
+        <p>모델 파일은 필요할 때 네트워크에서 받을 수 있지만, 입력한 11개 값의 계산은 이 브라우저에서 실행합니다. 분석 입력과 결과를 서버 추론 요청으로 보내거나 저장하지 않아 서버 계산을 기다리지 않고 바로 끝날 수 있어요.</p>
         {hasPreview && <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>}
       </details>
       <details className="model-v2-notice-details" data-model-v2-inputs>
