@@ -992,35 +992,32 @@ test("S11 preserves existing fractional and positive input semantics without new
   expect(routed.requests.every(request => request.method === "GET" && request.body === null)).toBe(true);
 });
 
-test("S11 time wheels keep a blank draft blank until all three explicit selections are made", async ({ page }) => {
-  const routed = await routeModel(page);
-  await page.goto("/?e2e=signed-in&screen=S11");
-  await toSleep(page);
-  const id = "model-weekday-bed";
-  await expect(page.locator(`#${id}`)).toContainText("시간 선택");
-  await page.locator(`#${id}`).click();
-  const picker = page.locator(`#${id}-picker`);
-  const periodGroup = picker.getByRole("radiogroup", { name: "평일 취침 시간 오전 또는 오후" });
-  await expect(periodGroup).toBeVisible();
-  await expect(periodGroup.getByRole("radio", { name: "오전" })).toBeVisible();
-  await expect(periodGroup.getByRole("radio", { name: "오후" })).toBeVisible();
-  await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 시" })).toBeVisible();
-  await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 분" })).toBeVisible();
-  const afternoon = periodGroup.getByRole("radio", { name: "오후" });
-  await afternoon.click();
-  await expect(afternoon).toHaveAttribute("aria-checked", "true");
-
-  const hourWheel = picker.getByRole("spinbutton", { name: "평일 취침 시간 시" });
-  await hourWheel.getByRole("button", { name: "11시", exact: true }).click();
-  await expect(hourWheel).toHaveAttribute("aria-valuetext", "11시");
-
-  await expect(page.locator(`#${id}`)).toContainText("시간 선택");
-
-  await chooseMinuteByKeyboard(page, id, 30);
-  await expectTimeValue(page, id, "23:30");
-  await expect(page.locator(`#${id}-status`)).toHaveText("선택 완료");
-  expect(routed.requests).toHaveLength(0);
-});
+for (const part of ["period", "hour", "minute"] as const) {
+  test(`S11 time wheels complete every blank field after changing only ${part}`, async ({ page }) => {
+    const routed = await routeModel(page);
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toSleep(page);
+    for (const id of ["model-weekday-bed", "model-weekday-wake", "model-weekend-bed", "model-weekend-wake"] as const) {
+      const trigger = page.locator(`#${id}`);
+      await trigger.click();
+      const picker = page.locator(`#${id}-picker`);
+      await expect(trigger).toHaveAttribute("data-time-complete", "false");
+      if (part === "period") await picker.getByRole("radio", { name: "오후", exact: true }).click();
+      else if (part === "hour") await picker.getByRole("spinbutton", { name: / 시$/ }).getByRole("button", { name: "1시", exact: true }).click();
+      else await picker.getByRole("spinbutton", { name: / 분$/ }).getByRole("button", { name: "01분", exact: true }).click();
+      const expected = part === "period" ? "12:00" : part === "hour" ? "01:00" : "00:01";
+      await expectTimeValue(page, id, expected);
+      await trigger.click();
+      await trigger.click();
+      await expectTimeValue(page, id, expected);
+      await expect(picker.getByRole("radio", { name: part === "period" ? "오후" : "오전", exact: true })).toHaveAttribute("aria-checked", "true");
+      await expect(picker.getByRole("spinbutton", { name: / 시$/ })).toHaveAttribute("aria-valuetext", part === "hour" ? "1시" : "12시");
+      await expect(picker.getByRole("spinbutton", { name: / 분$/ })).toHaveAttribute("aria-valuetext", part === "minute" ? "01분" : "00분");
+      await trigger.click();
+    }
+    expect(routed.requests).toHaveLength(0);
+  });
+}
 
 test("S11 time wheels support keyboard selection, exact 12-hour conversion, and local-only scoring", async ({ page }) => {
   const routed = await routeModel(page);
@@ -1564,14 +1561,64 @@ test("S11 supports 200% text and reduced motion through keyboard navigation, rev
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
 
-test("S11 time picker fits at 320px without horizontal overflow", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 700 });
+for (const width of [320, 610, 1024, 1280]) {
+  test(`S11 time picker fits at ${width}px with forgiving touch targets`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await routeModel(page);
+    await page.goto("/?e2e=signed-in&screen=S11");
+    await toSleep(page);
+    const trigger = page.locator("#model-weekday-bed");
+    await trigger.click();
+    const picker = page.locator("#model-weekday-bed-picker");
+    await expect(picker).toBeVisible();
+
+    await expect(picker.getByRole("radio", { name: "오전", exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 시" })).toHaveAttribute("aria-valuetext", "12시");
+    await expect(picker.getByRole("spinbutton", { name: "평일 취침 시간 분" })).toHaveAttribute("aria-valuetext", "00분");
+    await expect(trigger).toHaveAttribute("data-time-complete", "false");
+
+    for (const row of await picker.locator("[data-wheel-row]").all()) {
+      const box = await row.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(await row.evaluate(element => getComputedStyle(element).transform)).toMatch(/^matrix\(1, 0, 0, 1, 0, /);
+      await expect(row.locator(".model-v2-wheel-value")).toHaveCount(1);
+    }
+
+    await picker.getByRole("button", { name: "이 시간 사용", exact: true }).click();
+    await expectTimeValue(page, "model-weekday-bed", "00:00");
+    await assertFitsViewport(page);
+  });
+}
+
+test("S11 each blank sleep time field completes with one explicit default action", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await routeModel(page);
   await page.goto("/?e2e=signed-in&screen=S11");
   await toSleep(page);
-  await page.locator("#model-weekday-bed").click();
-  await expect(page.locator("#model-weekday-bed-picker")).toBeVisible();
-  await assertFitsViewport(page);
+
+  for (const id of ["model-weekday-bed", "model-weekday-wake", "model-weekend-bed", "model-weekend-wake"] as const) {
+    const trigger = page.locator(`#${id}`);
+    await expect(trigger).toHaveAttribute("data-time-complete", "false");
+    await trigger.click();
+    const picker = page.locator(`#${id}-picker`);
+    await expect(picker).toBeVisible();
+    await expect(trigger).toHaveAttribute("data-time-complete", "false");
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("data-time-complete", "false");
+    await expect(trigger).toContainText("시간 선택");
+    await trigger.click();
+    await picker.getByRole("button", { name: "이 시간 사용", exact: true }).click();
+    await expectTimeValue(page, id, "00:00");
+    await expect(picker).toHaveCount(0);
+    await trigger.click();
+    await expect(picker.getByRole("radio", { name: "오전", exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(picker.getByRole("spinbutton", { name: / 시$/ })).toHaveAttribute("aria-valuetext", "12시");
+    await expect(picker.getByRole("spinbutton", { name: / 분$/ })).toHaveAttribute("aria-valuetext", "00분");
+    await expect(picker.getByRole("button", { name: "이 시간 사용", exact: true })).toHaveCount(0);
+    await trigger.click();
+  }
 });
 
 // Observe the actual built S11 flow; no test-only inference facade is installed.
@@ -1826,10 +1873,10 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
 
   const touchDrag = async (point: { x: number; y: number }, deltaY: number) => {
     await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchStart", touchPoints: [{ x: point.x, y: point.y, radiusX: 1, radiusY: 1 }],
+      type: "touchStart", touchPoints: [{ x: point.x, y: point.y, radiusX: 12, radiusY: 12 }],
     });
     await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchMove", touchPoints: [{ x: point.x, y: point.y + deltaY, radiusX: 1, radiusY: 1 }],
+      type: "touchMove", touchPoints: [{ x: point.x, y: point.y + deltaY, radiusX: 12, radiusY: 12 }],
     });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };
@@ -1839,19 +1886,22 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     if (!box) throw new Error("The mobile control has no touch geometry.");
     const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 12, radiusY: 12 }],
     });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };
 
   const emptyColumnPoint = async (selector: string) => mobilePage.locator(selector).evaluate((element) => {
     const box = element.getBoundingClientRect();
-    for (let x = Math.ceil(box.left) + 1; x < box.right; x += 1) {
-      for (let y = Math.ceil(box.top) + 1; y < box.bottom; y += 2) {
-        if (document.elementFromPoint(x, y) === element) return { x, y };
+    const radius = 12;
+    // The entire contact area must fit on the drag surface, not a one-pixel gap.
+    for (let x = Math.ceil(box.left) + radius + 1; x < box.right - radius; x += 1) {
+      for (let y = Math.ceil(box.top) + radius + 1; y < box.bottom - radius; y += 2) {
+        const contact = [[0, 0], [-radius, 0], [radius, 0], [0, -radius], [0, radius]];
+        if (contact.every(([dx, dy]) => document.elementFromPoint(x + dx, y + dy) === element)) return { x, y };
       }
     }
-    throw new Error("No empty wheel-column surface was available for a native touch drag.");
+    throw new Error("No finger-sized wheel-column surface was available for a native touch drag.");
   });
 
   const selectBlankMidnight = async (id: string, order: readonly ("period" | "hour" | "minute")[]) => {
@@ -1861,11 +1911,13 @@ test("S11 real mobile touch preserves six explicit time orders, direct taps and 
     const period = picker.getByRole("radio", { name: "오전", exact: true });
     const hour = picker.getByRole("spinbutton", { name: / 시$/ });
     const minute = picker.getByRole("spinbutton", { name: / 분$/ });
-    for (const [index, part] of order.entries()) {
+    await expect(trigger).toHaveAttribute("data-time-complete", "false");
+    for (const part of order) {
       if (part === "period") await touchTap(period);
       else if (part === "hour") await touchTap(hour.getByRole("button", { name: "12시", exact: true }));
       else await touchTap(minute.getByRole("button", { name: "00분", exact: true }));
-      await expect(trigger).toHaveAttribute("data-time-complete", index === 2 ? "true" : "false");
+      await expect(trigger).toHaveAttribute("data-time-complete", "true");
+      await expectTimeValue(mobilePage, id, "00:00");
     }
     await expectTimeValue(mobilePage, id, "00:00");
     return { trigger, picker, period, hour, minute };
@@ -2006,7 +2058,7 @@ test("S11 time wheel detent keeps detent presentation after native touch tap", a
     if (!box) throw new Error("The mobile control has no touch geometry.");
     const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchStart", touchPoints: [{ ...point, radiusX: 1, radiusY: 1 }],
+      type: "touchStart", touchPoints: [{ ...point, radiusX: 12, radiusY: 12 }],
     });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };

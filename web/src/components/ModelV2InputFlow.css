@@ -279,6 +279,7 @@
 
 
 .model-v2-flow .model-v2-time-field {
+  container-type: inline-size;
   align-self: start;
   width: 100%;
   min-width: 0;
@@ -306,8 +307,8 @@
 }
 
 .model-v2-flow .model-v2-time-picker {
-  --time-wheel-row: 2.6rem;
-  --time-wheel-height: 12rem;
+  --time-wheel-row: max(var(--sk7-target-min), 2.75rem);
+  --time-wheel-height: calc(var(--time-wheel-row) * 5);
   position: relative;
   display: grid;
   grid-template-columns: minmax(5.4rem, .86fr) minmax(0, 1fr) minmax(0, 1fr);
@@ -989,7 +990,31 @@
   }
 }
 
+@container (max-width: 18rem) {
+  .model-v2-flow .model-v2-time-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .model-v2-flow .model-v2-period-selector {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto;
+    padding: var(--sk7-space-xs);
+    border-right: 0;
+    border-bottom: 1px solid var(--sk7-border);
+  }
+}
+
 @media (max-width: 38rem) {
+  .model-v2-flow .model-v2-time-default {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .model-v2-flow .model-v2-time-apply {
+    width: 100%;
+  }
+
   .model-v2-flow.signal-scene {
     gap: var(--sk7-space-md);
     padding: 0 0 var(--sk7-space-2xl);
@@ -1078,6 +1103,26 @@
   z-index: 6;
 }
 
+.model-v2-flow .model-v2-time-default {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sk7-space-sm);
+  padding: var(--sk7-space-xs) var(--sk7-space-2xs) 0;
+  border-top: 1px solid var(--sk7-border);
+}
+
+.model-v2-flow .model-v2-time-default .model-v2-time-editing {
+  margin: 0;
+}
+
+.model-v2-flow .model-v2-time-apply {
+  flex: none;
+  min-height: var(--sk7-target-min);
+  padding: var(--sk7-space-xs) var(--sk7-space-sm);
+}
+
 .model-v2-flow .model-v2-wheel-column + .model-v2-wheel-column {
   border-left: 1px solid color-mix(in srgb, var(--sk7-border) 72%, transparent);
 }
@@ -1097,8 +1142,9 @@
   position: absolute;
   z-index: 2;
   top: 50%;
-  left: .15rem;
-  width: calc(100% - .3rem);
+  /* Leave a finger-sized surface for the existing column drag gesture. */
+  left: 28px;
+  width: calc(100% - 30px);
   height: var(--time-wheel-row);
   padding: 0 .2rem;
   border: 0;
@@ -1107,24 +1153,35 @@
   font: inherit;
   line-height: var(--time-wheel-row);
   text-align: center;
-  transform-origin: center center;
-  backface-visibility: hidden;
+  touch-action: manipulation;
+  transform: translateY(-50%);
   transition: top 105ms cubic-bezier(.2, .75, .25, 1),
-              transform 105ms cubic-bezier(.2, .75, .25, 1),
               opacity 105ms ease-out,
               color 105ms ease-out;
+}
+
+.model-v2-flow .model-v2-hour-detent .model-v2-wheel-value {
+  display: block;
+  pointer-events: none;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition: transform 105ms cubic-bezier(.2, .75, .25, 1);
 }
 
 .model-v2-flow .model-v2-hour-detent button[data-offset="-2"] {
   top: calc(50% - (2 * var(--time-wheel-row)));
   opacity: .22;
-  transform: translateY(-50%) rotateX(54deg) translateZ(-1.1rem) scale(.78);
+}
+.model-v2-flow .model-v2-hour-detent button[data-offset="-2"] .model-v2-wheel-value {
+  transform: rotateX(54deg) translateZ(-1.1rem) scale(.78);
 }
 
 .model-v2-flow .model-v2-hour-detent button[data-offset="-1"] {
   top: calc(50% - var(--time-wheel-row));
   opacity: .58;
-  transform: translateY(-50%) rotateX(28deg) translateZ(-.35rem) scale(.9);
+}
+.model-v2-flow .model-v2-hour-detent button[data-offset="-1"] .model-v2-wheel-value {
+  transform: rotateX(28deg) translateZ(-.35rem) scale(.9);
 }
 
 .model-v2-flow .model-v2-hour-detent button[data-offset="0"] {
@@ -1133,30 +1190,34 @@
   font-size: 1.1em;
   font-weight: var(--sk7-weight-bold);
   opacity: 1;
-  transform: translateY(-50%) translateZ(1.85rem) scale(1.16);
+}
+.model-v2-flow .model-v2-hour-detent button[data-offset="0"] .model-v2-wheel-value {
+  transform: translateZ(1.85rem) scale(1.16);
 }
 
 .model-v2-flow .model-v2-hour-detent button[data-offset="1"] {
   top: calc(50% + var(--time-wheel-row));
   opacity: .58;
-  transform: translateY(-50%) rotateX(-28deg) translateZ(-.35rem) scale(.9);
+}
+.model-v2-flow .model-v2-hour-detent button[data-offset="1"] .model-v2-wheel-value {
+  transform: rotateX(-28deg) translateZ(-.35rem) scale(.9);
 }
 
 .model-v2-flow .model-v2-hour-detent button[data-offset="2"] {
   top: calc(50% + (2 * var(--time-wheel-row)));
   opacity: .22;
-  transform: translateY(-50%) rotateX(-54deg) translateZ(-1.1rem) scale(.78);
+}
+.model-v2-flow .model-v2-hour-detent button[data-offset="2"] .model-v2-wheel-value {
+  transform: rotateX(-54deg) translateZ(-1.1rem) scale(.78);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .model-v2-flow .model-v2-hour-detent button,
-  .model-v2-flow .model-v2-hour-detent button[data-offset="-2"],
-  .model-v2-flow .model-v2-hour-detent button[data-offset="-1"],
-  .model-v2-flow .model-v2-hour-detent button[data-offset="0"],
-  .model-v2-flow .model-v2-hour-detent button[data-offset="1"],
-  .model-v2-flow .model-v2-hour-detent button[data-offset="2"] {
+  .model-v2-flow .model-v2-hour-detent .model-v2-wheel-value {
     transition: none;
-    transform: translateY(-50%);
+  }
+  .model-v2-flow .model-v2-hour-detent .model-v2-wheel-value {
+    transform: none !important;
   }
 }
 
@@ -1175,8 +1236,9 @@
   position: absolute;
   z-index: 2;
   top: 50%;
-  left: .15rem;
-  width: calc(100% - .3rem);
+  /* Leave a finger-sized surface for the existing column drag gesture. */
+  left: 28px;
+  width: calc(100% - 30px);
   height: var(--time-wheel-row);
   padding: 0 .2rem;
   border: 0;
@@ -1185,25 +1247,36 @@
   font: inherit;
   line-height: var(--time-wheel-row);
   text-align: center;
-  transform-origin: center center;
-  backface-visibility: hidden;
+  touch-action: manipulation;
+  transform: translateY(-50%);
   transition:
     top 78ms cubic-bezier(.2, .75, .25, 1),
-    transform 78ms cubic-bezier(.2, .75, .25, 1),
     opacity 78ms ease-out,
     color 78ms ease-out;
+}
+
+.model-v2-flow .model-v2-minute-detent .model-v2-wheel-value {
+  display: block;
+  pointer-events: none;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition: transform 78ms cubic-bezier(.2, .75, .25, 1);
 }
 
 .model-v2-flow .model-v2-minute-detent button[data-offset="-2"] {
   top: calc(50% - (2 * var(--time-wheel-row)));
   opacity: .22;
-  transform: translateY(-50%) rotateX(54deg) translateZ(-1.1rem) scale(.78);
+}
+.model-v2-flow .model-v2-minute-detent button[data-offset="-2"] .model-v2-wheel-value {
+  transform: rotateX(54deg) translateZ(-1.1rem) scale(.78);
 }
 
 .model-v2-flow .model-v2-minute-detent button[data-offset="-1"] {
   top: calc(50% - var(--time-wheel-row));
   opacity: .58;
-  transform: translateY(-50%) rotateX(28deg) translateZ(-.35rem) scale(.9);
+}
+.model-v2-flow .model-v2-minute-detent button[data-offset="-1"] .model-v2-wheel-value {
+  transform: rotateX(28deg) translateZ(-.35rem) scale(.9);
 }
 
 .model-v2-flow .model-v2-minute-detent button[data-offset="0"] {
@@ -1212,30 +1285,34 @@
   font-size: 1.1em;
   font-weight: var(--sk7-weight-bold);
   opacity: 1;
-  transform: translateY(-50%) translateZ(1.85rem) scale(1.16);
+}
+.model-v2-flow .model-v2-minute-detent button[data-offset="0"] .model-v2-wheel-value {
+  transform: translateZ(1.85rem) scale(1.16);
 }
 
 .model-v2-flow .model-v2-minute-detent button[data-offset="1"] {
   top: calc(50% + var(--time-wheel-row));
   opacity: .58;
-  transform: translateY(-50%) rotateX(-28deg) translateZ(-.35rem) scale(.9);
+}
+.model-v2-flow .model-v2-minute-detent button[data-offset="1"] .model-v2-wheel-value {
+  transform: rotateX(-28deg) translateZ(-.35rem) scale(.9);
 }
 
 .model-v2-flow .model-v2-minute-detent button[data-offset="2"] {
   top: calc(50% + (2 * var(--time-wheel-row)));
   opacity: .22;
-  transform: translateY(-50%) rotateX(-54deg) translateZ(-1.1rem) scale(.78);
+}
+.model-v2-flow .model-v2-minute-detent button[data-offset="2"] .model-v2-wheel-value {
+  transform: rotateX(-54deg) translateZ(-1.1rem) scale(.78);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .model-v2-flow .model-v2-minute-detent button,
-  .model-v2-flow .model-v2-minute-detent button[data-offset="-2"],
-  .model-v2-flow .model-v2-minute-detent button[data-offset="-1"],
-  .model-v2-flow .model-v2-minute-detent button[data-offset="0"],
-  .model-v2-flow .model-v2-minute-detent button[data-offset="1"],
-  .model-v2-flow .model-v2-minute-detent button[data-offset="2"] {
+  .model-v2-flow .model-v2-minute-detent .model-v2-wheel-value {
     transition: none;
-    transform: translateY(-50%);
+  }
+  .model-v2-flow .model-v2-minute-detent .model-v2-wheel-value {
+    transform: none !important;
   }
 }
 
