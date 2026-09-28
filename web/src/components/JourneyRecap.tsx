@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { UiIcon } from './UiIcon';
 import { UiObject } from './UiObject';
 import { StaticJourneyLandscape } from './StaticSceneFallback';
@@ -23,15 +23,16 @@ type JourneyRecapProps = {
   records: (selectedDate: string | null) => ReactNode;
   challenge: ReactNode;
   actions: ReactNode;
+  selectedDate: string | null;
+  onSelectedDateChange: (date: string | null) => void;
   companionSpecies?: CompanionSpecies | null;
   companionAsset?: CompanionAsset | null;
   productionSceneEnabled?: boolean;
   reportOnly?: boolean;
 };
 
-/** Disposable day focus only; App retains requests, window dates and action guards. */
-export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, companionSpecies, companionAsset, productionSceneEnabled = false, reportOnly = false }: JourneyRecapProps) {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+/** App-owned day focus survives detail round-trips; this view owns only focus presentation. */
+export function JourneyRecap({ staticLandscape, today, days, year, period, freshness, navigation, records, challenge, actions, selectedDate, onSelectedDateChange, companionSpecies, companionAsset, productionSceneEnabled = false, reportOnly = false }: JourneyRecapProps) {
   const recordsRef = useRef<HTMLDivElement>(null);
   const selectedDay = days.find(day => day.date === selectedDate);
   const focusedDate = selectedDay?.date ?? null;
@@ -53,7 +54,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
     : null;
 
   const focusReplayDay = (date: string, trigger?: HTMLButtonElement) => {
-    setSelectedDate(date);
+    onSelectedDateChange(date);
     if (trigger) dispatchLivingReplayDayFocus(trigger);
   };
   const focusRecords = () => {
@@ -83,7 +84,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
       {freshnessNote && <p className="recap-freshness" role="status" data-freshness={freshness}>{freshnessNote}</p>}
       <div className="recap-trail-heading">
         <p>날짜를 선택하면 그날의 기록만 아래에서 확인할 수 있어요.</p>
-        <button type="button" className="recap-show-week" aria-pressed={!focusedDate} aria-controls="recap-day-context recap-journal-records" onClick={() => setSelectedDate(null)}>7일 전체 보기</button>
+        <button type="button" className="recap-show-week" aria-pressed={!focusedDate} aria-controls="recap-day-context recap-journal-records" onClick={() => onSelectedDateChange(null)}>7일 전체 보기</button>
       </div>
       <SevenDayTrail days={days} today={today} selectedDate={focusedDate} onSelectDate={focusReplayDay} detailId="recap-day-context recap-journal-records" factsKnown={factsKnown} />
       <div className="recap-day-focus" id="recap-day-context" data-day-focused={Boolean(selectedDay)}>
@@ -135,7 +136,7 @@ export function JourneyRecap({ staticLandscape, today, days, year, period, fresh
         </div>
         <div className="recap-journal-scope" data-record-scope={focusedDate ? 'day' : 'week'}>
           <p aria-live="polite" aria-atomic="true">{focusedDate ? `${formatTrailDate(focusedDate)} 기록 표시 중` : '7일 전체 기록 표시 중'}</p>
-          {focusedDate && <button type="button" className="recap-clear-day" onClick={() => setSelectedDate(null)}>7일 전체 기록 보기</button>}
+          {focusedDate && <button type="button" className="recap-clear-day" onClick={() => onSelectedDateChange(null)}>7일 전체 기록 보기</button>}
         </div>
         {freshness === 'refreshing' || freshness === 'refresh-error' ? <p className="recap-journal-freshness">{freshnessNote}</p> : null}
       </header>

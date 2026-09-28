@@ -10,7 +10,7 @@ type Props = {
   items: readonly RecordBrowseItem[];
   selection: ExplorerSelection;
   onSelect: (selection: ExplorerSelection) => void;
-  onOpen: (item: RecordBrowseItem) => void;
+  onOpen: (item: RecordBrowseItem, fallbackKey: string | null) => void;
   returnPoint: ExplorerReturnPoint | null;
   onRestored: () => void;
   dateLabel: (date: string) => string;
@@ -32,6 +32,7 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
   const allFilter = useRef<HTMLButtonElement>(null);
   const descriptionId = useId();
   const { counts, dates, groups, visibleCount } = exploreRecords(items, selection);
+  const visibleItems = groups.flatMap(([, records]) => records);
   const selectionType = selection.filter === "all" ? "모든 기록" : detailTypes[selection.filter];
   const selectionDate = selection.date ? dateLabel(selection.date) : "모든 날짜";
   const hasActiveFilter = selection.filter !== "all" || selection.date !== null;
@@ -51,7 +52,8 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
     // Scene focuses its heading first. Restore the actual opener afterwards,
     // cancelling navigate's smooth scroll without animating the return journey.
     const frame = requestAnimationFrame(() => {
-      const row = rows.current.get(returnPoint.key);
+      const row = rows.current.get(returnPoint.key)
+        ?? (returnPoint.fallbackKey ? rows.current.get(returnPoint.fallbackKey) : undefined);
       if (row) {
         window.scrollTo({ top: returnPoint.scrollY, behavior: "instant" });
         row.focus({ preventScroll: true });
@@ -108,7 +110,11 @@ export function RecordExplorer({ items, selection, onSelect, onOpen, returnPoint
               ref={node => { if (node) rows.current.set(item.key, node); else rows.current.delete(item.key); }}
               aria-label={`상세 보기 · ${detailTypes[item.kind]} · ${dateLabel(date)}${item.kind === "blood-pressure" ? ` · ${periodLabel(item.record.period)}` : ""}`}
               aria-describedby={`${descriptionId}-${date}-${index}-facts ${descriptionId}-${date}-${index}-access`}
-              onClick={() => onOpen(item)}>
+              onClick={() => {
+                const visibleIndex = visibleItems.findIndex(candidate => candidate.key === item.key);
+                const fallbackKey = visibleItems[visibleIndex + 1]?.key ?? visibleItems[visibleIndex - 1]?.key ?? null;
+                onOpen(item, fallbackKey);
+              }}>
               <span className="record-explorer-type">{recordTypes.find(type => type.kind === item.kind)?.label}</span>
               <span className="record-explorer-facts" id={`${descriptionId}-${date}-${index}-facts`}>
                 <strong>{item.kind === "blood-pressure" ? displayMeasurement(item.record) : challengeLabel(item.record.action_id)}</strong>

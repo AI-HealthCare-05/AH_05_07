@@ -44,6 +44,7 @@ type SceneShellProps = {
   children: ReactNode;
   evidenceLabel?: string;
   onNavigate: (screen: ScreenId) => void;
+  navigationDisabled?: boolean;
   onSignOut?: () => void;
   signOutPending?: boolean;
   companionSelection: CompanionSelection | null;
@@ -52,7 +53,7 @@ type SceneShellProps = {
   savedSceneEvent?: SavedSceneEvent | null;
 };
 
-export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, onSignOut, signOutPending = false, companionSelection, companionSpecies, companionAsset, savedSceneEvent = null }: SceneShellProps) {
+export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedbackPhase, feedbackSuspended, sessionGeneration, activeScreen, children, evidenceLabel, onNavigate, navigationDisabled = false, onSignOut, signOutPending = false, companionSelection, companionSpecies, companionAsset, savedSceneEvent = null }: SceneShellProps) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [forcedColors, setForcedColors] = useState(() => window.matchMedia("(forced-colors: active)").matches);
   const shellRef = useRef<HTMLElement>(null);
@@ -128,14 +129,14 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
       />
       <a className="skip-link" href="#scene-content">본문으로 건너뛰기</a>
       <header className="app-header" data-main-section="header">
-        <button className="brand-button" type="button" onClick={() => onNavigate("S02")}
+        <button className="brand-button" type="button" onClick={() => onNavigate("S02")} disabled={navigationDisabled}
           aria-label="SK7 · 하루의 사실을 차분하게 · 오늘의 기록으로 이동">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
           <span><strong>SK7</strong><small>하루의 사실을 차분하게</small></span>
         </button>
         <div className="header-actions">
           {evidenceLabel && <span className="fixture-label">검토 상태 · {evidenceLabel}</span>}
-          {onSignOut && <button className="text-button" type="button" onClick={onSignOut} disabled={signOutPending} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "로그아웃"}</button>}
+          {onSignOut && <button className="text-button" type="button" onClick={onSignOut} disabled={signOutPending || navigationDisabled} aria-busy={signOutPending}>{signOutPending ? "로그아웃 중" : "로그아웃"}</button>}
         </div>
       </header>
 
@@ -147,6 +148,7 @@ export function SceneShell({ staticJourneyUi = false, journeyPresentation, feedb
             aria-current={item.screen === activeNavigationScreen ? "page" : undefined}
             aria-label={item.label}
             onClick={() => onNavigate(item.screen)}
+            disabled={navigationDisabled}
             key={item.screen}
           >
             <UiIcon name={iconForScreen(item.screen)} size={20} data-nav-icon={item.screen} />

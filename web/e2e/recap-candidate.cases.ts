@@ -133,6 +133,21 @@ test('recap date focus filters existing records and returns to the complete week
   await expect(records('legacy')).toHaveCount(1);
 });
 
+test('recap keeps the selected date when a record detail returns to S10', async ({ page }) => {
+  await fixture(page);
+  const selectedDate = page.locator('[data-trail-date="2026-09-11"] > button');
+  await selectedDate.click();
+  const recap = page.locator('[data-main-section="seven-day-dashboard"]');
+  await expect(recap).toHaveAttribute('data-focused-date', '2026-09-11');
+  await page.locator('[data-record-lane="blood-pressure"] .record-action').click();
+  await expect(page.locator('[data-scene="S09"]')).toBeVisible();
+  await page.getByRole('button', { name: '7일 돌아보기로 돌아가기', exact: true }).click();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(recap).toHaveAttribute('data-focused-date', '2026-09-11');
+  await expect(selectedDate).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-record-scope="day"]')).toContainText('9월 11일');
+});
+
 test('recap rapid touch leaves only the selected date treatment', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 384, height: 718 },
