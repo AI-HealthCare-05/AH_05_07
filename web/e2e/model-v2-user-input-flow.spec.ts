@@ -121,8 +121,14 @@ test("S11 exposes exactly 11 conceptual questions immediately and focuses the fi
   await routeModel(page);
   await openS11(page);
   await expect(page.locator("[data-model-v2-question]")).toHaveCount(11);
+  await expect(page.locator(".model-v2-intake-section > header p")).toHaveCount(0);
+  await expect(page.locator(".model-v2-question-number")).toHaveText(
+    Array.from({ length: 11 }, (_, index) => String(index + 1).padStart(2, "0")));
   await expect(question(page, "age")).toBeVisible();
   await expect(page.getByText("0 / 11 입력 완료").first()).toBeVisible();
+  await expect(page.locator(".model-v2-intake-rail .model-v2-progress-caption")).toBeVisible();
+  await expect(page.locator(".model-v2-intake-rail .model-v2-privacy-note")).toHaveCount(0);
+  await expect(page.locator(".model-v2-final-action > *")).toHaveCount(3);
   await expect(page.getByRole("button", { name: "입력 시작하기" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "다음", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "입력 확인하기" })).toHaveCount(0);
@@ -133,6 +139,8 @@ test("S11 exposes exactly 11 conceptual questions immediately and focuses the fi
   await page.locator("#model-age").fill("35");
   await expect(page.locator("#model-v2-input-error")).toHaveCount(0);
   await expect(page.getByText("1 / 11 입력 완료").first()).toBeVisible();
+  await expect(question(page, "age").locator(".model-v2-question-complete [aria-hidden='true']")).toHaveText("✓");
+  await expect(question(page, "age").locator(".model-v2-question-complete .sr-only")).toHaveText("입력 완료");
 });
 
 test("structural answers complete their questions without redundant zeros or non-applicable selection", async ({ page }) => {
@@ -196,8 +204,12 @@ test("successful browser-local inference shows the execution receipt and keeps s
   await expect(receipt).toContainText("Model V2");
   await expect(receipt).toContainText("모델 입력 11 / 11 사용");
   await expect(receipt).toContainText("브라우저 계산 완료");
-  await expect(receipt).toContainText("분석 입력·결과 서버 추론 전송 없음");
-  await expect(result(page).locator(".model-v2-summary-heading")).toContainText("모델 결과와 별도");
+  await expect(receipt).not.toContainText("서버 전송");
+  await expect(result(page).locator(".model-v2-local-privacy")).toHaveText(
+    "이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함");
+  await expect(result(page).locator(".model-v2-local-privacy + .model-v2-execution-receipt")).toHaveCount(1);
+  await expect(result(page).locator(".model-v2-summary-heading h3")).toHaveText("입력 내용 요약");
+  await expect(result(page).locator(".model-v2-outcome-kicker")).toHaveText("모델 결과와 별도");
   await expect(result(page).locator(".model-v2-meaning-limit")).toContainText("확률·백분율");
   await expect(result(page).locator(".model-v2-result-next")).toBeVisible();
   const details = result(page).locator("details[data-model-v2-research]");
@@ -328,6 +340,14 @@ for (const width of [1366, 768, 390, 320]) {
     await expect(question(page, "weekendSleep")).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+    if (width === 320) {
+      const choices = await page.locator(".model-v2-choice").evaluateAll((nodes) => nodes.map((node) => ({
+        fontSize: Number.parseFloat(getComputedStyle(node).fontSize), height: node.getBoundingClientRect().height,
+      })));
+      expect(choices.length).toBeGreaterThan(0);
+      expect(Math.min(...choices.map((choice) => choice.fontSize))).toBeGreaterThanOrEqual(14);
+      expect(Math.min(...choices.map((choice) => choice.height))).toBeGreaterThanOrEqual(44);
+    }
   });
 }
 

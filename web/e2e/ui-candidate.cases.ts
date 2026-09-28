@@ -207,7 +207,7 @@ for (const state of s11ContinuationCases) test(`S11 continuation ${state.name}`,
   const result = page.locator('[data-model-v2-user-result="processed"]');
   await expect(page.locator('#model-v2-result-title')).toBeFocused();
   await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
-  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도');
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('모델 결과와 별도');
   await expect(result.getByRole('heading', { name: '다음 한 걸음', exact: true })).toBeVisible();
   const continuation = result.locator('[data-model-v2-continuation]');
   await expect(continuation).toHaveAttribute('data-model-v2-continuation', state.key);
@@ -249,7 +249,7 @@ test('S11 post-survey journey closes through BP save, saved confirmation, today,
   await expect(result.locator('[data-model-v2-preview-value]')).toBeVisible();
   await expect(result.locator('[data-model-v2-preview-value]')).toHaveText('0.055');
   await expect(result).toBeVisible();
-  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도');
+  await expect(result.locator('.model-v2-outcome-kicker')).toHaveText('모델 결과와 별도');
 
   await page.getByRole('button', { name: '혈압 기록 남기기', exact: true }).click();
   await expect(page.locator('#S04-title')).toBeFocused();
