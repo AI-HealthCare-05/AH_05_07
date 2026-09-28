@@ -1488,3 +1488,156 @@
     outline-offset: -2px;
   }
 }
+
+/* S03–S07: one quiet wayfinding line; the optional steps are never gates. */
+.journey-candidate .daily-action-loop {
+  display: grid;
+  gap: var(--sk7-space-xs);
+  width: 100%;
+  border-block: 1px solid var(--sk7-border);
+  padding-block: var(--sk7-space-sm);
+}
+
+.daily-action-loop-title {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: .04em;
+}
+
+.daily-action-loop ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sk7-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.daily-action-loop li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0 var(--sk7-space-xs);
+  min-width: 0;
+  border-bottom: 2px solid transparent;
+  padding: var(--sk7-space-xs) 0;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  font-weight: var(--sk7-weight-medium);
+  line-height: 1.35;
+}
+
+.daily-action-loop li[aria-current="step"] {
+  border-bottom-color: var(--sk7-accent);
+  color: var(--sk7-text);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.daily-action-loop-index { color: var(--sk7-accent); font-size: var(--sk7-type-caption); font-variant-numeric: tabular-nums; }
+.daily-action-loop li small { grid-column: 2; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-medium); }
+
+.journey-challenge-choice.scene,
+.journey-challenge-summary.scene,
+.journey-today-review.scene,
+.journey-saved.scene,
+.journey-sheet.scene {
+  max-width: 68rem;
+  min-height: 0;
+  margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-3xl) 0 var(--sk7-space-4xl);
+  box-shadow: none;
+}
+
+.journey-challenge-choice .challenge-choice-context {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.journey-challenge-choice .challenge-choice-context strong { font-size: var(--sk7-type-subtitle); line-height: var(--sk7-leading-tight); }
+.journey-challenge-choice .choice-grid { gap: 0; border-block: 1px solid var(--sk7-border); }
+.journey-challenge-choice .choice-tile {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: var(--sk7-space-xs) var(--sk7-space-md);
+  min-height: 10.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--sk7-space-lg) var(--sk7-space-md);
+  box-shadow: none;
+}
+.journey-challenge-choice .choice-tile + .choice-tile { border-left: 1px solid var(--sk7-border); }
+.journey-challenge-choice .choice-tile.is-selected { background: var(--sk7-accent-soft); box-shadow: inset 0 3px 0 var(--sk7-accent); }
+.journey-challenge-choice .choice-icon { grid-row: 1 / 4; width: 2.6rem; height: 2.6rem; }
+.journey-challenge-choice .choice-tile strong { font-size: var(--sk7-type-subtitle); }
+.journey-challenge-choice .choice-state { grid-column: 2; }
+.journey-challenge-choice .journey-challenge-state { border: 0; border-left: 2px solid var(--sk7-border-strong); border-radius: 0; background: transparent; padding: var(--sk7-space-xs) var(--sk7-space-sm); }
+.journey-challenge-choice .journey-challenge-actions { justify-content: flex-start; border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-md); }
+.journey-challenge-choice .journey-challenge-actions .text-button { margin-left: auto; }
+
+.journey-sheet .measurement-panel { padding-top: var(--sk7-space-lg); }
+.journey-sheet .bp-sheet-fields { grid-template-columns: minmax(13rem, .8fr) minmax(0, 1.2fr); gap: var(--sk7-space-xl); }
+.journey-sheet .bp-sheet-context { grid-template-columns: minmax(0, 1fr); }
+.journey-sheet .bp-measurement-pair { border-top: 0; border-left: 1px solid var(--sk7-border); padding: 0 0 0 var(--sk7-space-xl); }
+.journey-sheet .form-actions { border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-lg); }
+.journey-sheet .bp-sheet-secondary { padding-top: var(--sk7-space-md); }
+
+.journey-saved .save-next-step { margin-top: var(--sk7-space-sm); }
+.journey-saved .save-ripple { margin-inline: auto; }
+.journey-saved .journey-saved-home { justify-self: start; margin-top: var(--sk7-space-xs); }
+
+.journey-challenge-summary .journey-challenge-summary-card { width: 100%; }
+.journey-challenge-summary.scene { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--sk7-space-lg) var(--sk7-space-2xl); }
+.journey-challenge-summary > .scene-copy,
+.journey-challenge-summary > .daily-action-loop,
+.journey-challenge-summary > .journey-challenge-next-actions,
+.journey-challenge-summary > [data-living-cycle] { grid-column: 1 / -1; }
+.journey-challenge-summary .journey-challenge-summary-card { border-top-width: 2px; }
+.journey-challenge-summary .journey-challenge-checkin-card { border-top-color: var(--sk7-accent); }
+.journey-challenge-summary .journey-challenge-dates { display: flex; flex-wrap: wrap; gap: 0 var(--sk7-space-xs); }
+.journey-challenge-summary .journey-challenge-dates span { margin-right: var(--sk7-space-xs); }
+.journey-challenge-summary .journey-challenge-next-actions { border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-lg); }
+.journey-challenge-summary .journey-challenge-next-actions .secondary { background: transparent; box-shadow: none; }
+
+.journey-today-review .fact-lanes > .fact-lead { border-top-width: 2px; }
+.journey-today-review .journey-today-bp-records { gap: 0; margin-top: var(--sk7-space-sm); }
+.journey-today-review .journey-today-bp-records > div { align-items: center; padding-block: var(--sk7-space-sm); }
+.journey-today-review .journey-today-bp-records dd { color: var(--sk7-text); font-size: clamp(1.4rem, 2.4vw, 2rem); letter-spacing: -.04em; }
+
+@media (max-width: 820px) {
+  .journey-challenge-summary.scene { grid-template-columns: minmax(0, 1fr); }
+  .journey-sheet .bp-sheet-fields { grid-template-columns: minmax(0, 1fr); }
+  .journey-sheet .bp-sheet-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journey-sheet .bp-measurement-pair { border-top: 1px solid var(--sk7-border); border-left: 0; padding: var(--sk7-space-lg) 0 0; }
+}
+
+@media (max-width: 580px) {
+  .journey-challenge-choice.scene,
+  .journey-challenge-summary.scene,
+  .journey-today-review.scene,
+  .journey-saved.scene,
+  .journey-sheet.scene { padding: var(--sk7-space-lg) 0 var(--sk7-space-3xl); }
+  .daily-action-loop li { grid-template-columns: minmax(0, 1fr); font-size: var(--sk7-type-caption); }
+  .daily-action-loop-index { font-size: .7rem; }
+  .daily-action-loop li small { grid-column: 1; }
+  .journey-challenge-choice .choice-grid { grid-template-columns: minmax(0, 1fr); }
+  .journey-challenge-choice .choice-tile { min-height: var(--sk7-target-min); padding: var(--sk7-space-md) var(--sk7-space-xs); }
+  .journey-challenge-choice .choice-tile + .choice-tile { border-top: 1px solid var(--sk7-border); border-left: 0; }
+  .journey-challenge-choice .journey-challenge-actions .text-button { margin-left: 0; }
+  .journey-sheet .bp-sheet-context { grid-template-columns: minmax(0, 1fr); }
+  .journey-sheet .bp-measurement-pair { padding-top: var(--sk7-space-md); }
+  .journey-sheet .form-actions { padding-top: var(--sk7-space-md); }
+  .journey-today-review .journey-today-bp-records dd { font-size: var(--sk7-type-subtitle); }
+}
+
+@media (forced-colors: active) {
+  .daily-action-loop li[aria-current="step"] { border-bottom-color: Highlight; }
+  .journey-challenge-choice .choice-tile.is-selected { outline: 2px solid Highlight; outline-offset: -2px; }
+}

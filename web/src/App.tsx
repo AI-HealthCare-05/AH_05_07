@@ -24,6 +24,7 @@ import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { RecordExplorer } from "./components/RecordExplorer";
 import { BloodPressureDraftNote } from "./components/BloodPressureDraftNote";
+import { DailyActionLoop } from "./components/DailyActionLoop";
 import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDraft } from "./components/useNewBloodPressureDraft";
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
@@ -1609,6 +1610,7 @@ function App() {
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
       if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} tone="subtle" className="journey-candidate journey-challenge-choice surface">
+        <DailyActionLoop current="S03" />
         <div className="challenge-choice-context status-notice" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
           <p className="eyebrow">선택 기능</p>
           <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
@@ -1635,6 +1637,7 @@ function App() {
         </div>
         <div className="action-group journey-challenge-actions">
           {activeChallenge && !activeChallengeEnded && !isPriorDashboard && <button className="secondary" type="button" onClick={() => navigate("S07")} disabled={controlsDisabled}>오늘 상태 확인·기록하기</button>}
+          <button className="secondary" type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>
           <button className="text-button" type="button" onClick={() => navigate("S02")} disabled={readNavigationDisabled}>오늘의 기록으로 돌아가기</button>
         </div>
       </Scene>;
@@ -1651,6 +1654,7 @@ function App() {
           tone="emphasis"
           className={presentation.journey ? "journey-candidate journey-entry journey-sheet surface" : ""}
         >
+          {presentation.journey && <DailyActionLoop current="S04" />}
           <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
             <div className="bp-sheet-fields">
               <div className="bp-sheet-context">
@@ -1775,6 +1779,7 @@ function App() {
     if (activeScreen === "S05") {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
       return <Scene id="S05" {...journeyCopy.S05} tone="subtle" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
+        {presentation.journey && <DailyActionLoop current="S05" />}
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <section className="save-next-step section-header" aria-labelledby="save-next-step-title">
           <p className="eyebrow">다음 확인</p>
@@ -1786,26 +1791,28 @@ function App() {
           <p>{savedFactKind === "challenge-checkin"
             ? "챌린지 상태는 혈압 기록과 별도로 남아요."
             : savedBloodPressureIsToday
-              ? "오늘 화면에서 바로 확인할 수 있어요."
+              ? "오늘 기록 상세에서 바로 확인할 수 있어요."
               : "기록 찾아보기에서 날짜·시간대별로 확인할 수 있어요."}</p>
         </section>}
         <div className="split-actions action-group journey-continuation-actions journey-continuation-actions--saved">
           <button type="button" onClick={() => {
             setConfirmedSave(false);
             savedScene.clear();
-            navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "S08" : "S02");
-          }}>{savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "기록 찾아보기" : "오늘의 기록 보기"}</button>
+            navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "S08" : savedBloodPressureIsToday && presentation.journey ? "S07" : "S02");
+          }}>{savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "기록 찾아보기" : savedBloodPressureIsToday && presentation.journey ? "방금 기록한 혈압 확인" : "오늘의 기록 보기"}</button>
           <button className="secondary" type="button" onClick={() => {
             setConfirmedSave(false);
             savedScene.clear();
             navigate(savedFactKind === "challenge-checkin" ? "S06" : "S04");
           }}>{savedFactKind === "challenge-checkin" ? "챌린지 상태 보기" : "계속 기록하기"}</button>
         </div>
+        {presentation.journey && savedBloodPressureIsToday && <button className="text-button journey-saved-home" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>}
       </Scene>;
     }
 
     if (activeScreen === "S06") {
       if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} tone="subtle" className="journey-candidate journey-challenge-summary surface">
+        <DailyActionLoop current="S06" />
         <section className="locked-challenge journey-challenge-summary-card section-header" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
           <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
@@ -1837,6 +1844,7 @@ function App() {
 
     if (activeScreen === "S07") {
       if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="base" className="journey-candidate journey-today-review surface">
+        <DailyActionLoop current="S07" />
         <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
           ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
           : "혈압·챌린지·이전 기록을 따로 확인해요."}</span></div>

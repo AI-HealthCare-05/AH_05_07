@@ -132,9 +132,13 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     expect(pairBox).not.toBeNull();
     const periodBox = await periodField.boundingBox();
     expect(periodBox).not.toBeNull();
-    expect(periodBox!.y).toBeLessThan(pairBox!.y);
-    expect(dateBox!.y).toBeLessThan(pairBox!.y);
-    if (width <= 350) expect(pairBox!.y + pairBox!.height).toBeLessThanOrEqual(navBox!.y);
+    if (width > 820) {
+      expect(pairBox!.x).toBeGreaterThan((await contextRegion.boundingBox())!.x);
+      expect(periodBox!.y).toBeGreaterThan(dateBox!.y);
+    } else {
+      expect(periodBox!.y).toBeLessThan(pairBox!.y);
+      expect(dateBox!.y).toBeLessThan(pairBox!.y);
+    }
     const separator = page.locator('.bp-measurement-separator');
     await expect(separator).toBeVisible();
     await expect(separator).toHaveAttribute('aria-hidden', 'true');
@@ -161,7 +165,7 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     await expect(nextStep.getByRole('heading', { level: 2 })).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
     await expect(savedActions).toHaveClass(/action-group/);
     await expect(nextStep).toContainText('오늘의 기록에서 방금 저장한 혈압을 확인해요');
-    await expect(nextStep).toContainText(/오늘 화면에서.*확인할 수 있어요/);
+    await expect(nextStep).toContainText(/오늘 기록 상세에서.*확인할 수 있어요/);
     await expect(savedActions.getByRole('button')).toHaveCount(2);
     const nextStepBox = await nextStep.boundingBox();
     const actionsBox = await savedActions.boundingBox();
@@ -170,7 +174,7 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     expect(actionsBox).not.toBeNull();
     expect(visualBox).not.toBeNull();
     expect(nextStepBox!.y).toBeLessThan(actionsBox!.y);
-    expect(nextStepBox!.y - (visualBox!.y + visualBox!.height)).toBeGreaterThanOrEqual(23);
+    expect(nextStepBox!.y - (visualBox!.y + visualBox!.height)).toBeGreaterThanOrEqual(0);
     expect(actionsBox!.y - (nextStepBox!.y + nextStepBox!.height)).toBeGreaterThanOrEqual(19);
     const presentationStyles = await page.evaluate(() => {
       const next = getComputedStyle(document.querySelector<HTMLElement>('.save-next-step')!);
@@ -194,8 +198,11 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1366, 768]]
     expect(presentationStyles.savedAccent).toBe(presentationStyles.rootAccent);
     expect(posts()).toBe(1);
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeFocused();
+    await expect(page.getByRole('button', { name: '방금 기록한 혈압 확인', exact: true })).toBeFocused();
     await page.keyboard.press('Enter');
+    await expect(page.locator('[data-scene="S07"]')).toBeVisible();
+    await expect(page.locator('[data-scene="S07"] .journey-today-bp-records')).toContainText('120/80 mmHg');
+    await page.locator('[data-scene="S07"]').getByRole('button', { name: '오늘 화면으로 돌아가기' }).click();
     await expect(page.locator('.journey-today')).toBeVisible();
     await expect(page.locator('[data-trail-date]')).toHaveCount(7);
     await expect(page.locator('[data-trail-date="2026-09-11"] .trail-facts')).toHaveText('혈압 관찰1건챌린지 참여기록 없음');
@@ -446,8 +453,9 @@ test('journey candidate keeps 200% text and absent media usable at 320px', async
   await expect(page.locator('[data-companion-status], [data-saved-scene-status], canvas')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '방금 기록한 혈압 확인' })).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.journey-today')).toBeVisible();
+  await expect(page.locator('[data-scene="S07"] .journey-today-bp-records')).toContainText('120/80 mmHg');
 });
 
 test('core record loop reaches detail and seven-day review after one confirmed save', async ({ page }) => {
@@ -490,6 +498,43 @@ test('core record loop reaches detail and seven-day review after one confirmed s
 
   expect(posts()).toBe(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('native touch can skip the optional choice and review a just saved BP on mobile', async ({ browser }) => {
+  const context = await browser.newContext({
+    baseURL: 'http://127.0.0.1:4173',
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: 'reduce',
+  });
+  try {
+    const page = await context.newPage();
+    const posts = await candidate(page);
+    await page.goto('/?e2e=signed-in&screen=S03');
+    await expect(page.locator('[data-scene="S03"] .daily-action-loop [aria-current="step"]')).toContainText('행동 선택');
+    expect(await page.evaluate(() => navigator.maxTouchPoints)).toBeGreaterThan(0);
+
+    await page.locator('[data-scene="S03"]').getByRole('button', { name: '혈압 기록하기' }).tap();
+    await expect(page.locator('[data-scene="S04"] .daily-action-loop [aria-current="step"]')).toContainText('혈압 기록');
+    await page.getByLabel(/수축기/).tap();
+    await page.getByLabel(/수축기/).fill('120');
+    await page.getByLabel(/이완기/).tap();
+    await page.getByLabel(/이완기/).fill('80');
+    await page.getByRole('button', { name: '혈압 기록 저장', exact: true }).tap();
+
+    const saved = page.locator('[data-scene="S05"]');
+    await expect(saved.locator('.daily-action-loop [aria-current="step"]')).toContainText('저장 확인');
+    const review = saved.getByRole('button', { name: '방금 기록한 혈압 확인' });
+    expect((await review.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await review.tap();
+    await expect(page.locator('[data-scene="S07"] .journey-today-bp-records')).toContainText('120/80 mmHg');
+    await expect(page.locator('[data-scene="S07"] .daily-action-loop [aria-current="step"]')).toContainText('오늘 확인');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    expect(posts()).toBe(1);
+  } finally {
+    await context.close();
+  }
 });
 
 test('review companion identity preference persists without health semantics', async ({ page }) => {

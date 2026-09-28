@@ -432,7 +432,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 900]]) test(`S05 k
   expect(overlap(boxes.slot, boxes.nav)).toBe(false);
   await page.screenshot({ path: info.outputPath("s05.png"), fullPage: true });
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "오늘의 기록 보기" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "방금 기록한 혈압 확인" })).toBeFocused();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "혈압 기록 저장" })).toBeVisible();
