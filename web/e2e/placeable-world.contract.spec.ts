@@ -1,6 +1,6 @@
 import { keepsakeCandidate } from "../src/placeable/keepsakeMedia";
 import { expect, test } from "@playwright/test";
-import { Box3, Mesh, Vector3, type CylinderGeometry, type BufferGeometry, type Material } from "three";
+import { Box3, Mesh, Raycaster, Vector3, type CylinderGeometry, type BufferGeometry, type Material } from "three";
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
 import { PlaceableScene, PINWHEEL_RADIUS, type PlaceableProjection } from "../src/placeable/worldScene";
 import { PlaceableWorldInput } from "../src/placeable/worldInput";
@@ -13,6 +13,10 @@ import { readCompanionIdentity } from "../src/ui/companionIdentity";
 import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { GardenScene } from "../src/placeable/gardenScene";
 import { livingCityPixelRatio } from "../src/placeable/livingCityRenderDensity";
+import { PlazaLocomotion, PLAZA_LOCOMOTION, shortestYaw } from "../src/placeable/plazaLocomotion";
+import { PLAZA_CAMERA } from "../src/placeable/plazaCamera";
+import { PlazaPointerGesture } from "../src/placeable/plazaPointerGesture";
+import { cameraRelativeMovement } from "../transcend-lab/src/platform/spatial/thirdPersonCamera";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -476,4 +480,184 @@ test("keepsake is one bounded still marker beside the existing pinwheel; unknown
   }
   scene.update(projection({ keepsake: "forged" as never }), false); expect(scene.choiceMarker.visible).toBe(false);
   scene.dispose();
+});
+
+test("R2 camera-relative axes at 0/90/180/270 degrees retain normalized diagonals", () => {
+  for (const [yaw, x, z] of [[0, 0, -1], [Math.PI / 2, -1, 0], [Math.PI, 0, 1], [-Math.PI / 2, 1, 0]]) {
+    const forward = cameraRelativeMovement({ lateral: 0, forward: 1 }, yaw);
+    expect(forward.x).toBeCloseTo(x); expect(forward.z).toBeCloseTo(z);
+    const right = cameraRelativeMovement({ lateral: 1, forward: 0 }, yaw);
+    expect(right.x).toBeCloseTo(-z); expect(right.z).toBeCloseTo(x);
+    const diagonal = cameraRelativeMovement({ lateral: 1, forward: 1 }, yaw);
+    expect(Math.hypot(diagonal.x, diagonal.z)).toBeCloseTo(1);
+  }
+});
+
+test("R2 acceleration, deceleration, reversal and frame gaps are bounded; idle preserves facing", () => {
+  const motion = new PlazaLocomotion(); let p = { x: 0, z: 0 };
+  const forward = { lateral: 0, forward: 1, magnitude: 1, source: "keyboard" } as const;
+  for (let n = 0; n < 12; n++) {
+    const before = Math.hypot(motion.velocity.x, motion.velocity.z);
+    p = motion.step(p, forward, 0, 0.02, false);
+    expect(Math.hypot(motion.velocity.x, motion.velocity.z) - before).toBeLessThanOrEqual(PLAZA_LOCOMOTION.acceleration * 0.02 + 1e-8);
+  }
+  expect(Math.hypot(motion.velocity.x, motion.velocity.z)).toBeCloseTo(1.8);
+  const previous = { ...p }, yaw = motion.yaw;
+  p = motion.step(p, { ...forward, forward: -1 }, 0, 0.02, false);
+  expect(p.z).toBeLessThan(previous.z); // Momentum cannot instantly reverse.
+  expect(Math.abs(shortestYaw(yaw, motion.yaw))).toBeLessThanOrEqual(8 * 0.02 + 1e-8);
+  for (let n = 0; n < 20; n++) p = motion.step(p, still, 0, 0.02, false);
+  expect(motion.moving).toBe(false); const facing = motion.yaw;
+  expect(motion.step(p, still, 0, 0.05, false)).toEqual(p); expect(motion.yaw).toBe(facing);
+  expect(motion.step(p, forward, 0, NaN, false)).toEqual(p);
+  const gap = motion.step(p, forward, 0, 10, false);
+  expect(Math.hypot(gap.x - p.x, gap.z - p.z)).toBeLessThanOrEqual(1.8 * 0.05);
+});
+
+test("R2 actual bounded displacement owns facing and move state, including sliding along an edge", () => {
+  const scene = new PlaceableScene(); scene.update(projection(), false);
+  const motion = scene.locomotion; let p = { x: 100, z: 100 };
+  // Settle to the established bounds, then push into both blocked axes.
+  const outward = { lateral: 1, forward: -1, magnitude: 1, source: "pointer" } as const;
+  p = motion.step(p, outward, 0, 0.05, true);
+  p = motion.step(p, outward, 0, 0.05, true);
+  expect(motion.moving).toBe(false); expect(motion.velocity).toEqual({ x: 0, z: 0 });
+  const before = p;
+  p = motion.step(p, { ...outward, forward: 1 }, 0, 0.05, true);
+  expect(p.x).toBe(before.x); expect(p.z).toBeLessThan(before.z);
+  expect(Math.abs(motion.yaw)).toBeCloseTo(Math.PI);
+  motion.stop(); expect(motion.velocity).toEqual({ x: 0, z: 0 }); scene.dispose();
+});
+
+test("R2 facing uses the shortest arc across pi and reduced motion remains navigable", () => {
+  expect(shortestYaw(Math.PI - 0.05, -Math.PI + 0.05)).toBeCloseTo(0.1);
+  const motion = new PlazaLocomotion(); motion.yaw = Math.PI - 0.05;
+  const p = motion.step({ x: 0, z: 0 }, { lateral: -0.05, forward: 1, magnitude: 1, source: "keyboard" }, 0, 0.01, false);
+  expect(p.z).toBeLessThan(0); expect(Math.abs(shortestYaw(Math.PI - 0.05, motion.yaw))).toBeLessThanOrEqual(0.08 + 1e-8);
+  const next = motion.step(p, { lateral: 1, forward: 0, magnitude: 1, source: "keyboard" }, Math.PI / 2, 0.05, true);
+  expect(next.z).toBeLessThan(p.z); expect(motion.moving).toBe(true);
+  expect(motion.step(next, still, 0, 0.05, true)).toEqual(next);
+});
+
+test("R2 a brief step finishes facing its last actual direction, but lifecycle stop freezes pending rotation", () => {
+  const motion = new PlazaLocomotion();
+  let p = motion.step({ x: 0, z: 0 }, { lateral: 0, forward: 1, magnitude: 1, source: "keyboard" }, 0, 0.02, false);
+  p = motion.step(p, still, 0, 0.02, false); expect(motion.moving).toBe(false);
+  const stopped = { ...p };
+  for (let n = 0; n < 30; n++) p = motion.step(p, still, 0, 0.02, false);
+  expect(p).toEqual(stopped); expect(Math.abs(motion.yaw)).toBeCloseTo(Math.PI);
+  p = motion.step(p, { lateral: 1, forward: 0, magnitude: 1, source: "keyboard" }, 0, 0.02, false);
+  motion.stop(); const yaw = motion.yaw;
+  for (let n = 0; n < 30; n++) motion.step(p, still, 0, 0.02, false);
+  expect(motion.yaw).toBe(yaw);
+});
+
+test("R2 authored arrival waits for intent; camera clamps, reset, stop and live label projection", () => {
+  const scene = new PlaceableScene(); scene.update(projection(), false); scene.resize(390 / 844);
+  const camera = scene.camera.position.clone(), arrival = scene.labels();
+  for (let i = 0; i < 10; i++) scene.step(0.05, still);
+  expect(scene.camera.position.equals(camera)).toBe(true); expect(scene.cameraRig.engaged).toBe(false);
+  scene.cameraRig.orbit(Math.PI, 100); scene.cameraRig.zoom(-100);
+  for (let i = 0; i < 100; i++) scene.step(0.05, still);
+  expect(scene.cameraRig.pitch).toBeCloseTo(PLAZA_CAMERA.maxPitch);
+  expect(scene.cameraRig.distance).toBeCloseTo(PLAZA_CAMERA.minDistance);
+  expect(scene.labels()).not.toEqual(arrival);
+  scene.cameraRig.orbit(0, -100); scene.cameraRig.zoom(100);
+  for (let i = 0; i < 100; i++) scene.step(0.05, still);
+  expect(scene.cameraRig.pitch).toBeCloseTo(PLAZA_CAMERA.minPitch);
+  expect(scene.cameraRig.distance).toBeCloseTo(PLAZA_CAMERA.maxDistance);
+  scene.cameraRig.reset(); scene.update(projection(), true); scene.step(0.05, still);
+  expect(scene.cameraRig.pitch).toBe(PLAZA_CAMERA.pitch);
+  expect(scene.cameraRig.distance).toBe(PLAZA_CAMERA.distance);
+  scene.cameraRig.orbit(1, 0); scene.stopSpatial(); const stopped = scene.camera.position.clone();
+  scene.step(0.05, still); expect(scene.camera.position.distanceTo(stopped)).toBeLessThan(1e-8);
+  scene.camera.lookAt(scene.camera.position.clone().add(new Vector3(0, 1, 0))); scene.camera.updateMatrixWorld();
+  expect(scene.labels().every(label => !label.visible)).toBe(true);
+  scene.dispose();
+});
+
+test("R2 pointer threshold latches drag, handles release without a move and ignores other pointers", () => {
+  const gesture = new PlazaPointerGesture();
+  expect(gesture.begin(1, 0, 0)).toBe(true); expect(gesture.begin(2, 0, 0)).toBe(false);
+  expect(gesture.move(2, 100, 100)).toBeNull(); expect(gesture.move(1, 4, 4)).toBeNull();
+  expect(gesture.end(1, 4, 4)).toBe(true);
+  gesture.begin(1, 0, 0); expect(gesture.move(1, 8, 0)).toEqual({ x: 8, y: 0 });
+  gesture.move(1, 0, 0); expect(gesture.end(1, 0, 0)).toBe(false);
+  gesture.begin(1, 0, 0); expect(gesture.end(1, 0, 9)).toBe(false);
+  gesture.begin(1, 0, 0); gesture.clear(); expect(gesture.end(1, 0, 0)).toBe(false);
+});
+
+test("R2 actual gate/tree obstructions retract the camera and leave the companion torso visible at quarter turns", () => {
+  const scene = new PlaceableScene(); scene.update(projection(), false);
+  const ray = new Raycaster(); let retractions = 0;
+  for (let quarter = 0; quarter < 4; quarter++) {
+    scene.cameraRig.orbit(Math.PI / 2, 0);
+    for (let i = 0; i < 100; i++) scene.step(0.05, still);
+    if (scene.cameraRig.occluded) retractions++;
+    const torso = scene.actor.position.clone().setY(0.7), direction = torso.clone().sub(scene.camera.position);
+    ray.set(scene.camera.position, direction.clone().normalize()); ray.far = direction.length() - 0.05;
+    const hits = ray.intersectObjects(scene.scene.children.filter(object => object !== scene.actor), true);
+    expect(hits, `quarter ${quarter + 1} hides the actor`).toHaveLength(0);
+    expect(direction.length()).toBeGreaterThan(1.5);
+  }
+  expect(retractions).toBeGreaterThanOrEqual(2); scene.dispose();
+});
+
+test("R2 move crossfades without restarting, interrupts greet/rest, never translates its wrapper and reduces to neutral", () => {
+  const actor = new MySpaceCompanionActor(), gltf = companionFixture();
+  const move = gltf.animations.find(c => c.name === "move")!;
+  move.duration = 4; move.tracks = [new NumberKeyframeTrack(".rotation[z]", [0, 2, 4], [0, 0.3, 0])];
+  actor.start(getMySpaceCompanion("bear"), (_url, done) => done(gltf)); actor.greet();
+  actor.setMoving(true); expect(actor.pose).toBe("move"); expect(actor.greet()).toBe(false);
+  for (let n = 0; n < 30; n++) { actor.setMoving(true); actor.step(0.01); }
+  expect(gltf.scene.rotation.z).toBeGreaterThan(0.1); // Repeated calls did not restart its clock.
+  expect(actor.pose).toBe("move"); expect(actor.root.position.toArray()).toEqual([0, 0, 0]);
+  actor.setMoving(false); expect(actor.pose).toBe("idle");
+  actor.rest(); actor.setMoving(true); expect(actor.pose).toBe("move");
+  actor.setReducedMotion(true); expect(actor.pose).toBe("neutral"); actor.step(0.05);
+  expect(gltf.scene.rotation.z).toBe(0);
+  actor.setReducedMotion(false); expect(actor.pose).toBe("move");
+  actor.setMoving(false); actor.dispose(); actor.dispose();
+});
+
+test("R2 composite focus and independent pad/camera captures survive each other's release, then clear on every interruption", () => {
+  const oldWindow = Object.getOwnPropertyDescriptor(globalThis, "window"), oldDocument = Object.getOwnPropertyDescriptor(globalThis, "document");
+  const win = new EventTarget(), doc = Object.assign(new EventTarget(), { hidden: false });
+  Object.defineProperty(globalThis, "window", { configurable: true, value: win });
+  Object.defineProperty(globalThis, "document", { configurable: true, value: doc });
+  const input = new PlaceableWorldInput();
+  try {
+    const canvas = Object.assign(new Surface(), { style: { cursor: "" } }), pad = new Surface();
+    let orbits = 0, taps = 0, stops = 0;
+    input.mount(canvas as unknown as HTMLCanvasElement, pad as unknown as HTMLButtonElement, () => {}, {
+      orbit: () => orbits++, zoom: () => {}, tap: () => taps++, stop: () => stops++,
+    }); input.suspend(false);
+    const begin = () => {
+      dispatch(pad, "pointerdown", { button: 0, pointerId: 7 });
+      dispatch(pad, "pointermove", { pointerId: 7, clientX: 50, clientY: 0 });
+      dispatch(pad, "blur", { relatedTarget: canvas });
+      dispatch(canvas, "pointerdown", { button: 0, pointerId: 8, clientX: 20, clientY: 20 });
+      dispatch(canvas, "pointermove", { pointerId: 8, clientX: 40, clientY: 20 });
+      expect(input.movement.snapshot.intent.forward).toBe(1);
+    };
+    begin(); dispatch(canvas, "pointerup", { pointerId: 8, clientX: 40, clientY: 20 });
+    expect(input.movement.snapshot.pointerId).toBe(7); expect(taps).toBe(0);
+    dispatch(pad, "pointerup", { pointerId: 7 });
+    for (const reason of ["blur", "hidden", "suspend", "dispose"]) {
+      begin(); const before = stops;
+      if (reason === "blur") dispatch(win, "blur");
+      if (reason === "hidden") { doc.hidden = true; dispatch(doc, "visibilitychange"); }
+      if (reason === "suspend") input.suspend(true);
+      if (reason === "dispose") input.dispose();
+      expect(canvas.captured).toBeNull(); expect(pad.captured).toBeNull(); expect(stops).toBeGreaterThan(before);
+      expect(input.movement.snapshot.intent.magnitude).toBe(0);
+      doc.hidden = false; dispatch(doc, "visibilitychange"); input.suspend(false);
+    }
+    expect(orbits).toBe(5);
+  } finally {
+    input.dispose();
+    for (const [name, descriptor] of [["window", oldWindow], ["document", oldDocument]] as const) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor); else Reflect.deleteProperty(globalThis, name);
+    }
+  }
 });
