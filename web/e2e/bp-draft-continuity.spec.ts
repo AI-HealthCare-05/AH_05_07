@@ -185,6 +185,30 @@ for (const failure of [
   });
 }
 
+test("uncertain save recovery stays usable at 320px with 200% text", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  const api = await mockApi(page, async () => ({ status: 503, body: { detail: { code: "storage_unavailable" } } }));
+  await enter(page);
+  await fillDraft(page);
+  await page.getByRole("button", { name: "혈압 기록 저장" }).click();
+  await page.locator("html").evaluate((element) => { element.style.fontSize = "200%"; });
+
+  const recovery = page.locator('[data-recovery-kind="uncertain-save"]');
+  await expect(recovery).toContainText("확인됨");
+  await expect(recovery).toContainText("아직 확인되지 않음");
+  await expect(recovery).toContainText("지금 할 일");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  for (const name of ["다시 불러오기", "기록에서 확인하기"]) {
+    await recovery.getByRole("button", { name, exact: true }).focus();
+    await expect(recovery.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
+  }
+  const readsBeforeReview = api.reads.length;
+  await recovery.getByRole("button", { name: "기록에서 확인하기", exact: true }).click();
+  await expect.poll(() => api.reads.length).toBe(readsBeforeReview + 1);
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+  expect(api.writes).toHaveLength(1);
+});
+
 test("actual eight-second deadline retains draft and uncertainty after returning, without retry", async ({ page }) => {
   const pending = deferred();
   const api = await mockApi(page, async () => { await pending.promise; return { status: 201 }; });

@@ -228,11 +228,26 @@ ul, ol { margin: 0; padding: 0; }
 .notice-action { flex: 0 0 auto; border-color: currentColor; background: transparent; color: inherit; }
 .notice-title { display: block; margin-bottom: .25rem; }
 .notice p { margin-top: .3rem; }
+.recovery-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; justify-content: stretch; gap: var(--sk7-space-md); padding: clamp(var(--sk7-space-md), 2.4vw, var(--sk7-space-xl)); }
+.recovery-panel:focus { outline: 3px solid var(--sk7-focus); outline-offset: 3px; }
+.recovery-panel__icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid currentColor; border-radius: 50%; background: color-mix(in srgb, currentColor 8%, transparent); }
+.recovery-panel__body, .recovery-panel__header { display: grid; gap: var(--sk7-space-xs); min-width: 0; }
+.recovery-panel__header > span { font-size: var(--sk7-type-caption); font-weight: var(--sk7-weight-bold); letter-spacing: .08em; text-transform: uppercase; }
+.recovery-panel__header > strong { color: var(--sk7-text); font-size: var(--sk7-type-title); line-height: var(--sk7-leading-tight); text-wrap: balance; }
+.recovery-panel__facts { display: grid; margin: var(--sk7-space-xs) 0 0; }
+.recovery-panel__facts > div { display: grid; grid-template-columns: minmax(7.5rem, .32fr) minmax(0, 1fr); gap: var(--sk7-space-sm); border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: var(--sk7-space-sm) 0; }
+.recovery-panel__facts dt { font-size: var(--sk7-type-label); font-weight: var(--sk7-weight-bold); }
+.recovery-panel__facts dd { margin: 0; color: var(--sk7-text); line-height: var(--sk7-leading-body); }
+.recovery-panel__next dt, .recovery-panel__next dd { color: var(--sk7-text); }
+.recovery-panel__actions { margin-top: var(--sk7-space-sm); }
+.recovery-panel__actions button { min-height: var(--sk7-target-min); }
 .delete-dialog { width: min(32rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: clamp(var(--sk7-space-lg), 4vw, var(--sk7-space-2xl)); border: 1px solid var(--sk7-border); border-radius: var(--sk7-radius-panel); background: var(--sk7-surface-solid); color: var(--sk7-text); box-shadow: var(--sk7-shadow-overlay); overflow: auto; }
 .delete-dialog[open] { display: grid; gap: var(--sk7-space-lg); }
 .delete-dialog::backdrop { background: color-mix(in srgb, var(--sk7-text) 50%, transparent); }
 .delete-dialog p { line-height: var(--sk7-leading-body); }
 .delete-dialog .notice { margin: 0; }
+.delete-dialog .recovery-panel { grid-template-columns: minmax(0, 1fr); }
+.delete-dialog .recovery-panel__icon { display: none; }
 .confirmation { display: flex; align-items: center; justify-content: space-between; gap: var(--sk7-space-4); border: 1px solid var(--sk7-selection-border); border-radius: var(--sk7-radius-md); background: var(--sk7-selection-surface); color: var(--sk7-selection-text); padding: 1rem; }
 
 .today-ribbon { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 1rem; border-bottom: 1px solid var(--sk7-border); padding: .2rem 0 1rem; }
@@ -421,6 +436,10 @@ ul, ol { margin: 0; padding: 0; }
   .recap-summary > div { padding: .8rem 0; }
   .recap-summary > div + div { border-top: 1px solid var(--sk7-border); border-left: 0; padding-left: 0; }
   .today-date, .scene-toolbar, .window-nav, .confirmation, .notice { align-items: flex-start; flex-direction: column; }
+  .recovery-panel { grid-template-columns: minmax(0, 1fr); }
+  .recovery-panel__facts > div { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-2xs); }
+  .recovery-panel__actions { align-items: stretch; width: 100%; }
+  .recovery-panel__actions button { width: 100%; }
   .window-nav p { order: -1; text-align: left; }
   .week-path { gap: .25rem; }
   .week-path li { min-height: 2.5rem; }
@@ -436,6 +455,12 @@ ul, ol { margin: 0; padding: 0; }
   .record-list li { grid-template-columns: minmax(0, 1fr) auto; }
   .record-action { width: auto; }
   .settings-list section { align-items: flex-start; flex-direction: column; }
+}
+
+@media (forced-colors: active) {
+  .recovery-panel, .recovery-panel__icon { border: 2px solid CanvasText; background: Canvas; color: CanvasText; }
+  .recovery-panel:focus { outline-color: Highlight; }
+  .recovery-panel__facts > div { border-color: CanvasText; }
 }
 
 @media (max-width: 350px) {

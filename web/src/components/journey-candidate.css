@@ -401,8 +401,7 @@
 .journey-settings > .scene-visual-background, .journey-settings > .scene-visual-character, .journey-settings::after { display: none; }
 .journey-settings .scene-copy h1 { font-size: var(--sk7-type-display); line-height: var(--sk7-leading-tight); }
 .journey-load-error .scene-copy, .journey-settings .scene-copy { max-width: 39rem; }
-.journey-load-error-card { display: grid; justify-items: start; gap: var(--sk7-space-sm); border-color: var(--sk7-danger); color: var(--sk7-danger-text); padding: clamp(var(--sk7-space-lg), 3vw, var(--sk7-space-2xl)); }
-.journey-load-error-card p:first-child { color: var(--sk7-text); font-size: var(--sk7-type-subtitle); font-weight: 650; }
+.journey-load-error-card { border-color: var(--sk7-danger); color: var(--sk7-danger-text); padding: clamp(var(--sk7-space-lg), 3vw, var(--sk7-space-2xl)); }
 .journey-load-error-card button { min-height: 3rem; }
 .journey-settings-list { display: grid; gap: 0; }
 .journey-settings-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--sk7-space-sm) var(--sk7-space-2xl); border-top: 1px solid var(--sk7-border); padding: var(--sk7-space-lg) 0; }

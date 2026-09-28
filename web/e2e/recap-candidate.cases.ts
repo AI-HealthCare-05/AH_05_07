@@ -282,7 +282,10 @@ test('recap day focus keeps the full export window and clears success on navigat
 test('recap export failure preserves records and allows retry', async ({ page }) => {
   await fixture(page, 'export-error');
   await page.getByRole('button', { name: '현재 7일 내보내기' }).click();
-  await expect(page.getByText('파일을 내려받지 못했습니다.', { exact: false })).toBeVisible();
+  const recovery = page.locator('[data-recovery-kind="export-failure"]');
+  await expect(recovery).toContainText('계정 기록은 변경되지 않았어요.');
+  await expect(recovery).toContainText('파일 생성 또는 다운로드만 완료되지 않았어요.');
+  await expect(recovery.getByRole('button', { name: '내보내기 다시 시도' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '현재 7일 내보내기' })).toBeEnabled();
   await expect(page.locator('[data-dashboard-lane="blood-pressure"]')).toHaveText('2개 기록');
 });
@@ -931,8 +934,10 @@ test('living week report retains an uncertain deletion warning on screen and in 
   await page.getByRole('button', { name: '삭제', exact: true }).click();
   const confirmation = page.getByRole('dialog').filter({ hasText: '혈압 기록을 삭제할까요?' });
   await confirmation.getByRole('button', { name: '삭제', exact: true }).click();
-  await expect(confirmation.getByRole('status')).toContainText('삭제 여부를 확인하지 못했습니다.');
-  await confirmation.getByRole('button', { name: '취소', exact: true }).click();
+  const recovery = confirmation.locator('[data-recovery-kind="uncertain-delete"]');
+  await expect(recovery).toContainText('삭제 여부를 확인하지 못했습니다.');
+  await expect(confirmation.getByRole('button', { name: '삭제', exact: true })).toHaveCount(0);
+  await confirmation.getByRole('button', { name: '다시 불러오기', exact: true }).click();
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText('120/80 mmHg');
   await reportAction(page).click();
@@ -946,7 +951,7 @@ test('living week report retains an uncertain deletion warning on screen and in 
   await page.emulateMedia({ media: 'print' });
   await expect(freshness).toBeVisible();
   await expect(report(page).getByText('아침 · 120/80 mmHg', { exact: true })).toBeVisible();
-  expect(windowRequests).toBe(1);
+  expect(windowRequests).toBe(2);
   expect(deleteRequests).toBe(1);
 });
 

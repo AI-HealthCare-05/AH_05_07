@@ -148,5 +148,7 @@ test("S10 feedback session expiry returns to the existing sign-in recovery flow"
   await feedback.getByRole("button", { name: "이해하기 쉬웠어요" }).click();
 
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
-  await expect(page.getByText("로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.")).toBeVisible();
+  const recovery = page.locator('[data-recovery-kind="session-expired"]');
+  await expect(recovery).toContainText("로그인 시간이 만료되었습니다.");
+  await expect(recovery).toContainText("이메일로 로그인을 다시 시작한 뒤 서버 기록을 다시 확인해 주세요.");
 });

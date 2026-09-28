@@ -1264,7 +1264,7 @@ test('Journey record browsing keeps distinct facts, exact detail targets, and re
 });
 
 test('Journey S13 follows the bounded bootstrap retry and keeps manual read recovery', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 360, height: 800 });
+  await page.setViewportSize({ width: 320, height: 800 });
   let loads = 0; const methods: string[] = [];
   await page.route('http://e2e.invalid/**', async route => {
     const request = route.request(), url = new URL(request.url());
@@ -1280,15 +1280,27 @@ test('Journey S13 follows the bounded bootstrap retry and keeps manual read reco
   await page.goto('/?e2e=signed-in&screen=S02');
   const error = page.locator('.journey-load-error');
   await expect(error).toContainText('기록을 불러오지 못했어요');
+  await expect(error).toContainText('확인됨');
+  await expect(error).toContainText('아직 확인되지 않음');
+  await expect(error).toContainText('지금 할 일');
   await expect(error).toContainText('아직 기록이 없다는 뜻은 아니에요.');
-  await expect(error).toContainText('연결을 확인한 뒤 다시 불러와 주세요.');
+  await expect(error).toContainText('연결을 확인한 뒤 기록을 다시 불러와 주세요.');
   await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
   expect(loads).toBe(2);
-  await page.screenshot({ path: testInfo.outputPath('s13-mobile-360.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('s13-mobile-320.png'), fullPage: true });
   await page.locator('html').evaluate(el => { el.style.fontSize = '200%'; });
   await page.getByRole('button', { name: '다시 불러오기', exact: true }).focus();
   await expect(page.getByRole('button', { name: '다시 불러오기', exact: true })).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.locator('html').evaluate(el => { el.style.fontSize = ''; });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: testInfo.outputPath('s13-mobile-390.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: testInfo.outputPath('s13-desktop-1440.png'), fullPage: true });
+  await page.emulateMedia({ forcedColors: 'active' });
+  await expect(page.locator('[data-recovery-kind="initial-load"]')).toHaveCSS('border-top-style', 'solid');
+  await page.emulateMedia({ forcedColors: 'none' });
   await page.getByRole('button', { name: '다시 불러오기', exact: true }).click();
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   expect(methods).toEqual(['GET', 'GET', 'GET']);
@@ -1747,7 +1759,10 @@ test.describe('B9 journey feedback', () => {
     await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
     await expect(page.locator('[data-scene="S10"]')).toContainText('120/80 mmHg');
     refreshGate.release();
-    await expect(page.getByText('최신 여부 미확인', { exact: true }).first()).toBeVisible();
+    const recovery = page.locator('[data-recovery-kind="stale-read"]');
+    await expect(recovery).toContainText('마지막으로 불러온 기록을 보여드리고 있어요.');
+    await expect(recovery).toContainText('현재 최신 여부는 확인되지 않았어요.');
+    await expect(recovery).toContainText('기록을 다시 불러오면 최신 상태를 확인할 수 있어요.');
     await expect(page.locator('[data-scene="S10"]')).toContainText('120/80 mmHg');
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
   });

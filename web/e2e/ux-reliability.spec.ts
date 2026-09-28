@@ -52,9 +52,9 @@ test("export error notice survives navigation", async ({ page }) => {
   await mockExport(page, 503);
   await page.goto("/?e2e=signed-in&screen=S10");
   await page.getByRole("button", { name: "현재 7일 내보내기" }).click();
-  await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.");
+  await expect(page.locator('[data-recovery-kind="export-failure"]')).toContainText("계정 기록은 변경되지 않았어요.");
   await page.getByRole("button", { name: "오늘의 기록", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.");
+  await expect(page.locator('[data-recovery-kind="export-failure"]')).toContainText("파일 생성 또는 다운로드만 완료되지 않았어요.");
 });
 
 test("recent history and challenge progression use separate labels", async ({ page }) => {

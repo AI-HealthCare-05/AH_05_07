@@ -179,7 +179,11 @@ test("synthetic signed-in session returns to login after a 401 window response",
 
   await page.goto("/?e2e=signed-in&screen=S04");
   await expect(page.getByRole("heading", { name: "측정한 혈압을 기록하고 최근 7일을 확인해요" })).toBeVisible();
-  await expect(page.getByRole("status")).toContainText("로그인 시간이 만료되었습니다.");
+  const recovery = page.locator('[data-recovery-kind="session-expired"]');
+  await expect(recovery).toContainText("로그인 시간이 만료되었습니다.");
+  await expect(recovery).toContainText("계정이나 기록이 삭제됐다는 뜻은 아니에요.");
+  await expect(recovery).toContainText("서버 기록을 다시 확인해 주세요.");
+  await expect(recovery).toBeFocused();
 });
 
 test("synthetic signed-in load failure is not rendered as an empty record set", async ({ page }) => {
@@ -499,7 +503,9 @@ test("synthetic signed-in session keeps current check-in editing recoverable aft
   const editor = page.getByRole("status").filter({ hasText: "10분 걷기 상태" });
   await editor.getByRole("button", { name: "건너뜀" }).click();
 
-  await expect(page.getByText("저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.")).toBeVisible();
+  const recovery = page.locator('[data-recovery-kind="uncertain-save"]');
+  await expect(recovery).toContainText("자동으로 다시 보내지 않았습니다.");
+  await expect(recovery).toContainText("저장 여부를 확인하지 못했어요.");
   await expect(page.getByText("챌린지 상태를 수정했습니다.")).toHaveCount(0);
   await expect(editor).toBeVisible();
   await expect(editor.getByRole("button", { name: "건너뜀" })).toBeEnabled();
@@ -508,6 +514,7 @@ test("synthetic signed-in session keeps current check-in editing recoverable aft
 
 test("synthetic signed-in session keeps current check-in deletion recoverable after storage is unavailable", async ({ page }) => {
   let deleteRequests = 0;
+  let windowRequests = 0;
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -521,6 +528,7 @@ test("synthetic signed-in session keeps current check-in deletion recoverable af
       return;
     }
     if (url.pathname === "/api/v1/observations/window") {
+      windowRequests += 1;
       await route.fulfill({ contentType: "application/json", status: 200, headers, body: JSON.stringify(currentChallengeWindow("completed")) });
       return;
     }
@@ -538,10 +546,18 @@ test("synthetic signed-in session keeps current check-in deletion recoverable af
   const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await confirmation.getByRole("button", { name: "삭제" }).click();
 
-  await expect(page.getByRole("status")).toContainText("삭제 여부를 확인하지 못했습니다.");
+  const recovery = confirmation.locator('[data-recovery-kind="uncertain-delete"]');
+  await expect(recovery).toContainText("삭제 요청은 보냈고 같은 요청을 자동으로 반복하지 않았어요.");
+  await expect(recovery).toContainText("삭제 여부를 확인하지 못했습니다.");
+  await expect(recovery).toContainText("목록을 다시 불러와 먼저 확인해 주세요.");
+  await expect(recovery).toBeFocused();
   await expect(page.getByText("챌린지 기록을 삭제했습니다.")).toHaveCount(0);
   await expect(confirmation).toBeVisible();
-  await expect(confirmation.getByRole("button", { name: "삭제" })).toBeEnabled();
+  await expect(confirmation.getByRole("button", { name: "삭제" })).toHaveCount(0);
+  const readsBeforeRecovery = windowRequests;
+  await confirmation.getByRole("button", { name: "다시 불러오기" }).click();
+  await expect(confirmation).toHaveCount(0);
+  await expect.poll(() => windowRequests).toBe(readsBeforeRecovery + 1);
   expect(deleteRequests).toBe(1);
 });
 
@@ -580,7 +596,9 @@ test("synthetic signed-in session recovers a blood-pressure draft after the shar
   const saveButton = page.locator("form.measurement-panel button[type=submit]");
   await saveButton.click();
 
-  await expect(page.getByText("저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.")).toBeVisible({ timeout: 10_000 });
+  const recovery = page.locator('[data-recovery-kind="uncertain-save"]');
+  await expect(recovery).toContainText("자동으로 다시 보내지 않았습니다.", { timeout: 10_000 });
+  await expect(recovery).toContainText("저장 여부를 확인하지 못했어요.");
   await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
   await expect(page.getByLabel(/수축기/)).toHaveValue("120");
   await expect(page.getByLabel(/이완기/)).toHaveValue("80");
@@ -676,11 +694,9 @@ test("synthetic signed-in save times out when headers arrive but the JSON body s
   );
   await saveButton.click();
 
-  await expect(
-    page.getByText(
-      "저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.",
-    ),
-  ).toBeVisible({ timeout: 10_000 });
+  const recovery = page.locator('[data-recovery-kind="uncertain-save"]');
+  await expect(recovery).toContainText("자동으로 다시 보내지 않았습니다.", { timeout: 10_000 });
+  await expect(recovery).toContainText("저장 여부를 확인하지 못했어요.");
 
   await expect(page.getByText("혈압 기록을 저장했습니다.")).toHaveCount(0);
   await expect(page.getByLabel(/수축기/)).toHaveValue("120");
