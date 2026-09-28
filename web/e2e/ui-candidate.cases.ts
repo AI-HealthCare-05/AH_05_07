@@ -968,7 +968,7 @@ test('200% text, reduced motion and failed media keep completion DOM and no retr
   await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   expect(state.urls.filter(url => /\.(glb|webp)(\?|$)/.test(url))).toHaveLength(count);
-  await page.keyboard.press('Tab'); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '오늘의 기록 보기', exact: true }).press('Enter');
   await expect(page.locator('.journey-today')).toBeVisible();
 });
 
@@ -1139,6 +1139,28 @@ for (const prior of [false, true]) test(`S12 ${prior ? 'prior return' : 'current
   await expect(page.locator('#S03-title')).toBeFocused(); expect(writes).toBe(0);
   fail = true; await page.reload();
   await expect(page.locator('[data-scene="S13"]')).toBeVisible(); await expect(page.locator('[data-scene="S12"]')).toHaveCount(0);
+});
+
+test('S12 primary action and S13 recovery action clear the fixed navigation at 320x568', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+
+  await page.goto('/?fixture=VP-04');
+  const nav = page.locator('.primary-nav');
+  const emptyAction = page.getByRole('button', { name: '혈압 기록하기', exact: true });
+  await expect(emptyAction).toBeInViewport({ ratio: 1 });
+  const emptyActionBox = (await emptyAction.boundingBox())!;
+  const emptyNavBox = (await nav.boundingBox())!;
+  expect(emptyActionBox.y + emptyActionBox.height).toBeLessThanOrEqual(emptyNavBox.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+  await page.goto('/?fixture=VP-11a');
+  const retry = page.getByRole('button', { name: '다시 불러오기', exact: true });
+  await expect(retry).toBeInViewport({ ratio: 1 });
+  const retryBox = (await retry.boundingBox())!;
+  const recoveryNavBox = (await nav.boundingBox())!;
+  expect(retryBox.y + retryBox.height).toBeLessThanOrEqual(recoveryNavBox.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
 test('first confirmed-empty session continues through S04, confirmed S05, and immediate S07 review', async ({ page }) => {

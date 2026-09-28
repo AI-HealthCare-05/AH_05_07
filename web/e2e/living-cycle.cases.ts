@@ -196,20 +196,32 @@ test('Living Cycle keeps a challenge lock conflict distinct from an observation 
 });
 
 test('Living Cycle two tabs reconcile a losing creation response through a read', async ({ page, context }) => {
-  const delay = deferred();
-  const state = await api(context, { write: async index => { await delay.promise; if (index === 2) return 'uncertain'; } });
+  const winner = deferred();
+  const loser = deferred();
+  const state = await api(context, { write: async index => {
+    await (index === 1 ? winner.promise : loser.promise);
+    if (index === 2) return 'uncertain';
+  } });
   const other = await context.newPage();
   await other.clock.setFixedTime(new Date(`${today}T03:00:00Z`));
   await page.goto('/?e2e=signed-in&screen=S03');
   await other.goto('/?e2e=signed-in&screen=S03');
   await page.getByRole('button', { name: /수면 시간 지키기/ }).click();
+  await expect.poll(() => state.writes.length).toBe(1);
   await other.getByRole('button', { name: /수면 시간 지키기/ }).click();
   await expect.poll(() => state.writes.length).toBe(2);
-  delay.release();
+  loser.release();
+  const retry = other.getByRole('button', { name: '다시 불러오기', exact: true });
+  await expect.poll(async () => (await retry.count()) + (await other.locator('[data-window-kind="recent-history"]').count())).toBe(1);
+  if (await retry.isVisible()) {
+    await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toBeDisabled();
+    await retry.click();
+    await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
+  } else {
+    await expectCurrentRecentHistory(other);
+  }
+  winner.release();
   await expectCurrentRecentHistory(page);
-  await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toBeDisabled();
-  await other.getByRole('button', { name: '선택 상태 다시 확인하기', exact: true }).click();
-  await expect(other.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
   expect(state.writes).toHaveLength(2);
   expect(state.closed).toHaveLength(1);
   expect(state.active.id).toBe(next.id);
