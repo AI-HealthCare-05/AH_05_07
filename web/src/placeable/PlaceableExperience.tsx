@@ -212,13 +212,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"} data-editing={editing}
     onKeyDown={(event) => { if (world && editing && event.key === "Escape") { event.preventDefault(); cancelEditing(); } }}>
     <header className="placeable-header">
-      <div className="placeable-home-title"><p className="placeable-eyebrow">SK7 · 두 개의 홈</p><h1>내 공간 <span>My Space</span></h1>
+      <div className="placeable-home-title"><p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p><h1>내 공간 <span>My Space</span></h1>
         <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p></div>
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
         <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
         {world && <button ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
           onClick={() => { setEditing(true); editHeading.current?.focus(); }}>꾸미기</button>}
-        <a href={route(world ? "classic" : "3d")}>{world ? "간단한 광장으로 보기" : "3D 광장으로 보기"}</a>
+        <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
+          href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
         <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
           aria-disabled={preview || Boolean(state.pending)}
           onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
@@ -228,11 +229,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     <div className="placeable-layout">
       <section className="placeable-stage" aria-label="내 공간 미리보기" data-breeze={feedback && canInteract}>
         <div className="placeable-destination"><div><p className="placeable-eyebrow">다른 홈 · 건강 기록</p>
-          <h2>오늘의 기록</h2><p>혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
+          <h2>오늘의 기록</h2><p>{world ? "혈압과 지난 기록을 이어서 살펴보세요." : "혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요."}</p></div>
           <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+            aria-label="오늘의 기록으로 가기"
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
-            오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
+            {world ? "기록으로 가기" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
         </div>
         {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>

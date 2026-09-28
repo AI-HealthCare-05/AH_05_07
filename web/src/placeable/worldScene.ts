@@ -1,6 +1,6 @@
 import {
   AmbientLight, BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight,
-  DoubleSide, Float32BufferAttribute, Fog, Group, Mesh, MeshStandardMaterial, PerspectiveCamera,
+  DataTexture, DoubleSide, Float32BufferAttribute, Fog, Group, HemisphereLight, LinearFilter, Mesh, MeshStandardMaterial, PerspectiveCamera,
   Box3, CircleGeometry, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3, type WebGLRenderer,
 } from "three";
 import { disposeScene } from "../components/scene/disposeScene";
@@ -27,12 +27,17 @@ export type PlaceableProjection = Readonly<{
   canInteract: boolean;
 }>;
 export const PINWHEEL_RADIUS = 0.4;
-const material = (color: string | number) => new MeshStandardMaterial({ color, roughness: 0.82 });
+// A small clay palette: light separates surfaces without metallic highlights.
+const finishes = { stone: 0.96, paving: 0.88, wood: 0.74, foliage: 1, gate: 0.68, trim: 0.58, accent: 0.5 } as const;
+const material = (color: string | number, family: keyof typeof finishes = "stone") =>
+  new MeshStandardMaterial({ color, roughness: finishes[family] });
 const mood = {
-  sky: [new Color("#eee8db"), new Color("#202e58")],
-  ground: [new Color("#e0d7b9"), new Color("#465780")],
-  approach: [new Color("#f5ead4"), new Color("#8589aa")],
+  sky: [new Color("#e5e9df"), new Color("#303c59")],
+  ground: [new Color("#cfc7b2"), new Color("#73758a")],
+  approach: [new Color("#eee4cf"), new Color("#b2a9ad")],
+  surroundings: [new Color("#8b9b88"), new Color("#505e6b")],
   ambient: [new Color(0xe8ecff), new Color("#c4d0ff")],
+  fill: [new Color("#e5efff"), new Color("#b4c6ee")],
   sun: [new Color(0xffe4b8), new Color("#ccd9ff")],
 } as const;
 const ramp = (time: number, start: number, duration: number) => {
@@ -51,13 +56,15 @@ export class PlaceableScene {
   readonly cameraRig = new PlazaCameraRig();
   #cameraObstacles: CameraObstacle[] = [];
   readonly socketRings = new Group();
-  readonly bladeMaterial = material(COLORS.coral);
-  readonly ambient = new AmbientLight(0xe8ecff, 1.5);
-  readonly sun = new DirectionalLight(0xffe4b8, 2.4);
-  readonly groundMaterial = material("#e0d7b9");
-  readonly gateMaterial = material("#6954b5");
-  readonly archLightMaterial = material("#f8d789");
-  readonly approachMaterial = material("#f5ead4");
+  readonly bladeMaterial = material(COLORS.coral, "accent");
+  readonly ambient = new AmbientLight(0xe8ecff, 0.45);
+  readonly skyFill = new HemisphereLight("#e5efff", "#8e826d", 1.65);
+  readonly sun = new DirectionalLight(0xffe4b8, 3);
+  readonly groundMaterial = material("#cfc7b2");
+  readonly surroundingsMaterial = material("#8b9b88", "foliage");
+  readonly gateMaterial = material("#77638f", "gate");
+  readonly archLightMaterial = material("#dfbc7d", "accent");
+  readonly approachMaterial = material("#eee4cf", "paving");
   #detailMaterials: MeshStandardMaterial[] = [];
   #twilight = false;
   #welcomeTime = 0;
@@ -72,20 +79,20 @@ export class PlaceableScene {
 
   constructor() {
     // Daylight is the truthful default for every visit; no wall clock or stored mood.
-    this.scene.background = new Color("#eee8db");
-    this.scene.fog = new Fog("#eee8db", 22, 48);
-    this.scene.add(this.ambient);
+    this.scene.background = mood.sky[0].clone();
+    this.scene.fog = new Fog(mood.sky[0], 12, 36);
+    this.scene.add(this.ambient, this.skyFill);
     const sun = this.sun;
-    sun.position.set(-3, 8, 5); this.scene.add(sun);
+    sun.position.set(-5, 9, 3); this.scene.add(sun);
     sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
     Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 25 });
-    sun.shadow.bias = -0.001; sun.shadow.normalBias = 0.025;
+    sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.012;
     // The circular foundation covers the unchanged square walking bounds, including corners.
     const groundRadius = PATH.boundMetres * Math.SQRT2;
     const ground = new Mesh(new CylinderGeometry(groundRadius, groundRadius + 0.15, 0.25, 96), this.groundMaterial);
     ground.position.y = -0.14; ground.name = "e1-plaza-ground"; this.scene.add(ground);
     // A civic square extends into its neighborhood, rather than floating in a void.
-    const surroundings = new Mesh(new CylinderGeometry(28, 28, 0.2, 96), material("#98a28b"));
+    const surroundings = new Mesh(new CylinderGeometry(28, 28, 0.2, 96), this.surroundingsMaterial);
     surroundings.position.y = -0.3; this.scene.add(surroundings);
     // Preserve E1's authored route coordinates and all E2 sockets.
     for (const segment of PATH.segments) {
@@ -101,7 +108,7 @@ export class PlaceableScene {
     }
     const approach = new Mesh(new BoxGeometry(1.65, 0.03, 9), this.approachMaterial);
     approach.position.set(0, 0.02, 0.8); this.scene.add(approach);
-    const stone = material("#c7bea8"), edging = material("#b4a28e");
+    const stone = material("#bcb6a6", "paving"), edging = material("#a99e8e");
     for (let z = -3.3; z < 5; z += 0.65) {
       const joint = new Mesh(new BoxGeometry(1.64, 0.008, 0.018), stone);
       joint.position.set(0, 0.041, z); this.scene.add(joint);
@@ -120,7 +127,7 @@ export class PlaceableScene {
     const gate = new Group(); gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
     gate.scale.set(1.35, 1.45, 1.35);
-    const gateMaterial = this.gateMaterial, trimMaterial = material("#b4a3db");
+    const gateMaterial = this.gateMaterial, trimMaterial = material("#c4b4ce", "trim");
     for (const x of [-0.85, 0.85]) {
       const post = new Mesh(new CylinderGeometry(0.25, 0.29, 1.65, 32), gateMaterial);
       post.position.set(x, 0.825, 0); gate.add(post);
@@ -143,8 +150,8 @@ export class PlaceableScene {
     const crown = new Mesh(new BoxGeometry(0.22, 0.38, 0.58), trimMaterial);
     crown.position.set(0, 2.5, 0); gate.add(crown);
     this.scene.add(gate);
-    const leaves = [material("#647d68"), material("#849276"), material("#a0a27b")];
-    const trunk = material("#84745e");
+    const leaves = [material("#486a60", "foliage"), material("#678576", "foliage"), material("#92a184", "foliage")];
+    const trunk = material("#80664e", "wood");
     // Asymmetric clipped street trees and low terraces frame the one hero.
     for (const [x, z, height, spread] of [[-3.6, -3.2, 3.4, 1.1], [3.8, -4.6, 3.9, 1.25], [-5.8, 0.5, 2.9, 1], [6.6, -2.4, 3, 1]]) {
       const stem = new Mesh(new CylinderGeometry(0.1, 0.17, height - 0.7, 10), trunk);
@@ -194,7 +201,7 @@ export class PlaceableScene {
     this.scene.add(this.choiceMarker);
     this.choiceMarker.position.x = -2.15;
     this.pinwheel.name = ASSET; this.pinwheel.visible = false;
-    const stemMaterial = material("#99744d"), hubMaterial = material("#fff8df");
+    const stemMaterial = material("#99744d", "wood"), hubMaterial = material("#fff8df", "accent");
     this.#detailMaterials = [hubMaterial];
     const face = this.choiceMarker.getObjectByName("keepsake-face") as Mesh<CylinderGeometry, MeshStandardMaterial>;
     this.#detailMaterials.push(face.material);
@@ -214,7 +221,17 @@ export class PlaceableScene {
     hub.position.z = 0.06; this.rotor.add(hub); this.pinwheel.add(this.rotor); this.scene.add(this.pinwheel);
     this.actor.name = "plaza-companion";
     this.actor.position.set(-1.3, 0, 1.25);
-    const contact = new Mesh(new CircleGeometry(0.33, 32), new MeshBasicMaterial({ color: "#433931", transparent: true, opacity: 0.17, depthWrite: false }));
+    // A tiny generated falloff removes the hard disc edge under the real GLB.
+    // Owned by this scene and disposed through the existing material-map teardown.
+    const pixels = new Uint8Array(32 * 32 * 4);
+    for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+      const i = (y * 32 + x) * 4;
+      const falloff = Math.max(0, 1 - Math.hypot((x - 15.5) / 15.5, (y - 15.5) / 15.5));
+      pixels.set([255, 255, 255, Math.round(falloff * falloff * 255)], i);
+    }
+    const contactMap = new DataTexture(pixels, 32, 32);
+    contactMap.magFilter = LinearFilter; contactMap.needsUpdate = true;
+    const contact = new Mesh(new CircleGeometry(0.46, 32), new MeshBasicMaterial({ color: "#3e3935", map: contactMap, transparent: true, opacity: 0.38, depthWrite: false }));
     contact.rotation.x = -Math.PI / 2; contact.position.y = 0.055; contact.scale.y = 0.75;
     this.actor.add(contact);
     this.scene.add(this.actor);
@@ -326,12 +343,15 @@ export class PlaceableScene {
     (this.scene.fog as Fog).color.copy(this.scene.background as Color);
     this.groundMaterial.color.copy(mood.ground[0]).lerp(mood.ground[1], environment);
     this.ambient.color.copy(mood.ambient[0]).lerp(mood.ambient[1], environment);
-    this.ambient.intensity = 1.5 - 0.35 * environment;
+    this.surroundingsMaterial.color.copy(mood.surroundings[0]).lerp(mood.surroundings[1], environment);
+    this.ambient.intensity = 0.45 + 0.1 * environment;
+    this.skyFill.color.copy(mood.fill[0]).lerp(mood.fill[1], environment);
+    this.skyFill.intensity = 1.65 - 0.35 * environment;
     this.sun.color.copy(mood.sun[0]).lerp(mood.sun[1], environment);
-    this.sun.intensity = 2.4 - 0.75 * environment;
-    this.gateMaterial.emissive.set("#785ad8"); this.gateMaterial.emissiveIntensity = gate * 0.65;
-    this.archLightMaterial.emissive.set("#ffd18a"); this.archLightMaterial.emissiveIntensity = gate * 1.6;
-    this.approachMaterial.emissive.set("#c5c9ff"); this.approachMaterial.emissiveIntensity = route * 0.12;
+    this.sun.intensity = 3 - 1.4 * environment;
+    this.gateMaterial.emissive.set("#806f9f"); this.gateMaterial.emissiveIntensity = gate * 0.16;
+    this.archLightMaterial.emissive.set("#ffd18a"); this.archLightMaterial.emissiveIntensity = gate * 0.85;
+    this.approachMaterial.emissive.set("#e4caaa"); this.approachMaterial.emissiveIntensity = route * 0.035;
     this.approachMaterial.color.copy(mood.approach[0]).lerp(mood.approach[1], environment);
     for (const material of this.#detailMaterials) {
       material.emissive.set("#f8dcb2"); material.emissiveIntensity = detail * 0.07;
@@ -341,7 +361,7 @@ export class PlaceableScene {
   #feedback() {
     const detail = ramp(this.#welcomeTime, 1.05, 0.55);
     this.bladeMaterial.emissive.set(this.#feedbackLeft > 0 || detail > 0 ? "#ffdc79" : "#000000");
-    this.bladeMaterial.emissiveIntensity = this.#feedbackLeft > 0 ? 0.45 : detail * 0.06;
+    this.bladeMaterial.emissiveIntensity = this.#feedbackLeft > 0 ? 0.45 : detail * 0.025;
   }
 
   labels() {
