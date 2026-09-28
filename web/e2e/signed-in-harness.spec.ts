@@ -420,6 +420,9 @@ test("synthetic signed-in session requires confirmation before deleting the curr
   await page.getByRole("button", { name: "삭제" }).click();
   const confirmation = page.getByRole("dialog").filter({ hasText: "챌린지 기록을 삭제할까요?" });
   await expect(confirmation).toBeVisible();
+  await expect(confirmation).toContainText("챌린지 참여");
+  await expect(confirmation).toContainText("10분 걷기");
+  await expect(confirmation).toContainText("기록함");
   await confirmation.getByRole("button", { name: "취소" }).click();
   await expect(confirmation).toHaveCount(0);
   expect(deleteRequests).toBe(0);
@@ -721,7 +724,7 @@ test("synthetic signed-in session opens a separated record detail and starts onl
   await expect(detail).toContainText("120/80 mmHg");
   await detail.getByRole("button", { name: "수정" }).click();
 
-  await expect(page.getByRole("heading", { name: "혈압 기록 수정" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "혈압 기록을 바로잡아요" })).toBeVisible();
   await expect(page.getByLabel(/수축기/)).toHaveValue("120");
 });
 
@@ -786,7 +789,8 @@ test("synthetic signed-in session tells the user when a selected record disappea
   await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "새로고침" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("선택한 기록을 찾을 수 없습니다.");
+  await expect(page.getByRole("alert")).toContainText("현재 불러온 기간에서 선택한 기록을 찾을 수 없어요.");
+  await expect(page.getByRole("alert")).toContainText("기록이 삭제됐다고 단정하지 않습니다.");
   await page.getByRole("button", { name: "목록으로 돌아가기" }).click();
   await expect(page.locator(".record-explorer")).toContainText("이 7일에는 기록이 없어요.");
   expect(windowRequests).toBe(2);

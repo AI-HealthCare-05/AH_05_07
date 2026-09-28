@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ExplorerSelection } from "../ui/recordExplorer";
 import type { ScreenId } from "../ui/journey";
 
-export type ExplorerReturnPoint = { key: string; scrollY: number };
+export type ExplorerReturnPoint = { key: string; fallbackKey: string | null; scrollY: number };
 type ExplorerMemory = {
   scope: string;
   selection: ExplorerSelection;
@@ -37,8 +37,8 @@ export function useRecordExplorerMemory(scope: string, screen: ScreenId) {
   const select = useCallback((selection: ExplorerSelection) => {
     setSaved(current => ({ ...current, selection, returnPoint: null, restorePending: false }));
   }, []);
-  const remember = useCallback((key: string) => {
-    setSaved(current => ({ ...current, returnPoint: { key, scrollY: window.scrollY }, restorePending: true }));
+  const remember = useCallback((key: string, fallbackKey: string | null = null) => {
+    setSaved(current => ({ ...current, returnPoint: { key, fallbackKey, scrollY: window.scrollY }, restorePending: true }));
   }, []);
   const restored = useCallback(() => {
     setSaved(current => ({ ...current, restorePending: false }));

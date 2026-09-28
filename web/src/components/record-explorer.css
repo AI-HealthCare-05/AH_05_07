@@ -502,12 +502,43 @@
 }
 
 .journey-record-detail .record-detail-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--sk7-space-md);
   max-width: none;
+}
+
+.journey-record-detail .record-detail-heading .eyebrow,
+.record-maintenance .eyebrow,
+.record-correction-panel .eyebrow,
+.correction-identity .eyebrow {
+  margin: 0 0 var(--sk7-space-2xs);
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: .04em;
 }
 
 .journey-record-detail .record-detail-heading h2 {
   color: var(--sk7-text);
   font-size: var(--sk7-type-title);
+}
+
+.record-detail-access {
+  flex: none;
+  border: 1px solid var(--sk7-border);
+  border-radius: 999px;
+  padding: var(--sk7-space-2xs) var(--sk7-space-sm);
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.record-detail-access[data-record-access="editable"] {
+  border-color: var(--sk7-selection-border);
+  background: var(--sk7-selection-surface);
+  color: var(--sk7-selection-text);
 }
 
 .journey-record-detail .record-detail-facts {
@@ -547,7 +578,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.journey-record-detail [data-record-detail-kind="blood-pressure"] .record-detail-facts > div:last-child dd {
+.journey-record-detail .record-detail-primary-value dd {
   font-size: var(--sk7-type-heading);
   font-weight: var(--sk7-weight-bold);
   letter-spacing: -.035em;
@@ -573,6 +604,91 @@
   border-radius: 0 var(--sk7-radius-control) var(--sk7-radius-control) 0;
   box-shadow: none;
 }
+
+.journey-record-detail .record-read-only {
+  display: grid;
+  gap: var(--sk7-space-xs);
+  margin: 0;
+  border: 1px solid var(--sk7-border);
+  border-radius: var(--sk7-radius-control);
+  background: var(--sk7-surface-subtle);
+  padding: var(--sk7-space-md);
+  color: var(--sk7-text);
+}
+
+.journey-record-detail .record-read-only p {
+  margin: 0;
+  color: var(--sk7-text-muted);
+  line-height: var(--sk7-leading-body);
+}
+
+.journey-record-detail .record-maintenance.record-detail-primary-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sk7-space-md);
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-lg);
+}
+
+.record-maintenance-heading,
+.record-maintenance-delete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sk7-space-lg);
+}
+
+.record-maintenance-heading > div {
+  display: grid;
+  gap: var(--sk7-space-2xs);
+}
+
+.record-maintenance-delete {
+  border-top: 1px dashed var(--sk7-border);
+  padding-top: var(--sk7-space-md);
+  color: var(--sk7-text-muted);
+}
+
+.record-maintenance-delete p { margin: 0; }
+
+.journey-record-detail .record-maintenance .record-delete-action {
+  flex: none;
+  margin-left: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.journey-record-detail .record-correction-panel {
+  display: grid;
+  gap: var(--sk7-space-md);
+  margin: 0;
+  border: 1px solid var(--sk7-selection-border);
+  border-radius: var(--sk7-radius-md);
+  background: var(--sk7-selection-surface);
+  padding: var(--sk7-space-lg);
+  color: var(--sk7-selection-text);
+}
+
+.record-correction-panel .section-header { gap: var(--sk7-space-xs); }
+.record-correction-panel .section-header p,
+.record-correction-panel small { margin: 0; line-height: var(--sk7-leading-body); }
+.record-correction-choices [aria-pressed="true"] { box-shadow: inset 0 0 0 2px currentColor; }
+
+.journey-correction .correction-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sk7-space-xs) var(--sk7-space-lg);
+  border: 1px solid var(--sk7-selection-border);
+  border-radius: var(--sk7-radius-md);
+  background: var(--sk7-selection-surface);
+  padding: var(--sk7-space-lg);
+  color: var(--sk7-selection-text);
+}
+
+.correction-identity h2 { margin: 0; font-size: var(--sk7-type-subtitle); }
+.correction-identity > strong { font-size: var(--sk7-type-title); font-variant-numeric: tabular-nums; }
+.correction-identity > p { grid-column: 1 / -1; margin: 0; line-height: var(--sk7-leading-body); }
 
 .journey-record-detail .record-detail-utility-actions {
   justify-content: flex-end;
@@ -706,6 +822,31 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .journey-record-detail .record-maintenance.record-detail-primary-actions,
+  .record-maintenance-heading,
+  .record-maintenance-delete,
+  .journey-record-detail .record-detail-heading {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .record-maintenance-heading,
+  .record-maintenance-delete,
+  .journey-record-detail .record-detail-heading {
+    display: grid;
+  }
+
+  .journey-correction .correction-identity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .correction-identity > p { grid-column: 1; }
+
+  .record-correction-choices {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .journey-record-detail .record-detail-primary-actions > button,
   .journey-record-detail .record-detail-utility-actions > button {
     width: 100%;
@@ -723,4 +864,21 @@
 
 @media (prefers-reduced-motion: reduce) {
   .record-explorer button { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .record-detail-access,
+  .record-read-only,
+  .record-correction-panel,
+  .correction-identity,
+  .record-maintenance-delete,
+  .delete-dialog-facts > div {
+    border-color: CanvasText;
+  }
+
+  .record-detail-access[data-record-access="editable"],
+  .record-correction-choices button[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }

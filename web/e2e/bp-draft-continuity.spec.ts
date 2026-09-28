@@ -76,7 +76,7 @@ async function openEdit(page: Page) {
   await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
   await page.locator('[data-record-kind="blood-pressure"]').getByRole("button", { name: "상세 보기" }).click();
   await page.getByRole("button", { name: "수정", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "혈압 기록 수정" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "혈압 기록을 바로잡아요" })).toBeVisible();
 }
 function deferred() {
   let release!: () => void;
@@ -358,7 +358,7 @@ for (const outcome of ["cancel", "save"] as const) {
     await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
     await page.goBack();
     await expect(page.locator("#systolic")).toHaveValue("123");
-    await expect(page.getByRole("heading", { name: "혈압 기록 수정" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "혈압 기록을 바로잡아요" })).toBeVisible();
     if (outcome === "cancel") {
       await page.getByRole("button", { name: "수정 취소" }).click();
       await expect(page.locator('[data-scene="S09"]')).toBeVisible();

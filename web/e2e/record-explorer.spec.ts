@@ -280,7 +280,8 @@ test("S08 return falls back to the heading if the opened record disappears", asy
   await eveningDetail(page).click();
   await page.getByRole("button", { name: "새로고침", exact: true }).click();
   const missingRecord = page.getByRole("alert");
-  await expect(missingRecord).toContainText("선택한 기록을 찾을 수 없습니다.");
+  await expect(missingRecord).toContainText("현재 불러온 기간에서 선택한 기록을 찾을 수 없어요.");
+  await expect(missingRecord).toContainText("기록이 삭제됐다고 단정하지 않습니다.");
   await expect(missingRecord).toHaveClass(/\bstatus-notice\b/);
   await page.getByRole("button", { name: "목록으로 돌아가기", exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
@@ -337,6 +338,198 @@ test("S08 retains the loaded filtered rows after an S09 refresh failure", async 
   await page.waitForTimeout(200);
   expect(reads).toBe(2);
   expect(writes).toBe(0);
+});
+
+test("BP correction is distinct from new entry, cancels without a write, and returns to the same freshly read detail", async ({ page }) => {
+  let state = structuredClone(mixedWindow);
+  const writes: { method: string; body: unknown }[] = [];
+  await page.route("http://e2e.invalid/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) return reply(route, state);
+    if (request.method() === "PUT" && url.pathname.endsWith("/blood-pressure/explorer-bp-evening")) {
+      const body = request.postDataJSON();
+      writes.push({ method: request.method(), body });
+      state.blood_pressure_observations = state.blood_pressure_observations.map(record => record.id === "explorer-bp-evening" ? { ...record, ...body } : record);
+      return reply(route, state.blood_pressure_observations.find(record => record.id === "explorer-bp-evening"));
+    }
+    return route.abort();
+  });
+
+  await openExplorer(page);
+  await eveningDetail(page).click();
+  const detailUrl = page.url();
+  await page.getByRole("button", { name: "수정", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "혈압 기록을 바로잡아요" })).toBeVisible();
+  await expect(page.locator(".correction-identity")).toContainText("121/79 mmHg");
+  await expect(page.locator(".correction-identity")).toContainText("새 측정 기록");
+  await expect(page.locator(".daily-action-loop")).toHaveCount(0);
+  await page.getByRole("button", { name: "수정 취소", exact: true }).click();
+  await expect(page).toHaveURL(detailUrl);
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("121/79 mmHg");
+  expect(writes).toHaveLength(0);
+
+  await page.getByRole("button", { name: "수정", exact: true }).click();
+  await page.locator("#systolic").fill("124");
+  await page.locator("#diastolic").fill("81");
+  await page.getByRole("button", { name: "변경 저장", exact: true }).click();
+  await expect(page).toHaveURL(detailUrl);
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("124/81 mmHg");
+  await expect(page.getByText("혈압 기록을 수정했습니다.", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-scene="S05"]')).toHaveCount(0);
+  expect(writes).toEqual([{ method: "PUT", body: { observed_on: "2026-09-10", period: "evening", systolic: 124, diastolic: 81 } }]);
+});
+
+test("successful BP mutation waits for a fresh reread and cannot be repeated while confirmation is unavailable", async ({ page }) => {
+  let state = structuredClone(mixedWindow);
+  let reads = 0;
+  let writes = 0;
+  let failNextRead = false;
+  await page.route("http://e2e.invalid/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) {
+      reads += 1;
+      if (failNextRead) { failNextRead = false; return reply(route, {}, 503); }
+      return reply(route, state);
+    }
+    if (request.method() === "PUT" && url.pathname.endsWith("/blood-pressure/explorer-bp-evening")) {
+      writes += 1;
+      const body = request.postDataJSON();
+      state.blood_pressure_observations = state.blood_pressure_observations.map(record => record.id === "explorer-bp-evening" ? { ...record, ...body } : record);
+      failNextRead = true;
+      return reply(route, state.blood_pressure_observations.find(record => record.id === "explorer-bp-evening"));
+    }
+    return route.abort();
+  });
+
+  await openExplorer(page);
+  await eveningDetail(page).click();
+  await page.getByRole("button", { name: "수정", exact: true }).click();
+  await page.locator("#systolic").fill("126");
+  await page.getByRole("button", { name: "변경 저장", exact: true }).click();
+  const recovery = page.locator('[data-recovery-kind="stale-read"]');
+  await expect(recovery).toContainText("수정 요청에 대한 서버 응답은 완료됐어요.");
+  await expect(page.getByText("혈압 기록을 수정했습니다.", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "변경 저장", exact: true })).toBeDisabled();
+  await expect(page.locator(".primary-nav button:enabled")).toHaveCount(0);
+  await expect(page.locator(".brand-button")).toBeDisabled();
+  expect(writes).toBe(1);
+  await recovery.getByRole("button", { name: "다시 불러와 확인", exact: true }).click();
+  await expect(page.locator('[data-record-detail-kind="blood-pressure"]')).toContainText("126/79 mmHg");
+  await expect(page.getByText("혈압 기록을 수정했습니다.", { exact: true })).toBeVisible();
+  await expect(page.locator(".primary-nav button:enabled")).toHaveCount(5);
+  expect(writes).toBe(1);
+  expect(reads).toBe(3);
+});
+
+test("confirmed delete shows the exact fact and restores focus to the nearest surviving filtered record", async ({ page }) => {
+  let state = structuredClone(mixedWindow);
+  let deleteRequests = 0;
+  await page.route("http://e2e.invalid/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) return reply(route, state);
+    if (request.method() === "DELETE" && url.pathname.endsWith("/blood-pressure/explorer-bp-evening")) {
+      deleteRequests += 1;
+      state.blood_pressure_observations = state.blood_pressure_observations.filter(record => record.id !== "explorer-bp-evening");
+      return route.fulfill({ status: 204, headers });
+    }
+    return route.abort();
+  });
+
+  await openExplorer(page);
+  await page.getByRole("button", { name: "혈압 3개", exact: true }).click();
+  await dateFilter(page, 10).click();
+  await eveningDetail(page).click();
+  await page.getByRole("button", { name: "삭제", exact: true }).click();
+  const confirmation = page.getByRole("dialog");
+  await expect(confirmation).toContainText("혈압 관찰");
+  await expect(confirmation).toContainText("9월 10일");
+  await expect(confirmation).toContainText("저녁");
+  await expect(confirmation).toContainText("121/79 mmHg");
+  await confirmation.getByRole("button", { name: "삭제", exact: true }).click();
+  const survivingRow = page.getByRole("button", { name: /상세 보기 · 혈압 관찰 · 9월 10일.*아침/ });
+  await expect(survivingRow).toBeFocused();
+  await expect(rows(page)).toHaveCount(1);
+  await expect(dateFilter(page, 10)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("혈압 기록을 삭제했습니다.", { exact: true })).toBeVisible();
+  expect(deleteRequests).toBe(1);
+});
+
+test("a confirmed delete with a failed reread stays in recovery and never exposes a repeat delete", async ({ page }) => {
+  let state = structuredClone(mixedWindow);
+  let failNextRead = false;
+  let deleteRequests = 0;
+  let reads = 0;
+  await page.route("http://e2e.invalid/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) {
+      reads += 1;
+      if (failNextRead) { failNextRead = false; return reply(route, {}, 503); }
+      return reply(route, state);
+    }
+    if (request.method() === "DELETE" && url.pathname.endsWith("/blood-pressure/explorer-bp-evening")) {
+      deleteRequests += 1;
+      state.blood_pressure_observations = state.blood_pressure_observations.filter(record => record.id !== "explorer-bp-evening");
+      failNextRead = true;
+      return route.fulfill({ status: 204, headers });
+    }
+    return route.abort();
+  });
+
+  await openExplorer(page);
+  await eveningDetail(page).click();
+  await page.getByRole("button", { name: "삭제", exact: true }).click();
+  const confirmation = page.getByRole("dialog");
+  await confirmation.getByRole("button", { name: "삭제", exact: true }).click();
+  const recovery = confirmation.locator('[data-recovery-kind="stale-read"]');
+  await expect(recovery).toContainText("삭제 요청에 대한 서버 응답은 완료됐어요.");
+  await expect(confirmation.getByRole("button", { name: "삭제", exact: true })).toHaveCount(0);
+  await expect(page.getByText("혈압 기록을 삭제했습니다.", { exact: true })).toHaveCount(0);
+  expect(deleteRequests).toBe(1);
+  await recovery.getByRole("button", { name: "다시 불러오기", exact: true }).click();
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.locator('[data-scene="S08"]')).toBeVisible();
+  await expect(page.getByText("혈압 기록을 삭제했습니다.", { exact: true })).toBeVisible();
+  expect(deleteRequests).toBe(1);
+  expect(reads).toBe(3);
+});
+
+test("S10 detail and delete return to the originating recap instead of generic records", async ({ page }) => {
+  let state = structuredClone(mixedWindow);
+  await page.route("http://e2e.invalid/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+    if (request.method() === "GET" && url.pathname.endsWith("/window")) return reply(route, state);
+    if (request.method() === "DELETE" && url.pathname.endsWith("/blood-pressure/explorer-bp-evening")) {
+      state.blood_pressure_observations = state.blood_pressure_observations.filter(record => record.id !== "explorer-bp-evening");
+      return route.fulfill({ status: 204, headers });
+    }
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+  const evening = page.getByRole("button", { name: /상세 보기 · 혈압 관찰 · 9월 10일.*저녁/ });
+  await evening.click();
+  await expect(page.getByRole("button", { name: "7일 돌아보기로 돌아가기", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "7일 돌아보기로 돌아가기", exact: true }).click();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  await page.getByRole("button", { name: /상세 보기 · 혈압 관찰 · 9월 10일.*저녁/ }).click();
+  await page.getByRole("button", { name: "삭제", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "삭제", exact: true }).click();
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page).toHaveURL(/screen=S10/);
+  await expect(page).not.toHaveURL(/screen=S08/);
+  await expect(page.locator('[data-record-lane="blood-pressure"]')).toContainText("118/76 mmHg");
+  await expect(page.locator('[data-record-lane="blood-pressure"]')).not.toContainText("121/79 mmHg");
 });
 
 for (const width of [320, 390, 768, 1366]) {
