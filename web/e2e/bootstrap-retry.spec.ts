@@ -254,7 +254,10 @@ for (const failure of transient) {
     await page.getByRole("button", { name: "혈압 기록 저장" }).click();
     await expectCount(page, 3);
     if (timed(failure)) await page.clock.runFor(8_000);
-    await expect(page.getByText("저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.")).toBeVisible();
+    const recovery = page.locator('[data-recovery-kind="uncertain-save"]');
+    await expect(recovery).toContainText("자동으로 다시 보내지 않았습니다.");
+    await expect(recovery).toContainText("저장 여부를 확인하지 못했어요.");
+    await expect(recovery).toContainText("같은 요청을 다시 보내기 전에 기록을 다시 불러와");
     await page.clock.runFor(20_000);
     expect((await calls(page)).filter(call => call.method !== "GET")).toEqual([
       { method: "POST", path: "/api/v1/observations/blood-pressure", token: "Bearer e2e-synthetic-access-token", endOn: null },
@@ -302,7 +305,10 @@ for (const operation of ["export", "challenge", "delete-record"] as const) {
     await page.goto(`/?e2e=signed-in&screen=${operation === "challenge" ? "S03" : "S10"}`);
     if (operation === "export") {
       await page.getByRole("button", { name: "현재 7일 내보내기" }).click();
-      await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.");
+      const recovery = page.locator('[data-recovery-kind="export-failure"]');
+      await expect(recovery).toContainText("계정 기록은 변경되지 않았어요.");
+      await expect(recovery).toContainText("파일 생성 또는 다운로드만 완료되지 않았어요.");
+      await expect(recovery.getByRole("button", { name: "내보내기 다시 시도" })).toBeEnabled();
     } else if (operation === "challenge") {
       await page.getByRole("button", { name: /10분 걷기/ }).click();
       await expect(page.getByRole("status")).toContainText("저장 여부를 확인하지 못했어요.");

@@ -22,6 +22,7 @@ import { VisualStage } from "./components/VisualStage";
 
 import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
+import { RecoveryPanel, type RecoveryContent } from "./components/RecoveryPanel";
 import { RecordExplorer } from "./components/RecordExplorer";
 import { BloodPressureDraftNote } from "./components/BloodPressureDraftNote";
 import { DailyActionLoop } from "./components/DailyActionLoop";
@@ -86,6 +87,7 @@ type Notice = {
   reload?: boolean;
   origin: NoticeOrigin;
   persistence: "until-navigation" | "persistent";
+  recovery?: RecoveryContent;
 };
 type PendingAction = "blood-pressure" | "challenge-selection" | "challenge-checkin" | "export" | null;
 type SavedFactKind = "blood-pressure" | "challenge-checkin";
@@ -114,7 +116,7 @@ type LoginFeedback = {
 function makeNotice(
   kind: Notice["kind"],
   message: string,
-  options: { origin: NoticeOrigin; reload?: boolean },
+  options: { origin: NoticeOrigin; reload?: boolean; recovery?: RecoveryContent },
 ): Notice {
   return {
     kind,
@@ -122,6 +124,7 @@ function makeNotice(
     reload: options.reload,
     origin: options.origin,
     persistence: options.origin === "export-success" ? "until-navigation" : "persistent",
+    recovery: options.recovery,
   };
 }
 
@@ -182,6 +185,7 @@ function isWindowEmpty(windowData: ObservationWindow | null): boolean {
 function Login({
   onSession,
   recoveryMessage,
+  recovery,
   journey,
   companionMode,
   companionSpecies,
@@ -189,6 +193,7 @@ function Login({
 }: {
   onSession: (session: Session) => void;
   recoveryMessage?: string;
+  recovery?: RecoveryContent;
   journey: boolean;
   companionMode: CompanionMode;
   companionSpecies: CompanionSpecies;
@@ -253,7 +258,7 @@ function Login({
             </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>
-          {visibleFeedback && <p
+          {recovery ? <RecoveryPanel {...recovery} focusOnMount role="alert" /> : visibleFeedback && <p
             className={`notice ${visibleFeedback.kind === "sent" ? "notice-success" : "notice-error"} status-notice`}
             role="status"
             data-login-feedback={visibleFeedback.kind}
@@ -303,7 +308,7 @@ function Login({
           <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
           <button type="submit" disabled={pending}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
         </form>
-        {visibleFeedback && <p className={`notice ${visibleFeedback.kind === "sent" ? "notice-success" : "notice-error"}`} role="status">{visibleFeedback.message}</p>}
+        {recovery ? <RecoveryPanel {...recovery} focusOnMount role="alert" /> : visibleFeedback && <p className={`notice ${visibleFeedback.kind === "sent" ? "notice-success" : "notice-error"}`} role="status">{visibleFeedback.message}</p>}
         <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         <p className="welcome-footnote">혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시됩니다.</p>
       </section>
@@ -371,6 +376,7 @@ function App() {
   const [newBloodPressureRecovery, setNewBloodPressureRecovery] = useState<Notice | null>(null);
   const [previousCycleEnd, setPreviousCycleEnd] = useState<string | null>(null);
   const [challengeNeedsReload, setChallengeNeedsReload] = useState(false);
+  const [challengeKnownLocked, setChallengeKnownLocked] = useState(false);
   const challengeRequestRef = useRef<RequestContext | null>(null);
   const navigationVersionRef = useRef(0);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -454,6 +460,7 @@ function App() {
     setSession(nextSession);
     setPreviousCycleEnd(null);
     setChallengeNeedsReload(false);
+    setChallengeKnownLocked(false);
     challengeRequestRef.current = null;
     setSignOutPending(false);
     accountDeletionStartedRef.current = false;
@@ -719,7 +726,16 @@ function App() {
     if (isSessionError(error) && !hasNewerToken(requestContext)) {
       void supabase?.auth.signOut({ scope: "local" });
       applySession(null);
-      setNotice(makeNotice("warning", "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.", { origin: "session" }));
+      setNotice(makeNotice("warning", "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.", {
+        origin: "session",
+        recovery: {
+          kind: "session-expired",
+          title: "로그인 시간이 끝났어요",
+          known: "로그인 시간이 만료되었습니다. 계정이나 기록이 삭제됐다는 뜻은 아니에요.",
+          unknown: "진행 중이던 저장의 최종 결과는 여기서 단정하지 않아요.",
+          next: "이메일로 로그인을 다시 시작한 뒤 서버 기록을 다시 확인해 주세요.",
+        },
+      }));
       return;
     }
     if (context === "load") {
@@ -727,15 +743,39 @@ function App() {
       return;
     }
     if (error instanceof ApiRequestError && error.status === 422) {
-      setNotice(makeNotice("error", "입력 내용을 저장할 수 없어요. 날짜와 값의 형식을 확인한 뒤 수정해 주세요.", { origin: "request-error" }));
+      setNotice(makeNotice("error", "입력 내용을 저장할 수 없어요. 날짜와 값의 형식을 확인한 뒤 수정해 주세요.", {
+        origin: "request-error",
+        recovery: {
+          kind: "known-rejection",
+          title: "저장되지 않음",
+          known: "요청이 거절되어 변경이 완료되지 않았어요.",
+          next: "입력 내용을 저장할 수 없어요. 날짜와 값의 형식을 확인한 뒤 수정해 주세요.",
+        },
+      }));
       return;
     }
     if (error instanceof ApiRequestError && error.code === "challenge_selection_locked") {
-      setNotice(makeNotice("error", "첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.", { origin: "request-error" }));
+      setNotice(makeNotice("error", "첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.", {
+        origin: "request-error",
+        recovery: {
+          kind: "known-rejection",
+          title: "선택이 변경되지 않음",
+          known: "첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.",
+          next: "현재 선택을 유지하고 오늘 상태를 확인해 주세요.",
+        },
+      }));
       return;
     }
     if (error instanceof ApiRequestError && (error.status === 409 || error.code === "observation_conflict")) {
-      setNotice(makeNotice("error", "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.", { origin: "request-error" }));
+      setNotice(makeNotice("error", "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.", {
+        origin: "request-error",
+        recovery: {
+          kind: "known-rejection",
+          title: "새 기록이 저장되지 않음",
+          known: "요청이 거절되어 새 기록은 저장되지 않았어요.",
+          next: "같은 날짜와 시간대에 이미 기록이 있습니다. 입력을 확인해 주세요.",
+        },
+      }));
       return;
     }
     const message = context === "export"
@@ -743,7 +783,30 @@ function App() {
       : context === "delete"
         ? "삭제 여부를 확인하지 못했습니다. 목록을 다시 불러와 확인해 주세요."
         : "저장 여부를 확인하지 못했어요. 자동으로 다시 보내지 않았습니다. 기록을 새로고침해 확인해 주세요.";
-    const recovery = makeNotice("warning", message, { origin: "request-error", reload: context !== "export" });
+    const recoveryContent: RecoveryContent = context === "export"
+      ? {
+          kind: "export-failure",
+          title: "파일 내보내기만 완료되지 않음",
+          known: "계정 기록은 변경되지 않았어요.",
+          unknown: "파일 생성 또는 다운로드만 완료되지 않았어요.",
+          next: "연결을 확인한 뒤 내보내기를 다시 시도해 주세요.",
+        }
+      : context === "delete"
+        ? {
+            kind: "uncertain-delete",
+            title: "삭제 결과 확인 필요",
+            known: "삭제 요청은 보냈고 같은 요청을 자동으로 반복하지 않았어요.",
+            unknown: "삭제 여부를 확인하지 못했습니다.",
+            next: "같은 삭제를 다시 요청하기 전에 목록을 다시 불러와 먼저 확인해 주세요.",
+          }
+        : {
+            kind: "uncertain-save",
+            title: "처리 결과 확인 필요",
+            known: "저장 요청은 전송됐고 자동으로 다시 보내지 않았습니다.",
+            unknown: "저장 여부를 확인하지 못했어요.",
+            next: "같은 요청을 다시 보내기 전에 기록을 다시 불러와 반영 여부를 확인해 주세요.",
+          };
+    const recovery = makeNotice("warning", message, { origin: "request-error", reload: context !== "export", recovery: recoveryContent });
     setNotice(recovery);
     return recovery;
   }
@@ -783,6 +846,7 @@ function App() {
       setWindowData(nextData);
       setWindowState("ready");
       setChallengeNeedsReload(false);
+      setChallengeKnownLocked(false);
     } catch (error) {
       if (requestId !== windowRequestId.current || !isCurrentRequestContext(requestContext)) return;
       // One retry allowance and one logical deadline are shared by a transient
@@ -802,6 +866,13 @@ function App() {
       }
       presentRequestError(error, "load", requestContext);
     }
+  }
+
+  async function refreshThenOpenRecords() {
+    const requestContext = captureRequestContext();
+    if (!requestContext) return;
+    await refreshWindow();
+    if (isCurrentRequestContext(requestContext)) navigate("S08");
   }
 
   function selectDashboardWindow(nextWindow: DashboardWindow) {
@@ -1065,7 +1136,7 @@ function App() {
     const activeSession = sessionRef.current;
     const requestContext = captureRequestContext(activeSession);
     if (!activeSession || !requestContext || evidenceMode || isPriorDashboard || pendingAction || accountDeletionPending) return;
-    if (challengeRequestRef.current || challengeNeedsReload || windowState !== "ready") return;
+    if (challengeRequestRef.current || challengeNeedsReload || challengeKnownLocked || windowState !== "ready") return;
     challengeRequestRef.current = requestContext;
     windowRequestId.current += 1;
     const previous = presentationRef.current.windowData?.active_challenge;
@@ -1081,7 +1152,9 @@ function App() {
       if (navigationVersion === navigationVersionRef.current) navigate("S02");
     } catch (error) {
       if (isCurrentRequestContext(requestContext)) {
-        setChallengeNeedsReload(true);
+        const knownLocked = error instanceof ApiRequestError && error.code === "challenge_selection_locked";
+        setChallengeKnownLocked(knownLocked);
+        setChallengeNeedsReload(!knownLocked);
         presentRequestError(error, "save", requestContext);
       }
     } finally {
@@ -1196,7 +1269,7 @@ function App() {
     );
   }
   if (!evidenceMode && !session) {
-    return <><MySpaceReturn /><Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" ? notice.message : undefined} /></>;
+    return <><MySpaceReturn /><Login journey={presentation.journey} companionMode={companionMode} companionSpecies={companionSpeciesPreference} onCompanionSpeciesChange={(species) => setCompanionSpeciesPreference(writeCompanionIdentity(species))} onSession={applySession} recoveryMessage={notice?.kind === "warning" && !notice.recovery ? notice.message : undefined} recovery={notice?.recovery} /></>;
   }
 
   const activeChallenge = windowData?.active_challenge ?? null;
@@ -1569,16 +1642,23 @@ function App() {
     }
 
     if (activeScreen === "S13") {
+      const recovery = <RecoveryPanel
+        kind="initial-load"
+        title="기록 상태를 아직 확인하지 못했어요"
+        known="기록 불러오기가 완료되지 않았어요. 아직 기록이 없다는 뜻은 아니에요."
+        unknown="기록이 있는지와 현재 최신 상태는 확인되지 않았어요. 기존 기록이 변경됐다는 뜻도 아니에요."
+        next="연결을 확인한 뒤 기록을 다시 불러와 주세요."
+        tone="critical"
+        role="alert"
+        className={presentation.journey ? "journey-load-error-card" : "state-message"}
+        actions={<button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button>}
+      />;
       if (presentation.journey) return (
         <Scene id="S13" eyebrow="불러오기 오류" title="기록을 불러오지 못했어요" tone="critical" className="journey-load-error surface">
-          <div className="journey-load-error-card status-notice" role="alert">
-            <p>아직 기록이 없다는 뜻은 아니에요.</p>
-            <p>연결을 확인한 뒤 다시 불러와 주세요.</p>
-            <div className="action-group"><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>
-          </div>
+          {recovery}
         </Scene>
       );
-      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="critical" className="state-scene surface"><div className="mist-shape" aria-hidden="true" /><div className="state-message status-notice" role="alert"><p>{journeyCopy.S13.body}</p><button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div></Scene>;
+      return <Scene id="S13" eyebrow={journeyCopy.S13.eyebrow} title={journeyCopy.S13.title} tone="critical" className="state-scene surface"><div className="mist-shape" aria-hidden="true" />{recovery}</Scene>;
     }
 
     if (activeScreen === "S12") {
@@ -1638,7 +1718,7 @@ function App() {
     }
 
     if (activeScreen === "S03") {
-      const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded);
+      const locked = Boolean(activeChallenge?.first_checkin_on && !activeChallengeEnded) || challengeKnownLocked;
       if (presentation.journey) return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title={activeChallengeEnded ? "다음 챌린지를 시작할 행동을 골라요" : "원하면 이어갈 행동을 골라요"} tone="subtle" className="journey-candidate journey-challenge-choice surface">
         <DailyActionLoop current="S03" />
         <div className="challenge-choice-context status-notice" data-challenge-choice-state={locked ? "locked" : activeChallenge && !activeChallengeEnded ? "changeable" : "optional"}>
@@ -1665,7 +1745,6 @@ function App() {
             return <button className={`choice-tile ${selected ? "is-selected" : ""}`} type="button" key={action.id} aria-pressed={selected} onClick={() => void selectChallenge(action.id)} disabled={controlsDisabled || locked || challengeNeedsReload || windowState !== "ready"}><span className="choice-icon" aria-hidden="true" data-choice={action.id} /><span className="choice-kicker">선택 {index + 1}</span><strong>{action.label}</strong><small>{action.note}</small><span className="choice-state">{state}</span></button>;
           })}
         </div>
-        {challengeNeedsReload && <button type="button" className="secondary" disabled={windowState === "refreshing"} onClick={() => void refreshWindow()}>선택 상태 다시 확인하기</button>}
         <div className="journey-challenge-state status-notice" role="status">
           {pendingAction === "challenge-selection"
             ? "선택한 행동을 저장하고 있어요."
@@ -2150,11 +2229,27 @@ function App() {
       companionAsset={activeCompanionAsset}
       savedSceneEvent={confirmedSave ? savedScene.event : null}
     >
-      {visibleNotice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <div className={`notice notice-${visibleNotice.kind}`} role="status"><div>{visibleNotice.reload && <strong className="notice-title">처리 결과 확인 필요</strong>}<span>{visibleNotice.message}</span>{visibleNotice.reload && <p>같은 요청을 다시 보내기 전에 기록 목록에서 반영 여부를 확인해 주세요.</p>}</div>{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>}{visibleNotice.reload && <button className="notice-action" type="button" onClick={() => navigate("S08")}>기록 목록 보기</button>}</div>}
-      {windowState === "refresh-error" && requiresObservationWindow(activeScreen) && <div className="notice notice-warning" role="status"><div><strong className="notice-title">최신 여부 미확인</strong><span>마지막으로 불러온 기록을 보여드리고 있어요.</span><p>최근 변경이 반영되지 않았을 수 있어요.</p></div><button className="notice-action" type="button" onClick={() => void refreshWindow()}>다시 불러오기</button></div>}
+      {visibleNotice && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && (visibleNotice.recovery ? <RecoveryPanel
+        {...visibleNotice.recovery}
+        tone={visibleNotice.kind === "error" ? "critical" : "warning"}
+        focusOnMount
+        actions={visibleNotice.recovery.kind === "export-failure" ? <button type="button" onClick={() => void exportRecentRecords()} disabled={pendingAction === "export"}>{pendingAction === "export" ? "내보내는 중" : "내보내기 다시 시도"}</button> : visibleNotice.reload ? <>
+          <button type="button" onClick={() => void refreshWindow()} disabled={windowState === "loading" || windowState === "refreshing"}>다시 불러오기</button>
+          <button className="secondary" type="button" onClick={() => void refreshThenOpenRecords()} disabled={windowState === "loading" || windowState === "refreshing"}>기록에서 확인하기</button>
+        </> : undefined}
+      /> : <div className={`notice notice-${visibleNotice.kind}`} role="status"><span>{visibleNotice.message}</span></div>)}
+      {windowState === "refresh-error" && requiresObservationWindow(activeScreen) && <RecoveryPanel
+        kind="stale-read"
+        title="최신 여부 미확인"
+        known="마지막으로 불러온 기록을 보여드리고 있어요. 이 내용은 마지막으로 확인된 기록 그대로예요."
+        unknown="현재 최신 여부는 확인되지 않았어요. 최근 변경이 반영되지 않았을 수 있어요."
+        next="기록을 다시 불러오면 최신 상태를 확인할 수 있어요."
+        focusOnMount
+        actions={<button type="button" onClick={() => void refreshWindow()}>다시 불러오기</button>}
+      />}
       {isPriorDashboard && activeScreen !== "S12" && requiresObservationWindow(activeScreen) && <div className="notice notice-warning" data-read-only-window><span>{dashboardPeriodName} 기록을 읽기 전용으로 보고 있어요.</span><button className="notice-action" type="button" onClick={() => navigate("S02")}>현재 7일 보기</button></div>}
-      {pendingBloodPressureDeletion && <DeleteConfirmation title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingBloodPressureDeletion(null)} onConfirm={() => void confirmBloodPressureDeletion()} />}
-      {pendingChallengeCheckinDeletion && <DeleteConfirmation title={`${dateLabel(pendingChallengeCheckinDeletion.observed_on)} 챌린지 기록을 삭제할까요?`} pending={pendingAction !== null} error={notice?.reload ? notice.message : undefined} onCancel={() => setPendingChallengeCheckinDeletion(null)} onConfirm={() => void confirmChallengeCheckinDeletion()} />}
+      {pendingBloodPressureDeletion && <DeleteConfirmation title={`${dateLabel(pendingBloodPressureDeletion.observed_on)} ${periodLabel(pendingBloodPressureDeletion.period)} 혈압 기록을 삭제할까요?`} pending={pendingAction !== null} recovery={notice?.recovery?.kind === "uncertain-delete" ? notice.recovery : undefined} onCancel={() => setPendingBloodPressureDeletion(null)} onConfirm={() => void confirmBloodPressureDeletion()} onRecover={() => { setPendingBloodPressureDeletion(null); void refreshWindow(); }} onOpenRecords={() => { setPendingBloodPressureDeletion(null); void refreshThenOpenRecords(); }} />}
+      {pendingChallengeCheckinDeletion && <DeleteConfirmation title={`${dateLabel(pendingChallengeCheckinDeletion.observed_on)} 챌린지 기록을 삭제할까요?`} pending={pendingAction !== null} recovery={notice?.recovery?.kind === "uncertain-delete" ? notice.recovery : undefined} onCancel={() => setPendingChallengeCheckinDeletion(null)} onConfirm={() => void confirmChallengeCheckinDeletion()} onRecover={() => { setPendingChallengeCheckinDeletion(null); void refreshWindow(); }} onOpenRecords={() => { setPendingChallengeCheckinDeletion(null); void refreshThenOpenRecords(); }} />}
       {accountDeletionOpen && <AccountDeletionConfirmation pending={accountDeletionPending} recovery={accountDeletionRecovery} onCancel={() => { if (!accountDeletionPending) { setAccountDeletionOpen(false); setAccountDeletionRecovery(null); } }} onConfirm={() => void confirmAccountDeletion()} />}
       {renderScene()}
     </SceneShell>

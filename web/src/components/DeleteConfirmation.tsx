@@ -1,14 +1,17 @@
 import { useEffect, useRef } from "react";
+import { RecoveryPanel, type RecoveryContent } from "./RecoveryPanel";
 
 type DeleteConfirmationProps = {
   title: string;
   pending: boolean;
-  error?: string;
+  recovery?: RecoveryContent;
   onCancel: () => void;
   onConfirm: () => void;
+  onRecover?: () => void;
+  onOpenRecords?: () => void;
 };
 
-export function DeleteConfirmation({ title, pending, error, onCancel, onConfirm }: DeleteConfirmationProps) {
+export function DeleteConfirmation({ title, pending, recovery, onCancel, onConfirm, onRecover, onOpenRecords }: DeleteConfirmationProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -33,11 +36,13 @@ export function DeleteConfirmation({ title, pending, error, onCancel, onConfirm 
         <h2 id="delete-title">{title}</h2>
         <p id="delete-description">삭제한 기록은 되돌릴 수 없어요. 날짜와 기록 종류를 확인해 주세요.</p>
       </div>
-      {error && <p className="notice notice-warning status-notice" role="status">{error} 취소를 누른 뒤 목록을 다시 불러와 확인해 주세요.</p>}
-      <div className="form-actions action-group">
+      {recovery ? <RecoveryPanel {...recovery} role="alert" focusOnMount actions={<>
+        <button type="button" onClick={onRecover}>다시 불러오기</button>
+        <button className="secondary" type="button" onClick={onOpenRecords}>기록에서 확인하기</button>
+      </>} /> : <div className="form-actions action-group">
         <button className="secondary" type="button" onClick={onCancel} disabled={pending} autoFocus>취소</button>
         <button className="danger" type="button" onClick={onConfirm} disabled={pending}>{pending ? "삭제 중" : "삭제"}</button>
-      </div>
+      </div>}
     </dialog>
   );
 }

@@ -330,7 +330,9 @@ test("export timeout shows bounded warning and re-enables the button", async ({ 
   await page.goto("/?e2e=signed-in&screen=S10");
   const exportButton = page.getByRole("button", { name: "현재 7일 내보내기" });
   await exportButton.click();
-  await expect(page.getByRole("status")).toContainText("파일을 내려받지 못했습니다.", { timeout: 10_000 });
+  const recovery = page.locator('[data-recovery-kind="export-failure"]');
+  await expect(recovery).toContainText("계정 기록은 변경되지 않았어요.", { timeout: 10_000 });
+  await expect(recovery).toContainText("파일 생성 또는 다운로드만 완료되지 않았어요.");
   await expect(exportButton).toBeEnabled();
 });
 
@@ -420,10 +422,9 @@ test("export times out when headers arrive but the blob body stalls", async ({ p
   });
   await exportButton.click();
 
-  await expect(page.getByRole("status")).toContainText(
-    "파일을 내려받지 못했습니다.",
-    { timeout: 10_000 },
-  );
+  const recovery = page.locator('[data-recovery-kind="export-failure"]');
+  await expect(recovery).toContainText("계정 기록은 변경되지 않았어요.", { timeout: 10_000 });
+  await expect(recovery).toContainText("파일 생성 또는 다운로드만 완료되지 않았어요.");
   await expect(exportButton).toBeEnabled();
 
   const requestCount = await page.evaluate(() =>

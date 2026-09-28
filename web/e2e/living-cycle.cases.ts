@@ -175,7 +175,7 @@ test('Living Cycle uncertain creation requires a read and never automatically re
   await expect(page.getByText('저장 여부를 확인하지 못했어요.', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: /10분 걷기/ })).toBeDisabled();
   expect(state.writes).toHaveLength(1);
-  await page.getByRole('button', { name: '선택 상태 다시 확인하기', exact: true }).click();
+  await page.getByRole('button', { name: '다시 불러오기', exact: true }).click();
   await expect(page.getByRole('button', { name: /수면 시간 지키기/ })).toContainText('선택됨');
   expect(state.writes).toHaveLength(1);
   await page.getByRole('button', { name: '오늘의 기록으로 돌아가기', exact: true }).click();
@@ -188,6 +188,9 @@ test('Living Cycle keeps a challenge lock conflict distinct from an observation 
   await page.getByRole('button', { name: /수면 시간 지키기/ }).click();
   await expect(page.getByText('첫 체크인이 있어 선택한 행동은 바꿀 수 없어요.', { exact: true })).toBeVisible();
   await expect(page.getByText('같은 날짜와 시간대에 이미 기록이 있습니다.', { exact: false })).toHaveCount(0);
+  await expect(page.locator('[data-recovery-kind="known-rejection"]')).not.toContainText('아직 확인되지 않음');
+  await expect(page.getByRole('button', { name: '다시 불러오기', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /수면 시간 지키기/ })).toBeDisabled();
   expect(state.writes).toHaveLength(1);
   expect(state.closed).toHaveLength(0);
 });
