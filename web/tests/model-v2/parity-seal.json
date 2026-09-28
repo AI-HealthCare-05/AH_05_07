@@ -2,13 +2,13 @@
   "format": "sk7-parity-evidence-v2",
   "claim": "reviewed-local-run; not independent execution attestation",
   "source": {
-    "commit": "4f60c9147ef5c0e6ecddfa2f74ca24e2d5188f76",
-    "tree": "662fc7908f61a4f7bc1625b9254ea21817e7413b"
+    "commit": "d79a910e1126e48a01a055178addecc9f26b0675",
+    "tree": "7cf5bd4d338f2d64b2faf802cba0d8462966daca"
   },
   "canonicalSha256": "d0f3bc407edae83db0852e9b393831b02cc5420a49fbc447d8d108f99c69ed84",
   "sha256": {
     ".gitattributes": "a4799901d8bd2797b0ea643eea06b92b3ca2fbf909de3071ce56794592c94bdc",
-    ".github/workflows/checks.yml": "f1d9992c2eea662bd90832b4489469ae80aba190d5a13aee2e7e81b2bbdf2135",
+    ".github/workflows/checks.yml": "e56b203876b4af9bac9b1784ea69a36b59baf74385c90de51f404e70539c6b55",
     ".python-version": "f8faecf2505680716c6279bf2cdec3d5a5ba2ba852f0d7df45d51ac1ce8d9ade",
     "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "app/apis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -62,13 +62,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 6.800000000745058,
+        "coldLoadMs": 15,
         "warm": {
           "n": 30,
-          "medianMs": 0.003600000001490116,
-          "p95Ms": 0.004699999999254942,
-          "minMs": 0.003400000002235174,
-          "maxMs": 0.005200000002980232
+          "medianMs": 0.003700000002980232,
+          "p95Ms": 0.004900000005960465,
+          "minMs": 0.0035,
+          "maxMs": 0.005799999997019768
         }
       },
       {
@@ -79,13 +79,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 18,
+        "coldLoadMs": 19,
         "warm": {
           "n": 30,
           "medianMs": 0.006,
           "p95Ms": 0.008,
           "minMs": 0.004,
-          "maxMs": 0.009
+          "maxMs": 0.008
         }
       },
       {
@@ -96,13 +96,13 @@
         "mutationsRejected": 4,
         "publicExecutionGuard": true,
         "bmiEndpointFailClosed": true,
-        "coldLoadMs": 5,
+        "coldLoadMs": 18,
         "warm": {
           "n": 30,
           "medianMs": 0.004,
           "p95Ms": 0.005,
           "minMs": 0.004,
-          "maxMs": 0.005
+          "maxMs": 0.006
         }
       }
     ]
