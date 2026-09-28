@@ -64,16 +64,27 @@ export function ModelV2Outcome({
 
   return <div className="model-v2-outcome" data-model-v2-user-result="processed">
     <header className="model-v2-outcome-heading section-header">
+      <p className="model-v2-result-overline">이번 이용의 분석</p>
       <h2 id="model-v2-result-title" tabIndex={-1}>{hasPreview ? "연구 모델 분석 결과" : "생활정보 처리를 완료했어요"}</h2>
       {hasPreview ? (
         <div className="model-v2-preview status-notice" data-model-v2-preview>
-          <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
-          <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
-          <p>입력한 생활정보를 이 기기에서 Model V2가 처리해 만든 연속 출력입니다.</p>
-          <p className="model-v2-result-disclaimer">이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+          <div className="model-v2-preview-value-block">
+            <p id="model-v2-preview-label">연구/개발 미리보기 · 내부 연속 출력</p>
+            <p data-model-v2-preview-value>{previewOutput.toFixed(3)}</p>
+            <p>입력한 생활정보를 이 기기에서 Model V2가 처리해 만든 연속 출력입니다.</p>
+          </div>
+          <div className="model-v2-meaning-limit" aria-label="분석값 의미 제한">
+            <strong>이 숫자를 이렇게 해석하지 않아요</strong>
+            <p className="model-v2-result-disclaimer">이 값은 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험군 등급, 중증도 또는 향후 고혈압 발생 가능성을 뜻하지 않습니다. 치료·예방 효과를 뜻하지 않습니다.</p>
+            <ul aria-hidden="true"><li>확률·백분율 아님</li><li>진단·정상 판정 아님</li><li>위험등급·중증도 아님</li></ul>
+          </div>
         </div>
       ) : (
-        <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
+        <div className="model-v2-non-numeric status-notice">
+          <strong>생활정보 처리가 끝났어요</strong>
+          <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
+          <small>입력한 사실을 정리한 ‘오늘의 시작점’과 현재 기록 기준 다음 행동은 계속 확인할 수 있어요.</small>
+        </div>
       )}
       <p className="model-v2-local-privacy status-notice">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
       {Number(draft.age) >= 80 && <p className="notice-warning status-notice">
@@ -84,6 +95,7 @@ export function ModelV2Outcome({
     <div className="model-v2-summary-heading section-header">
       <p className="model-v2-outcome-kicker">오늘의 시작점 · 이번 이용에만</p>
       <h3>오늘의 생활 패턴을 정리했어요</h3>
+      <p>아래 내용은 방금 입력한 사실을 읽기 쉽게 바꾼 것이며, 위 분석값의 원인이나 해석이 아니에요.</p>
     </div>
 
     <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">
@@ -135,8 +147,16 @@ export function ModelV2Outcome({
       </section>
     </div>
 
+    <div className="model-v2-result-guardrails status-notice">
+      <p className="model-v2-result-disclaimer">
+        이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
+        특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
+      </p>
+      <p className="model-v2-result-explanation">이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
+    </div>
+
     <section className="model-v2-result-next section-header status-notice" aria-labelledby="model-v2-next-title">
-      <p className="eyebrow">현재 기록 기준</p>
+      <p className="eyebrow">분석값과 분리된 현재 기록 기준</p>
       <h3 id="model-v2-next-title">다음 한 걸음</h3>
       <div className="model-v2-continuation section-header" data-model-v2-continuation={continuation.key}>
         <h4>{continuation.title}</h4>
@@ -160,14 +180,6 @@ export function ModelV2Outcome({
       <p className="model-v2-result-explanation">다음 행동은 분석값이 아니라, 현재 앱에 남아 있는 오늘 기록 상태만 보고 정해요.</p>
       {continuation.destination !== "S02" && <button className="text-button" type="button" onClick={onReturnToToday}>오늘의 기록으로 돌아가기</button>}
     </section>
-
-    <div className="model-v2-result-guardrails status-notice">
-      <p className="model-v2-result-disclaimer">
-        이 요약은 입력한 생활정보를 읽기 좋게 정리한 것이며, 건강 상태나 질환 위험도를 판단하는 결과가 아니에요.
-        특정 생활습관이 어떤 결과의 원인이라는 뜻도 아닙니다.
-      </p>
-      <p className="model-v2-result-explanation">이번 입력과 결과는 저장되지 않아 기록 목록에서 다시 볼 수 없어요. 화면을 나가거나 새로고침하면 사라져요.</p>
-    </div>
 
     <section className="model-v2-result-model-note section-header" aria-labelledby="model-v2-research-title">
       <h3 id="model-v2-research-title">처리 방식과 입력 상세</h3>
