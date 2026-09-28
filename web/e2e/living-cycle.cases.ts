@@ -69,6 +69,10 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   const state = await api(context);
   await page.goto('/?e2e=signed-in&screen=S02');
   await expect(page.locator('[data-living-cycle="ended"]')).toContainText('이번 챌린지가 끝났어요');
+  await expect(page.locator('[data-living-cycle="ended"]')).toContainText('10분 걷기');
+  await expect(page.locator('[data-challenge-timeline="ended"] [data-challenge-day]')).toHaveCount(7);
+  await expect(page.locator('[data-challenge-day="2026-09-05"]')).toHaveAttribute('data-challenge-day-state', 'unloaded');
+  await expect(page.locator('[data-challenge-day="2026-09-05"]')).toContainText('불러오기 전');
   await expect(page.getByRole('button', { name: '다음 챌린지 고르기', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '종료된 7일 돌아보기', exact: true })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '종료된 7일 확인하기', exact: true })).toHaveCount(0);
@@ -98,6 +102,7 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await expect(page.locator('#S03-title')).toBeFocused();
   await expect(page).not.toHaveURL(/dashboard_window/);
   await expect(page.getByRole('heading', { name: '다음 챌린지를 시작할 행동을 골라요' })).toBeVisible();
+  await expect(page.getByRole('definition')).toHaveText(['선택한 오늘', '오늘부터 7일', '첫 상태 기록 전까지']);
   expect(state.writes).toHaveLength(0);
   await page.locator('html').evaluate(html => { html.style.fontSize = '200%'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -119,7 +124,7 @@ for (const width of [320, 390]) test(`Living Cycle retains exact recap/report an
   await expect(page.locator('[data-living-week-report]')).toContainText('10분 걷기 · 기록함');
   await expect(page.locator('[data-living-week-report]')).not.toContainText('수면 시간 지키기');
   await expect(page.locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
-    '전체 관찰1건', '아침 기록1건', '저녁 기록0건', '관찰이 있는 날짜1일', '관찰 기록 없음6일',
+    '전체 관찰1건', '관찰이 있는 날짜1일', '현재 불러온 관찰 없음6일', '아침 기록1건', '저녁 기록0건',
   ]);
   expect(await page.locator('[data-report-date]').allTextContents()).toEqual(completedReportFacts);
   expect(state.writes).toHaveLength(1);
@@ -236,6 +241,7 @@ test('Living Cycle ends only after Seoul midnight, including without a first che
   await expect(page.getByRole('button', { name: '다음 챌린지 고르기', exact: true })).toBeEnabled();
   await page.goto('/?e2e=signed-in&screen=S06');
   await expect(page.getByRole('heading', { name: '종료된 챌린지를 확인해요' })).toBeVisible();
+  await expect(page.locator('[data-challenge-timeline="ended"] [data-challenge-day]')).toHaveCount(7);
   await expect(page.getByRole('button', { name: '오늘 상태 확인·기록하기' })).toHaveCount(0);
   expect(state.writes).toHaveLength(0);
 });

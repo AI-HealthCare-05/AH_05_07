@@ -8,11 +8,11 @@ const headers = {
 
 const today = "2026-09-11";
 
-function windowWithActiveChallenge(options: { checkin?: "completed" | "skipped"; firstCheckin?: string | null; endsOn?: string; startOn?: string; endOn?: string; legacyObservedOn?: string } = {}) {
+function windowWithActiveChallenge(options: { checkin?: "completed" | "skipped"; firstCheckin?: string | null; challengeStartsOn?: string; endsOn?: string; startOn?: string; endOn?: string; legacyObservedOn?: string } = {}) {
   const challenge = {
     id: "challenge-daily-active",
     action_id: "walk-10-minutes",
-    starts_on: "2026-09-09",
+    starts_on: options.challengeStartsOn ?? "2026-09-09",
     ends_on: options.endsOn ?? "2026-09-15",
     first_checkin_on: options.firstCheckin === undefined ? "2026-09-09" : options.firstCheckin,
     status: "active",
@@ -64,6 +64,7 @@ test("S03 saves an existing action request once without premature selection", as
   const choiceContext = page.locator('[data-challenge-choice-state="optional"]');
   await expect(choiceContext).toContainText("참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요.");
   await expect(choiceContext).toContainText("원할 때 하나를 골라 오늘부터 시작해요.");
+  await expect(page.getByRole("definition")).toHaveText(["선택한 오늘", "오늘부터 7일", "첫 상태 기록 전까지"]);
   await page.locator("html").evaluate((html) => { html.style.fontSize = "200%"; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.getByRole("button", { name: /10분 걷기/ }).click();
@@ -117,10 +118,22 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   await expect(page.getByRole("heading", { name: "선택한 행동과 오늘 상태를 확인해요" })).toBeVisible();
   await expect(page.locator('[data-challenge-period="active"]')).toContainText("2026-09-09");
   await expect(page.locator('[data-challenge-period="active"]')).toContainText("2026-09-15");
+  const timeline = page.locator('[data-challenge-timeline="active"]');
+  await expect(timeline.locator('[data-challenge-day]')).toHaveCount(7);
+  await expect(timeline.locator(`[data-challenge-day="${today}"]`)).toHaveAttribute("aria-current", "date");
+  await expect(timeline.locator(`[data-challenge-day="${today}"]`)).toHaveAttribute("data-challenge-day-state", "empty");
+  await expect(timeline.locator('[data-challenge-day="2026-09-12"]')).toHaveAttribute("data-challenge-day-state", "upcoming");
+  await expect(timeline.locator('[data-challenge-day="2026-09-12"]')).toContainText("예정");
+  await expect(timeline).toContainText("오늘 · 3일째");
   const pendingCheckin = page.locator('[data-challenge-checkin-state="pending"]');
   await expect(pendingCheckin).toContainText("'기록함' 또는 '건너뜀'");
   await expect(pendingCheckin).toContainText("'건너뜀'도 오늘 상태를 남긴 기록");
   await expect(pendingCheckin).toContainText("혈압 기록과 합쳐서 판단하지 않아요");
+  await expect(page.locator('[data-scene="S06"]').getByRole("button", { name: "기록함", exact: true })).toBeVisible();
+  await expect(page.locator('[data-scene="S06"]').getByRole("button", { name: "건너뜀", exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.locator("html").evaluate((html) => { html.style.fontSize = "200%"; });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("button", { name: "오늘 상태 확인·기록하기" }).click();
   await expect(page.locator('[data-scene="S07"]')).toBeVisible();
   expect(nonGetRequests).toEqual([]);
@@ -143,6 +156,7 @@ test("S03 and S06 open S07 read-only, then S07 records one independent challenge
   await expect(challengeStateAction).toBeVisible();
   await challengeStateAction.click();
   await expect(page.locator('[data-scene="S06"]')).toBeVisible();
+  await expect(page.locator(`[data-challenge-day="${today}"]`)).toHaveAttribute("data-challenge-day-state", "completed");
 
   expect(checkinRequests).toBe(1);
   expect(nonGetRequests).toEqual(["POST /api/v1/observations/challenges/active/checkins"]);
@@ -222,6 +236,7 @@ for (const status of ["completed", "skipped"] as const) test(`S07 keeps today's 
   await expect(page.getByText(`오늘 상태 · ${status === "completed" ? "기록함" : "건너뜀"}`, { exact: true })).toBeVisible();
   await expect(page.getByText("오늘 기록 없음", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "기록함", exact: true })).toHaveCount(0);
+  await expect(page.locator(`[data-challenge-day="${today}"]`)).toHaveAttribute("data-challenge-day-state", status);
 });
 
 test("S06 identifies an ended challenge without offering today's status recording", async ({ page }) => {
@@ -230,7 +245,7 @@ test("S06 identifies an ended challenge without offering today's status recordin
     const request = route.request();
     const url = new URL(request.url());
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
-    if (url.pathname.endsWith("/window")) return route.fulfill({ status: 200, headers, contentType: "application/json", body: JSON.stringify(windowWithActiveChallenge({ endsOn: "2026-09-10" })) });
+    if (url.pathname.endsWith("/window")) return route.fulfill({ status: 200, headers, contentType: "application/json", body: JSON.stringify(windowWithActiveChallenge({ challengeStartsOn: "2026-09-04", endsOn: "2026-09-10" })) });
     return route.abort();
   });
 
@@ -240,5 +255,7 @@ test("S06 identifies an ended challenge without offering today's status recordin
   const endedCheckin = page.locator('[data-challenge-checkin-state="ended"]');
   await expect(endedCheckin).toContainText("챌린지 종료");
   await expect(endedCheckin).toContainText("오늘 상태를 새로 기록할 수 없어요");
+  await expect(page.locator('[data-challenge-timeline="ended"] [data-challenge-day]')).toHaveCount(7);
+  await expect(page.locator('[data-challenge-timeline="ended"]')).toContainText("기간 종료");
   await expect(page.getByRole("button", { name: "오늘 상태 확인·기록하기" })).toHaveCount(0);
 });

@@ -516,9 +516,12 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
 
   await page.getByRole("button", { name: "행동 고르기", exact: true }).click();
   await expect(page.locator('[data-scene="S03"]')).toBeVisible();
+  await expect(page.getByRole("definition")).toHaveText(["선택한 오늘", "오늘부터 7일", "첫 상태 기록 전까지"]);
   await chooseWalkingChallenge(page);
+  await expect(page.locator('[data-challenge-timeline="active"] [data-challenge-day]')).toHaveCount(7);
   await page.locator('[data-scene="S06"]').getByRole("button", { name: "기록함", exact: true }).click();
   await expect(page.locator('[data-challenge-checkin-state="completed"]')).toContainText("기록함");
+  await expect(page.locator(`[data-challenge-day="${today}"]`)).toHaveAttribute("data-challenge-day-state", "completed");
 
   await page.locator(".primary-nav").getByRole("button", { name: "기록 찾아보기", exact: true }).click();
   await expect(page.locator('[data-scene="S08"]')).toBeVisible();
