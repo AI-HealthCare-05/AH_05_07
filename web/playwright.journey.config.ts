@@ -8,7 +8,7 @@ export default defineConfig({
     'ui-candidate.cases.ts',
     'model-v2-result-state.spec.ts',
   ],
-  grep: /(journey candidate primary action, input identity and navigation at 390x844|recap week reflection map order at 390x844|route enter reuses the viewport and does not repeat for typing, theme, or refresh|reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion|S11 retained synthetic fixture defaults to not_ready and exposes no result value|S11 remains usable at 390px)/,
+  grep: /(journey candidate primary action, input identity and navigation at 390x844|recap week reflection map order at 390x844|held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time|route enter reuses the viewport and does not repeat for typing, theme, or refresh|reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion|S11 retained synthetic fixture defaults to not_ready and exposes no result value|S11 remains usable at 390px)/,
   outputDir: './test-results/living-scene-review/journey-pr',
   workers: 1,
   reporter: [['list'], ['json', { outputFile: 'test-results/living-scene-review/journey-pr-report.json' }]],

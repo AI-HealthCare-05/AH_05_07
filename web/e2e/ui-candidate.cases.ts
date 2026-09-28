@@ -1725,6 +1725,24 @@ test.describe('B9 journey feedback', () => {
     const today = page.locator('[data-journey-skeleton-family="today"]');
     await expect(today).toBeVisible();
     await expect(page.getByRole('status').filter({ hasText: '선택한 7일의 기록을 불러오는 중이에요.' })).toHaveCount(1);
+    const loadingLayout = today.locator('.journey-skeleton-layout');
+    const motionToggle = page.getByRole('button', { name: '움직임 멈추기', exact: true });
+    await expect(motionToggle).toBeVisible();
+    await page.waitForTimeout(4100);
+    expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('journey-skeleton-sweep');
+    expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationPlayState)).toBe('running');
+    await motionToggle.click();
+    const resumeMotion = page.getByRole('button', { name: '움직임 재생', exact: true });
+    await expect(resumeMotion).toHaveAttribute('aria-pressed', 'true');
+    expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationPlayState)).toBe('paused');
+    await resumeMotion.click();
+    await page.emulateMedia({ forcedColors: 'active' });
+    await expect(page.getByRole('button', { name: '움직임 멈추기', exact: true })).toBeHidden();
+    expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('none');
+    await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' });
+    await expect(page.getByRole('button', { name: '움직임 멈추기', exact: true })).toBeHidden();
+    expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('none');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(today.locator('.journey-skeleton-day')).toHaveCount(7);
     await expect(today.locator('button, input, select, a[href], [tabindex="0"]')).toHaveCount(0);
     await expect(page.locator('[data-scene="S05"], [data-scene="S12"]')).toHaveCount(0);
@@ -1821,7 +1839,7 @@ test.describe('B9 journey feedback', () => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(page.locator('[data-scene="S02"]')).toBeVisible();
     expect((await transitionProbe(page)).calls).toEqual([
-      { duration: 120, screen: 'S02', target: 'scene-copy' },
+      { duration: 200, screen: 'S02', target: 'today-desk today-showcase-copy' },
     ]);
     await resetTransitionProbe(page);
     await page.locator('#scene-content').evaluate(element => element.setAttribute('data-b9-node', 'preserved'));
@@ -1867,8 +1885,9 @@ test.describe('B9 journey feedback', () => {
     await page.goto('/?e2e=signed-in&screen=S02');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await expect(page.locator('.home-lead button')).toBeEnabled();
     expect((await transitionProbe(page)).calls).toEqual([
-      { duration: 120, screen: 'S02', target: 'scene-copy' },
+      { duration: 200, screen: 'S02', target: 'today-desk today-showcase-copy' },
     ]);
     await resetTransitionProbe(page);
 
@@ -1992,6 +2011,7 @@ test.describe('B9 journey feedback', () => {
       await page.goto('/?e2e=signed-in&screen=S02');
       await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
       await expect(page.locator('[data-journey-skeleton-family="today"]')).toBeVisible();
+      await expect(page.locator('.journey-skeleton-block').first()).toHaveCSS('animation-name', 'none');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (width <= 580) {
         const nav = (await page.locator('.primary-nav').boundingBox())!;

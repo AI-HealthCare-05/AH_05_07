@@ -31,6 +31,13 @@ const transitionTiming = {
     ],
     duration: 120,
   },
+  todayReveal: {
+    keyframes: [
+      { opacity: 0.88, transform: "translateY(5px)" },
+      { opacity: 1, transform: "none" },
+    ],
+    duration: 200,
+  },
 } as const;
 
 /** Presentation-only motion over the existing viewport DOM. */
@@ -84,13 +91,19 @@ export function useJourneyTransition({
     ) return;
 
     const transition = prior.phase === "loading"
-      ? transitionTiming.reveal
+      ? activeScreen === "S02" ? transitionTiming.todayReveal : transitionTiming.reveal
       : prior.phase === "content" && prior.activeScreen !== activeScreen
         ? transitionTiming.enter
         : null;
     if (!transition) return;
 
-    const target = viewportRef.current?.querySelector<HTMLElement>(".scene-copy");
+    // Today owns a much larger scene surface than its copy. Reveal only the
+    // semantic desk so VisualStage first-paint and spatial ownership remain
+    // independent and CTA availability is never coupled to scene readiness.
+    const targetSelector = prior.phase === "loading" && activeScreen === "S02"
+      ? ".today-desk"
+      : ".scene-copy";
+    const target = viewportRef.current?.querySelector<HTMLElement>(targetSelector);
     if (!target || typeof target.animate !== "function") return;
 
     try {

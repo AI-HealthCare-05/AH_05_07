@@ -281,6 +281,7 @@ test('fast Journey config reuses focused Journey, B9 and S11 assertions in one b
   for (const contract of [
     'journey candidate primary action, input identity and navigation at 390x844',
     'recap week reflection map order at 390x844',
+    'held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time',
     'route enter reuses the viewport and does not repeat for typing, theme, or refresh',
     'reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion',
     'S11 retained synthetic fixture defaults to not_ready and exposes no result value',
