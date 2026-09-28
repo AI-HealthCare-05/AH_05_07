@@ -725,6 +725,17 @@ test('North Star Home identifies a directly opened prior window without claiming
 for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirmed S05 at ${width}`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 320 ? 568 : 844 });
   const state = await setup(page);
+  // The confirmed save refresh must return the new observation for immediate S07 review.
+  await page.route('http://e2e.invalid/api/v1/observations/window**', async route => {
+    if (route.request().method() !== 'GET' || state.posts() === 0) return route.fallback();
+    const url = new URL(route.request().url());
+    return route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify({
+      start_on: url.searchParams.get('start_on'), end_on: url.searchParams.get('end_on'),
+      blood_pressure_observations: [{ id: 'synthetic-save', observed_on: '2026-09-11', period: 'morning', systolic: 120, diastolic: 80 }],
+      challenge_checkins: [], active_challenge: null,
+      challenge_events: [{ id: 'synthetic-existing-legacy', observed_on: '2026-09-05', action_id: 'walk-10-minutes', status: 'completed' }],
+    }) });
+  });
   await page.goto('/?e2e=signed-in&screen=S02&scene=review&VITE_SK7_UI_MODE=legacy&companion_species=cat');
   await expect(page.locator('.journey-today')).toBeVisible();
   const poster = page.locator('[data-poster-asset]');
@@ -787,8 +798,10 @@ for (const width of [320, 390, 1366]) test(`static posters, keyboard and confirm
     expect(boxes.slot.bottom).toBeLessThanOrEqual(boxes.cta.top);
   }
   await page.locator('#S05-title').focus(); await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: '오늘의 기록 보기', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: '방금 기록한 혈압 확인', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
+  await expect(page.locator('[data-scene="S07"] .journey-today-bp-records')).toContainText('120/80 mmHg');
+  await page.locator('[data-scene="S07"]').getByRole('button', { name: '오늘 화면으로 돌아가기' }).click();
   await expect(page.locator('[data-scene-recipe]')).toHaveAttribute('data-scene-recipe', recipe!);
   expect((await probe(page)).canvases).toBe(0);
   const frames = (await probe(page)).frames;
@@ -844,7 +857,7 @@ for (const [width, height] of [[320, 568], [390, 844], [1366, 768]]) test(`journ
     if (width === 320) {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.locator('#S05-title').focus();
-      for (const name of ['오늘의 기록 보기', '계속 기록하기']) {
+      for (const name of ['방금 기록한 혈압 확인', '계속 기록하기']) {
         await page.keyboard.press('Tab');
         const button = page.getByRole('button', { name, exact: true });
         await expect(button).toBeFocused();

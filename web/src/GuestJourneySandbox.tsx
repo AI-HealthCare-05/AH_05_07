@@ -9,6 +9,7 @@ import { LivingWeekReport } from "./components/LivingWeekReport";
 import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
 import { RecordExplorer } from "./components/RecordExplorer";
 import { Scene, SceneShell } from "./components/SceneShell";
+import { DailyActionLoop } from "./components/DailyActionLoop";
 import {
   emptyBloodPressureDraft,
   useNewBloodPressureDraft,
@@ -618,6 +619,7 @@ function GuestJourney({ today }: { today: string }) {
     if (activeScreen === "S03") {
       const locked = Boolean(activeChallenge?.first_checkin_on);
       return <Scene id="S03" eyebrow="선택 기능 · 7일 챌린지" title="원하면 이어갈 행동을 골라요" tone="subtle" className="journey-candidate journey-challenge-choice surface">
+        <DailyActionLoop current="S03" guest />
         <div className="challenge-choice-context status-notice" data-challenge-choice-state={locked ? "locked" : activeChallenge ? "changeable" : "optional"}>
           <p className="eyebrow">선택 기능</p>
           <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 둘러볼 수 있어요."}</strong>
@@ -640,7 +642,7 @@ function GuestJourney({ today }: { today: string }) {
             </button>;
           })}
         </div>
-        <button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button>
+        <div className="journey-challenge-actions action-group"><button className="secondary" type="button" onClick={() => navigate("S04")}>혈압 기록하기</button><button className="text-button" type="button" onClick={() => navigate("S02")}>오늘의 기록으로 돌아가기</button></div>
       </Scene>;
     }
 
@@ -653,6 +655,7 @@ function GuestJourney({ today }: { today: string }) {
         tone="emphasis"
         className="journey-candidate journey-entry journey-sheet surface"
       >
+        <DailyActionLoop current="S04" guest />
         <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
           <div className="bp-sheet-fields">
             <div className="bp-sheet-context">
@@ -750,6 +753,7 @@ function GuestJourney({ today }: { today: string }) {
     if (activeScreen === "S05" && confirmation) {
       const bloodPressureIsToday = confirmation.kind === "blood-pressure" && confirmation.observedOn === today;
       return <Scene id="S05" eyebrow="체험에 반영됨" title="입력한 기록을 이 체험에 반영했어요" tone="subtle" className="saved-scene journey-candidate journey-saved guest-local-confirmation">
+        <DailyActionLoop current="S05" guest />
         <div className="save-ripple" aria-hidden="true"><div className="save-ripple-landscape"><i /><i /></div><span>✓</span></div>
         <section className="save-next-step section-header" aria-labelledby="guest-save-next-step-title">
           <p className="eyebrow">다음 확인</p>
@@ -761,14 +765,16 @@ function GuestJourney({ today }: { today: string }) {
           <p>이 확인은 현재 체험 메모리에만 적용돼요.</p>
         </section>
         <div className="split-actions action-group journey-continuation-actions journey-continuation-actions--saved">
-          <button type="button" onClick={() => navigate(confirmation.kind === "blood-pressure" && !bloodPressureIsToday ? "S08" : "S02")}>{confirmation.kind === "blood-pressure" && !bloodPressureIsToday ? "기록 찾아보기" : "오늘의 기록 보기"}</button>
+          <button type="button" onClick={() => navigate(confirmation.kind === "blood-pressure" && !bloodPressureIsToday ? "S08" : bloodPressureIsToday ? "S07" : "S02")}>{confirmation.kind === "blood-pressure" && !bloodPressureIsToday ? "기록 찾아보기" : bloodPressureIsToday ? "방금 기록한 혈압 확인" : "오늘의 기록 보기"}</button>
           <button className="secondary" type="button" onClick={() => navigate(confirmation.kind === "challenge-checkin" ? "S06" : "S04")}>{confirmation.kind === "challenge-checkin" ? "챌린지 상태 보기" : "계속 기록하기"}</button>
         </div>
+        {bloodPressureIsToday && <button className="text-button journey-saved-home" type="button" onClick={() => navigate("S02")}>오늘의 기록 보기</button>}
       </Scene>;
     }
 
     if (activeScreen === "S06") {
       return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title="선택한 행동과 오늘 상태를 확인해요" tone="subtle" className="journey-candidate journey-challenge-summary surface">
+        <DailyActionLoop current="S06" guest />
         <section className="locked-challenge journey-challenge-summary-card section-header">
           <p className="eyebrow">선택한 행동</p>
           <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
@@ -792,6 +798,7 @@ function GuestJourney({ today }: { today: string }) {
 
     if (activeScreen === "S07") {
       return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="base" className="journey-candidate journey-today-review surface">
+        <DailyActionLoop current="S07" guest />
         <div className="today-date"><strong>{dateLabel(today)}</strong><span>혈압·챌린지 기록을 따로 확인해요.</span></div>
         <div className="journey-today-detail" data-today-scope="current" data-record-priority="blood-pressure">
           <div className="fact-lanes">
