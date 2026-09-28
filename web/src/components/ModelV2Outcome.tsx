@@ -83,28 +83,22 @@ export function ModelV2Outcome({
         <div className="model-v2-non-numeric status-notice">
           <strong>생활정보 처리가 끝났어요</strong>
           <p>현재 제품에서는 개인별 모델 점수·확률·백분율·등급을 표시하지 않아요.</p>
-          <small>입력한 사실을 정리한 ‘오늘의 시작점’과 현재 기록 기준 다음 행동은 계속 확인할 수 있어요.</small>
+          <small>입력 내용 요약과 현재 기록 기준 다음 행동은 계속 확인할 수 있어요.</small>
         </div>
       )}
+      <p className="model-v2-local-privacy status-notice">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
       <section className="model-v2-execution-receipt" aria-label="분석 실행 확인" data-model-v2-execution-receipt>
         <h3>분석 실행 확인</h3>
-        <dl>
-          <div><dt>모델</dt><dd>Model V2</dd></div>
-          <div><dt>입력</dt><dd>모델 입력 11 / 11 사용</dd></div>
-          <div><dt>처리</dt><dd>브라우저 계산 완료</dd></div>
-          <div><dt>전송</dt><dd>분석 입력·결과 서버 추론 전송 없음</dd></div>
-        </dl>
+        <p>Model V2 · 모델 입력 11 / 11 사용 · 브라우저 계산 완료</p>
       </section>
-      <p className="model-v2-local-privacy status-notice">이 브라우저에서 계산됨 · 분석 입력·결과 서버 전송 없음 · 저장 안 함</p>
       {Number(draft.age) >= 80 && <p className="notice-warning status-notice">
         만 80세 이상에서는 이 참고의 적용 근거가 상대적으로 약합니다. 이 내용만으로 건강 상태를 판단하지 말고, 실제 혈압을 확인해 보세요.
       </p>}
     </header>
 
     <div className="model-v2-summary-heading section-header">
-      <p className="model-v2-outcome-kicker">오늘의 시작점 · 입력 내용 요약 · 모델 결과와 별도</p>
-      <h3>오늘의 생활 패턴을 정리했어요</h3>
-      <p>아래 내용은 방금 입력한 사실을 읽기 쉽게 바꾼 것이며, 위 분석값의 원인이나 해석이 아니에요.</p>
+      <h3>입력 내용 요약</h3>
+      <p className="model-v2-outcome-kicker">모델 결과와 별도</p>
     </div>
 
     <div className="model-v2-result-summary" aria-label="입력한 생활정보 요약">

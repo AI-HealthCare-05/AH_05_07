@@ -502,7 +502,6 @@ export function ModelV2InputFlow({
     && modelV2PresentationMode(seoulDate()) === "research_preview";
   const processed = resultState === "processed";
   const completedCount = INTAKE_QUESTIONS.filter((item) => questionComplete(item, draft)).length;
-  const remainingCount = INTAKE_QUESTIONS.length - completedCount;
   const showOlderApplicabilityNotice = finiteNumber(draft.age) !== null && finiteNumber(draft.age)! >= 80;
   const nonDrinking = isNonDrinkingAlcoholFrequency(draft.alcoholFrequency);
   const noWalking = draft.walkingDays === "0";
@@ -692,7 +691,9 @@ export function ModelV2InputFlow({
       <div className="model-v2-question-heading">
         <span className="model-v2-question-number" aria-hidden="true">{String(index).padStart(2, "0")}</span>
         <h3 id={"model-v2-question-" + index}>{item.label}</h3>
-        {questionComplete(item, draft) && <span className="model-v2-question-complete">입력 완료</span>}
+        {questionComplete(item, draft) && <span className="model-v2-question-complete">
+          <span aria-hidden="true">✓</span><span className="sr-only">입력 완료</span>
+        </span>}
       </div>
       {note && <p className="model-v2-question-note">{note}</p>}
       <div className="model-v2-question-control">{content}</div>
@@ -704,10 +705,8 @@ export function ModelV2InputFlow({
     title="Model V2 생활정보 분석" tone="secondary" className="signal-scene model-v2-flow">
     <div className="model-v2-layout model-v2-intake-layout" data-model-v2-processed={processed ? "true" : undefined}>
       <aside className="model-v2-progress model-v2-intake-rail" aria-label="입력 진행">
-        <p className="model-v2-progress-eyebrow">MODEL V2 · 이 브라우저에서 계산</p>
         <p className="model-v2-progress-caption" role="status">{completedCount} / 11 입력 완료</p>
         <p className="model-v2-rail-copy">기본 정보 · 생활 습관 · 활동 · 수면</p>
-        <p className="model-v2-privacy-note">분석 입력·결과 서버 추론 전송 없음 · 저장 안 함</p>
       </aside>
       <form ref={formRef} className="measurement-panel model-v2-panel model-v2-intake-panel"
         data-model-v2-step={processed ? "result" : "intake"} onSubmit={submit}
@@ -719,12 +718,7 @@ export function ModelV2InputFlow({
           bloodPressureStatus={bloodPressureStatus} bloodPressureSupport={bloodPressureSupport}
           continuation={continuation} challengeStatus={challengeStatus} challengeSupport={challengeSupport}
           onContinue={onContinue} onReturnToToday={onReturnToToday} /> : <>
-          <header className="model-v2-intake-heading section-header">
-            <p className="model-v2-kicker">11개 입력 · 한 번의 분석</p>
-            <h2>생활정보 입력</h2>
-            <p>11개 입력만 이 브라우저의 Model V2에 사용합니다. 혈압 기록·챌린지는 별도입니다.</p>
-            {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
-          </header>
+          {guestCue && <p className="model-v2-guest-cue">{guestCue}</p>}
           {resultState === "input_invalid" && <p id={INPUT_ERROR_ID} className="notice-error status-notice"
             role="alert" tabIndex={-1}>{message}</p>}
           {pending && <div id="model-v2-pending" className="model-v2-processing status-notice"
@@ -744,14 +738,14 @@ export function ModelV2InputFlow({
           </p>}
           <div className="model-v2-intake-sections">
             <section className="model-v2-intake-section" aria-labelledby="model-v2-section-basics">
-              <header><p>01 / 04</p><h2 id="model-v2-section-basics">기본 정보</h2></header>
+              <header><h2 id="model-v2-section-basics">기본 정보</h2></header>
               {question(1, renderNumber("age"))}
               {question(2, renderChoices("sex"))}
               {question(3, <div className="model-v2-body-fields">{renderNumber("height")}{renderNumber("weight")}</div>,
                 "BMI는 키와 몸무게로 자동 계산합니다.")}
             </section>
             <section className="model-v2-intake-section" aria-labelledby="model-v2-section-habits">
-              <header><p>02 / 04</p><h2 id="model-v2-section-habits">생활 습관</h2></header>
+              <header><h2 id="model-v2-section-habits">생활 습관</h2></header>
               {question(4, renderChoices("smoking"), "일반담배 기준 · 전자담배 등 다른 제품 제외")}
               {question(5, renderSelect("alcoholFrequency"))}
               {question(6, nonDrinking
@@ -759,7 +753,7 @@ export function ModelV2InputFlow({
                 : renderSelect("alcoholAmount"))}
             </section>
             <section className="model-v2-intake-section" aria-labelledby="model-v2-section-activity">
-              <header><p>03 / 04</p><h2 id="model-v2-section-activity">활동</h2></header>
+              <header><h2 id="model-v2-section-activity">활동</h2></header>
               {question(7, renderChoices("walkingDays"), "같은 날 여러 번 걸었어도 하루로 세어 주세요.")}
               {question(8, noWalking
                 ? <p className="model-v2-automatic">하루 평균 0분 · 자동 적용</p>
@@ -781,7 +775,7 @@ export function ModelV2InputFlow({
               {question(9, renderChoices("strengthDays"))}
             </section>
             <section className="model-v2-intake-section" aria-labelledby="model-v2-section-sleep">
-              <header><p>04 / 04</p><h2 id="model-v2-section-sleep">수면</h2></header>
+              <header><h2 id="model-v2-section-sleep">수면</h2></header>
               <p className="model-v2-sleep-caption">각 시각의 오전·오후를 확인해 주세요. 자정은 오전 12:00이에요.</p>
               {question(10, <div className="model-v2-sleep-fields">{renderTime("weekdayBed")}{renderTime("weekdayWake")}</div>)}
               {question(11, <>
@@ -799,8 +793,6 @@ export function ModelV2InputFlow({
           </div>
           <div className="model-v2-final-action">
             <p className="model-v2-readiness" role="status">{completedCount} / 11 입력 완료</p>
-            {remainingCount > 0 && <p>{remainingCount}개 항목을 더 입력하면 분석할 수 있어요.</p>}
-            <p>이 11개 입력만 모델에 사용해요. 혈압 기록과 챌린지는 별도입니다.</p>
             <button ref={submitRef} type="submit" disabled={pending}>
               {pending ? "Model V2 실행 중" : "Model V2로 분석하기"}
             </button>
