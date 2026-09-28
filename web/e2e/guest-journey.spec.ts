@@ -432,6 +432,8 @@ async function openGuest(page: Page, width = 390, height = 844, fixedTime: strin
   await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
   await expect(page.getByText("체험 중 입력은 서버로 보내거나 저장하지 않아요.", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("로그인해도 계정으로 옮겨지지 않아요.", { exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "실제 기록은 로그인으로", exact: true })).toBeVisible();
 }
 
 async function waitForGuestSpatialActor(page: Page) {

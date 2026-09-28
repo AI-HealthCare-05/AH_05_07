@@ -105,6 +105,10 @@ type BloodPressureValidationError = {
   field: BloodPressureErrorField;
   message: string;
 } | null;
+type LoginFeedback = {
+  kind: "sent" | "error";
+  message: string;
+} | null;
 
 function makeNotice(
   kind: Notice["kind"],
@@ -190,7 +194,7 @@ function Login({
   onCompanionSpeciesChange: (species: CompanionSpecies) => void;
 }) {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState<LoginFeedback>(null);
   const [pending, setPending] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -206,19 +210,23 @@ function Login({
     event.preventDefault();
     if (!supabase || pending) return;
     setPending(true);
-    setMessage("");
+    setFeedback(null);
     try {
       const { data, error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: resolveAuthEmailRedirectTo(window.location.href) } });
       if (error) {
-        setMessage("로그인 링크를 보내지 못했습니다. 이메일 주소와 연결 상태를 확인해 주세요.");
+        setFeedback({ kind: "error", message: "로그인 링크를 보내지 못했습니다. 이메일 주소와 연결 상태를 확인해 주세요." });
         return;
       }
       if (data.session) onSession(data.session);
-      setMessage("로그인 링크를 보냈어요. 메일함에서 링크를 열면 이 기기에서 기록을 이어갈 수 있어요.");
+      setFeedback({ kind: "sent", message: "로그인 링크를 보냈어요. 메일함에서 링크를 열면 첫 혈압 기록을 시작할 수 있어요." });
     } finally {
       setPending(false);
     }
   }
+
+  const visibleFeedback = feedback ?? (recoveryMessage
+    ? { kind: "error" as const, message: recoveryMessage }
+    : null);
 
   if (journey) return (
     <main className="welcome-shell journey-login" data-scene="S01">
@@ -229,30 +237,12 @@ function Login({
             <h1 id="login-title">측정한 혈압을 기록하고,<br />최근 7일을 확인해요.</h1>
             <p className="scene-body">혈압을 날짜·시간대별로 남기고, 최근 7일의 기록을 한곳에서 다시 확인해요. 한 건부터 바로 시작할 수 있어요.</p>
           </div>
-          <div className="journey-login-companion section-header">
-            <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
-            {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
-              <span>함께할 캐릭터</span>
-              <select
-                id="login-companion-species"
-                value={companionSpecies}
-                onChange={(event) => onCompanionSpeciesChange(event.target.value as CompanionSpecies)}
-              >
-                {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
-              </select>
-            </label>}
-          </div>
-          <div className="journey-login-preview-entry section-header">
-            <div className="action-group">
-              <button type="button" className="secondary entry-preview-button journey-demo-entry-button" onClick={enterGuestJourney}>로그인 없이 30초 맛보기</button>
-            </div>
-            <p>예시 데이터로 여러 화면을 둘러볼 수 있어요. 실제 기록은 로그인 후 시작해요.</p>
-          </div>
         </section>
         <section className="welcome-card journey-login-auth surface" aria-label="이메일 로그인">
           <div className="journey-login-auth-header section-header">
-            <h2>이메일로 로그인</h2>
-            <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 기록 시작</p>
+            <p className="eyebrow">실제 기록 시작</p>
+            <h2>이메일로 로그인해 첫 혈압을 남겨요</h2>
+            <p className="journey-login-steps">이메일 입력 → 메일에서 로그인 → 혈압 기록</p>
           </div>
           <form className="journey-login-form section-header" onSubmit={submit} aria-busy={pending}>
             <label htmlFor="email">이메일</label>
@@ -262,12 +252,39 @@ function Login({
             </div>
             <p id="login-help" className="journey-login-help">이메일로 받은 링크를 열면 로그인할 수 있어요. 같은 브라우저에서는 로그인 상태가 유지되면 다시 로그인하지 않고 기록을 이어갈 수 있어요.</p>
           </form>
-          {(message || recoveryMessage) && <p className="notice notice-warning status-notice" role="status">{message || recoveryMessage}</p>}
+          {visibleFeedback && <p
+            className={`notice ${visibleFeedback.kind === "sent" ? "notice-success" : "notice-error"} status-notice`}
+            role="status"
+            data-login-feedback={visibleFeedback.kind}
+          >{visibleFeedback.message}</p>}
+          <div className="journey-login-preview-entry section-header">
+            <div>
+              <p className="eyebrow">저장 없는 미리보기</p>
+              <h3>먼저 30초만 둘러볼 수도 있어요</h3>
+            </div>
+            <p>체험 입력은 이 탭의 메모리에만 남고, 로그인해도 계정으로 옮겨지지 않아요.</p>
+            <div className="action-group">
+              <button type="button" className="secondary entry-preview-button journey-demo-entry-button" onClick={enterGuestJourney}>로그인 없이 30초 맛보기</button>
+            </div>
+          </div>
           <div className="journey-login-policy section-header">
             <p className="journey-login-demo">로그인 후 남긴 혈압 관찰과 챌린지 기록은 저장한 시점부터 30일 동안 보관돼요. 보관·삭제 안내는 설정과 도움말에서 확인할 수 있어요.</p>
             <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
           </div>
         </section>
+        <div className="journey-login-companion section-header">
+          <LoginCompanionNarrator mode={companionMode} species={companionSpecies} />
+          {companionMode !== "off" && <label className="companion-identity-control" htmlFor="login-companion-species">
+            <span>함께할 캐릭터</span>
+            <select
+              id="login-companion-species"
+              value={companionSpecies}
+              onChange={(event) => onCompanionSpeciesChange(event.target.value as CompanionSpecies)}
+            >
+              {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+            </select>
+          </label>}
+        </div>
       </div>
     </main>
   );
@@ -285,7 +302,7 @@ function Login({
           <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
           <button type="submit" disabled={pending}>{pending ? "보내는 중" : "이메일로 계속하기"}</button>
         </form>
-        {(message || recoveryMessage) && <p className="notice notice-warning" role="status">{message || recoveryMessage}</p>}
+        {visibleFeedback && <p className={`notice ${visibleFeedback.kind === "sent" ? "notice-success" : "notice-error"}`} role="status">{visibleFeedback.message}</p>}
         <p className="welcome-footnote">공용 기기에서는 사용을 마친 뒤 로그아웃해 주세요. 로그아웃하면 이 기기의 현재 계정 연결을 끝냅니다.</p>
         <p className="welcome-footnote">혈압 관찰과 챌린지 참여는 서로 다른 사실로 표시됩니다.</p>
       </section>
@@ -1168,11 +1185,11 @@ function App() {
   }
   if (!evidenceMode && (authEmailConfirmPending || authBootstrapPending || startingHomeDestination)) {
     return (
-      <main className="welcome-shell">
-        <section className="welcome-card" aria-live="polite">
+      <main className="welcome-shell auth-transition" data-auth-transition={startingHomeDestination ? "destination" : authEmailConfirmPending ? "confirm" : "bootstrap"}>
+        <section className="welcome-card" aria-live="polite" aria-busy="true">
           <p className="eyebrow">SK7</p>
           <h1>{startingHomeDestination ? "내 공간을 열고 있어요." : authEmailConfirmPending ? "로그인 링크를 확인하고 있어요." : "로그인 상태를 확인하고 있어요."}</h1>
-          <p className="scene-body">잠시만 기다려 주세요.</p>
+          <p className="scene-body">계정과 기록 상태를 확인한 뒤 올바른 시작 화면을 열게요.</p>
         </section>
       </main>
     );
@@ -1233,6 +1250,11 @@ function App() {
     && windowData?.start_on === startOn && windowData?.end_on === endOn;
   const reportVisible = reportCreatedAt !== null && reportAvailable && requestedScreen === "S10";
   const confirmedWindowEmpty = windowState === "ready" && isWindowEmpty(windowData);
+  const firstBloodPressureWindow = ready
+    && windowData?.blood_pressure_observations.length === 1
+    && windowData.challenge_checkins.length === 0
+    && windowData.challenge_events.length === 0
+    && !windowData.active_challenge;
   const automaticallyEmpty = confirmedWindowEmpty && requestedScreen === "S02" && !confirmedSave;
   const truthfulFallback: ScreenId = confirmedWindowEmpty ? "S12" : "S02";
   const activeScreen: ScreenId = windowState === "error" && requiresObservationWindow(requestedScreen)
@@ -1566,13 +1588,15 @@ function App() {
             </div>
           ) : (
             <>
+              <DailyActionLoop current="S12" firstSession />
               <div className="journey-empty-actions action-group">
-                <section className="journey-empty-action">
-                  <h2>혈압 기록</h2>
+                <section className="journey-empty-action journey-empty-action--primary">
+                  <div><p className="eyebrow">첫 실제 행동</p><h2>혈압 한 건 기록하기</h2></div>
+                  <p>저장이 확인되면 방금 남긴 기록을 바로 확인할 수 있어요.</p>
                   <button type="button" onClick={() => navigate("S04")}>혈압 기록하기</button>
                 </section>
-                <section className="journey-empty-action">
-                  <h2>7일 챌린지</h2>
+                <section className="journey-empty-action journey-empty-action--secondary">
+                  <div><p className="eyebrow">선택</p><h2>7일 챌린지</h2></div>
                   <p id="empty-challenge-help">선택 기능 · 혈압 기록과 별도로 시작해요.</p>
                   <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
                 </section>
@@ -1654,7 +1678,7 @@ function App() {
           tone="emphasis"
           className={presentation.journey ? "journey-candidate journey-entry journey-sheet surface" : ""}
         >
-          {presentation.journey && <DailyActionLoop current="S04" />}
+          {presentation.journey && <DailyActionLoop current="S04" firstSession={confirmedWindowEmpty && !editingBloodPressureId} />}
           <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
             <div className="bp-sheet-fields">
               <div className="bp-sheet-context">
@@ -1779,7 +1803,7 @@ function App() {
     if (activeScreen === "S05") {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
       return <Scene id="S05" {...journeyCopy.S05} tone="subtle" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
-        {presentation.journey && <DailyActionLoop current="S05" />}
+        {presentation.journey && <DailyActionLoop current="S05" firstSession={firstBloodPressureWindow && savedFactKind === "blood-pressure"} />}
         <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
         {presentation.journey && <section className="save-next-step section-header" aria-labelledby="save-next-step-title">
           <p className="eyebrow">다음 확인</p>
@@ -1844,7 +1868,7 @@ function App() {
 
     if (activeScreen === "S07") {
       if (presentation.journey) return <Scene id="S07" eyebrow="오늘 기록 확인" title="오늘의 기록 확인" tone="base" className="journey-candidate journey-today-review surface">
-        <DailyActionLoop current="S07" />
+        <DailyActionLoop current="S07" firstSession={firstBloodPressureWindow} />
         <div className="today-date"><strong>{isPriorDashboard ? "이전 7일 조회" : dateLabel(today)}</strong><span>{isPriorDashboard
           ? `${dateLabel(startOn)} ~ ${dateLabel(endOn)} · 읽기 전용`
           : "혈압·챌린지·이전 기록을 따로 확인해요."}</span></div>
