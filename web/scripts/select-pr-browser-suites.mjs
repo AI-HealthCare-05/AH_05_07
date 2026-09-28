@@ -82,6 +82,15 @@ export const fastJourneyCoverage = Object.freeze({
   'web/src/components/journey-feedback.css': {
     spec: 'ui-candidate.cases.ts',
     tests: [
+      'held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time',
+      'route enter reuses the viewport and does not repeat for typing, theme, or refresh',
+      'reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion',
+    ],
+  },
+  'web/src/components/useJourneyTransition.ts': {
+    spec: 'ui-candidate.cases.ts',
+    tests: [
+      'held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time',
       'route enter reuses the viewport and does not repeat for typing, theme, or refresh',
       'reduced motion, hidden documents, reports, and dialogs cancel only B9-owned motion',
     ],
