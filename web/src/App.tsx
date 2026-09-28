@@ -25,6 +25,7 @@ import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { RecordExplorer } from "./components/RecordExplorer";
 import { BloodPressureDraftNote } from "./components/BloodPressureDraftNote";
 import { DailyActionLoop } from "./components/DailyActionLoop";
+import { ChallengeTimeline } from "./components/ChallengeTimeline";
 import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDraft } from "./components/useNewBloodPressureDraft";
 import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
@@ -1329,12 +1330,12 @@ function App() {
         : "오늘 챌린지 상태"
       : "7일 챌린지";
   const homeChallengeSupport = activeChallengeEnded
-    ? "종료된 챌린지 확인하기"
+    ? `${activeChallenge!.starts_on} ~ ${activeChallenge!.ends_on} · 기록과 리포트 확인`
     : activeChallenge
       ? todayCheckin
         ? `${challengeLabel(activeChallenge.action_id)} · 오늘 상태 ${checkinLabel(todayCheckin.status)}`
         : `${challengeLabel(activeChallenge.action_id)} · 오늘 상태는 아직 기록하지 않았어요.`
-      : "선택 기능 · 이어갈 행동 고르기";
+      : "선택 기능 · 혈압 기록과 별도로 한 행동을 7일간 기록";
   const homeLead: HomeAction = !todayMeasurement
     ? { key: "blood-pressure", title: "오늘 혈압 기록", support: todayBloodPressureSupport, action: "혈압 기록하기", screen: "S04" }
     : { key: "today-detail", title: "오늘 혈압 기록 확인", support: todayBloodPressureSupport, action: "오늘 기록 보기", screen: "S07" };
@@ -1403,12 +1404,16 @@ function App() {
     selectDashboardWindow(`cycle:${end}`);
   }
 
-  function renderCycleActions() {
+  function renderCycleActions(showTimeline = true) {
     if (!activeChallengeEnded || !activeChallenge) return null;
-    return <section className="locked-challenge" data-living-cycle="ended" aria-label="종료된 챌린지">
-      <h2>이번 챌린지가 끝났어요</h2>
-      <p>{activeChallenge.starts_on} ~ {activeChallenge.ends_on} · {challengeLabel(activeChallenge.action_id)}</p>
-      <p>남긴 기록은 보관 기간 안에서 다시 볼 수 있어요.</p>
+    return <section className="locked-challenge challenge-ended-panel" data-living-cycle="ended" aria-label="종료된 챌린지">
+      <div className="challenge-ended-heading">
+        <div><p className="eyebrow">7일 기간 종료</p><h2>이번 챌린지가 끝났어요</h2></div>
+        <strong>{challengeLabel(activeChallenge.action_id)}</strong>
+      </div>
+      <p><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>
+      <p>기록함·건너뜀 내역은 완료된 7일 화면에서 정확한 기간 그대로 볼 수 있어요.</p>
+      {showTimeline && <ChallengeTimeline challenge={activeChallenge} checkins={windowData?.challenge_checkins ?? []} today={today} factsStartOn={startOn} factsEndOn={endOn} />}
       <div className="inline-actions">
         <button type="button" disabled={readNavigationDisabled || windowState !== "ready" || challengeNeedsReload} onClick={() => { setPreviousCycleEnd(activeChallenge.ends_on); navigate("S03"); }}>다음 챌린지 고르기</button>
         {!isCycleReview && <button type="button" className="secondary" disabled={readNavigationDisabled || evidenceMode} onClick={() => openCycleReview(activeChallenge.ends_on)}>종료된 7일 돌아보기</button>}
@@ -1553,6 +1558,7 @@ function App() {
             <button className="secondary" type="button" onClick={() => navigate("S08")} disabled={readNavigationDisabled}>기록 찾아보기</button>
           </section>
         </div>
+        {!isPriorDashboard && activeChallenge && <ChallengeTimeline challenge={activeChallenge} checkins={windowData?.challenge_checkins ?? []} today={today} factsStartOn={startOn} factsEndOn={endOn} compact />}
       </div>
     );
   }
@@ -1597,7 +1603,7 @@ function App() {
                 </section>
                 <section className="journey-empty-action journey-empty-action--secondary">
                   <div><p className="eyebrow">선택</p><h2>7일 챌린지</h2></div>
-                  <p id="empty-challenge-help">선택 기능 · 혈압 기록과 별도로 시작해요.</p>
+                  <p id="empty-challenge-help">참여는 선택이에요. 한 행동을 오늘부터 7일간 기록하며, 혈압 기록은 참여하지 않아도 그대로 사용할 수 있어요.</p>
                   <button className="secondary" type="button" aria-describedby="empty-challenge-help" onClick={() => navigate("S03")}>7일 챌린지 시작하기</button>
                 </section>
               </div>
@@ -1640,15 +1646,23 @@ function App() {
           <strong>{locked ? "첫 상태 기록 후에는 행동을 바꿀 수 없어요." : "참여하지 않아도 혈압 기록은 그대로 사용할 수 있어요."}</strong>
           <p>{locked ? "현재 선택을 확인하고 오늘 상태를 별도로 기록해요." : activeChallenge && !activeChallengeEnded ? "첫 상태를 기록하기 전까지 다른 행동으로 바꿀 수 있어요." : "원할 때 하나를 골라 오늘부터 시작해요."}</p>
         </div>
+        <dl className="challenge-choice-rules" aria-label="챌린지 선택 규칙">
+          <div><dt>시작</dt><dd>선택한 오늘</dd></div>
+          <div><dt>기간</dt><dd>오늘부터 7일</dd></div>
+          <div><dt>선택 변경</dt><dd>첫 상태 기록 전까지</dd></div>
+        </dl>
+        {activeChallenge && !activeChallengeEnded && <div className="challenge-selection-summary" data-selection-lock={locked ? "locked" : "changeable"}>
+          <span>현재 선택</span><strong>{challengeLabel(activeChallenge.action_id)}</strong><small>{activeChallenge.starts_on} ~ {activeChallenge.ends_on} · {locked ? "행동 고정됨" : "첫 기록 전 변경 가능"}</small>
+        </div>}
         <div className="choice-grid" aria-busy={pendingAction === "challenge-selection"}>
-          {challengeActions.map((action) => {
+          {challengeActions.map((action, index) => {
             const selected = activeChallenge?.action_id === action.id && !activeChallengeEnded;
             const state = pendingAction === "challenge-selection"
               ? "선택 저장 중"
               : locked
                 ? selected ? "선택됨 · 변경 불가" : "변경 불가"
                 : selected ? "선택됨" : "선택하기";
-            return <button className={`choice-tile ${selected ? "is-selected" : ""}`} type="button" key={action.id} onClick={() => void selectChallenge(action.id)} disabled={controlsDisabled || locked || challengeNeedsReload || windowState !== "ready"}><span className="choice-icon" aria-hidden="true" data-choice={action.id} /><strong>{action.label}</strong><small>{action.note}</small><span className="choice-state">{state}</span></button>;
+            return <button className={`choice-tile ${selected ? "is-selected" : ""}`} type="button" key={action.id} aria-pressed={selected} onClick={() => void selectChallenge(action.id)} disabled={controlsDisabled || locked || challengeNeedsReload || windowState !== "ready"}><span className="choice-icon" aria-hidden="true" data-choice={action.id} /><span className="choice-kicker">선택 {index + 1}</span><strong>{action.label}</strong><small>{action.note}</small><span className="choice-state">{state}</span></button>;
           })}
         </div>
         {challengeNeedsReload && <button type="button" className="secondary" disabled={windowState === "refreshing"} onClick={() => void refreshWindow()}>선택 상태 다시 확인하기</button>}
@@ -1837,28 +1851,32 @@ function App() {
     if (activeScreen === "S06") {
       if (presentation.journey) return <Scene id="S06" eyebrow="선택 기능 · 오늘 상태" title={activeChallengeEnded ? "종료된 챌린지를 확인해요" : "선택한 행동과 오늘 상태를 확인해요"} tone="subtle" className="journey-candidate journey-challenge-summary surface">
         <DailyActionLoop current="S06" />
-        <section className="locked-challenge journey-challenge-summary-card section-header" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
-          <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : "선택한 행동"}</p>
-          <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
-          {activeChallenge && <p className="journey-challenge-dates"><span>챌린지 기간</span><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>}
-        </section>
-        <section className="locked-challenge journey-challenge-summary-card journey-challenge-checkin-card section-header"
-          data-challenge-checkin-state={isPriorDashboard ? "unavailable" : activeChallengeEnded ? "ended" : todayCheckin?.status ?? "pending"}>
-          <p className="eyebrow">오늘 상태 · 별도 기록</p>
-          <h2>{isPriorDashboard ? "오늘 상태 미확인" : activeChallengeEnded ? "챌린지 종료" : todayCheckin ? checkinLabel(todayCheckin.status) : "아직 기록하지 않음"}</h2>
-          <p>{isPriorDashboard
-            ? "이전 7일 조회에서는 오늘 상태를 확인할 수 없어요."
-            : activeChallengeEnded
-              ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요."
-              : todayCheckin
-                ? `오늘은 '${checkinLabel(todayCheckin.status)}' 상태로 저장되어 있어요.`
-                : "오늘은 '기록함' 또는 '건너뜀' 중 하나를 상태로 저장할 수 있어요."}</p>
-          {!isPriorDashboard && !activeChallengeEnded && <p className="journey-challenge-checkin-note">
-            '건너뜀'도 오늘 상태를 남긴 기록이에요. 혈압 기록과 합쳐서 판단하지 않아요.
-          </p>}
-        </section>
-        {renderCycleActions()}
+        <div className="journey-challenge-summary-grid">
+          <section className="locked-challenge journey-challenge-summary-card section-header" data-challenge-period={activeChallengeEnded ? "ended" : "active"}>
+            <p className="eyebrow">{activeChallengeEnded ? "종료된 챌린지" : activeChallenge?.first_checkin_on ? "선택한 행동 · 고정됨" : "선택한 행동 · 첫 기록 전 변경 가능"}</p>
+            <h2>{activeChallenge ? challengeLabel(activeChallenge.action_id) : "선택한 행동 없음"}</h2>
+            {activeChallenge && <p className="journey-challenge-dates"><span>챌린지 기간</span><time dateTime={activeChallenge.starts_on}>{activeChallenge.starts_on}</time> ~ <time dateTime={activeChallenge.ends_on}>{activeChallenge.ends_on}</time></p>}
+          </section>
+          <section className="locked-challenge journey-challenge-summary-card journey-challenge-checkin-card section-header"
+            data-challenge-checkin-state={isPriorDashboard ? "unavailable" : activeChallengeEnded ? "ended" : todayCheckin?.status ?? "pending"}>
+            <p className="eyebrow">오늘 상태 · 별도 기록</p>
+            <h2>{isPriorDashboard ? "오늘 상태 미확인" : activeChallengeEnded ? "챌린지 종료" : todayCheckin ? checkinLabel(todayCheckin.status) : "아직 기록하지 않음"}</h2>
+            <p>{isPriorDashboard
+              ? "이전 7일 조회에서는 오늘 상태를 확인할 수 없어요."
+              : activeChallengeEnded
+                ? "종료된 챌린지에는 오늘 상태를 새로 기록할 수 없어요."
+                : todayCheckin
+                  ? `오늘은 '${checkinLabel(todayCheckin.status)}' 상태로 저장되어 있어요.`
+                  : "오늘은 '기록함' 또는 '건너뜀' 중 하나를 상태로 저장할 수 있어요."}</p>
+            {!isPriorDashboard && !activeChallengeEnded && <p className="journey-challenge-checkin-note">
+              '건너뜀'도 오늘 상태를 남긴 기록이에요. 혈압 기록과 합쳐서 판단하지 않아요.
+            </p>}
+          </section>
+        </div>
+        {activeChallenge && <ChallengeTimeline challenge={activeChallenge} checkins={windowData?.challenge_checkins ?? []} today={today} factsStartOn={startOn} factsEndOn={endOn} />}
+        {renderCycleActions(false)}
         <div className="inline-actions action-group journey-challenge-next-actions">
+          {activeChallenge && !activeChallengeEnded && !isPriorDashboard && !todayCheckin && <><button type="button" onClick={() => void submitActiveChallengeCheckin("completed")} disabled={controlsDisabled}>기록함</button><button className="secondary" type="button" onClick={() => void submitActiveChallengeCheckin("skipped")} disabled={controlsDisabled}>건너뜀</button></>}
           {activeChallenge && !activeChallengeEnded && !isPriorDashboard && <button type="button" onClick={() => navigate("S07")} disabled={controlsDisabled}>오늘 상태 확인·기록하기</button>}
           <button className="secondary" type="button" onClick={() => navigate("S04")} disabled={controlsDisabled}>혈압 기록하기</button>
         </div>

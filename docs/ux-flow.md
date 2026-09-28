@@ -234,6 +234,8 @@ confirmed-save feedback, and S11/S14 remain independent of observation loading.
 - During its current unexpired seven-day window, a check-in can change only between `completed` and `skipped`; its date, action, challenge link, and owner stay fixed.
 - During that same window, a user may delete an owned check-in after an explicit confirmation. An active challenge itself is not deleted through the web flow.
 - The challenge cannot be replaced after its first check-in.
+- The active-challenge timeline shows the exact start/end dates and keeps `기록함`, `건너뜀`, a loaded date with no check-in, a future date, and a date outside the loaded window visually distinct. It presents calendar position, not a score, streak, or success percentage.
+- After the Seoul-date end boundary, the ended state remains factual and read-only, links to the exact completed seven-day recap/report, and offers a separate optional next challenge without replacing the completed cycle's records.
 - Completion is adherence history, not evidence that blood pressure improved.
 
 ## Recovery paths

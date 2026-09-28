@@ -1,0 +1,96 @@
+.challenge-timeline {
+  display: grid;
+  gap: var(--sk7-space-md);
+  min-width: 0;
+  border: 1px solid var(--sk7-border);
+  border-radius: var(--sk7-radius-panel);
+  background: var(--sk7-surface-subtle);
+  padding: clamp(var(--sk7-space-md), 2.5vw, var(--sk7-space-xl));
+}
+
+.challenge-timeline-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sk7-space-xs) var(--sk7-space-xl);
+}
+
+.challenge-timeline-heading > div { display: grid; gap: var(--sk7-space-2xs); }
+.challenge-timeline-heading h2 { font-size: var(--sk7-type-subtitle); }
+.challenge-timeline-period { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sk7-space-xs); color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); font-variant-numeric: tabular-nums; }
+.challenge-timeline-position { grid-column: 1 / -1; color: var(--sk7-text); font-size: var(--sk7-type-label); }
+
+.challenge-timeline ol {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sk7-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.challenge-timeline ol::before {
+  position: absolute;
+  top: 3.8rem;
+  right: 6%;
+  left: 6%;
+  height: 1px;
+  background: var(--sk7-border-strong);
+  content: "";
+}
+
+.challenge-timeline li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--sk7-space-2xs);
+  min-width: 0;
+  border-radius: var(--sk7-radius-control);
+  padding: var(--sk7-space-xs) var(--sk7-space-2xs);
+  color: var(--sk7-text-muted);
+  text-align: center;
+}
+
+.challenge-timeline li[aria-current="date"] {
+  background: var(--sk7-surface);
+  box-shadow: inset 0 0 0 1px var(--sk7-border-strong);
+  color: var(--sk7-text);
+}
+
+.challenge-day-index { font-size: .6875rem; font-weight: var(--sk7-weight-bold); }
+.challenge-timeline time { font-size: var(--sk7-type-caption); font-variant-numeric: tabular-nums; }
+.challenge-day-marker { z-index: 1; width: .8rem; height: .8rem; border: 2px solid var(--sk7-border-strong); border-radius: 50%; background: var(--sk7-surface-subtle); }
+.challenge-timeline li[aria-current="date"] .challenge-day-marker { background: var(--sk7-surface); }
+.challenge-timeline li strong { font-size: .6875rem; line-height: 1.35; }
+.challenge-timeline li[data-challenge-day-state="completed"] .challenge-day-marker { border-color: var(--sk7-accent); background: var(--sk7-accent); }
+.challenge-timeline li[data-challenge-day-state="skipped"] .challenge-day-marker { border-color: var(--sk7-text-muted); background: var(--sk7-surface); box-shadow: inset 0 0 0 2px var(--sk7-surface-subtle); }
+.challenge-timeline li[data-challenge-day-state="unloaded"] .challenge-day-marker { border-style: dashed; background: transparent; }
+.challenge-timeline li[data-challenge-day-state="upcoming"] { opacity: .68; }
+.challenge-timeline-note { border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-sm); color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); line-height: var(--sk7-leading-body); }
+
+.challenge-timeline--compact { border-radius: var(--sk7-radius-surface); background: transparent; }
+.challenge-timeline--compact .challenge-timeline-heading h2 { font-size: var(--sk7-type-body); }
+
+@media (max-width: 580px) {
+  .challenge-timeline { padding: var(--sk7-space-md) var(--sk7-space-sm); }
+  .challenge-timeline-heading { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .challenge-timeline-period { justify-content: flex-start; }
+  .challenge-timeline-position { grid-column: auto; }
+  .challenge-timeline ol { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sk7-space-xs); }
+  .challenge-timeline ol::before { display: none; }
+  .challenge-timeline li { border: 1px solid var(--sk7-border); padding: var(--sk7-space-xs) var(--sk7-space-2xs); }
+  .challenge-day-index, .challenge-timeline li strong { font-size: .625rem; }
+  .challenge-timeline time { font-size: .6875rem; }
+  .challenge-day-marker { width: .7rem; height: .7rem; }
+}
+
+@media (max-width: 350px) {
+  .challenge-timeline { margin-inline: calc(var(--sk7-space-xs) * -1); }
+  .challenge-timeline-period { gap: var(--sk7-space-2xs); }
+}
+
+@media (forced-colors: active) {
+  .challenge-timeline li[aria-current="date"] { outline: 2px solid Highlight; outline-offset: -2px; }
+  .challenge-timeline li[data-challenge-day-state="completed"] .challenge-day-marker { background: Highlight; }
+}

@@ -110,9 +110,11 @@ export function guestJourneyReducer(
         ),
       };
     case "challenge/select": {
-      if (state.activeChallenge?.first_checkin_on) return state;
-      const activeChallenge: ActiveChallenge = state.activeChallenge
-        ? { ...state.activeChallenge, action_id: action.actionId }
+      const currentChallenge = state.activeChallenge;
+      const currentChallengeEnded = Boolean(currentChallenge && action.today > currentChallenge.ends_on);
+      if (currentChallenge?.first_checkin_on && !currentChallengeEnded) return state;
+      const activeChallenge: ActiveChallenge = currentChallenge && !currentChallengeEnded
+        ? { ...currentChallenge, action_id: action.actionId }
         : {
             id: `guest-challenge-${state.nextId}`,
             action_id: action.actionId,
@@ -124,7 +126,7 @@ export function guestJourneyReducer(
       return {
         ...state,
         activeChallenge,
-        nextId: state.activeChallenge ? state.nextId : state.nextId + 1,
+        nextId: currentChallenge && !currentChallengeEnded ? state.nextId : state.nextId + 1,
       };
     }
     case "challenge-checkin/create": {
