@@ -537,6 +537,8 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
   await page.getByRole("button", { name: "7일 리포트 보기", exact: true }).click();
   await expect(page.locator("[data-living-week-report]")).toBeVisible();
   await expect(page.locator("[data-living-week-report]")).toContainText("현재 체험 메모리에 반영된 7일 기록이에요.");
+  await expect(page.locator("[data-report-freshness]")).toHaveAttribute("data-report-confirmed", "true");
+  await expect(page.locator("[data-living-week-report] footer")).toContainText("체험을 새로 열면 원본 기록은 초기화돼요.");
   await page.getByRole("button", { name: "7일 돌아보기로 돌아가기", exact: true }).click();
 
   await page.locator(".primary-nav").getByRole("button", { name: "AI 분석", exact: true }).click();

@@ -528,7 +528,7 @@ test('seven-day report stays readable at 320px and 200% text', async ({ page }) 
   });
 
   await expect(document.locator('[data-report-summary="blood-pressure"]')).toContainText(
-    '관찰 기록 없음',
+    '현재 불러온 관찰 없음',
   );
   await expect(document.locator('[data-report-summary="challenge"]')).toContainText(
     '기록 없음',
@@ -623,12 +623,18 @@ test('living week report preserves the complete selected week with separate fact
   await reportAction(page).press('Enter');
   await expect(report(page)).toBeVisible();
   await expect(report(page).getByRole('heading', { name: '7일 기록 리포트', exact: true })).toBeFocused();
+  await expect(report(page).getByLabel('리포트 표시 기간')).toHaveText('2026년 9월 5일—2026년 9월 11일');
+  await expect(report(page).locator('[data-report-freshness]')).toHaveAttribute('data-report-confirmed', 'true');
+  await expect(report(page).locator('[data-report-freshness]')).toContainText('현재 불러온 기록');
+  await expect(report(page).getByRole('heading', { name: '혈압 관찰 요약', exact: true })).toBeVisible();
+  const summaryTop = await report(page).locator('.week-report-summary').evaluate(node => node.getBoundingClientRect().top);
+  expect(summaryTop).toBeLessThan(await page.evaluate(() => innerHeight));
   expect(await report(page).locator('[data-report-date]').evaluateAll(days => days.map(day => day.getAttribute('data-report-date')))).toEqual(reportDates);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/3\s*건/);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰이 있는 날짜\s*2일/);
-  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/관찰 기록 없음\s*5일/);
+  await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/현재 불러온 관찰 없음\s*5일/);
   await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
-    '전체 관찰3건', '아침 기록1건', '저녁 기록2건', '관찰이 있는 날짜2일', '관찰 기록 없음5일',
+    '전체 관찰3건', '관찰이 있는 날짜2일', '현재 불러온 관찰 없음5일', '아침 기록1건', '저녁 기록2건',
   ]);
   await expect(report(page).locator('[data-report-mean]')).toContainText('121.3/80.0 mmHg');
   await expect(report(page).locator('[data-report-mean]')).toContainText('이 기간에 저장되어 현재 불러온 3건의 단순 산술 평균');
@@ -636,7 +642,7 @@ test('living week report preserves the complete selected week with separate fact
     '체크인이 있는 날짜3일', '기록함1일', '건너뜀1일', '혼합1일', '기록 없음4일',
   ]);
   await expect(report(page).locator('[data-report-date] > header > p')).toHaveText([
-    '정자', '노을 전망대', '정원 대문', '허브 정원', '나무 그늘과 벤치', '나무다리', '책 읽는 쉼터',
+    '1 / 7일', '2 / 7일', '3 / 7일', '4 / 7일', '5 / 7일', '6 / 7일', '7 / 7일',
   ]);
   const lastDay = report(page).locator('[data-report-date="2026-09-11"]');
   await expect(lastDay).toContainText('아침 · 120/80 mmHg');
@@ -684,7 +690,7 @@ test('living week report distinguishes initial loading and failure from confirme
   await expect(report(page).locator('[data-report-date]')).toHaveCount(7);
   await expect(report(page).locator('[data-report-summary="blood-pressure"]')).toContainText(/0\s*건/);
   await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
-    '전체 관찰0건', '아침 기록0건', '저녁 기록0건', '관찰이 있는 날짜0일', '관찰 기록 없음7일',
+    '전체 관찰0건', '관찰이 있는 날짜0일', '현재 불러온 관찰 없음7일', '아침 기록0건', '저녁 기록0건',
   ]);
   await expect(report(page).locator('[data-report-mean]')).toHaveCount(0);
   await expect(report(page).locator('[data-report-summary="challenge"]')).toContainText(/0\s*일/);
@@ -813,10 +819,16 @@ test('living week report prints only semantic report content through an explicit
   await expect(footer).toContainText('30일 서버 보관과 별개');
   for (const day of await report(page).locator('[data-report-date]').all()) {
     await expect(day.locator('time')).toBeVisible();
-    await expect(day.locator('header > p')).toBeHidden();
+    await expect(day.locator('header > p')).toBeVisible();
     await expect(day).toHaveCSS('break-inside', 'avoid');
     await expect(day).toHaveCSS('color', 'rgb(0, 0, 0)');
   }
+  await expect(report(page).locator('.week-report-daily')).toHaveCSS('break-before', 'page');
+  await expect(report(page).locator('.week-report-daily .week-report-section-heading')).toHaveCSS('break-after', 'avoid');
+  await expect(report(page).locator('.week-report-footer')).toHaveCSS('break-inside', 'avoid');
+  const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
+  expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+  expect(pdf.byteLength).toBeGreaterThan(10_000);
   const selectableText = await report(page).evaluate(node => {
     const range = document.createRange();
     range.selectNodeContents(node);
@@ -875,7 +887,7 @@ for (const submit of [false, true]) test(`living week report excludes ${submit ?
   await page.getByRole('button', { name: '7일 돌아보기', exact: true }).click();
   await reportAction(page).click();
   await expect(report(page).locator('[data-report-summary="blood-pressure"] > div')).toHaveText([
-    '전체 관찰1건', '아침 기록1건', '저녁 기록0건', '관찰이 있는 날짜1일', '관찰 기록 없음6일',
+    '전체 관찰1건', '관찰이 있는 날짜1일', '현재 불러온 관찰 없음6일', '아침 기록1건', '저녁 기록0건',
   ]);
   await expect(report(page).locator('[data-report-mean]')).toHaveCount(0);
   await expect(report(page)).not.toContainText('135/89');
@@ -885,7 +897,10 @@ for (const submit of [false, true]) test(`living week report excludes ${submit ?
     if (submit) {
       await expect(report(page).locator('[data-report-freshness]')).toBeVisible();
       await expect(report(page).locator('[data-report-freshness]')).toContainText('저장 또는 삭제의 반영 여부를 아직 확인하지 못했어요.');
-    } else await expect(report(page).locator('[data-report-freshness]')).toHaveCount(0);
+    } else {
+      await expect(report(page).locator('[data-report-freshness]')).toHaveAttribute('data-report-confirmed', 'true');
+      await expect(report(page).locator('[data-report-freshness]')).toContainText('현재 불러온 기록');
+    }
   }
   expect(windowRequests).toBe(1);
   expect(saveRequests).toBe(Number(submit));
