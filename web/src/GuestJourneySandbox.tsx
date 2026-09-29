@@ -1011,38 +1011,43 @@ function GuestJourney({ today }: { today: string }) {
 
     return <Scene id="S14" {...journeyCopy.S14} tone="base" className="journey-settings surface guest-settings">
       <div className="journey-settings-list">
-        <section className="journey-settings-section journey-settings-display">
-          <div className="section-header"><p className="eyebrow">화면</p><h2>화면 테마</h2><p>이 브라우저의 화면에만 적용돼요. 체험 기록에는 영향이 없어요.</p></div>
-          <fieldset className="theme-preset-control">
-            <legend>화면 테마</legend>
-            {themePreferenceOptions.map((option) => <label key={option.value}>
-              <input
-                type="radio"
-                name="sk7-theme-preset"
-                value={option.value}
-                checked={themePreference === option.value}
-                onChange={(event) => {
-                  const theme = writeThemePreference(event.target.value);
-                  applyThemePreference(theme);
-                  setThemePreference(theme);
-                }}
-              />
-              <span><strong>{option.label}</strong><small>{option.description}</small></span>
-            </label>)}
-          </fieldset>
+        <section className="journey-settings-group" aria-labelledby="guest-settings-title">
+          <div className="journey-settings-group-heading"><h2 id="guest-settings-title">이 브라우저의 설정</h2><p className="journey-settings-scope">이 브라우저에만 저장</p></div>
+          <div className="journey-settings-group-content">
+            <section className="journey-settings-section journey-settings-display">
+              <div className="section-header"><h3>화면 테마</h3></div>
+              <fieldset className="theme-preset-control">
+                <legend>화면 테마</legend>
+                {themePreferenceOptions.map((option) => <label key={option.value}>
+                  <input
+                    type="radio"
+                    name="sk7-theme-preset"
+                    value={option.value}
+                    checked={themePreference === option.value}
+                    onChange={(event) => {
+                      const theme = writeThemePreference(event.target.value);
+                      applyThemePreference(theme);
+                      setThemePreference(theme);
+                    }}
+                  />
+                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                </label>)}
+              </fieldset>
+            </section>
+            {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
+              <div className="section-header"><h3>내 동반자</h3></div>
+              <label className="companion-identity-control" htmlFor="guest-companion-species">
+                <span>캐릭터 선택</span>
+                <select id="guest-companion-species" value={companionSpecies} onChange={(event) => setCompanionSpecies(writeCompanionIdentity(event.target.value as CompanionSpecies))}>
+                  {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
+                </select>
+              </label>
+            </section>}
+          </div>
         </section>
-        {companionMode !== "off" && <section className="journey-settings-section companion-identity-settings">
-          <div className="section-header"><p className="eyebrow">동반자</p><h2>내 동반자</h2><p>화면의 캐릭터만 바뀌며 체험 기록에는 영향이 없어요.</p></div>
-          <label className="companion-identity-control" htmlFor="guest-companion-species">
-            <span>캐릭터 선택</span>
-            <select id="guest-companion-species" value={companionSpecies} onChange={(event) => setCompanionSpecies(writeCompanionIdentity(event.target.value as CompanionSpecies))}>
-              {companionIdentityOptions.map((option) => <option key={option.species} value={option.species}>{option.label}</option>)}
-            </select>
-          </label>
-        </section>}
-        <section className="journey-settings-section guest-settings-exit">
-          <div className="section-header"><p className="eyebrow">체험</p><h2>로그인 화면으로 돌아가기</h2></div>
-          <button className="text-button" type="button" onClick={endGuestJourney}>체험 끝내고 로그인으로</button>
+        <section className="journey-settings-group guest-settings-exit" aria-labelledby="guest-settings-exit-title">
+          <div className="journey-settings-group-heading"><h2 id="guest-settings-exit-title">체험 끝내기</h2></div>
+          <div className="journey-settings-group-content"><div className="journey-settings-account-row"><p>체험을 마치고 로그인 화면으로 돌아가요.</p><button className="secondary" type="button" onClick={endGuestJourney}>체험 끝내고 로그인으로</button></div></div>
         </section>
       </div>
     </Scene>;
