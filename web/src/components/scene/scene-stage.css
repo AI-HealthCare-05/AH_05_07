@@ -283,8 +283,4 @@
   .living-visual-stage {
     height: var(--scene-height-320, 200px);
   }
-
-  .presence-scene-actor-layer {
-    display: none;
-  }
 }

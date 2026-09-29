@@ -3,6 +3,7 @@ import { companionAssetManifest } from "../src/ui/companionAssets.generated";
 import type { CompanionSpecies } from "../src/ui/companion";
 
 const url = "/?fixture=VP-10&screen=S02";
+const frameSelector = '[data-scene="S02"] [data-scene-reserved-box="true"]';
 
 async function openSpatialS02(page: Page, width = 390, height = 844) {
   await page.setViewportSize({ width, height });
@@ -41,6 +42,49 @@ async function dragBy(page: Page, target: Locator, deltaX: number, deltaY: numbe
   await page.mouse.up();
 }
 
+async function dragTowardFrameEdge(page: Page, layer: Locator, edge: "left" | "right" | "top" | "bottom") {
+  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const frame = await page.locator(frameSelector).boundingBox();
+  const actor = await target.boundingBox();
+  if (!frame || !actor) throw new Error("visible S02 geometry is unavailable");
+  const root = await rootPoint(layer);
+  const minX = root.x + frame.x + 8 - actor.x;
+  const maxX = root.x + frame.x + frame.width - 8 - actor.x - actor.width;
+  const minY = root.y + frame.y + 8 - actor.y;
+  const maxY = root.y + frame.y + frame.height - 8 - actor.y - actor.height;
+  // Top-left and top-right avoid the position-control hard zone; bottom-left
+  // explores the full remaining vertical edge.
+  const desired = {
+    left: { x: minX - 2, y: minY + 2 },
+    right: { x: maxX + 2, y: minY + 2 },
+    top: { x: minX + 2, y: minY - 2 },
+    bottom: { x: minX + 2, y: maxY + 2 },
+  }[edge];
+  const start = { x: actor.x + actor.width / 2, y: actor.y + actor.height / 2 };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + desired.x - root.x, start.y + desired.y - root.y, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(async () => Number(await layer.getAttribute("data-presence-commit-count")))
+    .toBeGreaterThan(0);
+  const settled = await target.boundingBox();
+  const control = await layer.locator(".presence-scene-actor-controls").boundingBox();
+  if (!settled || !control) throw new Error("settled S02 geometry is unavailable");
+  expect(settled.width).toBeCloseTo(actor.width, 0);
+  expect(settled.height).toBeCloseTo(actor.height, 0);
+  expect(settled.x).toBeGreaterThanOrEqual(frame.x + 7);
+  expect(settled.y).toBeGreaterThanOrEqual(frame.y + 7);
+  expect(settled.x + settled.width).toBeLessThanOrEqual(frame.x + frame.width - 7);
+  expect(settled.y + settled.height).toBeLessThanOrEqual(frame.y + frame.height - 7);
+  expect(
+    settled.x + settled.width <= control.x
+      || control.x + control.width <= settled.x
+      || settled.y + settled.height <= control.y
+      || control.y + control.height <= settled.y,
+  ).toBe(true);
+  return settled;
+}
+
 async function startCapturedDrag(page: Page, target: Locator) {
   const box = await target.boundingBox();
   if (!box) throw new Error("actor target has no box");
@@ -52,7 +96,7 @@ async function startCapturedDrag(page: Page, target: Locator) {
   return start;
 }
 
-for (const [width, height] of [[390, 844], [768, 900], [1366, 768]] as const) {
+for (const [width, height] of [[320, 844], [390, 844], [768, 900], [1366, 768]] as const) {
   test(`S02 fenced direct placement drags and commits at ${width}px`, async ({ page }) => {
     const layer = await openSpatialS02(page, width, height);
     const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
@@ -73,6 +117,53 @@ for (const [width, height] of [[390, 844], [768, 900], [1366, 768]] as const) {
     );
   });
 }
+
+for (const [species, width, height] of [
+  ["bear", 320, 844], ["cat", 320, 844], ["dog", 320, 844],
+  ["capybara", 320, 844], ["fox", 320, 844], ["hedgehog", 320, 844],
+  ["bear", 390, 844], ["bear", 768, 900],
+  ["bear", 1366, 768],
+] as const) {
+  test(`S02 ${species} reaches the safe frame edges at ${width}px`, async ({ page }) => {
+    await page.addInitScript((savedSpecies: string) => {
+      localStorage.setItem("sk7-companion-species", savedSpecies);
+    }, species);
+    const layer = await openSpatialS02(page, width, height);
+    const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+    const frame = await page.locator(frameSelector).boundingBox();
+    const initial = await target.boundingBox();
+    if (!frame || !initial) throw new Error("initial S02 geometry is unavailable");
+    const nominalX = frame.width - initial.width - 16;
+    const nominalY = frame.height - initial.height - 16;
+    expect(nominalX).toBeGreaterThan(100);
+    expect(nominalY).toBeGreaterThan(width <= 390 ? 70 : 90);
+
+    if (width === 320 && species === "bear") {
+      const root = await rootPoint(layer);
+      await target.click();
+      await expect(layer).toHaveAttribute("data-presence-commit-count", "0");
+      expect(await rootPoint(layer)).toEqual(root);
+    }
+
+    const left = await dragTowardFrameEdge(page, layer, "left");
+    const right = await dragTowardFrameEdge(page, layer, "right");
+    const top = await dragTowardFrameEdge(page, layer, "top");
+    const bottom = await dragTowardFrameEdge(page, layer, "bottom");
+    expect(left.x).toBeLessThanOrEqual(frame.x + 11);
+    expect(right.x + right.width).toBeGreaterThanOrEqual(frame.x + frame.width - 11);
+    expect(top.y).toBeLessThanOrEqual(frame.y + 11);
+    expect(bottom.y + bottom.height).toBeGreaterThanOrEqual(frame.y + frame.height - 11);
+    expect(right.x - left.x).toBeGreaterThan(nominalX * 0.95);
+    expect(bottom.y - top.y).toBeGreaterThan(nominalY * 0.95);
+  });
+}
+
+test("short 320px S02 keeps its intentionally hidden frame and interaction hidden", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto(url);
+  await expect(page.locator(frameSelector)).toBeHidden();
+  await expect(page.locator('[data-presence-scene-actor-interaction="S02"]')).toHaveCount(0);
+});
 
 test("S02 presentation controls stay visually quiet without losing semantics", async ({ page }) => {
   const layer = await openSpatialS02(page);
@@ -223,7 +314,7 @@ test("cancel, lost capture, Escape, and route invalidation restore and fence old
 });
 
 test("normalized S02 placement survives route return and responsive Arena rebuild", async ({ page }) => {
-  const layer = await openSpatialS02(page);
+  const layer = await openSpatialS02(page, 320, 844);
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   await cycle.click();
   const host = page.locator('[data-companion-presence-host="shadow-v1"]');
@@ -249,9 +340,17 @@ test("normalized S02 placement survives route return and responsive Arena rebuil
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
 
   const arenaRevision = Number(await host.getAttribute("data-presence-arena-revision"));
-  await page.setViewportSize({ width: 768, height: 900 });
+  await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(async () => Number(await host.getAttribute("data-presence-arena-revision")))
     .toBeGreaterThan(arenaRevision);
+  await expect.poll(async () => ({
+    x: Number(await host.getAttribute("data-presence-placement-x")),
+    y: Number(await host.getAttribute("data-presence-placement-y")),
+  })).toEqual(committed);
+  const mobileRevision = Number(await host.getAttribute("data-presence-arena-revision"));
+  await page.setViewportSize({ width: 768, height: 900 });
+  await expect.poll(async () => Number(await host.getAttribute("data-presence-arena-revision")))
+    .toBeGreaterThan(mobileRevision);
   await expect.poll(async () => ({
     x: Number(await host.getAttribute("data-presence-placement-x")),
     y: Number(await host.getAttribute("data-presence-placement-y")),

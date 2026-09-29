@@ -351,6 +351,12 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
         scene.add(environment);
       }
       profile = nextProfile;
+      // The mobile frame otherwise leaves under 50px of vertical travel.
+      // At 320px the wider species also need a top corridor above the
+      // position-control hard zone. Keep the feet anchored while scaling.
+      if (screen === "S02") s02ActorOwner?.setPresentationScale(
+        nextProfile === "mobile320" ? 0.7 : nextProfile === "mobile390" ? 0.75 : 1,
+      );
       element.dataset.environmentKind = recipe.environment;
       element.dataset.environmentLandmarks = JSON.stringify(environment.userData.landmarkIds ?? [landmark]);
       const { camera: cameraRecipe } = sceneComposition(recipeRef.current, window.innerWidth);

@@ -28,9 +28,9 @@
     }
   },
   "runtimeVisualSourceHashes": {
-    "web/src/components/scene/scene-stage.css": "1133789dcb4119035ae456a6e5d942a3f9f65e3ea68868142538daca2b41aa7d",
-    "web/src/components/scene/ThreeSceneRenderer.tsx": "cc473f8874b0aa1599484d9adcddff0adadc901eb7a993a1b256a144c5767b07",
-    "web/src/components/scene/s02SceneActor.ts": "0cfc5bfb5da05eb3af56e152edc59ca8ce1796f23a289ebb4015d72197218a89",
+    "web/src/components/scene/scene-stage.css": "2c432d3ec198174bada412836243745c3d77e5ca12946caa4d347c2ebe38da20",
+    "web/src/components/scene/ThreeSceneRenderer.tsx": "66e6c98a0bfd18a79da19fe20401409291a78f41d553f875dedf0d26de3dfcf6",
+    "web/src/components/scene/s02SceneActor.ts": "d3f18ce1556809981697da0d30b6a84d091bf0c6d8a42ac6ac2e45e6bc59b5ba",
     "web/src/components/VisualStage.tsx": "9a33b1c2e410c65d65174faf99c5cdab26f1dc87d85c1dbf6e7bdd95d20f3b3c",
     "web/src/components/SceneShell.tsx": "bd2b9f309bd6546e589fe33953b3bc43f5cc61de71edb29c6edd40a8f1ecd8e5",
     "web/src/components/SceneFirstPaintWitness.tsx": "2211bf34fce3bbff1cb2df4468a5fbd4f1737a669520f87cb6e73139368ebfbe",
@@ -91,9 +91,9 @@
     "identityBearingProductPosterSuppression": true,
     "neutralF1Fallback": true,
     "currentSourceHashes": {
-      "web/src/components/scene/scene-stage.css": "1133789dcb4119035ae456a6e5d942a3f9f65e3ea68868142538daca2b41aa7d",
-      "web/src/components/scene/ThreeSceneRenderer.tsx": "cc473f8874b0aa1599484d9adcddff0adadc901eb7a993a1b256a144c5767b07",
-      "web/src/components/scene/s02SceneActor.ts": "0cfc5bfb5da05eb3af56e152edc59ca8ce1796f23a289ebb4015d72197218a89",
+      "web/src/components/scene/scene-stage.css": "2c432d3ec198174bada412836243745c3d77e5ca12946caa4d347c2ebe38da20",
+      "web/src/components/scene/ThreeSceneRenderer.tsx": "66e6c98a0bfd18a79da19fe20401409291a78f41d553f875dedf0d26de3dfcf6",
+      "web/src/components/scene/s02SceneActor.ts": "d3f18ce1556809981697da0d30b6a84d091bf0c6d8a42ac6ac2e45e6bc59b5ba",
       "web/src/components/VisualStage.tsx": "9a33b1c2e410c65d65174faf99c5cdab26f1dc87d85c1dbf6e7bdd95d20f3b3c",
       "web/src/components/SceneShell.tsx": "bd2b9f309bd6546e589fe33953b3bc43f5cc61de71edb29c6edd40a8f1ecd8e5",
       "web/src/components/SceneFirstPaintWitness.tsx": "2211bf34fce3bbff1cb2df4468a5fbd4f1737a669520f87cb6e73139368ebfbe",
