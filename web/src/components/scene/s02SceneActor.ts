@@ -36,6 +36,12 @@ export class S02SceneActorOwner {
   #started = false;
   #disposed = false;
   #worldRoot: THREE.Group | null = null;
+  #normalized: THREE.Group | null = null;
+  #baseScale = 0;
+  #presentationScale = 1;
+  #centerX = 0;
+  #centerZ = 0;
+  #minY = 0;
 
   constructor(options: S02SceneActorOwnerOptions) {
     this.#scene = options.scene;
@@ -74,14 +80,12 @@ export class S02SceneActorOwner {
       const bounds = new THREE.Box3().setFromObject(worldRoot);
       const size = bounds.getSize(new THREE.Vector3());
       const center = bounds.getCenter(new THREE.Vector3());
-      const scale = (1.65 / Math.max(size.y, 0.001)) * this.#characterScale;
-
-      normalized.scale.setScalar(scale);
-      normalized.position.set(
-        -center.x * scale,
-        -bounds.min.y * scale,
-        -center.z * scale,
-      );
+      this.#normalized = normalized;
+      this.#baseScale = (1.65 / Math.max(size.y, 0.001)) * this.#characterScale;
+      this.#centerX = center.x;
+      this.#centerZ = center.z;
+      this.#minY = bounds.min.y;
+      this.#applyPresentationScale();
 
       this.#worldRoot = worldRoot;
       this.#scene.add(worldRoot);
@@ -93,6 +97,23 @@ export class S02SceneActorOwner {
 
   setAnchor(anchor: readonly [number, number, number]): void {
     this.#worldRoot?.position.fromArray(anchor);
+  }
+
+  setPresentationScale(scale: number): void {
+    if (!Number.isFinite(scale) || scale <= 0 || scale === this.#presentationScale) return;
+    this.#presentationScale = scale;
+    this.#applyPresentationScale();
+  }
+
+  #applyPresentationScale(): void {
+    if (!this.#normalized) return;
+    const scale = this.#baseScale * this.#presentationScale;
+    this.#normalized.scale.setScalar(scale);
+    this.#normalized.position.set(
+      -this.#centerX * scale,
+      -this.#minY * scale,
+      -this.#centerZ * scale,
+    );
   }
 
   measure(camera: THREE.Camera, stageHeight: number): SceneActorBounds | null {
@@ -123,6 +144,7 @@ export class S02SceneActorOwner {
     this.#disposed = true;
     const root = this.#worldRoot;
     this.#worldRoot = null;
+    this.#normalized = null;
     if (!root) return;
     this.#scene.remove(root);
     // Renderer-owned shared resources are released only by the final scene pass.
