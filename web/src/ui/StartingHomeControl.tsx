@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { readStartingHomePreference, writeStartingHomePreference } from "./startingHomePreference";
 
-export function StartingHomeControl({ headingLevel = 2 }: { headingLevel?: 2 | 3 } = {}) {
+export function StartingHomeControl({ headingLevel = 2, compact = false }: { headingLevel?: 2 | 3; compact?: boolean } = {}) {
   const [preference, setPreference] = useState(readStartingHomePreference);
   const [saveFailed, setSaveFailed] = useState(false);
   const Heading = headingLevel === 3 ? "h3" : "h2";
   return <section className="journey-settings-section journey-settings-display starting-home-control">
     <div className="section-header">
       <Heading>시작 화면</Heading>
-      <p id="starting-home-help">두 홈 중 어디에서 시작할지 이 브라우저에만 저장해요. 건강 기록·분석이나 계정 설정에는 영향을 주지 않으며, 다음에 기본 주소로 들어올 때 적용돼요.</p>
+      <p id="starting-home-help">{compact ? "다음에 기본 주소로 들어올 때 선택한 홈에서 시작해요." : "두 홈 중 어디에서 시작할지 이 브라우저에만 저장해요. 건강 기록·분석이나 계정 설정에는 영향을 주지 않으며, 다음에 기본 주소로 들어올 때 적용돼요."}</p>
     </div>
     <fieldset className="theme-preset-control" aria-describedby="starting-home-help">
       <legend>로그인 후 시작 화면</legend>

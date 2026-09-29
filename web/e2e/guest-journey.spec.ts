@@ -548,6 +548,9 @@ test("guest full journey is memory-only, keeps #713 direct placement, and reload
   await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
   await expect(page.getByRole("button", { name: "계정 삭제", exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-scene="S14"] .journey-settings-group-heading h2')).toHaveText(["이 브라우저의 설정", "체험 끝내기"]);
+  await expect(page.locator('[data-scene="S14"]')).toContainText("이 브라우저에만 저장");
+  await expect(page.locator('[data-scene="S14"]')).not.toContainText("서버 기록");
   await expect(page.getByText(/30일 보관|서버 내보내기/)).toHaveCount(0);
   await page.locator('input[name="sk7-theme-preset"][value="warm"]').check();
   await page.locator("#guest-companion-species").selectOption("cat");

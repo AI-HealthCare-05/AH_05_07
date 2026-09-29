@@ -486,7 +486,7 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   const settings = page.locator('[data-scene="S14"]');
   await expect(page.locator(".app-header").getByRole("button", { name: "로그아웃", exact: true })).toHaveCount(0);
   await expect(settings.getByRole("button", { name: "이 기기에서 로그아웃", exact: true })).toBeVisible();
-  await expect(settings).toContainText("개인 기기에서는 로그인 상태를 유지해도 괜찮아요.");
+  await expect(settings).toContainText("로그아웃해도 계정과 서버 기록은 삭제되지 않아요.");
   await expect(settings).toContainText("30일");
   await expect(settings).toContainText("이메일");
   await expect(settings).toContainText("혈압 관찰");
@@ -495,11 +495,17 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("JSON");
   await expect(settings).toContainText("PDF");
   await expect(settings).toContainText("인쇄물");
-  await expect(settings).toContainText("계정과 별개");
   await expect(settings).toContainText("이 브라우저에만 저장");
-  await expect(settings).toContainText("이번 이용에만 사용");
-  await expect(settings).toContainText("Model V2 분석");
-  await expect(settings).toContainText("계정 전체 백업이 아니며");
+  await expect(settings.locator('[data-boundary="account"]')).toContainText("계정 My Space");
+  await expect(settings.locator('[data-boundary="browser"]')).toContainText("브라우저 My Space");
+  await expect(settings.locator('[data-boundary="device"]')).toContainText("내 기기");
+  await expect(settings.locator('[data-boundary="transient"]')).toContainText("Model V2 입력 · 결과");
+  await expect(settings).toContainText("전체 계정 백업이 아니며");
+  await expect(settings.locator(".journey-settings-group-heading h2")).toHaveText([
+    "계정에 저장되는 것", "내 기기의 사본", "이 브라우저의 개인화", "이 기기에서 로그아웃", "계정 삭제",
+  ]);
+  await expect(settings.locator(".journey-settings-deletion-facts")).toContainText("계정 소유 제품 기록");
+  await expect(settings.locator(".journey-settings-deletion-facts")).toContainText("자동 삭제되지 않음");
 });
 
 test("S14 exports the exact recent 30-calendar-date range without mutating records", async ({ page }) => {
@@ -526,7 +532,7 @@ test("S14 exports the exact recent 30-calendar-date range without mutating recor
   await expect(settings).toContainText("2026-08-30");
   await expect(settings).toContainText("2026-09-28");
   const download = page.waitForEvent("download");
-  await settings.getByRole("button", { name: "최근 30일 날짜 범위 JSON 내려받기", exact: true }).click();
+  await settings.getByRole("button", { name: "최근 30일 JSON 내려받기", exact: true }).click();
   await download;
 
   const exportRequest = requests.find(({ url }) => new URL(url).pathname === "/api/v1/observations/export");
