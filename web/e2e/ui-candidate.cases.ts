@@ -1709,6 +1709,70 @@ test.describe('B9 journey feedback', () => {
     window as unknown as { __b9TransitionProbe: { reset: () => void } }
   ).__b9TransitionProbe.reset());
 
+  for (const [width, height] of [[1366, 768], [768, 900], [390, 844], [320, 568], [320, 844]] as const) {
+    test(`cold-start surfaces visibly breathe in the first second without moving at ${width}x${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      const gate = deferred();
+      await routeWindow(page, () => gate.promise);
+      await page.goto('/?e2e=signed-in&screen=S02');
+      await expect(page.locator('[data-journey-skeleton]')).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+
+      const sample = (time: number) => page.evaluate((time) => {
+        for (const animation of document.getAnimations()) {
+          if (!(animation instanceof CSSAnimation) || !animation.animationName.startsWith('journey-')) continue;
+          animation.pause();
+          animation.currentTime = time;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d')!;
+        const blocks = Array.from(document.querySelectorAll<HTMLElement>('.journey-skeleton-block'))
+          .filter(element => element.getClientRects().length > 0);
+        return blocks.map(element => {
+          const rect = element.getBoundingClientRect();
+          context.fillStyle = getComputedStyle(element).backgroundColor;
+          context.fillRect(0, 0, 1, 1);
+          return {
+            rect: [rect.x, rect.y, rect.width, rect.height],
+            color: Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3),
+          };
+        });
+      }, time);
+      const start = await sample(0);
+      const firstSecond = await sample(900);
+      expect(start.length).toBeGreaterThan(8);
+      expect(firstSecond.map(block => block.rect)).toEqual(start.map(block => block.rect));
+      // Measure actual rendered surface contrast, not just an animation name.
+      for (let index = 0; index < start.length; index++) {
+        const change = Math.max(...firstSecond[index].color.map((value, channel) => Math.abs(value - start[index].color[channel])));
+        expect(change).toBeGreaterThanOrEqual(5);
+        expect(change).toBeLessThan(30);
+      }
+      for (const fontSize of ['', '200%']) {
+        await page.locator('html').evaluate((element, size) => { element.style.fontSize = size; }, fontSize);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        const toggle = page.getByRole('button', { name: '움직임 멈추기', exact: true });
+        await toggle.scrollIntoViewIfNeeded();
+        await toggle.focus();
+        expect(await toggle.evaluate(element => {
+          const rect = element.getBoundingClientRect();
+          return element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+        })).toBe(true);
+        if (width <= 580) {
+          const lastBlock = page.locator('.journey-skeleton-facts .journey-skeleton-block').last();
+          await lastBlock.scrollIntoViewIfNeeded();
+          const block = (await lastBlock.boundingBox())!;
+          const nav = (await page.locator('.primary-nav').boundingBox())!;
+          expect(block.y + block.height).toBeLessThanOrEqual(nav.y);
+        }
+      }
+      gate.release();
+      await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+      await expect(page.locator('[data-journey-skeleton]')).toHaveCount(0);
+    });
+  }
+
   test('held S02 and S10 reads show truthful non-interactive families and fast reads have no minimum display time', async ({ page }) => {
     let gate = deferred();
     const loads = await routeWindow(page, () => gate.promise);
@@ -1720,6 +1784,11 @@ test.describe('B9 journey feedback', () => {
     const loadingLayout = today.locator('.journey-skeleton-layout');
     const motionToggle = page.getByRole('button', { name: '움직임 멈추기', exact: true });
     await expect(motionToggle).toBeVisible();
+    const motionStates = () => page.evaluate(() => [
+      ...Array.from(document.querySelectorAll('.journey-skeleton-block'), element => getComputedStyle(element)),
+      getComputedStyle(document.querySelector('.journey-skeleton-layout')!, '::after'),
+      getComputedStyle(document.querySelector('.journey-loading-status')!, '::before'),
+    ].map(style => ({ name: style.animationName, state: style.animationPlayState })));
     await page.waitForTimeout(4100);
     expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('journey-skeleton-sweep');
     expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationPlayState)).toBe('running');
@@ -1727,13 +1796,27 @@ test.describe('B9 journey feedback', () => {
     const resumeMotion = page.getByRole('button', { name: '움직임 재생', exact: true });
     await expect(resumeMotion).toHaveAttribute('aria-pressed', 'true');
     expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationPlayState)).toBe('paused');
+    expect((await motionStates()).every(motion => motion.state === 'paused')).toBe(true);
+    const pausedTimes = () => page.evaluate(() => document.getAnimations()
+      .filter(animation => animation instanceof CSSAnimation && animation.animationName.startsWith('journey-'))
+      .map(animation => animation.currentTime));
+    // Let the pending pause settle, then ensure no decorative layer keeps ticking.
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
+    const paused = await pausedTimes();
+    expect(paused.length).toBeGreaterThan(2);
+    await page.waitForTimeout(200);
+    expect(await pausedTimes()).toEqual(paused);
     await resumeMotion.click();
+    expect((await motionStates()).every(motion => motion.state === 'running')).toBe(true);
+    await expect.poll(pausedTimes).not.toEqual(paused);
     await page.emulateMedia({ forcedColors: 'active' });
     await expect(page.getByRole('button', { name: '움직임 멈추기', exact: true })).toBeHidden();
     expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('none');
+    expect((await motionStates()).every(motion => motion.name === 'none')).toBe(true);
     await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' });
     await expect(page.getByRole('button', { name: '움직임 멈추기', exact: true })).toBeHidden();
     expect(await loadingLayout.evaluate(element => getComputedStyle(element, '::after').animationName)).toBe('none');
+    expect((await motionStates()).every(motion => motion.name === 'none')).toBe(true);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(today.locator('.journey-skeleton-day')).toHaveCount(7);
     await expect(today.locator('button, input, select, a[href], [tabindex="0"]')).toHaveCount(0);
@@ -1993,7 +2076,7 @@ test.describe('B9 journey feedback', () => {
     await expect(page.locator('[data-scene="S02"], [data-journey-skeleton]')).toHaveCount(0);
   });
 
-  for (const [width, height] of [[320, 568], [390, 844], [1366, 768]] as const) {
+  for (const [width, height] of [[320, 568], [320, 844], [390, 844], [768, 900], [1366, 768]] as const) {
     test(`skeleton and loaded CSS stay visible without overflow or fixed-nav overlap at ${width}x${height} and 200% text`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: 'reduce' });
