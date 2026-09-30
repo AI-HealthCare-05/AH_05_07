@@ -1,4 +1,4 @@
-import { MySpaceReturn } from "./ui/SpaceReturnNavigation";
+import GuestPlaza from "./guest/GuestPlaza";
 import type { ComponentProps, FormEvent } from "react";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
@@ -82,6 +82,12 @@ function parseGuestScreen(value: string | null): ScreenId {
     : "S02";
 }
 
+// One bounded Guest destination, independent of ordinary My Space query composition.
+function isGuestPlaza(search: URLSearchParams) {
+  return search.getAll("space").length === 1 && search.get("space") === "plaza"
+    && parseGuestScreen(search.get("screen")) === "S02";
+}
+
 function parseDashboardWindow(value: string | null): DashboardWindow {
   return value === "prior" ? "prior" : "current";
 }
@@ -123,6 +129,7 @@ function GuestModelV2InputFlow(props: Omit<ComponentProps<typeof ModelV2InputFlo
 
 function GuestJourney({ today }: { today: string }) {
   const initialSearch = useMemo(() => new URLSearchParams(window.location.search), []);
+  const [plazaOpen, setPlazaOpen] = useState(() => isGuestPlaza(initialSearch));
   const [store, dispatch] = useReducer(guestJourneyReducer, today, createGuestJourneyState);
   const [requestedScreen, setRequestedScreen] = useState<ScreenId>(() =>
     parseGuestScreen(initialSearch.get("screen")),
@@ -285,6 +292,7 @@ function GuestJourney({ today }: { today: string }) {
   useEffect(() => {
     const onPopState = () => {
       const search = new URLSearchParams(window.location.search);
+      setPlazaOpen(isGuestPlaza(search));
       setRequestedScreen(parseGuestScreen(search.get("screen")));
       setDashboardWindow(parseDashboardWindow(search.get("dashboard_window")));
       setSelectedRecordKey(search.get("record"));
@@ -330,11 +338,21 @@ function GuestJourney({ today }: { today: string }) {
     );
     if (screen !== "S05") setConfirmation(null);
     if (returnsToCurrent) setDashboardWindow("current");
+    setPlazaOpen(false);
     setRequestedScreen(screen);
     setSelectedRecordKey(recordKey);
     setPendingBloodPressureDeletion(null);
     setPendingChallengeCheckinDeletion(null);
     setEditingChallengeCheckin(null);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function enterPlaza() {
+    const url = routeUrl("S02", null, dashboardWindow);
+    url.searchParams.set("space", "plaza");
+    window.history.pushState({ guestJourney: true }, "", url);
+    setRequestedScreen("S02");
+    setPlazaOpen(true);
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
@@ -641,7 +659,13 @@ function GuestJourney({ today }: { today: string }) {
         onNavigate={navigate}
         companionSpecies={s02SceneOwnsDecoration ? sceneCompanionSpecies : undefined}
         companionAsset={activeCompanionAsset}
+        guestPlazaEntry={<nav className="guest-plaza-entry" aria-label="선택 체험 · 3D 공간">
+          <span className="today-space-landmark" aria-hidden="true"><i /><i /><i /></span>
+          <div><strong>동반자와 광장 산책</strong><p>걸으며 둘러보는 작은 Living City</p></div>
+          <button type="button" className="secondary" onClick={enterPlaza}>3D 공간 둘러보기 <span aria-hidden="true">→</span></button>
+        </nav>}
       />;
+
     }
 
     if (activeScreen === "S03") {
@@ -1053,6 +1077,12 @@ function GuestJourney({ today }: { today: string }) {
     </Scene>;
   }
 
+  // Keep the Guest reducer and semantic facts mounted; only the presentation
+  // subtree switches. Today scenes are unmounted while the plaza owns WebGL.
+  if (plazaOpen) return <div data-guest-journey="memory-only" data-guest-companion-species={companionSpecies}>
+    <GuestPlaza companion={activeCompanionAsset} onReturn={() => navigate("S02")} />
+  </div>;
+
   const reportVisible = reportCreatedAt !== null && activeScreen === "S10";
 
   return <div
@@ -1061,7 +1091,6 @@ function GuestJourney({ today }: { today: string }) {
     data-guest-dashboard-window={dashboardWindow}
   >
     <div data-living-week-app hidden={reportVisible}>
-      {activeScreen === "S02" && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && <MySpaceReturn />}
       <SceneShell
         staticJourneyUi={sceneGate === "off"}
         journeyPresentation

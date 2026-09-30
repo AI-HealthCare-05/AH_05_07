@@ -104,7 +104,7 @@ const allowedLocalStorageKeys = ["sk7-companion-species", "sk7-ui-theme"];
 const allowedSessionStorageKeys = ["sk7:vite-preload-recovery-at"];
 
 type StorageRecord = {
-  storage: "local" | "session" | "idb" | "cache";
+  storage: "local" | "session" | "idb" | "cache" | "cookie";
   method: string;
   key?: string;
   args?: unknown;
@@ -143,6 +143,8 @@ async function installGuestNetworkFirewall(page: Page) {
         `loaded assets: ${loadedAssets.join(", ")}`,
       ).toBe(true);
       expect(loadedAssets.some((pathname) => /\/App-[^/]+\.(?:js|css)$/.test(pathname))).toBe(false);
+      expect(loadedAssets.some((pathname) => /\/ProductPlaceableEntry-[^/]+\.js$/.test(pathname))).toBe(false);
+      expect(loadedAssets.some((pathname) => /\/persistence-[^/]+\.js$/.test(pathname))).toBe(false);
     },
   };
 }
@@ -216,7 +218,7 @@ async function observeGuestStorage(page: Page) {
       (window as unknown as { guestStorageRecords: StorageRecord[] }).guestStorageRecords.push(rec);
     };
 
-    for (const method of ["setItem", "removeItem", "clear"] as const) {
+    for (const method of ["getItem", "setItem", "removeItem", "clear"] as const) {
       const original = Storage.prototype[method];
       Storage.prototype[method] = function (this: Storage, ...args: unknown[]) {
         const name = this === localStorage ? "local" : this === sessionStorage ? "session" : "unknown";
@@ -224,6 +226,13 @@ async function observeGuestStorage(page: Page) {
         return Reflect.apply(original, this, args);
       };
     }
+
+    const cookie = Object.getOwnPropertyDescriptor(Document.prototype, "cookie")!;
+    Object.defineProperty(document, "cookie", {
+      configurable: true,
+      get: () => cookie.get!.call(document),
+      set: (value: string) => { record("cookie", "set", [value]); cookie.set!.call(document, value); },
+    });
 
     if (globalThis.indexedDB) {
       const wrapObjectStore = (target: IDBObjectStore) => {
@@ -287,7 +296,7 @@ async function observeGuestStorage(page: Page) {
           if (!allowedLocalStorageKeys.includes(record.key ?? "")) unexpected.push(record);
         } else if (record.storage === "session") {
           if (!allowedSessionStorageKeys.includes(record.key ?? "")) unexpected.push(record);
-        } else if (record.storage === "idb" || record.storage === "cache") {
+        } else if (record.storage === "idb" || record.storage === "cache" || record.storage === "cookie") {
           // IDB and cache mutations are unexpected in guest S11 flow.
           unexpected.push(record);
         }
@@ -616,6 +625,13 @@ test("S01 entry uses the canonical isolated guest query and S14 can end the gues
   await page.getByRole("button", { name: "로그인 없이 30초 맛보기", exact: true }).click();
   await expect(page).toHaveURL(/\?guest=1$/);
   await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
+  const network = await installGuestNetworkFirewall(page);
+  await page.getByRole("button", { name: "3D 공간 둘러보기" }).press("Enter");
+  await expect(page).toHaveURL(/\?guest=1&space=plaza$/);
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await page.getByRole("button", { name: "오늘 화면으로 돌아가기" }).press("Enter");
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  network.assertClean();
   await page.locator(".primary-nav").getByRole("button", { name: "설정", exact: true }).click();
   await page.getByRole("button", { name: "체험 끝내고 로그인으로", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -688,7 +704,9 @@ test("guest S14 cat identity continues into an actual memory-only S05 confirmati
   await expect(page.locator("[data-companion-status]")).toHaveAttribute("data-companion-status", "ready", { timeout: 30_000 });
   await expect(page.locator('[data-saved-scene-status], [data-saved-scene-event]')).toHaveCount(0);
   const s05Requests = companionRequests(requests.slice(s05RequestStart));
-  expect(s05Requests).toContain(companionAssetManifest.cat.lite.url);
+  // A registered GLB already loaded by S02 may be reused by S05. The ready
+  // descriptor above proves identity; a second network GET is not required.
+  expect(companionRequests(requests)).toContain(companionAssetManifest.cat.lite.url);
   expect(s05Requests).not.toContain(companionAssetManifest.bear.lite.url);
 });
 
@@ -989,4 +1007,299 @@ test.describe("guest S11 real local model flow", () => {
     firewall.assertEntryIsolation();
     await assertGuestStorageFirewall(page);
   });
+});
+
+// Observe browser primitives independently of product code. No debug owner,
+// extra renderer or synthetic world is installed in the application.
+async function observeGuestWorldLifetime(page: Page) {
+  // Install Playwright's Date override before observing RAF. Installing clock
+  // afterwards would replace the primitive wrapper rather than measure it.
+  await page.clock.setFixedTime(fixedNow);
+  await page.addInitScript(() => {
+    const rafs = new Set<number>();
+    const listeners: { target: EventTarget; type: string; callback: unknown }[] = [];
+    const contexts = new Map<HTMLCanvasElement, WebGLRenderingContext | WebGL2RenderingContext>();
+    const drawn = new Set<WebGLRenderingContext | WebGL2RenderingContext>();
+    // Capability-probe contexts are not renderers. Count only contexts that
+    // actually draw, including any detached renderer left behind by navigation.
+    for (const prototype of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+      for (const name of ["drawArrays", "drawElements"] as const) {
+        const draw = prototype[name];
+        prototype[name] = function (...args: number[]) {
+          drawn.add(this);
+          return Reflect.apply(draw, this, args);
+        } as typeof draw;
+      }
+    }
+    const worldCall = () => /PlaceableWorld-|\/src\/placeable\//.test(new Error().stack ?? "");
+    const request = window.requestAnimationFrame, cancel = window.cancelAnimationFrame;
+    window.requestAnimationFrame = (callback) => {
+      const owned = worldCall();
+      const id = request.call(window, time => { rafs.delete(id); callback(time); });
+      if (owned) rafs.add(id);
+      return id;
+    };
+    window.cancelAnimationFrame = id => { rafs.delete(id); cancel.call(window, id); };
+    const add = EventTarget.prototype.addEventListener, remove = EventTarget.prototype.removeEventListener;
+    EventTarget.prototype.addEventListener = function (type, callback, options) {
+      if (worldCall() && !listeners.some(entry => entry.target === this && entry.type === type && entry.callback === callback)) {
+        listeners.push({ target: this, type, callback });
+      }
+      return add.call(this, type, callback, options);
+    };
+    EventTarget.prototype.removeEventListener = function (type, callback, options) {
+      const index = listeners.findIndex(entry => entry.target === this && entry.type === type && entry.callback === callback);
+      if (index >= 0) listeners.splice(index, 1);
+      return remove.call(this, type, callback, options);
+    };
+    const get = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (...args: unknown[]) {
+      const context = Reflect.apply(get, this, args);
+      if (/^webgl2?$/.test(String(args[0])) && context) contexts.set(this, context);
+      return context;
+    } as typeof get;
+    Object.assign(window, { guestWorldLifetime: () => ({
+      rafs: rafs.size,
+      // A failed Three constructor's GPU listeners live only on its unreachable
+      // canvas. The observation array itself retains those canvases; measure
+      // input/environment listeners separately from that artificial retention.
+      listeners: listeners.filter(entry => !entry.type.startsWith("webglcontext")).length,
+      contexts: [...contexts].filter(([canvas, context]) => canvas.dataset.testid === "placeable-world-canvas" && !context.isContextLost()).length,
+      activeContexts: [...contexts.values()].filter(context => drawn.has(context) && !context.isContextLost()).length,
+    }) });
+  });
+  const sample = () => page.evaluate(() => (window as unknown as { guestWorldLifetime: () => {
+    rafs: number; listeners: number; contexts: number; activeContexts: number;
+  } }).guestWorldLifetime());
+  return {
+    async entered() {
+      await expect.poll(async () => (await sample()).rafs).toBe(1);
+      await expect.poll(async () => (await sample()).contexts).toBe(1);
+      await expect.poll(async () => (await sample()).activeContexts).toBe(1);
+      expect((await sample()).listeners).toBeGreaterThan(6);
+    },
+    async exited() {
+      await expect.poll(sample).toMatchObject({ rafs: 0, listeners: 0, contexts: 0 });
+      await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
+    },
+  };
+}
+
+async function enterGuestPlaza(page: Page) {
+  await page.getByRole("button", { name: "3D 공간 둘러보기" }).click();
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await expect(page.getByRole("button", { name: /꾸미기|확정|저장|바람개비/ })).toHaveCount(0);
+}
+
+async function returnGuestToday(page: Page) {
+  await page.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true }).click();
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+}
+
+async function openPlazaTools(page: Page) {
+  await page.locator(".plaza-help summary").click();
+  await expect(page.getByRole("button", { name: "왼쪽 보기", exact: true })).toBeVisible();
+}
+
+async function assertGuestFact(page: Page) {
+  await page.locator(".home-lead").getByRole("button", { name: "오늘 기록 보기", exact: true }).click();
+  await expect(page.locator('[data-scene="S07"]')).toContainText("132/84 mmHg");
+  await page.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true }).click();
+}
+
+test("#909 Guest plaza preserves memory through repeated entry, movement, camera, history and reload without product access", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  const storage = await observeGuestStorage(page);
+  const lifetime = await observeGuestWorldLifetime(page);
+  await page.addInitScript(() => localStorage.setItem("sk7-companion-species", "fox"));
+  await openGuest(page, 1366, 900);
+  await createTodayBloodPressure(page);
+  await page.getByRole("button", { name: "오늘의 기록 보기", exact: true }).click();
+  for (let visit = 0; visit < 2; visit++) {
+    await enterGuestPlaza(page);
+    await expect(page).toHaveURL(/\?guest=1&space=plaza$/);
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion", "fox");
+    await lifetime.entered();
+    await page.getByTestId("placeable-world-canvas").focus();
+    await page.keyboard.down("w");
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "move");
+    await page.keyboard.up("w");
+    await openPlazaTools(page);
+    await page.getByRole("button", { name: "왼쪽 보기", exact: true }).click();
+    await page.getByRole("button", { name: "가까이 보기", exact: true }).click();
+    await page.getByRole("button", { name: "시점 다시 맞추기" }).click();
+    await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-lighting", "twilight");
+    await returnGuestToday(page);
+    await lifetime.exited();
+    // Explicit return's history entry is still Guest, and re-entry is a fresh world.
+    await page.goBack();
+    await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-lighting", "daylight");
+    await lifetime.entered();
+    await page.goForward();
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    await lifetime.exited();
+    await assertGuestFact(page);
+  }
+  network.assertEntryIsolation(); network.assertClean();
+  await storage.assertClean(); await assertGuestStorageFirewall(page);
+  expect(await page.context().cookies()).toEqual([]);
+  await enterGuestPlaza(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await returnGuestToday(page);
+  await expect(page.locator(".home-lead")).toContainText("혈압 기록하기");
+  await lifetime.exited(); network.assertClean(); await storage.assertClean();
+});
+
+test("#909 Guest namespace rejects My Space authority and respects direct semantic screens", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  const storage = await observeGuestStorage(page);
+  for (const query of [
+    "guest=1&experience=e2&view=3d&storage=account&return_space=3d-account",
+    "guest=1&experience=e2&view=3d&storage=browser&return_space=3d-browser",
+    "guest=1&space=plaza&screen=S11",
+    "guest=1&space=plaza&space=plaza",
+    "guest=1&space=https://evil.invalid",
+  ]) {
+    await page.goto(`/?${query}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-guest-journey="memory-only"]')).toBeVisible();
+    await expect(page.locator('[data-guest-space="plaza"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /내 공간/ })).toHaveCount(0);
+    await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+    network.assertClean(); await storage.assertClean();
+  }
+  await page.goto("/?guest=1&space=plaza&experience=e2&storage=account&return_space=3d-account", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await returnGuestToday(page);
+  await expect(page).toHaveURL(/\?guest=1$/);
+  network.assertEntryIsolation(); network.assertClean(); await storage.assertClean();
+});
+
+test("#909 actual WebGL loss and startup failure recover only presentation and preserve Guest memory", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  const storage = await observeGuestStorage(page);
+  const lifetime = await observeGuestWorldLifetime(page);
+  await openGuest(page);
+  await createTodayBloodPressure(page);
+  await page.getByRole("button", { name: "오늘의 기록 보기", exact: true }).click();
+  await enterGuestPlaza(page);
+  await page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="placeable-world-canvas"]')!;
+    const extension = canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context");
+    if (!extension) throw new Error("Actual context-loss extension unavailable");
+    extension.loseContext();
+  });
+  await expect(page.getByRole("alert")).toContainText("3D 공간을 열지 못했어요");
+  await lifetime.exited();
+  await expect(page.getByRole("alert")).not.toContainText(/저장된|꾸미기|분실|잃/);
+  await page.getByRole("button", { name: "3D 다시 열기" }).click();
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await lifetime.entered();
+  await returnGuestToday(page); await assertGuestFact(page);
+  // Real renderer construction now fails because the browser returns no context.
+  await page.evaluate(() => {
+    const get = HTMLCanvasElement.prototype.getContext;
+    Object.assign(window, { restoreGuestWebGL: () => { HTMLCanvasElement.prototype.getContext = get; } });
+    HTMLCanvasElement.prototype.getContext = function (...args: unknown[]) {
+      return /^webgl2?$/.test(String(args[0])) ? null : Reflect.apply(get, this, args);
+    } as typeof get;
+  });
+  await page.getByRole("button", { name: "3D 공간 둘러보기" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 공간을 열지 못했어요");
+  await lifetime.exited();
+  await page.evaluate(() => (window as unknown as { restoreGuestWebGL: () => void }).restoreGuestWebGL());
+  await returnGuestToday(page); await assertGuestFact(page);
+  network.assertClean(); await storage.assertClean(); await assertGuestStorageFirewall(page);
+});
+
+test("#909 world chunk failure leaves Guest memory, Today escape and zero preload-recovery storage", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  const storage = await observeGuestStorage(page);
+  await page.route("**/PlaceableWorld-*.js", route => route.abort());
+  await openGuest(page);
+  await createTodayBloodPressure(page);
+  await page.getByRole("button", { name: "오늘의 기록 보기", exact: true }).click();
+  await page.getByRole("button", { name: "3D 공간 둘러보기" }).click();
+  await expect(page.getByRole("alert")).toContainText("3D 공간을 열지 못했어요");
+  // Failed ES module loads can be cached by the browser. Keep the truthful
+  // semantic escape; renderer/context failures have their separate real retry.
+  await expect(page.getByRole("button", { name: "3D 다시 열기" })).toHaveCount(0);
+  await returnGuestToday(page); await assertGuestFact(page);
+  expect(await page.evaluate(() => sessionStorage.length)).toBe(0);
+  network.assertClean(); await storage.assertClean();
+});
+
+for (const [width, height, enlarged] of [
+  [1440, 900, false], [1366, 768, false], [768, 900, false], [390, 844, false],
+  [320, 568, false], [320, 400, false], [320, 568, true],
+] as const) test(`#909 Guest plaza adaptive ${width}x${height}${enlarged ? " 200% text" : ""}: semantic controls remain reachable`, async ({ page }, testInfo) => {
+  const network = await installGuestNetworkFirewall(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openGuest(page, width, height);
+  if (enlarged) await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  await enterGuestPlaza(page);
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-reduced-motion", "true");
+  const exit = page.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true });
+  await expect(exit).toBeInViewport();
+  if (width <= 390) {
+    expect((await page.getByRole("heading", { name: "3D 체험 공간" }).boundingBox())!.width).toBeGreaterThan(width * .75);
+    expect((await exit.boundingBox())!.width).toBeGreaterThan(width * .8);
+  }
+  await page.screenshot({ path: testInfo.outputPath("guest-plaza.png"), fullPage: true });
+  await openPlazaTools(page);
+  if (width === 1366) {
+    const canvas = page.getByTestId("placeable-world-canvas");
+    const before = await canvas.screenshot();
+    await page.getByRole("button", { name: "왼쪽 보기", exact: true }).click();
+    await expect.poll(async () => Buffer.compare(before, await canvas.screenshot())).not.toBe(0);
+  }
+  for (const name of ["동반자에게 인사하기", "광장의 불빛 켜기", "왼쪽 보기", "높게 보기", "가까이 보기", "시점 다시 맞추기"]) {
+    const control = page.getByRole("button", { name, exact: true });
+    await control.scrollIntoViewIfNeeded();
+    await expect(control).toBeInViewport();
+    expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await control.press("Enter");
+  }
+  await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  await page.screenshot({ path: testInfo.outputPath("guest-plaza-tools.png"), fullPage: true });
+  await exit.scrollIntoViewIfNeeded();
+  await exit.focus();
+  await expect(exit).toBeFocused();
+  expect(await exit.evaluate(node => getComputedStyle(node).outlineStyle)).not.toBe("none");
+  await exit.press("Enter");
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  network.assertClean();
+});
+
+for (const width of [390, 320]) test(`#909 Guest plaza ${width}px actual two-pointer touch walk and camera`, async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  try {
+    const network = await installGuestNetworkFirewall(page);
+    const storage = await observeGuestStorage(page);
+    await openGuest(page, width, 844);
+    await enterGuestPlaza(page);
+    const pad = (await page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기" }).boundingBox())!;
+    const canvas = (await page.getByTestId("placeable-world-canvas").boundingBox())!;
+    const cdp = await context.newCDPSession(page);
+    const thumb = { id: 1, x: pad.x + pad.width / 2, y: pad.y + pad.height / 2 };
+    const camera = { id: 2, x: canvas.x + canvas.width * .65, y: canvas.y + canvas.height * .45 };
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [thumb] });
+    thumb.y -= 22;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [thumb] });
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "move");
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [thumb, camera] });
+    camera.x -= 45;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [thumb, camera] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle");
+    await page.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true }).tap();
+    await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+    network.assertClean(); await storage.assertClean(); await assertGuestStorageFirewall(page);
+  } finally { await context.close(); }
 });

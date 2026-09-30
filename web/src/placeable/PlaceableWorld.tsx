@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import { livingCityPixelRatio } from "./livingCityRenderDensity";
@@ -7,10 +8,11 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
+type Props = PlaceableProjection & { presentation?: "guest"; extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
 /** Opt-in scene lifetime. No Lab shell, auth client, persistence, or health stores. */
 export default function PlaceableWorld(props: Props) {
+  const guestVisit = props.presentation === "guest";
   const host = useRef<HTMLDivElement>(null);
   const pad = useRef<HTMLButtonElement>(null);
   const labelNodes = useRef(new Map<string, HTMLSpanElement>());
@@ -106,7 +108,9 @@ export default function PlaceableWorld(props: Props) {
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFSoftShadowMap;
       const canvas = renderer.domElement;
       canvas.tabIndex = 0;
-      canvas.setAttribute("aria-label", "내 공간 3D 광장. 방향키 또는 W A S D로 걷고, 드래그로 둘러보세요. Enter로 저장된 바람개비를 돌리세요.");
+      canvas.setAttribute("aria-label", latest.current.presentation === "guest"
+        ? "3D 체험 광장. 방향키 또는 W A S D로 걷고, 드래그나 광장 도구로 둘러보세요."
+        : "내 공간 3D 광장. 방향키 또는 W A S D로 걷고, 드래그로 둘러보세요. Enter로 저장된 바람개비를 돌리세요.");
       canvas.setAttribute("aria-describedby", "my-space-companion-help");
       canvas.dataset.testid = "placeable-world-canvas";
       container.prepend(canvas);
@@ -205,8 +209,8 @@ export default function PlaceableWorld(props: Props) {
         ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
         style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{props.pinwheelPreview && label.id === props.selection?.socketId ? `미리보기 · ${label.label}` : label.label}</span>)}
       {error && <div className="placeable-world-message" role="alert">
-        <h2>3D 광장을 열지 못했어요</h2>
-        <p>저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요.</p>
+        <h2>{guestVisit ? "3D 공간을 열지 못했어요" : "3D 광장을 열지 못했어요"}</h2>
+        <p>{guestVisit ? "다시 열거나 오늘 화면으로 돌아갈 수 있어요." : "저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요."}</p>
         <button onClick={() => setAttempt((value) => value + 1)}>3D 다시 열기</button>
       </div>}
       {props.preview && <span className="placeable-world-caption">저장 전 미리보기</span>}
@@ -222,12 +226,12 @@ export default function PlaceableWorld(props: Props) {
         <div className="placeable-companion" aria-label="내 동반자" data-unavailable={error || pose === "unavailable"}>
           <button type="button" disabled={error || pose === "loading" || pose === "unavailable" || pose === "greet" || pose === "move"}
             onClick={greet}>동반자에게 인사하기</button>
-          <button type="button" disabled={!props.canInteract} onClick={props.onInteract}>바람개비 돌리기</button>
+          {!guestVisit && <button type="button" disabled={!props.canInteract} onClick={props.onInteract}>바람개비 돌리기</button>}
         </div>
         <div className="placeable-twilight">
           <button type="button" onClick={toggleTwilight} disabled={error} aria-pressed={twilight}
             aria-describedby="twilight-help">{twilight ? "낮의 광장으로 돌아가기" : "광장의 불빛 켜기"}</button>
-          <p role="status" data-testid="twilight-status">{error ? "조명을 볼 수 없어도 간단한 광장과 오늘의 기록은 이용할 수 있어요."
+          <p role="status" data-testid="twilight-status">{error ? (guestVisit ? "오늘 화면은 계속 이용할 수 있어요." : "조명을 볼 수 없어도 간단한 광장과 오늘의 기록은 이용할 수 있어요.")
             : twilight ? "오늘의 기록으로 이어지는 불빛과 함께 해질녘 광장을 둘러보세요." : "따뜻한 낮의 광장 · 원할 때 불빛을 켜 보세요."}</p>
           <p id="twilight-help">이번 방문의 분위기만 바뀌어요. 배치나 활동 기록은 변경되지 않아요.</p>
         </div>
@@ -242,11 +246,11 @@ export default function PlaceableWorld(props: Props) {
           <button type="button" onClick={() => sceneRef.current?.cameraRig.zoom(1)}>멀리 보기</button>
           <button type="button" className="plaza-camera-reset" onClick={() => sceneRef.current?.cameraRig.reset()}>시점 다시 맞추기</button>
         </fieldset>
-        <p id="my-space-companion-help" className="placeable-world-help">동반자를 탭하거나 인사하기 버튼을 선택한 뒤 Enter 또는 Space를 누르세요.
-          이 브라우저에서 고른 동반자이며, 인사는 이번 방문에서만 이어지는 작은 놀이예요.</p>
+        <p id="my-space-companion-help" className="placeable-world-help">{guestVisit ? "동반자를 탭하거나 인사하기 버튼으로 인사를 나눠 보세요." : <>동반자를 탭하거나 인사하기 버튼을 선택한 뒤 Enter 또는 Space를 누르세요.
+          이 브라우저에서 고른 동반자이며, 인사는 이번 방문에서만 이어지는 작은 놀이예요.</>}</p>
         <p className="placeable-world-help">광장을 선택한 뒤 방향키 또는 W A S D로 걸어요. 터치 화면에서는 걷기 패드를 드래그하세요.
           화면을 드래그해 둘러보고, 광장을 선택한 뒤 스크롤로 거리를 조절해요. 위 버튼으로도 시점을 바꿀 수 있어요.
-          바람개비는 탭하거나 Enter로 돌릴 수 있어요. 미리보기·저장·다른 조작 중에는 이동이 잠시 멈춰요.</p>
+          {!guestVisit && "바람개비는 탭하거나 Enter로 돌릴 수 있어요. 미리보기·저장·다른 조작 중에는 이동이 잠시 멈춰요."}</p>
         {props.extraTools}
       </div>
     </details>
