@@ -136,6 +136,25 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
   // No URL destination, visit flag, storage write or account identity enters the scene.
   const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
+  const seenReceipt = useRef(state.receipt);
+  const [receiptAccent, setReceiptAccent] = useState<string | null>(null);
+  useEffect(() => {
+    const fresh = state.receipt !== seenReceipt.current;
+    seenReceipt.current = state.receipt;
+    setReceiptAccent(null);
+    // Consume even hidden/ineligible receipts. A visit/view change never replays one.
+    if (!fresh || !state.receipt?.pinwheelOnly || space !== "plaza" || document.hidden) return;
+    setReceiptAccent(state.receipt.operationId);
+    const timer = setTimeout(() => setReceiptAccent(null), 2400);
+    return () => clearTimeout(timer);
+  }, [state.receipt, space, world]);
+  useEffect(() => {
+    const clear = () => setReceiptAccent(null);
+    const hide = () => { if (document.hidden) clear(); };
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("pagehide", clear);
+    return () => { document.removeEventListener("visibilitychange", hide); window.removeEventListener("pagehide", clear); };
+  }, []);
   const gardenHeading = useRef<HTMLHeadingElement>(null), gardenEntry = useRef<HTMLButtonElement>(null);
   const changedSpace = useRef(false);
   useEffect(() => {
@@ -215,8 +234,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     controller.cancel(); setEditing(false);
     if (world) editRef.current?.focus(); else chooseRef.current?.focus();
   }
-  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status" data-quiet={state.phase === "ready" && !state.saved}>
-    {state.saved ? adapter.mode === "browser" ? "이 브라우저에 저장했어요." : "계정 공간에 저장했어요." : phaseCopy[state.phase]}
+  const acknowledging = state.phase === "ready" && receiptAccent !== null && receiptAccent === state.receipt?.operationId;
+  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status" data-quiet={state.phase === "ready" && !state.saved}
+    data-pinwheel-receipt={acknowledging}>
+    {state.phase !== "ready" ? phaseCopy[state.phase] : state.saved ? <>
+      {state.receipt?.pinwheelOnly && <span className="pinwheel-receipt-check" aria-hidden="true">✓ </span>}
+      {adapter.mode === "browser" ? "이 브라우저에 " : "계정 공간에 "}
+      {state.receipt ? "저장했어요." : "저장된 꾸미기예요."}
+    </> : phaseCopy.ready}
   </p>;
   async function confirm() {
     await controller.confirm();

@@ -384,3 +384,90 @@ test("E4 fingerprint matches PostgreSQL fixed-order fields and full receipt reje
   expect(confirms(saved, op, hash)).toBe(true);
   expect(confirms({ ...saved, selection: { pinwheel: coral, keepsake: "quiet-moon-v1" } }, op, hash)).toBe(false);
 });
+
+// #907 observes newly published receipt identities, independently of saved state.
+function observeReceipts(controller: PlaceableController) {
+  const receipts: string[] = [];
+  let previous = controller.getState().receipt;
+  controller.subscribe(() => {
+    const next = controller.getState().receipt;
+    if (next && next !== previous && next.pinwheelOnly) receipts.push(next.operationId);
+    previous = next;
+  });
+  return receipts;
+}
+test("#907 exact direct pinwheel receipts publish once each; load, cancel and remount publish none", async () => {
+  const local = browserStore(), adapter = browserPersistence(local);
+  const c = new PlaceableController(adapter), receipts = observeReceipts(c);
+  await c.load(); expect(c.getState().receipt).toBeNull();
+  for (const selection of [coral, teal]) {
+    c.preview(selection); expect(c.getState().receipt).toBeNull();
+    await c.confirm();
+    expect(c.getState().receipt).toEqual({ operationId: c.getState().confirmed!.latestOperationId, pinwheelOnly: true });
+    c.interact(); await c.confirm(); // Neither interaction nor repeated Confirm publishes another receipt.
+  }
+  expect(receipts).toHaveLength(2); expect(new Set(receipts).size).toBe(2); expect(local.writes).toBe(2);
+  await c.load(); expect(c.getState()).toMatchObject({ saved: true, receipt: null });
+  c.preview(coral); c.cancel(); expect(c.getState()).toMatchObject({ saved: true, receipt: null });
+  expect(receipts).toHaveLength(2);
+  const remounted = new PlaceableController(adapter), replay = observeReceipts(remounted);
+  await remounted.load(); expect(remounted.getState()).toMatchObject({ saved: true, receipt: null });
+  expect(replay).toEqual([]); expect(local.writes).toBe(2);
+  expect([...local.values.keys()]).toEqual([STORAGE_KEY]);
+  expect(Object.keys(JSON.parse(local.values.get(STORAGE_KEY)!)).sort()).toEqual(Object.keys(emptySnapshot()).sort());
+});
+test("#907 UNKNOWN and old reread stay silent until an explicit exact read, without another mutation", async () => {
+  const db = store(); let attempted!: Operation; let writes = 0;
+  db.adapter.save = async (op) => { attempted = op; writes++; throw new PersistenceError("unknown"); };
+  const c = new PlaceableController(db.adapter), receipts = observeReceipts(c);
+  await c.load(); c.preview(coral); await c.confirm();
+  const pending = c.getState().pending;
+  expect(c.getState()).toMatchObject({ phase: "unknown", saved: false, receipt: null });
+  await c.load(); expect(c.getState().phase).toBe("unknown"); expect(c.getState().pending).toBe(pending);
+  expect(receipts).toEqual([]); expect(writes).toBe(1);
+  db.set(await receipt(attempted)); await c.load();
+  expect(c.getState()).toMatchObject({ phase: "ready", saved: true, pending: null });
+  expect(receipts).toEqual([attempted.operationId]); expect(writes).toBe(1);
+  await c.load(); await c.retryPending(); expect(receipts).toHaveLength(1); expect(writes).toBe(1);
+});
+for (const wrong of ["operation", "fingerprint", "revision", "payload", "conflict"] as const) {
+  test(`#907 ${wrong} cannot publish an exact pinwheel receipt`, async () => {
+    const db = store(); let writes = 0;
+    db.adapter.save = async (op) => {
+      writes++;
+      const snapshot = { ...await receipt(op), ...(wrong === "fingerprint" ? { latestFingerprint: "f".repeat(64) }
+        : wrong === "revision" ? { revision: op.expectedRevision + 2 }
+        : wrong === "payload" ? { selection: teal } : { latestOperationId: crypto.randomUUID() }) };
+      db.set(snapshot);
+      if (wrong === "conflict") throw new PersistenceError("conflict");
+      return snapshot;
+    };
+    const c = new PlaceableController(db.adapter), receipts = observeReceipts(c);
+    await c.load(); c.preview(coral); await c.confirm();
+    expect(c.getState()).toMatchObject({ phase: "conflict", saved: false, receipt: null });
+    expect(receipts).toEqual([]); expect(writes).toBe(1);
+  });
+}
+test("#907 keepsake add, replace, remove and mixed edits never qualify; pinwheel-only v2 still does", async () => {
+  const local = browserStore(), c = new PlaceableController(browserPersistence(local)), receipts = observeReceipts(c);
+  await c.load();
+  for (const keepsake of ["plaza-ribbon-v1", "quiet-moon-v1", null] as const) {
+    c.previewKeepsake(keepsake); await c.confirm();
+    expect(c.getState().receipt?.pinwheelOnly).toBe(false);
+  }
+  c.preview(coral); c.previewKeepsake("garden-leaf-v1"); await c.confirm();
+  expect(c.getState().receipt?.pinwheelOnly).toBe(false); expect(receipts).toEqual([]);
+  c.preview(teal); await c.confirm(); expect(receipts).toHaveLength(1);
+  expect(c.getState().confirmed?.selection).toEqual({ pinwheel: teal, keepsake: "garden-leaf-v1" });
+  expect(local.writes).toBe(5); expect(c.getState().pulse).toBe(0);
+});
+test("#907 late exact receipt after disposal publishes nothing", async () => {
+  const db = store(); let finish!: (snapshot: Snapshot) => void;
+  db.adapter.save = () => new Promise(resolve => { finish = resolve; });
+  const c = new PlaceableController(db.adapter), receipts = observeReceipts(c);
+  await c.load(); c.preview(coral); const saving = c.confirm();
+  await expect.poll(() => Boolean(finish)).toBe(true);
+  const snapshot = await receipt(c.getState().pending!.operation);
+  c.dispose(); finish(snapshot); await saving;
+  expect(c.getState().receipt).toBeNull(); expect(receipts).toEqual([]);
+});
