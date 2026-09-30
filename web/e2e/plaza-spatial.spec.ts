@@ -74,7 +74,7 @@ test("R2 desktop actual locomotion, facing, 90/180 degree camera-relative contro
   expect(Math.abs((await sample(page)).yaw)).toBeLessThan(0.1);
   await page.locator(".plaza-help summary").click();
   await hold(page, "d", 350); // Blur while moving must zero velocity, including deceleration.
-  await page.getByRole("link", { name: "오늘의 기록", exact: true }).focus();
+  await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).focus();
   const stopped = await sample(page); await page.waitForTimeout(250);
   expect((await sample(page)).x).toBeCloseTo(stopped.x, 4);
   await page.screenshot({ path: test.info().outputPath("follow.png") });
@@ -134,12 +134,12 @@ for (const [width, height] of [[390, 844], [320, 568]]) test(`R2 ${width}px two 
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await settle(page);
     await page.locator(".plaza-help summary").tap();
     await page.getByRole("button", { name: "시점 다시 맞추기" }).tap();
-    await page.getByRole("link", { name: "오늘의 기록", exact: true }).scrollIntoViewIfNeeded();
-    await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toBeInViewport();
+    await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     await page.screenshot({ path: test.info().outputPath(`touch-${width}.png`), scale: "css" });
     await page.locator(".plaza-help summary").tap();
-    await page.getByRole("link", { name: "오늘의 기록", exact: true }).tap();
+    await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).tap();
     await expect(page.getByTestId("placeable-world")).toHaveCount(0);
   } finally { await context.close(); }
 });
@@ -151,10 +151,10 @@ test("R2 reduced motion, forced colors, context loss, retry and semantic escape"
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "neutral");
   await rotate(page, 1); expect((await sample(page)).yaw).toBeGreaterThan(0.4);
   await page.emulateMedia({ forcedColors: "active" });
-  await page.getByRole("link", { name: "오늘의 기록", exact: true }).focus();
-  await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toBeFocused();
+  await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).focus();
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toBeFocused();
   await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toHaveCSS("outline-style", "solid");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveCSS("outline-style", "solid");
   await page.screenshot({ path: test.info().outputPath("903-forced-colors-focus.png"), scale: "css" });
   await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => {
     canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
@@ -230,7 +230,7 @@ for (const width of [390, 320]) test(`R3 ${width}px chrome, 200% text and safe-a
   expect(pad.y + pad.height).toBeLessThanOrEqual(844 - 34);
   await page.screenshot({ path: test.info().outputPath(`safe-area-${width}.png`) });
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
-  const today = page.getByRole("link", { name: "오늘의 기록", exact: true });
+  const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
   await today.focus(); await expect(today).toBeFocused(); await expect(today).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   await page.screenshot({ path: test.info().outputPath(`text-200-${width}.png`) });

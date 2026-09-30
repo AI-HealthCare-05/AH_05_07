@@ -14,6 +14,8 @@ export default function PlaceableWorld(props: Props) {
   const host = useRef<HTMLDivElement>(null);
   const pad = useRef<HTMLButtonElement>(null);
   const labelNodes = useRef(new Map<string, HTMLSpanElement>());
+  const labelGeometry = useRef<{ width: number; height: number; reserved: { left: number; right: number; top: number; bottom: number }[];
+    sizes: Map<string, { width: number; height: number }> } | null>(null);
   const latest = useRef(props); latest.current = props;
   const sceneRef = useRef<PlaceableScene | null>(null);
   const inputRef = useRef<PlaceableWorldInput | null>(null);
@@ -45,6 +47,35 @@ export default function PlaceableWorld(props: Props) {
     sceneRef.current?.update(props, reduced.current);
     inputRef.current?.suspend(props.suspended);
   }, [props]);
+
+  const companionNotice = !error && (pose === "loading" || pose === "unavailable");
+  useLayoutEffect(() => {
+    const container = host.current;
+    if (!container || error) { labelGeometry.current = null; return; }
+    const reservedNodes = Array.from(container.parentElement!.querySelectorAll<HTMLElement>(
+      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption",
+    ));
+    // Batch layout reads only when layout changes. Visibility keeps optional label
+    // dimensions measurable, so camera movement never needs a DOM geometry read.
+    const measure = () => {
+      const bounds = container.getBoundingClientRect();
+      const reserved = reservedNodes.map((node) => {
+        const rect = node.getBoundingClientRect();
+        return { left: rect.left - bounds.left, right: rect.right - bounds.left,
+          top: rect.top - bounds.top, bottom: rect.bottom - bounds.top };
+      });
+      const sizes = new Map(Array.from(labelNodes.current, ([id, node]) => {
+        const { width, height } = node.getBoundingClientRect();
+        return [id, { width, height }] as const;
+      }));
+      labelGeometry.current = { width: bounds.width, height: bounds.height, reserved, sizes };
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
+    window.addEventListener("resize", measure);
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
+  }, [labels, toolsOpen, companionNotice, props.preview, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -126,25 +157,26 @@ export default function PlaceableWorld(props: Props) {
           if (!document.hidden) {
             if (scene!.step(dt, input.movement.snapshot.intent)) greet();
             companion!.setMoving(scene!.locomotion.moving);
-            // Labels are optional orientation, never controls. Reserve real HTML
-            // clearance after resize, text reflow, tool disclosure and camera movement.
-            const bounds = container.getBoundingClientRect();
-            const reserved = Array.from(container.parentElement!.querySelectorAll<HTMLElement>(
-              ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption",
-            )).map((node) => node.getBoundingClientRect());
+            // Projection and clearance use cached local geometry; RAF only writes DOM.
+            const geometry = labelGeometry.current;
+            const reserved = geometry ? [...geometry.reserved] : [];
             for (const label of scene!.labels()) {
               const node = labelNodes.current.get(label.id);
               if (!node) continue;
-              node.hidden = !label.visible;
-              node.style.left = `${label.left.toFixed(2)}%`; node.style.top = `${label.top.toFixed(2)}%`;
-              if (label.visible) {
-                const box = node.getBoundingClientRect();
-                node.hidden = box.left < bounds.left + 8 || box.right > bounds.right - 8
-                  || box.top < bounds.top + 8 || box.bottom > bounds.bottom - 8
-                  || reserved.some((rect) => box.left < rect.right + 8 && box.right > rect.left - 8
+              const size = geometry?.sizes.get(label.id);
+              let visible = false;
+              if (label.visible && geometry && size && size.width && size.height) {
+                const x = label.left / 100 * geometry.width, y = label.top / 100 * geometry.height;
+                const box = { left: x - size.width / 2, right: x + size.width / 2,
+                  top: y - size.height / 2, bottom: y + size.height / 2 };
+                visible = box.left >= 8 && box.right <= geometry.width - 8
+                  && box.top >= 8 && box.bottom <= geometry.height - 8
+                  && !reserved.some((rect) => box.left < rect.right + 8 && box.right > rect.left - 8
                     && box.top < rect.bottom + 8 && box.bottom > rect.top - 8);
-                if (!node.hidden) reserved.push(box);
+                if (visible) reserved.push(box);
               }
+              node.style.visibility = visible ? "visible" : "hidden";
+              node.style.left = `${label.left.toFixed(2)}%`; node.style.top = `${label.top.toFixed(2)}%`;
             }
             const phase = scene!.welcomePhase;
             if (phase !== lastPhase) { lastPhase = phase; setWelcomePhase(phase); }
@@ -170,17 +202,17 @@ export default function PlaceableWorld(props: Props) {
     <div className="placeable-world-host" ref={host}>
       {!error && labels.map((label) => <span key={label.id} className="placeable-world-label" aria-hidden="true"
         ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
-        hidden={!label.visible} style={{ left: `${label.left}%`, top: `${label.top}%` }}>{label.label}</span>)}
+        style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{label.label}</span>)}
       {error && <div className="placeable-world-message" role="alert">
         <h2>3D 광장을 열지 못했어요</h2>
-        <p>저장된 꾸미기와 미리보기는 그대로예요. 위에서 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요.</p>
+        <p>저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요.</p>
         <button onClick={() => setAttempt((value) => value + 1)}>3D 다시 열기</button>
       </div>}
       {props.preview && <span className="placeable-world-caption">저장 전 미리보기</span>}
     </div>
     <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
       disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
-    <p className="plaza-companion-status" data-notice={!error && (pose === "loading" || pose === "unavailable")} role="status" data-testid="companion-response">{error || pose === "unavailable"
+    <p className="plaza-companion-status" data-notice={companionNotice} role="status" data-testid="companion-response">{error || pose === "unavailable"
       ? "지금은 동반자를 볼 수 없어요. 광장과 오늘의 기록은 계속 이용할 수 있어요."
       : pose === "loading" ? "동반자가 광장으로 오고 있어요…"
       : greetings ? "반가워요! 동반자와 인사를 나눴어요." : "동반자가 이 공간에 함께 있어요."}</p>

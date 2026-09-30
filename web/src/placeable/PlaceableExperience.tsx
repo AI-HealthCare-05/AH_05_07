@@ -225,10 +225,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
           href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
-        <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+        {!world && <a className="placeable-health-home" href={classicTodayHref("classic", adapter.mode)}
           aria-disabled={preview || Boolean(state.pending)}
           onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
-          오늘의 기록 <span aria-hidden="true">→</span></a>
+          오늘의 기록 <span aria-hidden="true">→</span></a>}
       </nav>
     </header>
     <div className="placeable-layout">

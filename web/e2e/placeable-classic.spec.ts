@@ -66,7 +66,7 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     const before = await readLocal(page);
     if (mobile) {
       await page.setViewportSize({ width: 320, height: 844 });
-      const exit = (await page.getByRole("link", { name: "오늘의 기록", exact: true }).boundingBox())!;
+      const exit = (await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).boundingBox())!;
       const light = (await (await worldTool(page, "광장의 불빛 켜기")).boundingBox())!;
       const spin = (await (await worldTool(page, "바람개비 돌리기", true)).boundingBox())!;
       const walk = (await page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기", exact: false }).boundingBox())!;
@@ -108,7 +108,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
   await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "true");
@@ -1231,9 +1231,19 @@ for (const [width, height] of [[1440, 900], [1366, 768], [768, 1024], [390, 844]
     const edit = page.getByRole("button", { name: "꾸미기", exact: true });
     const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
     const tools = page.locator(".plaza-help > summary");
+    // Count the semantic destination, including any differently named duplicate.
+    await expect(page.getByRole("link", { name: /오늘의 기록/ })).toHaveCount(1);
+    await expect(page.getByRole("link").filter({ hasText: "오늘의 기록" })).toHaveClass("placeable-today");
     const measure = async () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       expect(await page.locator("main").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await expect.poll(() => page.locator(".placeable-world-label:visible").evaluateAll(labels => {
+        const controls = Array.from(document.querySelectorAll(
+          ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption",
+        )).map(node => node.getBoundingClientRect());
+        return labels.every(label => { const b = label.getBoundingClientRect(); return controls.every(r =>
+          b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom); });
+      })).toBe(true);
       for (const control of [edit, today, tools, page.locator(".placeable-walk-pad")]) {
         await control.scrollIntoViewIfNeeded();
         const box = (await control.boundingBox())!;
@@ -1318,4 +1328,52 @@ test("903 account loading keeps scope and primary actions truthful without write
   await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   expect(account.puts).toBe(1); expect(account.revision).toBe(1); expect(await readLocal(page)).toBeNull();
   await page.screenshot({ path: test.info().outputPath("903-account-pinwheel.png"), scale: "css" });
+});
+
+
+test("904 Today remains direct in Garden and Classic while 3D has one semantic exit", async ({ page }) => {
+  await page.goto(companionRoute);
+  await expect(page.getByRole("link", { name: /오늘의 기록/ })).toHaveCount(1);
+  const href = await page.locator(".placeable-today").getAttribute("href");
+  await (await worldTool(page, "정원 쉼터로 가기")).click();
+  const gardenToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  await expect(gardenToday).toBeVisible();
+  await expect(gardenToday).toHaveAttribute("href", href!);
+  await gardenToday.click();
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+  await page.goto(browserRoute);
+  const classicToday = page.getByRole("link", { name: "오늘의 기록", exact: true });
+  await expect(classicToday).toBeVisible();
+  await classicToday.click();
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+});
+
+test("904 label clearance has no steady-frame DOM geometry reads", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(companionRoute);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle");
+  await expect(page.locator(".placeable-world-label").first()).toBeVisible();
+  const steadyReads = () => page.evaluate(async () => {
+    const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    // Allow resize/disclosure/text-reflow observers to settle before the idle witness.
+    for (let i = 0; i < 4; i++) await frame();
+    const original = Element.prototype.getBoundingClientRect;
+    let reads = 0;
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.matches(".placeable-world-host, .placeable-world-label, .placeable-walk-pad, .plaza-help > summary, .plaza-tools-content, .plaza-companion-status, .placeable-world-caption")) reads++;
+      return original.call(this);
+    };
+    try { for (let i = 0; i < 20; i++) await frame(); return reads; }
+    finally { Element.prototype.getBoundingClientRect = original; }
+  });
+  expect(await steadyReads()).toBe(0);
+  await (await worldTool(page, "왼쪽 보기", true)).click();
+  expect(await steadyReads()).toBe(0);
+  await page.locator(".plaza-help > summary").click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(page.locator(".placeable-world-caption")).toBeVisible();
+  expect(await steadyReads()).toBe(0);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  expect(await steadyReads()).toBe(0);
 });
