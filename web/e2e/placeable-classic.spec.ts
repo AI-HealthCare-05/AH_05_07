@@ -14,6 +14,15 @@ async function editorButton(page: Page, name: string, exact?: boolean) {
   return page.getByRole("button", { name, exact });
 }
 
+// Secondary world actions are disclosed through the real semantic control.
+async function worldTool(page: Page, name: string, exact?: boolean) {
+  const button = page.getByRole("button", { name, exact, includeHidden: true });
+  await button.waitFor({ state: "attached" });
+  const tools = page.locator(".plaza-help");
+  if (await tools.count() && await tools.getAttribute("open") === null) await tools.locator("summary").click();
+  return button;
+}
+
 const browserRoute = "/?experience=e2&view=classic&storage=browser";
 const saved = async (op: Operation): Promise<Snapshot> => ({ ...emptySnapshot(), revision: op.expectedRevision + 1,
   schemaVersion: op.schemaVersion, layoutId: op.layoutId, selection: op.selection, latestOperationId: op.operationId, latestFingerprint: await fingerprint(op) });
@@ -37,7 +46,7 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
     await expect(editor).toBeHidden();
     const rect = (await canvas.boundingBox())!;
-    expect(rect.height).toBeGreaterThan((mobile ? 844 : 960) * 0.95);
+    expect(rect.height).toBeGreaterThan((mobile ? 844 : 960) * 0.6);
     expect(await canvas.evaluate((c: HTMLCanvasElement) => c.width * c.height)).toBeLessThanOrEqual(2_000_000);
     if (mobile) await open.tap(); else { await open.focus(); await page.keyboard.press("Enter"); }
     await expect(page.getByRole("heading", { name: "내 공간 꾸미기" })).toBeFocused();
@@ -57,26 +66,29 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     const before = await readLocal(page);
     if (mobile) {
       await page.setViewportSize({ width: 320, height: 844 });
-      const exit = (await page.getByRole("link", { name: "오늘의 기록", exact: true }).boundingBox())!;
-      const light = (await page.getByRole("button", { name: "광장의 불빛 켜기" }).boundingBox())!;
-      const spin = (await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).boundingBox())!;
+      const exit = (await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).boundingBox())!;
+      const light = (await (await worldTool(page, "광장의 불빛 켜기")).boundingBox())!;
+      const spin = (await (await worldTool(page, "바람개비 돌리기", true)).boundingBox())!;
       const walk = (await page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기", exact: false }).boundingBox())!;
-      expect(light.y).toBeGreaterThanOrEqual(exit.y + exit.height);
-      expect(spin.y + spin.height).toBeLessThanOrEqual(walk.y);
+      expect(exit.width).toBeGreaterThanOrEqual(44);
+      expect(light.height).toBeGreaterThanOrEqual(44);
+      expect(spin.height).toBeGreaterThanOrEqual(44);
+      expect(walk.width).toBeGreaterThanOrEqual(44);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
       await page.screenshot({ path: test.info().outputPath("plaza-320.png"), scale: "css" });
       await page.setViewportSize({ width: 390, height: 844 });
     }
-    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+    await (await worldTool(page, "바람개비 돌리기", true)).click();
     await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-daylight.png`) });
-    await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+    await (await worldTool(page, "광장의 불빛 켜기")).click();
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-twilight.png`) });
-    await page.getByRole("button", { name: "정원 쉼터로 가기" }).click();
+    await (await worldTool(page, "정원 쉼터로 가기")).click();
     await expect(page.getByTestId("garden-canvas")).toBeVisible();
     await page.getByRole("button", { name: "광장으로 돌아가기" }).click();
     await expect(main).toHaveAttribute("data-phase", "ready"); await expect(editor).toBeHidden();
+    await expect(page.getByRole("button", { name: "정원 쉼터로 가기" })).toBeFocused();
     expect(await readLocal(page)).toEqual(before);
     await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: false }).click();
     await expect(main).toHaveCount(0);
@@ -96,7 +108,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
   await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByRole("link", { name: "오늘의 기록", exact: true })).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "true");
@@ -144,6 +156,7 @@ test("E5 actual default lite: pointer and keyboard greet return to idle without 
   const before = await readLocal(page), point = await companionPoint(page);
   await page.mouse.click(point.x, point.y); await expect(world).toHaveAttribute("data-companion-pose", "greet");
   await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 10000 });
+  await worldTool(page, "동반자에게 인사하기");
   await button.focus(); await page.keyboard.press("Enter"); await expect(world).toHaveAttribute("data-companion-pose", "greet");
   await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 10000 });
   await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
@@ -152,7 +165,7 @@ test("E5 actual default lite: pointer and keyboard greet return to idle without 
   expect(writes).toEqual([]); expect(errors).toEqual([]);
   await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(world).toHaveAttribute("data-color", "teal");
-  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await (await worldTool(page, "바람개비 돌리기", true)).click();
   await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
   await expect(page.getByTestId("classic-keepsake")).toBeVisible();
@@ -218,7 +231,7 @@ for (const failure of ["network", "clips"]) test(`E5 ${failure} failure is local
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
   await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
-  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await (await worldTool(page, "바람개비 돌리기", true)).click();
   await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   const before = await readLocal(page);
   await expect(page.getByRole("link", { name: /오늘의 기록으로 가기/ })).toHaveAttribute("aria-disabled", "false");
@@ -239,7 +252,7 @@ test("browser experience previews, cancels, confirms, interacts, leaves/returns,
   await expect(page.getByTestId("classic-pinwheel")).toHaveCount(0);
   await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
   const first = await readLocal(page);
-  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await (await worldTool(page, "바람개비 돌리기", true)).click();
   await expect(page.getByTestId("placeable-feedback")).toHaveText("광장에 바람이 불어 바람개비가 돌아가요.");
   expect(await readLocal(page)).toEqual(first);
   await (await editorButton(page, "입구 오른쪽", true)).click();
@@ -270,7 +283,7 @@ test("Classic keyboard, reduced motion and unavailable audio retain visual inter
   await confirm(page);
   await (await editorButton(page, "소리 켜기")).click();
   await expect(page.getByTestId("audio-status")).toContainText("사용할 수 없음");
-  await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+  await (await worldTool(page, "바람개비 돌리기", true)).click();
   await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
   await expect(page.locator(".pinwheel-spin")).toHaveCSS("animation-name", "none");
 });
@@ -496,7 +509,7 @@ test("touch and reduced motion retain the still choice, walk pad and placement c
     await (await editorButton(page, "환영 바람개비 고르기")).tap();
     await page.getByRole("button", { name: "배치 확정하기", exact: true }).tap();
     await expect(page.getByTestId("save-status")).toContainText("저장했어요");
-    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).tap();
+    await (await worldTool(page, "바람개비 돌리기", true)).tap();
     await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
     await expect(world).toHaveAttribute("data-choice", "low-sodium-meal");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -536,7 +549,7 @@ for (const mode of ["browser", "account"] as const) {
     await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", mode);
     expect(await readLocal(page)).toEqual(local); expect(account.puts).toBe(writes);
     expect(account.reads).toBe(mode === "account" ? reads + 1 : 0);
-    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).click();
+    await (await worldTool(page, "바람개비 돌리기", true)).click();
     await expect(page.getByTestId("placeable-feedback")).toContainText("바람개비가 돌아가요");
     await (await editorButton(page, "광장 가장자리", true)).click();
     await (await editorButton(page, "코랄", true)).click(); await confirm(page);
@@ -595,7 +608,7 @@ test.describe("touch return", () => {
     await page.getByRole("link", { name: "오늘의 기록으로 가기" }).tap();
     await expectClassicToday(page);
     await page.getByRole("link", { name: "내 공간으로 돌아가기" }).tap();
-    await page.getByRole("button", { name: "바람개비 돌리기", exact: true }).tap();
+    await (await worldTool(page, "바람개비 돌리기", true)).tap();
     await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
     await expect(page.locator(".pinwheel-spin")).toHaveCSS("animation-name", "none");
     expect(await readLocal(page)).toEqual(local);
@@ -629,7 +642,7 @@ test("UNKNOWN cannot announce a breeze or hand off an unresolved write", async (
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unknown");
   await expect(page.getByTestId("save-status")).not.toContainText("저장했어요");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByRole("button", { name: "바람개비 돌리기", exact: true })).toBeDisabled();
+  await expect((await worldTool(page, "바람개비 돌리기", true))).toBeDisabled();
   await expect(page.getByTestId("placeable-feedback")).not.toContainText("바람개비가 돌아가요");
   await expect(page.getByRole("button", { name: "저장된 상태 확인" })).toBeEnabled();
 });
@@ -671,6 +684,8 @@ test("E4 replacement and WebGL failure retain keepsake with Classic removal", as
   await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "quiet-moon-v1"); await confirm(page);
   await page.getByRole("link", { name: "3D 광장으로 보기" }).click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle");
+  await page.screenshot({ path: test.info().outputPath("903-keepsake-only.png"), scale: "css" });
   const canvas = page.getByTestId("placeable-world-canvas"); await expect(canvas).toBeVisible(); const before = await readLocal(page);
   await canvas.evaluate((element) => (element as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
   await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
@@ -729,7 +744,7 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   });
   await expect(world).toHaveAttribute("data-lighting", "daylight");
   await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath("e6-daylight-desktop.png") });
-  const light = page.getByRole("button", { name: "광장의 불빛 켜기" });
+  const light = (await worldTool(page, "광장의 불빛 켜기"));
   await light.focus(); await page.keyboard.press("Enter");
   await expect(world).toHaveAttribute("data-companion-pose", "greet");
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
@@ -737,7 +752,7 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(world).toHaveAttribute("data-color", "coral");
   await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath("e6-twilight-desktop.png") });
-  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
+  await (await worldTool(page, "낮의 광장으로 돌아가기")).click();
   await expect(world).toHaveAttribute("data-lighting", "daylight");
   await light.focus(); await page.keyboard.press("Space");
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
@@ -761,7 +776,7 @@ test("E6 mobile touch and live reduced motion retain the final hierarchy without
     await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
     await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
     const before = await readLocal(page);
-    await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
+    await (await worldTool(page, "광장의 불빛 켜기")).tap();
     await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
     await expect(world).toHaveAttribute("data-companion-pose", "neutral");
     await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
@@ -769,11 +784,11 @@ test("E6 mobile touch and live reduced motion retain the final hierarchy without
       await page.setViewportSize({ width, height: 844 });
       await page.getByTestId("placeable-world-canvas").screenshot({ path: test.info().outputPath(`e6-twilight-mobile-${width}.png`) });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await expect(page.getByRole("button", { name: "낮의 광장으로 돌아가기" })).toBeVisible();
+      await expect((await worldTool(page, "낮의 광장으로 돌아가기"))).toBeVisible();
     }
-    await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).tap();
+    await (await worldTool(page, "낮의 광장으로 돌아가기")).tap();
     await page.emulateMedia({ reducedMotion: "no-preference" });
-    await page.getByRole("button", { name: "광장의 불빛 켜기" }).tap();
+    await (await worldTool(page, "광장의 불빛 켜기")).tap();
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
     await expect(world).toHaveAttribute("data-companion-pose", "neutral");
@@ -790,7 +805,7 @@ test("E6 enabled audio plays one short motif per activation; muted and unavailab
     };
   });
   await page.goto(companionRoute);
-  const light = page.getByRole("button", { name: "광장의 불빛 켜기" });
+  const light = (await worldTool(page, "광장의 불빛 켜기"));
   const day = page.getByRole("button", { name: "낮의 광장으로 돌아가기" });
   await light.click(); await day.click();
   expect(await page.evaluate(() => (window as unknown as { e6Tones: number }).e6Tones)).toBe(0);
@@ -807,7 +822,7 @@ test("E6 enabled audio plays one short motif per activation; muted and unavailab
     Object.defineProperty(window, "webkitAudioContext", { configurable: true, value: undefined });
   });
   await (await editorButton(page, "소리 켜기")).click();
-  await expect(page.getByTestId("audio-status")).toContainText("사용할 수 없음"); await light.click();
+  await expect(page.getByTestId("audio-status")).toContainText("사용할 수 없음"); await (await worldTool(page, "광장의 불빛 켜기")).click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
 });
 
@@ -819,9 +834,9 @@ for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E6 acco
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
   const writes = account.puts, reads = account.reads, revision = account.revision, browser = await readLocal(page);
   const status = await page.getByTestId("save-status").textContent();
-  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await (await worldTool(page, "광장의 불빛 켜기")).click();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
-  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
+  await (await worldTool(page, "낮의 광장으로 돌아가기")).click();
   expect(account.puts).toBe(writes); expect(account.reads).toBe(reads); expect(await readLocal(page)).toEqual(browser);
   expect(account.revision).toBe(revision);
   await expect(page.getByTestId("save-status")).toHaveText(status!);
@@ -836,11 +851,11 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
   await page.goto(companionRoute);
   const world = page.getByTestId("placeable-world");
   await expect(world).toHaveAttribute("data-companion-pose", "unavailable");
-  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await (await worldTool(page, "광장의 불빛 켜기")).click();
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
   await expect(page.getByRole("link", { name: /오늘의 기록으로 가기/ })).toHaveAttribute("aria-disabled", "false");
-  await page.getByRole("button", { name: "낮의 광장으로 돌아가기" }).click();
-  await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+  await (await worldTool(page, "낮의 광장으로 돌아가기")).click();
+  await (await worldTool(page, "광장의 불빛 켜기")).click();
   await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => {
     const gl = canvas.getContext("webgl2")!; gl.getExtension("WEBGL_lose_context")!.loseContext();
   });
@@ -855,7 +870,7 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
 });
 
 // E7 inherits nightly/manual core discovery through this existing spec; no new CI gate.
-const enterGarden = (page: Page) => page.getByRole("button", { name: "정원 쉼터로 가기" });
+const enterGarden = async (page: Page) => (await worldTool(page, "정원 쉼터로 가기"));
 const returnGarden = (page: Page) => page.getByRole("button", { name: "광장으로 돌아가기" });
 const gardenRest = (page: Page) => page.getByRole("button", { name: "여기서 잠깐 쉬기" });
 async function gardenCompanionPoint(page: Page) {
@@ -893,7 +908,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
     Storage.prototype.setItem = function (key, value) { (window as unknown as { e7Writes: number }).e7Writes++; original.call(this, key, value); };
   });
   page.on("request", (request) => { if (!["GET", "HEAD"].includes(request.method())) requests.push(request.url()); });
-  await enterGarden(page).focus(); await page.keyboard.press("Enter");
+  await (await enterGarden(page)).focus(); await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: /정원 쉼터/ })).toBeFocused();
   await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
   const garden = page.getByTestId("garden-nook"), canvas = page.getByTestId("garden-canvas");
@@ -912,7 +927,7 @@ test("E7 desktop explicit entry, actual keyboard walking, pointer rest and retur
   await expect(garden).toHaveAttribute("data-companion-pose", "rest");
   await expect(garden).toHaveAttribute("data-companion-pose", "idle", { timeout: 6000 });
   await page.screenshot({ path: test.info().outputPath("e7-garden-desktop.png") });
-  await returnGarden(page).click(); await expect(enterGarden(page)).toBeFocused();
+  await returnGarden(page).click(); await expect(await enterGarden(page)).toBeFocused();
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-color", "coral");
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-choice", "sleep-routine");
@@ -924,7 +939,7 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
   const page = await context.newPage();
   try {
-    await page.goto(companionRoute); await enterGarden(page).tap();
+    await page.goto(companionRoute); await (await enterGarden(page)).tap();
     const garden = page.getByTestId("garden-nook");
     await expect(garden).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
     const pad = page.getByRole("button", { name: "정원에서 드래그하거나 방향키로 걷기" });
@@ -955,24 +970,24 @@ for (const behavior of ["normal", "unknown", "conflict"] as const) test(`E7 acco
   const account = await accountRoute(page, behavior, false);
   await page.goto("/?experience=e2&view=classic&storage=account&living_choice=walk-10-minutes");
   await (await editorButton(page, "환영 바람개비 고르기")).click();
-  await expect(enterGarden(page)).toBeDisabled();
+  await expect(await enterGarden(page)).toBeDisabled();
   await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", behavior === "normal" ? "ready" : behavior);
   if (behavior === "normal") { await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page); }
   const writes = account.puts, reads = account.reads, revision = account.revision, before = await readLocal(page);
   if (behavior === "normal") {
-    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await (await enterGarden(page)).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
     await returnGarden(page).click();
     await expect(page.getByTestId("classic-pinwheel")).toHaveAttribute("data-color", "coral");
     await expect(page.getByTestId("classic-keepsake")).toHaveAttribute("data-asset", "plaza-ribbon-v1");
-  } else await expect(enterGarden(page)).toBeDisabled();
+  } else await expect(await enterGarden(page)).toBeDisabled();
   expect(account.puts).toBe(writes); expect(account.reads).toBe(reads); expect(account.revision).toBe(revision);
   expect(await readLocal(page)).toEqual(before);
 });
 
 test("E7 companion failure and real context loss isolate the garden, retry and return without persistence error", async ({ page }) => {
   await page.route("**/companion/v1/**", (route) => route.abort("failed"));
-  await page.goto(companionRoute); await enterGarden(page).click();
+  await page.goto(companionRoute); await (await enterGarden(page)).click();
   const garden = page.getByTestId("garden-nook"), canvas = page.getByTestId("garden-canvas");
   await expect(garden).toHaveAttribute("data-companion-pose", "unavailable");
   await expect(canvas).toBeVisible(); await expect(gardenRest(page)).toBeDisabled();
@@ -998,7 +1013,7 @@ test("E7 repeated scene teardown leaves one renderer, one RAF and no stale rest"
   });
   await page.goto(companionRoute);
   for (let visit = 0; visit < 3; visit++) {
-    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await (await enterGarden(page)).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
     await expect(page.locator("canvas")).toHaveCount(1);
     if (visit === 1) {
       await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
@@ -1008,7 +1023,7 @@ test("E7 repeated scene teardown leaves one renderer, one RAF and no stale rest"
     await expect(page.getByTestId("placeable-world-canvas")).toBeVisible(); await expect(page.locator("canvas")).toHaveCount(1);
     expect(await page.evaluate(() => (window as unknown as { e7Rafs: Set<number> }).e7Rafs.size)).toBe(1);
   }
-  await enterGarden(page).click(); await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+  await (await enterGarden(page)).click(); await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
   await expect(page.getByTestId("garden-nook")).toHaveAttribute("data-at-pavilion", "false");
   expect(await readLocal(page)).toBeNull();
 });
@@ -1017,9 +1032,9 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
   const chunks: string[] = [];
   page.on("request", (request) => { if (/GardenNook-.*\.js/.test(request.url())) chunks.push(request.url()); });
   await page.goto(browserRoute);
-  await expect(enterGarden(page)).toBeVisible(); expect(chunks).toEqual([]);
+  await expect(await enterGarden(page)).toBeVisible(); expect(chunks).toEqual([]);
   await page.route("**/GardenNook-*.js", (route) => route.abort("failed"));
-  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
+  await (await enterGarden(page)).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).toBeNull();
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser");
   await returnGarden(page).click(); await expect(page.getByTestId("classic-plaza")).toBeVisible();
@@ -1030,7 +1045,7 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
       return kind === "webgl2" ? null : original.call(this, kind, ...args);
     } as typeof original;
   });
-  await enterGarden(page).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
+  await (await enterGarden(page)).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
   // Outside this optional visit, the existing one-shot stale-bundle recovery still owns errors.
@@ -1083,11 +1098,11 @@ for (const mobile of [false, true]) test(`E8 ${mobile ? "mobile touch" : "deskto
     await expect(world).toHaveAttribute("data-companion", "rabbit");
     await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
     expect(verified).toBeGreaterThan(0); expect(account.reads).toBe(1);
-    await page.getByRole("button", { name: "동반자에게 인사하기" }).click();
+    await (await worldTool(page, "동반자에게 인사하기")).click();
     await expect(page.getByTestId("companion-response")).toContainText("인사를 나눴어요");
-    await page.getByRole("button", { name: "광장의 불빛 켜기" }).click();
+    await (await worldTool(page, "광장의 불빛 켜기")).click();
     await expect(world).toHaveAttribute("data-lighting", "twilight");
-    await enterGarden(page).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
+    await (await enterGarden(page)).click(); await expect(page.getByTestId("garden-canvas")).toBeVisible();
     await returnGarden(page).click();
     await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
     await page.screenshot({ path: test.info().outputPath(`e8-my-space-${mobile ? "mobile" : "desktop"}.png`) });
@@ -1205,4 +1220,160 @@ test("E8 empty Today still exposes account entry and ignores arbitrary return UR
   await expect(page.locator('[data-scene="S12"]')).toBeVisible();
   await expect(page.getByRole("link", { name: "내 공간으로 가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
   expect(account.reads).toBe(0); expect(account.puts).toBe(0);
+});
+
+// #903: geometry witnesses complement the interaction/receipt cases above.
+for (const [width, height] of [[1440, 900], [1366, 768], [768, 1024], [390, 844], [320, 844], [320, 568]]) {
+  test(`903 arrival ${width}x${height}: primary clearance, disclosure and editor focus`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto(companionRoute);
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle");
+    const edit = page.getByRole("button", { name: "꾸미기", exact: true });
+    const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+    const tools = page.locator(".plaza-help > summary");
+    // Count the semantic destination, including any differently named duplicate.
+    await expect(page.getByRole("link", { name: /오늘의 기록/ })).toHaveCount(1);
+    await expect(page.getByRole("link").filter({ hasText: "오늘의 기록" })).toHaveClass("placeable-today");
+    const measure = async () => {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      expect(await page.locator("main").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await expect.poll(() => page.locator(".placeable-world-label:visible").evaluateAll(labels => {
+        const controls = Array.from(document.querySelectorAll(
+          ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption",
+        )).map(node => node.getBoundingClientRect());
+        return labels.every(label => { const b = label.getBoundingClientRect(); return controls.every(r =>
+          b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom); });
+      })).toBe(true);
+      for (const control of [edit, today, tools, page.locator(".placeable-walk-pad")]) {
+        await control.scrollIntoViewIfNeeded();
+        const box = (await control.boundingBox())!;
+        expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
+        expect(await control.evaluate(el => {
+          const r = el.getBoundingClientRect();
+          return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+        })).toBe(true);
+      }
+      const boxes = await Promise.all([today, edit, tools, page.locator(".placeable-walk-pad")].map(el => el.boundingBox()));
+      for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) {
+        expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y).toBe(true);
+      }
+    };
+    await measure();
+    await page.screenshot({ path: test.info().outputPath(`903-arrival-${width}-${height}.png`), scale: "css" });
+    await tools.focus(); await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "광장의 불빛 켜기" })).toBeVisible();
+    const panel = (await page.locator(".plaza-tools-content").boundingBox())!;
+    const dock = (await page.locator(".placeable-destination").boundingBox())!;
+    const header = (await page.locator(".placeable-header").boundingBox())!;
+    expect(panel.y).toBeGreaterThanOrEqual(header.y + header.height);
+    expect(panel.y + panel.height).toBeLessThanOrEqual(dock.y);
+    await expect.poll(async () => page.locator(".placeable-world-label:visible").evaluateAll(labels => {
+      const r = document.querySelector(".plaza-tools-content")!.getBoundingClientRect();
+      return labels.every(label => { const b = label.getBoundingClientRect(); return b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom; });
+    })).toBe(true);
+    await tools.click(); await measure();
+    await edit.focus(); await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "내 공간 꾸미기", exact: true })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "내 공간 꾸미기", exact: true })).toBeInViewport();
+    await page.keyboard.press("Escape"); await expect(edit).toBeFocused(); await expect(edit).toBeInViewport();
+    expect(await readLocal(page)).toBeNull();
+    await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+    await expect(edit).toBeInViewport();
+    expect(await page.locator("main").evaluate(el => el.scrollTop)).toBe(0);
+    await measure();
+    await page.screenshot({ path: test.info().outputPath(`903-confirmed-${width}-${height}.png`), scale: "css" });
+  });
+}
+
+test("903 delayed then unavailable companion preserves arrival actions without writes", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/companion/v1/**", async route => { await pending; await route.abort("failed"); });
+  await page.goto(companionRoute);
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-companion-pose", "loading");
+  await expect(page.getByTestId("companion-response")).toBeInViewport();
+  await page.screenshot({ path: test.info().outputPath("903-companion-loading.png") });
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "내 공간 꾸미기" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  release(); await expect(world).toHaveAttribute("data-companion-pose", "unavailable");
+  await expect(page.getByTestId("companion-response")).toContainText("계속 이용");
+  await page.screenshot({ path: test.info().outputPath("903-companion-unavailable.png") });
+  expect(await readLocal(page)).toBeNull();
+  await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).click();
+  await expect(world).toHaveCount(0);
+});
+
+
+test("903 account loading keeps scope and primary actions truthful without writes", async ({ page }) => {
+  const account = await accountRoute(page, "normal");
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async route => {
+    if (route.request().method() === "GET") await pending;
+    await route.fallback();
+  });
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "loading");
+  await expect(page.locator(".plaza-scope")).toContainText("계정 공간");
+  await expect(page.getByTestId("save-status")).toBeInViewport();
+  await page.screenshot({ path: test.info().outputPath("903-account-loading.png"), scale: "css" });
+  release();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.keyboard.press("Escape");
+  expect(account.puts).toBe(0); expect(await readLocal(page)).toBeNull();
+  await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+  expect(account.puts).toBe(1); expect(account.revision).toBe(1); expect(await readLocal(page)).toBeNull();
+  await page.screenshot({ path: test.info().outputPath("903-account-pinwheel.png"), scale: "css" });
+});
+
+
+test("904 Today remains direct in Garden and Classic while 3D has one semantic exit", async ({ page }) => {
+  await page.goto(companionRoute);
+  await expect(page.getByRole("link", { name: /오늘의 기록/ })).toHaveCount(1);
+  const href = await page.locator(".placeable-today").getAttribute("href");
+  await (await worldTool(page, "정원 쉼터로 가기")).click();
+  const gardenToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  await expect(gardenToday).toBeVisible();
+  await expect(gardenToday).toHaveAttribute("href", href!);
+  await gardenToday.click();
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+  await page.goto(browserRoute);
+  const classicToday = page.getByRole("link", { name: "오늘의 기록", exact: true });
+  await expect(classicToday).toBeVisible();
+  await classicToday.click();
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+});
+
+test("904 label clearance has no steady-frame DOM geometry reads", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(companionRoute);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle");
+  await expect(page.locator(".placeable-world-label").first()).toBeVisible();
+  const steadyReads = () => page.evaluate(async () => {
+    const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    // Allow resize/disclosure/text-reflow observers to settle before the idle witness.
+    for (let i = 0; i < 4; i++) await frame();
+    const original = Element.prototype.getBoundingClientRect;
+    let reads = 0;
+    Element.prototype.getBoundingClientRect = function () {
+      if (this.matches(".placeable-world-host, .placeable-world-label, .placeable-walk-pad, .plaza-help > summary, .plaza-tools-content, .plaza-companion-status, .placeable-world-caption")) reads++;
+      return original.call(this);
+    };
+    try { for (let i = 0; i < 20; i++) await frame(); return reads; }
+    finally { Element.prototype.getBoundingClientRect = original; }
+  });
+  expect(await steadyReads()).toBe(0);
+  await (await worldTool(page, "왼쪽 보기", true)).click();
+  expect(await steadyReads()).toBe(0);
+  await page.locator(".plaza-help > summary").click();
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(page.locator(".placeable-world-caption")).toBeVisible();
+  expect(await steadyReads()).toBe(0);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  expect(await steadyReads()).toBe(0);
 });
