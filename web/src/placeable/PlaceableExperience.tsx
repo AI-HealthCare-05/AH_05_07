@@ -18,11 +18,11 @@ class GardenBoundary extends Component<{ children: ReactNode }, { failed: boolea
     return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>정원 쉼터를 열지 못했어요</h2><p>꾸미기 상태는 그대로예요. 위의 광장 복귀 또는 오늘의 기록 이동을 이용해 주세요.</p></div> : this.props.children;
   }
 }
-class WorldBoundary extends Component<{ children: ReactNode; classicHref: string }, { failed: boolean }> {
+class WorldBoundary extends Component<{ children: ReactNode; classicHref: string; fallbackTools: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p></div>
+    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p>{this.props.fallbackTools}</div>
       : this.props.children;
   }
 }
@@ -152,12 +152,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   useEffect(() => {
     const draft = state.draft !== undefined || state.keepsakeDraft !== undefined || Boolean(state.pending);
     if (world && wasDraft.current && !draft && state.phase === "ready" && state.saved) {
-      setEditing(false); editRef.current?.focus({ preventScroll: true });
+      setEditing(false); editRef.current?.focus();
     }
     wasDraft.current = draft;
     if (world && !["ready", "loading"].includes(state.phase)) setEditing(true);
   }, [world, state.draft, state.keepsakeDraft, state.pending, state.phase, state.saved]);
-  useEffect(() => { if (editing) editHeading.current?.focus({ preventScroll: true }); }, [editing]);
+  useEffect(() => { if (editing) editHeading.current?.focus(); }, [editing]);
 
   const layout = cosmeticLayout(state.confirmed);
   const confirmed = layout.pinwheel;
@@ -185,15 +185,21 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   function cancelEditing() {
     if (state.phase !== "ready" && state.phase !== "conflict") return;
     controller.cancel(); setEditing(false);
-    if (world) editRef.current?.focus({ preventScroll: true }); else chooseRef.current?.focus();
+    if (world) editRef.current?.focus(); else chooseRef.current?.focus();
   }
   const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status">
     {state.saved ? adapter.mode === "browser" ? "이 브라우저에 저장했어요." : "계정 공간에 저장했어요." : phaseCopy[state.phase]}
   </p>;
   async function confirm() {
     await controller.confirm();
-    if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: true });
+    if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
   }
+  const gardenPath = <div className="placeable-garden-path">
+    <div><p className="placeable-eyebrow">내 공간 안의 쉼터</p><h2>정원 쉼터 · Garden Nook</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
+    <button ref={gardenEntry} type="button" disabled={preview || Boolean(state.pending)}
+      onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>정원 쉼터로 가기 →</button>
+    {(preview || state.pending) && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
+  </div>;
   if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
     <header className="placeable-header">
       <div className="placeable-home-title"><p className="placeable-eyebrow">SK7 · 내 공간 · My Space</p>
@@ -213,11 +219,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     onKeyDown={(event) => { if (world && editing && event.key === "Escape") { event.preventDefault(); cancelEditing(); } }}>
     <header className="placeable-header">
       <div className="placeable-home-title"><p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p><h1>내 공간 <span>My Space</span></h1>
-        <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p></div>
+        {world ? <p className="plaza-scope">{adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간"}<span aria-hidden="true"> · </span>3D 광장</p>
+          : <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p>}</div>
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
         <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
-        {world && <button ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
-          onClick={() => { setEditing(true); editHeading.current?.focus(); }}>꾸미기</button>}
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
           href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
         <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
@@ -229,30 +234,27 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     <div className="placeable-layout">
       <section className="placeable-stage" aria-label="내 공간 미리보기" data-breeze={feedback && canInteract}>
         <div className="placeable-destination"><div><p className="placeable-eyebrow">다른 홈 · 건강 기록</p>
-          <h2>오늘의 기록</h2><p>{world ? "혈압과 지난 기록을 이어서 살펴보세요." : "혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요."}</p></div>
+          <h2>오늘의 기록</h2>{!world && <p>혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p>}</div>
           <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-label="오늘의 기록으로 가기"
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
-            {world ? "기록으로 가기" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
+            {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
+          {world && <button className="plaza-edit-action" ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
+            onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
         {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
-        {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
-          <PlaceableWorld companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
+        {world ? <WorldBoundary classicHref={route("classic")} fallbackTools={gardenPath}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
+          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}
         {!keepsake && choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
         <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "광장에 바람이 불어 바람개비가 돌아가요." : "잠시 쉬어가는 나만의 광장이에요."}</p>
-        <div className="placeable-garden-path">
-          <div><p className="placeable-eyebrow">내 공간 안의 쉼터</p><h2>정원 쉼터 · Garden Nook</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
-          <button ref={gardenEntry} type="button" disabled={preview || Boolean(state.pending)}
-            onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>정원 쉼터로 가기 →</button>
-          {(preview || state.pending) && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
-        </div>
+        {!world && gardenPath}
       </section>
-      {world && <div className="plaza-save-summary" data-quiet={state.phase === "ready" && (preview || !state.saved)}>
+      {world && !editing && <div className="plaza-save-summary" data-quiet={state.phase === "ready" && (preview || !state.saved)}>
         {saveStatus}
         {preview && <p>저장 전 미리보기</p>}
       </div>}
@@ -261,7 +263,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           <h2 ref={editHeading} tabIndex={-1}>내 공간 꾸미기</h2></div>
           <button type="button" disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>
             {preview ? "취소하고 닫기" : "닫기"}</button></div>}
-        {world && <p className="plaza-editor-state" role="status">{state.saved ? "확인된 배치를 보여 드려요." : phaseCopy[state.phase]}</p>}
+        {world && editing && saveStatus}
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"
           ? "이 브라우저에만 저장 · 계정 공간과 분리돼요."
           : "계정 공간에 저장 · 이 브라우저의 공간과 분리돼요."}</p>
