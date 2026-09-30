@@ -1215,19 +1215,72 @@ test("#909 actual WebGL loss and startup failure recover only presentation and p
   network.assertClean(); await storage.assertClean(); await assertGuestStorageFirewall(page);
 });
 
-test("#909 world chunk failure leaves Guest memory, Today escape and zero preload-recovery storage", async ({ page }) => {
+test("#909 Guest root stale chunk uses one-shot preload reload and retains the cooldown", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  let rootRequests = 0;
+  let documentRequests = 0;
+  page.on("request", request => { if (request.isNavigationRequest()) documentRequests++; });
+  await page.route("**/GuestJourneySandbox-*.js", async route => {
+    rootRequests++;
+    if (rootRequests === 1) {
+      // The Guest boundary and its semantic escape do not exist at this point.
+      await expect(page.locator('[data-guest-space="plaza"]')).toHaveCount(0);
+      await expect(page.locator('[data-guest-journey="memory-only"]')).toHaveCount(0);
+      await route.abort();
+    } else await route.fallback();
+  });
+  await page.goto("/?guest=1", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  expect(rootRequests).toBe(2);
+  expect(documentRequests).toBe(2);
+  await expect(page).toHaveURL(/\?guest=1$/);
+  const recoveredAt = await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"));
+  expect(recoveredAt).not.toBeNull();
+  expect(Number(recoveredAt)).toBeGreaterThan(0);
+  // Another ordinary Guest preload error inside the cooldown propagates,
+  // rather than writing a new timestamp or reloading a second time.
+  const cooldown = await page.evaluate(() => {
+    const event = new Event("vite:preloadError", { cancelable: true });
+    window.dispatchEvent(event);
+    return { prevented: event.defaultPrevented, recoveredAt: sessionStorage.getItem("sk7:vite-preload-recovery-at") };
+  });
+  expect(cooldown).toEqual({ prevented: false, recoveredAt });
+  expect(documentRequests).toBe(2);
+  network.assertEntryIsolation(); network.assertClean();
+  expect(await page.evaluate(() => Object.keys(sessionStorage))).toEqual(["sk7:vite-preload-recovery-at"]);
+});
+
+test("#909 mounted Guest plaza world chunk failure stays local with no preload-recovery access", async ({ page }) => {
   const network = await installGuestNetworkFirewall(page);
   const storage = await observeGuestStorage(page);
+  let documentRequests = 0;
+  page.on("request", request => { if (request.isNavigationRequest()) documentRequests++; });
+  await page.addInitScript(() => {
+    const errors: { event: Event; plazaMounted: boolean }[] = [];
+    Object.assign(window, { guestPreloadErrors: errors });
+    window.addEventListener("vite:preloadError", event => {
+      errors.push({ event, plazaMounted: !!document.querySelector('[data-guest-space="plaza"]') });
+    });
+  });
   await page.route("**/PlaceableWorld-*.js", route => route.abort());
   await openGuest(page);
   await createTodayBloodPressure(page);
   await page.getByRole("button", { name: "오늘의 기록 보기", exact: true }).click();
   await page.getByRole("button", { name: "3D 공간 둘러보기" }).click();
   await expect(page.getByRole("alert")).toContainText("3D 공간을 열지 못했어요");
+  await expect(page.locator('[data-guest-space="plaza"]')).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as {
+    guestPreloadErrors: { event: Event; plazaMounted: boolean }[];
+  }).guestPreloadErrors.map(({ event, plazaMounted }) => ({ prevented: event.defaultPrevented, plazaMounted })))).toEqual([
+    { prevented: false, plazaMounted: true },
+  ]);
   // Failed ES module loads can be cached by the browser. Keep the truthful
   // semantic escape; renderer/context failures have their separate real retry.
   await expect(page.getByRole("button", { name: "3D 다시 열기" })).toHaveCount(0);
   await returnGuestToday(page); await assertGuestFact(page);
+  expect(documentRequests).toBe(1);
+  expect(await page.evaluate(() => (window as unknown as { guestStorageRecords: StorageRecord[] }).guestStorageRecords
+    .filter(record => record.storage === "session"))).toEqual([]);
   expect(await page.evaluate(() => sessionStorage.length)).toBe(0);
   network.assertClean(); await storage.assertClean();
 });
