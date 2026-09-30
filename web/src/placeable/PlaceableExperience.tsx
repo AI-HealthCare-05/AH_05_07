@@ -136,6 +136,38 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
   // No URL destination, visit flag, storage write or account identity enters the scene.
   const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
+  const seenReceipt = useRef(state.receipt);
+  const pageActive = useRef(true);
+  const [receiptNoticeId, setReceiptNoticeId] = useState<string | null>(null);
+  const [receiptAccentId, setReceiptAccentId] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    const fresh = state.receipt !== seenReceipt.current;
+    seenReceipt.current = state.receipt;
+    setReceiptNoticeId(null);
+    setReceiptAccentId(null);
+    // Consume even hidden/ineligible receipts. A visit/view change never replays one.
+    if (!fresh || !state.receipt || space !== "plaza" || document.hidden || !pageActive.current) return;
+    setReceiptNoticeId(state.receipt.operationId);
+    if (!state.receipt.pinwheelOnly) return;
+    setReceiptAccentId(state.receipt.operationId);
+    // Decorative expiry must not change the live-region confirmation.
+    const timer = setTimeout(() => setReceiptAccentId(null), 2400);
+    return () => clearTimeout(timer);
+  }, [state.receipt, space, world]);
+  useEffect(() => {
+    const clear = () => { setReceiptNoticeId(null); setReceiptAccentId(null); };
+    const hide = () => { if (document.hidden) clear(); };
+    const leave = () => { pageActive.current = false; clear(); };
+    const restore = () => { pageActive.current = true; };
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("pagehide", leave);
+    window.addEventListener("pageshow", restore);
+    return () => {
+      document.removeEventListener("visibilitychange", hide);
+      window.removeEventListener("pagehide", leave);
+      window.removeEventListener("pageshow", restore);
+    };
+  }, []);
   const gardenHeading = useRef<HTMLHeadingElement>(null), gardenEntry = useRef<HTMLButtonElement>(null);
   const changedSpace = useRef(false);
   useEffect(() => {
@@ -215,8 +247,15 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     controller.cancel(); setEditing(false);
     if (world) editRef.current?.focus(); else chooseRef.current?.focus();
   }
-  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status" data-quiet={state.phase === "ready" && !state.saved}>
-    {state.saved ? adapter.mode === "browser" ? "이 브라우저에 저장했어요." : "계정 공간에 저장했어요." : phaseCopy[state.phase]}
+  const exactNotice = state.phase === "ready" && receiptNoticeId !== null && receiptNoticeId === state.receipt?.operationId;
+  const acknowledging = exactNotice && receiptAccentId === receiptNoticeId;
+  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status" data-quiet={state.phase === "ready" && !state.saved}
+    data-pinwheel-receipt={acknowledging}>
+    {state.phase !== "ready" ? phaseCopy[state.phase] : state.saved ? <>
+      {exactNotice && state.receipt?.pinwheelOnly && <span className="pinwheel-receipt-check" aria-hidden="true">✓ </span>}
+      {adapter.mode === "browser" ? "이 브라우저에 " : "계정 공간에 "}
+      {exactNotice ? "저장했어요." : "저장된 꾸미기예요."}
+    </> : phaseCopy.ready}
   </p>;
   async function confirm() {
     await controller.confirm();

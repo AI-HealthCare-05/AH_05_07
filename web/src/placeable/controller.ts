@@ -10,12 +10,14 @@ export type PlaceableState = Readonly<{
   keepsakeDraft: Keepsake | null | undefined;
   pending: Readonly<{ operation: Operation; fingerprint: string }> | null;
   saved: boolean;
+  // Current-instance proof only: never restored from a snapshot or persisted.
+  receipt: Readonly<{ operationId: string; pinwheelOnly: boolean }> | null;
   pulse: number;
 }>;
 
 /** One E2 state machine for both presentations. Frames/proximity never call this adapter. */
 export class PlaceableController {
-  #state: PlaceableState = { phase: "loading", confirmed: null, draft: undefined, keepsakeDraft: undefined, pending: null, saved: false, pulse: 0 };
+  #state: PlaceableState = { phase: "loading", confirmed: null, draft: undefined, keepsakeDraft: undefined, pending: null, saved: false, receipt: null, pulse: 0 };
   #listeners = new Set<() => void>();
   #epoch = 0;
   #disposed = false;
@@ -27,18 +29,26 @@ export class PlaceableController {
     for (const listener of this.#listeners) listener();
   }
   #current(epoch: number) { return !this.#disposed && epoch === this.#epoch; }
+  // Both callers have just passed confirms() for the still-current pending operation.
+  #acceptReceipt(snapshot: Snapshot) {
+    const { pending, draft, keepsakeDraft } = this.#state;
+    const receipt = Object.freeze({ operationId: pending!.operation.operationId,
+      pinwheelOnly: draft !== undefined && keepsakeDraft === undefined });
+    this.#set({ confirmed: snapshot, draft: undefined, keepsakeDraft: undefined, pending: null,
+      phase: "ready", saved: true, receipt });
+  }
   dispose() { this.#disposed = true; this.#epoch++; this.#listeners.clear(); }
   async load() {
     if (this.#disposed || this.#state.phase === "saving") return;
     const epoch = ++this.#epoch;
     const { pending, draft, keepsakeDraft, confirmed, phase } = this.#state;
-    this.#set({ phase: "loading", saved: false });
+    this.#set({ phase: "loading", saved: false, receipt: null });
     try {
       const snapshot = readSnapshot(await this.adapter.read());
       if (!this.#current(epoch)) return;
       if (confirmed && snapshot.revision < confirmed.revision) throw new PersistenceError("unavailable");
       if (pending && confirms(snapshot, pending.operation, pending.fingerprint)) {
-        this.#set({ confirmed: snapshot, draft: undefined, keepsakeDraft: undefined, pending: null, phase: "ready", saved: true });
+        this.#acceptReceipt(snapshot);
       } else if (!supported(snapshot)) {
         this.#set({ confirmed: snapshot, pending: null, phase: "unsupported" });
       } else if (pending && snapshot.revision <= pending.operation.expectedRevision) {
@@ -57,15 +67,15 @@ export class PlaceableController {
   }
   preview(selection: Selection | null) {
     if (this.#disposed || this.#state.phase !== "ready" || !this.#state.confirmed || !isSelection(selection)) return;
-    this.#set({ draft: selection === null ? null : Object.freeze({ ...selection }), saved: false });
+    this.#set({ draft: selection === null ? null : Object.freeze({ ...selection }), saved: false, receipt: null });
   }
   previewKeepsake(keepsake: Keepsake | null) {
     if (this.#disposed || this.#state.phase !== "ready" || !this.#state.confirmed || !isKeepsake(keepsake)) return;
-    this.#set({ keepsakeDraft: keepsake, saved: false });
+    this.#set({ keepsakeDraft: keepsake, saved: false, receipt: null });
   }
   cancel() {
     if (this.#disposed || (this.#state.phase !== "ready" && this.#state.phase !== "conflict")) return;
-    this.#set({ draft: undefined, keepsakeDraft: undefined, saved: Boolean(this.#state.confirmed?.revision), phase: "ready" });
+    this.#set({ draft: undefined, keepsakeDraft: undefined, saved: Boolean(this.#state.confirmed?.revision), phase: "ready", receipt: null });
   }
   reviewLatest() {
     if (!this.#disposed && this.#state.phase === "conflict") this.#set({ phase: "ready", saved: false });
@@ -82,7 +92,7 @@ export class PlaceableController {
     if (this.#disposed || phase !== "ready" || !confirmed || (draft === undefined && keepsakeDraft === undefined) || !supported(confirmed)
       || confirmed.revision >= Number.MAX_SAFE_INTEGER) return;
     const epoch = ++this.#epoch;
-    this.#set({ phase: "saving", saved: false });
+    this.#set({ phase: "saving", saved: false, receipt: null });
     try {
       const latest = cosmeticLayout(confirmed);
       const pinwheel = draft === undefined ? latest.pinwheel : draft;
@@ -102,7 +112,7 @@ export class PlaceableController {
   async retryPending() {
     if (this.#disposed || this.#state.phase !== "unknown" || !this.#state.pending) return;
     const epoch = ++this.#epoch;
-    this.#set({ phase: "saving", saved: false });
+    this.#set({ phase: "saving", saved: false, receipt: null });
     await this.#send(epoch);
   }
   async #send(epoch: number) {
@@ -111,7 +121,7 @@ export class PlaceableController {
       const snapshot = readSnapshot(await this.adapter.save(pending.operation));
       if (!this.#current(epoch)) return;
       if (!confirms(snapshot, pending.operation, pending.fingerprint)) throw new PersistenceError("unknown");
-      this.#set({ confirmed: snapshot, draft: undefined, keepsakeDraft: undefined, pending: null, phase: "ready", saved: true });
+      this.#acceptReceipt(snapshot);
     } catch (error) {
       if (!this.#current(epoch)) return;
       const kind = error instanceof PersistenceError ? error.kind : "unknown";
