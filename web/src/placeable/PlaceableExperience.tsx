@@ -181,10 +181,11 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     // Inserting the local preview must not push the activating keyboard control
     // out of view. Keep the existing focus owner; no delayed scroll or motion.
     const active = document.activeElement;
-    if (state.draft && active instanceof HTMLElement && editorRef.current?.contains(active)) {
+    const hasDraft = state.draft !== undefined || state.keepsakeDraft !== undefined;
+    if (hasDraft && active instanceof HTMLElement && editorRef.current?.contains(active)) {
       active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
     }
-  }, [state.draft]);
+  }, [state.draft, state.keepsakeDraft]);
 
   const layout = cosmeticLayout(state.confirmed);
   const confirmed = layout.pinwheel;

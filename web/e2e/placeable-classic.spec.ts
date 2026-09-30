@@ -1391,6 +1391,43 @@ async function observePreviewWrites(page: Page) {
   return () => page.evaluate(() => (window as any).__previewWrites as number);
 }
 
+for (const mode of ["browser", "account"] as const) {
+  for (const [name, key, previewText] of [
+    ["바람개비 치우기", "Enter", "미리보기: 바람개비 치우기"],
+    ["남긴 문양 제거", "Space", "문양 제거 · 저장 전 미리보기"],
+  ]) test(`#905 ${mode}: ${name} keeps keyboard focus visible after preview insertion`, async ({ page }) => {
+    const account = await accountRoute(page, "normal"), writes = await observePreviewWrites(page);
+    await page.setViewportSize({ width: 320, height: mode === "browser" ? 480 : 568 });
+    await page.goto(`/?experience=e2&view=3d&storage=${mode}&living_choice=sleep-routine`);
+    if (mode === "account") await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+    await (await editorButton(page, "이 문양을 내 공간에 남기기")).click(); await confirm(page);
+    const local = await readLocal(page), localWrites = await writes(), accountWrites = account.puts;
+    expect(localWrites).toBe(mode === "browser" ? 2 : 0);
+    expect(accountWrites).toBe(mode === "account" ? 2 : 0);
+    const noNewWrites = async () => {
+      expect(await writes()).toBe(localWrites); expect(account.puts).toBe(accountWrites);
+      expect(await readLocal(page)).toEqual(local);
+    };
+    const trigger = await editorButton(page, name, true), draft = page.getByTestId("draft-placement");
+    await expect(draft).toHaveCount(0);
+    await trigger.focus();
+    await expect(trigger).toBeFocused(); await expect(trigger).toBeInViewport({ ratio: 1 });
+    await page.keyboard.press(key);
+    await expect(draft).toContainText(previewText);
+    // No locator action or test scroll after activation: the product must keep
+    // the same semantic control focused and fully visible on its own.
+    await expect(trigger).toBeFocused(); await expect(trigger).toBeInViewport({ ratio: 1 });
+    await noNewWrites();
+    await page.screenshot({ path: test.info().outputPath("905-removal-preview-focus.png") });
+    const cancel = page.getByRole("button", { name: "미리보기 취소", exact: true });
+    await cancel.focus(); await page.keyboard.press("Enter");
+    await expect(draft).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeFocused();
+    await noNewWrites();
+  });
+}
+
 for (const mode of ["browser", "account"] as const) test(`#905 ${mode}: each preview action writes zero; latest input, cancel, reopen and confirm stay separate`, async ({ page }) => {
   const account = await accountRoute(page, "normal"), writes = await observePreviewWrites(page);
   await page.setViewportSize({ width: 1440, height: 960 });
