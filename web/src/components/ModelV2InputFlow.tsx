@@ -5,7 +5,7 @@ import { scoreModelV2Locally } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { seoulDate } from "../lib/seoulDate";
 import { useSeoulDate } from "../lib/useSeoulDate";
-import { modelV2PresentationMode, modelV2PreviewEndLabel, visibleModelV2Output } from "../ui/modelV2VisibilityPolicy";
+import { modelV2PresentationMode, visibleModelV2Output } from "../ui/modelV2VisibilityPolicy";
 import { Scene } from "./SceneShell";
 import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, type Draft, type TimeDraftKey } from "./modelV2Draft";
@@ -800,7 +800,7 @@ export function ModelV2InputFlow({
           </div>
           <div className="model-v2-intake-disclosure">
             <p>{previewOpen
-              ? modelV2PreviewEndLabel + "까지 ‘연구/개발 미리보기 · 내부 연속 출력’을 소수로 표시합니다. 확률·진단·위험등급이나 치료·예방 효과가 아닙니다."
+              ? "연구/개발 미리보기로 ‘내부 연속 출력’을 소수로 표시합니다. 확률·진단·위험등급이나 치료·예방 효과가 아닙니다."
               : "이 도구는 개인별 모델 점수·백분율·등급을 제공하지 않습니다."}</p>
             <details className="model-v2-notice-details">
               <summary>입력 정보 이용 안내</summary>
