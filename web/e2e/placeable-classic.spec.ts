@@ -1576,14 +1576,25 @@ test("#905 saving and WebGL failure keep the candidate static and recovery separ
 async function observeReceiptAccent(page: Page) {
   await page.addInitScript(() => {
     (window as any).__receiptStarts = 0;
-    let active = false;
+    (window as any).__receiptNoticeStarts = 0;
+    let active = false, notice = false;
     new MutationObserver(() => {
       const next = Boolean(document.querySelector('[data-testid="save-status"][data-pinwheel-receipt="true"]'));
       if (next && !active) (window as any).__receiptStarts++;
       active = next;
-    }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-pinwheel-receipt"] });
+      const nextNotice = Boolean(document.querySelector('[data-testid="save-status"]')?.textContent?.includes("저장했어요"));
+      if (nextNotice && !notice) (window as any).__receiptNoticeStarts++;
+      notice = nextNotice;
+    }).observe(document, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["data-pinwheel-receipt"] });
   });
   return () => page.evaluate(() => (window as any).__receiptStarts as number);
+}
+const receiptNoticeStarts = (page: Page) => page.evaluate(() => (window as any).__receiptNoticeStarts as number);
+async function expectStableSaved(page: Page, mode: "browser" | "account") {
+  const status = page.getByTestId("save-status");
+  await expect(status).toContainText(mode === "browser" ? "이 브라우저에 저장된 꾸미기예요." : "계정 공간에 저장된 꾸미기예요.");
+  await expect(status).not.toContainText("저장했어요");
+  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
 }
 for (const mode of ["browser", "account"] as const) for (const view of ["classic", "3d"] as const) {
   test(`#907 ${mode} ${view}: exact direct save acknowledges once; reload, views and history do not replay`, async ({ page }) => {
@@ -1598,8 +1609,11 @@ for (const mode of ["browser", "account"] as const) for (const view of ["classic
       await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-pulse", "0");
     } else await expect(status).toBeFocused();
     const message = await status.textContent();
+    const notices = await receiptNoticeStarts(page);
     await expect(status).toHaveAttribute("data-pinwheel-receipt", "false", { timeout: 5000 });
+    await expect(status.locator(".pinwheel-receipt-check")).toBeHidden();
     expect(await status.textContent()).toBe(message); // Expiry adds no live-region message.
+    expect(await receiptNoticeStarts(page)).toBe(notices);
     expect(await starts()).toBe(1);
     expect(await writes()).toBe(mode === "browser" ? 1 : 0); expect(account.puts).toBe(mode === "account" ? 1 : 0);
     const snapshot = mode === "browser" ? await readLocal(page) : null;
@@ -1608,8 +1622,9 @@ for (const mode of ["browser", "account"] as const) for (const view of ["classic
     await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0); expect(await writes()).toBe(0);
     await page.getByRole("link", { name: view === "3d" ? "간단한 광장으로 보기" : "3D 광장으로 보기", exact: true }).click();
     await expect(status).toContainText("저장된 꾸미기예요"); expect(await starts()).toBe(0);
-    await page.goBack(); await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
-    await page.goForward(); await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
+    await page.goBack(); await expectStableSaved(page, mode); expect(await starts()).toBe(0);
+    await page.goForward(); await expectStableSaved(page, mode); expect(await starts()).toBe(0);
+    expect(await receiptNoticeStarts(page)).toBe(0);
     expect(account.puts).toBe(mode === "account" ? 1 : 0);
     if (mode === "browser") { expect(account.reads).toBe(0); expect(await readLocal(page)).toEqual(snapshot); }
     else expect(await readLocal(page)).toBeNull();
@@ -1664,23 +1679,26 @@ test("#907 newer operation replaces accent; Garden, page restore and scope chang
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "true"); expect(await starts()).toBe(1);
   await page.clock.runFor(1200);
   await page.getByRole("button", { name: "코랄", exact: true }).click(); await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
+  await expect(status).not.toContainText("저장했어요");
   await confirm(page); await expect(status).toHaveAttribute("data-pinwheel-receipt", "true"); expect(await starts()).toBe(2); expect(await writes()).toBe(2);
   await page.clock.runFor(1201); // The previous timer must not clear the newer receipt.
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "true");
   await page.getByRole("button", { name: "정원 쉼터로 가기", exact: false }).click();
   await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(2);
+  await expectStableSaved(page, "browser"); expect(await starts()).toBe(2);
+  expect(await receiptNoticeStarts(page)).toBe(2); expect(await writes()).toBe(2);
   await page.clock.runFor(2500); await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
   await page.getByRole("button", { name: "청록", exact: true }).click(); await confirm(page);
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "true"); expect(await starts()).toBe(3);
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })));
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+  await expectStableSaved(page, "browser"); expect(await receiptNoticeStarts(page)).toBe(3);
   expect(await starts()).toBe(3); expect(await writes()).toBe(3); await page.clock.resume();
   await page.getByRole("link", { name: "계정 공간 사용하기", exact: true }).click();
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0); expect(account.puts).toBe(0);
   await page.getByRole("link", { name: "이 브라우저의 공간 사용하기", exact: true }).click();
-  await expect(status).toContainText("저장된 꾸미기예요"); expect(await starts()).toBe(0);
+  await expectStableSaved(page, "browser"); expect(await starts()).toBe(0); expect(await receiptNoticeStarts(page)).toBe(0);
 });
 test("#907 keepsake add, replacement, removal and mixed save remain static", async ({ page }) => {
   const starts = await observeReceiptAccent(page), writes = await observePreviewWrites(page);
@@ -1694,6 +1712,11 @@ test("#907 keepsake add, replacement, removal and mixed save remain static", asy
   await page.getByRole("button", { name: "청록", exact: true }).click(); await confirm(page);
   await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0); expect(await writes()).toBe(3);
   expect(await page.getByTestId("classic-keepsake").evaluate(node => node.getAnimations({ subtree: true }).length)).toBe(0);
+  const notices = await receiptNoticeStarts(page), snapshot = await readLocal(page);
+  await page.getByRole("button", { name: "정원 쉼터로 가기", exact: false }).click();
+  await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
+  await expectStableSaved(page, "browser"); expect(await receiptNoticeStarts(page)).toBe(notices);
+  expect(await starts()).toBe(0); expect(await writes()).toBe(3); expect(await readLocal(page)).toEqual(snapshot);
 });
 for (const [width, height, accessible] of [[1366, 900, false], [390, 844, false], [320, 568, true], [320, 480, false]] as const) {
   test(`#907 ${width}x${height}: receipt reflows with controls${accessible ? ", reduced motion, forced colors and 200% text" : ""}`, async ({ page }) => {
@@ -1729,40 +1752,92 @@ for (const [width, height, accessible] of [[1366, 900, false], [390, 844, false]
   });
 }
 
-test("#907 hidden receipt is skipped and visibility restoration cannot replay it", async ({ page }) => {
-  await accountRoute(page, "normal"); const starts = await observeReceiptAccent(page);
-  let release!: () => void;
-  const held = new Promise<void>(resolve => { release = resolve; });
-  await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async route => {
-    if (route.request().method() === "PUT") await held;
-    await route.fallback();
+for (const slot of ["pinwheel", "keepsake"] as const) for (const interruption of ["hidden", "pagehide"] as const) {
+  test(`#907 ${slot} receipt during ${interruption} is skipped and restoration cannot replay semantics`, async ({ page }) => {
+    const account = await accountRoute(page, "normal"), starts = await observeReceiptAccent(page);
+    let release!: () => void;
+    const held = new Promise<void>(resolve => { release = resolve; });
+    await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async route => {
+      if (route.request().method() === "PUT") await held;
+      await route.fallback();
+    });
+    await page.goto("/?experience=e2&view=classic&storage=account&living_choice=sleep-routine");
+    await page.getByRole("button", { name: slot === "pinwheel" ? "청록" : "이 문양을 내 공간에 남기기", exact: true }).click();
+    await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+    const status = page.getByTestId("save-status");
+    await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "saving");
+    await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
+    // Controlled visibility fixture; this is not a claim about OS suspension timing.
+    await interruptReceipt(page, interruption);
+    release(); await expectStableSaved(page, "account");
+    expect(await starts()).toBe(0); expect(await receiptNoticeStarts(page)).toBe(0);
+    await restoreReceipt(page, interruption);
+    await expectStableSaved(page, "account"); expect(await starts()).toBe(0);
+    expect(await receiptNoticeStarts(page)).toBe(0); expect(account.puts).toBe(1); expect(await readLocal(page)).toBeNull();
+    await page.getByRole("button", { name: "코랄", exact: true }).click(); await confirm(page);
+    await expect(status).toHaveAttribute("data-pinwheel-receipt", "true"); expect(await starts()).toBe(1);
+    await interruptReceipt(page, interruption); await expectStableSaved(page, "account");
+    await restoreReceipt(page, interruption);
+    await expectStableSaved(page, "account"); expect(await starts()).toBe(1);
+    expect(await receiptNoticeStarts(page)).toBe(1); expect(account.puts).toBe(2); expect(await readLocal(page)).toBeNull();
   });
-  await page.goto("/?experience=e2&view=classic&storage=account");
-  await page.getByRole("button", { name: "청록", exact: true }).click();
-  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
-  const status = page.getByTestId("save-status");
-  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "saving");
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
-  // Controlled visibility fixture; this is not a claim about OS suspension timing.
-  await page.evaluate(() => {
-    Object.defineProperty(document, "hidden", { configurable: true, value: true });
-    document.dispatchEvent(new Event("visibilitychange"));
+}
+
+async function interruptReceipt(page: Page, interruption: "hidden" | "pagehide") {
+  await page.evaluate(interruption => {
+    if (interruption === "pagehide") window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+    else {
+      Object.defineProperty(document, "hidden", { configurable: true, value: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    }
+  }, interruption);
+}
+async function restoreReceipt(page: Page, interruption: "hidden" | "pagehide") {
+  await page.evaluate(interruption => {
+    if (interruption === "pagehide") window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    else {
+      Reflect.deleteProperty(document, "hidden"); document.dispatchEvent(new Event("visibilitychange"));
+    }
+  }, interruption);
+}
+
+for (const mode of ["browser", "account"] as const) for (const view of ["classic", "3d"] as const) for (const slot of ["pinwheel", "keepsake"] as const) {
+  test(`#907 ${mode} ${view} ${slot}: exact notice stays through expiry, Garden and interruptions retire it`, async ({ page }) => {
+    const account = await accountRoute(page, "normal"), starts = await observeReceiptAccent(page), writes = await observePreviewWrites(page);
+    await page.goto(`/?experience=e2&view=${view}&storage=${mode}&living_choice=sleep-routine`);
+    const status = page.getByTestId("save-status");
+    await (await editorButton(page, slot === "pinwheel" ? "청록" : "이 문양을 내 공간에 남기기", true)).click();
+    await page.clock.install({ time: new Date("2026-09-30T00:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-09-30T00:01:00Z"));
+    await confirm(page);
+    await expect(status).toHaveAttribute("data-pinwheel-receipt", String(slot === "pinwheel"));
+    expect(await starts()).toBe(slot === "pinwheel" ? 1 : 0); expect(await receiptNoticeStarts(page)).toBe(1);
+    expect(await status.evaluate(node => node.getAnimations({ subtree: true }).length)).toBe(0);
+    const message = await status.textContent(), snapshot = await readLocal(page);
+    await page.clock.runFor(2401);
+    await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
+    expect(await status.textContent()).toBe(message); expect(await receiptNoticeStarts(page)).toBe(1);
+    await (await worldTool(page, "정원 쉼터로 가기")).click();
+    await expect(page.getByTestId("garden-experience")).toBeVisible();
+    await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
+    await expectStableSaved(page, mode); expect(await receiptNoticeStarts(page)).toBe(1);
+    for (const interruption of ["hidden", "pagehide"] as const) {
+      // New exact saves are eligible again; interruptions clear both local lifetimes.
+      await (await editorButton(page, slot === "pinwheel" ? "해바라기" : "남긴 문양 제거", true)).click();
+      await confirm(page); const notices = await receiptNoticeStarts(page), accents = await starts();
+      await interruptReceipt(page, interruption); await expectStableSaved(page, mode);
+      await restoreReceipt(page, interruption); await expectStableSaved(page, mode);
+      expect(await receiptNoticeStarts(page)).toBe(notices); expect(await starts()).toBe(accents);
+      if (slot === "keepsake") {
+        await (await editorButton(page, "이 문양을 내 공간에 남기기", true)).click(); await confirm(page);
+      }
+    }
+    const expectedWrites = slot === "pinwheel" ? 3 : 5;
+    expect(await starts()).toBe(slot === "pinwheel" ? 3 : 0);
+    expect(await writes()).toBe(mode === "browser" ? expectedWrites : 0);
+    expect(account.puts).toBe(mode === "account" ? expectedWrites : 0);
+    if (mode === "browser") expect((await readLocal(page)).revision).toBe(snapshot.revision + expectedWrites - 1);
+    else expect(await readLocal(page)).toBeNull();
+    await page.clock.resume();
   });
-  release(); await expect(status).toContainText("저장했어요");
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
-  await page.evaluate(() => {
-    Reflect.deleteProperty(document, "hidden"); document.dispatchEvent(new Event("visibilitychange"));
-  });
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(0);
-  await page.getByRole("button", { name: "코랄", exact: true }).click(); await confirm(page);
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "true"); expect(await starts()).toBe(1);
-  await page.evaluate(() => {
-    Object.defineProperty(document, "hidden", { configurable: true, value: true });
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
-  await page.evaluate(() => {
-    Reflect.deleteProperty(document, "hidden"); document.dispatchEvent(new Event("visibilitychange"));
-  });
-  await expect(status).toHaveAttribute("data-pinwheel-receipt", "false"); expect(await starts()).toBe(1);
-});
+}
