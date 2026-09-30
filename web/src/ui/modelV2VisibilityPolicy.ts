@@ -25,6 +25,3 @@ export function visibleModelV2Output(output: number | null, kstDate: string): nu
   return modelV2PresentationMode(kstDate) === "research_preview"
     && output !== null && Number.isFinite(output) ? output : null;
 }
-
-const [endYear, endMonth, endDay] = MODEL_V2_PREVIEW_WINDOW.end.split("-");
-export const modelV2PreviewEndLabel = `${endYear}년 ${Number(endMonth)}월 ${Number(endDay)}일(KST)`;

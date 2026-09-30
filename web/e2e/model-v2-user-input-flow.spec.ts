@@ -120,6 +120,12 @@ test("Model V2 preview policy remains KST-bound and fail closed", () => {
 test("S11 exposes exactly 11 conceptual questions immediately and focuses the first missing answer", async ({ page }) => {
   await routeModel(page);
   await openS11(page);
+  const disclosure = page.locator(".model-v2-intake-disclosure > p");
+  await expect(disclosure).toHaveText(
+    "연구/개발 미리보기로 ‘내부 연속 출력’을 소수로 표시합니다. 확률·진단·위험등급이나 치료·예방 효과가 아닙니다.",
+  );
+  await expect(disclosure).not.toContainText("2026년 10월 17일");
+  await expect(disclosure).not.toContainText("KST");
   await expect(page.locator("[data-model-v2-question]")).toHaveCount(11);
   await expect(page.locator(".model-v2-intake-section > header p")).toHaveCount(0);
   await expect(page.locator(".model-v2-question-number")).toHaveText(
