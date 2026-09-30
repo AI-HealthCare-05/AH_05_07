@@ -7,6 +7,21 @@ import { VerifiedAccountBinding } from "../src/placeable/accountBinding";
 import { accountPersistence, type AccountIdentity, type PlaceablePersistence } from "../src/placeable/persistence";
 import { ASSET, emptySnapshot } from "../src/placeable/contract";
 import { PlaceableAudio } from "../src/placeable/feedback";
+import PlaceableWorld from "../src/placeable/PlaceableWorld";
+
+test("Guest world presentation exposes qualified spatial controls without durable cosmetic wording", () => {
+  const projection = { companion: null, selection: null, preview: false, pulse: 0,
+    suspended: false, canInteract: false, onInteract: () => {}, onTwilight: () => {} };
+  const guest = renderToStaticMarkup(createElement(PlaceableWorld, { ...projection, presentation: "guest" }));
+  expect(guest).toContain("드래그하거나 방향키로 광장 걷기");
+  expect(guest).toContain("동반자에게 인사하기");
+  expect(guest).toContain("시점 다시 맞추기");
+  expect(guest).toContain("광장의 불빛 켜기");
+  expect(guest).not.toMatch(/바람개비 돌리기|저장된|저장 전|확정|미리보기·저장/);
+  const ordinary = renderToStaticMarkup(createElement(PlaceableWorld, projection));
+  expect(ordinary).toContain("바람개비 돌리기");
+  expect(ordinary).toContain("미리보기·저장");
+});
 
 test("product's first render is unplaced/loading with disabled confirmation and truthful storage scope", () => {
   for (const mode of ["browser", "account"] as const) {

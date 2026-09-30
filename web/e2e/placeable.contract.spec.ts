@@ -141,7 +141,8 @@ test("explicit opt-in never overrides Classic direct links, guest or auth entry"
   expect(isPlaceableRoute("?experience=e2")).toBe(true);
   expect(isPlaceableRoute("?experience=e2", "#access_token=synthetic")).toBe(false);
   for (const query of ["", "?screen=S02", "?experience=e2&screen=S02", "?experience=e2&screen=S07",
-    "?experience=e2&guest=1", "?experience=e2&auth=email-confirm", "?experience=e2&code=synthetic"]) {
+    "?experience=e2&guest=1", "?experience=e2&guest=1&space=plaza&view=3d&storage=account",
+    "?experience=e2&guest=1&space=plaza&view=3d&storage=browser", "?experience=e2&auth=email-confirm", "?experience=e2&code=synthetic"]) {
     expect(isPlaceableRoute(query)).toBe(false);
   }
 });

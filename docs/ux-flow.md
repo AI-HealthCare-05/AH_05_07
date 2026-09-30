@@ -8,6 +8,8 @@ flowchart TD
     A --> P["?guest=1 · isolated Guest Journey Sandbox"]
     P --> Q["Guest S02 · memory-only current/prior facts"]
     Q --> R["Guest S04–S10 · local create/edit/delete"]
+    Q --> U["?guest=1&space=plaza · visit-local 3D"]
+    U --> Q
     R --> T["Guest-safe S11/S14"]
     T --> A
     B --> C["S04–S05 BP record"]
@@ -53,6 +55,17 @@ render its memory-backed report/PDF presentation but exposes no server JSON expo
 or backend refresh. Guest S14 omits account deletion, retention management, and
 server export, and provides a quiet return to S01. The disclosure
 `체험 중 입력은 서버로 보내거나 저장하지 않아요.` appears once in the guest shell.
+
+Guest Today also offers the optional `3D 공간 둘러보기` action. The bounded
+`?guest=1&space=plaza` destination reuses PlaceableWorld, worldScene, input,
+camera and the registered companion actor with a presentation-only projection.
+The same mounted Guest Journey owns its memory while the semantic scene and
+plaza renderers alternate. `오늘 화면으로 돌아가기` and browser Back/Forward
+preserve visit facts; reload resets them as before. Walking, camera controls,
+greeting and visit-local Twilight create no saved cosmetics. World/chunk failure
+keeps the semantic return available; WebGL failure also offers presentation retry,
+without auth or storage recovery. Guest never mounts ProductPlaceableEntry, a PlaceableController or a
+persistence adapter, including composed My Space/return queries.
 
 The signed-in screen state is reflected by a safe `screen` URL parameter. The
 five primary destinations are `오늘의 기록`, `AI 분석`, `기록 찾아보기`,
