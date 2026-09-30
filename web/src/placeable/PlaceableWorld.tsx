@@ -7,7 +7,7 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { extraTools?: ReactNode; initialToolsOpen?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
+type Props = PlaceableProjection & { extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
 /** Opt-in scene lifetime. No Lab shell, auth client, persistence, or health stores. */
 export default function PlaceableWorld(props: Props) {
@@ -75,7 +75,7 @@ export default function PlaceableWorld(props: Props) {
     [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
     window.addEventListener("resize", measure);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
-  }, [labels, toolsOpen, companionNotice, props.preview, error]);
+  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -201,8 +201,9 @@ export default function PlaceableWorld(props: Props) {
     }}>
     <div className="placeable-world-host" ref={host}>
       {!error && labels.map((label) => <span key={label.id} className="placeable-world-label" aria-hidden="true"
+        data-preview-selected={props.pinwheelPreview && label.id === props.selection?.socketId}
         ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
-        style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{label.label}</span>)}
+        style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{props.pinwheelPreview && label.id === props.selection?.socketId ? `미리보기 · ${label.label}` : label.label}</span>)}
       {error && <div className="placeable-world-message" role="alert">
         <h2>3D 광장을 열지 못했어요</h2>
         <p>저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요.</p>

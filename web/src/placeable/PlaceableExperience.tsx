@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { Component, lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
 import { classicTodayHref } from "../ui/mySpaceReturn";
@@ -49,6 +49,24 @@ function Pinwheel({ selection, pulse }: { selection: Selection; pulse: number })
       <circle r="5" fill="#fff9e9" />
     </svg>
   </span>;
+}
+// A still diagram of the current projection, never a second scene or interaction owner.
+function PinwheelPreview({ selection }: { selection: Selection }) {
+  const socket = SOCKETS.find(s => s.id === selection.socketId)!;
+  return <div className="pinwheel-preview" data-testid="pinwheel-preview" data-color={selection.color} data-socket={selection.socketId}>
+    <div className="pinwheel-preview-map" aria-hidden="true">
+      <svg viewBox="0 0 112 100"><path d="M56 94 V25" stroke="#e3d9c6" strokeWidth="22" />
+        <path d="M40 25 V18 a16 16 0 0 1 32 0 V25" fill="none" stroke="#877994" strokeWidth="7" />
+        {SOCKETS.map((socket) => <ellipse key={socket.id} cx={56 + socket.x * 22} cy={59 + socket.z * 16}
+          rx="10" ry="4" fill="none" stroke="currentColor" strokeDasharray="2 2" />)}
+      </svg>
+      <span className="pinwheel-preview-object" style={{ left: `${50 + socket.x * 22 / 1.12}%`,
+        top: `${59 + socket.z * 16}%` }}><Pinwheel selection={selection} pulse={0} /></span>
+    </div>
+    <div><span className="pinwheel-preview-label">저장 전 미리보기</span>
+      <strong>{colorLabel[selection.color]} 바람개비</strong>
+      <span>{socket.label}</span></div>
+  </div>;
 }
 export function ClassicPlaza({ selection, preview, pulse, interact, canInteract, choice = null, keepsake = null }: {
   choice?: LivingChoice | null;
@@ -109,6 +127,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const [editing, setEditing] = useState(false);
   const editRef = useRef<HTMLButtonElement>(null);
   const editHeading = useRef<HTMLHeadingElement>(null);
+  const editorRef = useRef<HTMLElement>(null);
   const wasDraft = useRef(false);
   const alive = useRef(true);
   const chooseRef = useRef<HTMLButtonElement>(null);
@@ -158,6 +177,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (world && !["ready", "loading"].includes(state.phase)) setEditing(true);
   }, [world, state.draft, state.keepsakeDraft, state.pending, state.phase, state.saved]);
   useEffect(() => { if (editing) editHeading.current?.focus(); }, [editing]);
+  useLayoutEffect(() => {
+    // Inserting the local preview must not push the activating keyboard control
+    // out of view. Keep the existing focus owner; no delayed scroll or motion.
+    const active = document.activeElement;
+    if (state.draft && active instanceof HTMLElement && editorRef.current?.contains(active)) {
+      active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    }
+  }, [state.draft]);
 
   const layout = cosmeticLayout(state.confirmed);
   const confirmed = layout.pinwheel;
@@ -187,7 +214,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     controller.cancel(); setEditing(false);
     if (world) editRef.current?.focus(); else chooseRef.current?.focus();
   }
-  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status">
+  const saveStatus = <p ref={statusRef} tabIndex={-1} className="placeable-status" role="status" data-testid="save-status" data-quiet={state.phase === "ready" && !state.saved}>
     {state.saved ? adapter.mode === "browser" ? "이 브라우저에 저장했어요." : "계정 공간에 저장했어요." : phaseCopy[state.phase]}
   </p>;
   async function confirm() {
@@ -245,7 +272,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         </div>
         {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")} fallbackTools={gardenPath}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
-          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
+          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
@@ -258,7 +285,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {saveStatus}
         {preview && <p>저장 전 미리보기</p>}
       </div>}
-      <section id="plaza-editor" className="placeable-controls" aria-label="내 공간 꾸미기" hidden={world && !editing}>
+      <section ref={editorRef} id="plaza-editor" className="placeable-controls" aria-label="내 공간 꾸미기" hidden={world && !editing}>
         {world && <div className="plaza-editor-heading"><div><p className="placeable-eyebrow">나만의 공간</p>
           <h2 ref={editHeading} tabIndex={-1}>내 공간 꾸미기</h2></div>
           <button type="button" disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>
@@ -274,27 +301,30 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {["unknown", "unavailable", "unsupported"].includes(state.phase) && <button onClick={() => void controller.load()}>저장된 상태 확인</button>}
         {state.phase === "unknown" && state.pending && <button onClick={() => void controller.retryPending()}>같은 저장 다시 시도</button>}
         {state.phase === "session" && <a href="/?screen=S02">오늘의 기록으로 돌아가기</a>}
-        {preview && <div className="placeable-draft" data-testid="draft-placement">
-          {state.keepsakeDraft !== undefined && <p data-testid="keepsake-preview">{keepsake ? `${keepsakeMedia[keepsake].label} · 저장 전 미리보기` : "문양 제거 · 저장 전 미리보기"}</p>}
-          {state.draft !== undefined && <p>{selection ? `미리보기: ${colorLabel[selection.color]} · ${SOCKETS.find((s) => s.id === selection.socketId)?.label}` : "미리보기: 바람개비 치우기"} · 저장 전</p>}
-          <div className="placeable-options"><button disabled={!canEdit} onClick={() => void confirm()}>배치 확정하기</button>
-            <button disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>미리보기 취소</button></div>
-        </div>}
         <h2>환영 바람개비</h2>
         <p data-testid="confirmed-placement">저장 상태: {state.confirmed
           ? state.phase === "unsupported" ? "새 형식 그대로 보존" : confirmed ? `${colorLabel[confirmed.color]} · ${SOCKETS.find((s) => s.id === confirmed.socketId)?.label}` : "바람개비 없음"
           : "아직 확인 전"}</p>
         <button ref={chooseRef} disabled={!canEdit} onClick={() => change({})}>환영 바람개비 고르기</button>
-        <fieldset disabled={!canEdit}><legend>색</legend><div className="placeable-options">
+        {state.draft && <PinwheelPreview selection={state.draft} />}
+        <fieldset className="pinwheel-choices" disabled={!canEdit}><legend>색</legend><div className="placeable-options">
           {(Object.keys(COLORS) as (keyof typeof COLORS)[]).map((color) => <button type="button" key={color}
             aria-pressed={selection?.color === color} onClick={() => change({ color })}>
-            <span className="placeable-swatch" style={{ background: COLORS[color] }} />{colorLabel[color]}
+            <span className="placeable-swatch" aria-hidden="true" style={{ background: COLORS[color] }} />{colorLabel[color]}
+            <span className="pinwheel-selected-mark" aria-hidden="true">✓</span>
           </button>)}
         </div></fieldset>
-        <fieldset disabled={!canEdit}><legend>광장에 놓을 자리</legend><div className="placeable-options">
+        <fieldset className="pinwheel-choices" disabled={!canEdit}><legend>광장에 놓을 자리</legend><div className="placeable-options">
           {SOCKETS.map((socket) => <button type="button" key={socket.id} aria-pressed={selection?.socketId === socket.id}
-            onClick={() => change({ socketId: socket.id })}>{socket.label}</button>)}
+            onClick={() => change({ socketId: socket.id })}>{socket.label}
+              <span className="pinwheel-selected-mark" aria-hidden="true">✓</span></button>)}
         </div></fieldset>
+        {preview && <div className="placeable-draft" data-testid="draft-placement">
+          {state.keepsakeDraft !== undefined && <p data-testid="keepsake-preview">{keepsake ? `${keepsakeMedia[keepsake].label} · 저장 전 미리보기` : "문양 제거 · 저장 전 미리보기"}</p>}
+          {state.draft !== undefined && <p>{selection ? `미리보기: ${colorLabel[selection.color]} · ${SOCKETS.find((s) => s.id === selection.socketId)?.label}` : "미리보기: 바람개비 치우기"} · 저장 전</p>}
+          <div className="placeable-options"><button className="pinwheel-confirm" disabled={!canEdit} onClick={() => void confirm()}>배치 확정하기</button>
+            <button disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>미리보기 취소</button></div>
+        </div>}
         <div className="placeable-options">{!world && <button disabled={!canInteract} onClick={interact}>바람개비 돌리기</button>}
           <button disabled={!canEdit || !confirmed} onClick={() => controller.preview(null)}>바람개비 치우기</button></div>
         <section className="placeable-keepsake" aria-labelledby="keepsake-title">

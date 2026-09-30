@@ -1377,3 +1377,160 @@ test("904 label clearance has no steady-frame DOM geometry reads", async ({ page
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
   expect(await steadyReads()).toBe(0);
 });
+
+// #905: observe writes independently of the displayed preview, using synthetic scopes.
+async function observePreviewWrites(page: Page) {
+  await page.addInitScript((key) => {
+    const original = Storage.prototype.setItem;
+    (window as any).__previewWrites = 0;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as any).__previewWrites++;
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+  return () => page.evaluate(() => (window as any).__previewWrites as number);
+}
+
+for (const mode of ["browser", "account"] as const) test(`#905 ${mode}: each preview action writes zero; latest input, cancel, reopen and confirm stay separate`, async ({ page }) => {
+  const account = await accountRoute(page, "normal"), writes = await observePreviewWrites(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto(`/?experience=e2&view=3d&storage=${mode}`);
+  const world = page.getByTestId("placeable-world"), preview = page.getByTestId("pinwheel-preview");
+  const noWrites = async () => { expect(await writes()).toBe(0); expect(account.puts).toBe(0); };
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click(); await noWrites();
+  const choose = page.getByRole("button", { name: "환영 바람개비 고르기" });
+  await choose.focus(); await page.keyboard.press("Enter"); await noWrites();
+  await expect(choose).toBeFocused();
+  await expect(preview).toContainText("코랄 바람개비");
+  await page.getByRole("button", { name: "청록", exact: true }).click(); await noWrites();
+  await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click(); await noWrites();
+  for (const name of ["코랄", "입구 왼쪽", "해바라기", "광장 가장자리", "청록", "입구 오른쪽"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
+  await expect(preview).toHaveAttribute("data-color", "teal");
+  await expect(preview).toHaveAttribute("data-socket", "gate-right");
+  await expect(world).toHaveAttribute("data-color", "teal");
+  await expect(world).toHaveAttribute("data-socket", "gate-right");
+  await expect(world).toHaveAttribute("data-pulse", "0");
+  const marker = page.locator('.placeable-world-label[data-preview-selected=true]');
+  await expect(marker).toHaveText("미리보기 · 입구 오른쪽");
+  await expect(marker).toBeVisible();
+  await expect(page.locator('.pinwheel-choices [aria-pressed=true]')).toHaveCount(2);
+  await noWrites();
+  expect(await preview.evaluate(node => node.getAnimations({ subtree: true }).length)).toBe(0);
+  await page.keyboard.press("Escape"); await noWrites();
+  await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeFocused();
+  await expect(preview).toHaveCount(0); await expect(marker).toHaveCount(0);
+  await expect(world).toHaveAttribute("data-color", "unplaced");
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(preview).toHaveAttribute("data-color", "coral");
+  await confirm(page);
+  expect(await writes()).toBe(mode === "browser" ? 1 : 0); expect(account.puts).toBe(mode === "account" ? 1 : 0);
+  const local = await readLocal(page);
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(preview).toHaveCount(0); await expect(marker).toHaveCount(0);
+  await page.getByRole("button", { name: "청록", exact: true }).click();
+  await expect(page.getByTestId("confirmed-placement")).toContainText("코랄");
+  await expect(preview).toContainText("청록");
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click();
+  await expect(world).toHaveAttribute("data-color", "coral");
+  expect(await readLocal(page)).toEqual(local);
+  expect(await writes()).toBe(mode === "browser" ? 1 : 0); expect(account.puts).toBe(mode === "account" ? 1 : 0);
+  await (await editorButton(page, "청록", true)).click(); await confirm(page);
+  expect(await writes()).toBe(mode === "browser" ? 2 : 0); expect(account.puts).toBe(mode === "account" ? 2 : 0);
+  await page.reload(); await expect(world).toHaveAttribute("data-color", "teal");
+  await expect(preview).toHaveCount(0); await expect(marker).toHaveCount(0);
+  await expect(world).toHaveAttribute("data-pulse", "0");
+  if (mode === "browser") expect(account.reads).toBe(0);
+  else expect(await readLocal(page)).toBeNull();
+});
+
+for (const [width, height] of [[1366, 900], [390, 844], [320, 568], [320, 480]]) test(`#905 ${width}x${height}: preview, choices and actions reflow with real touch targets`, async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 400, isMobile: width < 400 });
+  const page = await context.newPage();
+  try {
+    await page.goto(companionRoute);
+    await (await editorButton(page, "환영 바람개비 고르기")).click();
+    await page.getByRole("button", { name: "광장 가장자리", exact: true }).click();
+    await page.getByRole("button", { name: "해바라기", exact: true }).click();
+    await expect(page.getByTestId("pinwheel-preview")).toContainText("해바라기 바람개비");
+    const controls = page.locator('.pinwheel-choices button, .placeable-draft button');
+    for (const button of await controls.all()) {
+      await button.scrollIntoViewIfNeeded(); const rect = (await button.boundingBox())!;
+      expect(rect.width).toBeGreaterThanOrEqual(44); expect(rect.height).toBeGreaterThanOrEqual(44);
+      expect(rect.x).toBeGreaterThanOrEqual(0); expect(rect.x + rect.width).toBeLessThanOrEqual(width);
+      expect(await button.evaluate(node => {
+        const r = node.getBoundingClientRect(); return node.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+      })).toBe(true);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.getByTestId("pinwheel-preview").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: test.info().outputPath(`905-preview-${width}-${height}.png`) });
+    const cancel = page.getByRole("button", { name: "미리보기 취소", exact: true });
+    if (width < 400) await cancel.tap(); else await cancel.click();
+    await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeFocused();
+  } finally { await context.close(); }
+});
+
+test("#905 reduced motion, forced colors, keyboard and 200% text preserve static selection and focus", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.goto(companionRoute);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "neutral");
+  const open = page.getByRole("button", { name: "꾸미기", exact: true });
+  await open.focus(); await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "내 공간 꾸미기", exact: true })).toBeFocused();
+  const teal = page.getByRole("button", { name: "청록", exact: true });
+  await page.getByRole("button", { name: "코랄", exact: true }).focus(); await page.keyboard.press("Tab");
+  await expect(teal).toBeFocused(); await page.keyboard.press("Space");
+  await expect(teal).toHaveAttribute("aria-pressed", "true");
+  await expect(teal).toBeFocused(); await expect(teal).toBeInViewport();
+  await expect(teal.locator('.pinwheel-selected-mark')).toBeVisible();
+  await expect(teal).toHaveCSS("outline-style", "solid");
+  await expect(teal).toHaveCSS("border-width", "2px");
+  const preview = page.getByTestId("pinwheel-preview");
+  await expect(preview).toHaveCSS("border-style", "dashed");
+  expect(await preview.evaluate(node => node.getAnimations({ subtree: true }).length)).toBe(0);
+  await page.screenshot({ path: test.info().outputPath("905-forced-colors-keyboard.png") });
+  await page.emulateMedia({ forcedColors: "none" });
+  // Text-only enlargement, intentionally not represented as browser zoom.
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  await page.setViewportSize({ width: 320, height: 568 });
+  for (const name of ["입구 오른쪽", "해바라기", "미리보기 취소"]) {
+    const button = page.getByRole("button", { name, exact: true });
+    await button.scrollIntoViewIfNeeded(); await button.focus(); await page.keyboard.press("Enter");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  }
+  await expect(open).toBeFocused();
+  await page.keyboard.press("Enter"); await expect(preview).toHaveCount(0);
+  await page.getByRole("button", { name: "환영 바람개비 고르기" }).click();
+  await preview.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: test.info().outputPath("905-text-200.png") });
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+  await expect(page.getByTestId("save-status")).toContainText("저장했어요");
+});
+
+test("#905 saving and WebGL failure keep the candidate static and recovery separate", async ({ page }) => {
+  await accountRoute(page, "normal");
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async route => {
+    if (route.request().method() === "PUT") await held;
+    await route.fallback();
+  });
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByTestId("placeable-world-canvas").evaluate((canvas: HTMLCanvasElement) => {
+    canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
+  });
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await expect(page.getByTestId("pinwheel-preview")).toContainText("저장 전 미리보기");
+  await page.getByRole("button", { name: "청록", exact: true }).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "saving");
+  await expect(page.getByTestId("save-status")).toContainText("저장하고 있어요");
+  await expect(page.getByRole("button", { name: "미리보기 취소", exact: true })).toBeDisabled();
+  await expect(page.getByTestId("pinwheel-preview")).toHaveAttribute("data-color", "teal");
+  release(); await expect(page.getByTestId("save-status")).toContainText("계정 공간에 저장했어요");
+  await expect(page.getByTestId("pinwheel-preview")).toHaveCount(0);
+});

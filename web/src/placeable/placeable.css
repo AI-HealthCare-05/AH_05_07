@@ -252,3 +252,38 @@
 .placeable-world-view [data-world-error=true] .plaza-help { margin: 0 24px 24px; }
 .placeable-world-view [data-world-error=true] :is(.plaza-help > summary, .plaza-tools-content) { position: static; width: auto; max-height: none; }
 .placeable-world-view [data-world-error=true] .plaza-tools-content { margin-top: 12px; box-shadow: none; }
+
+/* Preview is a still, dashed working state. Selection and focus stay distinct;
+   none of these cues subscribes to saved, pulse, or an animation completion. */
+.pinwheel-preview { display: flex; align-items: center; gap: 16px; padding: 12px; border: 1px dashed #687766; border-radius: 12px; background: #f4f1e8; color: #303d36; }
+.pinwheel-preview-map { position: relative; flex: 0 0 112px; height: 100px; color: #687766; }
+.pinwheel-preview-map > svg { width: 100%; height: 100%; }
+.pinwheel-preview-object { position: absolute; width: 32px; height: 43px; transform: translate(-50%, -100%); }
+.pinwheel-preview-object .pinwheel { transform: scale(.5); transform-origin: top left; width: 64px; height: 86px; }
+.pinwheel-preview > div:last-child { display: grid; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.pinwheel-preview-label { font-size: .8rem; text-decoration: underline dashed; text-underline-offset: 4px; }
+.pinwheel-preview strong { font-size: 1rem; }
+.placeable-controls .placeable-status[data-quiet=true] { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pinwheel-preview > div > span:last-child { font-size: .85rem; }
+.placeable-experience .pinwheel-choices { margin-top: 8px; }
+.placeable-experience .pinwheel-choices button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-width: 2px; padding: 8px 10px; transition: none; transform: none; box-shadow: none; }
+.pinwheel-choices .placeable-swatch { flex: none; margin: 0; }
+.pinwheel-selected-mark { visibility: hidden; font-weight: 750; }
+.pinwheel-choices [aria-pressed=true] .pinwheel-selected-mark { visibility: visible; }
+.placeable-experience .pinwheel-choices button[aria-pressed=true] { color: #293f34; background: #e5eadf; border-color: #526a59; }
+.placeable-experience .pinwheel-choices button:hover:not(:disabled) { border-color: #526a59; background: #f0f3eb; color: #293f34; }
+.placeable-experience .pinwheel-choices button:active:not(:disabled) { background: #d8e0d1; }
+.placeable-experience .placeable-draft { border: 1px dashed #687766; background: #f4f1e8; color: #303d36; }
+.placeable-experience .pinwheel-confirm { color: #fffaf1; background: #385747; border-color: #385747; font-weight: 650; }
+.placeable-experience .pinwheel-confirm:hover:not(:disabled) { background: #294335; }
+.placeable-experience .placeable-world-label[data-preview-selected=true] { padding: 5px 9px; border: 2px dashed #526a59; border-radius: 6px; background: #faf8f0; color: #293f34; font-weight: 650; }
+@media (max-width: 380px) {
+  .pinwheel-preview { gap: 8px; padding: 8px; flex-wrap: wrap; }
+}
+@media (forced-colors: active) {
+  .pinwheel-preview, .placeable-experience .placeable-draft { color: CanvasText; background: Canvas; border-color: CanvasText; }
+  .placeable-experience .pinwheel-choices button[aria-pressed=true] { color: ButtonText; background: Canvas; border-color: Highlight; }
+  .placeable-experience .pinwheel-confirm { color: HighlightText; background: Highlight; border-color: Highlight; forced-color-adjust: none; }
+  .placeable-experience [data-preview-selected=true] { outline: 2px dashed Highlight; }
+  .pinwheel-choices :focus-visible { outline: 3px solid Highlight; outline-offset: 4px; }
+}
