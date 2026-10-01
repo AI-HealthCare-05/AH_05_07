@@ -142,6 +142,7 @@ export function PresenceSceneActorInteraction({ phase }: PresenceSceneActorInter
       data-presence-port-incarnation={snapshot.portIncarnation}
       data-presence-write-count={snapshot.writeCount}
       data-presence-commit-count={snapshot.commitCount}
+      data-presence-tap-count={snapshot.tapCount}
       data-presence-correction-distance={snapshot.lastCorrectionDistance.toFixed(3)}
       data-presence-root-x={projection.root.x.toFixed(3)}
       data-presence-root-y={projection.root.y.toFixed(3)}
@@ -151,12 +152,17 @@ export function PresenceSceneActorInteraction({ phase }: PresenceSceneActorInter
         type="button"
         className="presence-scene-actor-hit-target"
         style={hitStyle}
-        aria-label="동반자 움직이기"
-        aria-describedby="presence-scene-actor-status"
+        aria-label="동반자 반응 보기"
+        aria-describedby="presence-scene-actor-help presence-scene-actor-status"
         data-presence-actor-hit-target="true"
         data-pointer-dragging={snapshot.dragging || undefined}
         data-active-pointer-id={snapshot.activePointerId ?? undefined}
-        onClick={event => event.preventDefault()}
+        onClick={event => {
+          event.preventDefault();
+          // Pointer/touch is admitted only by endPointer(). Keyboard and
+          // assistive semantic activation produce click detail === 0.
+          if (event.detail === 0) runtime.acknowledgeTap();
+        }}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
         onPointerUp={pointerUp}
@@ -170,6 +176,19 @@ export function PresenceSceneActorInteraction({ phase }: PresenceSceneActorInter
           aria-hidden="true"
         />
       </button>
+      <span id="presence-scene-actor-help" className="sr-only">
+        누르면 동반자가 반응하고, 드래그하면 위치를 바꿔요.
+      </span>
+      <span
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-presence-tap-status="true"
+      >
+        {snapshot.tapCount > 0
+          ? `동반자가 반응했어요. ${snapshot.tapCount}`
+          : "\u00a0"}
+      </span>
       <div className="presence-scene-actor-controls" data-presence-hard-zone="position-control">
         <button
           type="button"

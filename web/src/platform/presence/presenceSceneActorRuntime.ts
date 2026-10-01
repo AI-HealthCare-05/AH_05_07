@@ -46,6 +46,9 @@ export type PresenceSceneActorPort = Readonly<{
   assetUrl: string;
   project: (arenaRevision: number) => PresenceSceneActorProjection | null;
   write: (request: PresenceSceneActorWriteRequest) => boolean;
+  // Renderer-local optional capability. These methods never own world-root movement.
+  acknowledgeTap?: () => boolean;
+  cancelTapReaction?: () => boolean;
 }>;
 
 export type PresenceWorldRootFence = Readonly<{
@@ -95,6 +98,7 @@ export type PresenceSceneActorRuntimeSnapshot = Readonly<{
   portIncarnation: number;
   writeCount: number;
   commitCount: number;
+  tapCount: number;
   revocationCount: number;
   lastRevocation: string | null;
   lastCorrectionDistance: number;
@@ -257,6 +261,7 @@ function initialSnapshot(): PresenceSceneActorRuntimeSnapshot {
     portIncarnation: 0,
     writeCount: 0,
     commitCount: 0,
+    tapCount: 0,
     revocationCount: 0,
     lastRevocation: null,
     lastCorrectionDistance: 0,
@@ -287,6 +292,7 @@ export class PresenceSceneActorRuntime {
   #status: PresenceSceneActorStatus = "unavailable";
   #writeCount = 0;
   #commitCount = 0;
+  #tapCount = 0;
   #revocationCount = 0;
   #lastRevocation: string | null = null;
   #lastCorrectionDistance = 0;
@@ -360,6 +366,14 @@ export class PresenceSceneActorRuntime {
     const released = this.#release(lease);
     this.#emit();
     return released;
+  }
+
+  /** Keyboard/assistive semantic activation. Pointer taps use endPointer(). */
+  acknowledgeTap(): boolean {
+    if (this.#pointer) return false;
+    const acknowledged = this.#admitTap();
+    this.#emit();
+    return acknowledged;
   }
 
   beginPointer(input: Readonly<{
@@ -436,6 +450,9 @@ export class PresenceSceneActorRuntime {
     if (!current.dragging) {
       this.#pointer = null;
       this.#status = this.#currentFence() ? "ready" : "unavailable";
+      // The runtime's existing exact-fence tap decision is the only pointer
+      // admission path for the local renderer acknowledgement.
+      this.#admitTap();
       this.#emit();
       return "tap";
     }
@@ -491,6 +508,9 @@ export class PresenceSceneActorRuntime {
     const envelope = envelopeFromProjection(projection.root, projection.visualEnvelope);
     if (!envelope) return false;
 
+    // Explicit root relocation wins over a decorative local acknowledgement.
+    this.#cancelTapReaction();
+
     for (let offset = 1; offset <= SAFE_PRESETS.length; offset += 1) {
       const index = (this.#presetCursor + offset) % SAFE_PRESETS.length;
       const request = requestFromNormalizedPlacement(
@@ -537,6 +557,7 @@ export class PresenceSceneActorRuntime {
 
   dispose(): void {
     this.#prepareFenceChange("runtime-dispose");
+    this.#tapCount = 0;
     this.#activeHostConnection = null;
     this.#host = null;
     this.#port = null;
@@ -672,7 +693,39 @@ export class PresenceSceneActorRuntime {
     return true;
   }
 
+  #admitTap(): boolean {
+    const fence = this.#currentFence();
+    const host = this.#host;
+    const port = this.#port?.port;
+    if (
+      !fence
+      || !host?.activeAssetUrl
+      || !port
+      || port.assetUrl !== host.activeAssetUrl
+      || !port.acknowledgeTap
+    ) return false;
+    try {
+      if (!port.acknowledgeTap()) return false;
+    } catch {
+      return false;
+    }
+    this.#tapCount += 1;
+    return true;
+  }
+
+  #cancelTapReaction(): boolean {
+    const cancel = this.#port?.port.cancelTapReaction;
+    if (!cancel) return false;
+    try {
+      return cancel();
+    } catch {
+      return false;
+    }
+  }
+
   #prepareFenceChange(reason: string): void {
+    // Route/owner/Arena/port invalidation settles renderer-local reaction first.
+    this.#cancelTapReaction();
     const pointer = this.#pointer;
     if (pointer?.lease && this.#isExactLease(pointer.lease)) {
       this.#restoreWithLease(pointer.lease, pointer.envelope);
@@ -820,6 +873,10 @@ export class PresenceSceneActorRuntime {
       return "pending";
     }
 
+    // Crossing the existing relocation threshold changes ownership: root drag
+    // cancels any in-flight decorative local acknowledgement.
+    if (!pointer.dragging) this.#cancelTapReaction();
+
     const lease = pointer.lease ?? this.#acquire(`pointer:${token.pointerId}:${token.token}`);
     if (!lease) return "failed";
     const request = Object.freeze({
@@ -881,6 +938,7 @@ export class PresenceSceneActorRuntime {
       portIncarnation: this.#port?.incarnation ?? this.#portOrder,
       writeCount: this.#writeCount,
       commitCount: this.#commitCount,
+      tapCount: this.#tapCount,
       revocationCount: this.#revocationCount,
       lastRevocation: this.#lastRevocation,
       lastCorrectionDistance: this.#lastCorrectionDistance,

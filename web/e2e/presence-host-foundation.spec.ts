@@ -44,6 +44,8 @@ function spatialArena(
 
 function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>) {
   let root = { ...initial };
+  let tapAcknowledgements = 0;
+  let tapCancellations = 0;
   const writes: PresenceArenaPoint[] = [];
   const port: PresenceSceneActorPort = {
     assetUrl,
@@ -75,8 +77,21 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
       writes.push(request.point);
       return true;
     },
+    acknowledgeTap: () => {
+      tapAcknowledgements += 1;
+      return true;
+    },
+    cancelTapReaction: () => {
+      tapCancellations += 1;
+      return true;
+    },
   };
-  return { port, writes, root: () => root };
+  return {
+    port,
+    writes,
+    root: () => root,
+    reactions: () => ({ acknowledgements: tapAcknowledgements, cancellations: tapCancellations }),
+  };
 }
 
 function publishSpatialHost(
@@ -335,7 +350,7 @@ test("S02 nearest-safe placement uses today-sidecar, 8px clearance, and x-then-y
   expect(noSpace).toEqual({ kind: "no-space", reason: "occupied" });
 });
 
-test("S02 direct grab waits for 6px, preserves grab offset, commits only on up, and rejects stale pointer tokens", () => {
+test("#921 S02 tap stays local while direct grab waits for 6px, commits only on up, and rejects stale tokens", () => {
   const runtime = new PresenceSceneActorRuntime();
   const connection = runtime.connectHost();
   const port = fakePort("https://asset.invalid/active.glb", { x: 100, y: 150 });
@@ -343,6 +358,8 @@ test("S02 direct grab waits for 6px, preserves grab offset, commits only on up, 
   const commits: PresencePlacementIntent[] = [];
   publishSpatialHost(connection, spatialArena(1), {}, commits);
   const baselineCommits = runtime.snapshot.commitCount;
+  const baselineWrites = runtime.snapshot.writeCount;
+  const baselineTaps = runtime.snapshot.tapCount;
 
   const tap = runtime.beginPointer({
     pointerId: 3,
@@ -355,7 +372,19 @@ test("S02 direct grab waits for 6px, preserves grab offset, commits only on up, 
   expect(runtime.snapshot.leaseToken).toBeNull();
   expect(runtime.endPointer(tap, { clientX: 113, clientY: 125 })).toBe("tap");
   expect(runtime.snapshot.commitCount).toBe(baselineCommits);
+  expect(runtime.snapshot.writeCount).toBe(baselineWrites);
+  expect(runtime.snapshot.tapCount).toBe(baselineTaps + 1);
+  expect(port.reactions().acknowledgements).toBe(1);
 
+  // Keyboard/assistive activation uses the same renderer-local acknowledgement
+  // without acquiring a root lease or producing a placement write.
+  expect(runtime.acknowledgeTap()).toBe(true);
+  expect(runtime.snapshot.tapCount).toBe(baselineTaps + 2);
+  expect(runtime.snapshot.commitCount).toBe(baselineCommits);
+  expect(runtime.snapshot.writeCount).toBe(baselineWrites);
+  expect(port.reactions().acknowledgements).toBe(2);
+
+  const cancellationsBeforeDrag = port.reactions().cancellations;
   const dragStart = port.root();
   const drag = runtime.beginPointer({
     pointerId: 4,
@@ -368,6 +397,8 @@ test("S02 direct grab waits for 6px, preserves grab offset, commits only on up, 
     clientX: dragStart.x + 28,
     clientY: dragStart.y - 15,
   })).toBe(true);
+  expect(port.reactions().cancellations).toBeGreaterThan(cancellationsBeforeDrag);
+  expect(runtime.snapshot.tapCount).toBe(baselineTaps + 2);
   expect(port.root().x).toBeCloseTo(dragStart.x + 20);
   expect(port.root().y).toBeCloseTo(dragStart.y + 10);
   expect(runtime.snapshot.commitCount).toBe(baselineCommits);
@@ -461,7 +492,7 @@ test("shadow presence host publishes S02 geometry without creating companion net
   expect(glbRequests).toEqual([]);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
   await expect(page.locator("[data-saved-scene-status]")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
 
   if (!companionOff) {
@@ -510,7 +541,7 @@ test("compact S02 keeps semantic task path while the shadow arena declines an in
   await expect(page.locator(".journey-view-frame")).toBeHidden();
   await expect(host).toHaveAttribute("data-presence-arena-status", "unavailable");
   await expect(host).toHaveAttribute("data-presence-anchor-count", "0");
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
   await expect(page.locator(".home-lead button")).toBeVisible();
   await expect(page.locator(".home-trail-dates")).toBeVisible();
