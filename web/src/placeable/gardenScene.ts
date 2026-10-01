@@ -2,9 +2,39 @@ import { BoxGeometry, BufferGeometry, CatmullRomCurve3, CircleGeometry, Color, C
   Fog, Group, HemisphereLight, LatheGeometry, Mesh, MeshStandardMaterial, PerspectiveCamera,
   Scene, Shape, SphereGeometry, Vector2, Vector3, DirectionalLight, type WebGLRenderer } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { createLandmark } from "../components/scene/environment";
+import {
+  createLandmark,
+  landmarkMaterialRole,
+  type LandmarkMaterialRole,
+} from "../components/scene/environment";
 import { disposeScene } from "../components/scene/disposeScene";
 import type { MovementIntent } from "../../transcend-lab/src/platform/behavior/worldMovementIntent";
+
+type GardenPavilionTreatment = Readonly<{ color: string; roughness?: number }>;
+const GARDEN_PAVILION_TREATMENT: Partial<Record<LandmarkMaterialRole, GardenPavilionTreatment>> = {
+  lavender: { color: "#465a65", roughness: 0.72 },
+  wood: { color: "#a97548" },
+  cream: { color: "#bec39b" },
+};
+
+/** Local Garden treatment selected by authored meaning, never by the source pixel color. */
+export function styleGardenPavilion(pavilion: Group) {
+  pavilion.traverse((object) => {
+    if (!(object instanceof Mesh)) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      if (!(material instanceof MeshStandardMaterial)) continue;
+      const role = landmarkMaterialRole(material);
+      if (!role) continue;
+      const treatment = GARDEN_PAVILION_TREATMENT[role];
+      if (!treatment) continue;
+      material.color.set(treatment.color);
+      if (treatment.roughness !== undefined) material.roughness = treatment.roughness;
+    }
+  });
+}
 
 /** A visit-local place: no placement projection, health, account or storage inputs. */
 export class GardenScene {
@@ -58,14 +88,7 @@ export class GardenScene {
     // Recolor this instance only; shared S02/S10 geometry and posters stay intact.
     this.pavilion.name = "garden-pavilion";
     this.pavilion.scale.setScalar(1.8); this.pavilion.position.set(0, 0, -1.3);
-    this.pavilion.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
-      object.castShadow = true; object.receiveShadow = true;
-      const material = object.material as MeshStandardMaterial;
-      if (material.color.getHex() === 0x8b839b) { material.color.set("#465a65"); material.roughness = 0.72; }
-      if (material.color.getHex() === 0xb68b69) material.color.set("#a97548");
-      if (material.color.getHex() === 0xeee2c6) material.color.set("#bec39b");
-    });
+    styleGardenPavilion(this.pavilion);
     // Local ring beams bridge column capitals (top 1.48) to the curved roof
     // rafters (~1.7 at the support lines). Overlap both ends to avoid daylight gaps.
     const supports = new Group(); supports.name = "garden-pavilion-supports";

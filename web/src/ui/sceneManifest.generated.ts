@@ -853,15 +853,15 @@ export const sceneManifest = {
       "status": "review",
       "provenance": {
         "sourceAssetId": "web/src/components/scene/environment.ts",
-        "sourceHash": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
+        "sourceHash": "51234c09ef9c38464629196ab14dc5f3c56165f3a22c37f850cbc550f1bb59dc",
         "owner": "AI-HealthCare-05/AH_05_07",
         "rightsBasis": "Repository-authored procedural review geometry",
         "reviewReference": "https://github.com/AI-HealthCare-05/AH_05_07/issues/390"
       },
       "sourceModule": {
         "path": "web/src/components/scene/environment.ts",
-        "sha256": "03eca6fffba186488e5a39bcafedc751c4eff1d978feb3b92569d206d706ca7c",
-        "byteLength": 9223
+        "sha256": "51234c09ef9c38464629196ab14dc5f3c56165f3a22c37f850cbc550f1bb59dc",
+        "byteLength": 9950
       }
     },
     {

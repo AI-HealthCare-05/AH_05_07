@@ -3,14 +3,33 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { SceneLandmark } from "../../ui/scenePolicy";
 
+export const LANDMARK_MATERIAL_ROLES = [
+  "wood", "woodLight", "stone", "cream", "sage", "leaf", "lavender", "water", "coral",
+] as const;
+export type LandmarkMaterialRole = typeof LANDMARK_MATERIAL_ROLES[number];
+
+/** Authoring meaning only: not a theme, ownership value or persisted identity. */
+export function landmarkMaterialRole(material: THREE.Material): LandmarkMaterialRole | null {
+  const role = material.userData.authoringRole;
+  return typeof role === "string"
+    && (LANDMARK_MATERIAL_ROLES as readonly string[]).includes(role)
+    ? role as LandmarkMaterialRole
+    : null;
+}
+
 /** Repository-authored clay study. Acceptance remains review-only. */
 export function createLandmark(id: SceneLandmark["id"]): THREE.Group {
   const root = new THREE.Group();
-  const palette = { wood: 0xb68b69, woodLight: 0xd0ad86, stone: 0xd9d2bc, cream: 0xeee2c6,
-    sage: 0x96ac86, leaf: 0xb7c39a, lavender: 0x8b839b, water: 0x9fc6bf, coral: 0xe9a08a };
-  type Color = keyof typeof palette;
-  const materials = Object.fromEntries(Object.entries(palette).map(([key, color]) =>
-    [key, new THREE.MeshStandardMaterial({ color, roughness: 0.94, metalness: 0 })])) as Record<Color, THREE.MeshStandardMaterial>;
+  const palette: Record<LandmarkMaterialRole, number> = {
+    wood: 0xb68b69, woodLight: 0xd0ad86, stone: 0xd9d2bc, cream: 0xeee2c6,
+    sage: 0x96ac86, leaf: 0xb7c39a, lavender: 0x8b839b, water: 0x9fc6bf, coral: 0xe9a08a,
+  };
+  type Color = LandmarkMaterialRole;
+  const materials = Object.fromEntries(Object.entries(palette).map(([key, color]) => {
+    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.94, metalness: 0 });
+    material.userData.authoringRole = key;
+    return [key, material];
+  })) as Record<Color, THREE.MeshStandardMaterial>;
   const batches = new Map<Color, THREE.BufferGeometry[]>();
   const add = (geometry: THREE.BufferGeometry, color: Color, position: number[], scale = [1, 1, 1], rotation = [0, 0, 0]) => {
     const matrix = new THREE.Matrix4().compose(new THREE.Vector3(...position),

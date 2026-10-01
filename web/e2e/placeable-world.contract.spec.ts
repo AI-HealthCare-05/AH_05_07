@@ -11,7 +11,9 @@ import { companionClips, companionSpecies } from "../src/ui/companion";
 import { getCompanionAsset } from "../src/ui/companionAssets.generated";
 import { readCompanionIdentity } from "../src/ui/companionIdentity";
 import { getMySpaceCompanion, validateMySpaceCompanion } from "../src/ui/mySpaceCompanion";
-import { GardenScene } from "../src/placeable/gardenScene";
+import { GardenScene, styleGardenPavilion } from "../src/placeable/gardenScene";
+import { createLandmark, landmarkMaterialRole } from "../src/components/scene/environment";
+import { disposeScene } from "../src/components/scene/disposeScene";
 import { livingCityPixelRatio } from "../src/placeable/livingCityRenderDensity";
 import { PlazaLocomotion, PLAZA_LOCOMOTION, shortestYaw } from "../src/placeable/plazaLocomotion";
 import { PLAZA_CAMERA } from "../src/placeable/plazaCamera";
@@ -38,6 +40,75 @@ test("Living City immersive density bounds actual drawing pixels across resizing
   expect(livingCityPixelRatio(390, 844, 3)).toBe(1.5);
   expect(livingCityPixelRatio(3840, 2160, 2)).toBeLessThan(1);
   expect(livingCityPixelRatio(390, 844, NaN)).toBe(1);
+});
+
+test("Garden pavilion treatment follows authored roles, not old colors, and keeps instances independent", () => {
+  const normal = createLandmark("pavilion");
+  const garden = createLandmark("pavilion");
+
+  const byRole = (root: Group, requireAuthoredRole = false) => {
+    const roles = new Map<string, MeshStandardMaterial>();
+    root.traverse((object) => {
+      if (!(object instanceof Mesh)) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (!(material instanceof MeshStandardMaterial)) continue;
+        const role = landmarkMaterialRole(material);
+        if (requireAuthoredRole) expect(role).not.toBeNull();
+        if (role) roles.set(role, material);
+      }
+    });
+    return roles;
+  };
+
+  // Raw createLandmark output is entirely authored by the shared role seam.
+  const normalRoles = byRole(normal, true);
+  const gardenRoles = byRole(garden, true);
+
+  expect(normalRoles.get("lavender")!.color.getHex()).toBe(0x8b839b);
+  expect(normalRoles.get("wood")!.color.getHex()).toBe(0xb68b69);
+  expect(normalRoles.get("cream")!.color.getHex()).toBe(0xeee2c6);
+
+  for (const role of ["lavender", "wood", "cream"] as const) {
+    expect(gardenRoles.get(role)).not.toBe(normalRoles.get(role));
+  }
+
+  // Poison the source colors. Role-based Garden styling must still resolve.
+  gardenRoles.get("lavender")!.color.set("#123456");
+  gardenRoles.get("wood")!.color.set("#654321");
+  gardenRoles.get("cream")!.color.set("#abcdef");
+
+  styleGardenPavilion(garden);
+
+  expect(gardenRoles.get("lavender")!.color.getHex()).toBe(0x465a65);
+  expect(gardenRoles.get("lavender")!.roughness).toBeCloseTo(0.72);
+  expect(gardenRoles.get("wood")!.color.getHex()).toBe(0xa97548);
+  expect(gardenRoles.get("cream")!.color.getHex()).toBe(0xbec39b);
+
+  // Styling the Garden copy cannot repaint the untouched shared instance.
+  expect(normalRoles.get("lavender")!.color.getHex()).toBe(0x8b839b);
+  expect(normalRoles.get("wood")!.color.getHex()).toBe(0xb68b69);
+  expect(normalRoles.get("cream")!.color.getHex()).toBe(0xeee2c6);
+
+  let gardenDisposals = 0;
+  for (const role of ["lavender", "wood", "cream"] as const) {
+    gardenRoles.get(role)!.addEventListener("dispose", () => gardenDisposals++);
+  }
+
+  disposeScene(normal);
+  expect(gardenDisposals).toBe(0);
+  disposeScene(garden);
+  expect(gardenDisposals).toBe(3);
+
+  // The real GardenScene must use the same role treatment.
+  const scene = new GardenScene();
+  // Garden adds local support-ring meshes after shared-landmark styling.
+  // Those local materials do not need a shared landmark authoring role.
+  const liveRoles = byRole(scene.pavilion);
+  expect(liveRoles.get("lavender")!.color.getHex()).toBe(0x465a65);
+  expect(liveRoles.get("wood")!.color.getHex()).toBe(0xa97548);
+  expect(liveRoles.get("cream")!.color.getHex()).toBe(0xbec39b);
+  scene.dispose();
 });
 
 test("Garden local support ring joins all four capitals to the roof without changing shared pavilion", () => {
