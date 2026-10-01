@@ -71,29 +71,153 @@ test("only verified matching owner publishes an account binding; delayed verific
   binding.dispose(); expect(binding.current()).toBeNull();
 });
 
-test("audio stays muted without a gesture, reports unavailable, and closes its context on cleanup", async () => {
+test("#919 audio is latest-wins, bounds active voices and ignores stale cue callbacks", async () => {
   const prior = Object.getOwnPropertyDescriptor(globalThis, "window");
-  let created = 0, closed = 0, tones = 0;
+  let created = 0, closed = 0, tones = 0, scheduledStops = 0, immediateStops = 0, disconnects = 0;
+  const voices: Array<{
+    active: boolean;
+    onended: (() => void) | null;
+  }> = [];
+
   class AudioFixture {
-    state = "running"; currentTime = 0; destination = {};
+    state = "running";
+    currentTime = 0;
+    destination = {};
     constructor() { created++; }
     resume = async () => {};
     close = async () => { closed++; this.state = "closed"; };
-    createGain = () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, disconnect() {} });
-    createOscillator = () => ({ frequency: { value: 0 }, connect() {}, disconnect() {}, start() { tones++; }, stop() {}, onended: null });
+    createGain = () => ({
+      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+      connect() {},
+      disconnect() { disconnects++; },
+    });
+    createOscillator = () => {
+      const voice = {
+        active: false,
+        frequency: { value: 0 },
+        connect() {},
+        disconnect() { disconnects++; },
+        start() { tones++; voice.active = true; },
+        stop(...args: unknown[]) {
+          if (args.length) scheduledStops++;
+          else { immediateStops++; voice.active = false; }
+        },
+        onended: null as (() => void) | null,
+      };
+      voices.push(voice);
+      return voice;
+    };
   }
+
   const audio = new PlaceableAudio();
   try {
     Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
-    expect(created).toBe(0); expect(audio.play()).toBe(false); expect(audio.play("twilight")).toBe(false); expect(await audio.enable()).toBe("unavailable");
-    Object.defineProperty(globalThis, "window", { configurable: true, value: { AudioContext: AudioFixture } });
-    expect(await audio.enable()).toBe("ready"); expect(audio.play()).toBe(true); expect(tones).toBe(3);
-    expect(audio.play("twilight")).toBe(true); expect(tones).toBe(6); expect(created).toBe(1);
-    audio.dispose(); audio.dispose(); expect(closed).toBe(1); expect(audio.play()).toBe(false);
+    expect(created).toBe(0);
+    expect(audio.play()).toBe(false);
+    expect(await audio.enable()).toBe("unavailable");
+
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: { AudioContext: AudioFixture },
+    });
+
+    expect(await audio.enable()).toBe("ready");
+    expect(audio.play()).toBe(true);
+    expect(tones).toBe(3);
+    expect(scheduledStops).toBe(3);
+    expect(voices.filter((voice) => voice.active)).toHaveLength(3);
+
+    const staleEnded = voices[0].onended;
+    expect(staleEnded).not.toBeNull();
+
+    // A newer motif replaces the three live old voices before creating three new ones.
+    expect(audio.play("twilight")).toBe(true);
+    expect(tones).toBe(6);
+    expect(scheduledStops).toBe(6);
+    expect(immediateStops).toBe(3);
+    expect(voices.filter((voice) => voice.active)).toHaveLength(3);
+
+    const afterReplacementDisconnects = disconnects;
+    staleEnded?.();
+    expect(disconnects).toBe(afterReplacementDisconnects);
+
+    audio.dispose();
+    expect(voices.filter((voice) => voice.active)).toHaveLength(0);
+    expect(immediateStops).toBe(6);
+    expect(closed).toBe(1);
+
+    audio.dispose();
+    expect(closed).toBe(1);
+    expect(audio.play()).toBe(false);
   } finally {
-    audio.dispose(); if (prior) Object.defineProperty(globalThis, "window", prior); else Reflect.deleteProperty(globalThis, "window");
+    audio.dispose();
+    if (prior) Object.defineProperty(globalThis, "window", prior);
+    else Reflect.deleteProperty(globalThis, "window");
   }
 });
+
+test("#919 stale enable failure cannot dispose a newer successful audio attempt", async () => {
+  const prior = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const pending: Array<{ resolve: () => void; reject: () => void }> = [];
+  let closed = 0, tones = 0;
+
+  class DeferredAudioFixture {
+    state = "suspended";
+    currentTime = 0;
+    destination = {};
+    resume = () => new Promise<void>((resolve, reject) => {
+      pending.push({
+        resolve: () => { this.state = "running"; resolve(); },
+        reject: () => reject(new Error("stale resume failure")),
+      });
+    });
+    close = async () => { closed++; this.state = "closed"; };
+    createGain = () => ({
+      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+      connect() {},
+      disconnect() {},
+    });
+    createOscillator = () => ({
+      frequency: { value: 0 },
+      connect() {},
+      disconnect() {},
+      start() { tones++; },
+      stop() {},
+      onended: null,
+    });
+  }
+
+  const audio = new PlaceableAudio();
+  try {
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: { AudioContext: DeferredAudioFixture },
+    });
+
+    const older = audio.enable();
+    const newer = audio.enable();
+    expect(pending).toHaveLength(2);
+
+    pending[1].resolve();
+    expect(await newer).toBe("ready");
+
+    pending[0].reject();
+    expect(await older).toBe("unavailable");
+
+    // The stale failure must not have closed the newer admitted context.
+    expect(closed).toBe(0);
+    expect(audio.play()).toBe(true);
+    expect(tones).toBe(3);
+
+    audio.dispose();
+    expect(closed).toBe(1);
+  } finally {
+    audio.dispose();
+    if (prior) Object.defineProperty(globalThis, "window", prior);
+    else Reflect.deleteProperty(globalThis, "window");
+  }
+});
+
 
 
 test("return context accepts only explicit view/storage enums, never an arbitrary redirect or placement", async () => {

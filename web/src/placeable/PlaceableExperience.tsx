@@ -130,6 +130,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const editorRef = useRef<HTMLElement>(null);
   const wasDraft = useRef(false);
   const alive = useRef(true);
+  const audioAttempt = useRef(0);
   const chooseRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
@@ -177,7 +178,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   useEffect(() => {
     alive.current = true;
     void controller.load();
-    return () => { alive.current = false; controller.dispose(); audio.dispose(); };
+    return () => {
+      alive.current = false;
+      audioAttempt.current++;
+      controller.dispose();
+      audio.dispose();
+    };
   }, [controller, audio]);
   useEffect(() => {
     const leave = (event: BeforeUnloadEvent) => {
@@ -193,7 +199,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     return () => clearTimeout(timer);
   }, [state.pulse]);
   useEffect(() => {
-    const hide = () => { if (document.hidden) { audio.dispose(); setAudioStatus("muted"); } };
+    const hide = () => {
+      if (!document.hidden) return;
+      audioAttempt.current++;
+      audio.dispose();
+      setAudioStatus("muted");
+    };
     document.addEventListener("visibilitychange", hide);
     return () => document.removeEventListener("visibilitychange", hide);
   }, [audio]);
@@ -236,8 +247,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (audioStatus === "ready" && !audio.play()) setAudioStatus("unavailable");
   }
   async function toggleAudio() {
-    if (audioStatus === "ready") { audio.dispose(); setAudioStatus("muted"); return; }
-    const next = await audio.enable(); if (alive.current) setAudioStatus(next);
+    const attempt = ++audioAttempt.current;
+    if (audioStatus === "ready") {
+      audio.dispose();
+      setAudioStatus("muted");
+      return;
+    }
+    const next = await audio.enable();
+    if (alive.current && attempt === audioAttempt.current) setAudioStatus(next);
   }
   function route(view: string, storage = adapter.mode) {
     return `?experience=e2&view=${view}&storage=${storage}${livingChoiceQuery(choice)}`;

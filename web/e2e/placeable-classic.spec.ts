@@ -829,6 +829,93 @@ test("E6 mobile touch and live reduced motion retain the final hierarchy without
   } finally { await context.close(); }
 });
 
+test("#919 latest audio enable attempt owns the UI status and hidden-page mute cannot be replayed", async ({ page }) => {
+  await page.addInitScript(() => {
+    const pending: Array<{ resolve: () => void; reject: () => void }> = [];
+
+    class DeferredAudioContext {
+      state = "suspended";
+      currentTime = 0;
+      destination = {};
+      resume = () => new Promise<void>((resolve, reject) => {
+        pending.push({
+          resolve: () => {
+            if (this.state !== "closed") this.state = "running";
+            resolve();
+          },
+          reject: () => reject(new Error("stale audio enable")),
+        });
+      });
+      close = async () => { this.state = "closed"; };
+      createGain = () => ({
+        gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        connect() {},
+        disconnect() {},
+      });
+      createOscillator = () => ({
+        frequency: { value: 0 },
+        connect() {},
+        disconnect() {},
+        start() {},
+        stop() {},
+        onended: null,
+      });
+    }
+
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: DeferredAudioContext,
+    });
+
+    Object.assign(window, {
+      audioResumeCount: () => pending.length,
+      resolveAudioResume: (index: number) => pending[index]?.resolve(),
+      rejectAudioResume: (index: number) => pending[index]?.reject(),
+    });
+  });
+
+  await page.goto(companionRoute);
+
+  const sound = await editorButton(page, "소리 켜기");
+  await sound.click();
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { audioResumeCount: () => number }).audioResumeCount())).toBe(1);
+
+  // The UI is still muted while resume is pending, so a second deliberate click
+  // starts a newer enable attempt.
+  await sound.click();
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { audioResumeCount: () => number }).audioResumeCount())).toBe(2);
+
+  // Newer enable succeeds first.
+  await page.evaluate(() =>
+    (window as unknown as { resolveAudioResume: (index: number) => void }).resolveAudioResume(1));
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 켜짐");
+
+  // Older failure arrives later and must not replace ready or close its context.
+  await page.evaluate(() =>
+    (window as unknown as { rejectAudioResume: (index: number) => void }).rejectAudioResume(0));
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 켜짐");
+
+  await (await editorButton(page, "소리 끄기")).click();
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
+
+  // Start another enable, then hide the page before it resolves.
+  await (await editorButton(page, "소리 켜기")).click();
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as { audioResumeCount: () => number }).audioResumeCount())).toBe(3);
+
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
+
+  await page.evaluate(() =>
+    (window as unknown as { resolveAudioResume: (index: number) => void }).resolveAudioResume(2));
+  await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
+});
+
 test("E6 enabled audio plays one short motif per activation; muted and unavailable stay visual", async ({ page }) => {
   await page.addInitScript(() => {
     Object.assign(window, { e6Tones: 0 });
