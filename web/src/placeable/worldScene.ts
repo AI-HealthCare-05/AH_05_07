@@ -25,8 +25,14 @@ export type PlaceableProjection = Readonly<{
   pulse: number;
   suspended: boolean;
   canInteract: boolean;
+  // Exact pinwheel draft signal. Generic preview may instead be keepsake-only.
+  pinwheelPreview?: boolean;
 }>;
 export const PINWHEEL_RADIUS = 0.4;
+export const PINWHEEL_PREVIEW_CUE = Object.freeze({
+  durationSeconds: 0.24,
+  maxAngleRadians: Math.PI / 14,
+});
 // A small clay palette: light separates surfaces without metallic highlights.
 const finishes = { stone: 0.96, paving: 0.88, wood: 0.74, foliage: 1, gate: 0.68, trim: 0.58, accent: 0.5 } as const;
 const material = (color: string | number, family: keyof typeof finishes = "stone") =>
@@ -66,7 +72,9 @@ export class PlaceableScene {
   readonly camera = new PerspectiveCamera(48, 1, 0.1, 60);
   readonly choiceMarker = createLivingChoiceMarker();
   readonly pinwheel = new Group();
+  // Existing rotor owns real pinwheel play. The inner group owns preview-only motion.
   readonly rotor = new Group();
+  readonly previewRotor = new Group();
   readonly actor = new Group();
   readonly locomotion = new PlazaLocomotion();
   readonly cameraRig = new PlazaCameraRig();
@@ -92,6 +100,8 @@ export class PlaceableScene {
   #pinwheelMaterials: MeshStandardMaterial[] = [];
   #pulse = 0;
   #feedbackLeft = 0;
+  #previewCueLeft = 0;
+  #previewSelectionKey: string | null = null;
   #disposed = false;
   #reducedMotion = false;
   #preview = false;
@@ -260,10 +270,12 @@ export class PlaceableScene {
     blade.computeVertexNormals();
     for (let index = 0; index < 4; index++) {
       const mesh = new Mesh(blade, this.bladeMaterial);
-      mesh.rotation.z = index * Math.PI / 2; this.rotor.add(mesh);
+      mesh.rotation.z = index * Math.PI / 2; this.previewRotor.add(mesh);
     }
     const hub = new Mesh(new SphereGeometry(0.045, 16, 12), hubMaterial);
-    hub.position.z = 0.06; this.rotor.add(hub); this.pinwheel.add(this.rotor); this.scene.add(this.pinwheel);
+    hub.position.z = 0.06; this.previewRotor.add(hub);
+    this.rotor.add(this.previewRotor);
+    this.pinwheel.add(this.rotor); this.scene.add(this.pinwheel);
     this.actor.name = "plaza-companion";
     this.actor.position.set(-1.3, 0, 1.25);
     // A tiny generated falloff removes the hard disc edge under the real GLB.
@@ -343,8 +355,29 @@ export class PlaceableScene {
       this.#welcomeTime = this.#twilight ? 2.1 : 0;
       this.#lighting();
     }
-    if (reducedMotion) this.rotor.rotation.z = 0;
+
     const selection = projection.selection;
+    const previewSelectionKey = projection.preview && projection.pinwheelPreview && selection
+      ? `${selection.assetId}:${selection.color}:${selection.socketId}`
+      : null;
+    const previewSelectionChanged = previewSelectionKey !== null
+      && previewSelectionKey !== this.#previewSelectionKey;
+    this.#previewSelectionKey = previewSelectionKey;
+
+    if (reducedMotion) {
+      this.rotor.rotation.z = 0;
+      this.#previewCueLeft = 0;
+      this.previewRotor.rotation.z = 0;
+    } else if (previewSelectionChanged) {
+      // Latest admitted draft replaces the previous local cue; nothing queues.
+      this.#previewCueLeft = PINWHEEL_PREVIEW_CUE.durationSeconds;
+      this.previewRotor.rotation.z = 0;
+    } else if (previewSelectionKey === null) {
+      // Cancel, pinwheel removal, keepsake-only preview and confirmed state are static here.
+      this.#previewCueLeft = 0;
+      this.previewRotor.rotation.z = 0;
+    }
+
     this.pinwheel.visible = selection !== null;
     if (selection) {
       const socket = SOCKETS.find((entry) => entry.id === selection.socketId)!;
@@ -381,6 +414,17 @@ export class PlaceableScene {
       this.actor.rotation.y = this.locomotion.yaw;
     }
     this.#camera(dt);
+
+    if (this.#previewCueLeft > 0) {
+      this.#previewCueLeft = Math.max(0, this.#previewCueLeft - dt);
+      if (this.#reducedMotion || !this.#preview || !this.#previewSelectionKey || this.#previewCueLeft === 0) {
+        this.previewRotor.rotation.z = 0;
+      } else {
+        const progress = 1 - this.#previewCueLeft / PINWHEEL_PREVIEW_CUE.durationSeconds;
+        this.previewRotor.rotation.z = Math.sin(Math.PI * progress) * PINWHEEL_PREVIEW_CUE.maxAngleRadians;
+      }
+    }
+
     if (this.#feedbackLeft > 0) {
       if (!this.#reducedMotion && !this.#preview) this.rotor.rotation.z -= dt * 14 * (this.#feedbackLeft / 0.9);
       this.#feedbackLeft = Math.max(0, this.#feedbackLeft - dt);
@@ -451,6 +495,9 @@ export class PlaceableScene {
   dispose(renderer?: WebGLRenderer) {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#previewCueLeft = 0;
+    this.#previewSelectionKey = null;
+    this.previewRotor.rotation.z = 0;
     disposeScene(this.scene, renderer);
     this.scene.clear();
   }

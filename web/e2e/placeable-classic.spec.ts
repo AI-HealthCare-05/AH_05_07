@@ -57,9 +57,16 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     expect(await readLocal(page)).toBeNull();
     await page.getByRole("button", { name: "청록", exact: true }).click();
     await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click();
+    await expect(world).toHaveAttribute("data-preview", "true");
+    await expect(world).toHaveAttribute("data-color", "teal");
+    await expect(world).toHaveAttribute("data-socket", "gate-right");
+    await expect(page.getByTestId("draft-placement")).toContainText("미리보기: 청록 · 입구 오른쪽");
+    expect(await readLocal(page)).toBeNull();
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-preview.png`) });
     if (mobile) await page.getByRole("button", { name: "미리보기 취소" }).tap(); else await page.keyboard.press("Escape");
-    await expect(editor).toBeHidden(); await expect(open).toBeFocused(); expect(await readLocal(page)).toBeNull();
+    await expect(editor).toBeHidden(); await expect(open).toBeFocused();
+    await expect(world).toHaveAttribute("data-preview", "false");
+    expect(await readLocal(page)).toBeNull();
     await (await editorButton(page, "환영 바람개비 고르기")).click();
     await page.getByRole("button", { name: "청록", exact: true }).click();
     await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click();
@@ -96,6 +103,30 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     await expect(main).toHaveCount(0);
     expect(errors).toEqual([]);
   } finally { await context.close(); }
+});
+
+test("#917 reduced motion keeps pinwheel preview static, semantic and unsaved", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(companionRoute);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-companion-pose", "neutral", { timeout: 15000 });
+  await expect(world).toHaveAttribute("data-reduced-motion", "true");
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "청록", exact: true }).click();
+  await page.getByRole("button", { name: "입구 오른쪽", exact: true }).click();
+
+  await expect(world).toHaveAttribute("data-preview", "true");
+  await expect(world).toHaveAttribute("data-color", "teal");
+  await expect(world).toHaveAttribute("data-socket", "gate-right");
+  await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
+  expect(await readLocal(page)).toBeNull();
+
+  await page.getByRole("button", { name: "미리보기 취소" }).click();
+  await expect(world).toHaveAttribute("data-preview", "false");
+  expect(await readLocal(page)).toBeNull();
 });
 
 for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive ${behavior}: recovery stays visible and cannot become a saved response`, async ({ page }) => {
