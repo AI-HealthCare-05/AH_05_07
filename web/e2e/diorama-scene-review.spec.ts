@@ -116,7 +116,7 @@ test("S10 non-bear first paint holds neutral fallback until the exact selected a
   await expect(page.locator(".living-scene-fallback")).toHaveCount(0);
   await expect.poll(() => glbRequests.length).toBe(1);
   expect(glbRequests[0]).toBe(companionAssetManifest.fox.lite.url);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(host).toHaveAttribute("data-presence-observed-asset-id", companionAssetManifest.fox.lite.assetId);
 });
 

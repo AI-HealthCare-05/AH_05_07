@@ -17,12 +17,25 @@ export type SceneActorBounds = Readonly<{
   height: number;
 }>;
 
+export const S02_TAP_REACTION = Object.freeze({
+  durationMs: 360,
+  maxOffsetY: 0.07,
+});
+
+export function s02TapReactionOffset(elapsedMs: number): number {
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0 || elapsedMs >= S02_TAP_REACTION.durationMs) return 0;
+  const progress = THREE.MathUtils.clamp(elapsedMs / S02_TAP_REACTION.durationMs, 0, 1);
+  return Math.sin(Math.PI * progress) * S02_TAP_REACTION.maxOffsetY;
+}
+
 type S02SceneActorOwnerOptions = Readonly<{
   scene: THREE.Scene;
   assetUrl: string;
   characterScale: number;
   onLoaded: () => void;
   onFailure: () => void;
+  requestDraw: () => void;
+  shouldAnimateTapReaction: () => boolean;
 }>;
 
 /** Owns the S02 actor only; renderer, camera and environment stay with the scene. */
@@ -32,11 +45,19 @@ export class S02SceneActorOwner {
   readonly #characterScale: number;
   readonly #onLoaded: () => void;
   readonly #onFailure: () => void;
+  readonly #requestDraw: () => void;
+  readonly #shouldAnimateTapReaction: () => boolean;
 
   #started = false;
   #disposed = false;
   #worldRoot: THREE.Group | null = null;
+  #reactionRoot: THREE.Group | null = null;
   #normalized: THREE.Group | null = null;
+  #tapReactionFrame: number | undefined;
+  #tapReactionGeneration = 0;
+  #tapReactionStartedAt = 0;
+  #tapReactionActive = false;
+  #tapReactionCount = 0;
   #baseScale = 0;
   #presentationScale = 1;
   #centerX = 0;
@@ -49,10 +70,24 @@ export class S02SceneActorOwner {
     this.#characterScale = options.characterScale;
     this.#onLoaded = options.onLoaded;
     this.#onFailure = options.onFailure;
+    this.#requestDraw = options.requestDraw;
+    this.#shouldAnimateTapReaction = options.shouldAnimateTapReaction;
   }
 
   get worldRoot(): THREE.Group | null {
     return this.#worldRoot;
+  }
+
+  get tapReactionActive(): boolean {
+    return this.#tapReactionActive;
+  }
+
+  get tapReactionCount(): number {
+    return this.#tapReactionCount;
+  }
+
+  get tapReactionOffsetY(): number {
+    return this.#reactionRoot?.position.y ?? 0;
   }
 
   start(): void {
@@ -73,13 +108,20 @@ export class S02SceneActorOwner {
       const normalized = new THREE.Group();
       normalized.add(gltf.scene);
 
+      // Presence owns worldRoot relocation. Tap acknowledgement owns only this
+      // child transform, so neither writer can restore or overwrite the other.
+      const reactionRoot = new THREE.Group();
+      reactionRoot.name = "sk7-presence-actor-reaction";
+      reactionRoot.add(normalized);
+
       const worldRoot = new THREE.Group();
       worldRoot.name = "sk7-presence-actor-root";
-      worldRoot.add(normalized);
+      worldRoot.add(reactionRoot);
 
       const bounds = new THREE.Box3().setFromObject(worldRoot);
       const size = bounds.getSize(new THREE.Vector3());
       const center = bounds.getCenter(new THREE.Vector3());
+      this.#reactionRoot = reactionRoot;
       this.#normalized = normalized;
       this.#baseScale = (1.65 / Math.max(size.y, 0.001)) * this.#characterScale;
       this.#centerX = center.x;
@@ -103,6 +145,76 @@ export class S02SceneActorOwner {
     if (!Number.isFinite(scale) || scale <= 0 || scale === this.#presentationScale) return;
     this.#presentationScale = scale;
     this.#applyPresentationScale();
+  }
+
+  acknowledgeTap(): boolean {
+    const root = this.#reactionRoot;
+    if (this.#disposed || !root) return false;
+
+    // Latest tap replaces the old cue instead of queueing another frame loop.
+    this.#clearTapReaction(false);
+    this.#tapReactionCount += 1;
+
+    if (!this.#shouldAnimateTapReaction()) {
+      this.#requestDraw();
+      return true;
+    }
+
+    const generation = this.#tapReactionGeneration;
+    this.#tapReactionActive = true;
+    this.#tapReactionStartedAt = performance.now();
+
+    const step = (now: number) => {
+      this.#tapReactionFrame = undefined;
+      const currentRoot = this.#reactionRoot;
+      if (
+        this.#disposed
+        || generation !== this.#tapReactionGeneration
+        || !currentRoot
+      ) return;
+
+      if (!this.#shouldAnimateTapReaction()) {
+        this.#clearTapReaction(true);
+        return;
+      }
+
+      const elapsed = Math.max(0, now - this.#tapReactionStartedAt);
+      if (elapsed >= S02_TAP_REACTION.durationMs) {
+        this.#clearTapReaction(true);
+        return;
+      }
+
+      currentRoot.position.y = s02TapReactionOffset(elapsed);
+      this.#requestDraw();
+      this.#tapReactionFrame = window.requestAnimationFrame(step);
+    };
+
+    this.#tapReactionFrame = window.requestAnimationFrame(step);
+    this.#requestDraw();
+    return true;
+  }
+
+  cancelTapReaction(): boolean {
+    return this.#clearTapReaction(true);
+  }
+
+  #clearTapReaction(requestDraw: boolean): boolean {
+    const root = this.#reactionRoot;
+    const changed = this.#tapReactionActive
+      || this.#tapReactionFrame !== undefined
+      || Math.abs(root?.position.y ?? 0) > 1e-6;
+
+    this.#tapReactionGeneration += 1;
+    if (this.#tapReactionFrame !== undefined) {
+      window.cancelAnimationFrame(this.#tapReactionFrame);
+      this.#tapReactionFrame = undefined;
+    }
+    this.#tapReactionActive = false;
+    this.#tapReactionStartedAt = 0;
+    if (root) root.position.y = 0;
+
+    if (requestDraw && changed && !this.#disposed) this.#requestDraw();
+    return changed;
   }
 
   #applyPresentationScale(): void {
@@ -141,9 +253,11 @@ export class S02SceneActorOwner {
 
   dispose(): void {
     if (this.#disposed) return;
+    this.#clearTapReaction(false);
     this.#disposed = true;
     const root = this.#worldRoot;
     this.#worldRoot = null;
+    this.#reactionRoot = null;
     this.#normalized = null;
     if (!root) return;
     this.#scene.remove(root);
@@ -207,6 +321,14 @@ export class S02SceneActorPort implements PresenceSceneActorPort {
     this.#getCharacterAnchor = options.getCharacterAnchor;
     this.#requestDraw = options.requestDraw;
     this.#onFirstWrite = options.onFirstWrite;
+  }
+
+  acknowledgeTap(): boolean {
+    return this.#owner.acknowledgeTap();
+  }
+
+  cancelTapReaction(): boolean {
+    return this.#owner.cancelTapReaction();
   }
 
   project(arenaRevision: number): PresenceSceneActorProjection | null {

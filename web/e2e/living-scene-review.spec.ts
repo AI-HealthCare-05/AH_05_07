@@ -37,7 +37,7 @@ test("short 320x568 journey yields decorative realtime scene before core UI", as
   await expect(page.locator(".home-trail-dates")).toBeVisible();
   await page.waitForTimeout(500);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -74,7 +74,7 @@ test("S02 keeps an identity-neutral fallback over a hidden canvas until the exac
   await expect(canvas).toHaveCSS("visibility", "hidden");
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
 
   releaseGlb();
 
@@ -163,7 +163,7 @@ for (const [width, height] of [[320, 844], [390, 844], [1366, 768]]) {
     await expect(page.locator("[data-living-scene-status]")).toHaveAttribute("data-living-scene-status", "ready", { timeout: 20000 });
     await expect(page.locator(".living-three-scene canvas")).toHaveCount(1);
     if (width === 320) {
-      await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
       await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
     }
     // VP-10 uses the fixed synthetic 2026-09-03 (Thursday) presentation date.
@@ -440,7 +440,7 @@ test("S02 reduced motion keeps the selected identity on a neutral fallback witho
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
 
   await page.waitForTimeout(300);
@@ -573,7 +573,7 @@ test("S10 reduced motion keeps the unified owner on a neutral fallback without l
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
 
   await page.waitForTimeout(300);
@@ -681,7 +681,7 @@ test("S02 companion-off stays identity-neutral fallback and requests no characte
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
   await expect(page.locator("[data-companion-status]")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
 
   await page.waitForTimeout(300);
@@ -946,7 +946,7 @@ async function expectNeutralFallback(page: Page) {
   await expect(page.locator(".living-scene-fallback--neutral")).toHaveCount(1);
   await expect(page.locator(".living-scene-fallback img")).toHaveCount(0);
   await expect(page.locator(".living-three-scene canvas")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 }
 

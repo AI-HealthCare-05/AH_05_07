@@ -80,6 +80,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
     let s02ActorOwner: S02SceneActorOwner | undefined;
     let unregisterS02ActorPort: (() => boolean) | undefined;
     let presenceOwnsS02Root = false;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let characterAnchor: readonly [number, number, number] = [0, 0.05, 0.65];
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-2, 2, 1.5, -1.5, 0.1, 40);
@@ -113,6 +114,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       if (disposed || failed) return;
       failed = true;
       cancelWarmup();
+      s02ActorOwner?.cancelTapReaction();
       callbacks.current.onFailure();
     };
     const draw = () => {
@@ -122,8 +124,21 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
         element.dataset.drawCalls = String(renderer.info.render.calls);
         element.dataset.triangles = String(renderer.info.render.triangles);
         if (screen === "S02") {
-          const bounds = s02ActorOwner?.measure(camera, element.clientHeight);
+          const owner = s02ActorOwner;
+          const bounds = owner?.measure(camera, element.clientHeight);
           if (bounds) element.dataset.subjectBounds = JSON.stringify(bounds);
+          if (owner) {
+            element.dataset.companionTapReactionCount = String(owner.tapReactionCount);
+            element.dataset.companionTapReactionActive = String(owner.tapReactionActive);
+            element.dataset.companionTapReactionOffsetY = owner.tapReactionOffsetY.toFixed(4);
+            // Diagnostic evidence only. Presence remains the world-root authority.
+            const worldRoot = owner.worldRoot;
+            if (worldRoot) {
+              element.dataset.companionWorldRootX = worldRoot.position.x.toFixed(5);
+              element.dataset.companionWorldRootY = worldRoot.position.y.toFixed(5);
+              element.dataset.companionWorldRootZ = worldRoot.position.z.toFixed(5);
+            }
+          }
         } else if (model) {
           const bounds = new THREE.Box3().setFromObject(model);
           const corners = [bounds.min.x, bounds.max.x].flatMap(x =>
@@ -138,6 +153,11 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
         return true;
       } catch { fail(); return false; }
     };
+    const cancelHiddenTapReaction = () => {
+      if (document.hidden) s02ActorOwner?.cancelTapReaction();
+    };
+    document.addEventListener("visibilitychange", cancelHiddenTapReaction);
+
     const setupReplayAttention = (animatedModel: THREE.Object3D) => {
       if (screen !== "S10") return;
 
@@ -402,6 +422,9 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
           scene,
           assetUrl: recipe.characterUrl,
           characterScale: recipe.characterScale,
+          requestDraw: () => { if (!disposed) draw(); },
+          shouldAnimateTapReaction: () =>
+            visibleRef.current && !document.hidden && !reducedMotion.matches,
           onLoaded: () => {
             loaded = true;
             resize();
@@ -452,6 +475,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       invalidate.current = null;
       cancelWarmup();
       observer?.disconnect();
+      document.removeEventListener("visibilitychange", cancelHiddenTapReaction);
       removeReplayAttention?.();
       removeReplayAttention = undefined;
       unregisterS02ActorPort?.();

@@ -16,7 +16,7 @@ async function openSpatialS02(page: Page, width = 390, height = 844) {
   );
   const layer = page.locator('[data-presence-scene-actor-interaction="S02"]');
   await expect(layer).toHaveCount(1);
-  await expect(layer.getByRole("button", { name: "동반자 움직이기", exact: true })).toBeVisible();
+  await expect(layer.getByRole("button", { name: "동반자 반응 보기", exact: true })).toBeVisible();
   await expect(layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toBeVisible();
   expect(await layer.evaluate(element => element.closest('[aria-hidden="true"]'))).toBeNull();
   const host = page.locator('[data-companion-presence-host="shadow-v1"]');
@@ -32,6 +32,31 @@ async function rootPoint(layer: Locator) {
   };
 }
 
+async function worldRootPosition(page: Page) {
+  const scene = page.locator(".living-three-scene");
+  await expect(scene).toHaveAttribute("data-companion-world-root-x", /-?\d/);
+  await expect(scene).toHaveAttribute("data-companion-world-root-y", /-?\d/);
+  await expect(scene).toHaveAttribute("data-companion-world-root-z", /-?\d/);
+  return {
+    x: Number(await scene.getAttribute("data-companion-world-root-x")),
+    y: Number(await scene.getAttribute("data-companion-world-root-y")),
+    z: Number(await scene.getAttribute("data-companion-world-root-z")),
+  };
+}
+
+async function tapActor(
+  page: Page,
+  target: Locator,
+  mode: "mouse" | "touch" = "mouse",
+) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error("S02 actor target is not measurable");
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  if (mode === "touch") await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+}
+
 async function dragBy(page: Page, target: Locator, deltaX: number, deltaY: number) {
   const box = await target.boundingBox();
   if (!box) throw new Error("actor target has no box");
@@ -43,7 +68,7 @@ async function dragBy(page: Page, target: Locator, deltaX: number, deltaY: numbe
 }
 
 async function dragTowardFrameEdge(page: Page, layer: Locator, edge: "left" | "right" | "top" | "bottom") {
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const frame = await page.locator(frameSelector).boundingBox();
   const actor = await target.boundingBox();
   if (!frame || !actor) throw new Error("visible S02 geometry is unavailable");
@@ -99,7 +124,7 @@ async function startCapturedDrag(page: Page, target: Locator) {
 for (const [width, height] of [[320, 844], [390, 844], [768, 900], [1366, 768]] as const) {
   test(`S02 fenced direct placement drags and commits at ${width}px`, async ({ page }) => {
     const layer = await openSpatialS02(page, width, height);
-    const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+    const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
     const before = await rootPoint(layer);
     const commits = Number(await layer.getAttribute("data-presence-commit-count"));
 
@@ -129,7 +154,7 @@ for (const [species, width, height] of [
       localStorage.setItem("sk7-companion-species", savedSpecies);
     }, species);
     const layer = await openSpatialS02(page, width, height);
-    const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+    const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
     const frame = await page.locator(frameSelector).boundingBox();
     const initial = await target.boundingBox();
     if (!frame || !initial) throw new Error("initial S02 geometry is unavailable");
@@ -167,10 +192,12 @@ test("short 320px S02 keeps its intentionally hidden frame and interaction hidde
 
 test("S02 presentation controls stay visually quiet without losing semantics", async ({ page }) => {
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   const status = layer.locator(".presence-scene-actor-status");
 
+  await expect(target).toHaveAccessibleName("동반자 반응 보기");
+  await expect(target).toHaveAccessibleDescription(/누르면 동반자가 반응하고.*드래그하면 위치를 바꿔요/);
   await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await target.hover();
   await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
@@ -219,9 +246,121 @@ test("S02 presentation controls stay visually quiet without losing semantics", a
   expect(await cycle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
 });
 
+test("#921 pointer, keyboard and rapid retap acknowledge locally while drag keeps root authority", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+  const worldRootBefore = await worldRootPosition(page);
+  const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const tapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+  const reactionsBefore = Number(await scene.getAttribute("data-companion-tap-reaction-count"));
+
+  // Real pointer tap: semantic count and local render response advance while
+  // root coordinates/write/commit authority remain unchanged.
+  await tapActor(page, target);
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBefore + 1));
+  expect(await worldRootPosition(page)).toEqual(worldRootBefore);
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  await expect.poll(async () =>
+    Number(await scene.getAttribute("data-companion-tap-reaction-count"))
+  ).toBe(reactionsBefore + 1);
+  await expect.poll(async () =>
+    Math.abs(Number(await scene.getAttribute("data-companion-tap-reaction-offset-y")))
+  ).toBeGreaterThan(0);
+  expect(Math.abs(Number(await scene.getAttribute("data-companion-tap-reaction-offset-y"))))
+    .toBeLessThanOrEqual(0.071);
+
+  // Keyboard activation is the semantic equivalent and does not pass through
+  // the pointer path or move the root.
+  await target.focus();
+  const keyboardWorldRootBefore = await worldRootPosition(page);
+  const keyboardArenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+  const keyboardWritesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const keyboardCommitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const keyboardTapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+
+  await page.keyboard.press("Enter");
+
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(keyboardTapsBefore + 1));
+  expect(await worldRootPosition(page)).toEqual(keyboardWorldRootBefore);
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(keyboardArenaBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(keyboardWritesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(keyboardCommitsBefore));
+
+  // Rapid retaps replace/restart one owner. They do not queue persistent loops.
+  await tapActor(page, target);
+  await tapActor(page, target);
+  await tapActor(page, target);
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBefore + 5));
+  await expect.poll(async () =>
+    Number(await scene.getAttribute("data-companion-tap-reaction-count"))
+  ).toBe(reactionsBefore + 5);
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "true");
+  await page.waitForTimeout(450);
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "false");
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-offset-y", "0.0000");
+
+  // Start a new acknowledgement, then cross the existing 6px drag threshold.
+  // Root relocation wins and cancels local reaction without admitting another tap.
+  await tapActor(page, target);
+  const tapsBeforeDrag = Number(await layer.getAttribute("data-presence-tap-count"));
+  const commitsBeforeDrag = Number(await layer.getAttribute("data-presence-commit-count"));
+  const rootBeforeDrag = await worldRootPosition(page);
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "true");
+  await dragBy(page, target, 30, 10);
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "false");
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-offset-y", "0.0000");
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBeforeDrag));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBeforeDrag + 1));
+  expect(await worldRootPosition(page)).not.toEqual(rootBeforeDrag);
+
+  // Route teardown owns the final cancellation. No old reaction DOM survives.
+  await tapActor(page, target);
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "true");
+  await page.locator(".home-lead button").click();
+  await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
+  await expect(page.locator('[data-presence-scene-actor-interaction="S02"]')).toHaveCount(0);
+  await expect(page.locator(".living-three-scene")).toHaveCount(0);
+});
+
+test("#921 mobile touch tap acknowledges without root relocation", async ({ browser }) => {
+  const context = await browser.newContext({
+    baseURL: "http://127.0.0.1:4173",
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  try {
+    const layer = await openSpatialS02(page);
+    const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+    const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+    const worldRootBefore = await worldRootPosition(page);
+    const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+    const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+    const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+    const tapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+
+    await tapActor(page, target, "touch");
+
+    await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBefore + 1));
+    expect(await worldRootPosition(page)).toEqual(worldRootBefore);
+    expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+    await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+    await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  } finally {
+    await context.close();
+  }
+});
+
 test("unsafe S02 drop receives deterministic nearest-safe correction", async ({ page }) => {
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const control = layer.locator(".presence-scene-actor-controls");
   const targetBox = await target.boundingBox();
   const controlBox = await control.boundingBox();
@@ -261,7 +400,7 @@ test("unsafe S02 drop receives deterministic nearest-safe correction", async ({ 
 
 test("cancel, lost capture, Escape, and route invalidation restore and fence old S02 pointers", async ({ page }) => {
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
 
   const escapeBaseline = await rootPoint(layer);
   await startCapturedDrag(page, target);
@@ -310,7 +449,7 @@ test("cancel, lost capture, Escape, and route invalidation restore and fence old
   await page.waitForTimeout(50);
   expect(Number(await host.getAttribute("data-presence-world-root-write-count")))
     .toBe(writesAfterRoute);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
 });
 
 test("normalized S02 placement survives route return and responsive Arena rebuild", async ({ page }) => {
@@ -407,7 +546,7 @@ test("reduced motion suppresses the S02 placement settle animation", async ({ pa
 
 test("only the S02 actor target suppresses touch gestures and outside wheel scroll remains native", async ({ page }) => {
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   await expect(target).toHaveCSS("touch-action", "none");
   await expect(cycle).not.toHaveCSS("touch-action", "none");
@@ -424,7 +563,7 @@ test("only the S02 actor target suppresses touch gestures and outside wheel scro
 test("forced colors preserves S02 focus and the graphical alternative control", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   await target.focus();
   await expect(target).toBeFocused();
@@ -459,13 +598,13 @@ async function waitForSceneReady(stage: Locator, timeout = 20_000) {
 
 async function assertNoAdmittedTarget(page: Page) {
   await expect(page.locator("[data-presence-scene-actor-interaction='S02']")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "동반자 움직이기", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "동반자 반응 보기", exact: true })).toHaveCount(0);
 }
 
 async function assertAdmittedTarget(page: Page) {
   const layer = page.locator("[data-presence-scene-actor-interaction='S02']");
   await expect(layer).toHaveCount(1);
-  await expect(layer.getByRole("button", { name: "동반자 움직이기", exact: true })).toBeVisible();
+  await expect(layer.getByRole("button", { name: "동반자 반응 보기", exact: true })).toBeVisible();
   return layer;
 }
 
@@ -610,7 +749,7 @@ test("S02 GPU-held port-before-reveal window keeps identity and admission neutra
   const layer = await assertAdmittedTarget(page);
 
   // 12. existing direct drag path remains green
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const before = await rootPoint(layer);
   const commits = Number(await layer.getAttribute("data-presence-commit-count"));
   await dragBy(page, target, -18, -12);
@@ -821,7 +960,7 @@ test("S02 in-memory companion selection changes owner-tree descriptor for the ne
 
 test("S02 target stays transparent in normal/hover/active/pointer-down to avoid a white rectangle", async ({ page }) => {
   const layer = await openSpatialS02(page);
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const assertTransparentFill = async () => {
     await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect(target).toHaveCSS("border-color", "rgba(0, 0, 0, 0)");

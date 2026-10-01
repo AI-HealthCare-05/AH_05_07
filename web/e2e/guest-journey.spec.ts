@@ -455,7 +455,7 @@ async function rootPoint(layer: Locator) {
 }
 
 async function dragActor(page: Page, layer: Locator) {
-  const target = layer.getByRole("button", { name: "동반자 움직이기", exact: true });
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
   const box = await target.boundingBox();
   if (!box) throw new Error("guest S02 actor target has no bounds");
   const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
