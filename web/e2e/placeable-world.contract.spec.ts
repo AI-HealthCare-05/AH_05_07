@@ -5,6 +5,7 @@ import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contrac
 import {
   PlaceableScene,
   PINWHEEL_RADIUS,
+  PINWHEEL_PREVIEW_CUE,
   resolvePlazaSceneryProfile,
   type PlaceableProjection,
 } from "../src/placeable/worldScene";
@@ -382,6 +383,99 @@ const projection = (change: Partial<PlaceableProjection> = {}): PlaceableProject
   selection: coral, preview: false, pulse: 0, suspended: false, canInteract: true, ...change,
 });
 const still = { lateral: 0, forward: 0, magnitude: 0, source: "none" } as const;
+
+test("#917 pinwheel preview cue is bounded, latest-wins and separate from saved/play feedback", () => {
+  const scene = new PlaceableScene();
+  const teal = { ...coral, color: "teal" } as const;
+  const right = { ...teal, socketId: "gate-right" } as const;
+
+  const previewProjection = (selection = coral) => projection({
+    selection,
+    preview: true,
+    pinwheelPreview: true,
+    suspended: true,
+  });
+
+  // Entering the actual pinwheel draft admits one local cue.
+  scene.update(previewProjection(), false);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBeGreaterThan(0);
+  expect(Math.abs(scene.previewRotor.rotation.z)).toBeLessThanOrEqual(
+    PINWHEEL_PREVIEW_CUE.maxAngleRadians,
+  );
+
+  // Re-publishing the exact same draft must not restart the cue.
+  scene.update(previewProjection(), false);
+  for (let index = 0; index < 4; index++) scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // A real color change admits a fresh cue.
+  scene.update(previewProjection(teal), false);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBeGreaterThan(0);
+
+  // A newer socket change replaces the in-flight cue immediately.
+  scene.update(previewProjection(right), false);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+  expect(scene.pinwheel.userData.selection).toEqual(right);
+
+  let maxAngle = 0;
+  for (let index = 0; index < 5; index++) {
+    scene.step(0.05, still);
+    maxAngle = Math.max(maxAngle, Math.abs(scene.previewRotor.rotation.z));
+  }
+  expect(maxAngle).toBeGreaterThan(0);
+  expect(maxAngle).toBeLessThanOrEqual(PINWHEEL_PREVIEW_CUE.maxAngleRadians);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // Generic preview can be keepsake-only: that must not move the pinwheel.
+  scene.update(projection({
+    selection: right,
+    preview: true,
+    pinwheelPreview: false,
+    keepsake: "quiet-moon-v1",
+    suspended: true,
+  }), false);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // Reduced motion admits the new semantic draft but no transient movement,
+  // and disabling reduced motion does not replay that old choice.
+  scene.update(previewProjection(coral), true);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+  scene.update(previewProjection(coral), false);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // A later actual change can cue again.
+  scene.update(previewProjection(teal), false);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBeGreaterThan(0);
+
+  // Cancel/confirmed projection clears preview motion and never spins the real rotor.
+  scene.update(projection({ selection: coral, preview: false, pinwheelPreview: false }), false);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+  expect(scene.rotor.rotation.z).toBe(0);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // Existing real play remains owned by the outer rotor only.
+  scene.update(projection({ selection: coral, pulse: 1, preview: false, pinwheelPreview: false }), false);
+  scene.step(0.05, still);
+  expect(scene.rotor.rotation.z).not.toBe(0);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+
+  // Teardown clears an in-flight preview cue and owns no timer/second RAF.
+  scene.update(previewProjection(right), false);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBeGreaterThan(0);
+  scene.dispose();
+  expect(scene.previewRotor.rotation.z).toBe(0);
+  scene.step(0.05, still);
+  expect(scene.previewRotor.rotation.z).toBe(0);
+});
 
 test("E6 Gate leads route/details, greets once, preserves placement and reverses to exact daylight", () => {
   const scene = new PlaceableScene();
