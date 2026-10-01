@@ -2,7 +2,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import { livingCityPixelRatio } from "./livingCityRenderDensity";
-import { PlaceableScene, type PlaceableProjection } from "./worldScene";
+import {
+  PlaceableScene,
+  resolvePlazaSceneryProfile,
+  type PlaceableProjection,
+  type PlazaSceneryProfile,
+} from "./worldScene";
 import { PlaceableWorldInput } from "./worldInput";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
@@ -33,6 +38,7 @@ export default function PlaceableWorld(props: Props) {
   const [greetings, setGreetings] = useState(0);
   const [twilight, setTwilight] = useState(false);
   const [welcomePhase, setWelcomePhase] = useState<PlaceableScene["welcomePhase"]>("daylight");
+  const [sceneryProfile, setSceneryProfile] = useState<PlazaSceneryProfile>("full");
   const toggleTwilight = () => {
     if (!sceneRef.current || error) return;
     const enabled = !twilight;
@@ -127,6 +133,9 @@ export default function PlaceableWorld(props: Props) {
       const resize = () => {
         if (disposed) return;
         const width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
+        const profile = resolvePlazaSceneryProfile(width, height);
+        scene!.setSceneryProfile(profile);
+        setSceneryProfile(profile);
         renderer!.setPixelRatio(livingCityPixelRatio(width, height, window.devicePixelRatio));
         renderer!.setSize(width, height, false); scene!.resize(width / height); setLabels(scene!.labels());
       };
@@ -198,6 +207,7 @@ export default function PlaceableWorld(props: Props) {
   return <div data-testid="placeable-world" data-preview={props.preview} data-color={props.selection?.color ?? "unplaced"}
     data-keepsake={props.keepsake ?? "none"} data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
     data-world-error={error} data-suspended={props.suspended || !focused} data-reduced-motion={reducedMotion}
+    data-scenery-profile={sceneryProfile}
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
     data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
