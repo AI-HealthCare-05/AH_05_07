@@ -1286,7 +1286,7 @@ test("#909 mounted Guest plaza world chunk failure stays local with no preload-r
 });
 
 for (const [width, height, enlarged] of [
-  [1440, 900, false], [1366, 768, false], [768, 900, false], [390, 844, false],
+  [1440, 900, false], [1366, 768, false], [768, 900, false], [768, 400, false], [390, 844, false],
   [320, 568, false], [320, 400, false], [320, 568, true],
 ] as const) test(`#909 Guest plaza adaptive ${width}x${height}${enlarged ? " 200% text" : ""}: semantic controls remain reachable`, async ({ page }, testInfo) => {
   const network = await installGuestNetworkFirewall(page);
@@ -1296,6 +1296,10 @@ for (const [width, height, enlarged] of [
   await enterGuestPlaza(page);
   const world = page.getByTestId("placeable-world");
   await expect(world).toHaveAttribute("data-reduced-motion", "true");
+  await expect(world).toHaveAttribute(
+    "data-scenery-profile",
+    width <= 390 || height <= 400 ? "compact" : "full",
+  );
   const exit = page.getByRole("button", { name: "오늘 화면으로 돌아가기", exact: true });
   await expect(exit).toBeInViewport();
   if (width <= 390) {
@@ -1326,6 +1330,41 @@ for (const [width, height, enlarged] of [
   expect(await exit.evaluate(node => getComputedStyle(node).outlineStyle)).not.toBe("none");
   await exit.press("Enter");
   await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  network.assertClean();
+});
+
+test("#915 Guest plaza live resize keeps one world, Twilight and companion while scenery adapts", async ({ page }) => {
+  const network = await installGuestNetworkFirewall(page);
+  const lifetime = await observeGuestWorldLifetime(page);
+  await openGuest(page, 1366, 900);
+  await enterGuestPlaza(page);
+
+  const world = page.getByTestId("placeable-world");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  await expect(world).toHaveAttribute("data-scenery-profile", "full");
+  await lifetime.entered();
+
+  await canvas.evaluate((node) => { (node as HTMLCanvasElement & { __adaptiveIdentity?: string }).__adaptiveIdentity = "same-canvas"; });
+  await openPlazaTools(page);
+  await page.getByRole("button", { name: "광장의 불빛 켜기", exact: true }).click();
+  await expect(world).toHaveAttribute("data-lighting", "twilight");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(world).toHaveAttribute("data-scenery-profile", "compact");
+  expect(await canvas.evaluate((node) =>
+    (node as HTMLCanvasElement & { __adaptiveIdentity?: string }).__adaptiveIdentity)).toBe("same-canvas");
+  await expect(world).toHaveAttribute("data-lighting", "twilight");
+  await lifetime.entered();
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await expect(world).toHaveAttribute("data-scenery-profile", "full");
+  expect(await canvas.evaluate((node) =>
+    (node as HTMLCanvasElement & { __adaptiveIdentity?: string }).__adaptiveIdentity)).toBe("same-canvas");
+  await expect(world).toHaveAttribute("data-lighting", "twilight");
+  await lifetime.entered();
+
+  await returnGuestToday(page);
+  await lifetime.exited();
   network.assertClean();
 });
 

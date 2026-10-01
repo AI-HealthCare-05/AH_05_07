@@ -45,6 +45,22 @@ const ramp = (time: number, start: number, duration: number) => {
   return value * value * (3 - 2 * value);
 };
 
+export type PlazaSceneryProfile = "full" | "compact";
+
+export const PLAZA_COMPACT_SCENERY_LIMITS = Object.freeze({
+  width: 560,
+  height: 420,
+});
+
+/** Host geometry selects presentation density only; it is not a device/performance guess. */
+export function resolvePlazaSceneryProfile(width: number, height: number): PlazaSceneryProfile {
+  if (![width, height].every(Number.isFinite) || width <= 0 || height <= 0) return "compact";
+  return width < PLAZA_COMPACT_SCENERY_LIMITS.width
+    || height < PLAZA_COMPACT_SCENERY_LIMITS.height
+    ? "compact"
+    : "full";
+}
+
 export class PlaceableScene {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(48, 1, 0.1, 60);
@@ -54,7 +70,11 @@ export class PlaceableScene {
   readonly actor = new Group();
   readonly locomotion = new PlazaLocomotion();
   readonly cameraRig = new PlazaCameraRig();
+  readonly gate = new Group();
+  readonly anchorScenery = new Group();
+  readonly optionalScenery = new Group();
   #cameraObstacles: CameraObstacle[] = [];
+  #sceneryProfile: PlazaSceneryProfile = "full";
   readonly socketRings = new Group();
   readonly bladeMaterial = material(COLORS.coral, "accent");
   readonly ambient = new AmbientLight(0xe8ecff, 0.45);
@@ -124,7 +144,7 @@ export class PlaceableScene {
     gardenRoute.setIndex([0, 2, 1, 3, 5, 4, 6, 8, 7, 9, 11, 10]);
     gardenRoute.computeVertexNormals();
     this.scene.add(new Mesh(gardenRoute, this.approachMaterial));
-    const gate = new Group(); gate.name = PLAZA.destination.id;
+    const gate = this.gate; gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
     gate.scale.set(1.35, 1.45, 1.35);
     const gateMaterial = this.gateMaterial, trimMaterial = material("#c4b4ce", "trim");
@@ -152,46 +172,71 @@ export class PlaceableScene {
     this.scene.add(gate);
     const leaves = [material("#486a60", "foliage"), material("#678576", "foliage"), material("#92a184", "foliage")];
     const trunk = material("#80664e", "wood");
-    // Asymmetric clipped street trees and low terraces frame the one hero.
-    for (const [x, z, height, spread] of [[-3.6, -3.2, 3.4, 1.1], [3.8, -4.6, 3.9, 1.25], [-5.8, 0.5, 2.9, 1], [6.6, -2.4, 3, 1]]) {
+    this.anchorScenery.name = "plaza-scenery-anchor";
+    this.optionalScenery.name = "plaza-scenery-optional";
+
+    // Two framing trees remain in every profile; the farther pair is optional.
+    const treeSites = [
+      [-3.6, -3.2, 3.4, 1.1],
+      [3.8, -4.6, 3.9, 1.25],
+      [-5.8, 0.5, 2.9, 1],
+      [6.6, -2.4, 3, 1],
+    ] as const;
+    treeSites.forEach(([x, z, height, spread], index) => {
+      const owner = index < 2 ? this.anchorScenery : this.optionalScenery;
+      const role = index < 2 ? "anchor" : "optional";
       const stem = new Mesh(new CylinderGeometry(0.1, 0.17, height - 0.7, 10), trunk);
-      stem.position.set(x, (height - 0.7) / 2, z); this.scene.add(stem);
+      stem.name = `plaza-${role}-tree-${index}-stem`;
+      stem.position.set(x, (height - 0.7) / 2, z); owner.add(stem);
       for (let n = 0; n < 3; n++) {
         const canopy = new Mesh(new SphereGeometry(spread, 12, 8), leaves[n]);
+        canopy.name = `plaza-${role}-tree-${index}-canopy-${n}`;
         canopy.scale.set(1 - n * 0.12, 0.65, 0.85);
-        canopy.position.set(x + (n - 1) * 0.28, height - 0.65 + n * 0.4, z + n * 0.12); this.scene.add(canopy);
+        canopy.position.set(x + (n - 1) * 0.28, height - 0.65 + n * 0.4, z + n * 0.12);
+        owner.add(canopy);
       }
-    }
-    for (const [x, z, width] of [[-3.5, -1.1, 1.7], [3.5, -2, 1.5], [-3.4, 3.6, 2.4], [4.1, 3.1, 1.8], [-2.7, -4.8, 2.5], [2.9, -5.4, 2.1]]) {
+    });
+
+    // The near pair keeps plaza silhouette/grounding; peripheral beds are optional.
+    const bedSites = [
+      [-3.5, -1.1, 1.7],
+      [3.5, -2, 1.5],
+      [-3.4, 3.6, 2.4],
+      [4.1, 3.1, 1.8],
+      [-2.7, -4.8, 2.5],
+      [2.9, -5.4, 2.1],
+    ] as const;
+    bedSites.forEach(([x, z, width], index) => {
+      const owner = index < 2 ? this.anchorScenery : this.optionalScenery;
+      const role = index < 2 ? "anchor" : "optional";
       const bed = new Mesh(new BoxGeometry(width, 0.3, 0.95), edging);
-      bed.position.set(x, 0.12, z); this.scene.add(bed);
+      bed.name = `plaza-${role}-bed-${index}`;
+      bed.position.set(x, 0.12, z); owner.add(bed);
       for (let n = 0; n < 4; n++) {
         const shrub = new Mesh(new SphereGeometry(0.46, 12, 8), leaves[n % 3]);
+        shrub.name = `plaza-${role}-bed-${index}-shrub-${n}`;
         shrub.scale.set(0.9, 0.6 + (n % 2) * 0.25, 0.85);
-        shrub.position.set(x - width / 2 + 0.25 + n * (width - 0.5) / 3, 0.38, z); this.scene.add(shrub);
+        shrub.position.set(x - width / 2 + 0.25 + n * (width - 0.5) / 3, 0.38, z);
+        owner.add(shrub);
       }
-    }
-    // A pair of quiet seats, with no extra actors or competing landmark.
-    for (const x of [-3.15, 3.2]) {
-      const seat = new Mesh(new BoxGeometry(1.25, 0.14, 0.48), trunk);
-      seat.position.set(x, 0.46, 0.2); this.scene.add(seat);
-      for (const offset of [-0.43, 0.43]) {
-        const leg = new Mesh(new BoxGeometry(0.16, 0.4, 0.38), stone);
-        leg.position.set(x + offset, 0.2, 0.2); this.scene.add(leg);
-      }
-    }
-    // Browser review reproduced gate/tree occlusion at 180/270 degrees. Static
-    // mesh bounds are a conservative camera-only proxy, never actor collision.
-    // Capture before adding interactive objects or the companion; ground/path
-    // surfaces cannot obstruct the eye-height boom.
-    this.scene.updateMatrixWorld(true);
-    this.scene.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
-      const box = new Box3().setFromObject(object);
-      if (box.max.y < 0.6) return;
-      this.#cameraObstacles.push(cameraObstacle(`plaza-${this.#cameraObstacles.length}`,
-        worldPoint(box.min.x, box.min.y, box.min.z), worldPoint(box.max.x, box.max.y, box.max.z)));
     });
+
+    // Quiet seats remain as compact-profile grounding landmarks.
+    for (const [index, x] of [-3.15, 3.2].entries()) {
+      const seat = new Mesh(new BoxGeometry(1.25, 0.14, 0.48), trunk);
+      seat.name = `plaza-anchor-seat-${index}`;
+      seat.position.set(x, 0.46, 0.2); this.anchorScenery.add(seat);
+      for (const [legIndex, offset] of [-0.43, 0.43].entries()) {
+        const leg = new Mesh(new BoxGeometry(0.16, 0.4, 0.38), stone);
+        leg.name = `plaza-anchor-seat-${index}-leg-${legIndex}`;
+        leg.position.set(x + offset, 0.2, 0.2); this.anchorScenery.add(leg);
+      }
+    }
+
+    this.scene.add(this.anchorScenery, this.optionalScenery);
+
+    // Camera proxies are rebuilt from exactly the scenery that is currently visible.
+    this.#rebuildCameraObstacles();
     for (const socket of SOCKETS) {
       const ring = new Mesh(new RingGeometry(0.31, PINWHEEL_RADIUS, 40), material("#819f86"));
       ring.name = socket.id; ring.rotation.x = -Math.PI / 2;
@@ -239,6 +284,36 @@ export class PlaceableScene {
     contact.castShadow = false; contact.receiveShadow = false;
     this.socketRings.traverse((object) => { object.castShadow = false; });
     this.resize(1);
+  }
+
+  #rebuildCameraObstacles() {
+    this.scene.updateMatrixWorld(true);
+    const next: CameraObstacle[] = [];
+    const roots = [
+      this.gate,
+      this.anchorScenery,
+      ...(this.#sceneryProfile === "full" ? [this.optionalScenery] : []),
+    ];
+    for (const root of roots) root.traverse((object) => {
+      if (!(object instanceof Mesh)) return;
+      const box = new Box3().setFromObject(object);
+      if (box.max.y < 0.6) return;
+      const id = object.name || `${root.name}-${next.length}`;
+      next.push(cameraObstacle(id,
+        worldPoint(box.min.x, box.min.y, box.min.z),
+        worldPoint(box.max.x, box.max.y, box.max.z)));
+    });
+    this.#cameraObstacles = next;
+  }
+
+  get sceneryProfile() { return this.#sceneryProfile; }
+  get cameraObstacles(): readonly CameraObstacle[] { return this.#cameraObstacles; }
+
+  setSceneryProfile(profile: PlazaSceneryProfile) {
+    if (this.#disposed || profile === this.#sceneryProfile) return;
+    this.#sceneryProfile = profile;
+    this.optionalScenery.visible = profile === "full";
+    this.#rebuildCameraObstacles();
   }
 
   resize(aspect: number) {

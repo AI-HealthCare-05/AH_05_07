@@ -2,7 +2,12 @@ import { keepsakeCandidate } from "../src/placeable/keepsakeMedia";
 import { expect, test } from "@playwright/test";
 import { Box3, Mesh, Raycaster, Vector3, type CylinderGeometry, type BufferGeometry, type Material } from "three";
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
-import { PlaceableScene, PINWHEEL_RADIUS, type PlaceableProjection } from "../src/placeable/worldScene";
+import {
+  PlaceableScene,
+  PINWHEEL_RADIUS,
+  resolvePlazaSceneryProfile,
+  type PlaceableProjection,
+} from "../src/placeable/worldScene";
 import { PlaceableWorldInput } from "../src/placeable/worldInput";
 import { AnimationClip, Bone, BoxGeometry, Float32BufferAttribute, Group, MeshStandardMaterial, NumberKeyframeTrack, Skeleton, SkinnedMesh, Texture, Uint16BufferAttribute } from "three";
 import type { GLTF } from "three/addons/loaders/GLTFLoader.js";
@@ -18,7 +23,8 @@ import { livingCityPixelRatio } from "../src/placeable/livingCityRenderDensity";
 import { PlazaLocomotion, PLAZA_LOCOMOTION, shortestYaw } from "../src/placeable/plazaLocomotion";
 import { PLAZA_CAMERA } from "../src/placeable/plazaCamera";
 import { PlazaPointerGesture } from "../src/placeable/plazaPointerGesture";
-import { cameraRelativeMovement } from "../transcend-lab/src/platform/spatial/thirdPersonCamera";
+import { cameraRelativeMovement, resolveThirdPersonCamera } from "../transcend-lab/src/platform/spatial/thirdPersonCamera";
+import { worldPoint } from "../transcend-lab/src/platform/spatial/worldSpaceClock";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -28,6 +34,69 @@ function companionFixture() {
     [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
   return { scene: model, animations: clips } as GLTF;
 }
+
+test("#915 plaza scenery profile follows host geometry and camera proxies follow optional scenery", () => {
+  expect(resolvePlazaSceneryProfile(1366, 600)).toBe("full");
+  expect(resolvePlazaSceneryProfile(768, 700)).toBe("full");
+  expect(resolvePlazaSceneryProfile(390, 700)).toBe("compact");
+  expect(resolvePlazaSceneryProfile(320, 700)).toBe("compact");
+  expect(resolvePlazaSceneryProfile(900, 400)).toBe("compact");
+  expect(resolvePlazaSceneryProfile(NaN, 700)).toBe("compact");
+
+  const scene = new PlaceableScene();
+  const countMeshes = (root: Group) => {
+    let count = 0;
+    root.traverse((object) => { if (object instanceof Mesh) count++; });
+    return count;
+  };
+
+  const anchorCount = countMeshes(scene.anchorScenery);
+  const optionalCount = countMeshes(scene.optionalScenery);
+  expect(anchorCount).toBeGreaterThan(0);
+  expect(optionalCount).toBeGreaterThan(0);
+  expect(optionalCount).toBeGreaterThan(anchorCount);
+
+  const optionalIdentity = scene.optionalScenery.children.map((object) => object.uuid);
+  const socketPositions = SOCKETS.map((socket) => [socket.id, socket.x, socket.z]);
+  const fullObstacleIds = scene.cameraObstacles.map((obstacle) => obstacle.id);
+  const optionalObstacle = scene.cameraObstacles.find((obstacle) => obstacle.id.includes("optional-tree"));
+  expect(optionalObstacle).toBeDefined();
+
+  // A known optional tree proxy is a real camera obstruction while full scenery is active.
+  const obstacle = optionalObstacle!;
+  const centerX = (obstacle.min.x + obstacle.max.x) / 2;
+  const centerY = (obstacle.min.y + obstacle.max.y) / 2;
+  const focus = worldPoint(centerX, centerY, obstacle.min.z - 1);
+  const cameraConfig = {
+    yawRadians: 0,
+    pitchRadians: 0,
+    minPitchRadians: -1,
+    maxPitchRadians: 1,
+    desiredDistance: Math.max(3, obstacle.max.z - obstacle.min.z + 3),
+    minDistance: 0.2,
+    obstructionClearance: 0.1,
+  };
+  expect(resolveThirdPersonCamera(focus, cameraConfig, [obstacle]).occluded).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.sceneryProfile).toBe("compact");
+  expect(scene.anchorScenery.visible).toBe(true);
+  expect(scene.optionalScenery.visible).toBe(false);
+  expect(scene.optionalScenery.children.map((object) => object.uuid)).toEqual(optionalIdentity);
+  expect(scene.cameraObstacles.some((entry) => entry.id === obstacle.id)).toBe(false);
+  expect(resolveThirdPersonCamera(focus, cameraConfig,
+    scene.cameraObstacles.filter((entry) => entry.id === obstacle.id)).occluded).toBe(false);
+  expect(SOCKETS.map((socket) => [socket.id, socket.x, socket.z])).toEqual(socketPositions);
+
+  scene.setSceneryProfile("full");
+  expect(scene.sceneryProfile).toBe("full");
+  expect(scene.optionalScenery.visible).toBe(true);
+  expect(scene.optionalScenery.children.map((object) => object.uuid)).toEqual(optionalIdentity);
+  expect(scene.cameraObstacles.map((entry) => entry.id)).toEqual(fullObstacleIds);
+  expect(SOCKETS.map((socket) => [socket.id, socket.x, socket.z])).toEqual(socketPositions);
+
+  scene.dispose();
+});
 
 test("Living City immersive density bounds actual drawing pixels across resizing and high DPR", () => {
   for (const [width, height] of [[390, 844], [844, 390], [1366, 900], [2560, 1440], [3840, 2160]]) {

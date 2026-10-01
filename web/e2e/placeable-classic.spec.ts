@@ -43,7 +43,9 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     const main = page.getByTestId("placeable-experience"), canvas = page.getByTestId("placeable-world-canvas");
     const editor = page.getByRole("region", { name: "내 공간 꾸미기", includeHidden: true });
     const open = page.getByRole("button", { name: "꾸미기", exact: true });
-    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+    await expect(world).toHaveAttribute("data-scenery-profile", mobile ? "compact" : "full");
     await expect(editor).toBeHidden();
     const rect = (await canvas.boundingBox())!;
     expect(rect.height).toBeGreaterThan((mobile ? 844 : 960) * 0.6);
