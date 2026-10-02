@@ -1,6 +1,25 @@
 // Navigation context only, carried by this visit's URL. Never a snapshot, user
 // identity, redirect URL or storage authority. E2 verifies and reads on return.
-type MySpaceReturn = Readonly<{ view: "classic" | "3d"; storage: "browser" | "account" }>;
+export type MySpaceView = "classic" | "3d";
+export type MySpaceStorage = "browser" | "account";
+export type MySpaceReturn = Readonly<{
+  view: MySpaceView;
+  storage: MySpaceStorage;
+}>;
+
+export const mySpaceViewLabel: Readonly<Record<MySpaceView, string>> = Object.freeze({
+  classic: "간단한 광장",
+  "3d": "3D 광장",
+});
+
+export const mySpaceStorageLabel: Readonly<Record<MySpaceStorage, string>> = Object.freeze({
+  browser: "이 브라우저의 공간",
+  account: "계정 공간",
+});
+
+export function mySpaceContextLabel(space: MySpaceReturn): string {
+  return `${mySpaceStorageLabel[space.storage]} · ${mySpaceViewLabel[space.view]}`;
+}
 
 export function readMySpaceReturn(search: string): MySpaceReturn | null {
   const params = new URLSearchParams(search);

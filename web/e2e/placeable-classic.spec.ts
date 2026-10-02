@@ -1961,3 +1961,146 @@ for (const mode of ["browser", "account"] as const) for (const view of ["classic
     await page.clock.resume();
   });
 }
+
+test("#930 Today-My Space round trip exposes exact identity and destination focus without extra history", async ({ page }) => {
+  await classicTodaySession(page);
+
+  await page.goto("/?screen=S02");
+  await expectClassicToday(page);
+  await expect(page.locator("#S02-title")).toBeFocused();
+
+  const entryNav = page.locator(".today-my-space");
+  await expect(entryNav).toHaveAttribute("data-my-space-intent", "enter");
+  await expect(entryNav).toHaveAttribute("data-my-space-view", "3d");
+  await expect(entryNav).toHaveAttribute("data-my-space-storage", "account");
+  await expect(entryNav).toContainText("계정 공간");
+  await expect(entryNav).toContainText("3D 광장");
+
+  const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+  await entry.focus();
+  await page.keyboard.press("Enter");
+
+  const spaceHeading = page.getByRole("heading", { level: 1, name: /내 공간/ });
+  await expect(spaceHeading).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "3d");
+
+  const today = page.getByRole("link", { name: "오늘의 기록으로 가기" });
+  await today.focus();
+  await page.keyboard.press("Enter");
+
+  await expectClassicToday(page);
+  await expect(page.locator("#S02-title")).toBeFocused();
+
+  const returnNav = page.locator(".today-my-space");
+  await expect(returnNav).toHaveAttribute("data-my-space-intent", "return");
+  await expect(returnNav).toHaveAttribute("data-my-space-view", "3d");
+  await expect(returnNav).toHaveAttribute("data-my-space-storage", "account");
+  await expect(returnNav).toContainText("계정 공간");
+  await expect(returnNav).toContainText("3D 광장");
+
+  const returnLink = page.getByRole("link", { name: "내 공간으로 돌아가기" });
+  await expect(returnLink).toHaveAttribute(
+    "href",
+    "?experience=e2&view=3d&storage=account",
+  );
+
+  // One explicit full-page transition is one browser-history step.
+  await page.goBack();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "3d");
+
+  await page.goForward();
+  await expectClassicToday(page);
+  await expect(returnNav).toHaveAttribute("data-my-space-intent", "return");
+
+  await returnLink.click();
+  await expect(spaceHeading).toBeFocused();
+});
+
+test("#930 blocked draft and unknown save keep My Space ownership and focus truthful handoff", async ({ page }) => {
+  await page.goto(companionRoute);
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  const draftExit = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+
+  await expect(draftExit).toHaveAttribute("aria-disabled", "true");
+  await draftExit.focus();
+  await page.keyboard.press("Enter");
+
+  const handoff = page.locator(".placeable-handoff-note");
+  await expect(handoff).toBeFocused();
+  await expect(handoff).toContainText("미리보기를 먼저 마무리해 주세요");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  await expect(page).toHaveURL(/experience=e2/);
+
+  await accountRoute(page, "unknown", false);
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unknown");
+
+  const unknownExit = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  await expect(unknownExit).toHaveAttribute("aria-disabled", "true");
+  await unknownExit.focus();
+  await page.keyboard.press("Enter");
+
+  await expect(handoff).toBeFocused();
+  await expect(handoff).toContainText("저장 결과를 먼저 확인해 주세요");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  await expect(page).toHaveURL(/experience=e2/);
+});
+
+test("#930 transition UI reflows at 320 and actual 200-percent text enlargement", async ({ page }) => {
+  await classicTodaySession(page);
+
+  for (const viewport of [
+    { width: 320, height: 844, label: "320", textPercent: 100 },
+    { width: 320, height: 568, label: "text-200", textPercent: 200 },
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto("/?screen=S02");
+    await expectClassicToday(page);
+
+    if (viewport.textPercent === 200) {
+      // Match the repository's established actual text-enlargement evidence.
+      // This is text-only enlargement, intentionally not claimed as browser zoom.
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+      });
+    }
+
+    const nav = page.locator(".today-my-space");
+    const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+
+    await nav.scrollIntoViewIfNeeded();
+    await expect(nav).toHaveAttribute("data-my-space-view", "3d");
+    await expect(nav).toHaveAttribute("data-my-space-storage", "account");
+    await expect(entry).toBeVisible();
+
+    const entryBox = await entry.boundingBox();
+    expect(entryBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    await page.emulateMedia({ forcedColors: "active" });
+    await entry.focus();
+    await expect(entry).toBeFocused();
+    expect(await entry.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
+    await page.emulateMedia({ forcedColors: "none" });
+
+    await entry.click();
+
+    await expect(page.getByRole("heading", { level: 1, name: /내 공간/ })).toBeFocused();
+    const today = page.getByRole("link", { name: "오늘의 기록으로 가기" });
+    await today.scrollIntoViewIfNeeded();
+
+    const todayBox = await today.boundingBox();
+    expect(todayBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    await page.screenshot({
+      path: test.info().outputPath(`930-transition-${viewport.label}.png`),
+      scale: "css",
+    });
+  }
+});

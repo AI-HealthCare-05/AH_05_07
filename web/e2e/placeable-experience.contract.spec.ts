@@ -252,3 +252,34 @@ test("Classic remount never replays an earlier interaction while preview or reco
     expect(html).not.toContain("pinwheel-spin");
   }
 });
+
+test("#930 bounded transition identity has exact view/storage vocabulary without another authority", async () => {
+  const {
+    mySpaceContextLabel,
+    mySpaceStorageLabel,
+    mySpaceViewLabel,
+    readMySpaceReturn,
+  } = await import("../src/ui/mySpaceReturn");
+
+  expect(mySpaceStorageLabel).toEqual({
+    browser: "이 브라우저의 공간",
+    account: "계정 공간",
+  });
+  expect(mySpaceViewLabel).toEqual({
+    classic: "간단한 광장",
+    "3d": "3D 광장",
+  });
+
+  const cases = [
+    ["classic-browser", "이 브라우저의 공간 · 간단한 광장"],
+    ["classic-account", "계정 공간 · 간단한 광장"],
+    ["3d-browser", "이 브라우저의 공간 · 3D 광장"],
+    ["3d-account", "계정 공간 · 3D 광장"],
+  ] as const;
+
+  for (const [value, label] of cases) {
+    const context = readMySpaceReturn(`?return_space=${value}`);
+    expect(context).not.toBeNull();
+    expect(mySpaceContextLabel(context!)).toBe(label);
+  }
+});

@@ -1563,12 +1563,18 @@ function App() {
   // Destination intent only. ProductPlaceableEntry owns verification and reads.
   // A bounded return context preserves an explicit browser-only visit.
   const returnSpace = readMySpaceReturn(window.location.search);
+  const mySpaceView = returnSpace?.view ?? "3d";
+  const mySpaceStorage = returnSpace?.storage ?? "account";
   const mySpaceEntry = session && !evidenceMode && requestedScreen === "S02"
     && (activeScreen === "S02" || activeScreen === "S12")
     && !readNavigationDisabled && !signOutPending && !accountDeletionOpen
     && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload
-    ? { href: `?experience=e2&view=${returnSpace?.view ?? "3d"}&storage=${returnSpace?.storage ?? "account"}`,
-      returning: Boolean(returnSpace), browserOnly: returnSpace?.storage === "browser" } : undefined;
+    ? {
+      href: `?experience=e2&view=${mySpaceView}&storage=${mySpaceStorage}`,
+      returning: Boolean(returnSpace),
+      view: mySpaceView,
+      storage: mySpaceStorage,
+    } : undefined;
   const blockingLoading = windowState === "loading" && requiresObservationWindow(activeScreen);
   const companionContext: CompanionSelectionContext | undefined = activeScreen === "S05" && confirmedSave
     ? "save_success"

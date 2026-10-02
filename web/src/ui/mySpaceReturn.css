@@ -48,3 +48,48 @@
 @media (forced-colors: active) {
   .today-space-landmark, .today-space-landmark i:nth-child(1) { border-color: CanvasText; }
 }
+
+/* #930 transition identity: bounded context only; never world/product state. */
+.today-space-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sk7-space-2xs);
+  min-width: 0;
+}
+.today-space-context span,
+.my-space-return-context {
+  width: fit-content;
+  max-width: 100%;
+  padding: .2rem .55rem;
+  border: 1px solid var(--sk7-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sk7-surface-solid) 86%, var(--sk7-accent-soft));
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  line-height: var(--sk7-leading-body);
+  overflow-wrap: anywhere;
+}
+.my-space-return-context {
+  display: inline-flex;
+  margin-top: .1rem;
+}
+.journey-today .today-space-landmark {
+  grid-row: span 3;
+}
+.journey-today .today-space-context {
+  grid-column: 2;
+}
+@media (max-width: 580px) {
+  .today-space-context {
+    gap: .2rem;
+  }
+}
+@media (forced-colors: active) {
+  .today-space-context span,
+  .my-space-return-context {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}
