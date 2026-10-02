@@ -1614,3 +1614,421 @@ test("#923 page hidden cancels active tactile ownership and visibility return st
   await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
   await expectTactileNeutral(scene);
 });
+
+
+// #925 bounded primary-action attention browser evidence
+
+async function attentionTransform(scene: Locator) {
+  return {
+    yaw: Number(await scene.getAttribute("data-companion-attention-yaw")),
+    pitch: Number(await scene.getAttribute("data-companion-attention-pitch")),
+    headYaw: Number(await scene.getAttribute("data-companion-attention-head-yaw")),
+    spineYaw: Number(await scene.getAttribute("data-companion-attention-spine-yaw")),
+    headPitch: Number(await scene.getAttribute("data-companion-attention-head-pitch")),
+    spinePitch: Number(await scene.getAttribute("data-companion-attention-spine-pitch")),
+    maxYaw: Number(await scene.getAttribute("data-companion-attention-max-yaw")),
+    maxPitch: Number(await scene.getAttribute("data-companion-attention-max-pitch")),
+  };
+}
+
+async function expectAttentionNeutral(scene: Locator) {
+  await expect.poll(async () => ({
+    active: await scene.getAttribute("data-companion-attention-active"),
+    yaw: await scene.getAttribute("data-companion-attention-yaw"),
+    pitch: await scene.getAttribute("data-companion-attention-pitch"),
+    headYaw: await scene.getAttribute("data-companion-attention-head-yaw"),
+    spineYaw: await scene.getAttribute("data-companion-attention-spine-yaw"),
+    headPitch: await scene.getAttribute("data-companion-attention-head-pitch"),
+    spinePitch: await scene.getAttribute("data-companion-attention-spine-pitch"),
+  })).toEqual({
+    active: "false",
+    yaw: "0.0000",
+    pitch: "0.0000",
+    headYaw: "0.0000",
+    spineYaw: "0.0000",
+    headPitch: "0.0000",
+    spinePitch: "0.0000",
+  });
+}
+
+async function expectAttentionChanged(scene: Locator) {
+  await expect.poll(async () => {
+    const value = await attentionTransform(scene);
+    return Math.max(
+      Math.abs(value.yaw),
+      Math.abs(value.pitch),
+      Math.abs(value.headYaw),
+      Math.abs(value.spineYaw),
+      Math.abs(value.headPitch),
+      Math.abs(value.spinePitch),
+    );
+  }).toBeGreaterThan(0.0001);
+}
+
+async function triggerPrimaryAttention(page: Page) {
+  const primary = page.locator('[data-scene="S02"] .home-lead button');
+  await expect(primary).toBeVisible();
+
+  await primary.evaluate((element: HTMLButtonElement) => {
+    element.blur();
+    element.focus({ preventScroll: true });
+  });
+
+  return primary;
+}
+
+async function expectReactionRootNeutralDuringAttention(scene: Locator) {
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-active", "false");
+  await expect(scene).toHaveAttribute("data-companion-tap-reaction-offset-y", "0.0000");
+  expect(await tactileTransform(scene)).toEqual({
+    x: 0,
+    y: 0,
+    rotationZ: 0,
+    scaleX: 1,
+    scaleY: 1,
+    scaleZ: 1,
+  });
+}
+
+test("#925 primary-action focus sends position-only attention and changes bones without root authority", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  await expect(scene).toHaveAttribute("data-companion-attention-available", "true");
+  await expect(scene).toHaveAttribute("data-companion-attention-posture", "head-spine");
+  await expect(scene).toHaveAttribute("data-companion-attention-head-bone", "head");
+  await expect(scene).toHaveAttribute("data-companion-attention-spine-bone", "spine");
+  await expectAttentionNeutral(scene);
+
+  await page.evaluate(() => {
+    const events: unknown[] = [];
+    Object.defineProperty(window, "__s02AttentionEvents", {
+      configurable: true,
+      value: events,
+    });
+    window.addEventListener("sk7:s02-primary-attention", (event) => {
+      events.push((event as CustomEvent).detail);
+    });
+  });
+
+  const primary = page.locator('[data-scene="S02"] .home-lead button');
+  const primaryBox = await primary.boundingBox();
+  if (!primaryBox) throw new Error("S02 primary action is not measurable");
+
+  const worldBefore = await worldRootPosition(page);
+  const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const attentionBefore = Number(await scene.getAttribute("data-companion-attention-count"));
+
+  await triggerPrimaryAttention(page);
+
+  await expect(scene).toHaveAttribute(
+    "data-companion-attention-count",
+    String(attentionBefore + 1),
+  );
+  await expect(scene).toHaveAttribute("data-companion-attention-active", "true");
+  await expectAttentionChanged(scene);
+
+  const eventDetail = await page.evaluate(() => {
+    const events = (window as unknown as {
+      __s02AttentionEvents: Array<Record<string, unknown>>;
+    }).__s02AttentionEvents;
+    return events.at(-1);
+  });
+
+  expect(eventDetail).toBeTruthy();
+  expect(Object.keys(eventDetail!).sort()).toEqual([
+    "clientX",
+    "clientY",
+    "kind",
+  ]);
+  expect(eventDetail!.kind).toBe("primary-action");
+  expect(Number(eventDetail!.clientX)).toBeCloseTo(
+    primaryBox.x + primaryBox.width / 2,
+    0,
+  );
+  expect(Number(eventDetail!.clientY)).toBeCloseTo(
+    primaryBox.y + primaryBox.height / 2,
+    0,
+  );
+
+  const attention = await attentionTransform(scene);
+  expect(Math.abs(attention.yaw)).toBeLessThanOrEqual(0.1101);
+  expect(Math.abs(attention.pitch)).toBeLessThanOrEqual(0.0501);
+  expect(attention.maxYaw).toBeLessThanOrEqual(0.16);
+  expect(attention.maxPitch).toBeLessThanOrEqual(0.075);
+  expect(Math.abs(attention.headYaw + attention.spineYaw - attention.yaw))
+    .toBeLessThan(0.0003);
+  expect(Math.abs(attention.headPitch + attention.spinePitch - attention.pitch))
+    .toBeLessThan(0.0003);
+
+  await expectReactionRootNeutralDuringAttention(scene);
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+
+  await expectAttentionNeutral(scene);
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  await expectReactionRootNeutralDuringAttention(scene);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+});
+
+test("#925 tap tactile and relocation each preempt attention without replaying it", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+
+  // Tap precedence.
+  await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+  const tapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+
+  await tapActor(page, target);
+
+  await expectAttentionNeutral(scene);
+  await expect(layer).toHaveAttribute(
+    "data-presence-tap-count",
+    String(tapsBefore + 1),
+  );
+  await expect.poll(
+    async () => scene.getAttribute("data-companion-tap-reaction-active"),
+  ).toBe("false");
+
+  // Tactile precedence.
+  await tactile.click();
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "on");
+
+  await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+
+  await beginTactileMouseDrag(page, target, 28, -17);
+
+  await expectAttentionNeutral(scene);
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expectTactileChanged(scene);
+
+  await page.mouse.up();
+  await expectTactileNeutral(scene);
+
+  await tactile.click();
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "off");
+
+  // Relocation precedence.
+  await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const worldBefore = await worldRootPosition(page);
+
+  await dragBy(page, target, 28, 10);
+
+  await expectAttentionNeutral(scene);
+  await expect(layer).toHaveAttribute(
+    "data-presence-commit-count",
+    String(commitsBefore + 1),
+  );
+  expect(await worldRootPosition(page)).not.toEqual(worldBefore);
+
+  // Suppressed/cancelled attention never replays after direct interaction ends.
+  const attentionCount = await scene.getAttribute("data-companion-attention-count");
+  await page.waitForTimeout(850);
+  await expect(scene).toHaveAttribute(
+    "data-companion-attention-count",
+    attentionCount!,
+  );
+  await expectAttentionNeutral(scene);
+});
+
+test("#925 rapid primary attention replaces stale cue instead of queueing", async ({ page }) => {
+  await openSpatialS02(page);
+  const scene = page.locator(".living-three-scene");
+
+  const before = Number(await scene.getAttribute("data-companion-attention-count"));
+
+  await triggerPrimaryAttention(page);
+  await expect(scene).toHaveAttribute(
+    "data-companion-attention-count",
+    String(before + 1),
+  );
+  await expectAttentionChanged(scene);
+
+  // Let cue 1 age far enough that its original completion would occur while
+  // cue 2 is still valid.
+  await page.waitForTimeout(420);
+
+  await triggerPrimaryAttention(page);
+  await expect(scene).toHaveAttribute(
+    "data-companion-attention-count",
+    String(before + 2),
+  );
+  await expectAttentionChanged(scene);
+
+  // Cue 1 would now be expired. Its stale callback must not neutralize cue 2.
+  await page.waitForTimeout(420);
+  await expect(scene).toHaveAttribute("data-companion-attention-active", "true");
+  await expectAttentionChanged(scene);
+
+  await expectAttentionNeutral(scene);
+});
+
+test("#925 blur hidden and route teardown leave no stale attention intent", async ({ page }) => {
+  await openSpatialS02(page);
+  const scene = page.locator(".living-three-scene");
+
+  await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("blur"));
+  });
+  await expectAttentionNeutral(scene);
+
+  await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    try {
+      document.dispatchEvent(new Event("visibilitychange"));
+    } finally {
+      Reflect.deleteProperty(document, "hidden");
+    }
+  });
+  await expectAttentionNeutral(scene);
+
+  // Visibility return must not revive the old cue.
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(120);
+  await expectAttentionNeutral(scene);
+
+  // Route teardown while a fresh cue is active.
+  const primary = await triggerPrimaryAttention(page);
+  await expectAttentionChanged(scene);
+
+  await primary.evaluate((button: HTMLButtonElement) => button.click());
+
+  await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
+  await expect(page.locator(".living-three-scene")).toHaveCount(0);
+
+  await page.getByRole(
+    "button",
+    { name: /SK7.*오늘의 기록으로 이동/ },
+  ).click();
+
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const returnedScene = page.locator(".living-three-scene");
+  await expect(returnedScene).toHaveAttribute(
+    "data-companion-attention-count",
+    "0",
+  );
+  await expectAttentionNeutral(returnedScene);
+});
+
+for (const species of ["cat", "fox", "hedgehog"] as const) {
+  test(`#925 attention capability is species-agnostic for ${species}`, async ({ page }) => {
+    await page.addInitScript((savedSpecies: string) => {
+      localStorage.setItem("sk7-companion-species", savedSpecies);
+    }, species);
+
+    await openSpatialS02(page);
+
+    const scene = page.locator(".living-three-scene");
+
+    await expect(scene).toHaveAttribute(
+      "data-companion-attention-available",
+      "true",
+    );
+    await expect(scene).toHaveAttribute(
+      "data-companion-attention-posture",
+      "head-spine",
+    );
+    await expect(scene).toHaveAttribute(
+      "data-companion-attention-head-bone",
+      "head",
+    );
+    await expect(scene).toHaveAttribute(
+      "data-companion-attention-spine-bone",
+      "spine",
+    );
+
+    await triggerPrimaryAttention(page);
+    await expectAttentionChanged(scene);
+
+    const value = await attentionTransform(scene);
+    expect(Math.abs(value.yaw)).toBeLessThanOrEqual(0.1101);
+    expect(Math.abs(value.pitch)).toBeLessThanOrEqual(0.0501);
+
+    await expectAttentionNeutral(scene);
+  });
+}
+
+test("#925 reduced-motion fallback cannot retain or replay attention", async ({ page }) => {
+  // Start from the already-proven realtime S02 path so the scene is inside the
+  // viewport and its IntersectionObserver owner has actually been activated.
+  await openSpatialS02(page);
+
+  const scene = page.locator(".living-three-scene");
+
+  // Prove there is a real attention cue to tear down.
+  await triggerPrimaryAttention(page);
+  await expect(scene).toHaveAttribute("data-companion-attention-active", "true");
+  await expectAttentionChanged(scene);
+
+  // Reduced motion removes the realtime owner entirely.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await expect(
+    page.locator('[data-presence-scene-actor-interaction="S02"]'),
+  ).toHaveCount(0);
+  await expect(page.locator(".living-three-scene")).toHaveCount(0);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "poster",
+  );
+
+  // The semantic primary action still works and may dispatch its presentation
+  // event, but there is no realtime attention owner that can retain the intent.
+  await triggerPrimaryAttention(page);
+  await page.waitForTimeout(120);
+  await expect(page.locator(".living-three-scene")).toHaveCount(0);
+
+  // Return to the existing realtime policy. Because the scene was already
+  // viewport-admitted before reduced motion, the replacement owner can become
+  // active without introducing a new scrolling requirement.
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const returnedScene = page.locator(".living-three-scene");
+  await expect(returnedScene).toHaveCount(1);
+
+  // Neither the pre-teardown cue nor the event dispatched while reduced may
+  // survive into the new renderer owner.
+  await expect(returnedScene).toHaveAttribute(
+    "data-companion-attention-count",
+    "0",
+  );
+  await expectAttentionNeutral(returnedScene);
+});

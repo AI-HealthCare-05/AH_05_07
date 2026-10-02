@@ -47,6 +47,11 @@ export type PresenceTactileDelta = Readonly<{
   deltaY: number;
 }>;
 
+export type PresenceAttentionTarget = Readonly<{
+  clientX: number;
+  clientY: number;
+}>;
+
 export type PresenceSceneActorPort = Readonly<{
   assetUrl: string;
   project: (arenaRevision: number) => PresenceSceneActorProjection | null;
@@ -59,6 +64,8 @@ export type PresenceSceneActorPort = Readonly<{
   endTactile?: () => boolean;
   cancelTactile?: () => boolean;
   pulseTactile?: () => boolean;
+  requestAttention?: (target: PresenceAttentionTarget) => boolean;
+  cancelAttention?: () => boolean;
 }>;
 
 export type PresenceWorldRootFence = Readonly<{
@@ -119,6 +126,7 @@ export type PresenceSceneActorRuntimeSnapshot = Readonly<{
   tapCount: number;
   tactileMoveCount: number;
   tactilePulseCount: number;
+  attentionCount: number;
   revocationCount: number;
   lastRevocation: string | null;
   lastCorrectionDistance: number;
@@ -291,6 +299,7 @@ function initialSnapshot(): PresenceSceneActorRuntimeSnapshot {
     tapCount: 0,
     tactileMoveCount: 0,
     tactilePulseCount: 0,
+    attentionCount: 0,
     revocationCount: 0,
     lastRevocation: null,
     lastCorrectionDistance: 0,
@@ -326,6 +335,7 @@ export class PresenceSceneActorRuntime {
   #tapCount = 0;
   #tactileMoveCount = 0;
   #tactilePulseCount = 0;
+  #attentionCount = 0;
   #revocationCount = 0;
   #lastRevocation: string | null = null;
   #lastCorrectionDistance = 0;
@@ -384,6 +394,7 @@ export class PresenceSceneActorRuntime {
   }
 
   acquireWorldRootLease(owner: string): PresenceWorldRootLease | null {
+    this.#cancelAttentionReaction();
     const lease = this.#acquire(owner);
     this.#emit();
     return lease;
@@ -407,6 +418,46 @@ export class PresenceSceneActorRuntime {
     const acknowledged = this.#admitTap();
     this.#emit();
     return acknowledged;
+  }
+
+  requestAttention(target: PresenceAttentionTarget): boolean {
+    const fence = this.#currentFence();
+    const host = this.#host;
+    const port = this.#port?.port;
+
+    if (
+      !fence
+      || !this.#projection
+      || !host?.activeAssetUrl
+      || !port?.requestAttention
+      || !port.cancelAttention
+      || port.assetUrl !== host.activeAssetUrl
+      || this.#pointer
+      || this.#tactilePointer
+      || this.#lease
+      || !Number.isFinite(target.clientX)
+      || !Number.isFinite(target.clientY)
+    ) return false;
+
+    let requested = false;
+    try {
+      requested = port.requestAttention(Object.freeze({
+        clientX: target.clientX,
+        clientY: target.clientY,
+      }));
+    } catch {
+      requested = false;
+    }
+
+    if (requested) this.#attentionCount += 1;
+    this.#emit();
+    return requested;
+  }
+
+  cancelAttention(): boolean {
+    const cancelled = this.#cancelAttentionReaction();
+    this.#emit();
+    return cancelled;
   }
 
   beginTactilePointer(input: Readonly<{
@@ -449,6 +500,7 @@ export class PresenceSceneActorRuntime {
     );
     if (!pointInside(point, projection.hitRect)) return null;
 
+    this.#cancelAttentionReaction();
     this.#cancelTapReaction();
 
     try {
@@ -568,6 +620,7 @@ export class PresenceSceneActorRuntime {
       || this.#tactilePointer
     ) return false;
 
+    this.#cancelAttentionReaction();
     this.#cancelTapReaction();
 
     let pulsed = false;
@@ -619,6 +672,11 @@ export class PresenceSceneActorRuntime {
     });
     const envelope = envelopeFromProjection(projection.root, projection.visualEnvelope);
     if (!envelope) return null;
+
+    // Any admitted actor pointer outranks decorative attention, even before the
+    // existing 6px threshold decides tap versus relocation.
+    this.#cancelAttentionReaction();
+
     this.#pointer = Object.freeze({
       publicToken,
       startPointer: point,
@@ -714,6 +772,7 @@ export class PresenceSceneActorRuntime {
 
     this.#tactilePointer = null;
     this.#cancelTactileReaction();
+    this.#cancelAttentionReaction();
 
     if (!arena || !fence || !projection || this.#pointer) return false;
     const envelope = envelopeFromProjection(projection.root, projection.visualEnvelope);
@@ -915,6 +974,9 @@ export class PresenceSceneActorRuntime {
       || port.assetUrl !== host.activeAssetUrl
       || !port.acknowledgeTap
     ) return false;
+
+    this.#cancelAttentionReaction();
+
     try {
       if (!port.acknowledgeTap()) return false;
     } catch {
@@ -944,10 +1006,21 @@ export class PresenceSceneActorRuntime {
     }
   }
 
+  #cancelAttentionReaction(): boolean {
+    const port = this.#port?.port;
+    if (!port?.cancelAttention) return false;
+    try {
+      return port.cancelAttention();
+    } catch {
+      return false;
+    }
+  }
+
   #prepareFenceChange(reason: string): void {
     // Route/owner/Arena/port invalidation settles every local embodiment effect.
     this.#cancelTapReaction();
     this.#cancelTactileReaction();
+    this.#cancelAttentionReaction();
     this.#tactilePointer = null;
     const pointer = this.#pointer;
     if (pointer?.lease && this.#isExactLease(pointer.lease)) {
@@ -1166,6 +1239,7 @@ export class PresenceSceneActorRuntime {
       tapCount: this.#tapCount,
       tactileMoveCount: this.#tactileMoveCount,
       tactilePulseCount: this.#tactilePulseCount,
+      attentionCount: this.#attentionCount,
       revocationCount: this.#revocationCount,
       lastRevocation: this.#lastRevocation,
       lastCorrectionDistance: this.#lastCorrectionDistance,

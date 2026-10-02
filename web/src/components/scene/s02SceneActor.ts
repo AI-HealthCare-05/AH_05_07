@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { disposeScene } from "./disposeScene";
 import type {
+  PresenceAttentionTarget,
   PresenceSceneActorPort,
   PresenceSceneActorProjection,
   PresenceSceneActorWriteRequest,
@@ -18,6 +19,26 @@ export type SceneActorBounds = Readonly<{
   height: number;
 }>;
 
+export type S02AttentionBones = Readonly<{
+  head: THREE.Bone;
+  spine: THREE.Bone | null;
+}>;
+
+export function resolveS02AttentionBones(
+  root: THREE.Object3D,
+): S02AttentionBones | null {
+  const head = root.getObjectByName("head");
+  if (!(head instanceof THREE.Bone)) return null;
+
+  const spineCandidate = root.getObjectByName("spine");
+  return Object.freeze({
+    head,
+    spine: spineCandidate instanceof THREE.Bone
+      ? spineCandidate
+      : null,
+  });
+}
+
 export const S02_TAP_REACTION = Object.freeze({
   durationMs: 360,
   maxOffsetY: 0.07,
@@ -32,6 +53,38 @@ export const S02_TACTILE_REACTION = Object.freeze({
   maxScaleX: 1.025,
   maxScaleZ: 1.015,
 });
+
+export const S02_ATTENTION = Object.freeze({
+  durationMs: 760,
+  rampInMs: 140,
+  rampOutMs: 220,
+  maxYaw: 0.11,
+  maxPitch: 0.05,
+  headYawShare: 0.78,
+  spineYawShare: 0.22,
+  headPitchShare: 0.82,
+  spinePitchShare: 0.18,
+});
+
+export function s02AttentionStrength(elapsedMs: number): number {
+  if (
+    !Number.isFinite(elapsedMs)
+    || elapsedMs <= 0
+    || elapsedMs >= S02_ATTENTION.durationMs
+  ) return 0;
+
+  if (elapsedMs < S02_ATTENTION.rampInMs) {
+    return elapsedMs / S02_ATTENTION.rampInMs;
+  }
+
+  const rampOutStart = S02_ATTENTION.durationMs - S02_ATTENTION.rampOutMs;
+  if (elapsedMs < rampOutStart) return 1;
+
+  return 1 - (
+    (elapsedMs - rampOutStart)
+    / S02_ATTENTION.rampOutMs
+  );
+}
 
 export function s02TapReactionOffset(elapsedMs: number): number {
   if (!Number.isFinite(elapsedMs) || elapsedMs <= 0 || elapsedMs >= S02_TAP_REACTION.durationMs) return 0;
@@ -79,6 +132,25 @@ export class S02SceneActorOwner {
   #tactileStartPosition = new THREE.Vector3();
   #tactileStartScale = new THREE.Vector3(1, 1, 1);
   #tactileStartRotationZ = 0;
+
+  #attentionHead: THREE.Bone | null = null;
+  #attentionSpine: THREE.Bone | null = null;
+  #attentionBaseHead = new THREE.Quaternion();
+  #attentionBaseSpine = new THREE.Quaternion();
+  #attentionHeadOffset = new THREE.Quaternion();
+  #attentionSpineOffset = new THREE.Quaternion();
+  #attentionHeadEuler = new THREE.Euler(0, 0, 0, "YXZ");
+  #attentionSpineEuler = new THREE.Euler(0, 0, 0, "YXZ");
+  #attentionFrame: number | undefined;
+  #attentionGeneration = 0;
+  #attentionStartedAt = 0;
+  #attentionActive = false;
+  #attentionCount = 0;
+  #attentionTargetYaw = 0;
+  #attentionTargetPitch = 0;
+  #attentionYaw = 0;
+  #attentionPitch = 0;
+
   #baseScale = 0;
   #presentationScale = 1;
   #centerX = 0;
@@ -139,6 +211,44 @@ export class S02SceneActorOwner {
     });
   }
 
+  get attentionAvailable(): boolean {
+    return this.#attentionHead !== null;
+  }
+
+  get attentionActive(): boolean {
+    return this.#attentionActive;
+  }
+
+  get attentionCount(): number {
+    return this.#attentionCount;
+  }
+
+  get attentionTransform() {
+    const spine = this.#attentionSpine !== null;
+    const headYawShare = spine ? S02_ATTENTION.headYawShare : 1;
+    const spineYawShare = spine ? S02_ATTENTION.spineYawShare : 0;
+    const headPitchShare = spine ? S02_ATTENTION.headPitchShare : 1;
+    const spinePitchShare = spine ? S02_ATTENTION.spinePitchShare : 0;
+
+    return Object.freeze({
+      yaw: this.#attentionYaw,
+      pitch: this.#attentionPitch,
+      headYaw: this.#attentionYaw * headYawShare,
+      spineYaw: this.#attentionYaw * spineYawShare,
+      headPitch: this.#attentionPitch * headPitchShare,
+      spinePitch: this.#attentionPitch * spinePitchShare,
+      maxYaw: S02_ATTENTION.maxYaw,
+      maxPitch: S02_ATTENTION.maxPitch,
+      posture: !this.#attentionHead
+        ? "unavailable"
+        : spine
+          ? "head-spine"
+          : "head-only",
+      headBone: this.#attentionHead?.name ?? "none",
+      spineBone: this.#attentionSpine?.name ?? "none",
+    });
+  }
+
   start(): void {
     if (this.#started || this.#disposed) return;
     this.#started = true;
@@ -152,6 +262,17 @@ export class S02SceneActorOwner {
         disposeScene(gltf.scene);
         this.#onFailure();
         return;
+      }
+
+      const attentionBones = resolveS02AttentionBones(gltf.scene);
+      this.#attentionHead = attentionBones?.head ?? null;
+      this.#attentionSpine = attentionBones?.spine ?? null;
+
+      if (this.#attentionHead) {
+        this.#attentionBaseHead.copy(this.#attentionHead.quaternion);
+      }
+      if (this.#attentionSpine) {
+        this.#attentionBaseSpine.copy(this.#attentionSpine.quaternion);
       }
 
       const normalized = new THREE.Group();
@@ -196,10 +317,87 @@ export class S02SceneActorOwner {
     this.#applyPresentationScale();
   }
 
+  requestAttention(target: PresenceAttentionTarget): boolean {
+    const head = this.#attentionHead;
+    if (
+      this.#disposed
+      || !head
+      || this.#tapReactionActive
+      || this.#tactileActive
+      || this.#tactileSettling
+      || !Number.isFinite(target.clientX)
+      || !Number.isFinite(target.clientY)
+    ) return false;
+
+    if (!this.#shouldAnimateTapReaction()) {
+      this.#cancelAttention(false);
+      return false;
+    }
+
+    // Latest approved attention replaces the old cue. Nothing queues.
+    this.#cancelAttention(false);
+
+    const width = Math.max(window.innerWidth, 1);
+    const height = Math.max(window.innerHeight, 1);
+    const normalizedX = THREE.MathUtils.clamp(
+      (target.clientX / width) * 2 - 1,
+      -1,
+      1,
+    );
+    const normalizedY = THREE.MathUtils.clamp(
+      1 - (target.clientY / height) * 2,
+      -1,
+      1,
+    );
+
+    this.#attentionTargetYaw = normalizedX * S02_ATTENTION.maxYaw;
+    this.#attentionTargetPitch = normalizedY * S02_ATTENTION.maxPitch;
+    this.#attentionStartedAt = performance.now();
+    this.#attentionActive = true;
+    this.#attentionCount += 1;
+
+    const generation = ++this.#attentionGeneration;
+
+    const step = (now: number) => {
+      this.#attentionFrame = undefined;
+
+      if (
+        this.#disposed
+        || generation !== this.#attentionGeneration
+        || !this.#attentionHead
+      ) return;
+
+      if (!this.#shouldAnimateTapReaction()) {
+        this.#cancelAttention(true);
+        return;
+      }
+
+      const elapsed = Math.max(0, now - this.#attentionStartedAt);
+      const strength = s02AttentionStrength(elapsed);
+      this.#applyAttentionPose(strength);
+      this.#requestDraw();
+
+      if (elapsed < S02_ATTENTION.durationMs) {
+        this.#attentionFrame = window.requestAnimationFrame(step);
+      } else {
+        this.#cancelAttention(true);
+      }
+    };
+
+    this.#attentionFrame = window.requestAnimationFrame(step);
+    this.#requestDraw();
+    return true;
+  }
+
+  cancelAttention(): boolean {
+    return this.#cancelAttention(true);
+  }
+
   acknowledgeTap(): boolean {
     const root = this.#reactionRoot;
     if (this.#disposed || !root) return false;
 
+    this.#cancelAttention(false);
     this.#cancelTactile(false);
     // Latest tap replaces the old cue instead of queueing another frame loop.
     this.#clearTapReaction(false);
@@ -252,6 +450,7 @@ export class S02SceneActorOwner {
     const root = this.#reactionRoot;
     if (this.#disposed || !root) return false;
 
+    this.#cancelAttention(false);
     this.#clearTapReaction(false);
     this.#cancelTactile(false);
     this.#neutralTactileRoot();
@@ -311,6 +510,7 @@ export class S02SceneActorOwner {
     const root = this.#reactionRoot;
     if (this.#disposed || !root) return false;
 
+    this.#cancelAttention(false);
     this.#clearTapReaction(false);
     this.#cancelTactile(false);
     this.#neutralTactileRoot();
@@ -320,6 +520,84 @@ export class S02SceneActorOwner {
     root.scale.set(1.02, 0.97, 1.01);
     this.#requestDraw();
     return this.#startTactileSettle();
+  }
+
+  #applyAttentionPose(strength: number): void {
+    const head = this.#attentionHead;
+    if (!head) {
+      this.#attentionYaw = 0;
+      this.#attentionPitch = 0;
+      return;
+    }
+
+    const spine = this.#attentionSpine;
+    const headYawShare = spine ? S02_ATTENTION.headYawShare : 1;
+    const spineYawShare = spine ? S02_ATTENTION.spineYawShare : 0;
+    const headPitchShare = spine ? S02_ATTENTION.headPitchShare : 1;
+    const spinePitchShare = spine ? S02_ATTENTION.spinePitchShare : 0;
+
+    const bounded = THREE.MathUtils.clamp(strength, 0, 1);
+    this.#attentionYaw = this.#attentionTargetYaw * bounded;
+    this.#attentionPitch = this.#attentionTargetPitch * bounded;
+
+    this.#attentionHeadEuler.set(
+      this.#attentionPitch * headPitchShare,
+      this.#attentionYaw * headYawShare,
+      0,
+      "YXZ",
+    );
+    this.#attentionHeadOffset.setFromEuler(this.#attentionHeadEuler);
+    head.quaternion
+      .copy(this.#attentionBaseHead)
+      .multiply(this.#attentionHeadOffset);
+
+    if (spine) {
+      this.#attentionSpineEuler.set(
+        this.#attentionPitch * spinePitchShare,
+        this.#attentionYaw * spineYawShare,
+        0,
+        "YXZ",
+      );
+      this.#attentionSpineOffset.setFromEuler(this.#attentionSpineEuler);
+      spine.quaternion
+        .copy(this.#attentionBaseSpine)
+        .multiply(this.#attentionSpineOffset);
+    }
+  }
+
+  #neutralAttentionPose(): void {
+    this.#attentionYaw = 0;
+    this.#attentionPitch = 0;
+    this.#attentionTargetYaw = 0;
+    this.#attentionTargetPitch = 0;
+
+    if (this.#attentionHead) {
+      this.#attentionHead.quaternion.copy(this.#attentionBaseHead);
+    }
+    if (this.#attentionSpine) {
+      this.#attentionSpine.quaternion.copy(this.#attentionBaseSpine);
+    }
+  }
+
+  #cancelAttention(requestDraw: boolean): boolean {
+    const changed = this.#attentionActive
+      || this.#attentionFrame !== undefined
+      || Math.abs(this.#attentionYaw) > 1e-6
+      || Math.abs(this.#attentionPitch) > 1e-6;
+
+    this.#attentionGeneration += 1;
+
+    if (this.#attentionFrame !== undefined) {
+      window.cancelAnimationFrame(this.#attentionFrame);
+      this.#attentionFrame = undefined;
+    }
+
+    this.#attentionActive = false;
+    this.#attentionStartedAt = 0;
+    this.#neutralAttentionPose();
+
+    if (requestDraw && changed && !this.#disposed) this.#requestDraw();
+    return changed;
   }
 
   #startTactileSettle(): boolean {
@@ -486,6 +764,7 @@ export class S02SceneActorOwner {
     if (this.#disposed) return;
     this.#clearTapReaction(false);
     this.#cancelTactile(false);
+    this.#cancelAttention(false);
     this.#disposed = true;
     const root = this.#worldRoot;
     this.#worldRoot = null;
@@ -531,7 +810,7 @@ function taggedRect(
   });
 }
 
-/** Renderer-local adapter; it can mutate only the registered S02 world root. */
+/** Renderer-local adapter; only write() may mutate the registered S02 world root. */
 export class S02SceneActorPort implements PresenceSceneActorPort {
   readonly assetUrl: string;
   readonly #owner: S02SceneActorOwner;
@@ -561,6 +840,14 @@ export class S02SceneActorPort implements PresenceSceneActorPort {
 
   cancelTapReaction(): boolean {
     return this.#owner.cancelTapReaction();
+  }
+
+  requestAttention(target: PresenceAttentionTarget): boolean {
+    return this.#owner.requestAttention(target);
+  }
+
+  cancelAttention(): boolean {
+    return this.#owner.cancelAttention();
   }
 
   beginTactile(): boolean {

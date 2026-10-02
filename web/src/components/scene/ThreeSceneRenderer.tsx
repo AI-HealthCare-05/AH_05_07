@@ -8,6 +8,10 @@ import {
   livingReplayAttentionEventName,
   type LivingReplayAttentionDetail,
 } from "../../ui/livingReplayAttention";
+import {
+  s02PrimaryAttentionEventName,
+  type S02PrimaryAttentionDetail,
+} from "../../ui/s02PrimaryAttention";
 import { createLandmark } from "./environment";
 import { createDiorama } from "./diorama";
 import { disposeScene } from "./disposeScene";
@@ -96,6 +100,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
     let gpuPollFrame: number | undefined;
     let revealFrame: number | undefined;
     let removeReplayAttention: (() => void) | undefined;
+    let removeS02PrimaryAttention: (() => void) | undefined;
     const deleteGpuSync = () => {
       if (gpuContext && gpuSync) {
         try { gpuContext.deleteSync(gpuSync); } catch { /* Context loss already invalidated it. */ }
@@ -116,6 +121,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       cancelWarmup();
       s02ActorOwner?.cancelTapReaction();
       s02ActorOwner?.cancelTactile();
+      s02ActorOwner?.cancelAttention();
       callbacks.current.onFailure();
     };
     const draw = () => {
@@ -143,6 +149,23 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
             element.dataset.companionTactileScaleX = tactile.scaleX.toFixed(4);
             element.dataset.companionTactileScaleY = tactile.scaleY.toFixed(4);
             element.dataset.companionTactileScaleZ = tactile.scaleZ.toFixed(4);
+
+            const attention = owner.attentionTransform;
+            element.dataset.companionAttentionAvailable = String(owner.attentionAvailable);
+            element.dataset.companionAttentionActive = String(owner.attentionActive);
+            element.dataset.companionAttentionCount = String(owner.attentionCount);
+            element.dataset.companionAttentionYaw = attention.yaw.toFixed(4);
+            element.dataset.companionAttentionPitch = attention.pitch.toFixed(4);
+            element.dataset.companionAttentionHeadYaw = attention.headYaw.toFixed(4);
+            element.dataset.companionAttentionSpineYaw = attention.spineYaw.toFixed(4);
+            element.dataset.companionAttentionHeadPitch = attention.headPitch.toFixed(4);
+            element.dataset.companionAttentionSpinePitch = attention.spinePitch.toFixed(4);
+            element.dataset.companionAttentionMaxYaw = attention.maxYaw.toFixed(3);
+            element.dataset.companionAttentionMaxPitch = attention.maxPitch.toFixed(3);
+            element.dataset.companionAttentionPosture = attention.posture;
+            element.dataset.companionAttentionHeadBone = attention.headBone;
+            element.dataset.companionAttentionSpineBone = attention.spineBone;
+
             // Diagnostic evidence only. Presence remains the world-root authority.
             const worldRoot = owner.worldRoot;
             if (worldRoot) {
@@ -169,8 +192,44 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       if (!document.hidden) return;
       s02ActorOwner?.cancelTapReaction();
       s02ActorOwner?.cancelTactile();
+      s02ActorOwner?.cancelAttention();
     };
     document.addEventListener("visibilitychange", cancelHiddenTapReaction);
+
+    const cancelBlurredS02Attention = () => {
+      if (screen === "S02") s02ActorOwner?.cancelAttention();
+    };
+    window.addEventListener("blur", cancelBlurredS02Attention);
+
+    const followS02PrimaryAttention = (event: Event) => {
+      if (screen !== "S02" || disposed || !visibleRef.current) return;
+
+      const detail = (event as CustomEvent<S02PrimaryAttentionDetail>).detail;
+      if (
+        !detail
+        || detail.kind !== "primary-action"
+        || !Number.isFinite(detail.clientX)
+        || !Number.isFinite(detail.clientY)
+      ) return;
+
+      presenceSceneActorRuntime.requestAttention({
+        clientX: detail.clientX,
+        clientY: detail.clientY,
+      });
+    };
+
+    if (screen === "S02") {
+      window.addEventListener(
+        s02PrimaryAttentionEventName,
+        followS02PrimaryAttention as EventListener,
+      );
+      removeS02PrimaryAttention = () => {
+        window.removeEventListener(
+          s02PrimaryAttentionEventName,
+          followS02PrimaryAttention as EventListener,
+        );
+      };
+    }
 
     const setupReplayAttention = (animatedModel: THREE.Object3D) => {
       if (screen !== "S10") return;
@@ -490,6 +549,9 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       cancelWarmup();
       observer?.disconnect();
       document.removeEventListener("visibilitychange", cancelHiddenTapReaction);
+      window.removeEventListener("blur", cancelBlurredS02Attention);
+      removeS02PrimaryAttention?.();
+      removeS02PrimaryAttention = undefined;
       removeReplayAttention?.();
       removeReplayAttention = undefined;
       unregisterS02ActorPort?.();
