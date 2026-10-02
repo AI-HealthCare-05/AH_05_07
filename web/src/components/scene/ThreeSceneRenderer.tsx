@@ -135,6 +135,14 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
           const bounds = owner?.measure(camera, element.clientHeight);
           if (bounds) element.dataset.subjectBounds = JSON.stringify(bounds);
           if (owner) {
+            const capabilities = owner.interactionCapabilities;
+            element.dataset.companionCapabilityTap =
+              capabilities.tapAcknowledgement ? "supported" : "unavailable";
+            element.dataset.companionCapabilityTactile =
+              capabilities.tactile ? "supported" : "unavailable";
+            element.dataset.companionCapabilityAttention =
+              capabilities.attention;
+
             element.dataset.companionTapReactionCount = String(owner.tapReactionCount);
             element.dataset.companionTapReactionActive = String(owner.tapReactionActive);
             element.dataset.companionTapReactionOffsetY = owner.tapReactionOffsetY.toFixed(4);

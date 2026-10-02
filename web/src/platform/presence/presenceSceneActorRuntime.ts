@@ -52,8 +52,27 @@ export type PresenceAttentionTarget = Readonly<{
   clientY: number;
 }>;
 
+export type PresenceSceneActorAttentionCapability =
+  | "unavailable"
+  | "head-only"
+  | "head-spine";
+
+export type PresenceSceneActorCapabilities = Readonly<{
+  tapAcknowledgement: boolean;
+  tactile: boolean;
+  attention: PresenceSceneActorAttentionCapability;
+}>;
+
+export const unavailablePresenceSceneActorCapabilities: PresenceSceneActorCapabilities =
+  Object.freeze({
+    tapAcknowledgement: false,
+    tactile: false,
+    attention: "unavailable",
+  });
+
 export type PresenceSceneActorPort = Readonly<{
   assetUrl: string;
+  capabilities: PresenceSceneActorCapabilities;
   project: (arenaRevision: number) => PresenceSceneActorProjection | null;
   write: (request: PresenceSceneActorWriteRequest) => boolean;
   // Renderer-local optional capability. These methods never own world-root movement.
@@ -121,6 +140,7 @@ export type PresenceSceneActorRuntimeSnapshot = Readonly<{
   leaseToken: string | null;
   portCount: 0 | 1;
   portIncarnation: number;
+  capabilities: PresenceSceneActorCapabilities;
   writeCount: number;
   commitCount: number;
   tapCount: number;
@@ -294,6 +314,7 @@ function initialSnapshot(): PresenceSceneActorRuntimeSnapshot {
     leaseToken: null,
     portCount: 0,
     portIncarnation: 0,
+    capabilities: unavailablePresenceSceneActorCapabilities,
     writeCount: 0,
     commitCount: 0,
     tapCount: 0,
@@ -431,6 +452,7 @@ export class PresenceSceneActorRuntime {
       || !host?.activeAssetUrl
       || !port?.requestAttention
       || !port.cancelAttention
+      || port.capabilities.attention === "unavailable"
       || port.assetUrl !== host.activeAssetUrl
       || this.#pointer
       || this.#tactilePointer
@@ -480,6 +502,7 @@ export class PresenceSceneActorRuntime {
       || !port
       || !host?.activeAssetUrl
       || port.assetUrl !== host.activeAssetUrl
+      || !port.capabilities.tactile
       || !port.beginTactile
       || !port.updateTactile
       || !port.endTactile
@@ -615,6 +638,7 @@ export class PresenceSceneActorRuntime {
       !fence
       || !host?.activeAssetUrl
       || !port?.pulseTactile
+      || !port.capabilities.tactile
       || port.assetUrl !== host.activeAssetUrl
       || this.#pointer
       || this.#tactilePointer
@@ -972,6 +996,7 @@ export class PresenceSceneActorRuntime {
       || !host?.activeAssetUrl
       || !port
       || port.assetUrl !== host.activeAssetUrl
+      || !port.capabilities.tapAcknowledgement
       || !port.acknowledgeTap
     ) return false;
 
@@ -1234,6 +1259,9 @@ export class PresenceSceneActorRuntime {
       leaseToken: this.#lease?.token ?? null,
       portCount: this.#port ? 1 : 0,
       portIncarnation: this.#port?.incarnation ?? this.#portOrder,
+      capabilities: enabled
+        ? this.#port?.port.capabilities ?? unavailablePresenceSceneActorCapabilities
+        : unavailablePresenceSceneActorCapabilities,
       writeCount: this.#writeCount,
       commitCount: this.#commitCount,
       tapCount: this.#tapCount,

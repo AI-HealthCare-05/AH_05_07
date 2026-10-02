@@ -1980,6 +1980,59 @@ for (const species of ["cat", "fox", "hedgehog"] as const) {
   });
 }
 
+for (const species of ["cat", "fox", "hedgehog"] as const) {
+  test(`#927 exact-loaded capability projection stays structural for ${species}`, async ({ page }) => {
+    await page.addInitScript((savedSpecies: string) => {
+      localStorage.setItem("sk7-companion-species", savedSpecies);
+    }, species);
+
+    const layer = await openSpatialS02(page);
+    const scene = page.locator(".living-three-scene");
+    const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+    const arenaBefore = Number(
+      await host.getAttribute("data-presence-arena-revision"),
+    );
+    const writesBefore = Number(
+      await layer.getAttribute("data-presence-write-count"),
+    );
+    const commitsBefore = Number(
+      await layer.getAttribute("data-presence-commit-count"),
+    );
+
+    await expect(scene).toHaveAttribute(
+      "data-companion-capability-tap",
+      "supported",
+    );
+    await expect(scene).toHaveAttribute(
+      "data-companion-capability-tactile",
+      "supported",
+    );
+    await expect(scene).toHaveAttribute(
+      "data-companion-capability-attention",
+      "head-spine",
+    );
+
+    // Existing #925 posture diagnostics must agree with the unified projection.
+    await expect(scene).toHaveAttribute(
+      "data-companion-attention-posture",
+      "head-spine",
+    );
+
+    expect(
+      Number(await host.getAttribute("data-presence-arena-revision")),
+    ).toBe(arenaBefore);
+    await expect(layer).toHaveAttribute(
+      "data-presence-write-count",
+      String(writesBefore),
+    );
+    await expect(layer).toHaveAttribute(
+      "data-presence-commit-count",
+      String(commitsBefore),
+    );
+  });
+}
+
 test("#925 reduced-motion fallback cannot retain or replay attention", async ({ page }) => {
   // Start from the already-proven realtime S02 path so the scene is inside the
   // viewport and its IntersectionObserver owner has actually been activated.
