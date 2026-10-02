@@ -6,6 +6,7 @@ import type {
   PresenceSceneActorPort,
   PresenceSceneActorProjection,
   PresenceSceneActorWriteRequest,
+  PresenceTactileDelta,
 } from "../../platform/presence/presenceSceneActorRuntime";
 import type { PresenceArenaRect } from "../../platform/presence/s02PresenceArena";
 
@@ -20,6 +21,16 @@ export type SceneActorBounds = Readonly<{
 export const S02_TAP_REACTION = Object.freeze({
   durationMs: 360,
   maxOffsetY: 0.07,
+});
+
+export const S02_TACTILE_REACTION = Object.freeze({
+  settleMs: 280,
+  maxOffsetX: 0.06,
+  maxOffsetY: 0.045,
+  maxLeanZ: 0.075,
+  minScaleY: 0.965,
+  maxScaleX: 1.025,
+  maxScaleZ: 1.015,
 });
 
 export function s02TapReactionOffset(elapsedMs: number): number {
@@ -58,6 +69,16 @@ export class S02SceneActorOwner {
   #tapReactionStartedAt = 0;
   #tapReactionActive = false;
   #tapReactionCount = 0;
+  #tactileActive = false;
+  #tactileSettling = false;
+  #tactileFrame: number | undefined;
+  #tactileGeneration = 0;
+  #tactileStartedAt = 0;
+  #tactileGestureCount = 0;
+  #tactilePulseCount = 0;
+  #tactileStartPosition = new THREE.Vector3();
+  #tactileStartScale = new THREE.Vector3(1, 1, 1);
+  #tactileStartRotationZ = 0;
   #baseScale = 0;
   #presentationScale = 1;
   #centerX = 0;
@@ -88,6 +109,34 @@ export class S02SceneActorOwner {
 
   get tapReactionOffsetY(): number {
     return this.#reactionRoot?.position.y ?? 0;
+  }
+
+  get tactileActive(): boolean {
+    return this.#tactileActive;
+  }
+
+  get tactileSettling(): boolean {
+    return this.#tactileSettling;
+  }
+
+  get tactileGestureCount(): number {
+    return this.#tactileGestureCount;
+  }
+
+  get tactilePulseCount(): number {
+    return this.#tactilePulseCount;
+  }
+
+  get tactileTransform() {
+    const root = this.#reactionRoot;
+    return Object.freeze({
+      x: root?.position.x ?? 0,
+      y: root?.position.y ?? 0,
+      rotationZ: root?.rotation.z ?? 0,
+      scaleX: root?.scale.x ?? 1,
+      scaleY: root?.scale.y ?? 1,
+      scaleZ: root?.scale.z ?? 1,
+    });
   }
 
   start(): void {
@@ -151,6 +200,7 @@ export class S02SceneActorOwner {
     const root = this.#reactionRoot;
     if (this.#disposed || !root) return false;
 
+    this.#cancelTactile(false);
     // Latest tap replaces the old cue instead of queueing another frame loop.
     this.#clearTapReaction(false);
     this.#tapReactionCount += 1;
@@ -196,6 +246,187 @@ export class S02SceneActorOwner {
 
   cancelTapReaction(): boolean {
     return this.#clearTapReaction(true);
+  }
+
+  beginTactile(): boolean {
+    const root = this.#reactionRoot;
+    if (this.#disposed || !root) return false;
+
+    this.#clearTapReaction(false);
+    this.#cancelTactile(false);
+    this.#neutralTactileRoot();
+
+    this.#tactileActive = true;
+    this.#tactileGestureCount += 1;
+
+    // Small press acknowledgement even when the pointer does not travel.
+    root.position.y = -0.008;
+    root.scale.set(1.008, 0.985, 1.004);
+
+    this.#requestDraw();
+    return true;
+  }
+
+  updateTactile(delta: PresenceTactileDelta): boolean {
+    const root = this.#reactionRoot;
+    if (
+      this.#disposed
+      || !root
+      || !this.#tactileActive
+      || !Number.isFinite(delta.deltaX)
+      || !Number.isFinite(delta.deltaY)
+    ) return false;
+
+    const nx = THREE.MathUtils.clamp(delta.deltaX / 56, -1, 1);
+    const ny = THREE.MathUtils.clamp(delta.deltaY / 56, -1, 1);
+    const strength = THREE.MathUtils.clamp(
+      Math.hypot(delta.deltaX, delta.deltaY) / 56,
+      0,
+      1,
+    );
+
+    root.position.x = nx * S02_TACTILE_REACTION.maxOffsetX;
+    root.position.y = -ny * S02_TACTILE_REACTION.maxOffsetY;
+    root.rotation.z = -nx * S02_TACTILE_REACTION.maxLeanZ;
+    root.scale.set(
+      1 + strength * (S02_TACTILE_REACTION.maxScaleX - 1),
+      1 - strength * (1 - S02_TACTILE_REACTION.minScaleY),
+      1 + strength * (S02_TACTILE_REACTION.maxScaleZ - 1),
+    );
+    this.#requestDraw();
+    return true;
+  }
+
+  endTactile(): boolean {
+    if (this.#disposed || !this.#reactionRoot || !this.#tactileActive) return false;
+    this.#tactileActive = false;
+    return this.#startTactileSettle();
+  }
+
+  cancelTactile(): boolean {
+    return this.#cancelTactile(true);
+  }
+
+  pulseTactile(): boolean {
+    const root = this.#reactionRoot;
+    if (this.#disposed || !root) return false;
+
+    this.#clearTapReaction(false);
+    this.#cancelTactile(false);
+    this.#neutralTactileRoot();
+
+    this.#tactilePulseCount += 1;
+    root.position.y = -0.022;
+    root.scale.set(1.02, 0.97, 1.01);
+    this.#requestDraw();
+    return this.#startTactileSettle();
+  }
+
+  #startTactileSettle(): boolean {
+    const root = this.#reactionRoot;
+    if (this.#disposed || !root) return false;
+
+    if (!this.#shouldAnimateTapReaction()) {
+      this.#cancelTactile(true);
+      return true;
+    }
+
+    if (this.#tactileFrame !== undefined) {
+      window.cancelAnimationFrame(this.#tactileFrame);
+      this.#tactileFrame = undefined;
+    }
+
+    const generation = ++this.#tactileGeneration;
+    this.#tactileSettling = true;
+    this.#tactileStartedAt = performance.now();
+    this.#tactileStartPosition.copy(root.position);
+    this.#tactileStartScale.copy(root.scale);
+    this.#tactileStartRotationZ = root.rotation.z;
+
+    const step = (now: number) => {
+      this.#tactileFrame = undefined;
+      const current = this.#reactionRoot;
+
+      if (
+        this.#disposed
+        || generation !== this.#tactileGeneration
+        || !current
+      ) return;
+
+      if (!this.#shouldAnimateTapReaction()) {
+        this.#cancelTactile(true);
+        return;
+      }
+
+      const progress = THREE.MathUtils.clamp(
+        (now - this.#tactileStartedAt) / S02_TACTILE_REACTION.settleMs,
+        0,
+        1,
+      );
+      const remain = Math.pow(1 - progress, 3);
+
+      current.position.set(
+        this.#tactileStartPosition.x * remain,
+        this.#tactileStartPosition.y * remain,
+        0,
+      );
+      current.rotation.set(0, 0, this.#tactileStartRotationZ * remain);
+      current.scale.set(
+        1 + (this.#tactileStartScale.x - 1) * remain,
+        1 + (this.#tactileStartScale.y - 1) * remain,
+        1 + (this.#tactileStartScale.z - 1) * remain,
+      );
+      this.#requestDraw();
+
+      if (progress < 1) {
+        this.#tactileFrame = window.requestAnimationFrame(step);
+      } else {
+        this.#cancelTactile(true);
+      }
+    };
+
+    this.#tactileFrame = window.requestAnimationFrame(step);
+    return true;
+  }
+
+  #neutralTactileRoot(): void {
+    const root = this.#reactionRoot;
+    if (!root) return;
+    root.position.set(0, 0, 0);
+    root.rotation.set(0, 0, 0);
+    root.scale.set(1, 1, 1);
+  }
+
+  #cancelTactile(requestDraw: boolean): boolean {
+    const root = this.#reactionRoot;
+    const transformChanged = Boolean(root && (
+      Math.abs(root.position.x) > 1e-6
+      || Math.abs(root.position.y) > 1e-6
+      || Math.abs(root.rotation.z) > 1e-6
+      || Math.abs(root.scale.x - 1) > 1e-6
+      || Math.abs(root.scale.y - 1) > 1e-6
+      || Math.abs(root.scale.z - 1) > 1e-6
+    ));
+
+    const changed = this.#tactileActive
+      || this.#tactileSettling
+      || this.#tactileFrame !== undefined
+      || transformChanged;
+
+    this.#tactileGeneration += 1;
+
+    if (this.#tactileFrame !== undefined) {
+      window.cancelAnimationFrame(this.#tactileFrame);
+      this.#tactileFrame = undefined;
+    }
+
+    this.#tactileActive = false;
+    this.#tactileSettling = false;
+    this.#tactileStartedAt = 0;
+    this.#neutralTactileRoot();
+
+    if (requestDraw && changed && !this.#disposed) this.#requestDraw();
+    return changed;
   }
 
   #clearTapReaction(requestDraw: boolean): boolean {
@@ -254,6 +485,7 @@ export class S02SceneActorOwner {
   dispose(): void {
     if (this.#disposed) return;
     this.#clearTapReaction(false);
+    this.#cancelTactile(false);
     this.#disposed = true;
     const root = this.#worldRoot;
     this.#worldRoot = null;
@@ -329,6 +561,26 @@ export class S02SceneActorPort implements PresenceSceneActorPort {
 
   cancelTapReaction(): boolean {
     return this.#owner.cancelTapReaction();
+  }
+
+  beginTactile(): boolean {
+    return this.#owner.beginTactile();
+  }
+
+  updateTactile(delta: PresenceTactileDelta): boolean {
+    return this.#owner.updateTactile(delta);
+  }
+
+  endTactile(): boolean {
+    return this.#owner.endTactile();
+  }
+
+  cancelTactile(): boolean {
+    return this.#owner.cancelTactile();
+  }
+
+  pulseTactile(): boolean {
+    return this.#owner.pulseTactile();
   }
 
   project(arenaRevision: number): PresenceSceneActorProjection | null {

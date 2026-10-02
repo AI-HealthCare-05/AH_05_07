@@ -46,6 +46,11 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
   let root = { ...initial };
   let tapAcknowledgements = 0;
   let tapCancellations = 0;
+  let tactileBegins = 0;
+  let tactileUpdates = 0;
+  let tactileEnds = 0;
+  let tactileCancels = 0;
+  let tactilePulses = 0;
   const writes: PresenceArenaPoint[] = [];
   const port: PresenceSceneActorPort = {
     assetUrl,
@@ -85,12 +90,39 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
       tapCancellations += 1;
       return true;
     },
+    beginTactile: () => {
+      tactileBegins += 1;
+      return true;
+    },
+    updateTactile: () => {
+      tactileUpdates += 1;
+      return true;
+    },
+    endTactile: () => {
+      tactileEnds += 1;
+      return true;
+    },
+    cancelTactile: () => {
+      tactileCancels += 1;
+      return true;
+    },
+    pulseTactile: () => {
+      tactilePulses += 1;
+      return true;
+    },
   };
   return {
     port,
     writes,
     root: () => root,
     reactions: () => ({ acknowledgements: tapAcknowledgements, cancellations: tapCancellations }),
+    tactile: () => ({
+      begins: tactileBegins,
+      updates: tactileUpdates,
+      ends: tactileEnds,
+      cancels: tactileCancels,
+      pulses: tactilePulses,
+    }),
   };
 }
 
@@ -424,6 +456,90 @@ test("#921 S02 tap stays local while direct grab waits for 6px, commits only on 
   expect(runtime.movePointer(stale, { clientX: port.root().x + 40, clientY: port.root().y })).toBe(false);
   expect(runtime.endPointer(stale, { clientX: port.root().x + 40, clientY: port.root().y })).toBe("ignored");
   expect(port.writes).toHaveLength(writesAfterInvalidation);
+});
+
+test("#923 tactile pointer is exact-fenced and never acquires world-root authority", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const port = fakePort("https://asset.invalid/active.glb", { x: 100, y: 150 });
+  runtime.registerPort(port.port);
+  const commits: PresencePlacementIntent[] = [];
+  publishSpatialHost(connection, spatialArena(1), {}, commits);
+
+  const writes = runtime.snapshot.writeCount;
+  const commitCount = runtime.snapshot.commitCount;
+  const taps = runtime.snapshot.tapCount;
+
+  const tactile = runtime.beginTactilePointer({
+    pointerId: 71,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  });
+
+  expect(tactile).not.toBeNull();
+  expect(runtime.snapshot.leaseToken).toBeNull();
+  expect(runtime.snapshot.activePointerToken).toBeNull();
+  expect(runtime.snapshot.activeTactilePointerToken).toBe(tactile!.token);
+  expect(port.tactile().begins).toBe(1);
+
+  // Relocation cannot be admitted while tactile owns the pointer domain.
+  expect(runtime.beginPointer({
+    pointerId: 72,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  })).toBeNull();
+
+  expect(runtime.moveTactilePointer(tactile!, {
+    clientX: 134,
+    clientY: 109,
+  })).toBe(true);
+
+  expect(port.tactile().updates).toBe(1);
+  expect(runtime.snapshot.tactileMoveCount).toBe(1);
+  expect(runtime.snapshot.writeCount).toBe(writes);
+  expect(runtime.snapshot.commitCount).toBe(commitCount);
+  expect(runtime.snapshot.tapCount).toBe(taps);
+  expect(runtime.snapshot.leaseToken).toBeNull();
+
+  expect(runtime.endTactilePointer(tactile!)).toBe(true);
+  expect(port.tactile().ends).toBe(1);
+  expect(runtime.snapshot.activeTactilePointerToken).toBeNull();
+  expect(runtime.snapshot.writeCount).toBe(writes);
+  expect(commits).toHaveLength(0);
+
+  expect(runtime.pulseTactile()).toBe(true);
+  expect(runtime.snapshot.tactilePulseCount).toBe(1);
+  expect(port.tactile().pulses).toBe(1);
+  expect(runtime.snapshot.writeCount).toBe(writes);
+  expect(runtime.snapshot.commitCount).toBe(commitCount);
+
+  const stale = runtime.beginTactilePointer({
+    pointerId: 73,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  })!;
+
+  const cancelsBeforeFence = port.tactile().cancels;
+
+  publishSpatialHost(connection, spatialArena(2), {
+    ownerToken: "tactile-owner-next",
+    ownerGeneration: 2,
+  }, commits);
+
+  expect(port.tactile().cancels).toBeGreaterThan(cancelsBeforeFence);
+  expect(runtime.snapshot.activeTactilePointerToken).toBeNull();
+
+  expect(runtime.moveTactilePointer(stale, {
+    clientX: 150,
+    clientY: 100,
+  })).toBe(false);
+  expect(runtime.endTactilePointer(stale)).toBe(false);
 });
 
 test("S02 Arena invalidation restores the committed safe root before a no-space revision", () => {

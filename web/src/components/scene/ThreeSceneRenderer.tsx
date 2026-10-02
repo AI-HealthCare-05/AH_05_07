@@ -115,6 +115,7 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       failed = true;
       cancelWarmup();
       s02ActorOwner?.cancelTapReaction();
+      s02ActorOwner?.cancelTactile();
       callbacks.current.onFailure();
     };
     const draw = () => {
@@ -131,6 +132,17 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
             element.dataset.companionTapReactionCount = String(owner.tapReactionCount);
             element.dataset.companionTapReactionActive = String(owner.tapReactionActive);
             element.dataset.companionTapReactionOffsetY = owner.tapReactionOffsetY.toFixed(4);
+            const tactile = owner.tactileTransform;
+            element.dataset.companionTactileActive = String(owner.tactileActive);
+            element.dataset.companionTactileSettling = String(owner.tactileSettling);
+            element.dataset.companionTactileGestureCount = String(owner.tactileGestureCount);
+            element.dataset.companionTactilePulseCount = String(owner.tactilePulseCount);
+            element.dataset.companionTactileX = tactile.x.toFixed(4);
+            element.dataset.companionTactileY = tactile.y.toFixed(4);
+            element.dataset.companionTactileRotationZ = tactile.rotationZ.toFixed(4);
+            element.dataset.companionTactileScaleX = tactile.scaleX.toFixed(4);
+            element.dataset.companionTactileScaleY = tactile.scaleY.toFixed(4);
+            element.dataset.companionTactileScaleZ = tactile.scaleZ.toFixed(4);
             // Diagnostic evidence only. Presence remains the world-root authority.
             const worldRoot = owner.worldRoot;
             if (worldRoot) {
@@ -154,7 +166,9 @@ export default function ThreeSceneRenderer({ screen, recipe, landmark, visible, 
       } catch { fail(); return false; }
     };
     const cancelHiddenTapReaction = () => {
-      if (document.hidden) s02ActorOwner?.cancelTapReaction();
+      if (!document.hidden) return;
+      s02ActorOwner?.cancelTapReaction();
+      s02ActorOwner?.cancelTactile();
     };
     document.addEventListener("visibilitychange", cancelHiddenTapReaction);
 
