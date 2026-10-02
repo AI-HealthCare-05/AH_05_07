@@ -11,6 +11,8 @@ import {
 } from "../src/platform/presence/s02PresenceArena";
 import {
   PresenceSceneActorRuntime,
+  unavailablePresenceSceneActorCapabilities,
+  type PresenceSceneActorCapabilities,
   type PresenceSceneActorHostConnection,
   type PresenceSceneActorPort,
 } from "../src/platform/presence/presenceSceneActorRuntime";
@@ -20,6 +22,8 @@ import {
 } from "../src/platform/presence/s02PresencePlacement";
 import {
   resolveS02AttentionBones,
+  resolveS02InteractionCapabilities,
+  S02SceneActorOwner,
 } from "../src/components/scene/s02SceneActor";
 
 const headers = {
@@ -46,7 +50,17 @@ function spatialArena(
   });
 }
 
-function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>) {
+const fullyCapablePort: PresenceSceneActorCapabilities = Object.freeze({
+  tapAcknowledgement: true,
+  tactile: true,
+  attention: "head-spine",
+});
+
+function fakePort(
+  assetUrl: string,
+  initial: Readonly<{ x: number; y: number }>,
+  capabilities: PresenceSceneActorCapabilities = fullyCapablePort,
+) {
   let root = { ...initial };
   let tapAcknowledgements = 0;
   let tapCancellations = 0;
@@ -60,6 +74,7 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
   const writes: PresenceArenaPoint[] = [];
   const port: PresenceSceneActorPort = {
     assetUrl,
+    capabilities,
     project: revision => ({
       space: "visual-viewport-css-px",
       revision,
@@ -811,4 +826,136 @@ test("#925 attention is exact-current presentation authority and yields to every
   expect(runtime.snapshot.commitCount).toBe(commitsBefore);
   expect(runtime.snapshot.leaseToken).toBeNull();
   expect(commits).toHaveLength(0);
+});
+
+test("#927 exact-loaded interaction capability projection is structural and bone-qualified", () => {
+  const owner = new S02SceneActorOwner({
+    scene: new THREE.Scene(),
+    assetUrl: "https://asset.invalid/not-loaded.glb",
+    characterScale: 1,
+    onLoaded: () => {},
+    onFailure: () => {},
+    requestDraw: () => {},
+    shouldAnimateTapReaction: () => true,
+  });
+
+  expect(owner.interactionCapabilities).toEqual(
+    unavailablePresenceSceneActorCapabilities,
+  );
+  owner.dispose();
+
+  const reactionRoot = new THREE.Group();
+
+  const noHead = new THREE.Group();
+  // Arbitrary clip-ish metadata cannot authorize interaction capability.
+  noHead.userData.clips = ["special", "celebrate"];
+  expect(resolveS02InteractionCapabilities(noHead, reactionRoot)).toEqual({
+    tapAcknowledgement: true,
+    tactile: true,
+    attention: "unavailable",
+  });
+
+  const headOnlyRoot = new THREE.Group();
+  const headOnly = new THREE.Bone();
+  headOnly.name = "head";
+  headOnlyRoot.add(headOnly);
+  expect(resolveS02InteractionCapabilities(headOnlyRoot, reactionRoot)).toEqual({
+    tapAcknowledgement: true,
+    tactile: true,
+    attention: "head-only",
+  });
+
+  const fullRoot = new THREE.Group();
+  const spine = new THREE.Bone();
+  spine.name = "spine";
+  const head = new THREE.Bone();
+  head.name = "head";
+  spine.add(head);
+  fullRoot.add(spine);
+  expect(resolveS02InteractionCapabilities(fullRoot, reactionRoot)).toEqual({
+    tapAcknowledgement: true,
+    tactile: true,
+    attention: "head-spine",
+  });
+
+  const misleading = new THREE.Group();
+  const fakeHead = new THREE.Group();
+  fakeHead.name = "head";
+  misleading.add(fakeHead);
+  expect(resolveS02InteractionCapabilities(misleading, reactionRoot)).toEqual({
+    tapAcknowledgement: true,
+    tactile: true,
+    attention: "unavailable",
+  });
+
+  expect(resolveS02InteractionCapabilities(fullRoot, null)).toEqual(
+    unavailablePresenceSceneActorCapabilities,
+  );
+});
+
+test("#927 runtime consumes exact-port capabilities and forgets them on incarnation replacement", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+
+  const blocked = fakePort(
+    "https://asset.invalid/active.glb",
+    { x: 100, y: 150 },
+    unavailablePresenceSceneActorCapabilities,
+  );
+  const unregisterBlocked = runtime.registerPort(blocked.port);
+
+  const commits: PresencePlacementIntent[] = [];
+  publishSpatialHost(connection, spatialArena(1), {}, commits);
+
+  expect(runtime.snapshot.capabilities).toEqual(
+    unavailablePresenceSceneActorCapabilities,
+  );
+
+  const writesBefore = runtime.snapshot.writeCount;
+  const commitsBefore = runtime.snapshot.commitCount;
+  const incarnationBefore = runtime.snapshot.portIncarnation;
+
+  expect(runtime.acknowledgeTap()).toBe(false);
+  expect(runtime.beginTactilePointer({
+    pointerId: 91,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  })).toBeNull();
+  expect(runtime.pulseTactile()).toBe(false);
+  expect(runtime.requestAttention({
+    clientX: 50,
+    clientY: 60,
+  })).toBe(false);
+
+  expect(blocked.reactions().acknowledgements).toBe(0);
+  expect(blocked.tactile().begins).toBe(0);
+  expect(blocked.tactile().pulses).toBe(0);
+  expect(blocked.attention().requests).toBe(0);
+  expect(runtime.snapshot.leaseToken).toBeNull();
+  expect(runtime.snapshot.writeCount).toBe(writesBefore);
+  expect(runtime.snapshot.commitCount).toBe(commitsBefore);
+  expect(commits).toHaveLength(0);
+
+  expect(unregisterBlocked()).toBe(true);
+  expect(runtime.snapshot.portCount).toBe(0);
+  expect(runtime.snapshot.capabilities).toEqual(
+    unavailablePresenceSceneActorCapabilities,
+  );
+
+  const supported = fakePort(
+    "https://asset.invalid/active.glb",
+    { x: 100, y: 150 },
+  );
+  const unregisterSupported = runtime.registerPort(supported.port);
+
+  expect(runtime.snapshot.portIncarnation).toBeGreaterThan(incarnationBefore);
+  expect(runtime.snapshot.capabilities).toEqual(fullyCapablePort);
+
+  expect(unregisterSupported()).toBe(true);
+  expect(runtime.snapshot.portCount).toBe(0);
+  expect(runtime.snapshot.capabilities).toEqual(
+    unavailablePresenceSceneActorCapabilities,
+  );
 });

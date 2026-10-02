@@ -2,12 +2,14 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { disposeScene } from "./disposeScene";
-import type {
-  PresenceAttentionTarget,
-  PresenceSceneActorPort,
-  PresenceSceneActorProjection,
-  PresenceSceneActorWriteRequest,
-  PresenceTactileDelta,
+import {
+  unavailablePresenceSceneActorCapabilities,
+  type PresenceAttentionTarget,
+  type PresenceSceneActorCapabilities,
+  type PresenceSceneActorPort,
+  type PresenceSceneActorProjection,
+  type PresenceSceneActorWriteRequest,
+  type PresenceTactileDelta,
 } from "../../platform/presence/presenceSceneActorRuntime";
 import type { PresenceArenaRect } from "../../platform/presence/s02PresenceArena";
 
@@ -36,6 +38,26 @@ export function resolveS02AttentionBones(
     spine: spineCandidate instanceof THREE.Bone
       ? spineCandidate
       : null,
+  });
+}
+
+export function resolveS02InteractionCapabilities(
+  actorRoot: THREE.Object3D,
+  reactionRoot: THREE.Group | null,
+): PresenceSceneActorCapabilities {
+  // The projection exists only after the local actor hierarchy has been
+  // assembled. Clip names and species identity are intentionally not inputs.
+  if (!reactionRoot) return unavailablePresenceSceneActorCapabilities;
+
+  const attentionBones = resolveS02AttentionBones(actorRoot);
+  return Object.freeze({
+    tapAcknowledgement: true,
+    tactile: true,
+    attention: !attentionBones
+      ? "unavailable"
+      : attentionBones.spine
+        ? "head-spine"
+        : "head-only",
   });
 }
 
@@ -117,6 +139,8 @@ export class S02SceneActorOwner {
   #worldRoot: THREE.Group | null = null;
   #reactionRoot: THREE.Group | null = null;
   #normalized: THREE.Group | null = null;
+  #interactionCapabilities: PresenceSceneActorCapabilities =
+    unavailablePresenceSceneActorCapabilities;
   #tapReactionFrame: number | undefined;
   #tapReactionGeneration = 0;
   #tapReactionStartedAt = 0;
@@ -171,6 +195,10 @@ export class S02SceneActorOwner {
     return this.#worldRoot;
   }
 
+  get interactionCapabilities(): PresenceSceneActorCapabilities {
+    return this.#interactionCapabilities;
+  }
+
   get tapReactionActive(): boolean {
     return this.#tapReactionActive;
   }
@@ -212,7 +240,7 @@ export class S02SceneActorOwner {
   }
 
   get attentionAvailable(): boolean {
-    return this.#attentionHead !== null;
+    return this.#interactionCapabilities.attention !== "unavailable";
   }
 
   get attentionActive(): boolean {
@@ -239,11 +267,7 @@ export class S02SceneActorOwner {
       spinePitch: this.#attentionPitch * spinePitchShare,
       maxYaw: S02_ATTENTION.maxYaw,
       maxPitch: S02_ATTENTION.maxPitch,
-      posture: !this.#attentionHead
-        ? "unavailable"
-        : spine
-          ? "head-spine"
-          : "head-only",
+      posture: this.#interactionCapabilities.attention,
       headBone: this.#attentionHead?.name ?? "none",
       spineBone: this.#attentionSpine?.name ?? "none",
     });
@@ -293,6 +317,10 @@ export class S02SceneActorOwner {
       const center = bounds.getCenter(new THREE.Vector3());
       this.#reactionRoot = reactionRoot;
       this.#normalized = normalized;
+      this.#interactionCapabilities = resolveS02InteractionCapabilities(
+        gltf.scene,
+        reactionRoot,
+      );
       this.#baseScale = (1.65 / Math.max(size.y, 0.001)) * this.#characterScale;
       this.#centerX = center.x;
       this.#centerZ = center.z;
@@ -321,6 +349,7 @@ export class S02SceneActorOwner {
     const head = this.#attentionHead;
     if (
       this.#disposed
+      || this.#interactionCapabilities.attention === "unavailable"
       || !head
       || this.#tapReactionActive
       || this.#tactileActive
@@ -395,7 +424,11 @@ export class S02SceneActorOwner {
 
   acknowledgeTap(): boolean {
     const root = this.#reactionRoot;
-    if (this.#disposed || !root) return false;
+    if (
+      this.#disposed
+      || !this.#interactionCapabilities.tapAcknowledgement
+      || !root
+    ) return false;
 
     this.#cancelAttention(false);
     this.#cancelTactile(false);
@@ -448,7 +481,11 @@ export class S02SceneActorOwner {
 
   beginTactile(): boolean {
     const root = this.#reactionRoot;
-    if (this.#disposed || !root) return false;
+    if (
+      this.#disposed
+      || !this.#interactionCapabilities.tactile
+      || !root
+    ) return false;
 
     this.#cancelAttention(false);
     this.#clearTapReaction(false);
@@ -508,7 +545,11 @@ export class S02SceneActorOwner {
 
   pulseTactile(): boolean {
     const root = this.#reactionRoot;
-    if (this.#disposed || !root) return false;
+    if (
+      this.#disposed
+      || !this.#interactionCapabilities.tactile
+      || !root
+    ) return false;
 
     this.#cancelAttention(false);
     this.#clearTapReaction(false);
@@ -770,6 +811,9 @@ export class S02SceneActorOwner {
     this.#worldRoot = null;
     this.#reactionRoot = null;
     this.#normalized = null;
+    this.#interactionCapabilities = unavailablePresenceSceneActorCapabilities;
+    this.#attentionHead = null;
+    this.#attentionSpine = null;
     if (!root) return;
     this.#scene.remove(root);
     // Renderer-owned shared resources are released only by the final scene pass.
@@ -813,6 +857,7 @@ function taggedRect(
 /** Renderer-local adapter; only write() may mutate the registered S02 world root. */
 export class S02SceneActorPort implements PresenceSceneActorPort {
   readonly assetUrl: string;
+  readonly capabilities: PresenceSceneActorCapabilities;
   readonly #owner: S02SceneActorOwner;
   readonly #camera: THREE.OrthographicCamera;
   readonly #stage: HTMLElement;
@@ -827,6 +872,7 @@ export class S02SceneActorPort implements PresenceSceneActorPort {
   constructor(options: S02SceneActorPortOptions) {
     this.#owner = options.owner;
     this.assetUrl = options.owner.assetUrl;
+    this.capabilities = options.owner.interactionCapabilities;
     this.#camera = options.camera;
     this.#stage = options.stage;
     this.#getCharacterAnchor = options.getCharacterAnchor;
