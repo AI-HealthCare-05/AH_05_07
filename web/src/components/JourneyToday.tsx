@@ -12,6 +12,7 @@ import { landmarkForCalendarDate } from '../ui/scenePolicy';
 import { formatTrailDate, summarizeTrailDays } from '../ui/livingWeekPresentation';
 import type { CompanionSpecies } from '../ui/companion';
 import type { CompanionAsset } from '../ui/companionAssets.generated';
+import { dispatchS02PrimaryAttention } from '../ui/s02PrimaryAttention';
 
 type Action = { key: string; title: string; support: string; action: string; screen: ScreenId };
 
@@ -71,7 +72,20 @@ export function JourneyToday({ mySpaceEntry, guestPlazaEntry, staticLandscape, t
               <h2 id="home-lead-title">{lead.title}</h2>
               <p id="home-lead-support">{lead.support}</p>
             </div>
-            <button type="button" className="ui-control" aria-describedby="home-lead-support" onClick={() => onNavigate(lead.screen)}>{lead.action}<UiIcon name="arrow-right" size={20} /></button>
+            <button
+              type="button"
+              className="ui-control"
+              aria-describedby="home-lead-support"
+              onFocus={(event) => dispatchS02PrimaryAttention(event.currentTarget)}
+              onPointerEnter={(event) => {
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+                  dispatchS02PrimaryAttention(event.currentTarget);
+                }
+              }}
+              onClick={() => onNavigate(lead.screen)}
+            >
+              {lead.action}<UiIcon name="arrow-right" size={20} />
+            </button>
           </section>
           {mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}
           {guestPlazaEntry}

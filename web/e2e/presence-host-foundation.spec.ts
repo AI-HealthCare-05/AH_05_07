@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import * as THREE from "three";
 
 import {
   CompanionPresenceKernel,
@@ -17,6 +18,9 @@ import {
   resolveS02FreePlacement,
   type PresenceArenaPoint,
 } from "../src/platform/presence/s02PresencePlacement";
+import {
+  resolveS02AttentionBones,
+} from "../src/components/scene/s02SceneActor";
 
 const headers = {
   "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
@@ -51,6 +55,8 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
   let tactileEnds = 0;
   let tactileCancels = 0;
   let tactilePulses = 0;
+  let attentionRequests = 0;
+  let attentionCancels = 0;
   const writes: PresenceArenaPoint[] = [];
   const port: PresenceSceneActorPort = {
     assetUrl,
@@ -110,6 +116,14 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
       tactilePulses += 1;
       return true;
     },
+    requestAttention: () => {
+      attentionRequests += 1;
+      return true;
+    },
+    cancelAttention: () => {
+      attentionCancels += 1;
+      return true;
+    },
   };
   return {
     port,
@@ -122,6 +136,10 @@ function fakePort(assetUrl: string, initial: Readonly<{ x: number; y: number }>)
       ends: tactileEnds,
       cancels: tactileCancels,
       pulses: tactilePulses,
+    }),
+    attention: () => ({
+      requests: attentionRequests,
+      cancels: attentionCancels,
     }),
   };
 }
@@ -661,4 +679,136 @@ test("compact S02 keeps semantic task path while the shadow arena declines an in
   await expect(page.getByRole("button", { name: "동반자 위치 바꾸기", exact: true })).toHaveCount(0);
   await expect(page.locator(".home-lead button")).toBeVisible();
   await expect(page.locator(".home-trail-dates")).toBeVisible();
+});
+
+
+test("#925 attention capability requires head while spine stays optional", () => {
+  const empty = new THREE.Group();
+  expect(resolveS02AttentionBones(empty)).toBeNull();
+
+  const headOnlyRoot = new THREE.Group();
+  const headOnly = new THREE.Bone();
+  headOnly.name = "head";
+  headOnlyRoot.add(headOnly);
+
+  const headOnlyCapability = resolveS02AttentionBones(headOnlyRoot);
+  expect(headOnlyCapability?.head).toBe(headOnly);
+  expect(headOnlyCapability?.spine).toBeNull();
+
+  const fullRoot = new THREE.Group();
+  const head = new THREE.Bone();
+  head.name = "head";
+  const spine = new THREE.Bone();
+  spine.name = "spine";
+  fullRoot.add(spine);
+  spine.add(head);
+
+  const fullCapability = resolveS02AttentionBones(fullRoot);
+  expect(fullCapability?.head).toBe(head);
+  expect(fullCapability?.spine).toBe(spine);
+
+  const misleading = new THREE.Group();
+  const fakeHead = new THREE.Group();
+  fakeHead.name = "head";
+  misleading.add(fakeHead);
+  expect(resolveS02AttentionBones(misleading)).toBeNull();
+});
+
+test("#925 attention is exact-current presentation authority and yields to every direct interaction", () => {
+  const runtime = new PresenceSceneActorRuntime();
+  const connection = runtime.connectHost();
+  const port = fakePort(
+    "https://asset.invalid/active.glb",
+    { x: 100, y: 150 },
+  );
+  runtime.registerPort(port.port);
+
+  const commits: PresencePlacementIntent[] = [];
+  publishSpatialHost(connection, spatialArena(1), {}, commits);
+
+  const writesBefore = runtime.snapshot.writeCount;
+  const commitsBefore = runtime.snapshot.commitCount;
+  const attentionBefore = runtime.snapshot.attentionCount;
+
+  expect(runtime.requestAttention({
+    clientX: 36,
+    clientY: 42,
+  })).toBe(true);
+
+  expect(port.attention().requests).toBe(1);
+  expect(runtime.snapshot.attentionCount).toBe(attentionBefore + 1);
+  expect(runtime.snapshot.leaseToken).toBeNull();
+  expect(runtime.snapshot.activePointerToken).toBeNull();
+  expect(runtime.snapshot.activeTactilePointerToken).toBeNull();
+  expect(runtime.snapshot.writeCount).toBe(writesBefore);
+  expect(runtime.snapshot.commitCount).toBe(commitsBefore);
+  expect(commits).toHaveLength(0);
+
+  // Any admitted actor pointer outranks attention before tap/drag is decided.
+  const pointerCancels = port.attention().cancels;
+  const pointer = runtime.beginPointer({
+    pointerId: 81,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  });
+  expect(pointer).not.toBeNull();
+  expect(port.attention().cancels).toBeGreaterThan(pointerCancels);
+  expect(runtime.cancelPointer(pointer!, "pointer-cancel")).toBe(true);
+
+  // Tactile owns local direct manipulation over attention.
+  expect(runtime.requestAttention({
+    clientX: 42,
+    clientY: 48,
+  })).toBe(true);
+  const tactileCancels = port.attention().cancels;
+
+  const tactile = runtime.beginTactilePointer({
+    pointerId: 82,
+    clientX: 100,
+    clientY: 125,
+    button: 0,
+    isPrimary: true,
+  });
+  expect(tactile).not.toBeNull();
+  expect(port.attention().cancels).toBeGreaterThan(tactileCancels);
+  expect(runtime.cancelTactilePointer(tactile!)).toBe(true);
+
+  // Semantic tap acknowledgement also outranks attention.
+  expect(runtime.requestAttention({
+    clientX: 48,
+    clientY: 54,
+  })).toBe(true);
+  const tapCancels = port.attention().cancels;
+
+  expect(runtime.acknowledgeTap()).toBe(true);
+  expect(port.attention().cancels).toBeGreaterThan(tapCancels);
+
+  // A fence replacement cancels any remaining local attention immediately.
+  expect(runtime.requestAttention({
+    clientX: 54,
+    clientY: 60,
+  })).toBe(true);
+  const fenceCancels = port.attention().cancels;
+  const writesBeforeFenceReconcile = runtime.snapshot.writeCount;
+
+  publishSpatialHost(
+    connection,
+    spatialArena(2),
+    {
+      ownerToken: "attention-owner-next",
+      ownerGeneration: 2,
+    },
+    commits,
+  );
+
+  expect(port.attention().cancels).toBeGreaterThan(fenceCancels);
+
+  // Fence/Arena replacement legitimately reprojects the committed root once.
+  // The attention requests above themselves never acquired or wrote root authority.
+  expect(runtime.snapshot.writeCount).toBe(writesBeforeFenceReconcile + 1);
+  expect(runtime.snapshot.commitCount).toBe(commitsBefore);
+  expect(runtime.snapshot.leaseToken).toBeNull();
+  expect(commits).toHaveLength(0);
 });
