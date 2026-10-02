@@ -193,11 +193,19 @@ test("short 320px S02 keeps its intentionally hidden frame and interaction hidde
 test("S02 presentation controls stay visually quiet without losing semantics", async ({ page }) => {
   const layer = await openSpatialS02(page);
   const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   const status = layer.locator(".presence-scene-actor-status");
 
   await expect(target).toHaveAccessibleName("동반자 반응 보기");
   await expect(target).toHaveAccessibleDescription(/누르면 동반자가 반응하고.*드래그하면 위치를 바꿔요/);
+
+  await expect(tactile).toHaveAccessibleName("동반자 만져보기");
+  await expect(tactile).toHaveAttribute("aria-pressed", "false");
+  const tactileBox = await tactile.boundingBox();
+  if (!tactileBox) throw new Error("tactile control is not measurable");
+  expect(tactileBox.width).toBeGreaterThanOrEqual(44);
+  expect(tactileBox.height).toBeGreaterThanOrEqual(44);
   await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await target.hover();
   await expect(target).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
@@ -241,6 +249,9 @@ test("S02 presentation controls stay visually quiet without losing semantics", a
   });
 
   await target.focus();
+  await page.keyboard.press("Tab");
+  await expect(tactile).toBeFocused();
+  expect(await tactile.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
   await page.keyboard.press("Tab");
   await expect(cycle).toBeFocused();
   expect(await cycle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
@@ -564,10 +575,20 @@ test("forced colors preserves S02 focus and the graphical alternative control", 
   await page.emulateMedia({ forcedColors: "active" });
   const layer = await openSpatialS02(page);
   const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
   const cycle = layer.getByRole("button", { name: "동반자 위치 바꾸기", exact: true });
   await target.focus();
   await expect(target).toBeFocused();
   expect(await target.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+
+  await page.keyboard.press("Tab");
+  await expect(tactile).toBeFocused();
+  expect(await tactile.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+  await expect(tactile).toBeVisible();
+  await expect(tactile).toHaveCSS("border-top-style", "solid");
+  expect(await tactile.evaluate(element => getComputedStyle(element).color))
+    .not.toBe("rgba(0, 0, 0, 0)");
+
   await page.keyboard.press("Tab");
   await expect(cycle).toBeFocused();
   expect(await cycle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
@@ -1069,4 +1090,527 @@ test("S02 same recipe and identity SPA return and tier return create new realtim
   await stage.scrollIntoViewIfNeeded();
   await waitForSceneReady(stage);
   expect(await stage.getAttribute("data-scene-visit-token")).not.toBe(second);
+});
+
+// #923 tactile-play browser evidence
+
+async function tactileTransform(scene: Locator) {
+  return {
+    x: Number(await scene.getAttribute("data-companion-tactile-x")),
+    y: Number(await scene.getAttribute("data-companion-tactile-y")),
+    rotationZ: Number(await scene.getAttribute("data-companion-tactile-rotation-z")),
+    scaleX: Number(await scene.getAttribute("data-companion-tactile-scale-x")),
+    scaleY: Number(await scene.getAttribute("data-companion-tactile-scale-y")),
+    scaleZ: Number(await scene.getAttribute("data-companion-tactile-scale-z")),
+  };
+}
+
+async function expectTactileNeutral(scene: Locator) {
+  await expect.poll(async () => ({
+    active: await scene.getAttribute("data-companion-tactile-active"),
+    settling: await scene.getAttribute("data-companion-tactile-settling"),
+    x: await scene.getAttribute("data-companion-tactile-x"),
+    y: await scene.getAttribute("data-companion-tactile-y"),
+    rotationZ: await scene.getAttribute("data-companion-tactile-rotation-z"),
+    scaleX: await scene.getAttribute("data-companion-tactile-scale-x"),
+    scaleY: await scene.getAttribute("data-companion-tactile-scale-y"),
+    scaleZ: await scene.getAttribute("data-companion-tactile-scale-z"),
+  })).toEqual({
+    active: "false",
+    settling: "false",
+    x: "0.0000",
+    y: "0.0000",
+    rotationZ: "0.0000",
+    scaleX: "1.0000",
+    scaleY: "1.0000",
+    scaleZ: "1.0000",
+  });
+}
+
+async function beginTactileMouseDrag(
+  page: Page,
+  target: Locator,
+  deltaX = 34,
+  deltaY = -22,
+) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error("tactile actor target has no box");
+  const start = {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(
+    start.x + deltaX,
+    start.y + deltaY,
+    { steps: 4 },
+  );
+  return start;
+}
+
+function tactilePointerId(token: string | null) {
+  if (!token || token === "none") throw new Error("active tactile token is unavailable");
+  const pointerId = Number(token.split(":")[2]);
+  if (!Number.isInteger(pointerId)) throw new Error(`invalid tactile token: ${token}`);
+  return pointerId;
+}
+
+async function expectTactileChanged(scene: Locator) {
+  await expect.poll(async () => {
+    const value = await tactileTransform(scene);
+    return Math.max(
+      Math.abs(value.x),
+      Math.abs(value.y),
+      Math.abs(value.rotationZ),
+      Math.abs(value.scaleX - 1),
+      Math.abs(value.scaleY - 1),
+      Math.abs(value.scaleZ - 1),
+    );
+  }).toBeGreaterThan(0.0001);
+}
+
+test("#923 tactile desktop drag changes reactionRoot only, stays bounded, settles exact neutral, and OFF restores #921 grammar", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "off");
+  await expect(tactile).toHaveAttribute("aria-pressed", "false");
+  await expectTactileNeutral(scene);
+
+  const tactileBox = await tactile.boundingBox();
+  if (!tactileBox) throw new Error("tactile control is not measurable");
+  expect(tactileBox.width).toBeGreaterThanOrEqual(44);
+  expect(tactileBox.height).toBeGreaterThanOrEqual(44);
+
+  const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const tapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+  const worldBefore = await worldRootPosition(page);
+
+  await tactile.click();
+
+  await expect(tactile).toHaveAttribute("aria-pressed", "true");
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "on");
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+
+  await beginTactileMouseDrag(page, target);
+
+  await expect(layer).not.toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+  await expectTactileChanged(scene);
+
+  const deformation = await tactileTransform(scene);
+
+  expect(Math.abs(deformation.x)).toBeLessThanOrEqual(0.0601);
+  expect(Math.abs(deformation.y)).toBeLessThanOrEqual(0.0451);
+  expect(Math.abs(deformation.rotationZ)).toBeLessThanOrEqual(0.0751);
+  expect(deformation.scaleX).toBeLessThanOrEqual(1.0251);
+  expect(deformation.scaleY).toBeGreaterThanOrEqual(0.9649);
+  expect(deformation.scaleZ).toBeLessThanOrEqual(1.0151);
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBefore));
+
+  await page.mouse.up();
+
+  await expect(scene).toHaveAttribute("data-companion-tactile-settling", "true");
+  await expectTactileNeutral(scene);
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+
+  // Explicitly leave tactile mode. The original #921 grammar must return.
+  await tactile.click();
+  await expect(tactile).toHaveAttribute("aria-pressed", "false");
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "off");
+
+  const tapsBeforeNormal = Number(await layer.getAttribute("data-presence-tap-count"));
+  await tapActor(page, target);
+  await expect(layer).toHaveAttribute(
+    "data-presence-tap-count",
+    String(tapsBeforeNormal + 1),
+  );
+
+  const commitsBeforeNormalDrag = Number(await layer.getAttribute("data-presence-commit-count"));
+  const normalWorldBefore = await worldRootPosition(page);
+
+  await dragBy(page, target, 28, 10);
+
+  await expect(layer).toHaveAttribute(
+    "data-presence-commit-count",
+    String(commitsBeforeNormalDrag + 1),
+  );
+  expect(await worldRootPosition(page)).not.toEqual(normalWorldBefore);
+});
+
+test("#923 tactile keyboard Enter and Space pulse locally without world-root authority", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  await tactile.click();
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "on");
+
+  const worldBefore = await worldRootPosition(page);
+  const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const tapsBefore = Number(await layer.getAttribute("data-presence-tap-count"));
+  const pulsesBefore = Number(await layer.getAttribute("data-presence-tactile-pulse-count"));
+
+  await target.focus();
+  await page.keyboard.press("Enter");
+
+  await expect(layer).toHaveAttribute(
+    "data-presence-tactile-pulse-count",
+    String(pulsesBefore + 1),
+  );
+  await expectTactileChanged(scene);
+  await expectTactileNeutral(scene);
+
+  await target.focus();
+  await page.keyboard.press("Space");
+
+  await expect(layer).toHaveAttribute(
+    "data-presence-tactile-pulse-count",
+    String(pulsesBefore + 2),
+  );
+  await expectTactileChanged(scene);
+  await expectTactileNeutral(scene);
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  await expect(layer).toHaveAttribute("data-presence-tap-count", String(tapsBefore));
+  await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+});
+
+test("#923 tactile rapid replacement defeats stale settle and Escape, pointercancel, lost capture all neutralize", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  await tactile.click();
+
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+  const worldBefore = await worldRootPosition(page);
+
+  // Gesture 1 enters settle.
+  await beginTactileMouseDrag(page, target, 30, -18);
+  await expectTactileChanged(scene);
+  await page.mouse.up();
+  await expect(scene).toHaveAttribute("data-companion-tactile-settling", "true");
+
+  // Gesture 2 must replace that settle. Hold it longer than an old settle window:
+  // a stale callback must not reset this newer active deformation.
+  await beginTactileMouseDrag(page, target, -31, 19);
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expect(scene).toHaveAttribute("data-companion-tactile-settling", "false");
+  await expectTactileChanged(scene);
+  await page.waitForTimeout(420);
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expectTactileChanged(scene);
+
+  // Escape cancels the newer active gesture to exact neutral.
+  await page.keyboard.press("Escape");
+  await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expectTactileNeutral(scene);
+  await page.mouse.up();
+
+  // pointercancel
+  await beginTactileMouseDrag(page, target, 28, -17);
+  const cancelId = tactilePointerId(
+    await layer.getAttribute("data-presence-tactile-pointer"),
+  );
+  await target.dispatchEvent("pointercancel", {
+    pointerId: cancelId,
+    pointerType: "mouse",
+    button: 0,
+    isPrimary: true,
+    bubbles: true,
+  });
+  await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expectTactileNeutral(scene);
+  await page.mouse.up();
+
+  // lostpointercapture
+  await beginTactileMouseDrag(page, target, -27, -16);
+  const lostId = tactilePointerId(
+    await layer.getAttribute("data-presence-tactile-pointer"),
+  );
+  await target.evaluate((element: HTMLButtonElement, pointerId) => {
+    if (!element.hasPointerCapture(pointerId)) {
+      throw new Error(`tactile pointer ${pointerId} is not captured`);
+    }
+    element.releasePointerCapture(pointerId);
+  }, lostId);
+  await target.dispatchEvent("lostpointercapture", {
+    pointerId: lostId,
+    pointerType: "mouse",
+    isPrimary: true,
+    bubbles: true,
+  });
+  await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expectTactileNeutral(scene);
+  await page.mouse.up();
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+  await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+});
+
+test("#923 tactile mobile touch drag deforms locally without relocation", async ({ browser }) => {
+  const context = await browser.newContext({
+    baseURL: "http://127.0.0.1:4173",
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  const page = await context.newPage();
+
+  try {
+    const layer = await openSpatialS02(page);
+    const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+    const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+    const scene = page.locator(".living-three-scene");
+    const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+    await tactile.click();
+
+    const box = await target.boundingBox();
+    if (!box) throw new Error("mobile tactile target has no box");
+
+    const start = {
+      x: Math.round(box.x + box.width / 2),
+      y: Math.round(box.y + box.height / 2),
+    };
+
+    const worldBefore = await worldRootPosition(page);
+    const arenaBefore = Number(await host.getAttribute("data-presence-arena-revision"));
+    const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+    const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+
+    const cdp = await context.newCDPSession(page);
+
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: start.x, y: start.y }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: start.x + 17, y: start.y - 10 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: start.x + 34, y: start.y - 20 }],
+    });
+
+    await expect(layer).not.toHaveAttribute("data-presence-tactile-pointer", "none");
+    await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+    await expectTactileChanged(scene);
+
+    const deformation = await tactileTransform(scene);
+    expect(Math.abs(deformation.x)).toBeLessThanOrEqual(0.0601);
+    expect(Math.abs(deformation.y)).toBeLessThanOrEqual(0.0451);
+    expect(Math.abs(deformation.rotationZ)).toBeLessThanOrEqual(0.0751);
+
+    expect(await worldRootPosition(page)).toEqual(worldBefore);
+    expect(Number(await host.getAttribute("data-presence-arena-revision"))).toBe(arenaBefore);
+    await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+    await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+    await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+
+    await expectTactileNeutral(scene);
+    await cdp.detach();
+  } finally {
+    await context.close();
+  }
+});
+
+for (const species of ["cat", "fox", "hedgehog"] as const) {
+  test(`#923 tactile stays species-agnostic for ${species}`, async ({ page }) => {
+    await openS02WithSpecies(page, species);
+    await waitForSceneReady(page.locator(".living-visual-stage"));
+
+    const layer = await assertAdmittedTarget(page);
+    const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+    const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+    const scene = page.locator(".living-three-scene");
+
+    const worldBefore = await worldRootPosition(page);
+    const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+    const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+
+    await tactile.click();
+    await beginTactileMouseDrag(page, target, 26, -15);
+
+    await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+    await expectTactileChanged(scene);
+    expect(await worldRootPosition(page)).toEqual(worldBefore);
+
+    await page.mouse.up();
+    await expectTactileNeutral(scene);
+
+    await expect(layer).toHaveAttribute("data-presence-write-count", String(writesBefore));
+    await expect(layer).toHaveAttribute("data-presence-commit-count", String(commitsBefore));
+  });
+}
+
+test("#923 tactile reduced-motion owner teardown returns with mode OFF and neutral reactionRoot", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+
+  await tactile.click();
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "on");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await expect(page.locator('[data-presence-scene-actor-interaction="S02"]')).toHaveCount(0);
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "poster",
+  );
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const returned = page.locator('[data-presence-scene-actor-interaction="S02"]');
+  await expect(returned).toHaveCount(1);
+  await expect(returned).toHaveAttribute("data-presence-tactile-mode", "off");
+  await expect(
+    returned.getByRole("button", { name: "동반자 만져보기", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await expectTactileNeutral(page.locator(".living-three-scene"));
+});
+
+test("#923 tactile route teardown cannot persist intent or local deformation across return", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+
+  await tactile.click();
+  await beginTactileMouseDrag(page, target, 32, -18);
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expectTactileChanged(scene);
+
+  await page.locator(".home-lead button").evaluate(
+    (button: HTMLButtonElement) => button.click(),
+  );
+
+  await expect(page.locator('[data-scene="S02"]')).toHaveCount(0);
+  await expect(page.locator('[data-presence-scene-actor-interaction="S02"]')).toHaveCount(0);
+  await page.mouse.up();
+
+  await page.getByRole("button", { name: /SK7.*오늘의 기록으로 이동/ }).click();
+  await page.locator(".living-visual-stage").scrollIntoViewIfNeeded();
+
+  await expect(page.locator("[data-living-scene-status]")).toHaveAttribute(
+    "data-living-scene-status",
+    "ready",
+    { timeout: 20_000 },
+  );
+
+  const returned = page.locator('[data-presence-scene-actor-interaction="S02"]');
+  await expect(returned).toHaveCount(1);
+  await expect(returned).toHaveAttribute("data-presence-tactile-mode", "off");
+  await expect(
+    returned.getByRole("button", { name: "동반자 만져보기", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await expectTactileNeutral(page.locator(".living-three-scene"));
+});
+
+
+test("#923 page hidden cancels active tactile ownership and visibility return stays OFF neutral", async ({ page }) => {
+  const layer = await openSpatialS02(page);
+  const target = layer.getByRole("button", { name: "동반자 반응 보기", exact: true });
+  const tactile = layer.getByRole("button", { name: "동반자 만져보기", exact: true });
+  const scene = page.locator(".living-three-scene");
+  const host = page.locator('[data-companion-presence-host="shadow-v1"]');
+
+  await tactile.click();
+  await expect(tactile).toHaveAttribute("aria-pressed", "true");
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "on");
+
+  const worldBefore = await worldRootPosition(page);
+  const writesBefore = Number(await layer.getAttribute("data-presence-write-count"));
+  const commitsBefore = Number(await layer.getAttribute("data-presence-commit-count"));
+
+  await beginTactileMouseDrag(page, target, 32, -19);
+
+  await expect(layer).not.toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expect(scene).toHaveAttribute("data-companion-tactile-active", "true");
+  await expectTactileChanged(scene);
+
+  // Deterministically exercise the browser visibilitychange contract.
+  // The own-property override exists only while listeners synchronously run.
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    try {
+      document.dispatchEvent(new Event("visibilitychange"));
+    } finally {
+      Reflect.deleteProperty(document, "hidden");
+    }
+  });
+
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "off");
+  await expect(tactile).toHaveAttribute("aria-pressed", "false");
+  await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expect(host).toHaveAttribute("data-presence-world-root-pointer", "none");
+  await expectTactileNeutral(scene);
+
+  expect(await worldRootPosition(page)).toEqual(worldBefore);
+  await expect(layer).toHaveAttribute(
+    "data-presence-write-count",
+    String(writesBefore),
+  );
+  await expect(layer).toHaveAttribute(
+    "data-presence-commit-count",
+    String(commitsBefore),
+  );
+
+  // Release the physical mouse after ownership has already been revoked.
+  // It must not revive either grammar.
+  await page.mouse.up();
+
+  // Visibility return has no persisted tactile intent.
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  await expect(layer).toHaveAttribute("data-presence-tactile-mode", "off");
+  await expect(tactile).toHaveAttribute("aria-pressed", "false");
+  await expect(layer).toHaveAttribute("data-presence-tactile-pointer", "none");
+  await expectTactileNeutral(scene);
 });

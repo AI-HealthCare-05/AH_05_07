@@ -42,6 +42,11 @@ export type PresenceSceneActorWriteRequest = Readonly<{
   point: PresenceArenaPoint;
 }>;
 
+export type PresenceTactileDelta = Readonly<{
+  deltaX: number;
+  deltaY: number;
+}>;
+
 export type PresenceSceneActorPort = Readonly<{
   assetUrl: string;
   project: (arenaRevision: number) => PresenceSceneActorProjection | null;
@@ -49,6 +54,11 @@ export type PresenceSceneActorPort = Readonly<{
   // Renderer-local optional capability. These methods never own world-root movement.
   acknowledgeTap?: () => boolean;
   cancelTapReaction?: () => boolean;
+  beginTactile?: () => boolean;
+  updateTactile?: (delta: PresenceTactileDelta) => boolean;
+  endTactile?: () => boolean;
+  cancelTactile?: () => boolean;
+  pulseTactile?: () => boolean;
 }>;
 
 export type PresenceWorldRootFence = Readonly<{
@@ -73,6 +83,12 @@ export type PresencePointerToken = Readonly<{
   fence: PresenceWorldRootFence;
 }>;
 
+export type PresenceTactilePointerToken = Readonly<{
+  token: string;
+  pointerId: number;
+  fence: PresenceWorldRootFence;
+}>;
+
 export type PresencePointerFinish = "ignored" | "tap" | "committed" | "restored";
 
 export type PresenceSceneActorStatus =
@@ -92,6 +108,8 @@ export type PresenceSceneActorRuntimeSnapshot = Readonly<{
   committedNormalized: PresenceNormalizedPlacement | null;
   activePointerId: number | null;
   activePointerToken: string | null;
+  activeTactilePointerId: number | null;
+  activeTactilePointerToken: string | null;
   dragging: boolean;
   leaseToken: string | null;
   portCount: 0 | 1;
@@ -99,6 +117,8 @@ export type PresenceSceneActorRuntimeSnapshot = Readonly<{
   writeCount: number;
   commitCount: number;
   tapCount: number;
+  tactileMoveCount: number;
+  tactilePulseCount: number;
   revocationCount: number;
   lastRevocation: string | null;
   lastCorrectionDistance: number;
@@ -139,6 +159,11 @@ type PointerSession = Readonly<{
   lease: PresenceWorldRootLease | null;
   dragging: boolean;
   latestPlacement: PresenceFreePlacementResult | null;
+}>;
+
+type TactilePointerSession = Readonly<{
+  publicToken: PresenceTactilePointerToken;
+  startPointer: Readonly<{ x: number; y: number }>;
 }>;
 
 type Listener = () => void;
@@ -255,6 +280,8 @@ function initialSnapshot(): PresenceSceneActorRuntimeSnapshot {
     committedNormalized: null,
     activePointerId: null,
     activePointerToken: null,
+    activeTactilePointerId: null,
+    activeTactilePointerToken: null,
     dragging: false,
     leaseToken: null,
     portCount: 0,
@@ -262,6 +289,8 @@ function initialSnapshot(): PresenceSceneActorRuntimeSnapshot {
     writeCount: 0,
     commitCount: 0,
     tapCount: 0,
+    tactileMoveCount: 0,
+    tactilePulseCount: 0,
     revocationCount: 0,
     lastRevocation: null,
     lastCorrectionDistance: 0,
@@ -285,6 +314,8 @@ export class PresenceSceneActorRuntime {
   #lease: PresenceWorldRootLease | null = null;
   #pointerOrder = 0;
   #pointer: PointerSession | null = null;
+  #tactilePointerOrder = 0;
+  #tactilePointer: TactilePointerSession | null = null;
   #projection: PresenceSceneActorProjection | null = null;
   #committedNormalized: PresenceNormalizedPlacement | null = null;
   #committedSessionEpoch: number | null = null;
@@ -293,6 +324,8 @@ export class PresenceSceneActorRuntime {
   #writeCount = 0;
   #commitCount = 0;
   #tapCount = 0;
+  #tactileMoveCount = 0;
+  #tactilePulseCount = 0;
   #revocationCount = 0;
   #lastRevocation: string | null = null;
   #lastCorrectionDistance = 0;
@@ -370,10 +403,183 @@ export class PresenceSceneActorRuntime {
 
   /** Keyboard/assistive semantic activation. Pointer taps use endPointer(). */
   acknowledgeTap(): boolean {
-    if (this.#pointer) return false;
+    if (this.#pointer || this.#tactilePointer) return false;
     const acknowledged = this.#admitTap();
     this.#emit();
     return acknowledged;
+  }
+
+  beginTactilePointer(input: Readonly<{
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+    button: number;
+    isPrimary: boolean;
+  }>): PresenceTactilePointerToken | null {
+    const fence = this.#currentFence();
+    const arena = this.#host?.arena;
+    const projection = this.#projection;
+    const port = this.#port?.port;
+    const host = this.#host;
+
+    if (
+      !fence
+      || !arena
+      || !projection
+      || !port
+      || !host?.activeAssetUrl
+      || port.assetUrl !== host.activeAssetUrl
+      || !port.beginTactile
+      || !port.updateTactile
+      || !port.endTactile
+      || !port.cancelTactile
+      || this.#pointer
+      || this.#tactilePointer
+      || input.button !== 0
+      || !input.isPrimary
+      || !Number.isSafeInteger(input.pointerId)
+      || input.pointerId < 0
+      || !Number.isFinite(input.clientX)
+      || !Number.isFinite(input.clientY)
+    ) return null;
+
+    const point = clientPointToArena(
+      { x: input.clientX, y: input.clientY },
+      arena.viewport,
+    );
+    if (!pointInside(point, projection.hitRect)) return null;
+
+    this.#cancelTapReaction();
+
+    try {
+      if (!port.beginTactile()) return null;
+    } catch {
+      return null;
+    }
+
+    const order = ++this.#tactilePointerOrder;
+    const publicToken = Object.freeze({
+      token: `presence-tactile:${order}:${input.pointerId}:${encodeURIComponent(fence.ownerToken)}`,
+      pointerId: input.pointerId,
+      fence: freezeFence(fence),
+    });
+
+    this.#tactilePointer = Object.freeze({
+      publicToken,
+      startPointer: point,
+    });
+    this.#emit();
+    return publicToken;
+  }
+
+  moveTactilePointer(
+    token: PresenceTactilePointerToken,
+    point: Readonly<{ clientX: number; clientY: number }>,
+  ): boolean {
+    const current = this.#tactilePointer;
+    const fence = this.#currentFence();
+    const arena = this.#host?.arena;
+    const port = this.#port?.port;
+
+    if (
+      !current
+      || current.publicToken.token !== token.token
+      || current.publicToken.pointerId !== token.pointerId
+      || !sameFence(current.publicToken.fence, fence)
+      || !arena
+      || !port?.updateTactile
+      || !Number.isFinite(point.clientX)
+      || !Number.isFinite(point.clientY)
+    ) return false;
+
+    const sample = clientPointToArena(
+      { x: point.clientX, y: point.clientY },
+      arena.viewport,
+    );
+
+    let updated = false;
+    try {
+      updated = port.updateTactile(Object.freeze({
+        deltaX: sample.x - current.startPointer.x,
+        deltaY: sample.y - current.startPointer.y,
+      }));
+    } catch {
+      updated = false;
+    }
+
+    if (updated) this.#tactileMoveCount += 1;
+    this.#emit();
+    return updated;
+  }
+
+  endTactilePointer(token: PresenceTactilePointerToken): boolean {
+    const current = this.#tactilePointer;
+    const fence = this.#currentFence();
+    const port = this.#port?.port;
+
+    if (
+      !current
+      || current.publicToken.token !== token.token
+      || !sameFence(current.publicToken.fence, fence)
+      || !port?.endTactile
+    ) return false;
+
+    this.#tactilePointer = null;
+
+    let ended = false;
+    try {
+      ended = port.endTactile();
+    } catch {
+      this.#cancelTactileReaction();
+    }
+
+    this.#emit();
+    return ended;
+  }
+
+  cancelTactilePointer(token: PresenceTactilePointerToken): boolean {
+    const current = this.#tactilePointer;
+    if (!current || current.publicToken.token !== token.token) return false;
+
+    this.#tactilePointer = null;
+    const cancelled = this.#cancelTactileReaction();
+    this.#emit();
+    return cancelled;
+  }
+
+  cancelTactile(): boolean {
+    this.#tactilePointer = null;
+    const cancelled = this.#cancelTactileReaction();
+    this.#emit();
+    return cancelled;
+  }
+
+  pulseTactile(): boolean {
+    const fence = this.#currentFence();
+    const host = this.#host;
+    const port = this.#port?.port;
+
+    if (
+      !fence
+      || !host?.activeAssetUrl
+      || !port?.pulseTactile
+      || port.assetUrl !== host.activeAssetUrl
+      || this.#pointer
+      || this.#tactilePointer
+    ) return false;
+
+    this.#cancelTapReaction();
+
+    let pulsed = false;
+    try {
+      pulsed = port.pulseTactile();
+    } catch {
+      pulsed = false;
+    }
+
+    if (pulsed) this.#tactilePulseCount += 1;
+    this.#emit();
+    return pulsed;
   }
 
   beginPointer(input: Readonly<{
@@ -391,6 +597,7 @@ export class PresenceSceneActorRuntime {
       || !arena
       || !projection
       || this.#pointer
+      || this.#tactilePointer
       || input.button !== 0
       || !input.isPrimary
       || !Number.isSafeInteger(input.pointerId)
@@ -504,6 +711,10 @@ export class PresenceSceneActorRuntime {
     const arena = this.#host?.arena;
     const fence = this.#currentFence();
     const projection = this.#projection;
+
+    this.#tactilePointer = null;
+    this.#cancelTactileReaction();
+
     if (!arena || !fence || !projection || this.#pointer) return false;
     const envelope = envelopeFromProjection(projection.root, projection.visualEnvelope);
     if (!envelope) return false;
@@ -714,18 +925,30 @@ export class PresenceSceneActorRuntime {
   }
 
   #cancelTapReaction(): boolean {
-    const cancel = this.#port?.port.cancelTapReaction;
-    if (!cancel) return false;
+    const port = this.#port?.port;
+    if (!port?.cancelTapReaction) return false;
     try {
-      return cancel();
+      return port.cancelTapReaction();
+    } catch {
+      return false;
+    }
+  }
+
+  #cancelTactileReaction(): boolean {
+    const port = this.#port?.port;
+    if (!port?.cancelTactile) return false;
+    try {
+      return port.cancelTactile();
     } catch {
       return false;
     }
   }
 
   #prepareFenceChange(reason: string): void {
-    // Route/owner/Arena/port invalidation settles renderer-local reaction first.
+    // Route/owner/Arena/port invalidation settles every local embodiment effect.
     this.#cancelTapReaction();
+    this.#cancelTactileReaction();
+    this.#tactilePointer = null;
     const pointer = this.#pointer;
     if (pointer?.lease && this.#isExactLease(pointer.lease)) {
       this.#restoreWithLease(pointer.lease, pointer.envelope);
@@ -932,6 +1155,8 @@ export class PresenceSceneActorRuntime {
       committedNormalized: this.#committedNormalized,
       activePointerId: this.#pointer?.publicToken.pointerId ?? null,
       activePointerToken: this.#pointer?.publicToken.token ?? null,
+      activeTactilePointerId: this.#tactilePointer?.publicToken.pointerId ?? null,
+      activeTactilePointerToken: this.#tactilePointer?.publicToken.token ?? null,
       dragging: this.#pointer?.dragging ?? false,
       leaseToken: this.#lease?.token ?? null,
       portCount: this.#port ? 1 : 0,
@@ -939,6 +1164,8 @@ export class PresenceSceneActorRuntime {
       writeCount: this.#writeCount,
       commitCount: this.#commitCount,
       tapCount: this.#tapCount,
+      tactileMoveCount: this.#tactileMoveCount,
+      tactilePulseCount: this.#tactilePulseCount,
       revocationCount: this.#revocationCount,
       lastRevocation: this.#lastRevocation,
       lastCorrectionDistance: this.#lastCorrectionDistance,
