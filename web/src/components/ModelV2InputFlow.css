@@ -2696,3 +2696,138 @@
     color: CanvasText;
   }
 }
+
+/* #934: read-only pre-run provenance review.
+   It projects the existing transient Draft; it owns no input, feature or persistence state. */
+.model-v2-flow .model-v2-preflight-review {
+  display: grid;
+  gap: var(--sk7-space-md);
+  width: 100%;
+  min-width: 0;
+  padding: var(--sk7-space-md);
+  border: 1px solid var(--sk7-border);
+  border-inline-start: 4px solid var(--sk7-secondary);
+  background: var(--sk7-surface-subtle);
+  color: var(--sk7-text);
+  overflow-wrap: anywhere;
+}
+
+.model-v2-flow .model-v2-preflight-review > header {
+  display: grid;
+  gap: var(--sk7-space-2xs);
+  min-width: 0;
+}
+
+.model-v2-flow .model-v2-preflight-review > header > * {
+  margin: 0;
+}
+
+.model-v2-flow .model-v2-preflight-kicker {
+  color: var(--sk7-accent);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.model-v2-flow .model-v2-preflight-review h2 {
+  font-size: var(--sk7-type-subtitle);
+  line-height: var(--sk7-leading-tight);
+}
+
+.model-v2-flow .model-v2-preflight-review > header p:last-child,
+.model-v2-flow .model-v2-preflight-note {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-label);
+  line-height: var(--sk7-leading-body);
+}
+
+.model-v2-flow .model-v2-preflight-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sk7-space-md) var(--sk7-space-xl);
+  width: 100%;
+  min-width: 0;
+}
+
+.model-v2-flow .model-v2-preflight-groups > section {
+  min-width: 0;
+}
+
+.model-v2-flow .model-v2-preflight-groups h3 {
+  margin: 0 0 var(--sk7-space-xs);
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-label);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.model-v2-flow .model-v2-preflight-groups dl {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.model-v2-flow .model-v2-preflight-groups dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sk7-space-2xs) var(--sk7-space-sm);
+  min-width: 0;
+  padding-block: var(--sk7-space-xs);
+  border-top: 1px solid color-mix(in srgb, var(--sk7-border) 76%, transparent);
+}
+
+.model-v2-flow .model-v2-preflight-groups dt {
+  flex: 1 1 9rem;
+  min-width: 0;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  line-height: var(--sk7-leading-body);
+}
+
+.model-v2-flow .model-v2-preflight-groups dd {
+  flex: 1 1 10rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-label);
+  font-weight: var(--sk7-weight-medium);
+  line-height: var(--sk7-leading-body);
+}
+
+.model-v2-flow [data-review-source="automatic"] dd {
+  font-weight: var(--sk7-weight-bold);
+}
+
+.model-v2-flow .model-v2-preflight-note {
+  margin: 0;
+  padding-top: var(--sk7-space-xs);
+  border-top: 1px solid var(--sk7-border);
+}
+
+@media (max-width: 42rem) {
+  .model-v2-flow .model-v2-preflight-groups {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sk7-space-sm);
+  }
+}
+
+@media (forced-colors: active) {
+  .model-v2-flow .model-v2-preflight-review {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+  }
+
+  .model-v2-flow .model-v2-preflight-review :is(
+    .model-v2-preflight-kicker,
+    header p:last-child,
+    dt,
+    .model-v2-preflight-note
+  ) {
+    color: CanvasText;
+  }
+
+  .model-v2-flow .model-v2-preflight-groups dl > div,
+  .model-v2-flow .model-v2-preflight-note {
+    border-color: CanvasText;
+  }
+}
