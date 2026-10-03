@@ -2293,3 +2293,41 @@ test("#932 companion representation failure preserves confirmed cosmetics and pe
   expect(await readLocal(page)).toEqual(snapshot);
   expect(await page.evaluate(() => (window as unknown as { e932Writes: number }).e932Writes)).toBe(0);
 });
+
+test("#938 My Space labels browser and account scopes without merging storage", async ({ page }) => {
+  await page.goto(browserRoute);
+
+  const browserScope = page.getByTestId("storage-label");
+
+  await expect(browserScope.locator('[data-scope-label="browser"]'))
+    .toHaveText("이 브라우저");
+  await expect(browserScope).toContainText("이 브라우저에만 저장");
+  await expect(browserScope).toContainText("계정 공간과 분리돼요");
+
+  expect(await readLocal(page)).toBeNull();
+
+  const account = await accountRoute(page, "normal");
+
+  await page.goto("/?experience=e2&view=classic&storage=account");
+
+  const accountScope = page.getByTestId("storage-label");
+
+  await expect(accountScope.locator('[data-scope-label="account"]'))
+    .toHaveText("계정");
+  await expect(accountScope).toContainText("계정 공간에 저장");
+  await expect(accountScope).toContainText("이 브라우저의 공간과 분리돼요");
+
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toBeNull();
+
+  await page.getByRole("link", {
+    name: "이 브라우저의 공간 사용하기",
+  }).click();
+
+  await expect(
+    page.getByTestId("storage-label").locator('[data-scope-label="browser"]'),
+  ).toHaveText("이 브라우저");
+
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toBeNull();
+});

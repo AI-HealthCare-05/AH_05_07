@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { dataScopeLabel } from "../ui/dataScope";
 import { RecoveryPanel, type RecoveryContent } from "./RecoveryPanel";
 
 export type AccountDeletionRecovery = "still-valid" | "ambiguous" | "failed" | null;
@@ -64,8 +65,8 @@ export function AccountDeletionConfirmation({ pending, recovery, onCancel, onCon
       {step === 1 ? (
         <>
           <div className="account-delete-scope">
-            <section><p className="eyebrow">삭제됨</p><h3>계정에 연결된 항목</h3><ul><li>Supabase Auth 사용자 계정이 삭제됩니다.</li><li>계정 소유 혈압 관찰과 챌린지 기록</li><li>계정 My Space 꾸미기 상태</li></ul></section>
-            <section><p className="eyebrow">자동 삭제되지 않음</p><h3>브라우저와 내 기기의 항목</h3><ul><li>화면 테마, 시작 화면, 동반자</li><li>browser-only My Space 배치</li><li>내려받은 JSON, 저장한 PDF, 인쇄물</li></ul></section>
+            <section><p className="eyebrow" data-scope-label="account">{dataScopeLabel("account")}</p><h3>삭제됨</h3><ul><li>Supabase Auth 사용자 계정이 삭제됩니다.</li><li>계정 소유 혈압 관찰과 챌린지 기록</li><li>계정 My Space 꾸미기 상태</li></ul></section>
+            <section><p className="eyebrow"><span data-scope-label="browser">{dataScopeLabel("browser")}</span> · <span data-scope-label="device-file">{dataScopeLabel("deviceFile")}</span></p><h3>자동 삭제되지 않음</h3><ul><li>화면 테마, 시작 화면, 동반자</li><li>이 브라우저 My Space 배치</li><li>내려받은 JSON, 저장한 PDF, 인쇄물</li></ul></section>
           </div>
           <p className="account-delete-export-note">원하면 삭제 전에 설정에서 최근 30일 날짜 범위의 현재 접근 가능한 혈압 관찰 JSON 사본을 받을 수 있어요. 내려받기는 선택 사항이에요.</p>
           <div className="form-actions action-group">
@@ -75,7 +76,7 @@ export function AccountDeletionConfirmation({ pending, recovery, onCancel, onCon
         </>
       ) : (
         <>
-          <div className="account-delete-final-summary"><strong>계정 영구 삭제</strong><p>브라우저 개인화와 내 기기의 파일은 그대로 둘 수 있어요. 원하면 삭제 완료 뒤 별도로 브라우저 개인화를 초기화할 수 있어요.</p></div>
+          <div className="account-delete-final-summary"><strong><span data-scope-label="account">{dataScopeLabel("account")}</span> · 계정 영구 삭제</strong><p><span data-scope-label="browser">{dataScopeLabel("browser")}</span> 개인화와 <span data-scope-label="device-file">{dataScopeLabel("deviceFile")}</span>은 그대로 둘 수 있어요. 원하면 삭제 완료 뒤 별도로 브라우저 개인화를 초기화할 수 있어요.</p></div>
           {recoveryContent && <RecoveryPanel {...recoveryContent} tone="warning" role="status" focusOnMount />}
           <div className="form-actions action-group">
             <button className="secondary" type="button" onClick={() => setStep(1)} disabled={pending}>이전</button>

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { e2eSessionEventName } from "../src/lib/e2eHarness";
+import { DATA_SCOPE_LABELS } from "../src/ui/dataScope";
 
 const emptyWindow = {
   start_on: "2026-08-28",
@@ -556,7 +557,8 @@ test("browser personalization reset clears only the four allowlisted local keys"
 
   await page.getByRole("button", { name: "초기화 범위 확인", exact: true }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toContainText("로그인, 계정, 서버 기록, 계정 My Space, 내려받은 파일");
+  await expect(dialog).toContainText("로그인·서버 기록·계정 My Space");
+  await expect(dialog).toContainText("내 기기 파일");
   await dialog.getByRole("button", { name: "이 브라우저만 초기화", exact: true }).click();
 
   expect(await page.evaluate(() => ({
@@ -609,4 +611,55 @@ test("S01 and S14 remain usable at 320px and 390px", async ({ page }) => {
     await expect(page.locator('[data-scene="S14"]')).toBeVisible();
     expect(await page.locator("html").evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   }
+});
+
+test("#938 lifecycle decisions use one exact four-scope vocabulary", async ({ page }) => {
+  expect(DATA_SCOPE_LABELS).toEqual({
+    account: "계정",
+    browser: "이 브라우저",
+    visit: "이번 방문",
+    deviceFile: "내 기기 파일",
+  });
+
+  await routeWindow(page, () => emptyWindow);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/?e2e=signed-in&screen=S14");
+
+  const scene = page.locator('[data-scene="S14"]');
+
+  await expect(scene.locator('[data-boundary="account"] [data-scope-label="account"]'))
+    .toHaveText("계정");
+  await expect(scene.locator('[data-boundary="browser"] [data-scope-label="browser"]'))
+    .toHaveText("이 브라우저");
+  await expect(scene.locator('[data-boundary="transient"] [data-scope-label="visit"]'))
+    .toHaveText("이번 방문");
+  await expect(scene.locator('[data-boundary="device"] [data-scope-label="device-file"]'))
+    .toHaveText("내 기기 파일");
+
+  await page.getByRole("button", { name: "초기화 범위 확인" }).click();
+
+  const reset = page.getByRole("dialog");
+
+  await expect(reset.locator('[data-scope-label="browser"]').first())
+    .toHaveText("이 브라우저");
+  await expect(reset).toContainText("내 기기 파일");
+  await expect(reset).not.toContainText("이 기기에서만");
+
+  await reset.getByRole("button", { name: "취소" }).click();
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+  await page.emulateMedia({ forcedColors: "active" });
+
+  await scene.locator('[data-boundary="device"]').scrollIntoViewIfNeeded();
+
+  expect(await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  )).toBeLessThanOrEqual(1);
+
+  const resetButton = page.getByRole("button", { name: "초기화 범위 확인" });
+  await resetButton.scrollIntoViewIfNeeded();
+  await resetButton.focus();
+  await expect(resetButton).toBeFocused();
 });

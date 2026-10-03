@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
+import { dataScopeLabel } from "../ui/dataScope";
 import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
 import { classicTodayHref } from "../ui/mySpaceReturn";
 import { ASSET, COLORS, cosmeticLayout, SOCKETS, type Keepsake, type Selection } from "./contract";
@@ -399,8 +400,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             {preview ? "취소하고 닫기" : "닫기"}</button></div>}
         {world && editing && saveStatus}
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"
-          ? "이 브라우저에만 저장 · 계정 공간과 분리돼요."
-          : "계정 공간에 저장 · 이 브라우저의 공간과 분리돼요."}</p>
+          ? <><span data-scope-label="browser">{dataScopeLabel("browser")}</span>에만 저장 · 계정 공간과 분리돼요.</>
+          : <><span data-scope-label="account">{dataScopeLabel("account")}</span> 공간에 저장 · 이 브라우저의 공간과 분리돼요.</>}</p>
         {stateIdentityCard}
         {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}>
           {adapter.mode === "browser" ? "계정 공간 사용하기" : "이 브라우저의 공간 사용하기"}</a>}
