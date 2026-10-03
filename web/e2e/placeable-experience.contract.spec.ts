@@ -222,13 +222,28 @@ test("#919 stale enable failure cannot dispose a newer successful audio attempt"
 
 
 test("return context accepts only explicit view/storage and bounded semantic place enums", async () => {
-  const { readMySpaceReturn, readMySpaceReturnPlace, mySpaceReturnPlaceQuery, classicTodayHref } = await import("../src/ui/mySpaceReturn");
+  const { readMySpaceReturn, readMySpaceReturnPlace, readMySpaceRouteRequest, mySpaceReturnPlaceQuery, classicTodayHref } = await import("../src/ui/mySpaceReturn");
   for (const view of ["classic", "3d"] as const) for (const storage of ["browser", "account"] as const) {
     expect(readMySpaceReturn(classicTodayHref(view, storage))).toEqual({ view, storage });
+    expect(readMySpaceRouteRequest(`?view=${view}&storage=${storage}`)).toEqual({ view, storage });
   }
   for (const search of ["", "?return_space=browser", "?return_space=https://evil.invalid", "?return_space=3d-unknown",
     "?return_space=classic-browser&return_space=3d-account", "?return_space=3d-account-extra"]) {
     expect(readMySpaceReturn(search)).toBeNull();
+  }
+
+  for (const search of [
+    "",
+    "?view=3d",
+    "?storage=browser",
+    "?view=unknown&storage=browser",
+    "?view=3d&storage=unknown",
+    "?view=3d&view=classic&storage=browser",
+    "?view=3d&view=3d&storage=browser",
+    "?view=3d&storage=browser&storage=account",
+    "?view=3d&storage=browser&storage=browser",
+  ]) {
+    expect(readMySpaceRouteRequest(search)).toBeNull();
   }
 
   expect(readMySpaceReturnPlace("?return_place=garden-nook")).toBe("garden-nook");

@@ -165,6 +165,65 @@ test("#948 bounded Today return re-enters Living City without replaying first-st
   await expect(page.getByTestId("plaza-first-step")).toBeVisible();
 });
 
+test("#952 re-entry authority requires exact raw view/storage while renderer fallback remains ordinary", async ({ page }) => {
+  await page.addInitScript(({ key, snapshot }) => {
+    localStorage.setItem(key, JSON.stringify(snapshot));
+    const original = Storage.prototype.setItem;
+    Object.assign(window, { e952Writes: 0 });
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { e952Writes: number }).e952Writes++;
+      return original.call(this, name, value);
+    };
+  }, { key: STORAGE_KEY, snapshot: emptySnapshot() });
+
+  const cases = [
+    {
+      href: "/?experience=e2&view=3d&storage=unknown&return_space=3d-browser&return_place=garden-nook",
+      view: "3d",
+    },
+    {
+      href: "/?experience=e2&view=3d&return_space=3d-browser&return_place=garden-nook",
+      view: "3d",
+    },
+    {
+      href: "/?experience=e2&view=3d&storage=browser&storage=account&return_space=3d-browser&return_place=garden-nook",
+      view: "3d",
+    },
+    {
+      href: "/?experience=e2&view=3d&view=classic&storage=browser&return_space=3d-browser&return_place=garden-nook",
+      view: "3d",
+    },
+    {
+      href: "/?experience=e2&view=unknown&storage=browser&return_space=classic-browser&return_place=garden-nook",
+      view: "classic",
+    },
+    {
+      href: "/?experience=e2&storage=browser&return_space=classic-browser&return_place=garden-nook",
+      view: "classic",
+    },
+  ] as const;
+
+  for (const { href, view } of cases) {
+    await page.goto(href);
+    const experience = page.getByTestId("placeable-experience");
+    await expect(experience).toHaveAttribute("data-mode", "browser");
+    await expect(experience).toHaveAttribute("data-view", view);
+    await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+
+    if (view === "3d") {
+      const world = page.getByTestId("placeable-world");
+      await expect(world).toHaveAttribute("data-reentry", "false");
+      await expect(world).toHaveAttribute("data-first-step", "prompt");
+      await expect(page.getByTestId("plaza-return-cue")).toHaveCount(0);
+      await expect(page.getByTestId("plaza-first-step")).toBeVisible();
+    } else {
+      await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
+    }
+
+    expect(await page.evaluate(() => (window as unknown as { e952Writes: number }).e952Writes)).toBe(0);
+  }
+});
+
 test("#944 Today Gate uses the existing E1 radius and reverses after real arrival", async ({ page }) => {
   const gate = E1_LIVING_CITY_ENTRY_SCENE_PROFILE.destination;
 
