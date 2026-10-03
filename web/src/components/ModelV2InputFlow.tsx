@@ -9,7 +9,7 @@ import { modelV2PresentationMode, visibleModelV2Output } from "../ui/modelV2Visi
 import { Scene } from "./SceneShell";
 import { ModelV2Outcome } from "./ModelV2Outcome";
 import { buildPayload, clockParts, EMPTY_DRAFT, finiteNumber, type Draft, type TimeDraftKey } from "./modelV2Draft";
-import { FIELDS, formatTimeKorean, INTAKE_QUESTIONS, questionComplete, questionFocusId, stepProblem } from "./modelV2Steps";
+import { FIELDS, formatTimeKorean, INPUT_STEPS, INTAKE_QUESTIONS, questionComplete, questionFocusId, reviewValue, stepProblem } from "./modelV2Steps";
 import type { ModelV2Continuation } from "./modelV2Continuation";
 import type { ModelV2ExecutionGuard } from "./modelV2ExecutionGuard";
 import "./ModelV2InputFlow.css";
@@ -39,6 +39,73 @@ const WHEEL_VALUES: Record<WheelPart, readonly number[]> = {
 
 function isNonDrinkingAlcoholFrequency(value: string) {
   return value === "none_past_year" || value === "lifetime_nonapplicable";
+}
+
+function formatReviewDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours <= 0) return `${minutes}분`;
+  if (minutes === 0) return `${hours}시간`;
+  return `${hours}시간 ${String(minutes).padStart(2, "0")}분`;
+}
+
+function ModelV2PreRunReview({ draft, weekendSame }: { draft: Draft; weekendSame: boolean }) {
+  const nonDrinking = isNonDrinkingAlcoholFrequency(draft.alcoholFrequency);
+  const noWalking = draft.walkingDays === "0";
+  const walkingMinutes = Number(draft.walkingHours) * 60 + Number(draft.walkingMinutes);
+  const weekdaySleep = `${formatTimeKorean(draft.weekdayBed)} → ${formatTimeKorean(draft.weekdayWake)}`;
+  const weekendSleep = `${formatTimeKorean(draft.weekendBed)} → ${formatTimeKorean(draft.weekendWake)}`;
+
+  const item = (key: string, label: string, value: string, automatic = false) =>
+    <div data-model-v2-review-item={key} data-review-source={automatic ? "automatic" : "entered"}>
+      <dt>{label}</dt><dd>{value}</dd>
+    </div>;
+
+  return <section className="model-v2-preflight-review status-notice"
+    data-model-v2-preflight-review aria-labelledby="model-v2-preflight-title">
+    <header>
+      <p className="model-v2-preflight-kicker">11 / 11 입력 확인</p>
+      <h2 id="model-v2-preflight-title">분석 전에 입력 내용을 확인해 주세요</h2>
+      <p>아직 Model V2를 실행하지 않았어요. 아래 내용은 현재 이 화면에 입력한 값이며 저장되지 않아요.</p>
+    </header>
+    <div className="model-v2-preflight-groups">
+      <section aria-labelledby="model-v2-review-basics" data-model-v2-review-group="basics">
+        <h3 id="model-v2-review-basics">기본 정보</h3>
+        <dl>
+          {item("age", "만 나이", reviewValue("age", draft))}
+          {item("sex", "성별", reviewValue("sex", draft))}
+          {item("body", "키 · 몸무게", `${reviewValue("height", draft)} · ${reviewValue("weight", draft)}`)}
+        </dl>
+      </section>
+      <section aria-labelledby="model-v2-review-habits" data-model-v2-review-group="habits">
+        <h3 id="model-v2-review-habits">생활 습관</h3>
+        <dl>
+          {item("smoking", "일반담배 흡연", reviewValue("smoking", draft))}
+          {item("alcoholFrequency", "최근 1년 음주 빈도", reviewValue("alcoholFrequency", draft))}
+          {item("alcoholAmount", "한 번 마실 때 음주량",
+            nonDrinking ? "해당 없음 · 자동 적용" : reviewValue("alcoholAmount", draft), nonDrinking)}
+        </dl>
+      </section>
+      <section aria-labelledby="model-v2-review-activity" data-model-v2-review-group="activity">
+        <h3 id="model-v2-review-activity">활동</h3>
+        <dl>
+          {item("walkingDays", "최근 7일 걷기", reviewValue("walkingDays", draft))}
+          {item("walkingDuration", "걷는 날 하루 평균",
+            noWalking ? "0분 · 자동 적용" : formatReviewDuration(walkingMinutes), noWalking)}
+          {item("strengthDays", "최근 7일 근력운동", reviewValue("strengthDays", draft))}
+        </dl>
+      </section>
+      <section aria-labelledby="model-v2-review-sleep" data-model-v2-review-group="sleep">
+        <h3 id="model-v2-review-sleep">수면</h3>
+        <dl>
+          {item("weekdaySleep", "평일", weekdaySleep)}
+          {item("weekendSleep", "주말",
+            weekendSame ? `${weekendSleep} · 평일과 같음 · 자동 적용` : weekendSleep, weekendSame)}
+        </dl>
+      </section>
+    </div>
+    <p className="model-v2-preflight-note">이 확인 내용은 모델 결과가 아니며, 아래 실행 버튼을 선택하기 전에는 모델 계산을 시작하지 않아요.</p>
+  </section>;
 }
 
 function wheelText(part: WheelPart, value: number) {
@@ -507,6 +574,9 @@ export function ModelV2InputFlow({
   const noWalking = draft.walkingDays === "0";
   const walkingTotalMinutes = draft.walkingHours === "" || draft.walkingMinutes === ""
     ? "" : String(Number(draft.walkingHours) * 60 + Number(draft.walkingMinutes));
+  const reviewReady = completedCount === INTAKE_QUESTIONS.length
+    && INPUT_STEPS.every((step) => stepProblem(step, draft) === null)
+    && buildPayload(draft) !== null;
 
   useEffect(() => {
     mounted.current = true;
@@ -791,6 +861,7 @@ export function ModelV2InputFlow({
               <p className="model-v2-field-help">시각을 정하기 어렵다면 분석 없이 혈압 기록과 챌린지를 이용할 수 있어요.</p>
             </section>
           </div>
+          {reviewReady && !pending && <ModelV2PreRunReview draft={draft} weekendSame={weekendSame} />}
           <div className="model-v2-final-action">
             <p className="model-v2-readiness" role="status">{completedCount} / 11 입력 완료</p>
             <button ref={submitRef} type="submit" disabled={pending}>

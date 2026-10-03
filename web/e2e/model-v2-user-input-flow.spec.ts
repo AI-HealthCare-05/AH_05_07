@@ -600,3 +600,113 @@ test("S11 time wheel detent keeps detent presentation after native touch tap", a
     await context.close().catch(() => undefined);
   }
 });
+
+test("#934 complete transient inputs expose pre-run provenance before exactly one local execution", async ({ page }) => {
+  await observeModelPrivacy(page);
+  const model = await routeModel(page);
+  await openS11(page);
+
+  const review = page.locator("[data-model-v2-preflight-review]");
+  await expect(review).toHaveCount(0);
+
+  await fillStandard(page, { walking: "0" });
+  await expect(page.getByText("11 / 11 입력 완료").first()).toBeVisible();
+  await expect(review).toBeVisible();
+  await expect(review.locator("[data-model-v2-review-item]")).toHaveCount(11);
+  await expect(review.getByRole("heading", { name: "분석 전에 입력 내용을 확인해 주세요" })).toBeVisible();
+  await expect(review).toContainText("아직 Model V2를 실행하지 않았어요");
+
+  const alcoholAmount = review.locator('[data-model-v2-review-item="alcoholAmount"]');
+  await expect(alcoholAmount).toHaveAttribute("data-review-source", "automatic");
+  await expect(alcoholAmount).toContainText("해당 없음 · 자동 적용");
+
+  const walkingDuration = review.locator('[data-model-v2-review-item="walkingDuration"]');
+  await expect(walkingDuration).toHaveAttribute("data-review-source", "automatic");
+  await expect(walkingDuration).toContainText("0분 · 자동 적용");
+
+  const weekendSleep = review.locator('[data-model-v2-review-item="weekendSleep"]');
+  await expect(weekendSleep).toHaveAttribute("data-review-source", "automatic");
+  await expect(weekendSleep).toContainText("평일과 같음 · 자동 적용");
+
+  await expect(review.locator('[data-model-v2-review-item="body"]')).toContainText("170 cm · 68 kg");
+  await expect(review).not.toContainText(/확률|백분율|백분위|위험등급|진단|정상\/비정상/);
+
+  expect(model.requests).toHaveLength(0);
+  const before = await startModelPrivacy(page);
+
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+  expect(model.requests).toHaveLength(1);
+  expect(new URL(model.requests[0].url).pathname).toBe("/models/model-v2.json");
+  await expect(result(page).locator("[data-model-v2-execution-receipt]"))
+    .toContainText("모델 입력 11 / 11 사용");
+  await assertModelPrivacy(page, before, true);
+});
+
+test("#934 pre-run review is a live projection of the draft and never becomes stale copied state", async ({ page }) => {
+  const model = await routeModel(page);
+  await openS11(page);
+  await fillStandard(page, { nonDrinking: false, sameWeekend: true });
+
+  const review = page.locator("[data-model-v2-preflight-review]");
+  await expect(review).toBeVisible();
+  expect(model.requests).toHaveLength(0);
+
+  await expect(review.locator('[data-model-v2-review-item="age"]')).toContainText("35 세");
+  await page.locator("#model-age").fill("36");
+  await expect(review.locator('[data-model-v2-review-item="age"]')).toContainText("36 세");
+  await expect(review.locator('[data-model-v2-review-item="age"]')).not.toContainText("35 세");
+
+  const alcoholAmount = review.locator('[data-model-v2-review-item="alcoholAmount"]');
+  await expect(alcoholAmount).toHaveAttribute("data-review-source", "entered");
+  await expect(alcoholAmount).toContainText("1~2잔");
+  await page.locator("#model-alcohol-frequency").selectOption("none_past_year");
+  await expect(alcoholAmount).toHaveAttribute("data-review-source", "automatic");
+  await expect(alcoholAmount).toContainText("해당 없음 · 자동 적용");
+
+  await page.locator("#model-weekend-same").uncheck();
+  await expect(review).toHaveCount(0);
+  await chooseTime(page, "model-weekend-bed", "22:45");
+  await chooseTime(page, "model-weekend-wake", "08:15");
+  await expect(review).toBeVisible();
+
+  const weekendSleep = review.locator('[data-model-v2-review-item="weekendSleep"]');
+  await expect(weekendSleep).toHaveAttribute("data-review-source", "entered");
+  await expect(weekendSleep).toContainText("오후 10:45 → 오전 8:15");
+  await expect(weekendSleep).not.toContainText("자동 적용");
+
+  expect(model.requests).toHaveLength(0);
+});
+
+test("#934 Guest pre-run review stays transient and reflows at actual 200-percent text", async ({ page }) => {
+  const model = await routeModel(page);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
+  await openS11(page, { guest: true });
+  await fillStandard(page);
+
+  const review = page.locator("[data-model-v2-preflight-review]");
+  await expect(review).toBeVisible();
+  expect(model.requests).toHaveLength(0);
+
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  await review.scrollIntoViewIfNeeded();
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth))
+    .toBeLessThanOrEqual(1);
+  await expect(review).toHaveCSS("border-left-style", "solid");
+
+  const submitButton = submit(page);
+  await page.locator("#model-weekend-same").scrollIntoViewIfNeeded();
+  await page.locator("#model-weekend-same").focus();
+  await page.keyboard.press("Tab");
+  await expect(submitButton).toBeFocused();
+
+  expect(model.requests).toHaveLength(0);
+
+  await page.reload();
+  await expect(intake(page)).toBeVisible();
+  await expect(page.getByText("0 / 11 입력 완료").first()).toBeVisible();
+  await expect(page.locator("[data-model-v2-preflight-review]")).toHaveCount(0);
+  expect(model.requests).toHaveLength(0);
+});
