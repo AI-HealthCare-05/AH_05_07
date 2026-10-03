@@ -50,9 +50,21 @@
 .placeable-status[data-pinwheel-receipt=true] .pinwheel-receipt-check { visibility: visible; }
 @media (forced-colors: active) {
   .placeable-status[data-pinwheel-receipt=true] { box-shadow: none; border: 2px solid CanvasText; }
+  .placeable-state-identity { color: CanvasText; background: Canvas; border-color: CanvasText; }
+  .placeable-state-identity .placeable-eyebrow,
+  .placeable-state-identity > p:last-child { color: CanvasText; }
 }
 .placeable-experience[data-phase=unknown] .placeable-status, .placeable-experience[data-phase=conflict] .placeable-status { color: var(--sk7-warning-text); background: var(--sk7-warning-soft); }
 .placeable-experience[data-phase=unavailable] .placeable-status, .placeable-experience[data-phase=session] .placeable-status { color: var(--sk7-danger-text); background: var(--sk7-danger-soft); }
+.placeable-state-identity { display: grid; gap: var(--sk7-space-2xs); min-width: 0; margin: 0; padding: var(--sk7-space-sm) var(--sk7-space-md); border: 1px solid var(--sk7-border); border-left-width: 4px; border-radius: var(--sk7-radius-control); background: var(--sk7-surface-subtle); overflow-wrap: anywhere; }
+.placeable-state-identity .placeable-eyebrow { margin: 0; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); }
+.placeable-state-identity strong { font-size: var(--sk7-type-label); line-height: var(--sk7-leading-body); }
+.placeable-state-identity > p:last-child { margin: 0; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); line-height: var(--sk7-leading-body); }
+.placeable-state-identity[data-state=empty] { border-left-color: var(--sk7-border-strong); }
+.placeable-state-identity[data-state=unavailable] { color: var(--sk7-danger-text); background: var(--sk7-danger-soft); border-color: color-mix(in srgb, var(--sk7-danger-text) 28%, var(--sk7-border)); }
+.placeable-state-identity[data-state=unsupported] { color: var(--sk7-warning-text); background: var(--sk7-warning-soft); border-color: color-mix(in srgb, var(--sk7-warning-text) 28%, var(--sk7-border)); }
+.placeable-state-identity[data-state=unavailable] > p:last-child,
+.placeable-state-identity[data-state=unsupported] > p:last-child { color: currentColor; }
 .placeable-experience .placeable-storage { font-size: .85rem; margin: 0; }
 .placeable-storage-switch, .placeable-asset-id { font-size: .8rem; }
 .placeable-choice-note { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
@@ -83,7 +95,7 @@
 .placeable-handoff-note p { margin: 0; font-size: var(--sk7-type-caption); }
 .placeable-stage[data-breeze=true] .placeable-feedback { color: var(--sk7-accent-hover); }
 @media (max-width: 760px) { .placeable-header { display: block; } .placeable-header nav { margin-top: 18px; } .placeable-layout { grid-template-columns: 1fr; } .placeable-controls { padding: var(--sk7-space-xl) 0 0; border-left: 0; border-top: 1px solid var(--sk7-border); } .placeable-world-host { aspect-ratio: .95; } }
-@media (max-width: 480px) { .placeable-destination { flex-wrap: wrap; gap: var(--sk7-space-xs); } .placeable-today { width: 100%; } .placeable-map-label { font-size: .7rem; } .placeable-experience .placeable-walk-pad { width: 68px; height: 68px; font-size: var(--sk7-type-caption); right: 12px; bottom: 12px; } }
+@media (max-width: 480px) { .placeable-destination { flex-wrap: wrap; gap: var(--sk7-space-xs); } .placeable-today { width: 100%; white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; } .placeable-health-home { max-width: 100%; white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; } .placeable-map-label { font-size: .7rem; } .placeable-experience .placeable-walk-pad { width: 68px; height: 68px; font-size: var(--sk7-type-caption); right: 12px; bottom: 12px; } }
 @media (prefers-reduced-motion: reduce) { .pinwheel-spin { animation: none; filter: brightness(1.2); } }
 .placeable-keepsake { display: grid; gap: var(--sk7-space-xs); padding-block: var(--sk7-space-md); border-block: 1px solid var(--sk7-border); }
 .placeable-keepsake h2 { font-size: var(--sk7-type-body); margin: 0; }
