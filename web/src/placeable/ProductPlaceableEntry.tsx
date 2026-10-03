@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import { getMySpaceCompanion } from "../ui/mySpaceCompanion";
 import { readLivingChoice } from "../ui/livingChoice";
-import { readMySpaceReturn } from "../ui/mySpaceReturn";
+import { readMySpaceReturn, readMySpaceReturnPlace } from "../ui/mySpaceReturn";
 import PlaceableExperience from "./PlaceableExperience";
 import { VerifiedAccountBinding, type AccountBindingStatus } from "./accountBinding";
 import { accountPersistence, browserPersistence, type PlaceablePersistence } from "./persistence";
@@ -19,6 +19,7 @@ export default function ProductPlaceableEntry() {
   const requestedStorage = account ? "account" : "browser";
   const returnSpace = readMySpaceReturn(window.location.search);
   const reentry = returnSpace?.view === requestedView && returnSpace.storage === requestedStorage;
+  const returnPlace = reentry ? readMySpaceReturnPlace(window.location.search) : null;
   const [companion] = useState(() => getMySpaceCompanion(readCompanionIdentity()));
   const [browser] = useState(() => browserPersistence());
   const [adapter, setAdapter] = useState<PlaceablePersistence | null>(account ? null : browser);
@@ -79,5 +80,5 @@ export default function ProductPlaceableEntry() {
     <p><a href="/?screen=S02">오늘의 기록으로 돌아가기</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>이 브라우저의 공간으로 계속하기</a></p>
   </main>;
-  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} reentry={reentry} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable />;
+  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} reentry={reentry} returnPlace={returnPlace} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable />;
 }

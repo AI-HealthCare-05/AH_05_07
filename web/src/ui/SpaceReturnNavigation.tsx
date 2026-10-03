@@ -1,9 +1,12 @@
 import { useState } from "react";
 import {
   mySpaceContextLabel,
+  mySpaceReturnPlaceLabel,
+  mySpaceReturnPlaceQuery,
   mySpaceStorageLabel,
   mySpaceViewLabel,
   readMySpaceReturn,
+  readMySpaceReturnPlace,
   type MySpaceReturn as MySpaceReturnContext,
 } from "./mySpaceReturn";
 import "./mySpaceReturn.css";
@@ -17,8 +20,10 @@ export type MySpaceEntryDisplay = MySpaceReturnContext & {
 export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay }) {
   const contextId = "today-my-space-context";
   const returning = destination.returning;
+  const returnPlace = returning ? readMySpaceReturnPlace(window.location.search) : null;
+  const returnPlaceLabel = returnPlace ? mySpaceReturnPlaceLabel[returnPlace] : null;
   const entryHref = returning
-    ? `${destination.href}&return_space=${destination.view}-${destination.storage}`
+    ? `${destination.href}&return_space=${destination.view}-${destination.storage}${mySpaceReturnPlaceQuery(returnPlace)}`
     : destination.href;
 
   return <nav
@@ -27,6 +32,7 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
     data-my-space-intent={returning ? "return" : "enter"}
     data-my-space-view={destination.view}
     data-my-space-storage={destination.storage}
+    data-my-space-return-place={returnPlace ?? undefined}
     data-living-city-invitation={returning ? "return" : "enter"}
   >
     <span className="today-space-portal" aria-hidden="true">
@@ -45,13 +51,15 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
           ? <>오늘의 기록 <span>· Today</span></>
           : <>내 공간 <span>· Living City</span></>}</strong>
         <p>{returning
-          ? "Living City에서 오늘의 기록으로 돌아왔어요."
+          ? returnPlaceLabel
+            ? `${returnPlaceLabel}에서 오늘의 기록으로 돌아왔어요.`
+            : "Living City에서 오늘의 기록으로 돌아왔어요."
           : "잠깐 걷고, 쉬고, 내 취향을 더하는 곳."}</p>
       </div>
 
       {returning
-        ? <ol className="today-return-route" aria-label="Living City에서 오늘의 기록까지">
-          <li data-return-stop="space">Living City</li>
+        ? <ol className="today-return-route" aria-label={`${returnPlaceLabel ?? "Living City"}에서 오늘의 기록까지`}>
+          <li data-return-stop="space">{returnPlaceLabel ?? "Living City"}</li>
           <li className="today-return-route-arrow" aria-hidden="true">→</li>
           <li data-return-stop="today">오늘의 기록</li>
         </ol>
@@ -64,6 +72,7 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
       <div className="today-space-context" id={contextId} aria-label="이동할 내 공간">
         <span>{mySpaceStorageLabel[destination.storage]}</span>
         <span>{mySpaceViewLabel[destination.view]}</span>
+        {returnPlaceLabel && <span>{returnPlaceLabel}</span>}
       </div>
 
       <a className="today-space-entry-action" href={entryHref} aria-describedby={contextId}>
@@ -78,6 +87,7 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
  * It imports no E2 runtime and never interprets a placement or auth state. */
 export function MySpaceReturn() {
   const [space] = useState(() => readMySpaceReturn(window.location.search));
+  const [returnPlace] = useState(() => readMySpaceReturnPlace(window.location.search));
   if (!space) return null;
 
   const contextId = "my-space-return-context";
@@ -92,11 +102,11 @@ export function MySpaceReturn() {
       <strong>오늘의 기록 · Today</strong>
       <span>내 공간에서 이어온 건강 기록 작업</span>
       <span id={contextId} className="my-space-return-context">
-        {mySpaceContextLabel(space)}로 돌아갈 수 있어요.
+        {mySpaceContextLabel(space)}{returnPlace ? ` · ${mySpaceReturnPlaceLabel[returnPlace]}` : ""}로 돌아갈 수 있어요.
       </span>
     </div>
     <a
-      href={`?experience=e2&view=${space.view}&storage=${space.storage}&return_space=${space.view}-${space.storage}`}
+      href={`?experience=e2&view=${space.view}&storage=${space.storage}&return_space=${space.view}-${space.storage}${mySpaceReturnPlaceQuery(returnPlace)}`}
       aria-describedby={contextId}
     >
       내 공간으로 돌아가기 <span aria-hidden="true">→</span>
