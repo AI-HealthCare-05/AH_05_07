@@ -527,3 +527,54 @@ test("an in-flight pre-deletion window response cannot restore the deleted accou
   expect(windowRequests).toBe(2);
   await expect(page.locator('[data-scene="S01"]')).toBeVisible();
 });
+
+test("#938 deletion consequences expose account, browser and device-file scopes before any DELETE", async ({ page }) => {
+  let deleteRequests = 0;
+
+  await page.route("**://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    if (request.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: headers() });
+    }
+
+    if (url.pathname === "/api/v1/observations/window") {
+      return route.fulfill({
+        status: 200,
+        headers: headers(),
+        contentType: "application/json",
+        body: JSON.stringify(emptyWindow),
+      });
+    }
+
+    if (url.pathname === "/api/v1/account" && request.method() === "DELETE") {
+      deleteRequests += 1;
+    }
+
+    return route.abort();
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S14");
+  await page.getByRole("button", { name: "계정 삭제" }).click();
+
+  const dialog = page.getByRole("dialog");
+
+  await expect(dialog.locator('[data-scope-label="account"]')).toHaveText("계정");
+  await expect(dialog.locator('[data-scope-label="browser"]')).toHaveText("이 브라우저");
+  await expect(dialog.locator('[data-scope-label="device-file"]')).toHaveText("내 기기 파일");
+
+  await expect(dialog.getByRole("heading", { name: "삭제됨" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "자동 삭제되지 않음" })).toBeVisible();
+
+  expect(deleteRequests).toBe(0);
+
+  await dialog.getByRole("button", { name: "계속" }).click();
+
+  await expect(dialog).toContainText("이 브라우저");
+  await expect(dialog).toContainText("내 기기 파일");
+  expect(deleteRequests).toBe(0);
+
+  await dialog.getByRole("button", { name: "취소" }).click();
+  expect(deleteRequests).toBe(0);
+});

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { dataScopeLabel } from "../ui/dataScope";
 
 type BrowserPersonalizationResetConfirmationProps = {
   error: string | null;
@@ -32,13 +33,13 @@ export function BrowserPersonalizationResetConfirmation({
       onCancel={(event) => { event.preventDefault(); onCancel(); }}
     >
       <div className="screen-header">
-        <p className="eyebrow">이 기기에서만</p>
+        <p className="eyebrow" data-scope-label="browser">{dataScopeLabel("browser")}</p>
         <h2 id="browser-reset-title">이 브라우저의 개인화를 초기화할까요?</h2>
         <p id="browser-reset-description">화면 테마, 시작 화면, 동반자, 브라우저 전용 My Space 배치를 기본값으로 되돌립니다.</p>
       </div>
       <div className="browser-reset-boundary" aria-label="초기화 범위">
-        <div><strong>초기화됨</strong><span>이 브라우저의 개인화 4가지</span></div>
-        <div><strong>변경되지 않음</strong><span>로그인, 계정, 서버 기록, 계정 My Space, 내려받은 파일</span></div>
+        <div><strong>초기화됨 · <span data-scope-label="browser">{dataScopeLabel("browser")}</span></strong><span>개인화 4가지</span></div>
+        <div><strong>변경되지 않음</strong><span><span data-scope-label="account">{dataScopeLabel("account")}</span> · 로그인·서버 기록·계정 My Space · <span data-scope-label="device-file">{dataScopeLabel("deviceFile")}</span></span></div>
       </div>
       {error && <p className="notice notice-warning status-notice" role="alert">{error}</p>}
       <div className="form-actions action-group">
