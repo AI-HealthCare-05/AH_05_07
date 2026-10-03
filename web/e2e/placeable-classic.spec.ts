@@ -450,6 +450,89 @@ async function classicTodaySession(page: Page, actionId: string | null = null, s
   return account;
 }
 
+test("#946 Living City return lands as truthful Today continuity", async ({ page }) => {
+  const account = await classicTodaySession(page);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto("/?screen=S02");
+  await expectClassicToday(page);
+
+  const ordinary = page.locator(".today-my-space");
+  await expect(ordinary).toHaveAttribute("data-living-city-invitation", "enter");
+  await expect(ordinary.locator(".today-space-kicker")).toHaveText("Living City");
+  await expect(ordinary).toContainText("잠깐 걷고, 쉬고, 내 취향을 더하는 곳.");
+  await expect(ordinary.locator(".today-return-route")).toHaveCount(0);
+
+  const before = await readLocal(page);
+  const writes = account.puts;
+
+  await page.goto("/?screen=S02&return_space=3d-browser");
+  await expectClassicToday(page);
+
+  const returned = page.locator(".today-my-space");
+  const back = page.getByRole("link", { name: "내 공간으로 돌아가기", exact: true });
+
+  await expect(returned).toHaveAttribute("data-living-city-invitation", "return");
+  await expect(returned.locator(".today-space-kicker")).toHaveText("Today 도착");
+  await expect(returned).toContainText("Living City에서 오늘의 기록으로 돌아왔어요.");
+  await expect(returned).not.toContainText("Today Gate를 지나");
+  await expect(returned.locator(".today-return-route")).toContainText("Living City");
+  await expect(returned.locator(".today-return-route")).toContainText("오늘의 기록");
+  await expect(returned).toContainText("이 브라우저의 공간");
+  await expect(returned).toContainText("3D 광장");
+  await expect(back).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+
+  // The visual arrival settles, but truthful semantic continuity remains.
+  await expect(returned).toHaveCSS("animation-name", "today-return-arrival");
+  await page.waitForTimeout(700);
+  await expect(returned).toContainText("Living City에서 오늘의 기록으로 돌아왔어요.");
+  await expect(back).toBeVisible();
+
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(writes);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await expectClassicToday(page);
+
+  const reduced = page.locator(".today-my-space");
+  await expect(reduced).toHaveAttribute("data-living-city-invitation", "return");
+  await expect(reduced).toContainText("Living City에서 오늘의 기록으로 돌아왔어요.");
+  await expect(reduced).toHaveCSS("animation-name", "none");
+  await expect(reduced.locator(".today-space-portal-gate")).toHaveCSS("animation-name", "none");
+
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+  await expect(reduced).toHaveCSS("border-top-style", "solid");
+  await expect(reduced.locator('[data-return-stop="today"]')).toHaveCSS("border-top-style", "solid");
+  await back.focus();
+  await expect(back).toBeFocused();
+  await expect(back).toHaveCSS("outline-style", "solid");
+
+  await page.emulateMedia({
+    reducedMotion: "no-preference",
+    forcedColors: "none",
+  });
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await back.scrollIntoViewIfNeeded();
+    await expect(back).toBeInViewport();
+    const box = await back.boundingBox();
+    expect(box).toBeTruthy();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+  }
+
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(writes);
+});
+
 for (const [index, choice] of ["walk-10-minutes", "sleep-routine", "low-sodium-meal"].entries()) {
   test(`Living Choice ${choice}: explicit Today handoff, same visit, independent placement and return`, async ({ page }) => {
     const account = await classicTodaySession(page, choice);

@@ -320,7 +320,8 @@
   transform: translateX(.2rem);
 }
 
-/* Returning is continuity, not a second capability set. */
+/* Returning is continuity, not a second capability set.
+   #946: the bounded return context owns meaning; animation only marks arrival. */
 .today-my-space[data-living-city-invitation="return"] {
   background:
     linear-gradient(
@@ -328,6 +329,63 @@
       color-mix(in srgb, var(--sk7-surface-solid) 90%, var(--sk7-accent-soft)),
       color-mix(in srgb, var(--sk7-surface-solid) 86%, var(--sk7-success-soft))
     );
+  animation: today-return-arrival 520ms ease-out both;
+}
+
+@keyframes today-return-arrival {
+  from {
+    opacity: .82;
+    transform: translateY(.3rem);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--sk7-accent-muted) 22%, transparent);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.today-my-space[data-living-city-invitation="return"] .today-space-portal-gate {
+  animation: today-return-gate-settle 520ms ease-out both;
+}
+
+@keyframes today-return-gate-settle {
+  from { transform: translateY(-.28rem); }
+  to { transform: translateY(0); }
+}
+
+.today-return-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sk7-space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+  line-height: var(--sk7-leading-body);
+}
+
+.today-return-route li:not(.today-return-route-arrow) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: .2rem .58rem;
+  border: 1px solid var(--sk7-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sk7-surface-solid) 84%, var(--sk7-accent-soft));
+}
+
+.today-return-route [data-return-stop="today"] {
+  border-color: var(--sk7-border-strong);
+  color: var(--sk7-text);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.today-return-route-arrow {
+  color: var(--sk7-accent-muted);
+  font-weight: var(--sk7-weight-bold);
 }
 
 .my-space-return-context {
@@ -385,6 +443,11 @@
     transition: none;
   }
 
+  .today-my-space[data-living-city-invitation="return"],
+  .today-my-space[data-living-city-invitation="return"] .today-space-portal-gate {
+    animation: none;
+  }
+
   .today-my-space:is(:hover, :focus-within) .today-space-portal-gate,
   .today-my-space:is(:hover, :focus-within) .today-space-portal-path,
   .today-my-space:is(:hover, :focus-within) .today-space-portal-companion,
@@ -399,6 +462,7 @@
   .today-space-portal-gate,
   .today-space-portal-gate i:first-child,
   .today-space-capabilities li,
+  .today-return-route li:not(.today-return-route-arrow),
   .today-space-context span,
   .my-space-return-context,
   .today-space-entry-action {
@@ -418,5 +482,9 @@
   .today-space-capabilities li::before,
   .today-space-portal-gate i:last-child {
     background: CanvasText;
+  }
+
+  .today-return-route-arrow {
+    color: CanvasText;
   }
 }
