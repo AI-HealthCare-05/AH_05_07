@@ -32,9 +32,11 @@ async function open(page: Page) {
       const result = step.apply(this, args);
       const canvas = document.querySelector('canvas')!, rect = canvas.getBoundingClientRect();
       const screen = (point: any) => { point.project(this.camera); return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 }; };
+      const pinHub = this.previewRotor.children.find((child: any) => child.geometry?.type === "SphereGeometry");
+      if (!pinHub) throw new Error("test probe: pinwheel hub missing");
       (window as any).__plazaSample = { x: this.actor.position.x, z: this.actor.position.z, facing: this.actor.rotation.y,
         yaw: this.cameraRig.yaw, moving: this.locomotion.moving, engaged: this.cameraRig.engaged,
-        actor: screen(this.actor.position.clone().setY(0.5)), pin: screen(this.rotor.children.find((child: any) => child.geometry.type === "SphereGeometry").getWorldPosition(this.pinwheel.position.clone())), labels: this.labels() };
+        actor: screen(this.actor.position.clone().setY(0.5)), pin: screen(pinHub.getWorldPosition(this.pinwheel.position.clone())), labels: this.labels() };
       return result;
     };
   });
@@ -51,6 +53,47 @@ async function rotate(page: Page, count: number) {
   await page.waitForTimeout(800);
   await page.locator(".plaza-help summary").click();
 }
+
+test("#942 first step is explicit and only real locomotion dismisses it", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await open(page);
+
+  const world = page.getByTestId("placeable-world");
+  const cue = page.getByTestId("plaza-first-step");
+  const gate = page.locator('[data-world-label="today-gate"]');
+
+  await expect(world).toHaveAttribute("data-first-step", "prompt");
+  await expect(cue).toBeVisible();
+  await expect(cue).toContainText("Today Gate로 걸어가 보세요.");
+  await expect(cue).toContainText("방향키·WASD 또는 걷기 패드");
+  await expect(gate).toHaveAttribute("data-arrival-highlight", "true");
+
+  // Elapsed time alone never pretends that the user moved.
+  await page.waitForTimeout(1250);
+  await expect(world).toHaveAttribute("data-first-step", "prompt");
+  await expect(cue).toBeVisible();
+
+  await page.emulateMedia({ forcedColors: "active" });
+  await expect(cue).toHaveCSS("border-top-style", "solid");
+  await expect(gate).toHaveCSS("outline-style", "solid");
+  await page.emulateMedia({ forcedColors: "none" });
+
+  const before = await sample(page);
+  await hold(page, "w", 160);
+
+  await expect(world).toHaveAttribute("data-first-step", "acknowledged");
+  await expect(cue).toContainText("첫걸음이 시작됐어요.");
+  await expect(cue).toContainText("이제 광장을 자유롭게 둘러보세요.");
+
+  const after = await sample(page);
+  expect(after.z).toBeLessThan(before.z);
+
+  await expect(world).toHaveAttribute("data-first-step", "complete", {
+    timeout: 3000,
+  });
+  await expect(cue).toHaveCount(0);
+  await expect(gate).not.toHaveAttribute("data-arrival-highlight", "true");
+});
 
 test("R2 desktop actual locomotion, facing, 90/180 degree camera-relative control, stop, reset and label tracking", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 }); await open(page);
@@ -123,6 +166,7 @@ for (const [width, height] of [[390, 844], [320, 568]]) test(`R2 ${width}px two 
     thumb.y -= 26;
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [thumb] });
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "move");
+    await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-first-step", /acknowledged|complete/);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [thumb, camera] });
     camera.x -= 80;
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [thumb, camera] });
@@ -146,6 +190,9 @@ for (const [width, height] of [[390, 844], [320, 568]]) test(`R2 ${width}px two 
 
 test("R2 reduced motion, forced colors, context loss, retry and semantic escape", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 }); await page.emulateMedia({ reducedMotion: "reduce" }); await open(page);
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-first-step", "prompt");
+  await expect(page.getByTestId("plaza-first-step")).toBeVisible();
+  await expect(page.locator('[data-world-label="today-gate"]')).toHaveCSS("animation-name", "none");
   const before = await sample(page); await hold(page, "ArrowRight");
   expect((await sample(page)).x).toBeGreaterThan(before.x);
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "neutral");
@@ -234,7 +281,7 @@ for (const width of [390, 320]) test(`R3 ${width}px chrome, 200% text and safe-a
   await today.focus(); await expect(today).toBeFocused(); await expect(today).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   await page.screenshot({ path: test.info().outputPath(`text-200-${width}.png`) });
-  const surfaces = [".placeable-header", ".placeable-destination", ".plaza-help > summary", ".placeable-walk-pad"];
+  const surfaces = [".placeable-header", ".placeable-destination", ".plaza-help > summary", ".placeable-walk-pad", ".plaza-first-step-cue"];
   const boxes = await Promise.all(surfaces.map(selector => page.locator(selector).boundingBox()));
   for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) {
     expect(a && b).toBeTruthy();
