@@ -134,6 +134,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const chooseRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
+  const plazaHeading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    plazaHeading.current?.focus({ preventScroll: true });
+  }, []);
   // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
   // No URL destination, visit flag, storage write or account identity enters the scene.
   const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
@@ -302,7 +306,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"} data-editing={editing}
     onKeyDown={(event) => { if (world && editing && event.key === "Escape") { event.preventDefault(); cancelEditing(); } }}>
     <header className="placeable-header">
-      <div className="placeable-home-title"><p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p><h1>내 공간 <span>My Space</span></h1>
+      <div className="placeable-home-title"><p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p><h1 ref={plazaHeading} tabIndex={-1}>내 공간 <span>My Space</span></h1>
         {world ? <p className="plaza-scope">{adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간"}<span aria-hidden="true"> · </span>3D 광장</p>
           : <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p>}</div>
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
@@ -310,6 +314,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
           href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
         {!world && <a className="placeable-health-home" href={classicTodayHref("classic", adapter.mode)}
+          aria-describedby="placeable-today-context"
           aria-disabled={preview || Boolean(state.pending)}
           onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
           오늘의 기록 <span aria-hidden="true">→</span></a>}
@@ -317,10 +322,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     </header>
     <div className="placeable-layout">
       <section className="placeable-stage" aria-label="내 공간 미리보기" data-breeze={feedback && canInteract}>
-        <div className="placeable-destination"><div><p className="placeable-eyebrow">다른 홈 · 건강 기록</p>
-          <h2>오늘의 기록</h2>{!world && <p>혈압 기록과 지난 기록 확인은 이곳에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p>}</div>
+        <div className="placeable-destination"><div><p className="placeable-eyebrow">건강 기록 홈 · Today</p>
+          <h2>오늘의 기록</h2>
+          <p id="placeable-today-context">혈압 기록과 지난 기록 확인은 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
           <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-label="오늘의 기록으로 가기"
+            aria-describedby="placeable-today-context"
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
