@@ -15,6 +15,8 @@ import { PLAZA_CAMERA } from "./plazaCamera";
 
 type Props = PlaceableProjection & { presentation?: "guest"; extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
+type FirstStepPhase = "prompt" | "acknowledged" | "complete";
+
 /** Opt-in scene lifetime. No Lab shell, auth client, persistence, or health stores. */
 export default function PlaceableWorld(props: Props) {
   const guestVisit = props.presentation === "guest";
@@ -39,6 +41,8 @@ export default function PlaceableWorld(props: Props) {
   const [twilight, setTwilight] = useState(false);
   const [welcomePhase, setWelcomePhase] = useState<PlaceableScene["welcomePhase"]>("daylight");
   const [sceneryProfile, setSceneryProfile] = useState<PlazaSceneryProfile>("full");
+  const firstStepPhaseRef = useRef<FirstStepPhase>(guestVisit ? "complete" : "prompt");
+  const [firstStepPhase, setFirstStepPhase] = useState<FirstStepPhase>(firstStepPhaseRef.current);
   const toggleTwilight = () => {
     if (!sceneRef.current || error) return;
     const enabled = !twilight;
@@ -51,6 +55,18 @@ export default function PlaceableWorld(props: Props) {
     if (companionRef.current?.greet()) setGreetings((count) => count + 1);
   };
 
+  // Visit-local only. A real locomotion transition starts this acknowledgement;
+  // elapsed time alone never claims that the user took a step.
+  useEffect(() => {
+    if (firstStepPhase !== "acknowledged") return;
+    const timer = window.setTimeout(() => {
+      if (firstStepPhaseRef.current !== "acknowledged") return;
+      firstStepPhaseRef.current = "complete";
+      setFirstStepPhase("complete");
+    }, 1100);
+    return () => window.clearTimeout(timer);
+  }, [firstStepPhase]);
+
   useLayoutEffect(() => {
     sceneRef.current?.update(props, reduced.current);
     inputRef.current?.suspend(props.suspended);
@@ -61,7 +77,7 @@ export default function PlaceableWorld(props: Props) {
     const container = host.current;
     if (!container || error) { labelGeometry.current = null; return; }
     const reservedNodes = Array.from(container.parentElement!.querySelectorAll<HTMLElement>(
-      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption",
+      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption, .plaza-first-step-cue[data-active=true]",
     ));
     // Batch layout reads only when layout changes. Visibility keeps optional label
     // dimensions measurable, so camera movement never needs a DOM geometry read.
@@ -83,7 +99,7 @@ export default function PlaceableWorld(props: Props) {
     [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
     window.addEventListener("resize", measure);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
-  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, error]);
+  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -169,7 +185,12 @@ export default function PlaceableWorld(props: Props) {
           const dt = previous === null ? 0 : (time - previous) / 1000; previous = time;
           if (!document.hidden) {
             if (scene!.step(dt, input.movement.snapshot.intent)) greet();
-            companion!.setMoving(scene!.locomotion.moving);
+            const moving = scene!.locomotion.moving;
+            companion!.setMoving(moving);
+            if (!guestVisit && moving && firstStepPhaseRef.current === "prompt") {
+              firstStepPhaseRef.current = "acknowledged";
+              setFirstStepPhase("acknowledged");
+            }
             // Projection and clearance use cached local geometry; RAF only writes DOM.
             const geometry = labelGeometry.current;
             const reserved = geometry ? [...geometry.reserved] : [];
@@ -210,11 +231,14 @@ export default function PlaceableWorld(props: Props) {
     data-scenery-profile={sceneryProfile}
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
     data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
+    data-first-step={guestVisit ? undefined : firstStepPhase}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
     }}>
     <div className="placeable-world-host" ref={host}>
       {!error && labels.map((label) => <span key={label.id} className="placeable-world-label" aria-hidden="true"
+        data-world-label={label.id}
+        data-arrival-highlight={!guestVisit && !props.suspended && firstStepPhase === "prompt" && label.id === "today-gate" ? "true" : undefined}
         data-preview-selected={props.pinwheelPreview && label.id === props.selection?.socketId}
         ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
         style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{props.pinwheelPreview && label.id === props.selection?.socketId ? `미리보기 · ${label.label}` : label.label}</span>)}
@@ -225,6 +249,18 @@ export default function PlaceableWorld(props: Props) {
       </div>}
       {props.preview && <span className="placeable-world-caption">저장 전 미리보기</span>}
     </div>
+    {!guestVisit && !error && !props.suspended && firstStepPhase !== "complete" && <p
+      className="plaza-first-step-cue"
+      data-testid="plaza-first-step"
+      data-state={firstStepPhase}
+      data-active="true"
+      role="status"
+      aria-live="polite"
+    >
+      {firstStepPhase === "prompt"
+        ? <><strong>Today Gate로 걸어가 보세요.</strong><span>방향키·WASD 또는 걷기 패드</span></>
+        : <><strong>첫걸음이 시작됐어요.</strong><span>이제 광장을 자유롭게 둘러보세요.</span></>}
+    </p>}
     <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
       disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
     <p className="plaza-companion-status" data-notice={companionNotice} role="status" data-testid="companion-response">{error
