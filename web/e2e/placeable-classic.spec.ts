@@ -480,7 +480,7 @@ test("#946 Living City return lands as truthful Today continuity", async ({ page
   await expect(returned.locator(".today-return-route")).toContainText("오늘의 기록");
   await expect(returned).toContainText("이 브라우저의 공간");
   await expect(returned).toContainText("3D 광장");
-  await expect(back).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+  await expect(back).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser&return_space=3d-browser");
 
   // The visual arrival settles, but truthful semantic continuity remains.
   await expect(returned).toHaveCSS("animation-name", "today-return-arrival");
@@ -657,7 +657,7 @@ for (const mode of ["browser", "account"] as const) {
     await expectClassicToday(page);
     await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
     const back = page.getByRole("link", { name: "내 공간으로 돌아가기" });
-    await expect(back).toHaveAttribute("href", `?experience=e2&view=3d&storage=${mode}`);
+    await expect(back).toHaveAttribute("href", `?experience=e2&view=3d&storage=${mode}&return_space=3d-${mode}`);
     await back.focus(); await page.keyboard.press("Enter");
     const world = page.getByTestId("placeable-world");
     await expect(world).toHaveAttribute("data-color", "teal");
@@ -1312,7 +1312,7 @@ for (const mobile of [false, true]) test(`E8 ${mobile ? "mobile touch" : "deskto
     const today = page.getByRole("link", { name: "오늘의 기록으로 가기" });
     if (mobile) await today.tap(); else { await today.focus(); await page.keyboard.press("Enter"); }
     await expectClassicToday(page);
-    await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account");
+    await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=account&return_space=3d-account");
     await page.goBack(); await expect(world).toHaveAttribute("data-color", "teal");
     await page.goForward(); await expectClassicToday(page);
     await page.getByRole("link", { name: "내 공간으로 돌아가기" }).click();
@@ -1353,7 +1353,7 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" }).click();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
   await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
-  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser&return_space=3d-browser");
 });
 
 test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
@@ -1391,7 +1391,7 @@ test("E8 WebGL failure retains account 간단한 광장으로 보기 and 오늘�
   await expect(page.getByTestId("classic-plaza")).toBeVisible();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
   await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
-  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=classic&storage=account");
+  await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=classic&storage=account&return_space=classic-account");
   expect(account.puts).toBe(0);
 });
 
@@ -2085,7 +2085,7 @@ test("#930 Today-My Space round trip exposes exact identity and destination focu
   const returnLink = page.getByRole("link", { name: "내 공간으로 돌아가기" });
   await expect(returnLink).toHaveAttribute(
     "href",
-    "?experience=e2&view=3d&storage=account",
+    "?experience=e2&view=3d&storage=account&return_space=3d-account",
   );
 
   // One explicit full-page transition is one browser-history step.
@@ -2141,8 +2141,8 @@ test("#940 Today makes Living City motivation visible without changing the bound
   const returned = page.locator(".today-my-space");
 
   await expect(returned).toHaveAttribute("data-living-city-invitation", "return");
-  await expect(returned.locator(".today-space-kicker")).toHaveText("다시 내 공간으로");
-  await expect(returned).toContainText("방금 머물던 Living City를 그대로 이어가요.");
+  await expect(returned.locator(".today-space-kicker")).toHaveText("Today 도착");
+  await expect(returned).toContainText("Living City에서 오늘의 기록으로 돌아왔어요.");
   await expect(returned).toContainText("계정 공간");
   await expect(returned).toContainText("3D 광장");
 
@@ -2150,7 +2150,7 @@ test("#940 Today makes Living City motivation visible without changing the bound
     page.getByRole("link", { name: "내 공간으로 돌아가기" }),
   ).toHaveAttribute(
     "href",
-    "?experience=e2&view=3d&storage=account",
+    "?experience=e2&view=3d&storage=account&return_space=3d-account",
   );
 });
 

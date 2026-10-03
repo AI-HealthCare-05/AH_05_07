@@ -233,6 +233,45 @@
   to { opacity: 1; }
 }
 
+/* #948 bounded Today → Living City re-entry.
+   return_space proves view/storage continuity only; no world pose is restored. */
+.plaza-return-cue {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: max(24px, env(safe-area-inset-left));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  width: fit-content;
+  max-width: min(380px, calc(100% - 48px));
+  min-height: 44px;
+  margin: 0;
+  padding: 9px 14px;
+  border: 1px solid #9cab9b;
+  border-radius: 14px;
+  background: #f2f4eaf2;
+  color: #303d36;
+  box-shadow: 0 8px 24px #24372e14;
+  font-size: .8rem;
+  line-height: 1.35;
+  pointer-events: none;
+  animation: plaza-return-entry 520ms ease-out both;
+}
+.plaza-return-cue strong {
+  color: #385747;
+  font-weight: 760;
+}
+.plaza-return-cue span {
+  color: #56655b;
+  font-size: .76rem;
+}
+@keyframes plaza-return-entry {
+  from { opacity: .72; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* #944 Today Gate approach / arrival.
    Geometry comes from the existing E1 destination; this layer is presentation only. */
 .placeable-world-view [data-gate-proximity=approach] .placeable-world-label[data-world-label="today-gate"] {
@@ -369,6 +408,7 @@
 }
 @media (max-width: 600px) {
   .plaza-first-step-cue,
+  .plaza-return-cue,
   .plaza-gate-status {
     top: 14px;
     left: max(16px, env(safe-area-inset-left));
@@ -407,6 +447,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .placeable-world-view .placeable-world-label[data-world-label="today-gate"][data-arrival-highlight=true],
+  .plaza-return-cue,
   .placeable-world-view [data-gate-proximity=arrived] .placeable-world-label[data-world-label="today-gate"],
   .plaza-first-step-cue[data-state=acknowledged],
   .plaza-gate-status[data-state=arrived],
@@ -432,6 +473,9 @@
   .plaza-first-step-cue,
   .plaza-first-step-cue strong,
   .plaza-first-step-cue span,
+  .plaza-return-cue,
+  .plaza-return-cue strong,
+  .plaza-return-cue span,
   .plaza-gate-status,
   .plaza-gate-status strong,
   .plaza-gate-status span {

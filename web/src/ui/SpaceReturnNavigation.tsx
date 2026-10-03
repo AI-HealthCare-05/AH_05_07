@@ -17,6 +17,9 @@ export type MySpaceEntryDisplay = MySpaceReturnContext & {
 export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay }) {
   const contextId = "today-my-space-context";
   const returning = destination.returning;
+  const entryHref = returning
+    ? `${destination.href}&return_space=${destination.view}-${destination.storage}`
+    : destination.href;
 
   return <nav
     className="today-my-space"
@@ -63,7 +66,7 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
         <span>{mySpaceViewLabel[destination.view]}</span>
       </div>
 
-      <a className="today-space-entry-action" href={destination.href} aria-describedby={contextId}>
+      <a className="today-space-entry-action" href={entryHref} aria-describedby={contextId}>
         <span>{returning ? "내 공간으로 돌아가기" : "내 공간으로 가기"}</span>
         <span className="today-space-entry-arrow" aria-hidden="true">→</span>
       </a>
@@ -93,7 +96,7 @@ export function MySpaceReturn() {
       </span>
     </div>
     <a
-      href={`?experience=e2&view=${space.view}&storage=${space.storage}`}
+      href={`?experience=e2&view=${space.view}&storage=${space.storage}&return_space=${space.view}-${space.storage}`}
       aria-describedby={contextId}
     >
       내 공간으로 돌아가기 <span aria-hidden="true">→</span>
