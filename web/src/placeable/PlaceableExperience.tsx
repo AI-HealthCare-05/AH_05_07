@@ -68,10 +68,14 @@ function PinwheelPreview({ selection }: { selection: Selection }) {
       <span>{socket.label}</span></div>
   </div>;
 }
-export function ClassicPlaza({ selection, preview, pulse, interact, canInteract, choice = null, keepsake = null }: {
+export type ClassicPlaceStatePresentation = "loading" | "unavailable" | "unsupported";
+
+export function ClassicPlaza({ selection, preview, pulse, interact, canInteract, choice = null, keepsake = null,
+  statePresentation = null }: {
   choice?: LivingChoice | null;
   keepsake?: Keepsake | null;
   selection: Selection | null; preview: boolean; pulse: number; interact: () => void; canInteract: boolean;
+  statePresentation?: ClassicPlaceStatePresentation | null;
 }) {
   const motif = keepsake ?? keepsakeCandidate(choice);
   return <div className="placeable-map" data-testid="classic-plaza" data-preview={preview}>
@@ -110,7 +114,10 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
       </button>}
       <span className="placeable-map-label">{socket.label}</span>
     </div>)}
-    <span className="placeable-map-caption">{preview ? "저장 전 미리보기" : selection || keepsake ? "저장된 꾸미기" : "꾸미기 전"}</span>
+    <span className="placeable-map-caption">{statePresentation === "loading" ? "저장 상태 확인 중"
+      : statePresentation === "unavailable" ? "저장 상태 확인 필요"
+      : statePresentation === "unsupported" ? "저장된 꾸미기 · 이 버전에서 표시 보류"
+      : preview ? "저장 전 미리보기" : selection || keepsake ? "저장된 꾸미기" : "꾸미기 전"}</span>
   </div>;
 }
 
@@ -243,6 +250,35 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const visibleChoice = state.keepsakeDraft === null ? null : choice;
   const canEdit = state.phase === "ready";
   const canInteract = canEdit && !preview && confirmed !== null;
+  const storageScope = adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간";
+  const confirmedEmpty = state.phase === "ready"
+    && state.confirmed !== null
+    && confirmed === null
+    && layout.keepsake === null;
+  const stateIdentity = confirmedEmpty
+    ? {
+        kind: "empty",
+        title: "아직 저장된 꾸미기가 없어요",
+        detail: `${storageScope}은 정상적으로 확인됐어요. 꾸미기를 고르고 확정할 때만 저장돼요.`,
+      } as const
+    : state.phase === "unavailable"
+      ? {
+          kind: "unavailable",
+          title: "저장 상태를 지금 확인할 수 없어요",
+          detail: `${storageScope}을 지금 안전하게 확인하거나 변경할 수 없어요. 비어 있다는 뜻은 아니에요.`,
+        } as const
+      : state.phase === "unsupported"
+        ? {
+            kind: "unsupported",
+            title: "저장된 꾸미기는 그대로 보존하고 있어요",
+            detail: `${storageScope}에 저장된 형식을 이 버전에서 안전하게 표시하거나 편집할 수 없어요. 비어 있는 공간으로 간주하지 않아요.`,
+          } as const
+        : null;
+  const classicStatePresentation = state.phase === "loading"
+    || state.phase === "unavailable"
+    || state.phase === "unsupported"
+    ? state.phase
+    : null;
   const selected = selection ?? { assetId: ASSET, color: "coral", socketId: "gate-left" };
   function change(change: Partial<Selection>) { controller.preview({ ...selected, ...change }); }
   function interact() {
@@ -278,6 +314,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       {exactNotice ? "저장했어요." : "저장된 꾸미기예요."}
     </> : phaseCopy.ready}
   </p>;
+  const stateIdentityCard = stateIdentity ? <div className="placeable-state-identity"
+    data-testid="placeable-state-identity" data-state={stateIdentity.kind} data-storage={adapter.mode}>
+    <p className="placeable-eyebrow">내 공간 저장 상태</p>
+    <strong>{stateIdentity.title}</strong>
+    <p>{stateIdentity.detail}</p>
+  </div> : null;
   async function confirm() {
     await controller.confirm();
     if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
@@ -339,7 +381,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
-        </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse} interact={interact} canInteract={canInteract} />}
+        </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
+          interact={interact} canInteract={canInteract} statePresentation={classicStatePresentation} />}
         {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}
         {!keepsake && choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
         <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "광장에 바람이 불어 바람개비가 돌아가요." : "잠시 쉬어가는 나만의 광장이에요."}</p>
@@ -358,6 +401,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <p className="placeable-storage" data-testid="storage-label">{adapter.mode === "browser"
           ? "이 브라우저에만 저장 · 계정 공간과 분리돼요."
           : "계정 공간에 저장 · 이 브라우저의 공간과 분리돼요."}</p>
+        {stateIdentityCard}
         {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}>
           {adapter.mode === "browser" ? "계정 공간 사용하기" : "이 브라우저의 공간 사용하기"}</a>}
         {!world && saveStatus}

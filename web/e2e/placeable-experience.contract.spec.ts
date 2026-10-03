@@ -29,7 +29,8 @@ test("product's first render is unplaced/loading with disabled confirmation and 
       save: async () => { throw new Error("render must not save"); } };
     const html = renderToStaticMarkup(createElement(PlaceableExperience, { adapter }));
     expect(html).toContain('data-phase="loading"'); expect(html).toContain("아직 확인 전");
-    expect(html).toContain("꾸미기 전"); expect(html).toContain("저장된 꾸미기를 불러오고 있어요");
+    expect(html).toContain("저장 상태 확인 중"); expect(html).not.toContain(">꾸미기 전<");
+    expect(html).toContain("저장된 꾸미기를 불러오고 있어요");
     expect(html).not.toContain("이 브라우저에 저장했어요.");
     expect(html).not.toContain('data-testid="classic-pinwheel"');
     expect(html).toContain(mode === "browser" ? "이 브라우저에만 저장" : "계정 공간에 저장");
@@ -282,4 +283,38 @@ test("#930 bounded transition identity has exact view/storage vocabulary without
     expect(context).not.toBeNull();
     expect(mySpaceContextLabel(context!)).toBe(label);
   }
+});
+
+test("#932 Classic state captions keep loading, unavailable and unsupported distinct from confirmed empty", () => {
+  const base = {
+    selection: null,
+    preview: false,
+    pulse: 0,
+    interact: () => {},
+    canInteract: false,
+  };
+
+  const empty = renderToStaticMarkup(createElement(ClassicPlaza, base));
+  expect(empty).toContain("꾸미기 전");
+
+  const loading = renderToStaticMarkup(createElement(ClassicPlaza, {
+    ...base,
+    statePresentation: "loading",
+  }));
+  expect(loading).toContain("저장 상태 확인 중");
+  expect(loading).not.toContain(">꾸미기 전<");
+
+  const unavailable = renderToStaticMarkup(createElement(ClassicPlaza, {
+    ...base,
+    statePresentation: "unavailable",
+  }));
+  expect(unavailable).toContain("저장 상태 확인 필요");
+  expect(unavailable).not.toContain(">꾸미기 전<");
+
+  const unsupported = renderToStaticMarkup(createElement(ClassicPlaza, {
+    ...base,
+    statePresentation: "unsupported",
+  }));
+  expect(unsupported).toContain("저장된 꾸미기 · 이 버전에서 표시 보류");
+  expect(unsupported).not.toContain(">꾸미기 전<");
 });

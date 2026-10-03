@@ -2104,3 +2104,192 @@ test("#930 transition UI reflows at 320 and actual 200-percent text enlargement"
     });
   }
 });
+
+test("#932 confirmed empty is a normal editable state, not a recovery state", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(browserRoute);
+
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  const identity = page.getByTestId("placeable-state-identity");
+  await expect(identity).toHaveAttribute("data-state", "empty");
+  await expect(identity).toHaveAttribute("data-storage", "browser");
+  await expect(identity).toContainText("아직 저장된 꾸미기가 없어요");
+  await expect(identity).toContainText("이 브라우저의 공간은 정상적으로 확인됐어요");
+  await expect(identity).not.toContainText(/확인할 수 없|이 버전에서/);
+
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 바람개비 없음");
+  await expect(page.getByTestId("confirmed-keepsake")).toHaveText("아직 남긴 문양이 없어요.");
+  await expect(page.getByRole("button", { name: "환영 바람개비 고르기" })).toBeEnabled();
+  expect(await readLocal(page)).toBeNull();
+});
+
+test("#932 browser unavailable and unsupported states never masquerade as empty or write repairs", async ({ browser }) => {
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    try {
+      await page.addInitScript((key) => {
+        const originalGet = Storage.prototype.getItem;
+        const originalSet = Storage.prototype.setItem;
+        Object.assign(window, { e932Writes: 0 });
+        Storage.prototype.getItem = function (name) {
+          if (name === key) throw new DOMException("blocked");
+          return originalGet.call(this, name);
+        };
+        Storage.prototype.setItem = function (name, value) {
+          if (name === key) (window as unknown as { e932Writes: number }).e932Writes++;
+          return originalSet.call(this, name, value);
+        };
+      }, STORAGE_KEY);
+
+      await page.goto(browserRoute);
+      await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unavailable");
+
+      const identity = page.getByTestId("placeable-state-identity");
+      await expect(identity).toHaveAttribute("data-state", "unavailable");
+      await expect(identity).toHaveAttribute("data-storage", "browser");
+      await expect(identity).toContainText("저장 상태를 지금 확인할 수 없어요");
+      await expect(identity).toContainText("비어 있다는 뜻은 아니에요");
+      await expect(page.locator(".placeable-map-caption")).toHaveText("저장 상태 확인 필요");
+      await expect(page.getByRole("button", { name: "환영 바람개비 고르기" })).toBeDisabled();
+      expect(await page.evaluate(() => (window as unknown as { e932Writes: number }).e932Writes)).toBe(0);
+    } finally {
+      await context.close();
+    }
+  }
+
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    const future = {
+      schemaVersion: "placeable.v9",
+      layoutId: "e1-plaza.v9",
+      revision: 7,
+      selection: { future: true },
+      latestOperationId: "00000000-0000-4000-8000-000000000932",
+      latestFingerprint: "9".repeat(64),
+    };
+    const raw = JSON.stringify(future);
+
+    try {
+      await page.addInitScript(({ key, raw }) => {
+        localStorage.setItem(key, raw);
+        const original = Storage.prototype.setItem;
+        Object.assign(window, { e932Writes: 0 });
+        Storage.prototype.setItem = function (name, value) {
+          if (name === key) (window as unknown as { e932Writes: number }).e932Writes++;
+          return original.call(this, name, value);
+        };
+      }, { key: STORAGE_KEY, raw });
+
+      await page.goto(browserRoute);
+      await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unsupported");
+
+      const identity = page.getByTestId("placeable-state-identity");
+      await expect(identity).toHaveAttribute("data-state", "unsupported");
+      await expect(identity).toHaveAttribute("data-storage", "browser");
+      await expect(identity).toContainText("저장된 꾸미기는 그대로 보존하고 있어요");
+      await expect(identity).toContainText("비어 있는 공간으로 간주하지 않아요");
+      await expect(page.locator(".placeable-map-caption"))
+        .toHaveText("저장된 꾸미기 · 이 버전에서 표시 보류");
+      await expect(page.getByTestId("confirmed-placement")).toContainText("새 형식 그대로 보존");
+      await expect(page.getByTestId("confirmed-keepsake")).toContainText("그대로 보존");
+      await expect(page.getByRole("button", { name: "환영 바람개비 고르기" })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "남긴 문양 제거" })).toBeDisabled();
+
+      expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe(raw);
+      expect(await page.evaluate(() => (window as unknown as { e932Writes: number }).e932Writes)).toBe(0);
+
+      const retry = page.getByRole("button", { name: "저장된 상태 확인" });
+      await retry.click();
+      await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unsupported");
+      expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBe(raw);
+      expect(await page.evaluate(() => (window as unknown as { e932Writes: number }).e932Writes)).toBe(0);
+
+      await page.setViewportSize({ width: 320, height: 568 });
+      await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+      await page.emulateMedia({ forcedColors: "active" });
+
+      await identity.scrollIntoViewIfNeeded();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(identity).toHaveCSS("border-left-style", "solid");
+
+      await retry.scrollIntoViewIfNeeded();
+
+      // :focus-visible is a keyboard-modality claim. Programmatic focus alone
+      // does not guarantee it, so reach the recovery action through real Tab input.
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      for (let index = 0; index < 30; index++) {
+        if (await retry.evaluate((element) => element === document.activeElement)) break;
+        await page.keyboard.press("Tab");
+      }
+
+      await expect(retry).toBeFocused();
+      await expect(retry).toHaveCSS("outline-style", "solid");
+
+      await page.emulateMedia({ forcedColors: "none" });
+    } finally {
+      await context.close();
+    }
+  }
+});
+
+test("#932 account read failure remains account-unavailable and never falls back to browser", async ({ page }) => {
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=classic&storage=account");
+
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "unavailable");
+  const identity = page.getByTestId("placeable-state-identity");
+  await expect(identity).toHaveAttribute("data-state", "unavailable");
+  await expect(identity).toHaveAttribute("data-storage", "account");
+  await expect(identity).toContainText("계정 공간을 지금 안전하게 확인하거나 변경할 수 없어요");
+  await expect(identity).toContainText("비어 있다는 뜻은 아니에요");
+
+  await expect(page.getByTestId("storage-label")).toContainText("계정 공간에 저장");
+  await expect(page.getByTestId("confirmed-placement")).toHaveText("저장 상태: 아직 확인 전");
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toBeNull();
+});
+
+test("#932 companion representation failure preserves confirmed cosmetics and performs no repair write", async ({ page }) => {
+  const snapshot = await saved({
+    operationId: "00000000-0000-4000-8000-000000000932",
+    expectedRevision: 3,
+    schemaVersion: "placeable.v2",
+    layoutId: "e1-plaza.v2",
+    selection: {
+      pinwheel: { assetId: "welcome-pinwheel-v1", color: "teal", socketId: "gate-right" },
+      keepsake: "quiet-moon-v1",
+    },
+  });
+
+  await page.addInitScript(({ key, snapshot }) => {
+    localStorage.setItem(key, JSON.stringify(snapshot));
+    const original = Storage.prototype.setItem;
+    Object.assign(window, { e932Writes: 0 });
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { e932Writes: number }).e932Writes++;
+      return original.call(this, name, value);
+    };
+  }, { key: STORAGE_KEY, snapshot });
+
+  await page.route("**/companion/v1/**", route => route.abort("failed"));
+  await page.goto(companionRoute);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-companion-pose", "unavailable", { timeout: 15000 });
+  await expect(world).toHaveAttribute("data-color", "teal");
+  await expect(world).toHaveAttribute("data-socket", "gate-right");
+  await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
+
+  await expect(page.getByTestId("companion-response")).toContainText("동반자 모습만 지금 불러오지 못했어요");
+  await expect(page.getByTestId("companion-response")).toContainText("꾸미기 상태가 바뀌지는 않아요");
+  await expect(page.getByTestId("save-status")).toContainText("이 브라우저에 저장된 꾸미기예요");
+  await expect(page.getByTestId("placeable-state-identity")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toBeVisible();
+
+  expect(await readLocal(page)).toEqual(snapshot);
+  expect(await page.evaluate(() => (window as unknown as { e932Writes: number }).e932Writes)).toBe(0);
+});

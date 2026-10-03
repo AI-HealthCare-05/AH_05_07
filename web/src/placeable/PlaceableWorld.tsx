@@ -227,8 +227,14 @@ export default function PlaceableWorld(props: Props) {
     </div>
     <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
       disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
-    <p className="plaza-companion-status" data-notice={companionNotice} role="status" data-testid="companion-response">{error || pose === "unavailable"
-      ? "지금은 동반자를 볼 수 없어요. 광장과 오늘의 기록은 계속 이용할 수 있어요."
+    <p className="plaza-companion-status" data-notice={companionNotice} role="status" data-testid="companion-response">{error
+      ? (guestVisit
+        ? "3D 표현만 지금 사용할 수 없어요. 오늘 화면은 계속 이용할 수 있어요."
+        : "3D 표현만 지금 사용할 수 없어요. 이 문제로 내 공간의 저장 상태가 바뀌지는 않아요.")
+      : pose === "unavailable"
+        ? (guestVisit
+          ? "동반자 모습만 지금 불러오지 못했어요. 광장과 오늘 화면은 계속 이용할 수 있어요."
+          : "동반자 모습만 지금 불러오지 못했어요. 이 문제로 내 공간의 꾸미기 상태가 바뀌지는 않아요. 광장과 오늘의 기록은 계속 이용할 수 있어요.")
       : pose === "loading" ? "동반자가 광장으로 오고 있어요…"
       : greetings ? "반가워요! 동반자와 인사를 나눴어요." : "동반자가 이 공간에 함께 있어요."}</p>
     <details className="plaza-help" open={toolsOpen} onToggle={(event) => setToolsOpen(event.currentTarget.open)}><summary>광장 도구 <span aria-hidden="true">＋</span></summary>
