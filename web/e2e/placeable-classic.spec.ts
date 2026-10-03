@@ -1622,6 +1622,80 @@ test("#950 Garden Nook Today round trip restores semantic place without stale Ga
   }
 });
 
+test("#954 Garden Nook semantic re-entry shows one truthful transient arrival cue", async ({ page }) => {
+  await page.addInitScript(({ key, snapshot }) => {
+    localStorage.setItem(key, JSON.stringify(snapshot));
+    const original = Storage.prototype.setItem;
+    Object.assign(window, { e954Writes: 0 });
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { e954Writes: number }).e954Writes++;
+      return original.call(this, name, value);
+    };
+  }, { key: STORAGE_KEY, snapshot: emptySnapshot() });
+
+  const reentryRoute = "/?experience=e2&view=3d&storage=browser&return_space=3d-browser&return_place=garden-nook";
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(reentryRoute);
+
+  const garden = page.getByTestId("garden-nook");
+  const cue = page.getByTestId("garden-return-cue");
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /정원 쉼터/ })).toBeFocused();
+  await expect(cue).toBeVisible();
+  await expect(cue).toContainText("Today → Garden Nook");
+  await expect(cue).toContainText("정원 쉼터로 돌아왔어요.");
+  await expect(cue).not.toContainText(/같은 자리|정자 앞|쉬던 상태|방금 있던 자리/);
+  await expect(cue).toHaveCSS("animation-name", "garden-return-entry");
+  await expect(garden).toHaveAttribute("data-at-pavilion", "false");
+  await expect(gardenRest(page)).toBeDisabled();
+
+  await expect(cue).toHaveCount(0, { timeout: 4000 });
+  await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click();
+  await expect(garden).toHaveAttribute("data-at-pavilion", "true");
+  expect(await page.evaluate(() => (window as unknown as { e954Writes: number }).e954Writes)).toBe(0);
+
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.reload();
+  const reducedCue = page.getByTestId("garden-return-cue");
+  await expect(reducedCue).toBeVisible();
+  await expect(reducedCue).toHaveCSS("animation-name", "none");
+  await expect(reducedCue).toHaveCSS("border-top-style", "solid");
+
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(reentryRoute);
+    const mobileCue = page.getByTestId("garden-return-cue");
+    const walk = page.getByRole("button", { name: "정원에서 드래그하거나 방향키로 걷기" });
+    await expect(mobileCue).toBeVisible();
+    await expect(walk).toBeVisible();
+    const cueBox = await mobileCue.boundingBox();
+    const walkBox = await walk.boundingBox();
+    expect(cueBox).toBeTruthy();
+    expect(walkBox).toBeTruthy();
+    expect(
+      cueBox!.x + cueBox!.width <= walkBox!.x
+      || walkBox!.x + walkBox!.width <= cueBox!.x
+      || cueBox!.y + cueBox!.height <= walkBox!.y
+      || walkBox!.y + walkBox!.height <= cueBox!.y,
+    ).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(companionRoute);
+  await (await enterGarden(page)).click();
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  await expect(page.getByTestId("garden-return-cue")).toHaveCount(0);
+
+  await page.goto("/?experience=e2&view=3d&storage=browser&return_space=classic-browser&return_place=garden-nook");
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+  await expect(page.getByTestId("garden-return-cue")).toHaveCount(0);
+});
+
 test("904 label clearance has no steady-frame DOM geometry reads", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(companionRoute);
