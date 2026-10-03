@@ -33,6 +33,18 @@ export function readMySpaceReturn(search: string): MySpaceReturn | null {
   return match ? { view: match[1] as MySpaceReturn["view"], storage: match[2] as MySpaceReturn["storage"] } : null;
 }
 
+/** Exact raw E2 request context for return authority only.
+ * Renderer fallbacks remain owned by ProductPlaceableEntry. */
+export function readMySpaceRouteRequest(search: string): MySpaceReturn | null {
+  const params = new URLSearchParams(search);
+  if (params.getAll("view").length !== 1 || params.getAll("storage").length !== 1) return null;
+  const view = params.get("view");
+  const storage = params.get("storage");
+  if (view !== "classic" && view !== "3d") return null;
+  if (storage !== "browser" && storage !== "account") return null;
+  return { view, storage };
+}
+
 export function readMySpaceReturnPlace(search: string): MySpaceReturnPlace | null {
   const params = new URLSearchParams(search);
   if (params.getAll("return_place").length !== 1) return null;

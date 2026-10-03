@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import { getMySpaceCompanion } from "../ui/mySpaceCompanion";
 import { readLivingChoice } from "../ui/livingChoice";
-import { readMySpaceReturn, readMySpaceReturnPlace } from "../ui/mySpaceReturn";
+import { readMySpaceReturn, readMySpaceReturnPlace, readMySpaceRouteRequest } from "../ui/mySpaceReturn";
 import PlaceableExperience from "./PlaceableExperience";
 import { VerifiedAccountBinding, type AccountBindingStatus } from "./accountBinding";
 import { accountPersistence, browserPersistence, type PlaceablePersistence } from "./persistence";
@@ -15,10 +15,12 @@ export default function ProductPlaceableEntry() {
   const params = new URLSearchParams(window.location.search);
   const account = params.get("storage") === "account";
   const world = params.get("view") === "3d";
-  const requestedView = world ? "3d" : "classic";
-  const requestedStorage = account ? "account" : "browser";
+  const requestedReturnRoute = readMySpaceRouteRequest(window.location.search);
   const returnSpace = readMySpaceReturn(window.location.search);
-  const reentry = returnSpace?.view === requestedView && returnSpace.storage === requestedStorage;
+  const reentry = requestedReturnRoute !== null
+    && returnSpace !== null
+    && returnSpace.view === requestedReturnRoute.view
+    && returnSpace.storage === requestedReturnRoute.storage;
   const returnPlace = reentry ? readMySpaceReturnPlace(window.location.search) : null;
   const [companion] = useState(() => getMySpaceCompanion(readCompanionIdentity()));
   const [browser] = useState(() => browserPersistence());
