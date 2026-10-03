@@ -35,20 +35,28 @@ export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay
     </span>
 
     <div className="today-space-copy">
-      <p className="today-space-kicker">{returning ? "다시 내 공간으로" : "Living City"}</p>
+      <p className="today-space-kicker">{returning ? "Today 도착" : "Living City"}</p>
 
       <div className="section-header">
-        <strong>내 공간 <span>· Living City</span></strong>
+        <strong>{returning
+          ? <>오늘의 기록 <span>· Today</span></>
+          : <>내 공간 <span>· Living City</span></>}</strong>
         <p>{returning
-          ? "방금 머물던 Living City를 그대로 이어가요."
+          ? "Living City에서 오늘의 기록으로 돌아왔어요."
           : "잠깐 걷고, 쉬고, 내 취향을 더하는 곳."}</p>
       </div>
 
-      <ul className="today-space-capabilities" aria-label="내 공간에서 할 수 있는 일">
-        <li data-space-capability="plaza">광장 걷기</li>
-        <li data-space-capability="garden">정원 쉼터</li>
-        <li data-space-capability="decorate">내 공간 꾸미기</li>
-      </ul>
+      {returning
+        ? <ol className="today-return-route" aria-label="Living City에서 오늘의 기록까지">
+          <li data-return-stop="space">Living City</li>
+          <li className="today-return-route-arrow" aria-hidden="true">→</li>
+          <li data-return-stop="today">오늘의 기록</li>
+        </ol>
+        : <ul className="today-space-capabilities" aria-label="내 공간에서 할 수 있는 일">
+          <li data-space-capability="plaza">광장 걷기</li>
+          <li data-space-capability="garden">정원 쉼터</li>
+          <li data-space-capability="decorate">내 공간 꾸미기</li>
+        </ul>}
 
       <div className="today-space-context" id={contextId} aria-label="이동할 내 공간">
         <span>{mySpaceStorageLabel[destination.storage]}</span>
