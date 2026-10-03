@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { adaptProductInput, FEATURES } from "../src/lib/model-v2/adapter";
@@ -7,6 +8,16 @@ import { assertModelPrivacy, observeModelPrivacy, startModelPrivacy } from "./mo
 import { chooseTime, expectTimeValue } from "./model-v2-time-wheel";
 
 const modelFixturePath = fileURLToPath(new URL("../public/models/model-v2.json", import.meta.url));
+const manifest = JSON.parse(readFileSync(
+  fileURLToPath(new URL("../src/lib/model-v2/manifest.json", import.meta.url)),
+  "utf8",
+)) as {
+  artifact: string;
+  bytes: number;
+  canonical_sha256: string;
+  format: string;
+  sha256: string;
+};
 const modelPath = "/api/v1/model-v2/product-score";
 const emptyWindow = {
   start_on: "2026-09-02", end_on: "2026-09-08",
@@ -709,4 +720,124 @@ test("#934 Guest pre-run review stays transient and reflows at actual 200-percen
   await expect(page.getByText("0 / 11 입력 완료").first()).toBeVisible();
   await expect(page.locator("[data-model-v2-preflight-review]")).toHaveCount(0);
   expect(model.requests).toHaveLength(0);
+});
+
+test("#936 verified model identity is absent before execution and exact after one successful local run", async ({ page }) => {
+  await observeModelPrivacy(page);
+  const model = await routeModel(page);
+  await openS11(page);
+  await fillStandard(page);
+
+  const identity = page.locator("details[data-model-v2-identity]");
+  await expect(identity).toHaveCount(0);
+  expect(model.requests).toHaveLength(0);
+
+  const before = await startModelPrivacy(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+
+  await expect(identity).toHaveCount(1);
+  expect(await identity.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(false);
+  expect(model.requests).toHaveLength(1);
+
+  await identity.locator("summary").click();
+  expect(await identity.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(true);
+
+  const value = (name: string) =>
+    identity.locator(`[data-model-v2-identity-field="${name}"] dd`);
+
+  await expect(value("schema")).toHaveText("model-v2-r1-schema-v1");
+  await expect(value("wording")).toHaveText("입력 기반 위험군 선별 신호");
+  await expect(value("manifest-format")).toHaveText(manifest.format);
+  await expect(value("artifact")).toHaveText(manifest.artifact);
+  await expect(value("bytes")).toHaveText(`${manifest.bytes} bytes`);
+  await expect(value("browser-sha256")).toHaveText(manifest.sha256);
+  await expect(value("canonical-sha256")).toHaveText(manifest.canonical_sha256);
+
+  expect(manifest.sha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(manifest.canonical_sha256).toMatch(/^[a-f0-9]{64}$/);
+
+  await expect(identity).toContainText("확인한 뒤에만 파싱·사용");
+  await expect(identity).toContainText("네트워크 URL을 뜻하지 않습니다");
+  await expect(identity).toContainText("확률·백분율·백분위");
+  await expect(identity).toContainText("진단");
+  await expect(identity).toContainText("위험등급");
+
+  // Expanding a read-only disclosure must not execute, request or persist again.
+  expect(model.requests).toHaveLength(1);
+  await assertModelPrivacy(page, before, true);
+});
+
+test("#936 the same verified identity remains after preview expiry and in Guest local execution", async ({ browser }) => {
+  const scenarios = [
+    { guest: false, instant: "2026-10-18T00:00:01+09:00", preview: false },
+    { guest: true, instant: "2026-09-23T12:00:00+09:00", preview: true },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+
+    try {
+      const model = await routeModel(page);
+      await openS11(page, { guest: scenario.guest, instant: scenario.instant });
+      await fillStandard(page);
+      await submit(page).click();
+      await expect(result(page)).toBeVisible();
+
+      await expect(result(page).locator("[data-model-v2-preview-value]"))
+        .toHaveCount(scenario.preview ? 1 : 0);
+
+      const identity = page.locator("details[data-model-v2-identity]");
+      await expect(identity).toBeVisible();
+      await identity.locator("summary").click();
+
+      await expect(identity.locator('[data-model-v2-identity-field="schema"] dd'))
+        .toHaveText("model-v2-r1-schema-v1");
+      await expect(identity.locator('[data-model-v2-identity-field="browser-sha256"] dd'))
+        .toHaveText(manifest.sha256);
+      await expect(identity.locator('[data-model-v2-identity-field="canonical-sha256"] dd'))
+        .toHaveText(manifest.canonical_sha256);
+
+      expect(model.requests).toHaveLength(1);
+    } finally {
+      await context.close();
+    }
+  }
+});
+
+test("#936 model identity disclosure is keyboard-usable and reflows at 320px with actual 200-percent text", async ({ page }) => {
+  const model = await routeModel(page);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openS11(page);
+  await fillStandard(page);
+  await submit(page).click();
+  await expect(result(page)).toBeVisible();
+
+  await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+
+  const identity = page.locator("details[data-model-v2-identity]");
+  const summary = identity.locator("summary");
+
+  await summary.scrollIntoViewIfNeeded();
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  expect(await identity.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth))
+    .toBeLessThanOrEqual(1);
+
+  await expect(identity.locator('[data-model-v2-identity-field="browser-sha256"] code'))
+    .toHaveText(manifest.sha256);
+  await expect(identity.locator('[data-model-v2-identity-field="canonical-sha256"] code'))
+    .toHaveText(manifest.canonical_sha256);
+
+  expect(model.requests).toHaveLength(1);
+
+  await page.reload();
+  await expect(intake(page)).toBeVisible();
+  await expect(page.locator("details[data-model-v2-identity]")).toHaveCount(0);
+  expect(model.requests).toHaveLength(1);
 });
