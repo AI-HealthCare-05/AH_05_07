@@ -1,12 +1,15 @@
 import { useMemo } from "react";
 
 import { adaptProductInput, FEATURES } from "../lib/model-v2/adapter";
+import manifest from "../lib/model-v2/manifest.json";
+import type { Projection } from "../lib/model-v2/runtime";
 import { buildPayload, type Draft } from "./modelV2Draft";
 import { formatTimeKorean, reviewValue } from "./modelV2Steps";
 import type { ModelV2Continuation } from "./modelV2Continuation";
 
 type Props = {
   draft: Draft;
+  projection: Projection | null;
   previewOutput: number | null;
   bloodPressureStatus: string;
   bloodPressureSupport: string;
@@ -41,6 +44,7 @@ function formatDurationMinutes(totalMinutes: number): string {
 
 export function ModelV2Outcome({
   draft,
+  projection,
   previewOutput,
   bloodPressureStatus,
   bloodPressureSupport,
@@ -192,6 +196,36 @@ export function ModelV2Outcome({
         <p>모델 파일은 필요할 때 네트워크에서 받을 수 있지만, 입력한 11개 값의 계산은 이 브라우저에서 실행합니다. 분석 입력과 결과를 서버 추론 요청으로 보내거나 저장하지 않아 서버 계산을 기다리지 않고 바로 끝날 수 있어요.</p>
         {hasPreview && <p>소수점 셋째 자리 표시는 화면 표시용 반올림이며, 판단 기준이나 등급을 뜻하지 않습니다.</p>}
       </details>
+      {projection && <details className="model-v2-notice-details" data-model-v2-identity>
+        <summary>모델 식별 정보</summary>
+        <p>이번 실행에서 확인된 Model V2의 기술 식별 정보예요. 모델 결과의 건강 의미를 추가하는 정보는 아니에요.</p>
+        <dl className="model-v2-feature-list" data-model-v2-identity-list>
+          <div data-model-v2-identity-field="schema">
+            <dt>스키마 버전</dt><dd><code>{projection.schema_version}</code></dd>
+          </div>
+          <div data-model-v2-identity-field="wording">
+            <dt>제품 표현</dt><dd>{projection.product_wording}</dd>
+          </div>
+          <div data-model-v2-identity-field="manifest-format">
+            <dt>로컬 manifest 형식</dt><dd><code>{manifest.format}</code></dd>
+          </div>
+          <div data-model-v2-identity-field="artifact">
+            <dt>manifest export artifact</dt><dd><code>{manifest.artifact}</code></dd>
+          </div>
+          <div data-model-v2-identity-field="bytes">
+            <dt>브라우저 모델 자산 크기</dt><dd>{manifest.bytes} bytes</dd>
+          </div>
+          <div data-model-v2-identity-field="browser-sha256">
+            <dt>브라우저 자산 SHA-256</dt><dd><code>{manifest.sha256}</code></dd>
+          </div>
+          <div data-model-v2-identity-field="canonical-sha256">
+            <dt>canonical artifact SHA-256</dt><dd><code>{manifest.canonical_sha256}</code></dd>
+          </div>
+        </dl>
+        <p>브라우저에서 받은 모델 자산은 위 SHA-256과 일치하는지 확인한 뒤에만 파싱·사용합니다.
+          manifest의 artifact 이름은 export 단계 식별자이며 네트워크 URL을 뜻하지 않습니다.</p>
+        <p>이 식별 정보는 확률·백분율·백분위, 진단, 정상/비정상 판정, 위험등급 또는 치료·예방 효과를 뜻하지 않습니다.</p>
+      </details>}
       <details className="model-v2-notice-details" data-model-v2-inputs>
         <summary>모델에 사용된 입력 보기</summary>
         <p>방금 입력한 내용을 모델에 맞게 변환한 11개 값이에요. 모델에 전달한 순서와 값 그대로 표시해요.</p>

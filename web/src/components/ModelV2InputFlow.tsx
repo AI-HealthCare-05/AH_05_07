@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { scoreModelV2Locally } from "../lib/model-v2/runtime";
+import { scoreModelV2Locally, type Projection } from "../lib/model-v2/runtime";
 import { ModelV2LocalError } from "../lib/model-v2/errors";
 import { seoulDate } from "../lib/seoulDate";
 import { useSeoulDate } from "../lib/useSeoulDate";
@@ -560,6 +560,7 @@ export function ModelV2InputFlow({
   const [focusRequest, setFocusRequest] = useState<{ id: string } | null>(null);
   const [openTimeField, setOpenTimeField] = useState<keyof Draft | null>(null);
   const [previewOutput, setPreviewOutput] = useState<number | null>(null);
+  const [projection, setProjection] = useState<Projection | null>(null);
   const requestInFlight = useRef(false);
   const mounted = useRef(true);
   const formRef = useRef<HTMLFormElement>(null);
@@ -594,6 +595,7 @@ export function ModelV2InputFlow({
     setMessage("");
     setInvalidFields([]);
     setPreviewOutput(null);
+    setProjection(null);
   }
 
   function update(key: keyof Draft, value: string) {
@@ -678,6 +680,7 @@ export function ModelV2InputFlow({
     try {
       const localResult = await scoreModelV2Locally(payload);
       if (!mounted.current || !guard.isCurrent(token)) return;
+      setProjection(localResult.projection);
       setPreviewOutput(visibleModelV2Output(localResult.continuousOutput, seoulDate()));
       setResultState("processed");
       setFocusRequest({ id: "model-v2-result-title" });
@@ -784,7 +787,8 @@ export function ModelV2InputFlow({
           if (event.key === "Enter" && event.target instanceof HTMLInputElement && !event.nativeEvent.isComposing) event.preventDefault();
         }}
         aria-describedby={resultState === "input_invalid" ? INPUT_ERROR_ID : undefined}>
-        {processed ? <ModelV2Outcome draft={draft} previewOutput={previewOpen ? previewOutput : null}
+        {processed ? <ModelV2Outcome draft={draft} projection={projection}
+          previewOutput={previewOpen ? previewOutput : null}
           bloodPressureStatus={bloodPressureStatus} bloodPressureSupport={bloodPressureSupport}
           continuation={continuation} challengeStatus={challengeStatus} challengeSupport={challengeSupport}
           onContinue={onContinue} onReturnToToday={onReturnToToday} /> : <>
