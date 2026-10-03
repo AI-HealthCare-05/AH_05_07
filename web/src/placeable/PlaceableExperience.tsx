@@ -150,6 +150,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   // only the initial semantic subspace; no Garden runtime residue is restored.
   const returnedToGarden = reentry && returnPlace === "garden-nook";
   const [space, setSpace] = useState<"plaza" | "garden-nook">(returnedToGarden ? "garden-nook" : "plaza");
+  const [gardenReturnCueVisible, setGardenReturnCueVisible] = useState(returnedToGarden);
   const seenReceipt = useRef(state.receipt);
   const pageActive = useRef(true);
   const [receiptNoticeId, setReceiptNoticeId] = useState<string | null>(null);
@@ -188,6 +189,17 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (!changedSpace.current) return;
     if (space === "garden-nook") gardenHeading.current?.focus(); else gardenEntry.current?.focus();
   }, [space]);
+  // #954 arrival confirmation is visit-local presentation only. Leaving the
+  // returned Garden consumes it; it never becomes Garden runtime state.
+  useEffect(() => {
+    if (!returnedToGarden || !gardenReturnCueVisible) return;
+    if (space !== "garden-nook") {
+      setGardenReturnCueVisible(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setGardenReturnCueVisible(false), 2600);
+    return () => window.clearTimeout(timer);
+  }, [returnedToGarden, space, gardenReturnCueVisible]);
   useEffect(() => {
     alive.current = true;
     void controller.load();
@@ -341,6 +353,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <a className="placeable-health-home" href={`${classicTodayHref(world ? "3d" : "classic", adapter.mode)}${mySpaceReturnPlaceQuery("garden-nook")}`}>오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
       </nav>
     </header>
+    {returnedToGarden && gardenReturnCueVisible && <p
+      className="garden-return-cue"
+      data-testid="garden-return-cue"
+      role="status"
+      aria-live="polite"
+    >
+      <strong>Today → Garden Nook</strong><span>정원 쉼터로 돌아왔어요.</span>
+    </p>}
     <div className="garden-stage"><GardenBoundary><Suspense fallback={<p role="status">정원을 열고 있어요… 위의 복귀 경로는 바로 이용할 수 있어요.</p>}>
       <GardenNook companion={companion} />
     </Suspense></GardenBoundary></div>
