@@ -2017,6 +2017,149 @@ test("#930 Today-My Space round trip exposes exact identity and destination focu
   await expect(spaceHeading).toBeFocused();
 });
 
+test("#940 Today makes Living City motivation visible without changing the bounded destination", async ({ page }) => {
+  await classicTodaySession(page);
+
+  await page.goto("/?screen=S02");
+  await expectClassicToday(page);
+
+  const invitation = page.locator(".today-my-space");
+
+  await expect(invitation).toHaveAttribute("data-living-city-invitation", "enter");
+  await expect(invitation.locator(".today-space-kicker")).toHaveText("Living City");
+  await expect(invitation).toContainText("잠깐 걷고, 쉬고, 내 취향을 더하는 곳.");
+
+  await expect(invitation.locator('[data-space-capability="plaza"]')).toHaveText("광장 걷기");
+  await expect(invitation.locator('[data-space-capability="garden"]')).toHaveText("정원 쉼터");
+  await expect(invitation.locator('[data-space-capability="decorate"]')).toHaveText("내 공간 꾸미기");
+
+  await expect(invitation).toContainText("계정 공간");
+  await expect(invitation).toContainText("3D 광장");
+  await expect(invitation).not.toContainText(/혈압|위험군|점수|보상|연속 기록|잠금 해제/);
+
+  const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+
+  await expect(entry).toHaveAttribute(
+    "href",
+    "?experience=e2&view=3d&storage=account",
+  );
+
+  await entry.click();
+
+  await expect(page.getByRole("heading", { level: 1, name: /내 공간/ })).toBeFocused();
+
+  await page.getByRole("link", {
+    name: "오늘의 기록으로 가기",
+    exact: true,
+  }).click();
+
+  await expectClassicToday(page);
+
+  const returned = page.locator(".today-my-space");
+
+  await expect(returned).toHaveAttribute("data-living-city-invitation", "return");
+  await expect(returned.locator(".today-space-kicker")).toHaveText("다시 내 공간으로");
+  await expect(returned).toContainText("방금 머물던 Living City를 그대로 이어가요.");
+  await expect(returned).toContainText("계정 공간");
+  await expect(returned).toContainText("3D 광장");
+
+  await expect(
+    page.getByRole("link", { name: "내 공간으로 돌아가기" }),
+  ).toHaveAttribute(
+    "href",
+    "?experience=e2&view=3d&storage=account",
+  );
+});
+
+test("#940 Living City invitation stays secondary, responsive and reduced-motion safe", async ({ page }) => {
+  await classicTodaySession(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/?screen=S02");
+    await expectClassicToday(page);
+
+    const lead = page.locator(".home-lead");
+    const invitation = page.locator(".today-my-space");
+    const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+
+    const leadBox = await lead.boundingBox();
+    const invitationBox = await invitation.boundingBox();
+
+    expect(leadBox).not.toBeNull();
+    expect(invitationBox).not.toBeNull();
+    expect(invitationBox!.y).toBeGreaterThanOrEqual(
+      leadBox!.y + leadBox!.height,
+    );
+
+    await invitation.scrollIntoViewIfNeeded();
+
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+
+    const entryBox = await entry.boundingBox();
+    expect(entryBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    await expect(invitation.locator(".today-space-capabilities li")).toHaveCount(3);
+
+    expect(
+      await invitation.locator(".today-space-portal-gate").evaluate(
+        (element) => getComputedStyle(element).transitionDuration,
+      ),
+    ).toBe("0s");
+  }
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/?screen=S02");
+  await expectClassicToday(page);
+
+  await page.locator("html").evaluate((html) => {
+    html.style.fontSize = "200%";
+  });
+
+  const invitation = page.locator(".today-my-space");
+  const entry = page.getByRole("link", { name: "내 공간으로 가기" });
+
+  await invitation.scrollIntoViewIfNeeded();
+
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+
+  const enlargedEntry = await entry.boundingBox();
+  expect(enlargedEntry?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+
+  await entry.focus();
+  await expect(entry).toBeFocused();
+
+  expect(
+    await entry.evaluate(
+      (element) => getComputedStyle(element).outlineStyle,
+    ),
+  ).not.toBe("none");
+
+  expect(
+    await invitation.locator(".today-space-portal").evaluate(
+      (element) => getComputedStyle(element).borderTopStyle,
+    ),
+  ).toBe("solid");
+});
+
 test("#930 blocked draft and unknown save keep My Space ownership and focus truthful handoff", async ({ page }) => {
   await page.goto(companionRoute);
 
