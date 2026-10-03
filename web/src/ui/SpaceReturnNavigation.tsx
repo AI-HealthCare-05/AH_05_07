@@ -16,27 +16,50 @@ export type MySpaceEntryDisplay = MySpaceReturnContext & {
 /** Display only: App supplies bounded intent; the destination verifies storage. */
 export function MySpaceEntry({ destination }: { destination: MySpaceEntryDisplay }) {
   const contextId = "today-my-space-context";
+  const returning = destination.returning;
+
   return <nav
     className="today-my-space"
     aria-label="SK7 홈 전환"
-    data-my-space-intent={destination.returning ? "return" : "enter"}
+    data-my-space-intent={returning ? "return" : "enter"}
     data-my-space-view={destination.view}
     data-my-space-storage={destination.storage}
+    data-living-city-invitation={returning ? "return" : "enter"}
   >
-    <span className="today-space-landmark" aria-hidden="true"><i /><i /><i /></span>
-    <div className="section-header">
-      <strong>내 공간 <span>· My Space</span></strong>
-      <p>{destination.returning
-        ? "방금 머물던 내 공간으로 이어서 돌아가요."
-        : "동반자와 광장·정원에서 잠시 쉬어가요."}</p>
+    <span className="today-space-portal" aria-hidden="true">
+      <span className="today-space-portal-sky" />
+      <span className="today-space-portal-gate"><i /><i /></span>
+      <span className="today-space-portal-path" />
+      <span className="today-space-portal-garden"><i /><i /><i /></span>
+      <span className="today-space-portal-companion"><i /><i /></span>
+    </span>
+
+    <div className="today-space-copy">
+      <p className="today-space-kicker">{returning ? "다시 내 공간으로" : "Living City"}</p>
+
+      <div className="section-header">
+        <strong>내 공간 <span>· Living City</span></strong>
+        <p>{returning
+          ? "방금 머물던 Living City를 그대로 이어가요."
+          : "잠깐 걷고, 쉬고, 내 취향을 더하는 곳."}</p>
+      </div>
+
+      <ul className="today-space-capabilities" aria-label="내 공간에서 할 수 있는 일">
+        <li data-space-capability="plaza">광장 걷기</li>
+        <li data-space-capability="garden">정원 쉼터</li>
+        <li data-space-capability="decorate">내 공간 꾸미기</li>
+      </ul>
+
+      <div className="today-space-context" id={contextId} aria-label="이동할 내 공간">
+        <span>{mySpaceStorageLabel[destination.storage]}</span>
+        <span>{mySpaceViewLabel[destination.view]}</span>
+      </div>
+
+      <a className="today-space-entry-action" href={destination.href} aria-describedby={contextId}>
+        <span>{returning ? "내 공간으로 돌아가기" : "내 공간으로 가기"}</span>
+        <span className="today-space-entry-arrow" aria-hidden="true">→</span>
+      </a>
     </div>
-    <div className="today-space-context" id={contextId} aria-label="이동할 내 공간">
-      <span>{mySpaceStorageLabel[destination.storage]}</span>
-      <span>{mySpaceViewLabel[destination.view]}</span>
-    </div>
-    <a href={destination.href} aria-describedby={contextId}>
-      {destination.returning ? "내 공간으로 돌아가기" : "내 공간으로 가기"} <span aria-hidden="true">→</span>
-    </a>
   </nav>;
 }
 
