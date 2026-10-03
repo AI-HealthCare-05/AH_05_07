@@ -1154,6 +1154,10 @@ test("E7 mobile touch walking, rest, live reduced motion, 320px framing and sema
     await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await gardenRest(page).tap(); await expect(page.getByTestId("garden-response")).toContainText("잠깐 쉬었어요");
     await expect(garden).toHaveAttribute("data-companion-pose", "neutral");
+    await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute(
+      "href",
+      "?screen=S02&return_space=3d-browser&return_place=garden-nook",
+    );
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 844 });
       await expectImmersiveGarden(page);
@@ -1198,7 +1202,7 @@ test("E7 companion failure and real context loss isolate the garden, retry and r
   await expect(garden).toHaveAttribute("data-at-pavilion", "true");
   await canvas.evaluate((canvas: HTMLCanvasElement) => canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext());
   await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요"); await expect(canvas).toHaveCount(0);
-  await expect(returnGarden(page)).toBeEnabled(); await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=3d-browser");
+  await expect(returnGarden(page)).toBeEnabled(); await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=3d-browser&return_place=garden-nook");
   await page.getByRole("button", { name: "정원 다시 열기" }).click(); await expect(canvas).toBeVisible();
   await expect(garden).toHaveAttribute("data-at-pavilion", "false");
   await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
@@ -1239,7 +1243,7 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
   await page.route("**/GardenNook-*.js", (route) => route.abort("failed"));
   await (await enterGarden(page)).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).toBeNull();
-  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("href", "?screen=S02&return_space=classic-browser&return_place=garden-nook");
   await returnGarden(page).click(); await expect(page.getByTestId("classic-plaza")).toBeVisible();
   await page.unroute("**/GardenNook-*.js"); await page.reload();
   await page.evaluate(() => {
@@ -1541,7 +1545,7 @@ test("904 Today remains direct in Garden and Classic while 3D has one semantic e
   await (await worldTool(page, "정원 쉼터로 가기")).click();
   const gardenToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
   await expect(gardenToday).toBeVisible();
-  await expect(gardenToday).toHaveAttribute("href", href!);
+  await expect(gardenToday).toHaveAttribute("href", `${href}&return_place=garden-nook`);
   await gardenToday.click();
   await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   await page.goto(browserRoute);
@@ -1549,6 +1553,73 @@ test("904 Today remains direct in Garden and Classic while 3D has one semantic e
   await expect(classicToday).toBeVisible();
   await classicToday.click();
   await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+});
+
+test("#950 Garden Nook Today round trip restores semantic place without stale Garden runtime state", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.goto(companionRoute);
+  const before = await readLocal(page), writes = account.puts;
+
+  await (await enterGarden(page)).click();
+  const garden = page.getByTestId("garden-nook");
+  await expect(garden).toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 15000 });
+  await page.getByRole("button", { name: "정자 앞으로 이동하기" }).click();
+  await expect(garden).toHaveAttribute("data-at-pavilion", "true");
+  await gardenRest(page).click();
+  await expect(garden).toHaveAttribute("data-companion-pose", "rest");
+
+  const gardenToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  await expect(gardenToday).toHaveAttribute(
+    "href",
+    "?screen=S02&return_space=3d-browser&return_place=garden-nook",
+  );
+  await gardenToday.click();
+  await expectClassicToday(page);
+
+  const returned = page.locator(".today-my-space");
+  await expect(returned).toHaveAttribute("data-my-space-return-place", "garden-nook");
+  await expect(returned).toContainText("정원 쉼터에서 오늘의 기록으로 돌아왔어요.");
+  await expect(returned.locator('[data-return-stop="space"]')).toHaveText("정원 쉼터");
+  await expect(returned.locator(".today-space-context")).toContainText("정원 쉼터");
+
+  const back = page.getByRole("link", { name: "내 공간으로 돌아가기", exact: true });
+  await expect(back).toHaveAttribute(
+    "href",
+    "?experience=e2&view=3d&storage=browser&return_space=3d-browser&return_place=garden-nook",
+  );
+
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(back).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await expect(back).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
+  await page.setViewportSize({ width: 1366, height: 900 });
+
+  await back.focus();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /정원 쉼터/ })).toBeFocused();
+  const freshGarden = page.getByTestId("garden-nook");
+  await expect(freshGarden).toHaveAttribute("data-at-pavilion", "false");
+  await expect(freshGarden).toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 15000 });
+  await expect(gardenRest(page)).toBeDisabled();
+  await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(writes);
+
+  for (const invalid of [
+    "/?experience=e2&view=3d&storage=browser&return_space=classic-browser&return_place=garden-nook",
+    "/?experience=e2&view=3d&storage=browser&return_space=3d-browser&return_place=garden-nook&return_place=garden-nook",
+    "/?experience=e2&view=3d&storage=browser&return_space=3d-browser&return_place=plaza",
+  ]) {
+    await page.goto(invalid);
+    await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+    await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+  }
 });
 
 test("904 label clearance has no steady-frame DOM geometry reads", async ({ page }) => {

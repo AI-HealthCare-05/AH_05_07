@@ -3,7 +3,7 @@ import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { dataScopeLabel } from "../ui/dataScope";
 import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
-import { classicTodayHref } from "../ui/mySpaceReturn";
+import { classicTodayHref, mySpaceReturnPlaceQuery, type MySpaceReturnPlace } from "../ui/mySpaceReturn";
 import { ASSET, COLORS, cosmeticLayout, SOCKETS, type Keepsake, type Selection } from "./contract";
 import { keepsakeCandidate, keepsakeMedia } from "./keepsakeMedia";
 import { PlaceableController } from "./controller";
@@ -122,10 +122,10 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
   </div>;
 }
 
-export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, reentry = false, choice = null, companion = null }: {
+export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, reentry = false, returnPlace = null, choice = null, companion = null }: {
   companion?: CompanionAsset | null;
   choice?: LivingChoice | null;
-  adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean; reentry?: boolean;
+  adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean; reentry?: boolean; returnPlace?: MySpaceReturnPlace | null;
 }) {
   const [controller] = useState(() => new PlaceableController(adapter));
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
@@ -146,9 +146,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   useLayoutEffect(() => {
     plazaHeading.current?.focus({ preventScroll: true });
   }, []);
-  // Allowlisted visit transition: keep the same controller and confirmed snapshot mounted.
-  // No URL destination, visit flag, storage write or account identity enters the scene.
-  const [space, setSpace] = useState<"plaza" | "garden-nook">("plaza");
+  // Internal transitions remain visit-local. A verified return_place may choose
+  // only the initial semantic subspace; no Garden runtime residue is restored.
+  const returnedToGarden = reentry && returnPlace === "garden-nook";
+  const [space, setSpace] = useState<"plaza" | "garden-nook">(returnedToGarden ? "garden-nook" : "plaza");
   const seenReceipt = useRef(state.receipt);
   const pageActive = useRef(true);
   const [receiptNoticeId, setReceiptNoticeId] = useState<string | null>(null);
@@ -182,7 +183,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     };
   }, []);
   const gardenHeading = useRef<HTMLHeadingElement>(null), gardenEntry = useRef<HTMLButtonElement>(null);
-  const changedSpace = useRef(false);
+  const changedSpace = useRef(returnedToGarden);
   useEffect(() => {
     if (!changedSpace.current) return;
     if (space === "garden-nook") gardenHeading.current?.focus(); else gardenEntry.current?.focus();
@@ -337,7 +338,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <h1 ref={gardenHeading} tabIndex={-1}>정원 쉼터 <span>Garden Nook</span></h1></div>
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
         <button onClick={() => setSpace("plaza")}>광장으로 돌아가기</button>
-        <a className="placeable-health-home" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}>오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
+        <a className="placeable-health-home" href={`${classicTodayHref(world ? "3d" : "classic", adapter.mode)}${mySpaceReturnPlaceQuery("garden-nook")}`}>오늘의 기록으로 가기 <span aria-hidden="true">→</span></a>
       </nav>
     </header>
     <div className="garden-stage"><GardenBoundary><Suspense fallback={<p role="status">정원을 열고 있어요… 위의 복귀 경로는 바로 이용할 수 있어요.</p>}>
