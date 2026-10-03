@@ -7,6 +7,7 @@ import {
   resolvePlazaSceneryProfile,
   type PlaceableProjection,
   type PlazaSceneryProfile,
+  type TodayGateProximity,
 } from "./worldScene";
 import { PlaceableWorldInput } from "./worldInput";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
@@ -43,6 +44,8 @@ export default function PlaceableWorld(props: Props) {
   const [sceneryProfile, setSceneryProfile] = useState<PlazaSceneryProfile>("full");
   const firstStepPhaseRef = useRef<FirstStepPhase>(guestVisit ? "complete" : "prompt");
   const [firstStepPhase, setFirstStepPhase] = useState<FirstStepPhase>(firstStepPhaseRef.current);
+  const gateProximityRef = useRef<TodayGateProximity>("far");
+  const [gateProximity, setGateProximity] = useState<TodayGateProximity>("far");
   const toggleTwilight = () => {
     if (!sceneRef.current || error) return;
     const enabled = !twilight;
@@ -77,7 +80,7 @@ export default function PlaceableWorld(props: Props) {
     const container = host.current;
     if (!container || error) { labelGeometry.current = null; return; }
     const reservedNodes = Array.from(container.parentElement!.querySelectorAll<HTMLElement>(
-      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption, .plaza-first-step-cue[data-active=true]",
+      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption, .plaza-first-step-cue[data-active=true], .plaza-gate-status[data-active=true]",
     ));
     // Batch layout reads only when layout changes. Visibility keeps optional label
     // dimensions measurable, so camera movement never needs a DOM geometry read.
@@ -99,7 +102,7 @@ export default function PlaceableWorld(props: Props) {
     [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
     window.addEventListener("resize", measure);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
-  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, error]);
+  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, gateProximity, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -107,6 +110,8 @@ export default function PlaceableWorld(props: Props) {
     let renderer: WebGLRenderer | null = null, scene: PlaceableScene | null = null;
     let companion: MySpaceCompanionActor | null = null;
     const input = new PlaceableWorldInput(); inputRef.current = input;
+    gateProximityRef.current = "far";
+    setGateProximity("far");
     let disposed = false, raf = 0;
     const cleanup: (() => void)[] = [];
     const dispose = () => {
@@ -191,6 +196,13 @@ export default function PlaceableWorld(props: Props) {
               firstStepPhaseRef.current = "acknowledged";
               setFirstStepPhase("acknowledged");
             }
+            if (!guestVisit) {
+              const nextGateProximity = scene!.todayGateProximity;
+              if (nextGateProximity !== gateProximityRef.current) {
+                gateProximityRef.current = nextGateProximity;
+                setGateProximity(nextGateProximity);
+              }
+            }
             // Projection and clearance use cached local geometry; RAF only writes DOM.
             const geometry = labelGeometry.current;
             const reserved = geometry ? [...geometry.reserved] : [];
@@ -232,6 +244,7 @@ export default function PlaceableWorld(props: Props) {
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
     data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
     data-first-step={guestVisit ? undefined : firstStepPhase}
+    data-gate-proximity={guestVisit ? undefined : gateProximity}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
     }}>
@@ -260,6 +273,18 @@ export default function PlaceableWorld(props: Props) {
       {firstStepPhase === "prompt"
         ? <><strong>Today Gate로 걸어가 보세요.</strong><span>방향키·WASD 또는 걷기 패드</span></>
         : <><strong>첫걸음이 시작됐어요.</strong><span>이제 광장을 자유롭게 둘러보세요.</span></>}
+    </p>}
+    {!guestVisit && !error && !props.suspended && firstStepPhase === "complete" && gateProximity !== "far" && <p
+      className="plaza-gate-status"
+      data-testid="plaza-gate-status"
+      data-state={gateProximity}
+      data-active="true"
+      role="status"
+      aria-live="polite"
+    >
+      {gateProximity === "arrived"
+        ? <><strong>Today Gate에 도착했어요.</strong><span>아래에서 오늘의 기록으로 이어갈 수 있어요.</span></>
+        : <><strong>Today Gate가 가까워지고 있어요.</strong><span>조금만 더 걸어가 보세요.</span></>}
     </p>}
     <button type="button" ref={pad} className="placeable-walk-pad" aria-label="드래그하거나 방향키로 광장 걷기"
       disabled={error || props.suspended}>↟<br />걷기<br />↞ · ↠</button>
