@@ -4,6 +4,11 @@ import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { MODEL_FORWARD_YAW_OFFSET } from "../src/placeable/plazaLocomotion";
 import { createHash } from "node:crypto";
 import { companionIdentityStorageKey } from "../src/ui/companionIdentity";
+import {
+  resolveTodayGateProximity,
+  TODAY_GATE_APPROACH_RADIUS,
+} from "../src/placeable/worldScene";
+import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 
 // Secondary world actions are disclosed through the real semantic control.
 async function worldTool(page: Page, name: string, exact?: boolean) {
@@ -93,6 +98,126 @@ test("#942 first step is explicit and only real locomotion dismisses it", async 
   });
   await expect(cue).toHaveCount(0);
   await expect(gate).not.toHaveAttribute("data-arrival-highlight", "true");
+});
+
+test("#944 Today Gate uses the existing E1 radius and reverses after real arrival", async ({ page }) => {
+  const gate = E1_LIVING_CITY_ENTRY_SCENE_PROFILE.destination;
+
+  expect(resolveTodayGateProximity({ x: gate.x + gate.radius, z: gate.z }))
+    .toBe("arrived");
+  expect(resolveTodayGateProximity({ x: gate.x + gate.radius + 0.01, z: gate.z }))
+    .toBe("approach");
+  expect(resolveTodayGateProximity({ x: gate.x + TODAY_GATE_APPROACH_RADIUS, z: gate.z }))
+    .toBe("approach");
+  expect(resolveTodayGateProximity({ x: gate.x + TODAY_GATE_APPROACH_RADIUS + 0.01, z: gate.z }))
+    .toBe("far");
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await open(page);
+
+  const world = page.getByTestId("placeable-world");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const gateLabel = page.locator('[data-world-label="today-gate"]');
+  const status = page.getByTestId("plaza-gate-status");
+  const today = page.getByRole("link", {
+    name: "오늘의 기록으로 가기",
+    exact: true,
+  });
+
+  await expect(world).toHaveAttribute("data-gate-proximity", "far");
+  await expect(status).toHaveCount(0);
+
+  // Time alone cannot manufacture approach or arrival.
+  await page.waitForTimeout(600);
+  await expect(world).toHaveAttribute("data-gate-proximity", "far");
+
+  // Walk straight toward the Gate until entering the derived approach envelope.
+  await canvas.focus();
+  await page.keyboard.down("w");
+  try {
+    await expect(world).toHaveAttribute("data-gate-proximity", "approach", {
+      timeout: 4500,
+    });
+  } finally {
+    await page.keyboard.up("w");
+  }
+
+  await expect(world).toHaveAttribute("data-first-step", "complete", {
+    timeout: 3000,
+  });
+  await expect(status).toContainText("Today Gate가 가까워지고 있어요.");
+  await expect(status).toContainText("조금만 더 걸어가 보세요.");
+
+  // Arrival requires centering on the real Gate; straight-ahead alone cannot
+  // satisfy the authoritative 0.85m radius from the authored start position.
+  await canvas.focus();
+  await page.keyboard.down("d");
+  try {
+    await expect.poll(async () => (await sample(page)).x, {
+      timeout: 3500,
+    }).toBeGreaterThan(-0.25);
+  } finally {
+    await page.keyboard.up("d");
+  }
+
+  await canvas.focus();
+  await page.keyboard.down("w");
+  try {
+    await expect(world).toHaveAttribute("data-gate-proximity", "arrived", {
+      timeout: 4000,
+    });
+  } finally {
+    await page.keyboard.up("w");
+  }
+
+  await expect(status).toContainText("Today Gate에 도착했어요.");
+  await expect(status).toContainText("오늘의 기록으로 이어갈 수 있어요.");
+  await expect(today).toHaveAttribute(
+    "href",
+    "?screen=S02&return_space=3d-browser",
+  );
+
+  expect(
+    await today.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).not.toBe("rgba(0, 0, 0, 0)");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(gateLabel).toHaveCSS("animation-name", "none");
+
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+  await expect(status).toHaveCSS("border-top-style", "solid");
+  await expect(gateLabel).toHaveCSS("outline-style", "solid");
+
+  await page.emulateMedia({
+    reducedMotion: "no-preference",
+    forcedColors: "none",
+  });
+
+  // Walking away must reverse the same visit-local state.
+  await canvas.focus();
+  await page.keyboard.down("s");
+  try {
+    await expect(world).toHaveAttribute("data-gate-proximity", "approach", {
+      timeout: 2500,
+    });
+    await expect(world).toHaveAttribute("data-gate-proximity", "far", {
+      timeout: 4000,
+    });
+  } finally {
+    await page.keyboard.up("s");
+  }
+
+  await expect(status).toHaveCount(0);
+  expect(
+    await today.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).toBe("rgba(0, 0, 0, 0)");
 });
 
 test("R2 desktop actual locomotion, facing, 90/180 degree camera-relative control, stop, reset and label tracking", async ({ page }) => {

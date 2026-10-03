@@ -67,6 +67,24 @@ export function resolvePlazaSceneryProfile(width: number, height: number): Plaza
     : "full";
 }
 
+export type TodayGateProximity = "far" | "approach" | "arrived";
+
+/** Presentation-only approach envelope derived from the existing E1 arrival authority.
+ *  The E1 destination radius remains the sole arrival threshold. */
+export const TODAY_GATE_APPROACH_RADIUS = PLAZA.destination.radius * 3;
+
+export function resolveTodayGateProximity(
+  position: Readonly<{ x: number; z: number }>,
+): TodayGateProximity {
+  const distance = Math.hypot(
+    position.x - PLAZA.destination.x,
+    position.z - PLAZA.destination.z,
+  );
+  if (!Number.isFinite(distance)) return "far";
+  if (distance <= PLAZA.destination.radius) return "arrived";
+  return distance <= TODAY_GATE_APPROACH_RADIUS ? "approach" : "far";
+}
+
 export class PlaceableScene {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(48, 1, 0.1, 60);
@@ -316,6 +334,10 @@ export class PlaceableScene {
         worldPoint(box.max.x, box.max.y, box.max.z)));
     });
     this.#cameraObstacles = next;
+  }
+
+  get todayGateProximity(): TodayGateProximity {
+    return resolveTodayGateProximity(this.actor.position);
   }
 
   get sceneryProfile() { return this.#sceneryProfile; }
