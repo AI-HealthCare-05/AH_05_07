@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { emptySnapshot } from "../src/placeable/contract";
+import { STORAGE_KEY } from "../src/placeable/persistence";
 import { companionSpecies } from "../src/ui/companion";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { MODEL_FORWARD_YAW_OFFSET } from "../src/placeable/plazaLocomotion";
@@ -98,6 +100,69 @@ test("#942 first step is explicit and only real locomotion dismisses it", async 
   });
   await expect(cue).toHaveCount(0);
   await expect(gate).not.toHaveAttribute("data-arrival-highlight", "true");
+});
+
+test("#948 bounded Today return re-enters Living City without replaying first-step onboarding", async ({ page }) => {
+  await page.addInitScript(({ key, snapshot }) => {
+    localStorage.setItem(key, JSON.stringify(snapshot));
+    const original = Storage.prototype.setItem;
+    Object.assign(window, { e948Writes: 0 });
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { e948Writes: number }).e948Writes++;
+      return original.call(this, name, value);
+    };
+  }, { key: STORAGE_KEY, snapshot: emptySnapshot() });
+
+  const reentryRoute = `${route}&return_space=3d-browser`;
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(reentryRoute);
+
+  const world = page.getByTestId("placeable-world");
+  const cue = page.getByTestId("plaza-return-cue");
+  const firstStep = page.getByTestId("plaza-first-step");
+  const gate = page.locator('[data-world-label="today-gate"]');
+  const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+
+  await expect(world).toHaveAttribute("data-reentry", "true");
+  await expect(world).toHaveAttribute("data-first-step", "complete");
+  await expect(firstStep).toHaveCount(0);
+  await expect(cue).toBeVisible();
+  await expect(cue).toContainText("Today");
+  await expect(cue).toContainText("Living City");
+  await expect(cue).toContainText("내 공간으로 돌아왔어요.");
+  await expect(cue).not.toContainText(/Today Gate|같은 자리|방금 있던 자리/);
+  await expect(gate).not.toHaveAttribute("data-arrival-highlight", "true");
+  await expect(today).toHaveAttribute("href", "?screen=S02&return_space=3d-browser");
+  await expect(cue).toHaveCSS("animation-name", "plaza-return-entry");
+
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.reload();
+  await expect(world).toHaveAttribute("data-reentry", "true");
+  await expect(world).toHaveAttribute("data-first-step", "complete");
+  const reducedCue = page.getByTestId("plaza-return-cue");
+  await expect(reducedCue).toBeVisible();
+  await expect(reducedCue).toHaveCSS("animation-name", "none");
+  await expect(reducedCue).toHaveCSS("border-top-style", "solid");
+
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(reentryRoute);
+    await expect(page.getByTestId("plaza-return-cue")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+
+  expect(await page.evaluate(() => (window as unknown as { e948Writes: number }).e948Writes)).toBe(0);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(`${route}&return_space=classic-browser`);
+  await expect(world).toHaveAttribute("data-reentry", "false");
+  await expect(world).toHaveAttribute("data-first-step", "prompt");
+  await expect(page.getByTestId("plaza-return-cue")).toHaveCount(0);
+  await expect(page.getByTestId("plaza-first-step")).toBeVisible();
 });
 
 test("#944 Today Gate uses the existing E1 radius and reverses after real arrival", async ({ page }) => {

@@ -122,10 +122,10 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
   </div>;
 }
 
-export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, choice = null, companion = null }: {
+export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, reentry = false, choice = null, companion = null }: {
   companion?: CompanionAsset | null;
   choice?: LivingChoice | null;
-  adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean;
+  adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean; reentry?: boolean;
 }) {
   const [controller] = useState(() => new PlaceableController(adapter));
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
@@ -379,7 +379,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         </div>
         {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")} fallbackTools={gardenPath}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
-          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
+          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}

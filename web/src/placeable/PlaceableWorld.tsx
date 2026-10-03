@@ -14,13 +14,14 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
+type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
 /** Opt-in scene lifetime. No Lab shell, auth client, persistence, or health stores. */
 export default function PlaceableWorld(props: Props) {
   const guestVisit = props.presentation === "guest";
+  const reentryVisit = !guestVisit && props.reentry === true;
   const host = useRef<HTMLDivElement>(null);
   const pad = useRef<HTMLButtonElement>(null);
   const labelNodes = useRef(new Map<string, HTMLSpanElement>());
@@ -42,8 +43,9 @@ export default function PlaceableWorld(props: Props) {
   const [twilight, setTwilight] = useState(false);
   const [welcomePhase, setWelcomePhase] = useState<PlaceableScene["welcomePhase"]>("daylight");
   const [sceneryProfile, setSceneryProfile] = useState<PlazaSceneryProfile>("full");
-  const firstStepPhaseRef = useRef<FirstStepPhase>(guestVisit ? "complete" : "prompt");
+  const firstStepPhaseRef = useRef<FirstStepPhase>(guestVisit || reentryVisit ? "complete" : "prompt");
   const [firstStepPhase, setFirstStepPhase] = useState<FirstStepPhase>(firstStepPhaseRef.current);
+  const [returnCueVisible, setReturnCueVisible] = useState(reentryVisit);
   const gateProximityRef = useRef<TodayGateProximity>("far");
   const [gateProximity, setGateProximity] = useState<TodayGateProximity>("far");
   const toggleTwilight = () => {
@@ -57,6 +59,14 @@ export default function PlaceableWorld(props: Props) {
   const greet = () => {
     if (companionRef.current?.greet()) setGreetings((count) => count + 1);
   };
+
+  // Navigation continuity only. return_space proves the bounded view/storage,
+  // never an exact prior coordinate, camera pose or physical Gate traversal.
+  useEffect(() => {
+    if (!reentryVisit || props.suspended || !returnCueVisible) return;
+    const timer = window.setTimeout(() => setReturnCueVisible(false), 2600);
+    return () => window.clearTimeout(timer);
+  }, [reentryVisit, props.suspended, returnCueVisible]);
 
   // Visit-local only. A real locomotion transition starts this acknowledgement;
   // elapsed time alone never claims that the user took a step.
@@ -80,7 +90,7 @@ export default function PlaceableWorld(props: Props) {
     const container = host.current;
     if (!container || error) { labelGeometry.current = null; return; }
     const reservedNodes = Array.from(container.parentElement!.querySelectorAll<HTMLElement>(
-      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption, .plaza-first-step-cue[data-active=true], .plaza-gate-status[data-active=true]",
+      ".placeable-walk-pad, .plaza-help > summary, .plaza-help[open] .plaza-tools-content, .plaza-companion-status[data-notice=true], .placeable-world-caption, .plaza-first-step-cue[data-active=true], .plaza-return-cue[data-active=true], .plaza-gate-status[data-active=true]",
     ));
     // Batch layout reads only when layout changes. Visibility keeps optional label
     // dimensions measurable, so camera movement never needs a DOM geometry read.
@@ -102,7 +112,7 @@ export default function PlaceableWorld(props: Props) {
     [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
     window.addEventListener("resize", measure);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
-  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, gateProximity, error]);
+  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, returnCueVisible, gateProximity, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -244,6 +254,7 @@ export default function PlaceableWorld(props: Props) {
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
     data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
     data-first-step={guestVisit ? undefined : firstStepPhase}
+    data-reentry={guestVisit ? undefined : reentryVisit ? "true" : "false"}
     data-gate-proximity={guestVisit ? undefined : gateProximity}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
@@ -262,6 +273,15 @@ export default function PlaceableWorld(props: Props) {
       </div>}
       {props.preview && <span className="placeable-world-caption">저장 전 미리보기</span>}
     </div>
+    {reentryVisit && !error && !props.suspended && returnCueVisible && <p
+      className="plaza-return-cue"
+      data-testid="plaza-return-cue"
+      data-active="true"
+      role="status"
+      aria-live="polite"
+    >
+      <strong>Today → Living City</strong><span>내 공간으로 돌아왔어요.</span>
+    </p>}
     {!guestVisit && !error && !props.suspended && firstStepPhase !== "complete" && <p
       className="plaza-first-step-cue"
       data-testid="plaza-first-step"
