@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Raycaster, Vector2, WebGLRenderer } from "three";
 import { livingCityPixelRatio } from "./livingCityRenderDensity";
 import {
@@ -14,7 +14,7 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; extraTools?: ReactNode; initialToolsOpen?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
+type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
@@ -36,7 +36,7 @@ export default function PlaceableWorld(props: Props) {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [labels, setLabels] = useState<ReturnType<PlaceableScene["labels"]>>([]);
-  const [toolsOpen, setToolsOpen] = useState(props.initialToolsOpen ?? false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [pose, setPose] = useState<CompanionPose>("loading");
   const [greetings, setGreetings] = useState(0);
@@ -348,7 +348,6 @@ export default function PlaceableWorld(props: Props) {
         <p className="placeable-world-help">광장을 선택한 뒤 방향키 또는 W A S D로 걸어요. 터치 화면에서는 걷기 패드를 드래그하세요.
           화면을 드래그해 둘러보고, 광장을 선택한 뒤 스크롤로 거리를 조절해요. 위 버튼으로도 시점을 바꿀 수 있어요.
           {!guestVisit && "바람개비는 탭하거나 Enter로 돌릴 수 있어요. 미리보기·저장·다른 조작 중에는 이동이 잠시 멈춰요."}</p>
-        {props.extraTools}
       </div>
     </details>
   </div>;

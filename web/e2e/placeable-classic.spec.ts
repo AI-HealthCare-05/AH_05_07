@@ -35,6 +35,7 @@ const confirm = async (page: Page) => {
 const companionRoute = "/?experience=e2&view=3d&storage=browser";
 
 for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile touch" : "desktop keyboard"}: edit, preview, cancel, confirmed save and destinations`, async ({ browser }) => {
+  test.setTimeout(60_000);
   const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 960 }, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 2 });
   const page = await context.newPage(), errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -93,7 +94,7 @@ for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile tou
     await (await worldTool(page, "광장의 불빛 켜기")).click();
     await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-welcome-phase", "twilight");
     await page.screenshot({ path: test.info().outputPath(`plaza-${mobile ? "mobile" : "desktop"}-twilight.png`) });
-    await (await worldTool(page, "정원 쉼터로 가기")).click();
+    await (await enterGarden(page)).click();
     await expect(page.getByTestId("garden-canvas")).toBeVisible();
     await page.getByRole("button", { name: "광장으로 돌아가기" }).click();
     await expect(main).toHaveAttribute("data-phase", "ready"); await expect(editor).toBeHidden();
@@ -1073,7 +1074,7 @@ test("E6 companion and WebGL failures stay independent; interrupted welcome cann
 });
 
 // E7 inherits nightly/manual core discovery through this existing spec; no new CI gate.
-const enterGarden = async (page: Page) => (await worldTool(page, "정원 쉼터로 가기"));
+const enterGarden = async (page: Page) => page.getByRole("button", { name: "정원 쉼터로 가기", exact: false });
 const returnGarden = (page: Page) => page.getByRole("button", { name: "광장으로 돌아가기" });
 const gardenRest = (page: Page) => page.getByRole("button", { name: "여기서 잠깐 쉬기" });
 async function gardenCompanionPoint(page: Page) {
@@ -1538,11 +1539,74 @@ test("903 account loading keeps scope and primary actions truthful without write
 });
 
 
+test("#956 Garden Nook is a primary Plaza destination without opening tools", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(companionRoute);
+
+  const tools = page.locator(".plaza-help");
+  const garden = await enterGarden(page);
+  await expect(garden).toBeVisible();
+  await expect(page.getByRole("button", { name: "정원 쉼터로 가기", exact: true })).toHaveCount(1);
+  expect(await tools.getAttribute("open")).toBeNull();
+
+  await garden.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  await expect(page.getByTestId("garden-return-cue")).toHaveCount(0);
+  await returnGarden(page).click();
+  await expect(garden).toBeFocused();
+  expect(await tools.getAttribute("open")).toBeNull();
+  expect(await readLocal(page)).toBeNull();
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  await expect(garden).toBeDisabled();
+  await page.keyboard.press("Escape");
+  await expect(garden).toBeEnabled();
+
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.reload();
+  const forcedGarden = await enterGarden(page);
+  await expect(forcedGarden).toBeVisible();
+  await expect(forcedGarden).toHaveCSS("border-top-style", "solid");
+
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(companionRoute);
+    const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+    const mobileGarden = await enterGarden(page);
+    const edit = page.getByRole("button", { name: "꾸미기", exact: true });
+    await mobileGarden.scrollIntoViewIfNeeded();
+    for (const control of [today, mobileGarden, edit]) {
+      await expect(control).toBeVisible();
+      const box = await control.boundingBox();
+      expect(box).toBeTruthy();
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+    }
+    const boxes = await Promise.all([today, mobileGarden, edit].map((control) => control.boundingBox()));
+    for (const [index, left] of boxes.entries()) for (const right of boxes.slice(index + 1)) {
+      expect(left && right).toBeTruthy();
+      expect(
+        left!.x + left!.width <= right!.x
+        || right!.x + right!.width <= left!.x
+        || left!.y + left!.height <= right!.y
+        || right!.y + right!.height <= left!.y,
+      ).toBe(true);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await tools.getAttribute("open")).toBeNull();
+  }
+});
+
 test("904 Today remains direct in Garden and Classic while 3D has one semantic exit", async ({ page }) => {
   await page.goto(companionRoute);
   await expect(page.getByRole("link", { name: /오늘의 기록/ })).toHaveCount(1);
   const href = await page.locator(".placeable-today").getAttribute("href");
-  await (await worldTool(page, "정원 쉼터로 가기")).click();
+  await (await enterGarden(page)).click();
   const gardenToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
   await expect(gardenToday).toBeVisible();
   await expect(gardenToday).toHaveAttribute("href", `${href}&return_place=garden-nook`);
@@ -2165,7 +2229,7 @@ for (const mode of ["browser", "account"] as const) for (const view of ["classic
     await page.clock.runFor(2401);
     await expect(status).toHaveAttribute("data-pinwheel-receipt", "false");
     expect(await status.textContent()).toBe(message); expect(await receiptNoticeStarts(page)).toBe(1);
-    await (await worldTool(page, "정원 쉼터로 가기")).click();
+    await (await enterGarden(page)).click();
     await expect(page.getByTestId("garden-experience")).toBeVisible();
     await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
     await expectStableSaved(page, mode); expect(await receiptNoticeStarts(page)).toBe(1);

@@ -19,11 +19,11 @@ class GardenBoundary extends Component<{ children: ReactNode }, { failed: boolea
     return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>정원 쉼터를 열지 못했어요</h2><p>꾸미기 상태는 그대로예요. 위의 광장 복귀 또는 오늘의 기록 이동을 이용해 주세요.</p></div> : this.props.children;
   }
 }
-class WorldBoundary extends Component<{ children: ReactNode; classicHref: string; fallbackTools: ReactNode }, { failed: boolean }> {
+class WorldBoundary extends Component<{ children: ReactNode; classicHref: string }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p>{this.props.fallbackTools}</div>
+    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. 정원 쉼터로 이동하거나 <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p></div>
       : this.props.children;
   }
 }
@@ -338,11 +338,16 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     await controller.confirm();
     if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
   }
+  const gardenBlocked = preview || Boolean(state.pending);
+  function enterGardenNook() {
+    if (gardenBlocked) return;
+    changedSpace.current = true;
+    setSpace("garden-nook");
+  }
   const gardenPath = <div className="placeable-garden-path">
     <div><p className="placeable-eyebrow">내 공간 안의 쉼터</p><h2>정원 쉼터 · Garden Nook</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
-    <button ref={gardenEntry} type="button" disabled={preview || Boolean(state.pending)}
-      onClick={() => { changedSpace.current = true; setSpace("garden-nook"); }}>정원 쉼터로 가기 →</button>
-    {(preview || state.pending) && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
+    <button ref={gardenEntry} type="button" disabled={gardenBlocked} onClick={enterGardenNook}>정원 쉼터로 가기 →</button>
+    {gardenBlocked && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
   </div>;
   if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
     <header className="placeable-header">
@@ -395,12 +400,16 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
+          {world && <button className="plaza-garden-action" ref={gardenEntry} type="button"
+            aria-label="정원 쉼터로 가기" disabled={gardenBlocked} onClick={enterGardenNook}>
+            정원 쉼터 <span aria-hidden="true">→</span>
+          </button>}
           {world && <button className="plaza-edit-action" ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
         {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
-        {world ? <WorldBoundary classicHref={route("classic")} fallbackTools={gardenPath}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
-          <PlaceableWorld initialToolsOpen={changedSpace.current} extraTools={gardenPath} reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
+        {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
+          <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}

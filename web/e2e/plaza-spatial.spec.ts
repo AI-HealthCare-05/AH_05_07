@@ -404,9 +404,10 @@ for (const [width, height] of [[390, 844], [320, 568]]) test(`R2 ${width}px two 
   try {
     await open(page); const before = await sample(page), cdp = await context.newCDPSession(page);
     const help = (await page.locator(".plaza-help summary").boundingBox())!;
-    const garden = (await (await worldTool(page, "정원 쉼터로 가기", false)).boundingBox())!;
+    const gardenControl = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+    const garden = (await gardenControl.boundingBox())!;
+    expect(await page.locator(".plaza-help").getAttribute("open")).toBeNull();
     expect(help.x + help.width <= garden.x || help.y + help.height <= garden.y || garden.y + garden.height <= help.y).toBe(true);
-    await page.locator(".plaza-help summary").tap();
     const pad = (await page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기" }).boundingBox())!;
     const thumb = { id: 1, x: pad.x + pad.width / 2, y: pad.y + pad.height / 2 };
     const canvas = (await page.getByTestId("placeable-world-canvas").boundingBox())!;
@@ -537,11 +538,15 @@ for (const width of [390, 320]) test(`R3 ${width}px chrome, 200% text and safe-a
     expect(a!.x + a!.width <= b!.x || b!.x + b!.width <= a!.x || a!.y + a!.height <= b!.y || b!.y + b!.height <= a!.y,
       `${surfaces[i]} overlaps another control: ${JSON.stringify({ a, b })}`).toBe(true);
   }
+  const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+  await garden.scrollIntoViewIfNeeded();
+  await expect(garden).toBeInViewport();
+  expect((await garden.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByRole("button", { name: "꾸미기", exact: true }).click();
   await expect(page.getByRole("heading", { name: "내 공간 꾸미기", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeFocused();
-  await (await worldTool(page, "정원 쉼터로 가기", false)).click();
+  await page.getByRole("button", { name: "정원 쉼터로 가기", exact: true }).click();
   await expect(page.getByTestId("placeable-world-canvas")).toHaveCount(0);
   await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
   await today.click();
