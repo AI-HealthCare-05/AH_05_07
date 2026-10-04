@@ -508,7 +508,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -523,6 +523,14 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     if (request.method() === "GET") {
       reads++;
+      if (behavior === "read-session") {
+        return route.fulfill({ status: 401, headers: cors, contentType: "application/json",
+          body: JSON.stringify({ detail: { code: "session_invalid" } }) });
+      }
+      if (behavior === "read-owner-deleted") {
+        return route.fulfill({ status: 410, headers: cors, contentType: "application/json",
+          body: JSON.stringify({ detail: { code: "owner_deleted" } }) });
+      }
       return route.fulfill({ status: behavior === "read-error" && reads === 1 ? 503 : 200, headers: cors, contentType: "application/json",
         body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } }
           : behavior === "unknown" && !confirmUnknownOnRead ? emptySnapshot() : snapshot) });
@@ -1495,6 +1503,25 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
   await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
   await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser&return_space=3d-browser");
+});
+
+for (const [behavior, expected] of [
+  ["read-session", "계정 공간을 이용하려면 다시 로그인해 주세요"],
+  ["read-owner-deleted", "이 계정은 삭제되어 계정 공간을 더 이상 이용할 수 없어요"],
+] as const) test(`#985 initial account GET ${behavior} withdraws authority with truthful recovery`, async ({ page }) => {
+  const account = await accountRoute(page, behavior);
+  await page.addInitScript((key) => localStorage.setItem(key, "browser-space-must-stay-separate"), STORAGE_KEY);
+
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText(expected);
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 돌아가기" })).toHaveAttribute("href", "/?screen=S02");
+  await expect(page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" })).toBeVisible();
+  expect(account.reads).toBe(1);
+  expect(account.puts).toBe(0);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-e2e-auth-token"))).toBeNull();
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-space-must-stay-separate");
 });
 
 test("#975 API session rejection withdraws account My Space without browser fallback", async ({ page }) => {

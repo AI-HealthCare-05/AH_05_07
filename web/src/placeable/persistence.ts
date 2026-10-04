@@ -55,13 +55,14 @@ export function browserPersistence(options: {
 // The entry verifies owner/token with auth.getUser before publishing this identity.
 // Generation also fences logout/sign-in with an otherwise identical token (ABA).
 export type AccountIdentity = Readonly<{ owner: string; token: string; generation: number }>;
+export type AccountSessionRejection = "session-invalid" | "owner-deleted";
 export function accountPersistence(options: {
   identity: AccountIdentity;
   currentIdentity: () => AccountIdentity | null;
   baseUrl: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
-  onSessionRejected?: (identity: AccountIdentity) => void;
+  onSessionRejected?: (identity: AccountIdentity, reason: AccountSessionRejection) => void;
 }): PlaceablePersistence {
   const { currentIdentity, baseUrl, fetcher = fetch, timeoutMs = 8000, onSessionRejected } = options;
   const identity = Object.freeze({ ...options.identity });
@@ -88,12 +89,16 @@ export function accountPersistence(options: {
         const body = await response.json().catch(() => null);
         checkSession();
         const code = body?.detail?.code;
-        if ([401, 403, 410].includes(response.status)) {
+        const rejection: AccountSessionRejection | null =
+          response.status === 410 && code === "owner_deleted" ? "owner-deleted"
+            : response.status === 401 || response.status === 403 ? "session-invalid"
+              : null;
+        if (rejection) {
           // This callback is intentionally narrower than Failure="session".
           // Reaching here means the captured identity is still current and the
           // server itself rejected that exact session/owner. A stale adapter
           // fenced by checkSession() never reaches this callback.
-          onSessionRejected?.(identity);
+          onSessionRejected?.(identity, rejection);
           throw new PersistenceError("session");
         }
         if (response.status === 409 && ["revision_conflict", "operation_changed"].includes(code)) throw new PersistenceError("conflict");

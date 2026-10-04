@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { ASSET, confirms, emptySnapshot, fingerprint, isPlaceableRoute, readSnapshot, SOCKETS,
   type Operation, type Selection, type Snapshot } from "../src/placeable/contract";
 import { PlaceableController } from "../src/placeable/controller";
-import { accountPersistence, browserPersistence, STORAGE_KEY, PersistenceError, type PlaceablePersistence } from "../src/placeable/persistence";
+import { accountPersistence, browserPersistence, STORAGE_KEY, PersistenceError, type AccountSessionRejection, type PlaceablePersistence } from "../src/placeable/persistence";
 import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 
@@ -98,7 +98,7 @@ test("account adapter binds owner/token, preserves response failures and never r
 });
 test("#977 account adapter reports only current remote session rejection", async () => {
   const identity = { owner: "synthetic-A", token: "synthetic-A", generation: 1 };
-  const rejected: typeof identity[] = [];
+  const rejected: Array<{ identity: typeof identity; reason: AccountSessionRejection }> = [];
   const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 0,
     schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral };
 
@@ -108,15 +108,18 @@ test("#977 account adapter reports only current remote session rejection", async
       identity,
       currentIdentity: () => current,
       baseUrl: "https://synthetic.invalid",
-      onSessionRejected: (value) => rejected.push(value),
-      fetcher: async () => new Response(JSON.stringify({ detail: { code: "session_invalid" } }), { status }),
+      onSessionRejected: (value, reason) => rejected.push({ identity: value, reason }),
+      fetcher: async () => new Response(JSON.stringify({ detail: { code: status === 410 ? "owner_deleted" : "session_invalid" } }), { status }),
     });
     await expect(adapter.save(op)).rejects.toMatchObject({ kind: "session" });
-    expect(rejected.at(-1)).toEqual(identity);
+    expect(rejected.at(-1)).toEqual({
+      identity,
+      reason: status === 410 ? "owner-deleted" : "session-invalid",
+    });
 
     current = { owner: "synthetic-A", token: "newer-token", generation: 2 };
     await expect(adapter.read()).rejects.toMatchObject({ kind: "session" });
-    expect(rejected.filter((value) => value.generation === identity.generation)).toHaveLength(status === 401 ? 1 : status === 403 ? 2 : 3);
+    expect(rejected.filter((value) => value.identity.generation === identity.generation)).toHaveLength(status === 401 ? 1 : status === 403 ? 2 : 3);
   }
 
   const beforeUnknown = rejected.length;
@@ -124,7 +127,7 @@ test("#977 account adapter reports only current remote session rejection", async
     identity,
     currentIdentity: () => identity,
     baseUrl: "https://synthetic.invalid",
-    onSessionRejected: (value) => rejected.push(value),
+    onSessionRejected: (value, reason) => rejected.push({ identity: value, reason }),
     fetcher: async () => new Response(JSON.stringify({ detail: { code: "save_unknown" } }), { status: 503 }),
   });
   await expect(unknown.save(op)).rejects.toMatchObject({ kind: "unknown" });

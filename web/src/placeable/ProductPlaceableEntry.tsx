@@ -7,7 +7,7 @@ import { readLivingChoice } from "../ui/livingChoice";
 import { readMySpaceReturn, readMySpaceReturnPlace, readMySpaceRouteRequest } from "../ui/mySpaceReturn";
 import PlaceableExperience from "./PlaceableExperience";
 import { VerifiedAccountBinding, type AccountBindingStatus } from "./accountBinding";
-import { accountPersistence, browserPersistence, type PlaceablePersistence } from "./persistence";
+import { accountPersistence, browserPersistence, type AccountSessionRejection, type PlaceablePersistence } from "./persistence";
 import "./placeable.css";
 
 /** Auth belongs to the product entry, never to either renderer. No guest merge. */
@@ -26,6 +26,7 @@ export default function ProductPlaceableEntry() {
   const [browser] = useState(() => browserPersistence());
   const [adapter, setAdapter] = useState<PlaceablePersistence | null>(account ? null : browser);
   const [status, setStatus] = useState<AccountBindingStatus>("checking");
+  const [rejection, setRejection] = useState<AccountSessionRejection | null>(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!account) return;
@@ -56,16 +57,18 @@ export default function ProductPlaceableEntry() {
     }, (identity, nextStatus) => {
       if (!alive) return;
       setStatus(nextStatus);
+      if (identity) setRejection(null);
       setAdapter(identity ? accountPersistence({
         identity,
         currentIdentity: binding.current,
         baseUrl: import.meta.env.VITE_API_BASE_URL || "",
-        onSessionRejected: (rejected) => {
+        onSessionRejected: (rejected, reason) => {
           const current = binding.current();
           if (!alive || !current
             || current.owner !== rejected.owner
             || current.token !== rejected.token
             || current.generation !== rejected.generation) return;
+          setRejection(reason);
           // Withdraw this verified binding immediately. Do not call the SDK
           // signOut here: it targets whichever session is current when its auth
           // lock runs, which may already be a newer same-user token. Cleanup is
@@ -92,9 +95,11 @@ export default function ProductPlaceableEntry() {
   const adapterId = useRef({ adapter, value: 0 });
   if (adapterId.current.adapter !== adapter) adapterId.current = { adapter, value: adapterId.current.value + 1 };
   if (!adapter) return <main className="placeable-experience placeable-entry-recovery"><p className="placeable-eyebrow">SK7 · 내 공간</p><h1>계정 공간을 확인하고 있어요</h1>
-    <p role="status">{status === "checking" ? "로그인 상태를 확인하고 있어요…" : status === "unavailable"
-      ? "계정 공간을 불러올 수 없어요. 로그인 상태와 연결을 확인한 뒤 다시 시도해 주세요."
-      : "계정 공간을 이용하려면 다시 로그인해 주세요."} 이 브라우저의 꾸미기 상태는 복사하거나 변경하지 않았어요.</p>
+    <p role="status">{status === "checking" ? "로그인 상태를 확인하고 있어요…" : rejection === "owner-deleted"
+      ? "이 계정은 삭제되어 계정 공간을 더 이상 이용할 수 없어요."
+      : status === "unavailable"
+        ? "계정 공간을 불러올 수 없어요. 로그인 상태와 연결을 확인한 뒤 다시 시도해 주세요."
+        : "계정 공간을 이용하려면 다시 로그인해 주세요."} 이 브라우저의 꾸미기 상태는 복사하거나 변경하지 않았어요.</p>
     {status !== "checking" && <button onClick={() => setAttempt((value) => value + 1)}>계정 공간 다시 확인</button>}
     <p><a href="/?screen=S02">오늘의 기록으로 돌아가기</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>이 브라우저의 공간으로 계속하기</a></p>
