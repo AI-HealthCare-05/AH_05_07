@@ -53,7 +53,9 @@ test("product's first render is unplaced/loading with disabled confirmation and 
     expect(html).toContain("저장된 꾸미기를 불러오고 있어요");
     expect(html).not.toContain("이 브라우저에 저장했어요.");
     expect(html).not.toContain('data-testid="classic-pinwheel"');
-    expect(html).toContain(mode === "browser" ? "이 브라우저에만 저장" : "계정 공간에 저장");
+    const visibleText = html.replace(/<[^>]+>/g, "");
+    expect(visibleText).toContain(mode === "browser" ? "이 브라우저에만 저장" : "계정 공간에 저장");
+    expect(html).toContain(`data-scope-label="${mode}"`);
     expect(html).toContain(`href="?screen=S02&amp;return_space=classic-${mode}"`);
     expect(html).not.toContain('href="/"');
   }
