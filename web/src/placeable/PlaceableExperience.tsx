@@ -459,6 +459,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             sourceSettling={sourceSettling}
             onGateProximityChange={setTodayGateProximity}
+            onGardenActivate={enterGardenNook}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
