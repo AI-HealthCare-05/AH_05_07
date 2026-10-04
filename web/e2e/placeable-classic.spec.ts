@@ -145,6 +145,8 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }))
+    .toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
   await blockedGarden.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator(".placeable-handoff-note")).toBeFocused();
@@ -1628,6 +1630,8 @@ test("#958 blocked Garden destination stays focusable and explains why before ac
     await expect(garden).toBeVisible();
     await expect(garden).toHaveAttribute("aria-disabled", "true");
     await expect(garden).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+    const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+    await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
 
     for (const key of ["Enter", "Space"]) {
       await garden.focus();
@@ -1649,11 +1653,40 @@ test("#958 blocked Garden destination stays focusable and explains why before ac
     await page.keyboard.press("Escape");
     await expect(garden).toHaveAttribute("aria-disabled", "false");
     await expect(garden).not.toHaveAttribute("aria-describedby", /.+/);
+    await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context");
     await garden.tap();
     await expect(page.getByTestId("garden-experience")).toBeVisible();
     await expect(page.getByTestId("garden-return-cue")).toHaveCount(0);
   } finally {
     await context.close();
+  }
+});
+
+test("#961 Classic blocked Today exits describe source truth and reset after preview", async ({ page }) => {
+  await page.goto(browserRoute);
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+
+  const headerToday = page.getByRole("link", { name: "오늘의 기록", exact: true });
+  const stageToday = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  const handoff = page.locator(".placeable-handoff-note");
+
+  for (const today of [headerToday, stageToday]) {
+    await expect(today).toHaveAttribute("aria-disabled", "true");
+    await expect(today).toHaveAttribute(
+      "aria-describedby",
+      "placeable-today-context placeable-destination-handoff",
+    );
+  }
+
+  await headerToday.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toBeVisible();
+
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click();
+  for (const today of [headerToday, stageToday]) {
+    await expect(today).toHaveAttribute("aria-disabled", "false");
+    await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context");
   }
 });
 
