@@ -70,6 +70,29 @@ export function resolvePlazaSceneryProfile(width: number, height: number): Plaza
 
 export type TodayGateProximity = "far" | "approach" | "arrived";
 
+export type PlazaWayfindingRole =
+  | "primary"
+  | "destination"
+  | "utility"
+  | "placement";
+
+export const PLAZA_WAYFINDING_PRIORITY = Object.freeze({
+  primary: 400,
+  destination: 300,
+  utility: 100,
+  placement: 50,
+  placementEditing: 500,
+});
+
+export function resolvePlazaWayfindingPriority(
+  role: PlazaWayfindingRole,
+  placementEditing: boolean,
+) {
+  return role === "placement" && placementEditing
+    ? PLAZA_WAYFINDING_PRIORITY.placementEditing
+    : PLAZA_WAYFINDING_PRIORITY[role];
+}
+
 /** Presentation-only approach envelope derived from the existing E1 arrival authority.
  *  The E1 destination radius remains the sole arrival threshold. */
 export const TODAY_GATE_APPROACH_RADIUS = PLAZA.destination.radius * 3;
@@ -787,7 +810,14 @@ export class PlaceableScene {
 
   labels() {
     const destinations = [
-      { id: "today-gate", label: "오늘의 기록", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
+      {
+        id: "today-gate",
+        label: "오늘의 기록",
+        x: PLAZA.destination.x,
+        y: 4.15,
+        z: PLAZA.destination.z,
+        wayfindingRole: "primary" as const,
+      },
       ...(this.gardenDestination.visible
         ? [{
             id: GARDEN_ENTRANCE.id,
@@ -795,6 +825,7 @@ export class PlaceableScene {
             x: GARDEN_ENTRANCE.x,
             y: 1.15,
             z: GARDEN_ENTRANCE.z,
+            wayfindingRole: "destination" as const,
           }]
         : []),
       ...this.#authoredDestinations.flatMap((destination) => {
@@ -804,19 +835,40 @@ export class PlaceableScene {
     ];
     const sockets = SOCKETS.map((socket) => ({
       ...socket,
+      wayfindingRole: "placement" as const,
       // During placement editing the projected label is centered on the same
       // world point used by the raycast target, so the visible place teaches
       // the actual selectable location.
       y: this.#placementEditing ? 0.055 : 0,
       z: this.#placementEditing ? socket.z : socket.z + 0.55,
     }));
-    const ordered = this.#placementEditing
-      ? [...sockets, ...destinations]
-      : [...destinations, ...sockets];
-    return ordered.map((label) => {
+    const ranked = [...destinations, ...sockets]
+      .map((label, sequence) => ({
+        ...label,
+        sequence,
+        priority: resolvePlazaWayfindingPriority(
+          label.wayfindingRole,
+          this.#placementEditing,
+        ),
+      }))
+      .sort((left, right) =>
+        right.priority - left.priority || left.sequence - right.sequence
+      );
+
+    return ranked.map(({ sequence: _sequence, ...label }) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
-      const visible = point.z >= -1 && point.z <= 1 && Math.abs(point.x) < 0.9 && Math.abs(point.y) < 0.94;
-      return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50, visible };
+      const visible = point.z >= -1 && point.z <= 1
+        && Math.abs(point.x) < 0.9
+        && Math.abs(point.y) < 0.94;
+      return {
+        id: label.id,
+        label: label.label,
+        wayfindingRole: label.wayfindingRole,
+        priority: label.priority,
+        left: (point.x + 1) * 50,
+        top: (1 - point.y) * 50,
+        visible,
+      };
     });
   }
 

@@ -350,6 +350,7 @@ export default function PlaceableWorld(props: Props) {
           : undefined;
         return <span key={label.id} className="placeable-world-label" aria-hidden="true"
           data-world-label={label.id}
+          data-wayfinding-role={label.wayfindingRole}
           data-placement-state={placementState}
           data-arrival-highlight={!guestVisit && !props.suspended && firstStepPhase === "prompt" && label.id === "today-gate" ? "true" : undefined}
           data-preview-selected={placementState === "preview" ? "true" : undefined}

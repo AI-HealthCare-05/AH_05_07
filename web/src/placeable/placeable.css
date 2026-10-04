@@ -83,6 +83,30 @@
 .placeable-experience .plaza-camera-controls button { min-height: 44px; padding: 8px; font-size: .8rem; }
 .plaza-camera-reset { grid-column: 1 / -1; }
 .placeable-world-label { position: absolute; transform: translate(-50%, -50%); pointer-events: none; padding: 2px 6px; border-radius: 5px; background: #fffdf3d9; font-size: .7rem; white-space: nowrap; }
+/* 02-G: projected labels share one explicit journey hierarchy.
+   Today/Garden keep their more specific authored treatments below. */
+.placeable-world-view .placeable-world-label[data-wayfinding-role=destination] {
+  padding: 5px 10px;
+  border: 1px solid #657a6a80;
+  border-radius: 8px;
+  font-size: .76rem;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+.placeable-world-view .placeable-world-label[data-wayfinding-role=utility] {
+  padding: 4px 8px;
+  border: 1px solid #74807755;
+  border-radius: 7px;
+  font-size: .66rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+@media (forced-colors: active) {
+  .placeable-world-view .placeable-world-label[data-wayfinding-role=destination],
+  .placeable-world-view .placeable-world-label[data-wayfinding-role=utility] {
+    border-color: CanvasText;
+  }
+}
 .placeable-world-view[data-editing=true] .placeable-world-host canvas { cursor: crosshair; }
 .placeable-world-view[data-editing=true] .placeable-world-label:is(
   [data-world-label="gate-left"],
