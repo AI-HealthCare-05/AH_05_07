@@ -7,9 +7,12 @@ import { MODEL_FORWARD_YAW_OFFSET } from "../src/placeable/plazaLocomotion";
 import { createHash } from "node:crypto";
 import { companionIdentityStorageKey } from "../src/ui/companionIdentity";
 import {
+  PlaceableScene,
   resolveTodayGateProximity,
   TODAY_GATE_APPROACH_RADIUS,
+  RECORDS_DESTINATION,
 } from "../src/placeable/worldScene";
+import { Vector3 } from "three";
 import { E1_LIVING_CITY_ENTRY_SCENE_PROFILE } from "../transcend-lab/src/platform/spatial/e1LivingCityEntrySceneProfile";
 
 // Secondary world actions are disclosed through the real semantic control.
@@ -24,6 +27,7 @@ async function worldTool(page: Page, name: string, exact?: boolean) {
 const route = "/?experience=e2&view=3d&storage=browser";
 type Sample = { x: number; z: number; facing: number; yaw: number; moving: boolean; engaged: boolean;
   actor: { x: number; y: number }; pin: { x: number; y: number }; garden: { x: number; y: number };
+  records: { x: number; y: number };
   labels: { id: string; left: number; top: number; visible: boolean }[] };
 const sample = (page: Page): Promise<Sample> => page.evaluate(() => (window as any).__plazaSample);
 
@@ -42,13 +46,16 @@ async function open(page: Page) {
       const screen = (point: any) => { point.project(this.camera); return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 }; };
       const pinHub = this.previewRotor.children.find((child: any) => child.geometry?.type === "SphereGeometry");
       const gardenSign = this.gardenEntrance.getObjectByName("garden-entrance-sign");
+      const recordsSign = this.recordsArchive.getObjectByName("records-archive-sign");
       if (!pinHub) throw new Error("test probe: pinwheel hub missing");
       if (!gardenSign) throw new Error("test probe: Garden entrance sign missing");
+      if (!recordsSign) throw new Error("test probe: Records archive sign missing");
       (window as any).__plazaSample = { x: this.actor.position.x, z: this.actor.position.z, facing: this.actor.rotation.y,
         yaw: this.cameraRig.yaw, moving: this.locomotion.moving, engaged: this.cameraRig.engaged,
         actor: screen(this.actor.position.clone().setY(0.5)),
         pin: screen(pinHub.getWorldPosition(this.pinwheel.position.clone())),
         garden: screen(gardenSign.getWorldPosition(this.gardenEntrance.position.clone())),
+        records: screen(recordsSign.getWorldPosition(this.recordsArchive.position.clone())),
         labels: this.labels() };
       return result;
     };
@@ -82,6 +89,45 @@ async function gardenTarget(page: Page) {
     x: box.x + box.width / 2,
     y: box.y + box.height / 2,
   };
+}
+
+async function openRecordsDestination(page: Page) {
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+  await expect(page.locator(
+    `[data-world-label="${RECORDS_DESTINATION.id}"]`,
+  )).toHaveText("기록 찾아보기");
+}
+
+async function recordsTarget(page: Page) {
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Records canvas is not visible");
+
+  const scene = new PlaceableScene();
+  try {
+    scene.resize(box.width / box.height);
+    scene.scene.updateMatrixWorld(true);
+
+    const sign = scene.recordsArchive.getObjectByName(
+      "records-archive-sign",
+    );
+    if (!sign) throw new Error("Records archive sign is missing");
+
+    const point = sign
+      .getWorldPosition(new Vector3())
+      .project(scene.camera);
+
+    return {
+      x: box.x + (point.x + 1) * box.width / 2,
+      y: box.y + (1 - point.y) * box.height / 2,
+    };
+  } finally {
+    scene.dispose();
+  }
 }
 
 async function openPlacementEditor(page: Page) {
@@ -479,6 +525,10 @@ test("#999 resting Plaza is scene-first with distinct civic, place and local act
     name: "오늘의 기록으로 가기",
     exact: true,
   });
+  const records = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
   const garden = page.getByRole("button", {
     name: "정원 쉼터로 가기",
     exact: true,
@@ -496,6 +546,7 @@ test("#999 resting Plaza is scene-first with distinct civic, place and local act
   await expect(scope).toContainText("3D 광장");
 
   await expect(today).toBeVisible();
+  await expect(records).toBeVisible();
   await expect(garden).toBeVisible();
   await expect(decorate).toBeVisible();
   await expect(decorate).toHaveAttribute(
@@ -510,6 +561,10 @@ test("#999 resting Plaza is scene-first with distinct civic, place and local act
     "data-plaza-action",
     "today",
   );
+  await expect(records).toHaveAttribute(
+    "data-plaza-action",
+    "records",
+  );
 
   const identityBox = (await identity.boundingBox())!;
   const railBox = (await rail.boundingBox())!;
@@ -521,6 +576,12 @@ test("#999 resting Plaza is scene-first with distinct civic, place and local act
 
   expect(
     await today.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).toBe("rgba(0, 0, 0, 0)");
+
+  expect(
+    await records.evaluate(
       (element) => getComputedStyle(element).backgroundColor,
     ),
   ).toBe("rgba(0, 0, 0, 0)");
@@ -602,6 +663,10 @@ test("#999 compact, short and enlarged-text compositions remain reachable withou
       name: "오늘의 기록으로 가기",
       exact: true,
     });
+    const records = page.getByRole("link", {
+      name: "기록 찾아보기로 가기",
+      exact: true,
+    });
     const garden = page.getByRole("button", {
       name: "정원 쉼터로 가기",
       exact: true,
@@ -613,7 +678,7 @@ test("#999 compact, short and enlarged-text compositions remain reachable withou
 
     await expect(scope).toBeVisible();
 
-    for (const action of [today, garden, decorate]) {
+    for (const action of [today, records, garden, decorate]) {
       await action.scrollIntoViewIfNeeded();
       await expect(action).toBeVisible();
       const box = (await action.boundingBox())!;
@@ -904,6 +969,161 @@ test("#997 renderer failure leaves semantic socket preview available", async ({ 
     .toContainText("입구 오른쪽");
   await expect(page.getByTestId("placeable-world"))
     .toHaveAttribute("data-socket", "gate-right");
+});
+
+test("Records is a visible drag-safe spatial destination that activates one semantic S08 link", async ({ page }) => {
+  await page.addInitScript((key) => {
+    Object.assign(window, { recordsWrites: 0 });
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { recordsWrites: number }).recordsWrites++;
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openRecordsDestination(page);
+
+  const label = page.locator(`[data-world-label="${RECORDS_DESTINATION.id}"]`);
+  const link = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
+
+  await expect(label).toHaveText("기록 찾아보기");
+  await expect(label).toBeVisible();
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute("href", "?screen=S08");
+  await expect(link).toHaveAttribute("aria-describedby", "placeable-records-context");
+  await expect(link).toHaveAttribute("aria-disabled", "false");
+
+  await page.screenshot({
+    path: test.info().outputPath("records-destination-desktop.png"),
+    scale: "css",
+  });
+
+  const beforeUrl = page.url();
+  let point = await recordsTarget(page);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 90, point.y + 18, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  await expect(page).toHaveURL(beforeUrl);
+
+  // The drag legitimately changed the camera. Start a fresh visit before
+  // proving the authored Records object itself is a deliberate canvas tap.
+  await openRecordsDestination(page);
+  point = await recordsTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/\?screen=S08$/);
+
+  expect(await page.evaluate(() =>
+    (window as unknown as { recordsWrites: number }).recordsWrites,
+  )).toBe(0);
+});
+
+test("Records obeys the existing source-settling and placement-tap owner", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openRecordsDestination(page);
+
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await page.getByRole("button", { name: "환영 바람개비 고르기", exact: true }).click();
+
+  const records = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
+  const handoff = page.locator("#placeable-destination-handoff");
+
+  await expect(records).toHaveAttribute("aria-disabled", "true");
+  await expect(records).toHaveAttribute(
+    "aria-describedby",
+    "placeable-records-context placeable-destination-handoff",
+  );
+
+  await records.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page).toHaveURL(/experience=e2/);
+
+  const point = await recordsTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/experience=e2/);
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  await page.getByRole("button", {
+    name: "미리보기 취소",
+    exact: true,
+  }).click();
+
+  await expect(records).toHaveAttribute("aria-disabled", "false");
+  await expect(records).toHaveAttribute(
+    "aria-describedby",
+    "placeable-records-context",
+  );
+});
+
+test("Records remains semantic at compact sizes and when the optional world fails", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(route);
+    await expect(page.getByTestId("placeable-world"))
+      .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+        timeout: 20000,
+      });
+
+    const records = page.getByRole("link", {
+      name: "기록 찾아보기로 가기",
+      exact: true,
+    });
+    await records.scrollIntoViewIfNeeded();
+    await expect(records).toBeVisible();
+    await expect(records).toHaveAttribute("href", "?screen=S08");
+    expect((await records.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= innerWidth,
+    )).toBe(true);
+
+    await page.getByTestId("placeable-experience").evaluate((element) => {
+      element.scrollTop = 0;
+      element.scrollLeft = 0;
+    });
+    await page.screenshot({
+      path: test.info().outputPath(
+        `records-destination-${viewport.width}x${viewport.height}.png`,
+      ),
+      scale: "css",
+    });
+  }
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+
+  await page.getByTestId("placeable-world-canvas").evaluate(
+    (canvas: HTMLCanvasElement) => {
+      canvas.getContext("webgl2")!
+        .getExtension("WEBGL_lose_context")!
+        .loseContext();
+    },
+  );
+
+  await expect(page.getByRole("alert"))
+    .toContainText("3D 광장을 열지 못했어요");
+
+  const records = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
+  await expect(records).toBeVisible();
+  await expect(records).toHaveAttribute("href", "?screen=S08");
 });
 
 test("#995 Garden is a visible tappable Plaza destination without proximity navigation or cosmetic writes", async ({ page }) => {

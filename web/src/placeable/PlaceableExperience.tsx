@@ -188,6 +188,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const chooseRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
+  const recordsEntry = useRef<HTMLAnchorElement>(null);
   const plazaHeading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
     plazaHeading.current?.focus({ preventScroll: true });
@@ -414,10 +415,20 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     : world && todayGateProximity !== "far"
       ? "placeable-today-context plaza-gate-status"
       : "placeable-today-context";
+  const recordsDescribedBy = sourceSettling
+    ? "placeable-records-context placeable-destination-handoff"
+    : "placeable-records-context";
   function blockContextSwitch(event: MouseEvent<HTMLAnchorElement>) {
     if (!sourceSettling) return;
     event.preventDefault();
     handoffRef.current?.focus();
+  }
+  function activateRecords() {
+    if (sourceSettling) {
+      handoffRef.current?.focus();
+      return;
+    }
+    recordsEntry.current?.click();
   }
   function enterGardenNook() {
     if (sourceSettling) {
@@ -491,7 +502,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           data-testid={world ? "plaza-action-rail" : undefined}
         ><div><p className="placeable-eyebrow">건강 기록 홈 · Today</p>
           <h2>오늘의 기록</h2>
-          <p id="placeable-today-context">혈압 기록과 지난 기록 확인은 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
+          <p id="placeable-today-context">오늘의 혈압 기록과 오늘 상태는 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
+          <p id="placeable-records-context" className="sr-only">날짜별 지난 기록은 기록 찾아보기에서 확인해요. 내 공간은 기록 내용을 읽지 않아요.</p>
           <a className="placeable-today" data-plaza-action={world ? "today" : undefined}
             href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-label="오늘의 기록으로 가기"
@@ -499,6 +511,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
+          <a ref={recordsEntry} className="placeable-records" data-plaza-action={world ? "records" : undefined}
+            href="?screen=S08"
+            aria-label="기록 찾아보기로 가기"
+            aria-describedby={recordsDescribedBy}
+            aria-disabled={sourceSettling}
+            onClick={blockContextSwitch}>
+            기록 찾아보기 <span aria-hidden="true">→</span>
+          </a>
           {world && <button className="plaza-garden-action" data-plaza-action="garden"
             ref={gardenEntry} type="button"
             aria-label="정원 쉼터로 가기"
@@ -511,13 +531,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
-        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
+        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록, 기록 찾아보기, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록, 기록 찾아보기, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")} sourceSettling={sourceSettling} onContextSwitch={blockContextSwitch}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             sourceSettling={sourceSettling}
             placementEditing={editing && canEdit}
             onGateProximityChange={setTodayGateProximity}
             onGardenActivate={enterGardenNook}
+            onRecordsActivate={activateRecords}
             onSocketSelect={(socketId) => change({ socketId })}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
