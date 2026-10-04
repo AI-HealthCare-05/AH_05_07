@@ -151,6 +151,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const returnedToGarden = reentry && returnPlace === "garden-nook";
   const [space, setSpace] = useState<"plaza" | "garden-nook">(returnedToGarden ? "garden-nook" : "plaza");
   const [gardenReturnCueVisible, setGardenReturnCueVisible] = useState(returnedToGarden);
+  const [todayGateProximity, setTodayGateProximity] = useState<"far" | "approach" | "arrived">("far");
   const seenReceipt = useRef(state.receipt);
   const pageActive = useRef(true);
   const [receiptNoticeId, setReceiptNoticeId] = useState<string | null>(null);
@@ -341,7 +342,9 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const gardenBlocked = preview || Boolean(state.pending);
   const todayDescribedBy = gardenBlocked
     ? "placeable-today-context placeable-destination-handoff"
-    : "placeable-today-context";
+    : world && todayGateProximity !== "far"
+      ? "placeable-today-context plaza-gate-status"
+      : "placeable-today-context";
   function enterGardenNook() {
     if (gardenBlocked) {
       handoffRef.current?.focus();
@@ -419,6 +422,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {(preview || state.pending) && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
+            onGateProximityChange={setTodayGateProximity}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}

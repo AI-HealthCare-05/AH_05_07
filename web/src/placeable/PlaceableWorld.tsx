@@ -14,7 +14,7 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void };
+type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
@@ -67,6 +67,16 @@ export default function PlaceableWorld(props: Props) {
     const timer = window.setTimeout(() => setReturnCueVisible(false), 2600);
     return () => window.clearTimeout(timer);
   }, [reentryVisit, props.suspended, returnCueVisible]);
+
+  // Surface only the Gate state that is actually rendered. This is presentation
+  // context for the semantic Today control, never navigation authority.
+  useEffect(() => {
+    props.onGateProximityChange?.(
+      !guestVisit && !error && !props.suspended && firstStepPhase === "complete"
+        ? gateProximity
+        : "far",
+    );
+  }, [guestVisit, error, props.suspended, firstStepPhase, gateProximity, props.onGateProximityChange]);
 
   // Visit-local only. A real locomotion transition starts this acknowledgement;
   // elapsed time alone never claims that the user took a step.
@@ -295,6 +305,7 @@ export default function PlaceableWorld(props: Props) {
         : <><strong>첫걸음이 시작됐어요.</strong><span>이제 광장을 자유롭게 둘러보세요.</span></>}
     </p>}
     {!guestVisit && !error && !props.suspended && firstStepPhase === "complete" && gateProximity !== "far" && <p
+      id="plaza-gate-status"
       className="plaza-gate-status"
       data-testid="plaza-gate-status"
       data-state={gateProximity}
