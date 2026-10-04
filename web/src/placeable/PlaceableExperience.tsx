@@ -96,6 +96,25 @@ function PinwheelPreview({ selection }: { selection: Selection }) {
       <span>{socket.label}</span></div>
   </div>;
 }
+function KeepsakeIdentity({ keepsake, testId }: {
+  keepsake: Keepsake;
+  testId?: string;
+}) {
+  const media = keepsakeMedia[keepsake];
+  return <span
+    className="keepsake-identity"
+    data-testid={testId}
+    data-asset={keepsake}
+  >
+    <span
+      className="keepsake-identity-mark"
+      aria-hidden="true"
+      style={{ background: media.accent }}
+    />
+    <strong>{media.label}</strong>
+  </span>;
+}
+
 export type ClassicPlaceStatePresentation = "loading" | "unavailable" | "unsupported";
 
 export function ClassicPlaza({ selection, preview, pulse, interact, canInteract, choice = null, keepsake = null,
@@ -290,6 +309,29 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const selection = state.draft !== undefined ? state.draft : confirmed;
   const keepsake = state.keepsakeDraft !== undefined ? state.keepsakeDraft : layout.keepsake;
   const visibleChoice = state.keepsakeDraft === null ? null : choice;
+  const keepsakeContext = state.phase !== "ready"
+    ? null
+    : state.keepsakeDraft === null
+      ? {
+          kind: "removal",
+          text: "문양 제거",
+        } as const
+      : state.keepsakeDraft !== undefined
+        ? {
+            kind: "preview",
+            text: `문양 · ${keepsakeMedia[state.keepsakeDraft].label}`,
+          } as const
+        : layout.keepsake
+          ? {
+              kind: "confirmed",
+              text: `현재 문양 · ${keepsakeMedia[layout.keepsake].label}`,
+            } as const
+          : candidate
+            ? {
+                kind: "offered",
+                text: `이번 방문의 문양 · ${keepsakeMedia[candidate].label}`,
+              } as const
+            : null;
   const canEdit = state.phase === "ready";
   const canInteract = canEdit && !preview && confirmed !== null;
   const storageScope = adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간";
@@ -481,7 +523,11 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
           interact={interact} canInteract={canInteract} statePresentation={classicStatePresentation} />}
-        {keepsake && <p className="placeable-keepsake-caption">{state.keepsakeDraft !== undefined ? "저장 전 미리보기" : "내 공간에 남긴 문양"} · {keepsakeMedia[keepsake].label}</p>}
+        {keepsakeContext && <p
+          className="placeable-keepsake-caption"
+          data-testid="keepsake-world-context"
+          data-keepsake-context={keepsakeContext.kind}
+        >{keepsakeContext.text}</p>}
         {!keepsake && choice && <p className="placeable-choice-note">Living Choice · {livingChoiceLabel[choice]}<br /><span>이번 방문에 가져온 문양이에요. 활동 기록이나 달성 표시가 아니에요.</span></p>}
         <p className="placeable-feedback" role="status" data-testid="placeable-feedback">{feedback && canInteract ? "광장에 바람이 불어 바람개비가 돌아가요." : "잠시 쉬어가는 나만의 광장이에요."}</p>
         {!world && gardenPath}
@@ -529,7 +575,6 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
               <span className="pinwheel-selected-mark" aria-hidden="true">✓</span></button>)}
         </div></fieldset>
         {preview && <div className="placeable-draft" data-testid="draft-placement">
-          {state.keepsakeDraft !== undefined && <p data-testid="keepsake-preview">{keepsake ? `${keepsakeMedia[keepsake].label} · 저장 전 미리보기` : "문양 제거 · 저장 전 미리보기"}</p>}
           {state.draft !== undefined && <p>{selection ? `미리보기: ${colorLabel[selection.color]} · ${SOCKETS.find((s) => s.id === selection.socketId)?.label}` : "미리보기: 바람개비 치우기"} · 저장 전</p>}
           <div className="placeable-options"><button className="pinwheel-confirm" disabled={!canEdit} onClick={() => void confirm()}>배치 확정하기</button>
             <button disabled={!canEdit && state.phase !== "conflict"} onClick={cancelEditing}>미리보기 취소</button></div>
@@ -537,15 +582,94 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <div className="placeable-options">{!world && <button disabled={!canInteract} onClick={interact}>바람개비 돌리기</button>}
           <button disabled={!canEdit || !confirmed} onClick={() => controller.preview(null)}>바람개비 치우기</button></div>
         <section className="placeable-keepsake" aria-labelledby="keepsake-title">
-          <p className="placeable-eyebrow">첫 번째 기념 문양</p><h2 id="keepsake-title">내 공간에 남긴 문양</h2>
-          <p data-testid="confirmed-keepsake">{state.phase === "unsupported" ? "알 수 없는 저장 형식을 그대로 보존하고 있어요."
-            : !state.confirmed ? "저장된 문양을 읽고 있어요…" : layout.keepsake ? keepsakeMedia[layout.keepsake].label : "아직 남긴 문양이 없어요."}</p>
-          <p className="placeable-choice-note">바람개비 곁에 두는 작은 장식이에요. 활동 기록이나 달성 표시가 아니에요.</p>
-          {candidate && <><p>이번 방문의 문양 · {keepsakeMedia[candidate].label}</p>
-            <button disabled={!canEdit || keepsake === candidate} onClick={() => controller.previewKeepsake(candidate)}>
-              {layout.keepsake ? "이 문양으로 바꾸기" : "이 문양을 내 공간에 남기기"}</button></>}
-          {!candidate && <p className="placeable-choice-note">오늘의 기록에서 Living Choice 문양을 가져올 수 있어요.</p>}
-          <button disabled={!canEdit || !layout.keepsake} onClick={() => controller.previewKeepsake(null)}>남긴 문양 제거</button>
+          <div className="keepsake-section-heading">
+            <div>
+              <p className="placeable-eyebrow">기념 문양</p>
+              <h2 id="keepsake-title">내 공간의 문양</h2>
+            </div>
+            <p className="placeable-choice-note">
+              작은 장식이에요 · 활동 달성 표시나 건강 결과가 아니에요.
+            </p>
+          </div>
+
+          <div className="keepsake-state-grid">
+            <div
+              className="keepsake-state-card"
+              data-keepsake-state="current"
+              data-testid="keepsake-current"
+            >
+              <span className="keepsake-state-label">현재</span>
+              {state.phase === "unsupported"
+                ? <strong data-testid="confirmed-keepsake">알 수 없는 저장 형식을 그대로 보존하고 있어요.</strong>
+                : !state.confirmed
+                  ? <strong data-testid="confirmed-keepsake">저장된 문양을 읽고 있어요…</strong>
+                  : layout.keepsake
+                    ? <KeepsakeIdentity keepsake={layout.keepsake} testId="confirmed-keepsake" />
+                    : <strong data-testid="confirmed-keepsake">아직 남긴 문양이 없어요.</strong>}
+              <span className="keepsake-state-note">
+                {state.phase === "unsupported"
+                  ? "현재 버전에서 내용을 바꾸지 않고 보존 중이에요."
+                  : !state.confirmed
+                    ? "저장 상태를 확인하고 있어요."
+                    : layout.keepsake
+                      ? "지금 내 공간에 확정되어 있는 문양이에요."
+                      : "문양이 없어도 내 공간은 완성된 상태예요."}
+              </span>
+            </div>
+
+            {state.phase === "ready" && candidate && <div
+              className="keepsake-state-card"
+              data-keepsake-state="offered"
+              data-testid="keepsake-offer"
+            >
+              <span className="keepsake-state-label">이번 방문의 문양</span>
+              <KeepsakeIdentity keepsake={candidate} />
+              {candidate === layout.keepsake
+                ? <span className="keepsake-state-note">현재 남긴 문양과 같아요. 새로 저장할 필요가 없어요.</span>
+                : state.keepsakeDraft === candidate
+                  ? <span className="keepsake-state-note">지금 저장 전 미리보기로 보고 있어요.</span>
+                  : <>
+                      <span className="keepsake-state-note">
+                        {layout.keepsake
+                          ? "고르면 현재 문양을 이 문양으로 바꾸는 미리보기가 시작돼요."
+                          : "고르면 내 공간에 남길지 먼저 미리볼 수 있어요."}
+                      </span>
+                      <button
+                        disabled={!canEdit}
+                        onClick={() => controller.previewKeepsake(candidate)}
+                      >
+                        {layout.keepsake ? "이 문양으로 바꾸기" : "이 문양을 내 공간에 남기기"}
+                      </button>
+                    </>}
+            </div>}
+
+            {state.keepsakeDraft !== undefined && <div
+              className="keepsake-state-card keepsake-preview-card"
+              data-keepsake-state="preview"
+              data-preview-kind={state.keepsakeDraft === null ? "removal" : layout.keepsake ? "replacement" : "keep"}
+              data-testid="keepsake-preview"
+            >
+              <span className="keepsake-state-label">저장 전 미리보기</span>
+              {state.keepsakeDraft
+                ? <KeepsakeIdentity keepsake={state.keepsakeDraft} />
+                : <strong>문양 제거</strong>}
+              <span className="keepsake-state-note">
+                {state.keepsakeDraft === null
+                  ? "확정하면 현재 문양을 내 공간에서 제거해요."
+                  : layout.keepsake
+                    ? `확정하면 ${keepsakeMedia[layout.keepsake].label} 대신 이 문양을 남겨요.`
+                    : "확정할 때만 이 문양이 내 공간에 저장돼요."}
+              </span>
+            </div>}
+          </div>
+
+          {layout.keepsake && <button
+            className="keepsake-remove"
+            disabled={!canEdit || state.keepsakeDraft === null}
+            onClick={() => controller.previewKeepsake(null)}
+          >
+            남긴 문양 제거
+          </button>}
         </section>
         <button onClick={() => void toggleAudio()} aria-pressed={audioStatus === "ready"}>
           {audioStatus === "ready" ? "소리 끄기" : "소리 켜기"}</button>
