@@ -1401,11 +1401,20 @@ test("E7 lazy chunk and renderer startup failure keep independent semantic exits
   await (await enterGarden(page)).click(); await expect(page.getByRole("alert")).toContainText("정원 쉼터를 열지 못했어요");
   await returnGarden(page).click(); await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
   expect(await readLocal(page)).toBeNull();
-  // Outside this optional visit, the existing one-shot stale-bundle recovery still owns errors.
-  await Promise.all([page.waitForEvent("framenavigated"), page.evaluate(() => {
+  // #993: once My Space is mounted again, its local recovery boundary owns
+  // optional preload failures. Global one-shot reload remains covered by the
+  // dedicated preload-recovery contract when no local owner is mounted.
+  const href = page.url();
+  await page.evaluate(() => {
     window.dispatchEvent(new Event("vite:preloadError", { cancelable: true }));
-  })]);
-  expect(await page.evaluate(() => sessionStorage.getItem("sk7:vite-preload-recovery-at"))).not.toBeNull();
+  });
+  await page.waitForTimeout(150);
+
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-phase", "ready");
+  expect(page.url()).toBe(href);
+  expect(await page.evaluate(() =>
+    sessionStorage.getItem("sk7:vite-preload-recovery-at"),
+  )).toBeNull();
 });
 
 

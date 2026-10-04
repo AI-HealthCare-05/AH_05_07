@@ -14,7 +14,7 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; sourceSettling?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
+type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; sourceSettling?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGardenActivate?: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
@@ -156,6 +156,7 @@ export default function PlaceableWorld(props: Props) {
     setTwilight(false); setWelcomePhase("daylight");
     try {
       scene = new PlaceableScene(); sceneRef.current = scene;
+      scene.setGardenAvailable(!guestVisit);
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
       companionRef.current = companion; scene.actor.add(companion.root);
       renderer = new WebGLRenderer({ antialias: true, alpha: false });
@@ -199,6 +200,12 @@ export default function PlaceableWorld(props: Props) {
         ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1,
           1 - (y - rect.top) / rect.height * 2), scene!.camera);
         if (ray.intersectObject(companion!.root, true).length) { greet(); return; }
+        if (!guestVisit
+          && latest.current.onGardenActivate
+          && ray.intersectObject(scene!.gardenEntrance, true).length) {
+          latest.current.onGardenActivate();
+          return;
+        }
         if (latest.current.canInteract && scene!.pinwheel.visible && ray.intersectObject(scene!.pinwheel, true).length) interact();
       };
       input.mount(canvas, pad.current, interact, {

@@ -73,6 +73,13 @@ export type TodayGateProximity = "far" | "approach" | "arrived";
  *  The E1 destination radius remains the sole arrival threshold. */
 export const TODAY_GATE_APPROACH_RADIUS = PLAZA.destination.radius * 3;
 
+export const GARDEN_ENTRANCE = Object.freeze({
+  id: "garden-entrance",
+  label: "정원 쉼터",
+  x: 3.05,
+  z: -0.8,
+});
+
 export function resolveTodayGateProximity(
   position: Readonly<{ x: number; z: number }>,
 ): TodayGateProximity {
@@ -97,6 +104,8 @@ export class PlaceableScene {
   readonly locomotion = new PlazaLocomotion();
   readonly cameraRig = new PlazaCameraRig();
   readonly gate = new Group();
+  readonly gardenDestination = new Group();
+  readonly gardenEntrance = new Group();
   readonly anchorScenery = new Group();
   readonly optionalScenery = new Group();
   #cameraObstacles: CameraObstacle[] = [];
@@ -161,17 +170,34 @@ export class PlaceableScene {
       const joint = new Mesh(new BoxGeometry(1.64, 0.008, 0.018), stone);
       joint.position.set(0, 0.041, z); this.scene.add(joint);
     }
-    // The side route bends toward the existing Garden visit; it is visual only.
-    const gardenRoute = new BufferGeometry();
-    gardenRoute.setAttribute("position", new Float32BufferAttribute([
-      0.7, 0.045, 2.2, 0.7, 0.045, 1.3, 3.1, 0.045, -0.1,
-      0.7, 0.045, 2.2, 3.1, 0.045, -0.1, 3.8, 0.045, 0.6,
-      3.8, 0.045, 0.6, 3.1, 0.045, -0.1, 5.7, 0.045, -3.3,
-      3.8, 0.045, 0.6, 5.7, 0.045, -3.3, 6.6, 0.045, -2.6,
-    ], 3));
-    gardenRoute.setIndex([0, 2, 1, 3, 5, 4, 6, 8, 7, 9, 11, 10]);
-    gardenRoute.computeVertexNormals();
-    this.scene.add(new Mesh(gardenRoute, this.approachMaterial));
+    // The Garden route now terminates at a reachable Plaza destination.
+    // It remains presentation-only; activation is emitted separately by the renderer.
+    this.gardenDestination.name = "plaza-garden-destination";
+    const gardenPathMaterial = material("#c4c5a3", "paving");
+    const gardenRoutePoints = [
+      [0.7, 2.2],
+      [0.8, 1.25],
+      [1.55, 0.65],
+      [2.35, -0.05],
+      [GARDEN_ENTRANCE.x, GARDEN_ENTRANCE.z],
+    ] as const;
+    for (let index = 0; index < gardenRoutePoints.length - 1; index++) {
+      const [startX, startZ] = gardenRoutePoints[index];
+      const [endX, endZ] = gardenRoutePoints[index + 1];
+      const length = Math.hypot(endX - startX, endZ - startZ);
+      const segment = new Mesh(
+        new BoxGeometry(0.62, 0.025, length),
+        gardenPathMaterial,
+      );
+      segment.name = `garden-route-${index}`;
+      segment.position.set(
+        (startX + endX) / 2,
+        0.035,
+        (startZ + endZ) / 2,
+      );
+      segment.rotation.y = Math.atan2(endX - startX, endZ - startZ);
+      this.gardenDestination.add(segment);
+    }
     const gate = this.gate; gate.name = PLAZA.destination.id;
     gate.position.set(PLAZA.destination.x, 0, PLAZA.destination.z);
     gate.scale.set(1.35, 1.45, 1.35);
@@ -200,6 +226,63 @@ export class PlaceableScene {
     this.scene.add(gate);
     const leaves = [material("#486a60", "foliage"), material("#678576", "foliage"), material("#92a184", "foliage")];
     const trunk = material("#80664e", "wood");
+
+    // A low pergola silhouette makes Garden legible as a destination without
+    // borrowing the Today Gate's arch language or requiring explanatory copy.
+    this.gardenEntrance.name = GARDEN_ENTRANCE.id;
+    this.gardenEntrance.position.set(
+      GARDEN_ENTRANCE.x,
+      0,
+      GARDEN_ENTRANCE.z,
+    );
+    const gardenStone = material("#a9a58f", "stone");
+    const gardenSign = material("#d8d3a7", "trim");
+    for (const [index, x] of [-0.62, 0.62].entries()) {
+      const post = new Mesh(
+        new BoxGeometry(0.16, 1.5, 0.16),
+        trunk,
+      );
+      post.name = `garden-entrance-post-${index}`;
+      post.position.set(x, 0.75, 0);
+      this.gardenEntrance.add(post);
+
+      const base = new Mesh(
+        new BoxGeometry(0.4, 0.22, 0.42),
+        gardenStone,
+      );
+      base.name = `garden-entrance-base-${index}`;
+      base.position.set(x, 0.11, 0);
+      this.gardenEntrance.add(base);
+
+      const foliage = new Mesh(
+        new SphereGeometry(0.38, 12, 8),
+        leaves[index],
+      );
+      foliage.name = `garden-entrance-foliage-${index}`;
+      foliage.scale.set(1.05, 0.72, 0.9);
+      foliage.position.set(x, 1.62, 0);
+      this.gardenEntrance.add(foliage);
+    }
+
+    const lintel = new Mesh(
+      new BoxGeometry(1.52, 0.16, 0.22),
+      trunk,
+    );
+    lintel.name = "garden-entrance-lintel";
+    lintel.position.set(0, 1.5, 0);
+    this.gardenEntrance.add(lintel);
+
+    const sign = new Mesh(
+      new BoxGeometry(0.78, 0.32, 0.12),
+      gardenSign,
+    );
+    sign.name = "garden-entrance-sign";
+    sign.position.set(0, 1.15, 0.05);
+    this.gardenEntrance.add(sign);
+
+    this.gardenDestination.add(this.gardenEntrance);
+    this.scene.add(this.gardenDestination);
+
     this.anchorScenery.name = "plaza-scenery-anchor";
     this.optionalScenery.name = "plaza-scenery-optional";
 
@@ -321,6 +404,7 @@ export class PlaceableScene {
     const next: CameraObstacle[] = [];
     const roots = [
       this.gate,
+      ...(this.gardenDestination.visible ? [this.gardenDestination] : []),
       this.anchorScenery,
       ...(this.#sceneryProfile === "full" ? [this.optionalScenery] : []),
     ];
@@ -342,6 +426,12 @@ export class PlaceableScene {
 
   get sceneryProfile() { return this.#sceneryProfile; }
   get cameraObstacles(): readonly CameraObstacle[] { return this.#cameraObstacles; }
+
+  setGardenAvailable(available: boolean) {
+    if (this.#disposed || this.gardenDestination.visible === available) return;
+    this.gardenDestination.visible = available;
+    this.#rebuildCameraObstacles();
+  }
 
   setSceneryProfile(profile: PlazaSceneryProfile) {
     if (this.#disposed || profile === this.#sceneryProfile) return;
@@ -506,7 +596,19 @@ export class PlaceableScene {
   }
 
   labels() {
-    return [{ id: "today-gate", label: "오늘의 기록", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
+    const destinations = [
+      { id: "today-gate", label: "오늘의 기록", x: PLAZA.destination.x, y: 4.15, z: PLAZA.destination.z },
+      ...(this.gardenDestination.visible
+        ? [{
+            id: GARDEN_ENTRANCE.id,
+            label: GARDEN_ENTRANCE.label,
+            x: GARDEN_ENTRANCE.x,
+            y: 1.15,
+            z: GARDEN_ENTRANCE.z,
+          }]
+        : []),
+    ];
+    return [...destinations,
       ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
       const visible = point.z >= -1 && point.z <= 1 && Math.abs(point.x) < 0.9 && Math.abs(point.y) < 0.94;

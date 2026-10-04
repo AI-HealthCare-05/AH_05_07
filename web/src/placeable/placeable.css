@@ -217,6 +217,16 @@
 .placeable-world-view .placeable-world-host { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .placeable-world-view canvas:focus-visible { outline-offset: -6px; }
 .placeable-world-view .placeable-world-label:first-of-type { font-size: .85rem; font-weight: 650; letter-spacing: .04em; padding: 7px 14px; border: 1px solid #ffffff80; border-radius: 20px; background: #fcf9f0eb; color: #4f4168; }
+.placeable-world-view .placeable-world-label[data-world-label="garden-entrance"] {
+  padding: 6px 12px;
+  border: 1px solid #6f8878;
+  border-radius: 8px;
+  background: #eef2e7ed;
+  color: #2f5140;
+  font-size: .8rem;
+  font-weight: 720;
+  letter-spacing: .015em;
+}
 
 /* #942 first-step cue — visit-local presentation only.
    Actual locomotion owns dismissal; this layer never moves the actor or changes product state. */
@@ -399,7 +409,12 @@
   from { transform: translateY(2px); }
   to { transform: translateY(0); }
 }
-.placeable-world-view:not([data-editing=true]) .placeable-world-label:not(:first-of-type) { display: none; }
+.placeable-world-view:not([data-editing=true])
+  .placeable-world-label:is(
+    [data-world-label="gate-left"],
+    [data-world-label="gate-right"],
+    [data-world-label="plaza-edge"]
+  ) { display: none; }
 .placeable-world-view .placeable-destination { order: 2; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px max(32px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(32px, env(safe-area-inset-left)); background: #f5f4eb; border-top: 1px solid #b9c2b0; }
 .placeable-world-view .placeable-destination > div { display: none; }
 .placeable-world-view .placeable-destination .placeable-today { width: auto; min-height: 48px; margin-right: auto; padding: 10px 0; background: transparent; color: #4f4168; border: 0; border-radius: 0; font-size: 1.05rem; gap: 24px; white-space: normal; }
@@ -508,6 +523,11 @@
   .placeable-world-view :is(button, a, summary) { border: 1px solid ButtonText; color: LinkText; }
   .placeable-world-view button[aria-pressed=true], .placeable-world-view .plaza-edit-action { border: 2px solid Highlight; }
   .placeable-world-view :focus-visible { outline: 3px solid Highlight; }
+  .placeable-world-view .placeable-world-label[data-world-label="garden-entrance"] {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+  }
   .placeable-world-view .placeable-world-label[data-world-label="today-gate"][data-arrival-highlight=true] {
     border-color: Highlight;
     background: Canvas;

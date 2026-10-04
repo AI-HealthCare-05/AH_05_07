@@ -23,7 +23,8 @@ async function worldTool(page: Page, name: string, exact?: boolean) {
 
 const route = "/?experience=e2&view=3d&storage=browser";
 type Sample = { x: number; z: number; facing: number; yaw: number; moving: boolean; engaged: boolean;
-  actor: { x: number; y: number }; pin: { x: number; y: number }; labels: { id: string; left: number; top: number; visible: boolean }[] };
+  actor: { x: number; y: number }; pin: { x: number; y: number }; garden: { x: number; y: number };
+  labels: { id: string; left: number; top: number; visible: boolean }[] };
 const sample = (page: Page): Promise<Sample> => page.evaluate(() => (window as any).__plazaSample);
 
 // Test-only observation of the real scene's existing RAF; no runtime debug hook or extra renderer.
@@ -40,10 +41,15 @@ async function open(page: Page) {
       const canvas = document.querySelector('canvas')!, rect = canvas.getBoundingClientRect();
       const screen = (point: any) => { point.project(this.camera); return { x: rect.x + (point.x + 1) * rect.width / 2, y: rect.y + (1 - point.y) * rect.height / 2 }; };
       const pinHub = this.previewRotor.children.find((child: any) => child.geometry?.type === "SphereGeometry");
+      const gardenSign = this.gardenEntrance.getObjectByName("garden-entrance-sign");
       if (!pinHub) throw new Error("test probe: pinwheel hub missing");
+      if (!gardenSign) throw new Error("test probe: Garden entrance sign missing");
       (window as any).__plazaSample = { x: this.actor.position.x, z: this.actor.position.z, facing: this.actor.rotation.y,
         yaw: this.cameraRig.yaw, moving: this.locomotion.moving, engaged: this.cameraRig.engaged,
-        actor: screen(this.actor.position.clone().setY(0.5)), pin: screen(pinHub.getWorldPosition(this.pinwheel.position.clone())), labels: this.labels() };
+        actor: screen(this.actor.position.clone().setY(0.5)),
+        pin: screen(pinHub.getWorldPosition(this.pinwheel.position.clone())),
+        garden: screen(gardenSign.getWorldPosition(this.gardenEntrance.position.clone())),
+        labels: this.labels() };
       return result;
     };
   });
@@ -59,6 +65,23 @@ async function rotate(page: Page, count: number) {
   for (let n = 0; n < count; n++) await page.getByRole("button", { name: "오른쪽 보기", exact: true }).click();
   await page.waitForTimeout(800);
   await page.locator(".plaza-help summary").click();
+}
+
+async function openGardenDestination(page: Page) {
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await expect(page.locator('[data-world-label="garden-entrance"]'))
+    .toBeVisible();
+}
+
+async function gardenTarget(page: Page) {
+  const box = await page.locator('[data-world-label="garden-entrance"]').boundingBox();
+  if (!box) throw new Error("Garden entrance label is not visible");
+  return {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  };
 }
 
 test("#942 first step is explicit and only real locomotion dismisses it", async ({ page }) => {
@@ -409,6 +432,153 @@ test("#967 Gate semantic handoff clears when Plaza world unmounts for Garden", a
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
 });
 
+test("#995 Garden is a visible tappable Plaza destination without proximity navigation or cosmetic writes", async ({ page }) => {
+  await page.addInitScript((key) => {
+    Object.assign(window, { e995Writes: 0 });
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { e995Writes: number }).e995Writes++;
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openGardenDestination(page);
+
+  const world = page.getByTestId("placeable-world");
+  const gardenLabel = page.locator('[data-world-label="garden-entrance"]');
+  const todayLabel = page.locator('[data-world-label="today-gate"]');
+  const semanticGarden = page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  });
+
+  await expect(world).toHaveAttribute("data-scenery-profile", "full");
+  await expect(gardenLabel).toHaveText("정원 쉼터");
+  await expect(todayLabel).toHaveText("오늘의 기록");
+  await expect(todayLabel).toBeVisible();
+  await expect(semanticGarden).toBeVisible();
+
+  const canvas = page.getByTestId("placeable-world-canvas");
+  await canvas.focus();
+  await page.keyboard.down("d");
+  await page.waitForTimeout(2400);
+  await page.keyboard.up("d");
+  await page.waitForTimeout(250);
+
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+
+  const target = await gardenTarget(page);
+  await page.mouse.click(target.x, target.y);
+
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  expect(await page.evaluate(() =>
+    (window as unknown as { e995Writes: number }).e995Writes,
+  )).toBe(0);
+
+  await page.getByRole("button", {
+    name: "광장으로 돌아가기",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("placeable-world")).toBeVisible();
+  expect(await page.evaluate(() =>
+    (window as unknown as { e995Writes: number }).e995Writes,
+  )).toBe(0);
+
+  await page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  expect(await page.evaluate(() =>
+    (window as unknown as { e995Writes: number }).e995Writes,
+  )).toBe(0);
+});
+
+test("#995 dragging the Garden entrance or tapping it while source-settling never bypasses the parent guard", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openGardenDestination(page);
+
+  let target = await gardenTarget(page);
+  await page.mouse.move(target.x, target.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x + 90, target.y + 18, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+  await expect(page.getByTestId("placeable-world")).toBeVisible();
+
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await page.getByRole("button", { name: "환영 바람개비 고르기" }).click();
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  target = await gardenTarget(page);
+  await page.mouse.click(target.x, target.y);
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+
+  const blockedGarden = page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  });
+  await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
+  await blockedGarden.focus();
+  await expect(blockedGarden).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page.locator("#placeable-destination-handoff")).toBeFocused();
+  await expect(page.locator("#placeable-destination-handoff"))
+    .toContainText("미리보기를 먼저 마무리해 주세요");
+});
+
+test("#995 Garden remains legible in compact, reduced-motion and forced-colors presentation", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+
+  await openGardenDestination(page);
+
+  const world = page.getByTestId("placeable-world");
+  const garden = page.locator('[data-world-label="garden-entrance"]');
+  const today = page.locator('[data-world-label="today-gate"]');
+
+  await expect(world).toHaveAttribute("data-scenery-profile", "compact");
+  await expect(world).toHaveAttribute("data-reduced-motion", "true");
+
+  await expect(garden).toBeVisible();
+  await expect(garden).toHaveText("정원 쉼터");
+  await expect(garden).toHaveCSS("animation-name", "none");
+  await expect(garden).toHaveCSS("border-top-style", "solid");
+
+  // The narrow-stage collision resolver may hide the floating Today label
+  // rather than overlap two destination labels. Today remains represented by
+  // its unchanged world landmark and first-class semantic action.
+  await expect(today).toHaveText("오늘의 기록");
+
+  const semanticToday = page.getByRole("link", {
+    name: "오늘의 기록으로 가기",
+    exact: true,
+  });
+  await semanticToday.scrollIntoViewIfNeeded();
+  await expect(semanticToday).toBeVisible();
+  await expect(semanticToday).toBeInViewport();
+
+  const semanticGarden = page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  });
+  await semanticGarden.scrollIntoViewIfNeeded();
+  await expect(semanticGarden).toBeInViewport();
+
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+});
+
 test("R2 desktop actual locomotion, facing, 90/180 degree camera-relative control, stop, reset and label tracking", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 }); await open(page);
   const initial = await sample(page); expect(initial.engaged).toBe(false);
@@ -508,11 +678,14 @@ test("R2 reduced motion, forced colors, context loss, retry and semantic escape"
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-first-step", "prompt");
   await expect(page.getByTestId("plaza-first-step")).toBeVisible();
   await expect(page.locator('[data-world-label="today-gate"]')).toHaveCSS("animation-name", "none");
+  await expect(page.locator('[data-world-label="garden-entrance"]')).toBeVisible();
+  await expect(page.locator('[data-world-label="garden-entrance"]')).toHaveCSS("animation-name", "none");
   const before = await sample(page); await hold(page, "ArrowRight");
   expect((await sample(page)).x).toBeGreaterThan(before.x);
   await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-companion-pose", "neutral");
   await rotate(page, 1); expect((await sample(page)).yaw).toBeGreaterThan(0.4);
   await page.emulateMedia({ forcedColors: "active" });
+  await expect(page.locator('[data-world-label="garden-entrance"]')).toHaveCSS("border-top-style", "solid");
   await page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }).focus();
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toBeFocused();
   await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");

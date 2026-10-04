@@ -4,6 +4,7 @@ import { Box3, Mesh, Raycaster, Vector3, type CylinderGeometry, type BufferGeome
 import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contract";
 import {
   PlaceableScene,
+  GARDEN_ENTRANCE,
   PINWHEEL_RADIUS,
   PINWHEEL_PREVIEW_CUE,
   resolvePlazaSceneryProfile,
@@ -26,6 +27,7 @@ import { PLAZA_CAMERA } from "../src/placeable/plazaCamera";
 import { PlazaPointerGesture } from "../src/placeable/plazaPointerGesture";
 import { cameraRelativeMovement, resolveThirdPersonCamera } from "../transcend-lab/src/platform/spatial/thirdPersonCamera";
 import { worldPoint } from "../transcend-lab/src/platform/spatial/worldSpaceClock";
+import { LIVING_WEEK_SCENE_PLAN } from "../transcend-lab/src/platform/spatial/livingWeekScenePlan";
 
 function companionFixture() {
   const model = new Group(); model.name = "companion";
@@ -35,6 +37,39 @@ function companionFixture() {
     [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
   return { scene: model, animations: clips } as GLTF;
 }
+
+test("#995 Garden entrance stays inside unchanged Plaza movement authority and remains an optional renderer destination", () => {
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
+  expect(Math.abs(GARDEN_ENTRANCE.x)).toBeLessThan(reachableBound);
+  expect(Math.abs(GARDEN_ENTRANCE.z)).toBeLessThan(reachableBound);
+  expect(scene.gardenEntrance.name).toBe(GARDEN_ENTRANCE.id);
+  expect(scene.gardenEntrance.children.length).toBeGreaterThanOrEqual(7);
+
+  const gardenLabel = scene.labels().find((label) => label.id === GARDEN_ENTRANCE.id);
+  const todayLabel = scene.labels().find((label) => label.id === "today-gate");
+  expect(gardenLabel?.label).toBe("정원 쉼터");
+  expect(todayLabel?.label).toBe("오늘의 기록");
+
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("garden-entrance-"),
+  )).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.gardenDestination.visible).toBe(true);
+  expect(scene.labels().some((label) => label.id === GARDEN_ENTRANCE.id)).toBe(true);
+
+  scene.setGardenAvailable(false);
+  expect(scene.gardenDestination.visible).toBe(false);
+  expect(scene.labels().some((label) => label.id === GARDEN_ENTRANCE.id)).toBe(false);
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("garden-entrance-"),
+  )).toBe(false);
+
+  scene.dispose();
+});
 
 test("#915 plaza scenery profile follows host geometry and camera proxies follow optional scenery", () => {
   expect(resolvePlazaSceneryProfile(1366, 600)).toBe("full");
