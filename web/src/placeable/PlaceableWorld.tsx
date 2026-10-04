@@ -78,6 +78,14 @@ export default function PlaceableWorld(props: Props) {
     );
   }, [guestVisit, error, props.suspended, firstStepPhase, gateProximity, props.onGateProximityChange]);
 
+  // A world instance may disappear while the parent remains alive (for example
+  // Plaza -> Garden). Never leave parent semantic UI pointing at a status node
+  // owned by an unmounted world.
+  useEffect(() => {
+    const release = props.onGateProximityChange;
+    return () => release?.("far");
+  }, [props.onGateProximityChange]);
+
   // Visit-local only. A real locomotion transition starts this acknowledgement;
   // elapsed time alone never claims that the user took a step.
   useEffect(() => {
