@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
+import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase } from "../lib/supabase";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import { getMySpaceCompanion } from "../ui/mySpaceCompanion";
 import { readLivingChoice } from "../ui/livingChoice";
@@ -66,10 +66,13 @@ export default function ProductPlaceableEntry() {
             || current.owner !== rejected.owner
             || current.token !== rejected.token
             || current.generation !== rejected.generation) return;
-          // Match App's local session-invalid contract without allowing a stale
-          // adapter to sign out a newer verified token.
+          // Withdraw this verified binding immediately. Do not call the SDK
+          // signOut here: it targets whichever session is current when its auth
+          // lock runs, which may already be a newer same-user token. Cleanup is
+          // bound to the exact rejected token instead.
           void binding.update(null);
-          void auth.signOut({ scope: "local" });
+          removePersistedSessionIfAccessToken(rejected.token);
+          void requestTokenBoundLocalLogout(rejected.token).catch(() => undefined);
         },
       }) : null);
     });

@@ -1541,6 +1541,65 @@ test("#975 API session rejection withdraws account My Space without browser fall
   expect(account.puts).toBe(1);
 });
 
+test("#983 rejected-token cleanup cannot erase a newer same-user session", async ({ page }) => {
+  const account = await accountRoute(page, "session");
+  const owner = "00000000-0000-4000-8000-000000000810";
+  const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
+  const header = Buffer.from('{"alg":"none"}').toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url");
+  const rejectedToken = [header, payload, "synthetic"].join(".");
+  const newerToken = [header, payload, "newer-synthetic"].join(".");
+  const newerSession = {
+    access_token: newerToken,
+    refresh_token: "newer-synthetic-refresh",
+    expires_at: 4102444800,
+    expires_in: 3600,
+    token_type: "bearer",
+    user,
+  };
+
+  let releaseLogout!: () => void;
+  let markLogoutStarted!: () => void;
+  const pendingLogout = new Promise<void>((resolve) => { releaseLogout = resolve; });
+  const logoutStarted = new Promise<void>((resolve) => { markLogoutStarted = resolve; });
+  let logoutCalls = 0;
+
+  await page.route("https://e2e.invalid/auth/v1/logout?scope=local", async (route) => {
+    logoutCalls++;
+    expect(route.request().headers().authorization).toBe(`Bearer ${rejectedToken}`);
+    markLogoutStarted();
+    await pendingLogout;
+    await route.fulfill({ status: 204, headers: cors });
+  });
+
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+
+  await logoutStarted;
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-e2e-auth-token"))).toBeNull();
+
+  await page.evaluate((session) => {
+    localStorage.setItem("sb-e2e-auth-token", JSON.stringify(session));
+  }, newerSession);
+
+  releaseLogout();
+
+  await expect.poll(() => page.evaluate(() => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    return raw ? JSON.parse(raw).access_token : null;
+  })).toBe(newerToken);
+  expect(logoutCalls).toBe(1);
+  expect(account.puts).toBe(1);
+
+  await page.getByRole("button", { name: "계정 공간 다시 확인" }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  expect(account.puts).toBe(1);
+});
+
 test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
   const account = await classicTodaySession(page);
   await page.goto("/?screen=S02"); await expectClassicToday(page);
