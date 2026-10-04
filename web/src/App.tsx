@@ -60,6 +60,11 @@ import { useSeoulDate } from "./lib/useSeoulDate";
 import { resolveSceneGate } from "./ui/scenePolicy";
 import { useSavedSceneEvent } from "./lib/useSavedSceneEvent";
 import { allowsE2eFixture, e2eSessionEventName, getE2eSession } from "./lib/e2eHarness";
+import {
+  publishAuthoritativeSessionRejection,
+  subscribeAuthoritativeSessionRejection,
+  type AuthoritativeSessionRejection,
+} from "./lib/sessionRejectionBoundary";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase, supabaseConfigured } from "./lib/supabase";
 import { resolveCompanionMode, resolveCompanionSelection, resolveProductionCompanion, type CompanionMode, type CompanionSelectionContext, type CompanionSpecies } from "./ui/companion";
 import { getActiveCompanionAsset } from "./ui/companionActiveAsset";
@@ -141,6 +146,23 @@ function makeNotice(
     persistence: options.origin === "export-success" ? "until-navigation" : "persistent",
     recovery: options.recovery,
   };
+}
+
+function makeSessionExpiredNotice(): Notice {
+  return makeNotice(
+    "warning",
+    "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.",
+    {
+      origin: "session",
+      recovery: {
+        kind: "session-expired",
+        title: "로그인 시간이 끝났어요",
+        known: "로그인 시간이 만료되었습니다. 계정이나 기록이 삭제됐다는 뜻은 아니에요.",
+        unknown: "진행 중이던 저장의 최종 결과는 여기서 단정하지 않아요.",
+        next: "이메일로 로그인을 다시 시작한 뒤 서버 기록을 다시 확인해 주세요.",
+      },
+    },
+  );
 }
 
 function makePostMutationReadNotice(kind: Exclude<PostMutationRead, null>["kind"]): Notice {
@@ -478,6 +500,7 @@ function App() {
   }>({ userId: null, accessToken: null });
   const editOriginKey = useRef<string | null>(null);
   const sessionRef = useRef<Session | null>(e2eSession);
+  const authoritativeRejectionHandlerRef = useRef<(reason: AuthoritativeSessionRejection) => void>(() => undefined);
   const sessionIdentityRef = useRef<SessionIdentity>({ userId: e2eSession?.user.id ?? null, generation: e2eSession ? 1 : 0 });
   const newBloodPressure = useNewBloodPressureDraft(sessionIdentityRef.current.generation, today, requestedScreen === "S04" && !editingBloodPressureId);
   const bloodPressureDraft = editingBloodPressureId ? bloodPressureEditDraft : newBloodPressure.draft;
@@ -582,6 +605,29 @@ function App() {
     if (!nextUserId) defaultHomeEntry.current = isDefaultHomeEntry(url.href);
   }
 
+  function withdrawSessionForAuthoritativeRejection(reason: AuthoritativeSessionRejection) {
+    if (!sessionRef.current) return;
+
+    if (reason === "owner-deleted") {
+      setAnonymousCompletion("account-deleted");
+      setBrowserResetCompleted(false);
+    } else {
+      setAnonymousCompletion(null);
+    }
+
+    // App remains the sole owner of its signed-in product state. The boundary
+    // only tells that owner its exact current token lost authority.
+    applySession(null);
+
+    if (reason === "session-invalid") {
+      setNotice(makeSessionExpiredNotice());
+    }
+  }
+
+  // Keep one BroadcastChannel subscription while allowing it to invoke the
+  // current render's App-owned withdrawal logic.
+  authoritativeRejectionHandlerRef.current = withdrawSessionForAuthoritativeRejection;
+
   function captureRequestContext(activeSession: Session | null = sessionRef.current): RequestContext | null {
     const userId = activeSession?.user.id;
     if (!activeSession || !userId) return null;
@@ -607,6 +653,11 @@ function App() {
       window.history.replaceState({ ...(window.history.state ?? {}), sk7UserId: currentUserId }, "", window.location.href);
     }
   }, []);
+
+  useEffect(() => subscribeAuthoritativeSessionRejection(
+    () => sessionRef.current?.access_token ?? null,
+    (reason) => authoritativeRejectionHandlerRef.current(reason),
+  ), []);
 
   useEffect(() => {
     if (evidenceMode) return;
@@ -818,17 +869,15 @@ function App() {
       if (cleanup === "different") return;
       void requestTokenBoundLocalLogout(requestContext.accessToken).catch(() => undefined);
       if (!isCurrentRequestContext(requestContext) || hasNewerToken(requestContext)) return;
-      applySession(null);
-      setNotice(makeNotice("warning", "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.", {
-        origin: "session",
-        recovery: {
-          kind: "session-expired",
-          title: "로그인 시간이 끝났어요",
-          known: "로그인 시간이 만료되었습니다. 계정이나 기록이 삭제됐다는 뜻은 아니에요.",
-          unknown: "진행 중이던 저장의 최종 결과는 여기서 단정하지 않아요.",
-          next: "이메일로 로그인을 다시 시작한 뒤 서버 기록을 다시 확인해 주세요.",
-        },
-      }));
+
+      // Propagate only the admitted rejected token. The boundary publishes a
+      // SHA-256 fingerprint, never the bearer token itself.
+      void publishAuthoritativeSessionRejection(
+        requestContext.accessToken,
+        "session-invalid",
+      ).catch(() => undefined);
+
+      withdrawSessionForAuthoritativeRejection("session-invalid");
       return;
     }
     if (context === "load") {

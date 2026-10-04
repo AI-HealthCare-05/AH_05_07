@@ -68,6 +68,138 @@ async function routeWindow(page: Page, resolveWindow: (token: string) => unknown
   });
 }
 
+const emptyPlaceableSnapshot = {
+  revision: 0,
+  schemaVersion: "placeable.v1",
+  layoutId: "e1-plaza.v1",
+  selection: null,
+  latestOperationId: null,
+  latestFingerprint: null,
+};
+
+async function routeRejectedAppWindow(page: Page) {
+  const apiHeaders = {
+    "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+    "Access-Control-Allow-Headers": "authorization,content-type",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+  };
+  const authHeaders = {
+    "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+    "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+  };
+
+  await page.route("https://e2e.invalid/auth/v1/logout?scope=local", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: authHeaders });
+    }
+    return route.fulfill({ status: 204, headers: authHeaders });
+  });
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: apiHeaders });
+    }
+    if (url.pathname !== "/api/v1/observations/window") return route.abort();
+
+    return route.fulfill({
+      status: 401,
+      headers: apiHeaders,
+      contentType: "application/json",
+      body: JSON.stringify({
+        detail: { code: "supabase_session_invalid" },
+      }),
+    });
+  });
+}
+
+async function routeAccountMySpace(
+  page: Page,
+  rejection: "none" | "session-invalid" | "owner-deleted" = "none",
+) {
+  await page.addInitScript((value) => {
+    localStorage.setItem("sb-e2e-auth-token", JSON.stringify(value));
+  }, accountA);
+
+  const headers = {
+    "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+    "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
+    "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS",
+  };
+
+  await page.route("https://e2e.invalid/auth/v1/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    if (request.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers });
+    }
+    if (url.pathname === "/auth/v1/user") {
+      return route.fulfill({
+        status: 200,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify(accountA.user),
+      });
+    }
+    if (url.pathname === "/auth/v1/logout") {
+      return route.fulfill({ status: 204, headers });
+    }
+    return route.abort();
+  });
+
+  let puts = 0;
+  await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async (route) => {
+    const request = route.request();
+
+    if (request.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers });
+    }
+    if (request.method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify(emptyPlaceableSnapshot),
+      });
+    }
+
+    puts += 1;
+
+    if (rejection === "session-invalid") {
+      return route.fulfill({
+        status: 401,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: { code: "session_invalid" } }),
+      });
+    }
+    if (rejection === "owner-deleted") {
+      return route.fulfill({
+        status: 410,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: { code: "owner_deleted" } }),
+      });
+    }
+
+    return route.fulfill({
+      status: 500,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: { code: "unexpected_test_write" } }),
+    });
+  });
+
+  return {
+    get puts() {
+      return puts;
+    },
+  };
+}
+
 test("normal synthetic sign-in keeps the existing empty-state routing", async ({ page }) => {
   await routeWindow(page, () => emptyWindow);
   await page.goto("/");
@@ -448,6 +580,244 @@ test("#991 rejected token A cleanup cannot erase newer same-user token B", async
   ).toBe(accountARefreshed.access_token);
 
   expect(logoutCalls).toBe(1);
+});
+
+
+test("#993 App rejection withdraws another App tab still bound to token A", async ({ page, context }) => {
+  const peer = await context.newPage();
+  await routeWindow(peer, () => windowWithMeasurement("peer-a", 120, 80));
+  await peer.goto("/?e2e=signed-in&screen=S10");
+  await expect(peer.locator('[data-scene="S10"]')).toBeVisible();
+
+  await routeRejectedAppWindow(page);
+  await page.goto("/?e2e=signed-in&screen=S10");
+
+  await expect(page.locator('[data-scene="S01"]')).toBeVisible();
+  await expect(peer.locator('[data-scene="S01"]')).toBeVisible();
+
+  const peerRecovery = peer.locator('[data-recovery-kind="session-expired"]');
+  await expect(peerRecovery).toContainText("로그인 시간이 만료되었습니다.");
+  await expect(peerRecovery).toContainText("계정이나 기록이 삭제됐다는 뜻은 아니에요.");
+
+  await peer.close();
+});
+
+test("#993 App rejection withdraws account My Space still bound to token A", async ({ page, context }) => {
+  const peer = await context.newPage();
+  const mySpace = await routeAccountMySpace(peer);
+  await peer.goto("/?experience=e2&view=classic&storage=account");
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  await routeRejectedAppWindow(page);
+  await page.goto("/?e2e=signed-in&screen=S10");
+
+  await expect(peer.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(
+    peer.locator("main.placeable-entry-recovery").getByRole("status"),
+  ).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요.");
+  expect(mySpace.puts).toBe(0);
+
+  await peer.close();
+});
+
+test("#993 My Space rejection withdraws App still bound to token A", async ({ page, context }) => {
+  const app = await context.newPage();
+  await routeWindow(app, () => windowWithMeasurement("app-a", 120, 80));
+  await app.goto("/?e2e=signed-in&screen=S10");
+  await expect(app.locator('[data-scene="S10"]')).toBeVisible();
+
+  const mySpace = await routeAccountMySpace(page, "session-invalid");
+  await page.goto("/?experience=e2&view=classic&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  await page.getByRole("button", { name: "환영 바람개비 고르기" }).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+
+  await expect(app.locator('[data-scene="S01"]')).toBeVisible();
+  await expect(app.locator('[data-recovery-kind="session-expired"]'))
+    .toContainText("로그인 시간이 만료되었습니다.");
+  expect(mySpace.puts).toBe(1);
+
+  await app.close();
+});
+
+test("#993 owner-deleted from My Space remains terminal in App", async ({ page, context }) => {
+  const app = await context.newPage();
+  await routeWindow(app, () => windowWithMeasurement("app-a", 120, 80));
+  await app.goto("/?e2e=signed-in&screen=S10");
+  await expect(app.locator('[data-scene="S10"]')).toBeVisible();
+
+  const mySpace = await routeAccountMySpace(page, "owner-deleted");
+  await page.goto("/?experience=e2&view=classic&storage=account");
+
+  await page.getByRole("button", { name: "환영 바람개비 고르기" }).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+
+  await expect(app.locator('[data-scene="S01"]')).toBeVisible();
+  await expect(app.getByRole("heading", { name: "계정을 삭제했어요", exact: true })).toBeVisible();
+  await expect(app.locator('[data-recovery-kind="session-expired"]')).toHaveCount(0);
+  expect(mySpace.puts).toBe(1);
+
+  await app.close();
+});
+
+test("#993 App receiver ignores malformed and stale token-A rejection after refresh to B", async ({ page }) => {
+  await routeWindow(page, () => windowWithMeasurement("current", 121, 81));
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  await dispatchSession(page, accountARefreshed);
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  await page.evaluate(() => {
+    const channel = new BroadcastChannel("sk7:authoritative-session-rejection:v1");
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint: "not-a-digest",
+      reason: "session-invalid",
+    });
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint: "0".repeat(64),
+      reason: "session-invalid",
+    });
+    channel.close();
+  });
+
+  await page.evaluate(async (token) => {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token),
+    );
+    const tokenFingerprint = Array.from(
+      new Uint8Array(digest),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+
+    const channel = new BroadcastChannel(
+      "sk7:authoritative-session-rejection:v1",
+    );
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint,
+      reason: "session-invalid",
+    });
+    channel.close();
+  }, accountA.access_token);
+
+  await page.waitForTimeout(100);
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
+});
+
+test("#993 App receiver rechecks the current token after asynchronous fingerprinting", async ({ page }) => {
+  await page.addInitScript(() => {
+    const subtle = crypto.subtle;
+    const nativeDigest = subtle.digest.bind(subtle);
+
+    let hold = false;
+    let started = false;
+    let release: (() => void) | null = null;
+
+    Object.defineProperty(subtle, "digest", {
+      configurable: true,
+      value: async (algorithm: AlgorithmIdentifier, data: BufferSource) => {
+        if (hold) {
+          started = true;
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+        return nativeDigest(algorithm, data);
+      },
+    });
+
+    const target = window as unknown as {
+      e2eRejectionDigestGate: {
+        enable: () => void;
+        started: () => boolean;
+        release: () => void;
+      };
+    };
+
+    target.e2eRejectionDigestGate = {
+      enable() {
+        hold = true;
+        started = false;
+        release = null;
+      },
+      started() {
+        return started;
+      },
+      release() {
+        const pending = release;
+        release = null;
+        hold = false;
+        pending?.();
+      },
+    };
+  });
+
+  await routeWindow(page, () => windowWithMeasurement("current", 121, 81));
+  await page.goto("/?e2e=signed-in&screen=S10");
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  const tokenFingerprint = await page.evaluate(async (token) => {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token),
+    );
+    return Array.from(
+      new Uint8Array(digest),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+  }, accountA.access_token);
+
+  await page.evaluate((fingerprint) => {
+    const target = window as unknown as {
+      e2eRejectionDigestGate: {
+        enable: () => void;
+      };
+    };
+
+    target.e2eRejectionDigestGate.enable();
+
+    const channel = new BroadcastChannel(
+      "sk7:authoritative-session-rejection:v1",
+    );
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint: fingerprint,
+      reason: "session-invalid",
+    });
+    channel.close();
+  }, tokenFingerprint);
+
+  await expect.poll(() => page.evaluate(() => {
+    const target = window as unknown as {
+      e2eRejectionDigestGate: {
+        started: () => boolean;
+      };
+    };
+    return target.e2eRejectionDigestGate.started();
+  })).toBe(true);
+
+  await dispatchSession(page, accountARefreshed);
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+
+  await page.evaluate(() => {
+    const target = window as unknown as {
+      e2eRejectionDigestGate: {
+        release: () => void;
+      };
+    };
+    target.e2eRejectionDigestGate.release();
+  });
+
+  await page.waitForTimeout(100);
+
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.locator('[data-scene="S01"]')).toHaveCount(0);
 });
 
 test("export timeout shows bounded warning and re-enables the button", async ({ page }) => {
