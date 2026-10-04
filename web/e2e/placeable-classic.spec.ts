@@ -1019,6 +1019,246 @@ test("E4 touch and reduced motion: keep/remove stays muted and fits narrow scree
   } finally { await context.close(); }
 });
 
+test("#1001 keepsake editor separates current, offered and unsaved meanings without writes", async ({ page }) => {
+  await page.goto(`${companionRoute}&living_choice=sleep-routine`);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 15000 },
+  );
+
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+
+  const current = page.getByTestId("keepsake-current");
+  const offer = page.getByTestId("keepsake-offer");
+
+  await expect(current).toContainText("현재");
+  await expect(page.getByTestId("confirmed-keepsake"))
+    .toHaveText("아직 남긴 문양이 없어요.");
+  await expect(current).toContainText("문양이 없어도 내 공간은 완성된 상태");
+
+  await expect(offer).toContainText("이번 방문의 문양");
+  await expect(offer).toContainText("고요한 달");
+  await expect(offer).toContainText("미리볼 수 있어요");
+
+  const section = page.locator(".placeable-keepsake");
+  await expect(section).not.toContainText("보상");
+  await expect(section).not.toContainText("업적");
+  await expect(section).not.toContainText("수집");
+
+  await page.screenshot({
+    path: test.info().outputPath("1001-keepsake-offer-desktop.png"),
+    scale: "css",
+  });
+
+  const before = await readLocal(page);
+  await page.getByRole("button", {
+    name: "이 문양을 내 공간에 남기기",
+    exact: true,
+  }).click();
+
+  const preview = page.getByTestId("keepsake-preview");
+  await expect(preview).toHaveAttribute("data-preview-kind", "keep");
+  await expect(preview).toContainText("저장 전 미리보기");
+  await expect(preview).toContainText("고요한 달");
+  await expect(preview).toContainText("확정할 때만");
+  await expect(page.getByTestId("keepsake-world-context"))
+    .toContainText("문양 · 고요한 달");
+  expect(await readLocal(page)).toEqual(before);
+
+  await page.getByRole("button", {
+    name: "미리보기 취소",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("keepsake-preview")).toHaveCount(0);
+  expect(await readLocal(page)).toEqual(before);
+});
+
+test("#1001 keepsake replacement and removal name the current truth and stay reversible", async ({ page }) => {
+  await page.goto(`${browserRoute}&living_choice=walk-10-minutes`);
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", {
+    name: "청록",
+    exact: true,
+  }).click();
+  await page.getByRole("button", {
+    name: "입구 오른쪽",
+    exact: true,
+  }).click();
+  await confirm(page);
+
+  await (await editorButton(
+    page,
+    "이 문양을 내 공간에 남기기",
+  )).click();
+  await confirm(page);
+
+  const stored = await readLocal(page);
+  expect(stored.selection.pinwheel).toMatchObject({
+    color: "teal",
+    socketId: "gate-right",
+  });
+  expect(stored.selection.keepsake).toBe("plaza-ribbon-v1");
+
+  await page.goto(`${companionRoute}&living_choice=sleep-routine`);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 15000,
+    });
+
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("confirmed-keepsake"))
+    .toHaveText("광장의 리본");
+  await expect(page.getByTestId("keepsake-offer"))
+    .toContainText("고요한 달");
+  await expect(page.getByTestId("keepsake-offer"))
+    .toContainText("현재 문양을 이 문양으로 바꾸는");
+
+  await page.getByRole("button", {
+    name: "이 문양으로 바꾸기",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("keepsake-preview"))
+    .toHaveAttribute("data-preview-kind", "replacement");
+  await expect(page.getByTestId("keepsake-preview"))
+    .toContainText("광장의 리본 대신 이 문양을 남겨요");
+  await expect(page.getByTestId("confirmed-keepsake"))
+    .toHaveText("광장의 리본");
+  await expect(page.getByTestId("keepsake-world-context"))
+    .toContainText("문양 · 고요한 달");
+
+  await page.screenshot({
+    path: test.info().outputPath("1001-keepsake-replacement-desktop.png"),
+    scale: "css",
+  });
+
+  expect(await readLocal(page)).toEqual(stored);
+
+  await page.getByRole("button", {
+    name: "미리보기 취소",
+    exact: true,
+  }).click();
+
+  expect(await readLocal(page)).toEqual(stored);
+
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+
+  await page.getByRole("button", {
+    name: "남긴 문양 제거",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("keepsake-preview"))
+    .toHaveAttribute("data-preview-kind", "removal");
+  await expect(page.getByTestId("keepsake-preview"))
+    .toContainText("문양 제거");
+  await expect(page.getByTestId("keepsake-world-context"))
+    .toContainText("문양 제거");
+
+  expect(await readLocal(page)).toEqual(stored);
+
+  await page.getByRole("button", {
+    name: "미리보기 취소",
+    exact: true,
+  }).click();
+
+  expect(await readLocal(page)).toEqual(stored);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-color", "teal");
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-socket", "gate-right");
+});
+
+test("#1001 same offered motif is not presented as a duplicate acquisition", async ({ page }) => {
+  await page.goto(`${browserRoute}&living_choice=low-sodium-meal`);
+  await (await editorButton(
+    page,
+    "이 문양을 내 공간에 남기기",
+  )).click();
+  await confirm(page);
+
+  await page.reload();
+
+  const current = page.getByTestId("keepsake-current");
+  const offer = page.getByTestId("keepsake-offer");
+
+  await expect(current).toBeVisible();
+  await expect(offer).toBeVisible();
+
+  await expect(page.getByTestId("confirmed-keepsake"))
+    .toHaveText("정원의 잎");
+  await expect(offer)
+    .toContainText("현재 남긴 문양과 같아요");
+  await expect(offer)
+    .toContainText("새로 저장할 필요가 없어요");
+
+  await expect(page.getByRole("button", {
+    name: "이 문양으로 바꾸기",
+    exact: true,
+  })).toHaveCount(0);
+});
+
+test("#1001 keepsake clarity remains static and reachable at 320px forced colors", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+
+  await page.goto(`${companionRoute}&living_choice=sleep-routine`);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 15000,
+    });
+
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+
+  await page.getByRole("button", {
+    name: "이 문양을 내 공간에 남기기",
+    exact: true,
+  }).click();
+
+  const preview = page.getByTestId("keepsake-preview");
+  await preview.scrollIntoViewIfNeeded();
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveCSS("border-top-style", "dashed");
+
+  const confirmButton = page.getByRole("button", {
+    name: "배치 확정하기",
+    exact: true,
+  });
+  await confirmButton.scrollIntoViewIfNeeded();
+  await expect(confirmButton).toBeVisible();
+  await expect(confirmButton).toBeInViewport();
+
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+
+  await page.screenshot({
+    path: test.info().outputPath("1001-keepsake-320-forced.png"),
+    scale: "css",
+  });
+});
+
 // E6 stays in the existing scheduled/manual placeable surface; no new visual CI.
 test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes zero storage writes", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });

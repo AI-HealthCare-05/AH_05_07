@@ -1049,3 +1049,184 @@
     color: LinkText;
   }
 }
+
+
+/* #1001 keepsake clarity.
+   One current slot, one transient offer, one explicit draft. No collection UI. */
+.keepsake-section-heading {
+  display: grid;
+  gap: 6px;
+}
+.keepsake-section-heading > div {
+  display: grid;
+  gap: 2px;
+}
+.keepsake-section-heading .placeable-eyebrow,
+.keepsake-section-heading .placeable-choice-note {
+  margin: 0;
+}
+.keepsake-section-heading .placeable-choice-note {
+  color: #657269;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+
+.keepsake-state-grid {
+  display: grid;
+  gap: 8px;
+}
+.keepsake-state-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #bcc6b9;
+  border-radius: 12px;
+  background: #f5f5eef0;
+}
+.keepsake-state-card[data-keepsake-state=offered] {
+  border-style: dashed;
+  background: #faf8f0;
+}
+.keepsake-preview-card {
+  border: 2px dashed #687766;
+  background: #f4f1e8;
+}
+.keepsake-state-label {
+  color: #66756c;
+  font-size: .68rem;
+  font-weight: 720;
+  letter-spacing: .04em;
+}
+.keepsake-state-note {
+  color: #66736b;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+.keepsake-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.keepsake-identity strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: .92rem;
+}
+.keepsake-identity-mark {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fffdf5;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #87948b;
+}
+.placeable-keepsake .keepsake-state-card button {
+  justify-self: start;
+  min-height: 44px;
+}
+.placeable-keepsake .keepsake-remove {
+  justify-self: start;
+  color: #56655c;
+  background: transparent;
+  border-color: #a7b2a9;
+}
+
+/* The existing still medallion remains the only world representation.
+   During editing this compact context connects it to the semantic editor. */
+.placeable-world-view[data-editing=true] .placeable-keepsake-caption {
+  position: absolute;
+  z-index: 2;
+  top: 58px;
+  left: max(24px, env(safe-area-inset-left));
+  width: fit-content;
+  max-width: min(360px, calc(100% - 48px));
+  height: auto;
+  margin: 0;
+  padding: 7px 10px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  pointer-events: none;
+  border: 1px solid #9ba89e;
+  border-radius: 999px;
+  background: #f6f5edf0;
+  color: #415348;
+  font-size: .72rem;
+  line-height: 1.35;
+}
+.placeable-world-view[data-editing=true]
+  .placeable-keepsake-caption[data-keepsake-context=preview],
+.placeable-world-view[data-editing=true]
+  .placeable-keepsake-caption[data-keepsake-context=removal] {
+  border: 2px dashed #526a59;
+  background: #fffaf0f2;
+  font-weight: 680;
+}
+.placeable-world-view[data-editing=true]
+  .placeable-keepsake-caption[data-keepsake-context=offered] {
+  border-style: dashed;
+}
+
+@media (max-width: 600px) {
+  .placeable-world-view[data-editing=true] .placeable-keepsake-caption {
+    top: 54px;
+    left: max(14px, env(safe-area-inset-left));
+    max-width: calc(100% - 28px);
+    font-size: .68rem;
+  }
+}
+@media (forced-colors: active) {
+  .keepsake-state-card,
+  .placeable-world-view[data-editing=true] .placeable-keepsake-caption {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .keepsake-preview-card,
+  .placeable-world-view[data-editing=true]
+    .placeable-keepsake-caption:is(
+      [data-keepsake-context=preview],
+      [data-keepsake-context=removal]
+    ) {
+    border-color: Highlight;
+    outline: 2px dashed Highlight;
+    outline-offset: 2px;
+  }
+  .keepsake-state-label,
+  .keepsake-state-note,
+  .keepsake-section-heading .placeable-choice-note {
+    color: CanvasText;
+  }
+  .keepsake-identity-mark {
+    background: CanvasText !important;
+    border-color: Canvas;
+    box-shadow: 0 0 0 1px CanvasText;
+  }
+}
+
+/* #1001 final hierarchy: current is reference truth, not an inventory tile.
+   Offer remains transient; the active draft receives the strongest boundary. */
+.keepsake-state-card[data-keepsake-state=current] {
+  padding: 4px 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.keepsake-state-card[data-keepsake-state=offered] {
+  border-width: 1px;
+}
+
+.keepsake-preview-card {
+  border-width: 2px;
+}
+
+@media (forced-colors: active) {
+  .keepsake-state-card[data-keepsake-state=current] {
+    border: 0;
+    background: Canvas;
+  }
+}
