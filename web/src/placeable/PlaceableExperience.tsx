@@ -340,7 +340,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }
   const gardenBlocked = preview || Boolean(state.pending);
   function enterGardenNook() {
-    if (gardenBlocked) return;
+    if (gardenBlocked) {
+      handoffRef.current?.focus();
+      return;
+    }
     changedSpace.current = true;
     setSpace("garden-nook");
   }
@@ -401,13 +404,16 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
           {world && <button className="plaza-garden-action" ref={gardenEntry} type="button"
-            aria-label="정원 쉼터로 가기" disabled={gardenBlocked} onClick={enterGardenNook}>
+            aria-label="정원 쉼터로 가기"
+            aria-disabled={gardenBlocked}
+            aria-describedby={gardenBlocked ? "placeable-destination-handoff" : undefined}
+            onClick={enterGardenNook}>
             정원 쉼터 <span aria-hidden="true">→</span>
           </button>}
           {world && <button className="plaza-edit-action" ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
-        {(preview || state.pending) && <div ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록으로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 이동할 수 있어요."}</p></div>}
+        {(preview || state.pending) && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
