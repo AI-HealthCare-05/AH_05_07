@@ -460,6 +460,238 @@ test("#967 Gate semantic handoff clears when Plaza world unmounts for Garden", a
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
 });
 
+test("#999 resting Plaza is scene-first with distinct civic, place and local actions", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(route);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 20000 },
+  );
+
+  const identity = page.getByTestId("plaza-identity-bar");
+  const scope = page.getByTestId("plaza-scope");
+  const rail = page.getByTestId("plaza-action-rail");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const today = page.getByRole("link", {
+    name: "오늘의 기록으로 가기",
+    exact: true,
+  });
+  const garden = page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  });
+  const decorate = page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  });
+  const companionStatus = page.getByTestId("companion-response");
+  const tools = page.locator(".plaza-help");
+
+  await expect(identity).toBeVisible();
+  await expect(scope).toBeVisible();
+  await expect(scope).toContainText("이 브라우저의 공간");
+  await expect(scope).toContainText("3D 광장");
+
+  await expect(today).toBeVisible();
+  await expect(garden).toBeVisible();
+  await expect(decorate).toBeVisible();
+  await expect(decorate).toHaveAttribute(
+    "data-plaza-action",
+    "decorate",
+  );
+  await expect(garden).toHaveAttribute(
+    "data-plaza-action",
+    "garden",
+  );
+  await expect(today).toHaveAttribute(
+    "data-plaza-action",
+    "today",
+  );
+
+  const identityBox = (await identity.boundingBox())!;
+  const railBox = (await rail.boundingBox())!;
+  const worldBox = (await world.boundingBox())!;
+
+  expect(identityBox.height).toBeLessThan(90);
+  expect(railBox.height).toBeLessThan(84);
+  expect(worldBox.height).toBeGreaterThan(900 * 0.68);
+
+  expect(
+    await today.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).toBe("rgba(0, 0, 0, 0)");
+
+  expect(
+    await decorate.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).not.toBe("rgba(0, 0, 0, 0)");
+
+  await expect(garden).toHaveCSS("border-top-style", "solid");
+
+  // The rendered companion is the normal presence. Its live semantic status
+  // remains mounted without becoming a persistent visible card.
+  await expect(companionStatus).toHaveAttribute(
+    "data-notice",
+    "false",
+  );
+  await expect(companionStatus).toHaveCSS(
+    "clip-path",
+    "inset(50%)",
+  );
+
+  await expect(tools).not.toHaveAttribute("open", /.+/);
+  await expect(tools.locator("summary")).toBeVisible();
+
+  await expect(world).toHaveAttribute("data-socket", "unplaced");
+  await expect(page.getByText("0/3", { exact: true })).toHaveCount(0);
+
+  await page.screenshot({
+    path: test.info().outputPath("999-resting-desktop.png"),
+    scale: "css",
+  });
+
+  // Editing transforms the same place rather than mounting a second renderer.
+  await decorate.click();
+  await expect(world).toHaveAttribute(
+    "data-placement-editing",
+    "true",
+  );
+  await expect(
+    page.getByRole("region", {
+      name: "내 공간 꾸미기",
+    }),
+  ).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(1);
+
+  const editingCanvas = (await canvas.boundingBox())!;
+  expect(editingCanvas.width).toBeGreaterThan(700);
+
+  await page.screenshot({
+    path: test.info().outputPath("999-editing-desktop.png"),
+    scale: "css",
+  });
+});
+
+test("#999 compact, short and enlarged-text compositions remain reachable without overflow", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+    { width: 900, height: 500 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(route);
+
+    const world = page.getByTestId("placeable-world");
+    await expect(world).toHaveAttribute(
+      "data-companion-pose",
+      /idle|neutral/,
+      { timeout: 20000 },
+    );
+
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= innerWidth,
+    )).toBe(true);
+
+    const scope = page.getByTestId("plaza-scope");
+    const today = page.getByRole("link", {
+      name: "오늘의 기록으로 가기",
+      exact: true,
+    });
+    const garden = page.getByRole("button", {
+      name: "정원 쉼터로 가기",
+      exact: true,
+    });
+    const decorate = page.getByRole("button", {
+      name: "꾸미기",
+      exact: true,
+    });
+
+    await expect(scope).toBeVisible();
+
+    for (const action of [today, garden, decorate]) {
+      await action.scrollIntoViewIfNeeded();
+      await expect(action).toBeVisible();
+      const box = (await action.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    }
+
+    // Reachability may scroll the fixed My Space viewport itself rather than
+    // window. Reset the real scroll owner before capturing entry composition.
+    await page.getByTestId("placeable-experience").evaluate((element) => {
+      element.scrollTop = 0;
+      element.scrollLeft = 0;
+    });
+
+    await page.screenshot({
+      path: test.info().outputPath(
+        `999-resting-${viewport.width}x${viewport.height}.png`,
+      ),
+      scale: "css",
+    });
+  }
+
+  // Exercise a real 200% text-size path rather than assuming the media rules.
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "32px";
+  });
+  await page.getByTestId("placeable-experience").evaluate((element) => {
+    element.scrollTop = 0;
+    element.scrollLeft = 0;
+  });
+
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+
+  await page.screenshot({
+    path: test.info().outputPath("999-text-200-top.png"),
+    scale: "css",
+  });
+
+  const decorate = page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  });
+  await decorate.scrollIntoViewIfNeeded();
+  await decorate.click();
+
+  const choose = page.getByRole("button", {
+    name: "환영 바람개비 고르기",
+    exact: true,
+  });
+  await choose.scrollIntoViewIfNeeded();
+  await expect(choose).toBeVisible();
+  await choose.click();
+
+  const confirm = page.getByRole("button", {
+    name: "배치 확정하기",
+    exact: true,
+  });
+  await confirm.scrollIntoViewIfNeeded();
+  await expect(confirm).toBeVisible();
+
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+
+  await page.screenshot({
+    path: test.info().outputPath("999-text-200.png"),
+    scale: "css",
+  });
+});
+
 test("#997 spatial socket editing previews the authored locations without writes or navigation leakage", async ({ page }) => {
   await page.addInitScript((key) => {
     Object.assign(window, { e997Writes: 0 });
@@ -782,7 +1014,11 @@ test("#995 Garden remains legible in compact, reduced-motion and forced-colors p
     forcedColors: "active",
   });
 
-  await openGardenDestination(page);
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
 
   const world = page.getByTestId("placeable-world");
   const garden = page.locator('[data-world-label="garden-entrance"]');
@@ -791,14 +1027,12 @@ test("#995 Garden remains legible in compact, reduced-motion and forced-colors p
   await expect(world).toHaveAttribute("data-scenery-profile", "compact");
   await expect(world).toHaveAttribute("data-reduced-motion", "true");
 
-  await expect(garden).toBeVisible();
+  // #999 allows projected destination labels to yield to collision avoidance
+  // on a narrow stage. Their semantic identity and forced-colors treatment
+  // remain defined even when the resolver hides one of them.
   await expect(garden).toHaveText("정원 쉼터");
   await expect(garden).toHaveCSS("animation-name", "none");
   await expect(garden).toHaveCSS("border-top-style", "solid");
-
-  // The narrow-stage collision resolver may hide the floating Today label
-  // rather than overlap two destination labels. Today remains represented by
-  // its unchanged world landmark and first-class semantic action.
   await expect(today).toHaveText("오늘의 기록");
 
   const semanticToday = page.getByRole("link", {
@@ -814,7 +1048,9 @@ test("#995 Garden remains legible in compact, reduced-motion and forced-colors p
     exact: true,
   });
   await semanticGarden.scrollIntoViewIfNeeded();
+  await expect(semanticGarden).toBeVisible();
   await expect(semanticGarden).toBeInViewport();
+  await expect(semanticGarden).toHaveCSS("border-top-style", "solid");
 
   expect(await page.evaluate(() =>
     document.documentElement.scrollWidth <= innerWidth,

@@ -34,6 +34,38 @@ const confirm = async (page: Page) => {
 
 const companionRoute = "/?experience=e2&view=3d&storage=browser";
 
+test("#999 resting scope remains concise and truthful in browser and account My Space", async ({ page }) => {
+  await page.goto(companionRoute);
+
+  const browserWorld = page.getByTestId("placeable-world");
+  await expect(browserWorld).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 15000 },
+  );
+
+  const browserScope = page.getByTestId("plaza-scope");
+  await expect(browserScope).toBeVisible();
+  await expect(browserScope).toContainText("이 브라우저의 공간");
+  await expect(browserScope).toContainText("3D 광장");
+
+  const account = await accountRoute(page, "normal");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const main = page.getByTestId("placeable-experience");
+  await expect(main).toHaveAttribute("data-mode", "account");
+  await expect(main).toHaveAttribute("data-phase", "ready");
+
+  const accountScope = page.getByTestId("plaza-scope");
+  await expect(accountScope).toBeVisible();
+  await expect(accountScope).toContainText("계정 공간");
+  await expect(accountScope).toContainText("3D 광장");
+
+  // Reading/resting composition is not a cosmetic write.
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toBeNull();
+});
+
 for (const mobile of [false, true]) test(`Plaza immersive ${mobile ? "mobile touch" : "desktop keyboard"}: edit, preview, cancel, confirmed save and destinations`, async ({ browser }) => {
   test.setTimeout(60_000);
   const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 960 }, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 2 });
