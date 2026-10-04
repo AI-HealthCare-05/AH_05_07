@@ -24,6 +24,7 @@ import { GardenScene, styleGardenPavilion } from "../src/placeable/gardenScene";
 import { createLandmark, landmarkMaterialRole } from "../src/components/scene/environment";
 import { disposeScene } from "../src/components/scene/disposeScene";
 import { livingCityPixelRatio } from "../src/placeable/livingCityRenderDensity";
+import { authorPlazaDestination, definePlazaDestination } from "../src/placeable/worldDestinationAuthoring";
 import { PlazaLocomotion, PLAZA_LOCOMOTION, shortestYaw } from "../src/placeable/plazaLocomotion";
 import { PLAZA_CAMERA } from "../src/placeable/plazaCamera";
 import { PlazaPointerGesture } from "../src/placeable/plazaPointerGesture";
@@ -39,6 +40,52 @@ function companionFixture() {
     [new NumberKeyframeTrack(".rotation[z]", [0, 0.1, 0.2], [0, 0.04, 0])]));
   return { scene: model, animations: clips } as GLTF;
 }
+
+test("bounded destination authoring validates role, grounding, envelope and parent fallback", () => {
+  expect(RECORDS_DESTINATION).toMatchObject({
+    id: "records-archive",
+    label: "기록 찾아보기",
+    role: "semantic",
+    rootName: "plaza-records-destination",
+    x: -2.4,
+    z: 1.1,
+    labelY: 1.08,
+    grounding: "plaza-floor",
+    compact: "retain",
+    cameraObstacle: true,
+    semanticFallback: "parent-semantic-control",
+  });
+  expect(SETTINGS_DESTINATION).toMatchObject({
+    id: "settings-service",
+    label: "설정",
+    role: "utility",
+    rootName: "plaza-settings-destination",
+    x: 2.85,
+    z: 1.75,
+    labelY: 1.2,
+    grounding: "plaza-floor",
+    compact: "retain",
+    cameraObstacle: true,
+    semanticFallback: "parent-semantic-control",
+  });
+
+  const base = { ...RECORDS_DESTINATION };
+  for (const candidate of [
+    { ...base, id: "" },
+    { ...base, label: "   " },
+    { ...base, x: Number.NaN },
+    { ...base, role: "diagnostic" },
+    { ...base, compact: "optional" },
+    { ...base, semanticFallback: "renderer-route" },
+  ]) {
+    expect(() => definePlazaDestination(candidate as never)).toThrow(/Plaza destination authoring/);
+  }
+
+  expect(() => authorPlazaDestination(RECORDS_DESTINATION, null as never))
+    .toThrow(/landmark builder/);
+  expect(() => authorPlazaDestination(RECORDS_DESTINATION, () => undefined))
+    .toThrow(/visible landmark geometry/);
+});
 
 test("#995 Garden entrance stays inside unchanged Plaza movement authority and remains an optional renderer destination", () => {
   const scene = new PlaceableScene();
@@ -80,8 +127,18 @@ test("Records archive stays inside unchanged Plaza authority and remains navigat
   const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
   expect(Math.abs(RECORDS_DESTINATION.x)).toBeLessThan(reachableBound);
   expect(Math.abs(RECORDS_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.recordsDestination.name).toBe("plaza-records-destination");
   expect(scene.recordsArchive.name).toBe(RECORDS_DESTINATION.id);
-  expect(scene.recordsArchive.children.length).toBeGreaterThanOrEqual(7);
+  expect(scene.recordsArchive.position.toArray()).toEqual([-2.4, 0, 1.1]);
+  expect(scene.recordsArchive.children.map((child) => child.name)).toEqual([
+    "records-archive-base",
+    "records-archive-body",
+    "records-archive-cap",
+    "records-archive-sign",
+    "records-archive-ledger-0",
+    "records-archive-ledger-1",
+    "records-archive-ledger-2",
+  ]);
 
   const recordsLabel = scene.labels().find(
     (label) => label.id === RECORDS_DESTINATION.id,
@@ -119,8 +176,17 @@ test("Settings service post stays inside unchanged Plaza authority and remains a
   const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
   expect(Math.abs(SETTINGS_DESTINATION.x)).toBeLessThan(reachableBound);
   expect(Math.abs(SETTINGS_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.settingsDestination.name).toBe("plaza-settings-destination");
   expect(scene.settingsPost.name).toBe(SETTINGS_DESTINATION.id);
-  expect(scene.settingsPost.children.length).toBeGreaterThanOrEqual(6);
+  expect(scene.settingsPost.position.toArray()).toEqual([2.85, 0, 1.75]);
+  expect(scene.settingsPost.children.map((child) => child.name)).toEqual([
+    "settings-service-base",
+    "settings-service-stem",
+    "settings-service-panel",
+    "settings-service-control-0",
+    "settings-service-control-1",
+    "settings-service-control-2",
+  ]);
 
   const label = scene.labels().find(
     (entry) => entry.id === SETTINGS_DESTINATION.id,

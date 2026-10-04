@@ -15,6 +15,7 @@ import { PlazaLocomotion } from "./plazaLocomotion";
 import { PlazaCameraRig } from "./plazaCamera";
 import { cameraObstacle, type CameraObstacle } from "../../transcend-lab/src/platform/spatial/thirdPersonCamera";
 import { worldPoint } from "../../transcend-lab/src/platform/spatial/worldSpaceClock";
+import { authorPlazaDestination, definePlazaDestination, type PlazaDestinationUnit } from "./worldDestinationAuthoring";
 
 // Rendering receives a projection only. It has no storage, identity, API or health access.
 export type PlaceableProjection = Readonly<{
@@ -80,18 +81,32 @@ export const GARDEN_ENTRANCE = Object.freeze({
   z: -0.8,
 });
 
-export const RECORDS_DESTINATION = Object.freeze({
+export const RECORDS_DESTINATION = definePlazaDestination({
   id: "records-archive",
   label: "기록 찾아보기",
+  role: "semantic",
+  rootName: "plaza-records-destination",
   x: -2.4,
   z: 1.1,
+  labelY: 1.08,
+  grounding: "plaza-floor",
+  compact: "retain",
+  cameraObstacle: true,
+  semanticFallback: "parent-semantic-control",
 });
 
-export const SETTINGS_DESTINATION = Object.freeze({
+export const SETTINGS_DESTINATION = definePlazaDestination({
   id: "settings-service",
   label: "설정",
+  role: "utility",
+  rootName: "plaza-settings-destination",
   x: 2.85,
   z: 1.75,
+  labelY: 1.2,
+  grounding: "plaza-floor",
+  compact: "retain",
+  cameraObstacle: true,
+  semanticFallback: "parent-semantic-control",
 });
 
 export function resolveTodayGateProximity(
@@ -120,10 +135,13 @@ export class PlaceableScene {
   readonly gate = new Group();
   readonly gardenDestination = new Group();
   readonly gardenEntrance = new Group();
-  readonly recordsDestination = new Group();
-  readonly recordsArchive = new Group();
-  readonly settingsDestination = new Group();
-  readonly settingsPost = new Group();
+  readonly recordsDestination: Group;
+  readonly recordsArchive: Group;
+  readonly settingsDestination: Group;
+  readonly settingsPost: Group;
+  #recordsUnit: PlazaDestinationUnit;
+  #settingsUnit: PlazaDestinationUnit;
+  #authoredDestinations: readonly PlazaDestinationUnit[];
   readonly anchorScenery = new Group();
   readonly optionalScenery = new Group();
   #cameraObstacles: CameraObstacle[] = [];
@@ -303,115 +321,104 @@ export class PlaceableScene {
     this.gardenDestination.add(this.gardenEntrance);
     this.scene.add(this.gardenDestination);
 
-    // Records is a navigation-only semantic destination. This low archive kiosk
-    // receives no record count/date/BP/session input and has no autonomous state.
-    this.recordsDestination.name = "plaza-records-destination";
-    this.recordsArchive.name = RECORDS_DESTINATION.id;
-    this.recordsArchive.position.set(
-      RECORDS_DESTINATION.x,
-      0,
-      RECORDS_DESTINATION.z,
-    );
-    const archiveStone = material("#b7b09c", "stone");
-    const archiveWood = material("#756955", "wood");
-    const archivePaper = material("#ddd6bd", "trim");
-    const archiveAccent = material("#596d63", "accent");
+    // Records and Settings share only the bounded destination authoring envelope.
+    // Their geometry remains individually authored and their semantic fallback stays parent-owned.
+    this.#recordsUnit = authorPlazaDestination(RECORDS_DESTINATION, (recordsArchive) => {
+      const archiveStone = material("#b7b09c", "stone");
+      const archiveWood = material("#756955", "wood");
+      const archivePaper = material("#ddd6bd", "trim");
+      const archiveAccent = material("#596d63", "accent");
 
-    const archiveBase = new Mesh(
-      new BoxGeometry(1.04, 0.18, 0.62),
-      archiveStone,
-    );
-    archiveBase.name = "records-archive-base";
-    archiveBase.position.y = 0.09;
-    this.recordsArchive.add(archiveBase);
-
-    const archiveBody = new Mesh(
-      new BoxGeometry(0.9, 0.72, 0.5),
-      archiveWood,
-    );
-    archiveBody.name = "records-archive-body";
-    archiveBody.position.y = 0.5;
-    this.recordsArchive.add(archiveBody);
-
-    const archiveCap = new Mesh(
-      new BoxGeometry(1.02, 0.1, 0.6),
-      archiveStone,
-    );
-    archiveCap.name = "records-archive-cap";
-    archiveCap.position.y = 0.91;
-    this.recordsArchive.add(archiveCap);
-
-    const archiveSign = new Mesh(
-      new BoxGeometry(0.64, 0.24, 0.055),
-      archivePaper,
-    );
-    archiveSign.name = "records-archive-sign";
-    archiveSign.position.set(0, 0.72, 0.28);
-    this.recordsArchive.add(archiveSign);
-
-    for (const [index, x] of [-0.22, 0, 0.22].entries()) {
-      const ledger = new Mesh(
-        new BoxGeometry(0.12, 0.27, 0.045),
-        archiveAccent,
+      const archiveBase = new Mesh(
+        new BoxGeometry(1.04, 0.18, 0.62),
+        archiveStone,
       );
-      ledger.name = `records-archive-ledger-${index}`;
-      ledger.position.set(x, 0.45, 0.275);
-      this.recordsArchive.add(ledger);
-    }
+      archiveBase.name = "records-archive-base";
+      archiveBase.position.y = 0.09;
+      recordsArchive.add(archiveBase);
 
-    this.recordsDestination.add(this.recordsArchive);
+      const archiveBody = new Mesh(
+        new BoxGeometry(0.9, 0.72, 0.5),
+        archiveWood,
+      );
+      archiveBody.name = "records-archive-body";
+      archiveBody.position.y = 0.5;
+      recordsArchive.add(archiveBody);
+
+      const archiveCap = new Mesh(
+        new BoxGeometry(1.02, 0.1, 0.6),
+        archiveStone,
+      );
+      archiveCap.name = "records-archive-cap";
+      archiveCap.position.y = 0.91;
+      recordsArchive.add(archiveCap);
+
+      const archiveSign = new Mesh(
+        new BoxGeometry(0.64, 0.24, 0.055),
+        archivePaper,
+      );
+      archiveSign.name = "records-archive-sign";
+      archiveSign.position.set(0, 0.72, 0.28);
+      recordsArchive.add(archiveSign);
+
+      for (const [index, x] of [-0.22, 0, 0.22].entries()) {
+        const ledger = new Mesh(
+          new BoxGeometry(0.12, 0.27, 0.045),
+          archiveAccent,
+        );
+        ledger.name = `records-archive-ledger-${index}`;
+        ledger.position.set(x, 0.45, 0.275);
+        recordsArchive.add(ledger);
+      }
+    });
+    this.recordsDestination = this.#recordsUnit.root;
+    this.recordsArchive = this.#recordsUnit.landmark;
     this.scene.add(this.recordsDestination);
 
-    // Settings is a navigation-only utility destination. The world receives no
-    // theme, account, deletion, export, session or personalization state.
-    this.settingsDestination.name = "plaza-settings-destination";
-    this.settingsPost.name = SETTINGS_DESTINATION.id;
-    this.settingsPost.position.set(
-      SETTINGS_DESTINATION.x,
-      0,
-      SETTINGS_DESTINATION.z,
-    );
-    const settingsStone = material("#aaa999", "stone");
-    const settingsWood = material("#6d756a", "wood");
-    const settingsPanel = material("#d8d5c5", "trim");
-    const settingsAccent = material("#6f6b83", "accent");
+    this.#settingsUnit = authorPlazaDestination(SETTINGS_DESTINATION, (settingsPost) => {
+      const settingsStone = material("#aaa999", "stone");
+      const settingsWood = material("#6d756a", "wood");
+      const settingsPanel = material("#d8d5c5", "trim");
+      const settingsAccent = material("#6f6b83", "accent");
 
-    const serviceBase = new Mesh(
-      new BoxGeometry(0.82, 0.16, 0.58),
-      settingsStone,
-    );
-    serviceBase.name = "settings-service-base";
-    serviceBase.position.y = 0.08;
-    this.settingsPost.add(serviceBase);
-
-    const serviceStem = new Mesh(
-      new BoxGeometry(0.16, 0.72, 0.16),
-      settingsWood,
-    );
-    serviceStem.name = "settings-service-stem";
-    serviceStem.position.y = 0.52;
-    this.settingsPost.add(serviceStem);
-
-    const servicePanel = new Mesh(
-      new BoxGeometry(0.76, 0.46, 0.08),
-      settingsPanel,
-    );
-    servicePanel.name = "settings-service-panel";
-    servicePanel.position.set(0, 0.91, 0.08);
-    this.settingsPost.add(servicePanel);
-
-    for (const [index, x] of [-0.2, 0, 0.2].entries()) {
-      const control = new Mesh(
-        new BoxGeometry(0.08, 0.08, 0.04),
-        settingsAccent,
+      const serviceBase = new Mesh(
+        new BoxGeometry(0.82, 0.16, 0.58),
+        settingsStone,
       );
-      control.name = `settings-service-control-${index}`;
-      control.position.set(x, 0.91, 0.13);
-      this.settingsPost.add(control);
-    }
+      serviceBase.name = "settings-service-base";
+      serviceBase.position.y = 0.08;
+      settingsPost.add(serviceBase);
 
-    this.settingsDestination.add(this.settingsPost);
+      const serviceStem = new Mesh(
+        new BoxGeometry(0.16, 0.72, 0.16),
+        settingsWood,
+      );
+      serviceStem.name = "settings-service-stem";
+      serviceStem.position.y = 0.52;
+      settingsPost.add(serviceStem);
+
+      const servicePanel = new Mesh(
+        new BoxGeometry(0.76, 0.46, 0.08),
+        settingsPanel,
+      );
+      servicePanel.name = "settings-service-panel";
+      servicePanel.position.set(0, 0.91, 0.08);
+      settingsPost.add(servicePanel);
+
+      for (const [index, x] of [-0.2, 0, 0.2].entries()) {
+        const control = new Mesh(
+          new BoxGeometry(0.08, 0.08, 0.04),
+          settingsAccent,
+        );
+        control.name = `settings-service-control-${index}`;
+        control.position.set(x, 0.91, 0.13);
+        settingsPost.add(control);
+      }
+    });
+    this.settingsDestination = this.#settingsUnit.root;
+    this.settingsPost = this.#settingsUnit.landmark;
     this.scene.add(this.settingsDestination);
+    this.#authoredDestinations = [this.#recordsUnit, this.#settingsUnit];
 
     this.anchorScenery.name = "plaza-scenery-anchor";
     this.optionalScenery.name = "plaza-scenery-optional";
@@ -555,11 +562,13 @@ export class PlaceableScene {
   #rebuildCameraObstacles() {
     this.scene.updateMatrixWorld(true);
     const next: CameraObstacle[] = [];
+    const authoredObstacleRoots = this.#authoredDestinations
+      .map((destination) => destination.obstacleRoot())
+      .filter((root): root is Group => root !== null);
     const roots = [
       this.gate,
       ...(this.gardenDestination.visible ? [this.gardenDestination] : []),
-      ...(this.recordsDestination.visible ? [this.recordsDestination] : []),
-      ...(this.settingsDestination.visible ? [this.settingsDestination] : []),
+      ...authoredObstacleRoots,
       this.anchorScenery,
       ...(this.#sceneryProfile === "full" ? [this.optionalScenery] : []),
     ];
@@ -589,14 +598,12 @@ export class PlaceableScene {
   }
 
   setRecordsAvailable(available: boolean) {
-    if (this.#disposed || this.recordsDestination.visible === available) return;
-    this.recordsDestination.visible = available;
+    if (this.#disposed || !this.#recordsUnit.setAvailable(available)) return;
     this.#rebuildCameraObstacles();
   }
 
   setSettingsAvailable(available: boolean) {
-    if (this.#disposed || this.settingsDestination.visible === available) return;
-    this.settingsDestination.visible = available;
+    if (this.#disposed || !this.#settingsUnit.setAvailable(available)) return;
     this.#rebuildCameraObstacles();
   }
 
@@ -790,24 +797,10 @@ export class PlaceableScene {
             z: GARDEN_ENTRANCE.z,
           }]
         : []),
-      ...(this.recordsDestination.visible
-        ? [{
-            id: RECORDS_DESTINATION.id,
-            label: RECORDS_DESTINATION.label,
-            x: RECORDS_DESTINATION.x,
-            y: 1.08,
-            z: RECORDS_DESTINATION.z,
-          }]
-        : []),
-      ...(this.settingsDestination.visible
-        ? [{
-            id: SETTINGS_DESTINATION.id,
-            label: SETTINGS_DESTINATION.label,
-            x: SETTINGS_DESTINATION.x,
-            y: 1.2,
-            z: SETTINGS_DESTINATION.z,
-          }]
-        : []),
+      ...this.#authoredDestinations.flatMap((destination) => {
+        const descriptor = destination.labelDescriptor();
+        return descriptor ? [descriptor] : [];
+      }),
     ];
     const sockets = SOCKETS.map((socket) => ({
       ...socket,
