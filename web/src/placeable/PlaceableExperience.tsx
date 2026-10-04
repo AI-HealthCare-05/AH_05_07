@@ -19,12 +19,39 @@ class GardenBoundary extends Component<{ children: ReactNode }, { failed: boolea
     return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>정원 쉼터를 열지 못했어요</h2><p>꾸미기 상태는 그대로예요. 위의 광장 복귀 또는 오늘의 기록 이동을 이용해 주세요.</p></div> : this.props.children;
   }
 }
-class WorldBoundary extends Component<{ children: ReactNode; classicHref: string }, { failed: boolean }> {
+export function WorldFailure({ classicHref, sourceSettling, onContextSwitch }: {
+  classicHref: string;
+  sourceSettling: boolean;
+  onContextSwitch: (event: MouseEvent<HTMLAnchorElement>) => void;
+}) {
+  return <div className="placeable-world-message" role="alert">
+    <h2>3D 광장을 열지 못했어요</h2>
+    <p>{sourceSettling
+      ? <>저장된 꾸미기와 미리보기는 그대로예요. 위의 안내에 따라 미리보기나 저장 상태를 먼저 마무리한 뒤 정원 쉼터, <a
+        href={classicHref}
+        aria-disabled="true"
+        aria-describedby="placeable-destination-handoff"
+        onClick={onContextSwitch}>간단한 광장으로 보기</a>, 오늘의 기록을 이용해 주세요.</>
+      : <>저장된 꾸미기는 그대로예요. 정원 쉼터, <a
+        href={classicHref}
+        aria-disabled="false"
+        onClick={onContextSwitch}>간단한 광장으로 보기</a>, 오늘의 기록으로 계속 이용할 수 있어요.</>}</p>
+  </div>;
+}
+class WorldBoundary extends Component<{
+  children: ReactNode;
+  classicHref: string;
+  sourceSettling: boolean;
+  onContextSwitch: (event: MouseEvent<HTMLAnchorElement>) => void;
+}, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <div className="placeable-world-message" role="alert"><h2>3D 광장을 열지 못했어요</h2><p>저장된 꾸미기는 그대로예요. 정원 쉼터로 이동하거나 <a href={this.props.classicHref}>간단한 광장으로 보기</a>에서 계속 이용할 수 있어요.</p></div>
-      : this.props.children;
+    return this.state.failed ? <WorldFailure
+      classicHref={this.props.classicHref}
+      sourceSettling={this.props.sourceSettling}
+      onContextSwitch={this.props.onContextSwitch}
+    /> : this.props.children;
   }
 }
 const phaseCopy = {
@@ -428,8 +455,9 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
         {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
-        {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
+        {world ? <WorldBoundary classicHref={route("classic")} sourceSettling={sourceSettling} onContextSwitch={blockContextSwitch}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
+            sourceSettling={sourceSettling}
             onGateProximityChange={setTodayGateProximity}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
