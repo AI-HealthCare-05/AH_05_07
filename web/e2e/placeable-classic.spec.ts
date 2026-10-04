@@ -1533,6 +1533,12 @@ test("#975 API session rejection withdraws account My Space without browser fall
   expect(await page.evaluate(() =>
     (window as unknown as { sessionBoundaryBrowserWrites: number }).sessionBoundaryBrowserWrites)).toBe(0);
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-space-must-stay-separate");
+
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-e2e-auth-token"))).toBeNull();
+  await page.getByRole("button", { name: "계정 공간 다시 확인" }).click();
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요");
+  expect(account.puts).toBe(1);
 });
 
 test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
