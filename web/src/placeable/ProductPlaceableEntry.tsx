@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { readCompanionIdentity } from "../ui/companionIdentity";
@@ -27,6 +27,11 @@ export default function ProductPlaceableEntry() {
   const [adapter, setAdapter] = useState<PlaceablePersistence | null>(account ? null : browser);
   const [status, setStatus] = useState<AccountBindingStatus>("checking");
   const [attempt, setAttempt] = useState(0);
+  const bindingRef = useRef<VerifiedAccountBinding | null>(null);
+  const withdrawAccountAuthority = useCallback(() => {
+    if (!account) return;
+    void bindingRef.current?.update(null);
+  }, [account]);
   useEffect(() => {
     if (!account) return;
     const auth = supabase?.auth;
@@ -59,6 +64,7 @@ export default function ProductPlaceableEntry() {
       setAdapter(identity ? accountPersistence({ identity, currentIdentity: binding.current,
         baseUrl: import.meta.env.VITE_API_BASE_URL || "" }) : null);
     });
+    bindingRef.current = binding;
     const update = (session: Session | null) => {
       if (alive) void binding.update(session ? { owner: session.user.id, token: session.access_token } : null);
     };
@@ -68,6 +74,7 @@ export default function ProductPlaceableEntry() {
     void auth.getSession().then(({ data, error }) => { if (!observed) update(error ? null : data.session); })
       .catch(() => { if (!observed) update(null); });
     return () => {
+      if (bindingRef.current === binding) bindingRef.current = null;
       alive = false; binding.dispose(); subscription.unsubscribe(); timers.forEach(clearTimeout); timers.clear();
     };
   }, [account, attempt]);
@@ -82,5 +89,6 @@ export default function ProductPlaceableEntry() {
     <p><a href="/?screen=S02">오늘의 기록으로 돌아가기</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>이 브라우저의 공간으로 계속하기</a></p>
   </main>;
-  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} reentry={reentry} returnPlace={returnPlace} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable />;
+  return <PlaceableExperience key={adapterId.current.value} adapter={adapter} world={world} reentry={reentry} returnPlace={returnPlace} companion={companion} choice={readLivingChoice(window.location.search)} accountAvailable
+    onSessionInvalid={account ? withdrawAccountAuthority : undefined} />;
 }
