@@ -40,7 +40,7 @@ test("built default/Classic/guest chunks may dynamically reach E2 but cannot eag
 
 test("renderer cannot import account, API, controller or health state", () => {
   const plugin = placeableBoundary(); plugin.configResolved({ root: "/web" });
-  for (const source of ["placeable/PlaceableWorld.tsx", "placeable/livingCityRenderDensity.ts", "placeable/livingChoiceMarker.ts", "placeable/companionActor.ts", "placeable/plazaLocomotion.ts", "placeable/plazaCamera.ts", "placeable/plazaPointerGesture.ts", "ui/mySpaceCompanion.ts", "ui/livingChoice.ts"]) {
+  for (const source of ["placeable/PlaceableWorld.tsx", "placeable/GardenNook.tsx", "placeable/gardenScene.ts", "placeable/gardenWalk.ts", "placeable/livingCityRenderDensity.ts", "placeable/livingChoiceMarker.ts", "placeable/companionActor.ts", "placeable/plazaLocomotion.ts", "placeable/plazaCamera.ts", "placeable/plazaPointerGesture.ts", "ui/mySpaceCompanion.ts", "ui/livingChoice.ts"]) {
     const id = `/web/src/${source}`;
     for (const imported of ["lib/supabase.ts", "lib/api.ts", "placeable/controller.ts", "placeable/persistence.ts", "App.tsx", "ui/LivingChoiceLink.tsx", "ui/companionIdentity.ts", "components/CompanionReviewRenderer.tsx", "components/scene/s02SceneActor.ts"]) {
       assert.throws(() => plugin.moduleParsed({ id, importedIds: [`/web/src/${imported}`], dynamicallyImportedIds: [] }), /product state/);

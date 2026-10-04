@@ -8,6 +8,7 @@ import {
   type LandmarkMaterialRole,
 } from "../components/scene/environment";
 import { disposeScene } from "../components/scene/disposeScene";
+import { advanceGardenWalk } from "./gardenWalk";
 import type { MovementIntent } from "../../transcend-lab/src/platform/behavior/worldMovementIntent";
 
 type GardenPavilionTreatment = Readonly<{ color: string; roughness?: number }>;
@@ -176,13 +177,27 @@ export class GardenScene {
   }
 
   get atPavilion() { return Math.abs(this.actor.position.x) < 0.7 && this.actor.position.z < 0.75; }
-  approach() { if (!this.#disposed) this.actor.position.set(0, 0.17, 0.4); }
-  step(seconds: number, intent: MovementIntent, resting: boolean) {
-    if (this.#disposed || resting) return;
-    const dt = Math.max(0, Math.min(seconds, 0.05));
-    // The walkable front garden ends at the pavilion steps; never walk through its columns.
-    this.actor.position.x = Math.max(-1.65, Math.min(1.65, this.actor.position.x + intent.lateral * dt * 1.6));
-    this.actor.position.z = Math.max(0.35, Math.min(2.75, this.actor.position.z - intent.forward * dt * 1.6));
+  approach() {
+    if (this.#disposed) return;
+    this.actor.position.set(0, 0.17, 0.4);
+    // The semantic shortcut arrives facing the pavilion. Position authority and
+    // the existing approach destination remain unchanged.
+    this.actor.rotation.y = Math.PI;
+  }
+  step(seconds: number, intent: MovementIntent, resting: boolean): boolean {
+    if (this.#disposed) return false;
+    const next = advanceGardenWalk({
+      x: this.actor.position.x,
+      z: this.actor.position.z,
+      facing: this.actor.rotation.y,
+    }, seconds, intent, resting);
+    if (!next.moving) return false;
+    // GardenScene remains the only world-root writer. Animation owns only its
+    // child model; neither a held key nor a clip creates travel at the boundary.
+    this.actor.position.x = next.x;
+    this.actor.position.z = next.z;
+    this.actor.rotation.y = next.facing;
+    return true;
   }
   dispose(renderer?: WebGLRenderer) {
     if (this.#disposed) return;
