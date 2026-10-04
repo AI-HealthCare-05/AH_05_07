@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { livingChoice, livingChoiceQuery, readLivingChoice } from "../src/ui/livingChoice";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import PlaceableExperience, { ClassicPlaza } from "../src/placeable/PlaceableExperience";
+import PlaceableExperience, { ClassicPlaza, WorldFailure } from "../src/placeable/PlaceableExperience";
 import { VerifiedAccountBinding } from "../src/placeable/accountBinding";
 import { accountPersistence, type AccountIdentity, type PlaceablePersistence } from "../src/placeable/persistence";
 import { ASSET, emptySnapshot } from "../src/placeable/contract";
@@ -21,6 +21,26 @@ test("Guest world presentation exposes qualified spatial controls without durabl
   const ordinary = renderToStaticMarkup(createElement(PlaceableWorld, projection));
   expect(ordinary).toContain("바람개비 돌리기");
   expect(ordinary).toContain("미리보기·저장");
+});
+
+test("#971 world fallback keeps source-settling recovery truthful", () => {
+  const blocked = renderToStaticMarkup(createElement(WorldFailure, {
+    classicHref: "?experience=e2&view=classic&storage=browser",
+    sourceSettling: true,
+    onContextSwitch: () => {},
+  }));
+  expect(blocked).toContain('aria-disabled="true"');
+  expect(blocked).toContain('aria-describedby="placeable-destination-handoff"');
+  expect(blocked).toContain("미리보기나 저장 상태를 먼저 마무리");
+
+  const available = renderToStaticMarkup(createElement(WorldFailure, {
+    classicHref: "?experience=e2&view=classic&storage=browser",
+    sourceSettling: false,
+    onContextSwitch: () => {},
+  }));
+  expect(available).toContain('aria-disabled="false"');
+  expect(available).not.toContain('aria-describedby="placeable-destination-handoff"');
+  expect(available).toContain("오늘의 기록으로 계속 이용할 수 있어요");
 });
 
 test("product's first render is unplaced/loading with disabled confirmation and truthful storage scope", () => {

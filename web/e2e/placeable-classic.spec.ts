@@ -207,6 +207,46 @@ test("#969 preview blocks renderer and storage context switches until source set
   await expect(storageClassic).toHaveAttribute("aria-disabled", "false");
 });
 
+test("#971 WebGL failure during preview preserves source-settling recovery truth", async ({ page }) => {
+  await page.goto(companionRoute);
+  const canvas = page.getByTestId("placeable-world-canvas");
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  await canvas.evaluate((node: HTMLCanvasElement) => {
+    node.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
+  });
+
+  const alert = page.getByRole("alert");
+  const handoff = page.locator(".placeable-handoff-note");
+  const viewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
+  const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+  const storage = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
+
+  await expect(alert).toContainText("3D 광장을 열지 못했어요");
+  await expect(alert).toContainText("미리보기나 저장 상태를 먼저 마무리");
+  await expect(canvas).toHaveCount(0);
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  for (const control of [viewSwitch, storage]) {
+    await expect(control).toHaveAttribute("aria-disabled", "true");
+    await expect(control).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+  }
+  await expect(today).toHaveAttribute("aria-disabled", "true");
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
+  await expect(garden).toHaveAttribute("aria-disabled", "true");
+  await expect(garden).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+
+  await viewSwitch.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "3d");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  await expect(page.getByRole("button", { name: "3D 다시 열기", exact: true })).toBeEnabled();
+  expect(await readLocal(page)).toBeNull();
+});
+
 for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive ${behavior}: recovery stays visible and cannot become a saved response`, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await accountRoute(page, behavior, false);

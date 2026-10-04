@@ -14,7 +14,7 @@ import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
+type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; sourceSettling?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
@@ -286,7 +286,11 @@ export default function PlaceableWorld(props: Props) {
         style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{props.pinwheelPreview && label.id === props.selection?.socketId ? `미리보기 · ${label.label}` : label.label}</span>)}
       {error && <div className="placeable-world-message" role="alert">
         <h2>{guestVisit ? "3D 공간을 열지 못했어요" : "3D 광장을 열지 못했어요"}</h2>
-        <p>{guestVisit ? "다시 열거나 오늘 화면으로 돌아갈 수 있어요." : "저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장으로 바꾸거나 오늘의 기록으로 이동할 수 있어요."}</p>
+        <p>{guestVisit
+          ? "다시 열거나 오늘 화면으로 돌아갈 수 있어요."
+          : props.sourceSettling
+            ? "저장된 꾸미기와 미리보기는 그대로예요. 위의 안내에 따라 미리보기나 저장 상태를 먼저 마무리해 주세요."
+            : "저장된 꾸미기와 미리보기는 그대로예요. 간단한 광장이나 오늘의 기록으로 계속 이용할 수 있어요."}</p>
         <button onClick={() => setAttempt((value) => value + 1)}>3D 다시 열기</button>
       </div>}
       {props.preview && <span className="placeable-world-caption">저장 전 미리보기</span>}
