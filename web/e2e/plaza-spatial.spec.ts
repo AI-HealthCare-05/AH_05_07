@@ -359,6 +359,56 @@ test("#944/#963 Today Gate uses the existing E1 radius and exposes one semantic 
   ).toBe("rgba(0, 0, 0, 0)");
 });
 
+test("#967 Gate semantic handoff clears when Plaza world unmounts for Garden", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await open(page);
+
+  const world = page.getByTestId("placeable-world");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  const status = page.getByTestId("plaza-gate-status");
+
+  await canvas.focus();
+  await page.keyboard.down("w");
+  try {
+    await expect(world).toHaveAttribute("data-gate-proximity", "approach", { timeout: 4500 });
+  } finally {
+    await page.keyboard.up("w");
+  }
+
+  await expect(world).toHaveAttribute("data-first-step", "complete", { timeout: 3000 });
+
+  await canvas.focus();
+  await page.keyboard.down("d");
+  try {
+    await expect.poll(async () => (await sample(page)).x, { timeout: 3500 }).toBeGreaterThan(-0.25);
+  } finally {
+    await page.keyboard.up("d");
+  }
+
+  await canvas.focus();
+  await page.keyboard.down("w");
+  try {
+    await expect(world).toHaveAttribute("data-gate-proximity", "arrived", { timeout: 4000 });
+  } finally {
+    await page.keyboard.up("w");
+  }
+
+  await expect(status).toHaveAttribute("data-state", "arrived");
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context plaza-gate-status");
+
+  await page.getByRole("button", { name: "정원 쉼터로 가기", exact: true }).click();
+  await expect(page.getByTestId("garden-experience")).toBeVisible();
+  await expect(page.getByTestId("plaza-gate-status")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "광장으로 돌아가기", exact: true }).click();
+  await expect(page.getByTestId("placeable-world")).toHaveAttribute("data-gate-proximity", "far");
+  await expect(page.getByTestId("plaza-gate-status")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }))
+    .toHaveAttribute("aria-describedby", "placeable-today-context");
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+});
+
 test("R2 desktop actual locomotion, facing, 90/180 degree camera-relative control, stop, reset and label tracking", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 }); await open(page);
   const initial = await sample(page); expect(initial.engaged).toBe(false);
