@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { publishAuthoritativeSessionRejection, subscribeAuthoritativeSessionRejection } from "../lib/sessionRejectionBoundary";
 import { removePersistedSessionIfAccessToken, requestTokenBoundLocalLogout, supabase } from "../lib/supabase";
 import { readCompanionIdentity } from "../ui/companionIdentity";
 import { getMySpaceCompanion } from "../ui/mySpaceCompanion";
@@ -75,10 +76,19 @@ export default function ProductPlaceableEntry() {
           // bound to the exact rejected token instead.
           void binding.update(null);
           removePersistedSessionIfAccessToken(rejected.token);
+          void publishAuthoritativeSessionRejection(rejected.token, reason).catch(() => undefined);
           void requestTokenBoundLocalLogout(rejected.token).catch(() => undefined);
         },
       }) : null);
     });
+    const stopAuthoritativeRejection = subscribeAuthoritativeSessionRejection(
+      () => binding.current()?.token ?? null,
+      (reason) => {
+        if (!alive || !binding.current()) return;
+        setRejection(reason);
+        void binding.update(null);
+      },
+    );
     const update = (session: Session | null) => {
       if (alive) void binding.update(session ? { owner: session.user.id, token: session.access_token } : null);
     };
@@ -88,7 +98,7 @@ export default function ProductPlaceableEntry() {
     void auth.getSession().then(({ data, error }) => { if (!observed) update(error ? null : data.session); })
       .catch(() => { if (!observed) update(null); });
     return () => {
-      alive = false; binding.dispose(); subscription.unsubscribe(); timers.forEach(clearTimeout); timers.clear();
+      alive = false; stopAuthoritativeRejection(); binding.dispose(); subscription.unsubscribe(); timers.forEach(clearTimeout); timers.clear();
     };
   }, [account, attempt]);
   // Each verified identity gets a fresh controller; old in-flight work cannot publish.

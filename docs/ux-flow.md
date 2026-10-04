@@ -87,9 +87,12 @@ state. No prior `return_space` or Living
 Choice is needed. App supplies only the bounded My Space destination intent:
 3D/account by default; an existing explicit browser-only or Classic return
 context stays intact. ProductPlaceableEntry re-verifies the account session and
-owns cosmetic reads through the existing adapters/controller. Account failure
-never silently reads, copies or merges browser state; sign-in/retry and explicit
-browser-only recovery remain available. My Space's `오늘의 기록으로 가기`
+owns cosmetic reads through the existing adapters/controller. An authoritative
+remote session/owner rejection is propagated across open product tabs by a
+one-way token fingerprint, and only a tab still bound to that exact rejected
+token withdraws authority; a newer token is not signed out by stale rejection.
+Account failure never silently reads, copies or merges browser state; sign-in/retry
+and explicit browser-only recovery remain available. My Space's `오늘의 기록으로 가기`
 action uses an explicit S02 URL and carries only the known view/storage return
 context; it never uses bare `/`. Entry itself performs no cosmetic
 write or WebGL availability check. Guest routing and production activation remain
