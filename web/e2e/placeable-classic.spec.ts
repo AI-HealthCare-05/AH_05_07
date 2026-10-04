@@ -130,6 +130,83 @@ test("#917 reduced motion keeps pinwheel preview static, semantic and unsaved", 
   expect(await readLocal(page)).toBeNull();
 });
 
+test("#969 preview blocks renderer and storage context switches until source settles", async ({ page }) => {
+  await page.goto(companionRoute);
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+
+  const handoff = page.locator(".placeable-handoff-note");
+  const view3d = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
+  const storage3d = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
+
+  for (const link of [view3d, storage3d]) {
+    await expect(link).toHaveAttribute("aria-disabled", "true");
+    await expect(link).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+  }
+
+  await view3d.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "3d");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  const storage3dBox = await storage3d.boundingBox();
+  expect(storage3dBox).toBeTruthy();
+  await page.mouse.click(
+    storage3dBox!.x + storage3dBox!.width / 2,
+    storage3dBox!.y + storage3dBox!.height / 2,
+  );
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  expect(await readLocal(page)).toBeNull();
+
+  await page.keyboard.press("Escape");
+  await expect(view3d).toHaveAttribute("aria-disabled", "false");
+  await expect(view3d).not.toHaveAttribute("aria-describedby", /.+/);
+
+  // In 3D, cancelling the preview closes the editor, so the storage switch is
+  // intentionally hidden from the accessibility tree until editing is opened.
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(storage3d).toHaveAttribute("aria-disabled", "false");
+  await expect(storage3d).not.toHaveAttribute("aria-describedby", /.+/);
+
+  await view3d.click();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "classic");
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  const viewClassic = page.getByRole("link", { name: "3D 광장으로 보기", exact: true });
+  const storageClassic = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
+
+  for (const link of [viewClassic, storageClassic]) {
+    await expect(link).toHaveAttribute("aria-disabled", "true");
+    await expect(link).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+  }
+
+  const viewClassicBox = await viewClassic.boundingBox();
+  expect(viewClassicBox).toBeTruthy();
+  await page.mouse.click(
+    viewClassicBox!.x + viewClassicBox!.width / 2,
+    viewClassicBox!.y + viewClassicBox!.height / 2,
+  );
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-view", "classic");
+
+  const storageClassicBox = await storageClassic.boundingBox();
+  expect(storageClassicBox).toBeTruthy();
+  await page.mouse.click(
+    storageClassicBox!.x + storageClassicBox!.width / 2,
+    storageClassicBox!.y + storageClassicBox!.height / 2,
+  );
+  await expect(handoff).toBeFocused();
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  expect(await readLocal(page)).toBeNull();
+
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click();
+  await expect(viewClassic).toHaveAttribute("aria-disabled", "false");
+  await expect(storageClassic).toHaveAttribute("aria-disabled", "false");
+});
+
 for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive ${behavior}: recovery stays visible and cannot become a saved response`, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await accountRoute(page, behavior, false);
@@ -144,7 +221,13 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+  const blockedViewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
+  const blockedStorageSwitch = page.getByRole("link", { name: "이 브라우저의 공간 사용하기", exact: true });
   await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
+  for (const link of [blockedViewSwitch, blockedStorageSwitch]) {
+    await expect(link).toHaveAttribute("aria-disabled", "true");
+    await expect(link).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+  }
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }))
     .toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
   await blockedGarden.focus();
@@ -1401,7 +1484,9 @@ test("E8 WebGL failure retains account 간단한 광장으로 보기 and 오늘�
   await page.getByRole("link", { name: "내 공간으로 가기" }).click();
   await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toBeVisible();
-  await page.getByRole("link", { name: "간단한 광장으로 보기", exact: true }).click();
+  const recoveryViewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
+  await expect(recoveryViewSwitch).toHaveAttribute("aria-disabled", "false");
+  await recoveryViewSwitch.click();
   await expect(page.getByTestId("classic-plaza")).toBeVisible();
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
   await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
