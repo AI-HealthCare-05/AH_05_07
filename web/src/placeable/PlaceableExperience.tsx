@@ -149,10 +149,11 @@ export function ClassicPlaza({ selection, preview, pulse, interact, canInteract,
   </div>;
 }
 
-export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, reentry = false, returnPlace = null, choice = null, companion = null }: {
+export default function PlaceableExperience({ adapter, accountAvailable = false, world = false, reentry = false, returnPlace = null, choice = null, companion = null, onSessionInvalid }: {
   companion?: CompanionAsset | null;
   choice?: LivingChoice | null;
   adapter: PlaceablePersistence; accountAvailable?: boolean; world?: boolean; reentry?: boolean; returnPlace?: MySpaceReturnPlace | null;
+  onSessionInvalid?: () => void;
 }) {
   const [controller] = useState(() => new PlaceableController(adapter));
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
@@ -238,6 +239,9 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       audio.dispose();
     };
   }, [controller, audio]);
+  useEffect(() => {
+    if (state.phase === "session") onSessionInvalid?.();
+  }, [state.phase, onSessionInvalid]);
   useEffect(() => {
     const leave = (event: BeforeUnloadEvent) => {
       if (state.draft !== undefined || state.keepsakeDraft !== undefined || state.pending) { event.preventDefault(); event.returnValue = ""; }

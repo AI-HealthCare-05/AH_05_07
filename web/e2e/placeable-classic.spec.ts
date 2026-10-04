@@ -508,7 +508,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -528,6 +528,10 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
           : behavior === "unknown" && !confirmUnknownOnRead ? emptySnapshot() : snapshot) });
     }
     puts++; const op = request.postDataJSON() as Operation;
+    if (behavior === "session") {
+      return route.fulfill({ status: 401, headers: cors, contentType: "application/json",
+        body: JSON.stringify({ detail: { code: "session_invalid" } }) });
+    }
     if (behavior === "conflict" && puts === 1) {
       snapshot = await saved({ ...op, operationId: crypto.randomUUID(), selection: op.schemaVersion === "placeable.v2" ? { pinwheel: null, keepsake: null } : null });
       return route.fulfill({ status: 409, headers: cors, contentType: "application/json", body: JSON.stringify({ detail: { code: "revision_conflict" } }) });
@@ -1491,6 +1495,44 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "browser");
   await page.getByRole("link", { name: "오늘의 기록으로 가기" }).click(); await expectClassicToday(page);
   await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser&return_space=3d-browser");
+});
+
+test("#975 API session rejection withdraws account My Space without browser fallback", async ({ page }) => {
+  const account = await accountRoute(page, "session");
+  await page.addInitScript((key) => {
+    localStorage.setItem(key, "browser-space-must-stay-separate");
+    const read = Storage.prototype.getItem;
+    const write = Storage.prototype.setItem;
+    Object.assign(window, { sessionBoundaryBrowserReads: 0, sessionBoundaryBrowserWrites: 0 });
+    Storage.prototype.getItem = function (name) {
+      if (name === key) (window as unknown as { sessionBoundaryBrowserReads: number }).sessionBoundaryBrowserReads++;
+      return read.call(this, name);
+    };
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) (window as unknown as { sessionBoundaryBrowserWrites: number }).sessionBoundaryBrowserWrites++;
+      return write.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+
+  await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요");
+  await expect(page.getByRole("link", { name: "오늘의 기록으로 돌아가기" })).toHaveAttribute("href", "/?screen=S02");
+  await expect(page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" }))
+    .toHaveAttribute("href", "?experience=e2&view=3d&storage=browser");
+
+  expect(account.puts).toBe(1);
+  expect(await page.evaluate(() =>
+    (window as unknown as { sessionBoundaryBrowserReads: number }).sessionBoundaryBrowserReads)).toBe(0);
+  expect(await page.evaluate(() =>
+    (window as unknown as { sessionBoundaryBrowserWrites: number }).sessionBoundaryBrowserWrites)).toBe(0);
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-space-must-stay-separate");
 });
 
 test("E8 live account session loss removes the space without browser fallback", async ({ page }) => {
