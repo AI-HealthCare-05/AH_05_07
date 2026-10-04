@@ -1644,8 +1644,24 @@ test("#989 stale token-A rejection cannot withdraw newer token B in another My S
 
   // A well-formed but stale rejection for token A must also leave B alive.
   await page.evaluate(async (token) => {
-    const boundary = await import("/src/lib/sessionRejectionBoundary.ts");
-    await boundary.publishAuthoritativeSessionRejection(token, "session-invalid");
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token),
+    );
+    const tokenFingerprint = Array.from(
+      new Uint8Array(digest),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+
+    const channel = new BroadcastChannel(
+      "sk7:authoritative-session-rejection:v1",
+    );
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint,
+      reason: "session-invalid",
+    });
+    channel.close();
   }, primary.session.access_token);
 
   await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");

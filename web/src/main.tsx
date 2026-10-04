@@ -20,9 +20,11 @@ const PRELOAD_RECOVERY_COOLDOWN_MS = 60_000;
 // bundle whose hashed lazy chunk no longer exists. Recover once by reloading
 // the current HTML instead of leaving an optional presentation layer missing.
 window.addEventListener("vite:preloadError", (event) => {
-  // Mounted Guest plaza and Garden own local recovery and semantic exits.
-  // Before they mount, root chunk failures still need the one-shot reload.
-  if (document.querySelector('[data-guest-space="plaza"]')
+  // Mounted product My Space, Guest plaza and Garden own local recovery
+  // and semantic exits. Before they mount, root chunk failures still need
+  // the one-shot reload.
+  if (document.querySelector(".placeable-experience")
+    || document.querySelector('[data-guest-space="plaza"]')
     || document.querySelector('[data-living-city-space="garden-nook"]')) return;
   const now = Date.now();
 
