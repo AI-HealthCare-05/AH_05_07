@@ -67,6 +67,7 @@
 .placeable-state-identity[data-state=unsupported] > p:last-child { color: currentColor; }
 .placeable-experience .placeable-storage { font-size: .85rem; margin: 0; }
 .placeable-storage-switch, .placeable-asset-id { font-size: .8rem; }
+.placeable-view-switch[aria-disabled=true], .placeable-storage-switch[aria-disabled=true] { opacity: .5; cursor: not-allowed; }
 .placeable-choice-note { color: var(--sk7-text-muted); font-size: var(--sk7-type-label); }
 .placeable-choice-note span { font-size: var(--sk7-type-caption); }
 .placeable-feedback { min-height: 28px; text-align: center; font-weight: 600; }

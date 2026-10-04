@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { dataScopeLabel } from "../ui/dataScope";
 import { livingChoiceLabel, livingChoiceQuery, type LivingChoice } from "../ui/livingChoice";
@@ -339,14 +339,19 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     await controller.confirm();
     if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
   }
-  const gardenBlocked = preview || Boolean(state.pending);
-  const todayDescribedBy = gardenBlocked
+  const sourceSettling = preview || Boolean(state.pending);
+  const todayDescribedBy = sourceSettling
     ? "placeable-today-context placeable-destination-handoff"
     : world && todayGateProximity !== "far"
       ? "placeable-today-context plaza-gate-status"
       : "placeable-today-context";
+  function blockContextSwitch(event: MouseEvent<HTMLAnchorElement>) {
+    if (!sourceSettling) return;
+    event.preventDefault();
+    handoffRef.current?.focus();
+  }
   function enterGardenNook() {
-    if (gardenBlocked) {
+    if (sourceSettling) {
       handoffRef.current?.focus();
       return;
     }
@@ -355,8 +360,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }
   const gardenPath = <div className="placeable-garden-path">
     <div><p className="placeable-eyebrow">내 공간 안의 쉼터</p><h2>정원 쉼터 · Garden Nook</h2><p>정자 곁에서 동반자와 잠깐 머물러 보세요.</p></div>
-    <button ref={gardenEntry} type="button" disabled={gardenBlocked} onClick={enterGardenNook}>정원 쉼터로 가기 →</button>
-    {gardenBlocked && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
+    <button ref={gardenEntry} type="button" disabled={sourceSettling} onClick={enterGardenNook}>정원 쉼터로 가기 →</button>
+    {sourceSettling && <p>미리보기를 확정하거나 취소해 주세요. 저장 상태가 불확실하면 먼저 확인해 주세요.</p>}
   </div>;
   if (space === "garden-nook") return <main className="placeable-experience garden-experience" data-testid="garden-experience" data-living-city-space="garden-nook">
     <header className="placeable-header">
@@ -390,11 +395,14 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
         <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
-          href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
+          href={route(world ? "classic" : "3d")}
+          aria-disabled={sourceSettling}
+          aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
+          onClick={blockContextSwitch}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
         {!world && <a className="placeable-health-home" href={classicTodayHref("classic", adapter.mode)}
           aria-describedby={todayDescribedBy}
-          aria-disabled={preview || Boolean(state.pending)}
-          onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
+          aria-disabled={sourceSettling}
+          onClick={blockContextSwitch}>
           오늘의 기록 <span aria-hidden="true">→</span></a>}
       </nav>
     </header>
@@ -411,15 +419,15 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
           {world && <button className="plaza-garden-action" ref={gardenEntry} type="button"
             aria-label="정원 쉼터로 가기"
-            aria-disabled={gardenBlocked}
-            aria-describedby={gardenBlocked ? "placeable-destination-handoff" : undefined}
+            aria-disabled={sourceSettling}
+            aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
             onClick={enterGardenNook}>
             정원 쉼터 <span aria-hidden="true">→</span>
           </button>}
           {world && <button className="plaza-edit-action" ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
-        {(preview || state.pending) && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동할 수 있어요."}</p></div>}
+        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             onGateProximityChange={setTodayGateProximity}
@@ -446,7 +454,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           ? <><span data-scope-label="browser">{dataScopeLabel("browser")}</span>에만 저장 · 계정 공간과 분리돼요.</>
           : <><span data-scope-label="account">{dataScopeLabel("account")}</span> 공간에 저장 · 이 브라우저의 공간과 분리돼요.</>}</p>
         {stateIdentityCard}
-        {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}>
+        {accountAvailable && <a className="placeable-storage-switch" href={route(world ? "3d" : "classic", adapter.mode === "browser" ? "account" : "browser")}
+          aria-disabled={sourceSettling}
+          aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
+          onClick={blockContextSwitch}>
           {adapter.mode === "browser" ? "계정 공간 사용하기" : "이 브라우저의 공간 사용하기"}</a>}
         {!world && saveStatus}
         {state.phase === "conflict" && <button onClick={() => controller.reviewLatest()}>미리보기를 유지하고 최근 저장 상태 사용</button>}
