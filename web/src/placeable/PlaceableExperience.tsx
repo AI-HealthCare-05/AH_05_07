@@ -339,6 +339,9 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
   }
   const gardenBlocked = preview || Boolean(state.pending);
+  const todayDescribedBy = gardenBlocked
+    ? "placeable-today-context placeable-destination-handoff"
+    : "placeable-today-context";
   function enterGardenNook() {
     if (gardenBlocked) {
       handoffRef.current?.focus();
@@ -386,7 +389,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
           href={route(world ? "classic" : "3d")}>{world ? "간단한 광장" : "3D 광장으로 보기"}</a>
         {!world && <a className="placeable-health-home" href={classicTodayHref("classic", adapter.mode)}
-          aria-describedby="placeable-today-context"
+          aria-describedby={todayDescribedBy}
           aria-disabled={preview || Boolean(state.pending)}
           onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
           오늘의 기록 <span aria-hidden="true">→</span></a>}
@@ -399,7 +402,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           <p id="placeable-today-context">혈압 기록과 지난 기록 확인은 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
           <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-label="오늘의 기록으로 가기"
-            aria-describedby="placeable-today-context"
+            aria-describedby={todayDescribedBy}
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
