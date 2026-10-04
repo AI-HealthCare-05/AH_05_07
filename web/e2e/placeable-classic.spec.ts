@@ -1505,17 +1505,21 @@ test("E8 account unavailable never reads browser placement; explicit browser-onl
   await expect(page.getByRole("link", { name: "내 공간으로 돌아가기" })).toHaveAttribute("href", "?experience=e2&view=3d&storage=browser&return_space=3d-browser");
 });
 
-for (const [behavior, expected] of [
-  ["read-session", "계정 공간을 이용하려면 다시 로그인해 주세요"],
-  ["read-owner-deleted", "이 계정은 삭제되어 계정 공간을 더 이상 이용할 수 없어요"],
-] as const) test(`#985 initial account GET ${behavior} withdraws authority with truthful recovery`, async ({ page }) => {
+for (const [behavior, expected, heading, retry] of [
+  ["read-session", "계정 공간을 이용하려면 다시 로그인해 주세요", "계정 공간을 확인하고 있어요", true],
+  ["read-owner-deleted", "이 계정은 삭제되어 계정 공간을 더 이상 이용할 수 없어요", "계정이 삭제됐어요", false],
+] as const) test(`#987 initial account GET ${behavior} exposes only truthful recovery actions`, async ({ page }) => {
   const account = await accountRoute(page, behavior);
   await page.addInitScript((key) => localStorage.setItem(key, "browser-space-must-stay-separate"), STORAGE_KEY);
 
   await page.goto("/?experience=e2&view=3d&storage=account");
 
   await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   await expect(page.getByRole("status")).toContainText(expected);
+  const retryButton = page.getByRole("button", { name: "계정 공간 다시 확인" });
+  if (retry) await expect(retryButton).toBeVisible();
+  else await expect(retryButton).toHaveCount(0);
   await expect(page.getByRole("link", { name: "오늘의 기록으로 돌아가기" })).toHaveAttribute("href", "/?screen=S02");
   await expect(page.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" })).toBeVisible();
   expect(account.reads).toBe(1);
