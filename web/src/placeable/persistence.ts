@@ -61,8 +61,9 @@ export function accountPersistence(options: {
   baseUrl: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
+  onSessionRejected?: (identity: AccountIdentity) => void;
 }): PlaceablePersistence {
-  const { currentIdentity, baseUrl, fetcher = fetch, timeoutMs = 8000 } = options;
+  const { currentIdentity, baseUrl, fetcher = fetch, timeoutMs = 8000, onSessionRejected } = options;
   const identity = Object.freeze({ ...options.identity });
   function checkSession() {
     const current = currentIdentity();
@@ -87,7 +88,14 @@ export function accountPersistence(options: {
         const body = await response.json().catch(() => null);
         checkSession();
         const code = body?.detail?.code;
-        if ([401, 403, 410].includes(response.status)) throw new PersistenceError("session");
+        if ([401, 403, 410].includes(response.status)) {
+          // This callback is intentionally narrower than Failure="session".
+          // Reaching here means the captured identity is still current and the
+          // server itself rejected that exact session/owner. A stale adapter
+          // fenced by checkSession() never reaches this callback.
+          onSessionRejected?.(identity);
+          throw new PersistenceError("session");
+        }
         if (response.status === 409 && ["revision_conflict", "operation_changed"].includes(code)) throw new PersistenceError("conflict");
         if (response.status === 422 && code === "unsupported_snapshot") throw new PersistenceError("unsupported");
         throw new PersistenceError(operation ? "unknown" : "unavailable");

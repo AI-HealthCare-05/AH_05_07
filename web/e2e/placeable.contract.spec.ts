@@ -96,6 +96,41 @@ test("account adapter binds owner/token, preserves response failures and never r
     schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral })).rejects.toMatchObject({ kind: "unknown" });
   expect(calls).toBe(2);
 });
+test("#977 account adapter reports only current remote session rejection", async () => {
+  const identity = { owner: "synthetic-A", token: "synthetic-A", generation: 1 };
+  const rejected: typeof identity[] = [];
+  const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 0,
+    schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral };
+
+  for (const status of [401, 403, 410]) {
+    let current: typeof identity | null = identity;
+    const adapter = accountPersistence({
+      identity,
+      currentIdentity: () => current,
+      baseUrl: "https://synthetic.invalid",
+      onSessionRejected: (value) => rejected.push(value),
+      fetcher: async () => new Response(JSON.stringify({ detail: { code: "session_invalid" } }), { status }),
+    });
+    await expect(adapter.save(op)).rejects.toMatchObject({ kind: "session" });
+    expect(rejected.at(-1)).toEqual(identity);
+
+    current = { owner: "synthetic-A", token: "newer-token", generation: 2 };
+    await expect(adapter.read()).rejects.toMatchObject({ kind: "session" });
+    expect(rejected.filter((value) => value.generation === identity.generation)).toHaveLength(status === 401 ? 1 : status === 403 ? 2 : 3);
+  }
+
+  const beforeUnknown = rejected.length;
+  const unknown = accountPersistence({
+    identity,
+    currentIdentity: () => identity,
+    baseUrl: "https://synthetic.invalid",
+    onSessionRejected: (value) => rejected.push(value),
+    fetcher: async () => new Response(JSON.stringify({ detail: { code: "save_unknown" } }), { status: 503 }),
+  });
+  await expect(unknown.save(op)).rejects.toMatchObject({ kind: "unknown" });
+  expect(rejected).toHaveLength(beforeUnknown);
+});
+
 test("strict snapshot and receipt matching includes revision, full selection and fingerprint", async () => {
   const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 0,
     schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral };

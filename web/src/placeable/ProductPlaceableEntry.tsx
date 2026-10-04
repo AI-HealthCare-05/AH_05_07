@@ -61,8 +61,22 @@ export default function ProductPlaceableEntry() {
     }, (identity, nextStatus) => {
       if (!alive) return;
       setStatus(nextStatus);
-      setAdapter(identity ? accountPersistence({ identity, currentIdentity: binding.current,
-        baseUrl: import.meta.env.VITE_API_BASE_URL || "" }) : null);
+      setAdapter(identity ? accountPersistence({
+        identity,
+        currentIdentity: binding.current,
+        baseUrl: import.meta.env.VITE_API_BASE_URL || "",
+        onSessionRejected: (rejected) => {
+          const current = binding.current();
+          if (!alive || !current
+            || current.owner !== rejected.owner
+            || current.token !== rejected.token
+            || current.generation !== rejected.generation) return;
+          // Match App's local session-invalid contract without allowing a stale
+          // adapter to sign out a newer verified token.
+          void binding.update(null);
+          void auth.signOut({ scope: "local" });
+        },
+      }) : null);
     });
     bindingRef.current = binding;
     const update = (session: Session | null) => {
