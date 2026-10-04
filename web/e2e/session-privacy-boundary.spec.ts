@@ -314,6 +314,142 @@ test("same-user token refresh retries an initial stale-token window once with th
   ]);
 });
 
+test("991 rejected token A cleanup cannot erase newer same-user token B", async ({ page }) => {
+  let releaseLogout!: () => void;
+  let markLogoutStarted!: () => void;
+
+  const pendingLogout = new Promise<void>((resolve) => {
+    releaseLogout = resolve;
+  });
+  const logoutStarted = new Promise<void>((resolve) => {
+    markLogoutStarted = resolve;
+  });
+
+  let logoutCalls = 0;
+
+  await page.addInitScript((value) => {
+    localStorage.setItem("sb-e2e-auth-token", JSON.stringify(value));
+  }, accountA);
+
+  const authHeaders = {
+    "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+    "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-supabase-api-version",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+  };
+
+  await page.route(
+    "https://e2e.invalid/auth/v1/logout?scope=local",
+    async (route) => {
+      if (route.request().method() === "OPTIONS") {
+        return route.fulfill({ status: 204, headers: authHeaders });
+      }
+
+      logoutCalls += 1;
+      expect(route.request().headers().authorization)
+        .toBe(`Bearer ${accountA.access_token}`);
+
+      markLogoutStarted();
+      await pendingLogout;
+
+      await route.fulfill({
+        status: 204,
+        headers: authHeaders,
+      });
+    },
+  );
+
+  await page.route("http://e2e.invalid/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    const headers = {
+      "Access-Control-Allow-Origin": "http://127.0.0.1:4173",
+      "Access-Control-Allow-Headers": "authorization,content-type",
+      "Access-Control-Allow-Methods": "GET,OPTIONS",
+    };
+
+    if (request.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers });
+    }
+
+    if (url.pathname !== "/api/v1/observations/window") {
+      return route.abort();
+    }
+
+    const token =
+      request.headers().authorization?.replace("Bearer ", "") ?? "";
+
+    if (token === accountA.access_token) {
+      return route.fulfill({
+        status: 401,
+        headers,
+        contentType: "application/json",
+        body: JSON.stringify({
+          detail: { code: "supabase_session_invalid" },
+        }),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      headers,
+      contentType: "application/json",
+      body: JSON.stringify(
+        windowWithMeasurement("refreshed-record", 121, 81),
+      ),
+    });
+  });
+
+  await page.goto("/?e2e=signed-in&screen=S10");
+
+  await logoutStarted;
+
+  await expect.poll(() =>
+    page.evaluate(() => localStorage.getItem("sb-e2e-auth-token")),
+  ).toBeNull();
+
+  const refreshedWindow = page.waitForRequest((request) => (
+    new URL(request.url()).pathname === "/api/v1/observations/window"
+    && request.headers().authorization
+      === `Bearer ${accountARefreshed.access_token}`
+  ));
+
+  await page.evaluate(([eventName, session]) => {
+    localStorage.setItem(
+      "sb-e2e-auth-token",
+      JSON.stringify(session),
+    );
+
+    const channel = new BroadcastChannel("sb-e2e-auth-token");
+    channel.postMessage({
+      event: "TOKEN_REFRESHED",
+      session,
+    });
+    channel.close();
+
+    window.dispatchEvent(
+      new CustomEvent(eventName, { detail: session }),
+    );
+  }, [e2eSessionEventName, accountARefreshed] as const);
+
+  await refreshedWindow;
+
+  await expect(
+    page.locator('[data-scene="S02"], [data-scene="S12"]'),
+  ).toBeVisible();
+
+  releaseLogout();
+
+  await expect.poll(() =>
+    page.evaluate(() => {
+      const raw = localStorage.getItem("sb-e2e-auth-token");
+      return raw ? JSON.parse(raw).access_token : null;
+    }),
+  ).toBe(accountARefreshed.access_token);
+
+  expect(logoutCalls).toBe(1);
+});
+
 test("export timeout shows bounded warning and re-enables the button", async ({ page }) => {
   await page.route("http://e2e.invalid/**", async (route) => {
     const request = route.request();

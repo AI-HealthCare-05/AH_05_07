@@ -810,8 +810,14 @@ function App() {
   }
 
   function presentRequestError(error: unknown, context: "load" | "save" | "delete" | "export", requestContext?: RequestContext) {
-    if (isSessionError(error) && !hasNewerToken(requestContext)) {
-      void supabase?.auth.signOut({ scope: "local" });
+    if (isSessionError(error) && requestContext && isCurrentRequestContext(requestContext) && !hasNewerToken(requestContext)) {
+      // A server rejection of request token A must never sign out a newer token B.
+      // Remove only A if it is still persisted, then best-effort logout A by value.
+      // A different persisted token means auth renewal has already won the race.
+      const cleanup = removePersistedSessionIfAccessToken(requestContext.accessToken);
+      if (cleanup === "different") return;
+      void requestTokenBoundLocalLogout(requestContext.accessToken).catch(() => undefined);
+      if (!isCurrentRequestContext(requestContext) || hasNewerToken(requestContext)) return;
       applySession(null);
       setNotice(makeNotice("warning", "로그인 시간이 만료되었습니다. 이메일 링크로 다시 로그인해 주세요.", {
         origin: "session",
