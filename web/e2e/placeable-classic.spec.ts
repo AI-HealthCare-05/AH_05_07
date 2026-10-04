@@ -143,6 +143,13 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
+  const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+  await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
+  await blockedGarden.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".placeable-handoff-note")).toBeFocused();
+  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록이나 정원 쉼터");
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toHaveAttribute("aria-expanded", "true");
@@ -1560,9 +1567,15 @@ test("#956 Garden Nook is a primary Plaza destination without opening tools", as
 
   await (await editorButton(page, "환영 바람개비 고르기")).click();
   await expect(page.getByTestId("draft-placement")).toBeVisible();
-  await expect(garden).toBeDisabled();
+  await expect(garden).toHaveAttribute("aria-disabled", "true");
+  await garden.focus();
+  await page.keyboard.press("Enter");
+  const handoff = page.locator(".placeable-handoff-note");
+  await expect(handoff).toBeFocused();
+  await expect(handoff).toContainText("오늘의 기록이나 정원 쉼터");
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await expect(garden).toBeEnabled();
+  await expect(garden).toHaveAttribute("aria-disabled", "false");
 
   await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
   await page.reload();
@@ -1599,6 +1612,48 @@ test("#956 Garden Nook is a primary Plaza destination without opening tools", as
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await tools.getAttribute("open")).toBeNull();
+  }
+});
+
+test("#958 blocked Garden destination stays focusable and explains why before activation", async ({ browser }) => {
+  test.setTimeout(60_000);
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  try {
+    await page.goto(companionRoute);
+    const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
+
+    await (await editorButton(page, "환영 바람개비 고르기")).click();
+    await expect(page.getByTestId("draft-placement")).toBeVisible();
+    await expect(garden).toBeVisible();
+    await expect(garden).toHaveAttribute("aria-disabled", "true");
+    await expect(garden).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
+
+    for (const key of ["Enter", "Space"]) {
+      await garden.focus();
+      await page.keyboard.press(key);
+      await expect(page.locator(".placeable-handoff-note")).toBeFocused();
+      await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+    }
+
+    const blockedBox = await garden.boundingBox();
+    expect(blockedBox).toBeTruthy();
+    await page.touchscreen.tap(
+      blockedBox!.x + blockedBox!.width / 2,
+      blockedBox!.y + blockedBox!.height / 2,
+    );
+    await expect(page.locator(".placeable-handoff-note")).toBeFocused();
+    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록이나 정원 쉼터");
+    await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+
+    await page.keyboard.press("Escape");
+    await expect(garden).toHaveAttribute("aria-disabled", "false");
+    await expect(garden).not.toHaveAttribute("aria-describedby", /.+/);
+    await garden.tap();
+    await expect(page.getByTestId("garden-experience")).toBeVisible();
+    await expect(page.getByTestId("garden-return-cue")).toHaveCount(0);
+  } finally {
+    await context.close();
   }
 });
 

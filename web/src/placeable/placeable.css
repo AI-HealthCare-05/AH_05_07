@@ -403,8 +403,9 @@
 .placeable-world-view .placeable-destination > div { display: none; }
 .placeable-world-view .placeable-destination .placeable-today { width: auto; min-height: 48px; margin-right: auto; padding: 10px 0; background: transparent; color: #4f4168; border: 0; border-radius: 0; font-size: 1.05rem; gap: 24px; white-space: normal; }
 .placeable-world-view .plaza-garden-action { min-height: 48px; min-width: 140px; padding: 12px 20px; display: inline-flex; justify-content: center; align-items: center; gap: 12px; color: #385747; background: #edf2e9; border: 1px solid #8fa294; border-radius: 14px; font-weight: 650; }
-.placeable-world-view .plaza-garden-action:hover:not(:disabled) { background: #e2eadf; border-color: #61796b; }
-.placeable-world-view .plaza-garden-action:active:not(:disabled) { background: #d7e1d3; }
+.placeable-world-view .plaza-garden-action[aria-disabled=true] { opacity: .55; cursor: not-allowed; }
+.placeable-world-view .plaza-garden-action:hover:not([aria-disabled=true]) { background: #e2eadf; border-color: #61796b; }
+.placeable-world-view .plaza-garden-action:active:not([aria-disabled=true]) { background: #d7e1d3; }
 .placeable-world-view .plaza-edit-action { min-height: 48px; min-width: 140px; padding: 12px 24px; display: inline-flex; justify-content: center; align-items: center; gap: 12px; color: #fffaf1; background: #385747; border: 1px solid #385747; border-radius: 14px; font-weight: 650; }
 .placeable-world-view .plaza-edit-action:hover { background: #294335; }
 .placeable-world-view .plaza-edit-action:active { background: #20382a; }
