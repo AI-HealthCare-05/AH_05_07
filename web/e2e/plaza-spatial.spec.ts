@@ -224,7 +224,7 @@ test("#952 re-entry authority requires exact raw view/storage while renderer fal
   }
 });
 
-test("#944 Today Gate uses the existing E1 radius and reverses after real arrival", async ({ page }) => {
+test("#944/#963 Today Gate uses the existing E1 radius and exposes one semantic Today handoff", async ({ page }) => {
   const gate = E1_LIVING_CITY_ENTRY_SCENE_PROFILE.destination;
 
   expect(resolveTodayGateProximity({ x: gate.x + gate.radius, z: gate.z }))
@@ -250,6 +250,7 @@ test("#944 Today Gate uses the existing E1 radius and reverses after real arriva
 
   await expect(world).toHaveAttribute("data-gate-proximity", "far");
   await expect(status).toHaveCount(0);
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context");
 
   // Time alone cannot manufacture approach or arrival.
   await page.waitForTimeout(600);
@@ -271,6 +272,8 @@ test("#944 Today Gate uses the existing E1 radius and reverses after real arriva
   });
   await expect(status).toContainText("Today Gate가 가까워지고 있어요.");
   await expect(status).toContainText("조금만 더 걸어가 보세요.");
+  await expect(status).toHaveAttribute("id", "plaza-gate-status");
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context plaza-gate-status");
 
   // Arrival requires centering on the real Gate; straight-ahead alone cannot
   // satisfy the authoritative 0.85m radius from the authored start position.
@@ -296,10 +299,20 @@ test("#944 Today Gate uses the existing E1 radius and reverses after real arriva
 
   await expect(status).toContainText("Today Gate에 도착했어요.");
   await expect(status).toContainText("오늘의 기록으로 이어갈 수 있어요.");
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context plaza-gate-status");
   await expect(today).toHaveAttribute(
     "href",
     "?screen=S02&return_space=3d-browser",
   );
+
+  // Editing hides the Gate status, so the semantic control must not retain a
+  // dangling description. Closing the editor restores the same arrived state.
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(status).toHaveCount(0);
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context");
+  await page.keyboard.press("Escape");
+  await expect(status).toHaveAttribute("data-state", "arrived");
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context plaza-gate-status");
 
   expect(
     await today.evaluate(
@@ -329,6 +342,7 @@ test("#944 Today Gate uses the existing E1 radius and reverses after real arriva
     await expect(world).toHaveAttribute("data-gate-proximity", "approach", {
       timeout: 2500,
     });
+    await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context plaza-gate-status");
     await expect(world).toHaveAttribute("data-gate-proximity", "far", {
       timeout: 4000,
     });
@@ -337,6 +351,7 @@ test("#944 Today Gate uses the existing E1 radius and reverses after real arriva
   }
 
   await expect(status).toHaveCount(0);
+  await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context");
   expect(
     await today.evaluate(
       (element) => getComputedStyle(element).backgroundColor,
