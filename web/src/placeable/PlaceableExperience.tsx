@@ -189,6 +189,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const statusRef = useRef<HTMLParagraphElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
   const recordsEntry = useRef<HTMLAnchorElement>(null);
+  const settingsEntry = useRef<HTMLAnchorElement>(null);
   const plazaHeading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
     plazaHeading.current?.focus({ preventScroll: true });
@@ -430,6 +431,13 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     }
     recordsEntry.current?.click();
   }
+  function activateSettings() {
+    if (sourceSettling) {
+      handoffRef.current?.focus();
+      return;
+    }
+    settingsEntry.current?.click();
+  }
   function enterGardenNook() {
     if (sourceSettling) {
       handoffRef.current?.focus();
@@ -493,6 +501,11 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           aria-disabled={sourceSettling}
           onClick={blockContextSwitch}>
           오늘의 기록 <span aria-hidden="true">→</span></a>}
+        <a ref={settingsEntry} className="placeable-settings-link" href="?screen=S14"
+          aria-label="설정으로 가기"
+          aria-disabled={sourceSettling}
+          aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
+          onClick={blockContextSwitch}>설정</a>
       </nav>
     </header>
     <div className="placeable-layout">
@@ -531,7 +544,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
-        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록, 기록 찾아보기, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록, 기록 찾아보기, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
+        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록, 기록 찾아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록, 기록 찾아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")} sourceSettling={sourceSettling} onContextSwitch={blockContextSwitch}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             sourceSettling={sourceSettling}
@@ -539,6 +552,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             onGateProximityChange={setTodayGateProximity}
             onGardenActivate={enterGardenNook}
             onRecordsActivate={activateRecords}
+            onSettingsActivate={activateSettings}
             onSocketSelect={(socketId) => change({ socketId })}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />

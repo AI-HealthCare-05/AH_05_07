@@ -26,6 +26,7 @@ type Props = PlaceableProjection & {
   onTwilight: () => void;
   onGardenActivate?: () => void;
   onRecordsActivate?: () => void;
+  onSettingsActivate?: () => void;
   onSocketSelect?: (socketId: Selection["socketId"]) => void;
   onGateProximityChange?: (proximity: TodayGateProximity) => void;
 };
@@ -176,6 +177,7 @@ export default function PlaceableWorld(props: Props) {
       scene = new PlaceableScene(); sceneRef.current = scene;
       scene.setGardenAvailable(!guestVisit);
       scene.setRecordsAvailable(!guestVisit);
+      scene.setSettingsAvailable(!guestVisit);
       scene.setPlacementEditing(!guestVisit && latest.current.placementEditing === true);
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
       companionRef.current = companion; scene.actor.add(companion.root);
@@ -244,6 +246,12 @@ export default function PlaceableWorld(props: Props) {
           && latest.current.onRecordsActivate
           && ray.intersectObject(scene!.recordsArchive, true).length) {
           latest.current.onRecordsActivate();
+          return;
+        }
+        if (!guestVisit
+          && latest.current.onSettingsActivate
+          && ray.intersectObject(scene!.settingsPost, true).length) {
+          latest.current.onSettingsActivate();
           return;
         }
         if (latest.current.canInteract && scene!.pinwheel.visible && ray.intersectObject(scene!.pinwheel, true).length) interact();

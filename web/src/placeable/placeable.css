@@ -1303,3 +1303,46 @@
     background: Canvas;
   }
 }
+
+
+/* Settings is a global utility destination, not another Plaza primary action. */
+.placeable-experience .placeable-settings-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 9px;
+  color: #657168;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: .76rem;
+  font-weight: 620;
+  text-decoration: underline;
+  text-decoration-color: #a2aca5;
+  text-underline-offset: 3px;
+}
+.placeable-experience .placeable-settings-link:hover {
+  color: #43564b;
+  border-color: #aeb9ab;
+  background: #f2f3ece8;
+}
+.placeable-experience .placeable-settings-link[aria-disabled=true] {
+  opacity: .55;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .placeable-world-view .placeable-settings-link {
+    min-height: 44px;
+    padding: 7px 5px;
+    font-size: .7rem;
+  }
+}
+@media (forced-colors: active) {
+  .placeable-experience .placeable-settings-link {
+    color: LinkText;
+    background: Canvas;
+    border-color: LinkText;
+    forced-color-adjust: auto;
+  }
+}
