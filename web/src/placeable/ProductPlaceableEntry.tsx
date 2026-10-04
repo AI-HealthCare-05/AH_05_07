@@ -94,13 +94,14 @@ export default function ProductPlaceableEntry() {
   // Each verified identity gets a fresh controller; old in-flight work cannot publish.
   const adapterId = useRef({ adapter, value: 0 });
   if (adapterId.current.adapter !== adapter) adapterId.current = { adapter, value: adapterId.current.value + 1 };
-  if (!adapter) return <main className="placeable-experience placeable-entry-recovery"><p className="placeable-eyebrow">SK7 · 내 공간</p><h1>계정 공간을 확인하고 있어요</h1>
-    <p role="status">{status === "checking" ? "로그인 상태를 확인하고 있어요…" : rejection === "owner-deleted"
+  const ownerDeleted = rejection === "owner-deleted";
+  if (!adapter) return <main className="placeable-experience placeable-entry-recovery"><p className="placeable-eyebrow">SK7 · 내 공간</p><h1>{ownerDeleted ? "계정이 삭제됐어요" : "계정 공간을 확인하고 있어요"}</h1>
+    <p role="status">{status === "checking" ? "로그인 상태를 확인하고 있어요…" : ownerDeleted
       ? "이 계정은 삭제되어 계정 공간을 더 이상 이용할 수 없어요."
       : status === "unavailable"
         ? "계정 공간을 불러올 수 없어요. 로그인 상태와 연결을 확인한 뒤 다시 시도해 주세요."
         : "계정 공간을 이용하려면 다시 로그인해 주세요."} 이 브라우저의 꾸미기 상태는 복사하거나 변경하지 않았어요.</p>
-    {status !== "checking" && <button onClick={() => setAttempt((value) => value + 1)}>계정 공간 다시 확인</button>}
+    {status !== "checking" && !ownerDeleted && <button onClick={() => setAttempt((value) => value + 1)}>계정 공간 다시 확인</button>}
     <p><a href="/?screen=S02">오늘의 기록으로 돌아가기</a></p>
     <p><a href={`?experience=e2&view=${world ? "3d" : "classic"}&storage=browser`}>이 브라우저의 공간으로 계속하기</a></p>
   </main>;
