@@ -80,6 +80,13 @@ export const GARDEN_ENTRANCE = Object.freeze({
   z: -0.8,
 });
 
+export const RECORDS_DESTINATION = Object.freeze({
+  id: "records-archive",
+  label: "기록 찾아보기",
+  x: -2.4,
+  z: 1.1,
+});
+
 export function resolveTodayGateProximity(
   position: Readonly<{ x: number; z: number }>,
 ): TodayGateProximity {
@@ -106,6 +113,8 @@ export class PlaceableScene {
   readonly gate = new Group();
   readonly gardenDestination = new Group();
   readonly gardenEntrance = new Group();
+  readonly recordsDestination = new Group();
+  readonly recordsArchive = new Group();
   readonly anchorScenery = new Group();
   readonly optionalScenery = new Group();
   #cameraObstacles: CameraObstacle[] = [];
@@ -285,6 +294,65 @@ export class PlaceableScene {
     this.gardenDestination.add(this.gardenEntrance);
     this.scene.add(this.gardenDestination);
 
+    // Records is a navigation-only semantic destination. This low archive kiosk
+    // receives no record count/date/BP/session input and has no autonomous state.
+    this.recordsDestination.name = "plaza-records-destination";
+    this.recordsArchive.name = RECORDS_DESTINATION.id;
+    this.recordsArchive.position.set(
+      RECORDS_DESTINATION.x,
+      0,
+      RECORDS_DESTINATION.z,
+    );
+    const archiveStone = material("#b7b09c", "stone");
+    const archiveWood = material("#756955", "wood");
+    const archivePaper = material("#ddd6bd", "trim");
+    const archiveAccent = material("#596d63", "accent");
+
+    const archiveBase = new Mesh(
+      new BoxGeometry(1.04, 0.18, 0.62),
+      archiveStone,
+    );
+    archiveBase.name = "records-archive-base";
+    archiveBase.position.y = 0.09;
+    this.recordsArchive.add(archiveBase);
+
+    const archiveBody = new Mesh(
+      new BoxGeometry(0.9, 0.72, 0.5),
+      archiveWood,
+    );
+    archiveBody.name = "records-archive-body";
+    archiveBody.position.y = 0.5;
+    this.recordsArchive.add(archiveBody);
+
+    const archiveCap = new Mesh(
+      new BoxGeometry(1.02, 0.1, 0.6),
+      archiveStone,
+    );
+    archiveCap.name = "records-archive-cap";
+    archiveCap.position.y = 0.91;
+    this.recordsArchive.add(archiveCap);
+
+    const archiveSign = new Mesh(
+      new BoxGeometry(0.64, 0.24, 0.055),
+      archivePaper,
+    );
+    archiveSign.name = "records-archive-sign";
+    archiveSign.position.set(0, 0.72, 0.28);
+    this.recordsArchive.add(archiveSign);
+
+    for (const [index, x] of [-0.22, 0, 0.22].entries()) {
+      const ledger = new Mesh(
+        new BoxGeometry(0.12, 0.27, 0.045),
+        archiveAccent,
+      );
+      ledger.name = `records-archive-ledger-${index}`;
+      ledger.position.set(x, 0.45, 0.275);
+      this.recordsArchive.add(ledger);
+    }
+
+    this.recordsDestination.add(this.recordsArchive);
+    this.scene.add(this.recordsDestination);
+
     this.anchorScenery.name = "plaza-scenery-anchor";
     this.optionalScenery.name = "plaza-scenery-optional";
 
@@ -430,6 +498,7 @@ export class PlaceableScene {
     const roots = [
       this.gate,
       ...(this.gardenDestination.visible ? [this.gardenDestination] : []),
+      ...(this.recordsDestination.visible ? [this.recordsDestination] : []),
       this.anchorScenery,
       ...(this.#sceneryProfile === "full" ? [this.optionalScenery] : []),
     ];
@@ -455,6 +524,12 @@ export class PlaceableScene {
   setGardenAvailable(available: boolean) {
     if (this.#disposed || this.gardenDestination.visible === available) return;
     this.gardenDestination.visible = available;
+    this.#rebuildCameraObstacles();
+  }
+
+  setRecordsAvailable(available: boolean) {
+    if (this.#disposed || this.recordsDestination.visible === available) return;
+    this.recordsDestination.visible = available;
     this.#rebuildCameraObstacles();
   }
 
@@ -646,6 +721,15 @@ export class PlaceableScene {
             x: GARDEN_ENTRANCE.x,
             y: 1.15,
             z: GARDEN_ENTRANCE.z,
+          }]
+        : []),
+      ...(this.recordsDestination.visible
+        ? [{
+            id: RECORDS_DESTINATION.id,
+            label: RECORDS_DESTINATION.label,
+            x: RECORDS_DESTINATION.x,
+            y: 1.08,
+            z: RECORDS_DESTINATION.z,
           }]
         : []),
     ];

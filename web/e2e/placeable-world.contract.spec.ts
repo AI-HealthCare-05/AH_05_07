@@ -5,6 +5,7 @@ import { ASSET, COLORS, SOCKETS, type Selection } from "../src/placeable/contrac
 import {
   PlaceableScene,
   GARDEN_ENTRANCE,
+  RECORDS_DESTINATION,
   PINWHEEL_RADIUS,
   PINWHEEL_PREVIEW_CUE,
   resolvePlazaSceneryProfile,
@@ -67,6 +68,45 @@ test("#995 Garden entrance stays inside unchanged Plaza movement authority and r
   expect(scene.cameraObstacles.some((obstacle) =>
     obstacle.id.startsWith("garden-entrance-"),
   )).toBe(false);
+
+  scene.dispose();
+});
+
+test("Records archive stays inside unchanged Plaza authority and remains navigation-only scenery", () => {
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
+  expect(Math.abs(RECORDS_DESTINATION.x)).toBeLessThan(reachableBound);
+  expect(Math.abs(RECORDS_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.recordsArchive.name).toBe(RECORDS_DESTINATION.id);
+  expect(scene.recordsArchive.children.length).toBeGreaterThanOrEqual(7);
+
+  const recordsLabel = scene.labels().find(
+    (label) => label.id === RECORDS_DESTINATION.id,
+  );
+  expect(recordsLabel?.label).toBe("기록 찾아보기");
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("records-archive-"),
+  )).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.recordsDestination.visible).toBe(true);
+  expect(scene.labels().some(
+    (label) => label.id === RECORDS_DESTINATION.id,
+  )).toBe(true);
+
+  scene.setRecordsAvailable(false);
+  expect(scene.recordsDestination.visible).toBe(false);
+  expect(scene.labels().some(
+    (label) => label.id === RECORDS_DESTINATION.id,
+  )).toBe(false);
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("records-archive-"),
+  )).toBe(false);
+
+  expect(scene.labels().some((label) => label.id === "today-gate")).toBe(true);
+  expect(scene.labels().some((label) => label.id === GARDEN_ENTRANCE.id)).toBe(true);
 
   scene.dispose();
 });

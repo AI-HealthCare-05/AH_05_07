@@ -5,6 +5,7 @@ import { PlaceableScene } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
 import { GardenScene } from "../src/placeable/gardenScene";
+import { e2eSessionEventName } from "../src/lib/e2eHarness";
 
 // Editing is explicit in immersive 3D; Classic retains its inline controls.
 async function editorButton(page: Page, name: string, exact?: boolean) {
@@ -253,6 +254,7 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   const handoff = page.locator(".placeable-handoff-note");
   const viewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
   const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
+  const records = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
   const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const storage = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
 
@@ -267,6 +269,8 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   }
   await expect(today).toHaveAttribute("aria-disabled", "true");
   await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
+  await expect(records).toHaveAttribute("aria-disabled", "true");
+  await expect(records).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
   await expect(garden).toHaveAttribute("aria-disabled", "true");
   await expect(garden).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
 
@@ -292,9 +296,12 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByTestId("draft-placement")).toContainText("저장 전");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
+  const blockedRecords = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
   const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const blockedViewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
   const blockedStorageSwitch = page.getByRole("link", { name: "이 브라우저의 공간 사용하기", exact: true });
+  await expect(blockedRecords).toHaveAttribute("aria-disabled", "true");
+  await expect(blockedRecords).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
   await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
   for (const link of [blockedViewSwitch, blockedStorageSwitch]) {
     await expect(link).toHaveAttribute("aria-disabled", "true");
@@ -305,7 +312,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await blockedGarden.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록이나 정원 쉼터");
+  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, 기록 찾아보기, 정원 쉼터");
   await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
@@ -627,6 +634,105 @@ async function classicTodaySession(page: Page, actionId: string | null = null, s
   });
   return account;
 }
+
+test("Records destination uses direct S08 semantics and browser Back restores My Space without cosmetic writes", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.goto(companionRoute);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 20000 },
+  );
+
+  const records = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
+  await expect(records).toHaveAttribute("href", "?screen=S08");
+
+  const sourceUrl = page.url();
+  const before = await readLocal(page);
+  const puts = account.puts;
+
+  // A completed document navigation does not prove that App's passive auth
+  // effect has subscribed yet. Observe only that exact existing E2E seam.
+  await page.addInitScript((eventName) => {
+    const nativeAdd = window.addEventListener.bind(window);
+    Object.assign(window, { recordsSessionListenerReady: false });
+    window.addEventListener = (...args: Parameters<typeof window.addEventListener>) => {
+      nativeAdd(...args);
+      if (args[0] === eventName) {
+        (window as unknown as {
+          recordsSessionListenerReady: boolean;
+        }).recordsSessionListenerReady = true;
+      }
+    };
+  }, e2eSessionEventName);
+
+  await records.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\?screen=S08$/);
+  expect(new URL(page.url()).searchParams.has("return_space")).toBe(false);
+
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as {
+      recordsSessionListenerReady: boolean;
+    }).recordsSessionListenerReady,
+  )).toBe(true);
+
+  await page.evaluate((eventName) => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    if (raw) {
+      window.dispatchEvent(new CustomEvent(
+        eventName,
+        { detail: JSON.parse(raw) },
+      ));
+    }
+  }, e2eSessionEventName);
+
+  await expect(page.getByRole("heading", {
+    level: 1,
+    name: "기록 찾아보기",
+  })).toBeVisible();
+
+  await expect(page.getByRole("link", {
+    name: "내 공간으로 돌아가기",
+  })).toHaveCount(0);
+
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.goBack();
+
+  await expect(page).toHaveURL(sourceUrl);
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-view", "3d");
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-mode", "browser");
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.getByRole("link", {
+    name: "간단한 광장으로 보기",
+    exact: true,
+  }).click();
+
+  const classicRecords = page.getByRole("link", {
+    name: "기록 찾아보기로 가기",
+    exact: true,
+  });
+
+  await expect(classicRecords).toBeVisible();
+  await expect(classicRecords).toHaveAttribute("href", "?screen=S08");
+  expect(await readLocal(page)).toEqual(before);
+});
 
 test("#946 Living City return lands as truthful Today continuity", async ({ page }) => {
   const account = await classicTodaySession(page);
@@ -2338,7 +2444,7 @@ test("#958 blocked Garden destination stays focusable and explains why before ac
       blockedBox!.y + blockedBox!.height / 2,
     );
     await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록이나 정원 쉼터");
+    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, 기록 찾아보기, 정원 쉼터");
     await expect(page.getByTestId("garden-experience")).toHaveCount(0);
 
     await page.keyboard.press("Escape");
