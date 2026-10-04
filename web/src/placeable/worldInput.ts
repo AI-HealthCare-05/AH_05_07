@@ -8,19 +8,25 @@ type SpatialInput = {
   stop: () => void;
 };
 
+type SuspendOptions = Readonly<{
+  tapWhileSuspended?: boolean;
+}>;
+
 /** Input is local to the focused scene or its movement pad, never global shortcuts. */
 export class PlaceableWorldInput {
   readonly movement = new WorldMovementIntentController();
   #cleanups: (() => void)[] = [];
   #suspended = true;
+  #tapWhileSuspended = false;
   #focused = false;
   #disposed = false;
   #release: (() => void) | null = null;
   #spatial: SpatialInput | undefined;
   #releaseCamera: (() => void) | null = null;
   constructor() { this.movement.setSemanticSuspended(true); }
-  suspend(value: boolean) {
+  suspend(value: boolean, options: SuspendOptions = {}) {
     this.#suspended = value;
+    this.#tapWhileSuspended = value && options.tapWhileSuspended === true;
     this.movement.setSemanticSuspended(value || !this.#focused);
     if (value) this.clear();
   }
@@ -101,14 +107,26 @@ export class PlaceableWorldInput {
       };
       listen(canvas, "pointerdown", (event) => {
         const p = event as PointerEvent;
-        if (p.button !== 0 || this.#suspended || document.hidden) return;
+        if (
+          p.button !== 0
+          || (this.#suspended && !this.#tapWhileSuspended)
+          || document.hidden
+        ) return;
         if (!gesture.begin(p.pointerId, p.clientX, p.clientY)) return;
         p.preventDefault(); canvas.focus({ preventScroll: true });
         try { canvas.setPointerCapture(p.pointerId); } catch { this.#releaseCamera?.(); }
       });
       listen(canvas, "pointermove", (event) => {
-        const p = event as PointerEvent, delta = gesture.move(p.pointerId, p.clientX, p.clientY);
-        if (delta) { canvas.style.cursor = "grabbing"; spatial.orbit(delta.x, delta.y); }
+        const p = event as PointerEvent;
+        const delta = gesture.move(
+          p.pointerId,
+          p.clientX,
+          p.clientY,
+        );
+        if (delta && !this.#suspended) {
+          canvas.style.cursor = "grabbing";
+          spatial.orbit(delta.x, delta.y);
+        }
       });
       listen(canvas, "pointerup", (event) => {
         const p = event as PointerEvent;
@@ -116,7 +134,11 @@ export class PlaceableWorldInput {
         const tap = gesture.end(p.pointerId, p.clientX, p.clientY);
         if (canvas.hasPointerCapture(p.pointerId)) canvas.releasePointerCapture(p.pointerId);
         canvas.style.cursor = "";
-        if (tap && !this.#suspended && !document.hidden) spatial.tap(p.clientX, p.clientY);
+        if (
+          tap
+          && (!this.#suspended || this.#tapWhileSuspended)
+          && !document.hidden
+        ) spatial.tap(p.clientX, p.clientY);
       });
       for (const type of ["pointercancel", "lostpointercapture"]) listen(canvas, type, (event) => {
         if ((event as PointerEvent).pointerId === gesture.pointer) { this.#releaseCamera?.(); spatial.stop(); }
