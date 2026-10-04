@@ -6,6 +6,7 @@ import {
   PlaceableScene,
   GARDEN_ENTRANCE,
   RECORDS_DESTINATION,
+  SETTINGS_DESTINATION,
   PINWHEEL_RADIUS,
   PINWHEEL_PREVIEW_CUE,
   resolvePlazaSceneryProfile,
@@ -107,6 +108,46 @@ test("Records archive stays inside unchanged Plaza authority and remains navigat
 
   expect(scene.labels().some((label) => label.id === "today-gate")).toBe(true);
   expect(scene.labels().some((label) => label.id === GARDEN_ENTRANCE.id)).toBe(true);
+
+  scene.dispose();
+});
+
+test("Settings service post stays inside unchanged Plaza authority and remains a utility destination", () => {
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
+  expect(Math.abs(SETTINGS_DESTINATION.x)).toBeLessThan(reachableBound);
+  expect(Math.abs(SETTINGS_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.settingsPost.name).toBe(SETTINGS_DESTINATION.id);
+  expect(scene.settingsPost.children.length).toBeGreaterThanOrEqual(6);
+
+  const label = scene.labels().find(
+    (entry) => entry.id === SETTINGS_DESTINATION.id,
+  );
+  expect(label?.label).toBe("설정");
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("settings-service-"),
+  )).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.settingsDestination.visible).toBe(true);
+  expect(scene.labels().some(
+    (entry) => entry.id === SETTINGS_DESTINATION.id,
+  )).toBe(true);
+
+  scene.setSettingsAvailable(false);
+  expect(scene.settingsDestination.visible).toBe(false);
+  expect(scene.labels().some(
+    (entry) => entry.id === SETTINGS_DESTINATION.id,
+  )).toBe(false);
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("settings-service-"),
+  )).toBe(false);
+
+  expect(scene.labels().some((entry) => entry.id === "today-gate")).toBe(true);
+  expect(scene.labels().some((entry) => entry.id === RECORDS_DESTINATION.id)).toBe(true);
+  expect(scene.labels().some((entry) => entry.id === GARDEN_ENTRANCE.id)).toBe(true);
 
   scene.dispose();
 });

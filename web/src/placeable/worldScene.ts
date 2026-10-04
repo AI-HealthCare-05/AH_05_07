@@ -87,6 +87,13 @@ export const RECORDS_DESTINATION = Object.freeze({
   z: 1.1,
 });
 
+export const SETTINGS_DESTINATION = Object.freeze({
+  id: "settings-service",
+  label: "설정",
+  x: 2.85,
+  z: 1.75,
+});
+
 export function resolveTodayGateProximity(
   position: Readonly<{ x: number; z: number }>,
 ): TodayGateProximity {
@@ -115,6 +122,8 @@ export class PlaceableScene {
   readonly gardenEntrance = new Group();
   readonly recordsDestination = new Group();
   readonly recordsArchive = new Group();
+  readonly settingsDestination = new Group();
+  readonly settingsPost = new Group();
   readonly anchorScenery = new Group();
   readonly optionalScenery = new Group();
   #cameraObstacles: CameraObstacle[] = [];
@@ -353,6 +362,57 @@ export class PlaceableScene {
     this.recordsDestination.add(this.recordsArchive);
     this.scene.add(this.recordsDestination);
 
+    // Settings is a navigation-only utility destination. The world receives no
+    // theme, account, deletion, export, session or personalization state.
+    this.settingsDestination.name = "plaza-settings-destination";
+    this.settingsPost.name = SETTINGS_DESTINATION.id;
+    this.settingsPost.position.set(
+      SETTINGS_DESTINATION.x,
+      0,
+      SETTINGS_DESTINATION.z,
+    );
+    const settingsStone = material("#aaa999", "stone");
+    const settingsWood = material("#6d756a", "wood");
+    const settingsPanel = material("#d8d5c5", "trim");
+    const settingsAccent = material("#6f6b83", "accent");
+
+    const serviceBase = new Mesh(
+      new BoxGeometry(0.82, 0.16, 0.58),
+      settingsStone,
+    );
+    serviceBase.name = "settings-service-base";
+    serviceBase.position.y = 0.08;
+    this.settingsPost.add(serviceBase);
+
+    const serviceStem = new Mesh(
+      new BoxGeometry(0.16, 0.72, 0.16),
+      settingsWood,
+    );
+    serviceStem.name = "settings-service-stem";
+    serviceStem.position.y = 0.52;
+    this.settingsPost.add(serviceStem);
+
+    const servicePanel = new Mesh(
+      new BoxGeometry(0.76, 0.46, 0.08),
+      settingsPanel,
+    );
+    servicePanel.name = "settings-service-panel";
+    servicePanel.position.set(0, 0.91, 0.08);
+    this.settingsPost.add(servicePanel);
+
+    for (const [index, x] of [-0.2, 0, 0.2].entries()) {
+      const control = new Mesh(
+        new BoxGeometry(0.08, 0.08, 0.04),
+        settingsAccent,
+      );
+      control.name = `settings-service-control-${index}`;
+      control.position.set(x, 0.91, 0.13);
+      this.settingsPost.add(control);
+    }
+
+    this.settingsDestination.add(this.settingsPost);
+    this.scene.add(this.settingsDestination);
+
     this.anchorScenery.name = "plaza-scenery-anchor";
     this.optionalScenery.name = "plaza-scenery-optional";
 
@@ -499,6 +559,7 @@ export class PlaceableScene {
       this.gate,
       ...(this.gardenDestination.visible ? [this.gardenDestination] : []),
       ...(this.recordsDestination.visible ? [this.recordsDestination] : []),
+      ...(this.settingsDestination.visible ? [this.settingsDestination] : []),
       this.anchorScenery,
       ...(this.#sceneryProfile === "full" ? [this.optionalScenery] : []),
     ];
@@ -530,6 +591,12 @@ export class PlaceableScene {
   setRecordsAvailable(available: boolean) {
     if (this.#disposed || this.recordsDestination.visible === available) return;
     this.recordsDestination.visible = available;
+    this.#rebuildCameraObstacles();
+  }
+
+  setSettingsAvailable(available: boolean) {
+    if (this.#disposed || this.settingsDestination.visible === available) return;
+    this.settingsDestination.visible = available;
     this.#rebuildCameraObstacles();
   }
 
@@ -730,6 +797,15 @@ export class PlaceableScene {
             x: RECORDS_DESTINATION.x,
             y: 1.08,
             z: RECORDS_DESTINATION.z,
+          }]
+        : []),
+      ...(this.settingsDestination.visible
+        ? [{
+            id: SETTINGS_DESTINATION.id,
+            label: SETTINGS_DESTINATION.label,
+            x: SETTINGS_DESTINATION.x,
+            y: 1.2,
+            z: SETTINGS_DESTINATION.z,
           }]
         : []),
     ];
