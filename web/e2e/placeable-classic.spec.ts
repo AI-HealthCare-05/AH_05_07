@@ -512,9 +512,10 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
-  await page.addInitScript(({ token, user }) => localStorage.setItem("sb-e2e-auth-token", JSON.stringify({
+  const session = {
     access_token: token, refresh_token: "synthetic-refresh", expires_at: 4102444800, expires_in: 3600, token_type: "bearer", user,
-  })), { token, user });
+  };
+  await page.addInitScript((value) => localStorage.setItem("sb-e2e-auth-token", JSON.stringify(value)), session);
   await page.route("https://e2e.invalid/auth/v1/**", (route) => route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
     headers: cors, contentType: "application/json", body: route.request().method() === "OPTIONS" ? "" : JSON.stringify(user) }));
   let snapshot = initialSnapshot, puts = 0, reads = 0;
@@ -548,7 +549,7 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (behavior === "unknown") return route.abort("failed");
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(snapshot) });
   });
-  return { get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
+  return { session, get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
 }
 
 for (const behavior of ["conflict", "unknown", "read-error"] as const) {
@@ -1516,7 +1517,9 @@ for (const [behavior, expected, heading, retry] of [
 
   await expect(page.getByTestId("placeable-experience")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
-  await expect(page.getByRole("status")).toContainText(expected);
+  await expect(
+    page.locator("main.placeable-entry-recovery").getByRole("status"),
+  ).toContainText(expected);
   const retryButton = page.getByRole("button", { name: "계정 공간 다시 확인" });
   if (retry) await expect(retryButton).toBeVisible();
   else await expect(retryButton).toHaveCount(0);
@@ -1526,6 +1529,134 @@ for (const [behavior, expected, heading, retry] of [
   expect(account.puts).toBe(0);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-e2e-auth-token"))).toBeNull();
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe("browser-space-must-stay-separate");
+});
+
+test("#989 authoritative rejection withdraws another My Space tab still bound to token A", async ({ page, context }) => {
+  const primary = await accountRoute(page, "session");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  const peer = await context.newPage();
+  const peerAccount = await accountRoute(peer, "normal");
+  await peer.goto("/?experience=e2&view=3d&storage=account");
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  expect(peerAccount.session.access_token).toBe(primary.session.access_token);
+
+  const boundaryMessage = peer.evaluate(() => new Promise<unknown>((resolve) => {
+    const channel = new BroadcastChannel("sk7:authoritative-session-rejection:v1");
+    channel.addEventListener("message", (event) => {
+      resolve(event.data);
+      channel.close();
+    }, { once: true });
+  }));
+
+  await (await editorButton(page, "환영 바람개비 고르기")).click();
+  await page.getByRole("button", { name: "배치 확정하기", exact: true }).click();
+
+  const message = await boundaryMessage;
+  expect(message).toMatchObject({ version: 1, reason: "session-invalid" });
+  expect(String((message as { tokenFingerprint?: unknown }).tokenFingerprint))
+    .toMatch(/^[0-9a-f]{64}$/);
+  expect(JSON.stringify(message)).not.toContain(primary.session.access_token);
+
+  await expect(peer.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(peer.getByRole("status")).toContainText("계정 공간을 이용하려면 다시 로그인해 주세요");
+  expect(peerAccount.reads).toBe(1);
+  expect(peerAccount.puts).toBe(0);
+  await peer.close();
+});
+
+test("#989 owner-deleted rejection preserves terminal meaning in another My Space tab", async ({ page, context }) => {
+  const primary = await accountRoute(page, "read-owner-deleted");
+
+  const peer = await context.newPage();
+  const peerAccount = await accountRoute(peer, "normal");
+  await peer.goto("/?experience=e2&view=3d&storage=account");
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  expect(peerAccount.session.access_token).toBe(primary.session.access_token);
+
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByRole("heading", { name: "계정이 삭제됐어요", exact: true })).toBeVisible();
+
+  await expect(peer.getByTestId("placeable-experience")).toHaveCount(0);
+  await expect(peer.getByRole("heading", { name: "계정이 삭제됐어요", exact: true })).toBeVisible();
+  await expect(peer.getByRole("button", { name: "계정 공간 다시 확인" })).toHaveCount(0);
+  await expect(peer.getByRole("link", { name: "이 브라우저의 공간으로 계속하기" })).toBeVisible();
+
+  expect(peerAccount.reads).toBeGreaterThanOrEqual(1);
+  expect(peerAccount.reads).toBeLessThanOrEqual(2);
+  expect(peerAccount.puts).toBe(0);
+
+  await peer.close();
+});
+
+test("#989 stale token-A rejection cannot withdraw newer token B in another My Space tab", async ({ page, context }) => {
+  const primary = await accountRoute(page, "normal");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+  await expect(page.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  const peer = await context.newPage();
+  const peerAccount = await accountRoute(peer, "normal");
+  await peer.goto("/?experience=e2&view=3d&storage=account");
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  const newerToken = primary.session.access_token.replace(/synthetic$/, "newer-synthetic");
+  const newerSession = {
+    ...primary.session,
+    access_token: newerToken,
+    refresh_token: "newer-synthetic-refresh",
+  };
+
+  const newerRead = peer.waitForRequest((request) => (
+    request.method() === "GET"
+    && new URL(request.url()).pathname === "/api/v1/cosmetics/placeable"
+    && request.headers().authorization === `Bearer ${newerToken}`
+  ));
+
+  await peer.evaluate((session) => {
+    localStorage.setItem("sb-e2e-auth-token", JSON.stringify(session));
+    const channel = new BroadcastChannel("sb-e2e-auth-token");
+    channel.postMessage({ event: "TOKEN_REFRESHED", session });
+    channel.close();
+  }, newerSession);
+
+  await newerRead;
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  // Malformed or unrelated app-owned messages cannot withdraw B.
+  await page.evaluate(() => {
+    const channel = new BroadcastChannel("sk7:authoritative-session-rejection:v1");
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint: "not-a-digest",
+      reason: "session-invalid",
+    });
+    channel.postMessage({
+      version: 1,
+      tokenFingerprint: "0".repeat(64),
+      reason: "session-invalid",
+    });
+    channel.close();
+  });
+
+  await page.waitForTimeout(50);
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+
+  // A well-formed but stale rejection for token A must also leave B alive.
+  await page.evaluate(async (token) => {
+    const boundary = await import("/src/lib/sessionRejectionBoundary.ts");
+    await boundary.publishAuthoritativeSessionRejection(token, "session-invalid");
+  }, primary.session.access_token);
+
+  await expect(peer.getByTestId("placeable-experience")).toHaveAttribute("data-mode", "account");
+  await expect.poll(() => peer.evaluate(() => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    return raw ? JSON.parse(raw).access_token : null;
+  })).toBe(newerToken);
+
+  expect(peerAccount.puts).toBe(0);
+
+  await peer.close();
 });
 
 test("#975 API session rejection withdraws account My Space without browser fallback", async ({ page }) => {

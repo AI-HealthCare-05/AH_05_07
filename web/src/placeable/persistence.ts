@@ -1,3 +1,4 @@
+import type { AuthoritativeSessionRejection } from "../lib/sessionRejectionBoundary";
 import { emptySnapshot, fingerprint, readSnapshot, supported, supportedValue, SCHEMA_V2, type Operation, type Snapshot } from "./contract";
 
 export type Failure = "conflict" | "unsupported" | "session" | "unavailable" | "unknown";
@@ -55,7 +56,7 @@ export function browserPersistence(options: {
 // The entry verifies owner/token with auth.getUser before publishing this identity.
 // Generation also fences logout/sign-in with an otherwise identical token (ABA).
 export type AccountIdentity = Readonly<{ owner: string; token: string; generation: number }>;
-export type AccountSessionRejection = "session-invalid" | "owner-deleted";
+export type AccountSessionRejection = AuthoritativeSessionRejection;
 export function accountPersistence(options: {
   identity: AccountIdentity;
   currentIdentity: () => AccountIdentity | null;
