@@ -83,6 +83,34 @@
 .placeable-experience .plaza-camera-controls button { min-height: 44px; padding: 8px; font-size: .8rem; }
 .plaza-camera-reset { grid-column: 1 / -1; }
 .placeable-world-label { position: absolute; transform: translate(-50%, -50%); pointer-events: none; padding: 2px 6px; border-radius: 5px; background: #fffdf3d9; font-size: .7rem; white-space: nowrap; }
+.placeable-world-view[data-editing=true] .placeable-world-host canvas { cursor: crosshair; }
+.placeable-world-view[data-editing=true] .placeable-world-label:is(
+  [data-world-label="gate-left"],
+  [data-world-label="gate-right"],
+  [data-world-label="plaza-edge"]
+) {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #61796b;
+  border-radius: 8px;
+  background: #f7f5ecf2;
+  color: #31483b;
+  font-size: .76rem;
+  font-weight: 650;
+  box-shadow: 0 4px 14px #24372e14;
+}
+.placeable-world-view[data-editing=true] .placeable-world-label[data-placement-state=current] {
+  border-width: 2px;
+  background: #e4ebe1f2;
+  font-weight: 760;
+}
+.placeable-world-view[data-editing=true] .placeable-world-label[data-placement-state=preview] {
+  border: 2px dashed #526a59;
+  background: #fffaf0f2;
+  font-weight: 760;
+}
 .placeable-experience .placeable-walk-pad { position: absolute; bottom: 16px; right: 16px; width: 96px; height: 96px; border-radius: 50%; border: 2px solid #fff9; background: #253e35c4; color: #fff; touch-action: none; user-select: none; line-height: 1.15; }
 .placeable-world-caption { position: absolute; bottom: 16px; left: 16px; background: #fffdf3e8; padding: 4px 10px; border-radius: 10px; font-size: .8rem; pointer-events: none; }
 .placeable-world-help { font-size: .85rem; }
@@ -110,7 +138,7 @@
 .placeable-twilight p { font-size: var(--sk7-type-label); }
 .placeable-twilight #twilight-help { flex-basis: 100%; color: var(--sk7-text-muted); font-size: var(--sk7-type-caption); margin-top: 0; }
 [data-lighting=twilight] .placeable-world-label { background: #253359e8; color: #f5ebd5; }
-[data-lighting=twilight] .placeable-world-label:first-of-type { background: #f4dfb8; color: #30294e; }
+[data-lighting=twilight] .placeable-world-label[data-world-label="today-gate"] { background: #f4dfb8; color: #30294e; }
 
 .placeable-garden-path { border-top: 1px solid var(--sk7-border); padding-block: var(--sk7-space-lg); display: flex; align-items: center; flex-wrap: wrap; gap: var(--sk7-space-md); }
 .placeable-garden-path h2 { font-size: var(--sk7-type-body); margin: 0; }
@@ -216,7 +244,7 @@
 .placeable-world-view [data-testid=placeable-world] { position: relative; flex: 1 0 auto; min-height: max(360px, calc(100dvh - 240px - var(--plaza-status-space, 0px))); }
 .placeable-world-view .placeable-world-host { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .placeable-world-view canvas:focus-visible { outline-offset: -6px; }
-.placeable-world-view .placeable-world-label:first-of-type { font-size: .85rem; font-weight: 650; letter-spacing: .04em; padding: 7px 14px; border: 1px solid #ffffff80; border-radius: 20px; background: #fcf9f0eb; color: #4f4168; }
+.placeable-world-view .placeable-world-label[data-world-label="today-gate"] { font-size: .85rem; font-weight: 650; letter-spacing: .04em; padding: 7px 14px; border: 1px solid #ffffff80; border-radius: 20px; background: #fcf9f0eb; color: #4f4168; }
 .placeable-world-view .placeable-world-label[data-world-label="garden-entrance"] {
   padding: 6px 12px;
   border: 1px solid #6f8878;
@@ -527,6 +555,20 @@
     color: CanvasText;
     background: Canvas;
     border-color: CanvasText;
+  }
+  .placeable-world-view[data-editing=true] .placeable-world-label:is(
+    [data-world-label="gate-left"],
+    [data-world-label="gate-right"],
+    [data-world-label="plaza-edge"]
+  ) {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .placeable-world-view[data-editing=true] .placeable-world-label[data-placement-state] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
   .placeable-world-view .placeable-world-label[data-world-label="today-gate"][data-arrival-highlight=true] {
     border-color: Highlight;

@@ -584,6 +584,45 @@ test("Living Choice is one bounded still family and never changes the plaza, act
   scene.dispose();
 });
 
+test("#997 authored socket targets appear only in placement editing and preserve one coordinate authority", () => {
+  const scene = new PlaceableScene();
+
+  expect(scene.socketRings.visible).toBe(false);
+  expect(scene.socketTargets.visible).toBe(false);
+  expect(scene.socketRings.children.map((object) => object.name))
+    .toEqual(SOCKETS.map((socket) => socket.id));
+  expect(scene.socketTargets.children.map((object) => object.name))
+    .toEqual(SOCKETS.map((socket) => socket.id));
+
+  for (const socket of SOCKETS) {
+    const ring = scene.socketRings.getObjectByName(socket.id)!;
+    const target = scene.socketTargets.getObjectByName(socket.id)!;
+    expect([ring.position.x, ring.position.z]).toEqual([socket.x, socket.z]);
+    expect([target.position.x, target.position.z]).toEqual([socket.x, socket.z]);
+  }
+
+  scene.setPlacementEditing(true);
+  expect(scene.socketRings.visible).toBe(true);
+  expect(scene.socketTargets.visible).toBe(true);
+
+  scene.update(projection({
+    selection: { ...coral, socketId: "gate-right" },
+    preview: true,
+    pinwheelPreview: true,
+    suspended: true,
+  }), false);
+
+  expect(scene.socketRings.getObjectByName("gate-right")!.scale.x)
+    .toBeGreaterThan(1);
+  expect(scene.socketRings.getObjectByName("gate-left")!.scale.x).toBe(1);
+
+  scene.setPlacementEditing(false);
+  expect(scene.socketRings.visible).toBe(false);
+  expect(scene.socketTargets.visible).toBe(false);
+
+  scene.dispose();
+});
+
 test("real scene projects all authored sockets, colors, preview, confirmed and explicit removal", () => {
   const scene = new PlaceableScene();
   expect(scene.socketRings.children.map((socket) => socket.name)).toEqual(SOCKETS.map((s) => s.id));
@@ -731,6 +770,111 @@ test("DOM input ownership releases capture/listeners on blur, hidden, cancellati
   }
 });
 
+
+test("#997 suspended placement mode admits tap only and keeps movement, orbit and Enter interaction stopped", () => {
+  const oldWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const oldDocument = Object.getOwnPropertyDescriptor(globalThis, "document");
+  const win = new EventTarget();
+  const doc = Object.assign(new EventTarget(), { hidden: false });
+  Object.defineProperty(globalThis, "window", { configurable: true, value: win });
+  Object.defineProperty(globalThis, "document", { configurable: true, value: doc });
+
+  const input = new PlaceableWorldInput();
+  try {
+    const canvas = Object.assign(new Surface(), { style: { cursor: "" } });
+    const pad = new Surface();
+    let interactions = 0;
+    let orbits = 0;
+    let taps = 0;
+
+    input.mount(
+      canvas as unknown as HTMLCanvasElement,
+      pad as unknown as HTMLButtonElement,
+      () => interactions++,
+      {
+        orbit: () => orbits++,
+        zoom: () => {},
+        tap: () => taps++,
+        stop: () => {},
+      },
+    );
+
+    input.suspend(true, { tapWhileSuspended: true });
+    canvas.focus();
+
+    dispatch(canvas, "keydown", { code: "KeyW", repeat: false });
+    expect(input.movement.snapshot.intent.magnitude).toBe(0);
+
+    dispatch(canvas, "keydown", { code: "Enter", repeat: false });
+    expect(interactions).toBe(0);
+
+    dispatch(pad, "pointerdown", {
+      button: 0,
+      pointerId: 2,
+      clientX: 50,
+      clientY: 50,
+    });
+    expect(input.movement.snapshot.pointerId).toBeNull();
+
+    dispatch(canvas, "pointerdown", {
+      button: 0,
+      pointerId: 3,
+      clientX: 20,
+      clientY: 20,
+    });
+    dispatch(canvas, "pointerup", {
+      pointerId: 3,
+      clientX: 22,
+      clientY: 22,
+    });
+    expect(taps).toBe(1);
+    expect(orbits).toBe(0);
+
+    dispatch(canvas, "pointerdown", {
+      button: 0,
+      pointerId: 4,
+      clientX: 20,
+      clientY: 20,
+    });
+    dispatch(canvas, "pointermove", {
+      pointerId: 4,
+      clientX: 60,
+      clientY: 28,
+    });
+    dispatch(canvas, "pointerup", {
+      pointerId: 4,
+      clientX: 60,
+      clientY: 28,
+    });
+
+    expect(taps).toBe(1);
+    expect(orbits).toBe(0);
+    expect(input.movement.snapshot.intent.magnitude).toBe(0);
+
+    input.suspend(true);
+    dispatch(canvas, "pointerdown", {
+      button: 0,
+      pointerId: 5,
+      clientX: 20,
+      clientY: 20,
+    });
+    dispatch(canvas, "pointerup", {
+      pointerId: 5,
+      clientX: 20,
+      clientY: 20,
+    });
+    expect(taps).toBe(1);
+  } finally {
+    input.dispose();
+    for (const [name, descriptor] of [
+      ["window", oldWindow],
+      ["document", oldDocument],
+    ] as const) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else Reflect.deleteProperty(globalThis, name);
+    }
+  }
+});
 
 test("the authored round foundation supports every corner of the existing walking bounds", () => {
   const scene = new PlaceableScene();

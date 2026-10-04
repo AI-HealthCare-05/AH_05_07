@@ -10,11 +10,24 @@ import {
   type TodayGateProximity,
 } from "./worldScene";
 import { PlaceableWorldInput } from "./worldInput";
+import { SOCKETS, type Selection } from "./contract";
 import type { CompanionAsset } from "../ui/companionAssets.generated";
 import { MySpaceCompanionActor, type CompanionPose } from "./companionActor";
 import { PLAZA_CAMERA } from "./plazaCamera";
 
-type Props = PlaceableProjection & { presentation?: "guest"; reentry?: boolean; pinwheelPreview?: boolean; sourceSettling?: boolean; companion: CompanionAsset | null; onInteract: () => void; onTwilight: () => void; onGardenActivate?: () => void; onGateProximityChange?: (proximity: TodayGateProximity) => void };
+type Props = PlaceableProjection & {
+  presentation?: "guest";
+  reentry?: boolean;
+  pinwheelPreview?: boolean;
+  sourceSettling?: boolean;
+  placementEditing?: boolean;
+  companion: CompanionAsset | null;
+  onInteract: () => void;
+  onTwilight: () => void;
+  onGardenActivate?: () => void;
+  onSocketSelect?: (socketId: Selection["socketId"]) => void;
+  onGateProximityChange?: (proximity: TodayGateProximity) => void;
+};
 
 type FirstStepPhase = "prompt" | "acknowledged" | "complete";
 
@@ -99,9 +112,13 @@ export default function PlaceableWorld(props: Props) {
   }, [firstStepPhase]);
 
   useLayoutEffect(() => {
+    const placementEditing = !guestVisit && props.placementEditing === true;
+    sceneRef.current?.setPlacementEditing(placementEditing);
     sceneRef.current?.update(props, reduced.current);
-    inputRef.current?.suspend(props.suspended);
-  }, [props]);
+    inputRef.current?.suspend(props.suspended, {
+      tapWhileSuspended: placementEditing,
+    });
+  }, [guestVisit, props]);
 
   const companionNotice = !error && (pose === "loading" || pose === "unavailable");
   useLayoutEffect(() => {
@@ -130,7 +147,7 @@ export default function PlaceableWorld(props: Props) {
     [container, ...reservedNodes, ...labelNodes.current.values()].forEach(node => observer.observe(node));
     window.addEventListener("resize", measure);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); labelGeometry.current = null; };
-  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.selection?.socketId, props.suspended, firstStepPhase, returnCueVisible, gateProximity, error]);
+  }, [labels, toolsOpen, companionNotice, props.preview, props.pinwheelPreview, props.placementEditing, props.selection?.socketId, props.suspended, firstStepPhase, returnCueVisible, gateProximity, error]);
 
   useEffect(() => {
     if (!host.current || !pad.current) return;
@@ -157,6 +174,7 @@ export default function PlaceableWorld(props: Props) {
     try {
       scene = new PlaceableScene(); sceneRef.current = scene;
       scene.setGardenAvailable(!guestVisit);
+      scene.setPlacementEditing(!guestVisit && latest.current.placementEditing === true);
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
       companionRef.current = companion; scene.actor.add(companion.root);
       renderer = new WebGLRenderer({ antialias: true, alpha: false });
@@ -199,6 +217,20 @@ export default function PlaceableWorld(props: Props) {
         scene!.camera.updateMatrixWorld();
         ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1,
           1 - (y - rect.top) / rect.height * 2), scene!.camera);
+
+        if (
+          !guestVisit
+          && latest.current.placementEditing
+          && latest.current.onSocketSelect
+        ) {
+          const hit = ray.intersectObject(scene!.socketTargets, true)[0];
+          const socket = SOCKETS.find((entry) => entry.id === hit?.object.name);
+          if (socket) latest.current.onSocketSelect(socket.id);
+          // Placement mode owns canvas taps exclusively. A miss must not greet,
+          // enter Garden or play the pinwheel.
+          return;
+        }
+
         if (ray.intersectObject(companion!.root, true).length) { greet(); return; }
         if (!guestVisit
           && latest.current.onGardenActivate
@@ -213,7 +245,10 @@ export default function PlaceableWorld(props: Props) {
         zoom: (delta) => scene!.cameraRig.zoom(delta), tap,
         stop: () => { scene!.stopSpatial(); companion!.setMoving(false); },
       });
-      input.suspend(latest.current.suspended);
+      input.suspend(latest.current.suspended, {
+        tapWhileSuspended: !guestVisit
+          && latest.current.placementEditing === true,
+      });
       const lost = (event: Event) => { event.preventDefault(); fail(); };
       canvas.addEventListener("webglcontextlost", lost);
       cleanup.push(() => canvas.removeEventListener("webglcontextlost", lost));
@@ -276,6 +311,7 @@ export default function PlaceableWorld(props: Props) {
     data-keepsake={props.keepsake ?? "none"} data-choice={props.choice ?? "none"} data-socket={props.selection?.socketId ?? "unplaced"} data-pulse={props.pulse}
     data-world-error={error} data-suspended={props.suspended || !focused} data-reduced-motion={reducedMotion}
     data-scenery-profile={sceneryProfile}
+    data-placement-editing={!guestVisit && props.placementEditing ? "true" : "false"}
     data-companion={props.companion?.species ?? "unavailable"} data-companion-pose={pose}
     data-lighting={twilight ? "twilight" : "daylight"} data-welcome-phase={welcomePhase}
     data-first-step={guestVisit ? undefined : firstStepPhase}
@@ -285,12 +321,31 @@ export default function PlaceableWorld(props: Props) {
       if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
     }}>
     <div className="placeable-world-host" ref={host}>
-      {!error && labels.map((label) => <span key={label.id} className="placeable-world-label" aria-hidden="true"
-        data-world-label={label.id}
-        data-arrival-highlight={!guestVisit && !props.suspended && firstStepPhase === "prompt" && label.id === "today-gate" ? "true" : undefined}
-        data-preview-selected={props.pinwheelPreview && label.id === props.selection?.socketId}
-        ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
-        style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>{props.pinwheelPreview && label.id === props.selection?.socketId ? `미리보기 · ${label.label}` : label.label}</span>)}
+      {!error && labels.map((label) => {
+        const socketLabel = SOCKETS.some((socket) => socket.id === label.id);
+        const selectedSocket = !guestVisit
+          && props.placementEditing
+          && socketLabel
+          && label.id === props.selection?.socketId;
+        const placementState = selectedSocket
+          ? props.pinwheelPreview
+            ? "preview"
+            : "current"
+          : undefined;
+        return <span key={label.id} className="placeable-world-label" aria-hidden="true"
+          data-world-label={label.id}
+          data-placement-state={placementState}
+          data-arrival-highlight={!guestVisit && !props.suspended && firstStepPhase === "prompt" && label.id === "today-gate" ? "true" : undefined}
+          data-preview-selected={placementState === "preview" ? "true" : undefined}
+          ref={(node) => { if (node) labelNodes.current.set(label.id, node); else labelNodes.current.delete(label.id); }}
+          style={{ visibility: "hidden", left: `${label.left}%`, top: `${label.top}%` }}>
+          {placementState === "preview"
+            ? `미리보기 · ${label.label}`
+            : placementState === "current"
+              ? `현재 · ${label.label}`
+              : label.label}
+        </span>;
+      })}
       {error && <div className="placeable-world-message" role="alert">
         <h2>{guestVisit ? "3D 공간을 열지 못했어요" : "3D 광장을 열지 못했어요"}</h2>
         <p>{guestVisit

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { emptySnapshot } from "../src/placeable/contract";
+import { emptySnapshot, SOCKETS } from "../src/placeable/contract";
 import { STORAGE_KEY } from "../src/placeable/persistence";
 import { companionSpecies } from "../src/ui/companion";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
@@ -78,6 +78,34 @@ async function openGardenDestination(page: Page) {
 async function gardenTarget(page: Page) {
   const box = await page.locator('[data-world-label="garden-entrance"]').boundingBox();
   if (!box) throw new Error("Garden entrance label is not visible");
+  return {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  };
+}
+
+async function openPlacementEditor(page: Page) {
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-placement-editing", "true");
+}
+
+async function socketTarget(
+  page: Page,
+  socketId: (typeof SOCKETS)[number]["id"],
+) {
+  const label = page.locator(`[data-world-label="${socketId}"]`);
+  await expect(label).toBeVisible();
+  const box = await label.boundingBox();
+  if (!box) throw new Error(`Socket label ${socketId} is not visible`);
   return {
     x: box.x + box.width / 2,
     y: box.y + box.height / 2,
@@ -430,6 +458,220 @@ test("#967 Gate semantic handoff clears when Plaza world unmounts for Garden", a
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }))
     .toHaveAttribute("aria-describedby", "placeable-today-context");
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
+});
+
+test("#997 spatial socket editing previews the authored locations without writes or navigation leakage", async ({ page }) => {
+  await page.addInitScript((key) => {
+    Object.assign(window, { e997Writes: 0 });
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) {
+        (window as unknown as { e997Writes: number }).e997Writes++;
+      }
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+
+  for (const socket of SOCKETS) {
+    await expect(
+      page.locator(`[data-world-label="${socket.id}"]`),
+    ).toBeHidden();
+  }
+
+  await page.getByRole("button", {
+    name: "꾸미기",
+    exact: true,
+  }).click();
+
+  const world = page.getByTestId("placeable-world");
+  const walkPad = page.getByRole("button", {
+    name: "드래그하거나 방향키로 광장 걷기",
+  });
+
+  await expect(world).toHaveAttribute("data-placement-editing", "true");
+  await expect(walkPad).toBeDisabled();
+
+  for (const socket of SOCKETS) {
+    await expect(
+      page.locator(`[data-world-label="${socket.id}"]`),
+    ).toBeVisible();
+  }
+
+  // Canvas placement mode owns the gesture. Even a direct Garden tap cannot
+  // leak into navigation while the edit surface is active.
+  const garden = await gardenTarget(page);
+  await page.mouse.click(garden.x, garden.y);
+  await expect(page.getByTestId("garden-experience")).toHaveCount(0);
+
+  for (const socket of SOCKETS) {
+    const target = await socketTarget(page, socket.id);
+    await page.mouse.click(target.x, target.y);
+
+    await expect(world).toHaveAttribute("data-socket", socket.id);
+    await expect(page.getByRole("button", {
+      name: socket.label,
+      exact: true,
+    })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("draft-placement"))
+      .toContainText(socket.label);
+    expect(await page.evaluate(() =>
+      (window as unknown as { e997Writes: number }).e997Writes,
+    )).toBe(0);
+  }
+
+  // Dragging across another socket is a cancelled tap and cannot orbit/select.
+  const beforeDrag = await world.getAttribute("data-socket");
+  const dragTarget = await socketTarget(page, "gate-left");
+  await page.mouse.move(dragTarget.x, dragTarget.y);
+  await page.mouse.down();
+  await page.mouse.move(
+    dragTarget.x + 90,
+    dragTarget.y + 18,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+
+  await expect(world).toHaveAttribute("data-socket", beforeDrag!);
+  expect(await page.evaluate(() =>
+    (window as unknown as { e997Writes: number }).e997Writes,
+  )).toBe(0);
+
+  await page.getByRole("button", {
+    name: "미리보기 취소",
+    exact: true,
+  }).click();
+
+  await expect(world).toHaveAttribute("data-placement-editing", "false");
+  await expect(world).toHaveAttribute("data-socket", "unplaced");
+  for (const socket of SOCKETS) {
+    await expect(
+      page.locator(`[data-world-label="${socket.id}"]`),
+    ).toBeHidden();
+  }
+  expect(await page.evaluate(() =>
+    (window as unknown as { e997Writes: number }).e997Writes,
+  )).toBe(0);
+
+  // The existing explicit confirmation remains the sole write path.
+  await openPlacementEditor(page);
+  const target = await socketTarget(page, "plaza-edge");
+  await page.mouse.click(target.x, target.y);
+  expect(await page.evaluate(() =>
+    (window as unknown as { e997Writes: number }).e997Writes,
+  )).toBe(0);
+
+  await page.getByRole("button", {
+    name: "배치 확정하기",
+    exact: true,
+  }).click();
+
+  await expect(page.getByTestId("save-status")).toContainText("저장했어요");
+  expect(await page.evaluate(() =>
+    (window as unknown as { e997Writes: number }).e997Writes,
+  )).toBe(1);
+});
+
+test("#997 compact placement keeps static selection identity and semantic fallback", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({
+    reducedMotion: "reduce",
+    forcedColors: "active",
+  });
+
+  await openPlacementEditor(page);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute("data-scenery-profile", "compact");
+  await expect(world).toHaveAttribute("data-reduced-motion", "true");
+  await expect(world).toHaveAttribute("data-placement-editing", "true");
+
+  for (const socket of SOCKETS) {
+    await expect(page.getByRole("button", {
+      name: socket.label,
+      exact: true,
+    })).toBeVisible();
+  }
+
+  const visibleSocketLabels = await page.locator(
+    '[data-world-label="gate-left"],'
+      + '[data-world-label="gate-right"],'
+      + '[data-world-label="plaza-edge"]',
+  ).evaluateAll((nodes) => nodes.filter((node) => {
+    const style = getComputedStyle(node);
+    return style.display !== "none"
+      && style.visibility !== "hidden"
+      && style.opacity !== "0";
+  }).length);
+
+  expect(visibleSocketLabels).toBeGreaterThan(0);
+
+  await page.getByRole("button", {
+    name: "입구 오른쪽",
+    exact: true,
+  }).click();
+
+  await expect(world).toHaveAttribute("data-socket", "gate-right");
+  await expect(page.getByRole("button", {
+    name: "입구 오른쪽",
+    exact: true,
+  })).toHaveAttribute("aria-pressed", "true");
+
+  const selected = page.locator(
+    '[data-world-label="gate-right"]',
+  );
+  await expect(selected).toHaveAttribute(
+    "data-placement-state",
+    "preview",
+  );
+  await expect(selected).toHaveCSS(
+    "animation-name",
+    "none",
+  );
+  await expect(selected).toHaveCSS(
+    "border-top-style",
+    "dashed",
+  );
+
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+});
+
+test("#997 renderer failure leaves semantic socket preview available", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openPlacementEditor(page);
+
+  await page.getByTestId("placeable-world-canvas").evaluate(
+    (canvas: HTMLCanvasElement) => {
+      canvas.getContext("webgl2")!
+        .getExtension("WEBGL_lose_context")!
+        .loseContext();
+    },
+  );
+
+  await expect(page.getByRole("alert"))
+    .toContainText("3D 광장을 열지 못했어요");
+
+  const semanticSocket = page.getByRole("button", {
+    name: "입구 오른쪽",
+    exact: true,
+  });
+  await expect(semanticSocket).toBeVisible();
+  await semanticSocket.click();
+
+  await expect(semanticSocket)
+    .toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("draft-placement"))
+    .toContainText("입구 오른쪽");
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-socket", "gate-right");
 });
 
 test("#995 Garden is a visible tappable Plaza destination without proximity navigation or cosmetic writes", async ({ page }) => {

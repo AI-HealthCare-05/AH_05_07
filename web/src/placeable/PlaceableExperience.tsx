@@ -458,8 +458,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
         {world ? <WorldBoundary classicHref={route("classic")} sourceSettling={sourceSettling} onContextSwitch={blockContextSwitch}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             sourceSettling={sourceSettling}
+            placementEditing={editing && canEdit}
             onGateProximityChange={setTodayGateProximity}
             onGardenActivate={enterGardenNook}
+            onSocketSelect={(socketId) => change({ socketId })}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
             suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}

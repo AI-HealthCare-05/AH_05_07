@@ -111,6 +111,7 @@ export class PlaceableScene {
   #cameraObstacles: CameraObstacle[] = [];
   #sceneryProfile: PlazaSceneryProfile = "full";
   readonly socketRings = new Group();
+  readonly socketTargets = new Group();
   readonly bladeMaterial = material(COLORS.coral, "accent");
   readonly ambient = new AmbientLight(0xe8ecff, 0.45);
   readonly skyFill = new HemisphereLight("#e5efff", "#8e826d", 1.65);
@@ -133,6 +134,7 @@ export class PlaceableScene {
   #reducedMotion = false;
   #preview = false;
   #suspended = true;
+  #placementEditing = false;
 
   constructor() {
     // Daylight is the truthful default for every visit; no wall clock or stored mood.
@@ -348,12 +350,35 @@ export class PlaceableScene {
 
     // Camera proxies are rebuilt from exactly the scenery that is currently visible.
     this.#rebuildCameraObstacles();
+    const socketHitMaterial = new MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
     for (const socket of SOCKETS) {
-      const ring = new Mesh(new RingGeometry(0.31, PINWHEEL_RADIUS, 40), material("#819f86"));
-      ring.name = socket.id; ring.rotation.x = -Math.PI / 2;
-      ring.position.set(socket.x, 0.04, socket.z); this.socketRings.add(ring);
+      const ring = new Mesh(
+        new RingGeometry(0.31, PINWHEEL_RADIUS, 40),
+        material("#819f86"),
+      );
+      ring.name = socket.id;
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(socket.x, 0.04, socket.z);
+      this.socketRings.add(ring);
+
+      // #997: a forgiving edit-only hit surface shares the authored SOCKETS
+      // coordinates. It owns no selection or persistence state.
+      const target = new Mesh(
+        new CircleGeometry(PINWHEEL_RADIUS * 1.45, 32),
+        socketHitMaterial,
+      );
+      target.name = socket.id;
+      target.rotation.x = -Math.PI / 2;
+      target.position.set(socket.x, 0.055, socket.z);
+      this.socketTargets.add(target);
     }
-    this.scene.add(this.socketRings);
+    this.socketRings.visible = false;
+    this.socketTargets.visible = false;
+    this.scene.add(this.socketRings, this.socketTargets);
     this.scene.add(this.choiceMarker);
     this.choiceMarker.position.x = -2.15;
     this.pinwheel.name = ASSET; this.pinwheel.visible = false;
@@ -433,6 +458,13 @@ export class PlaceableScene {
     this.#rebuildCameraObstacles();
   }
 
+  setPlacementEditing(editing: boolean) {
+    if (this.#disposed || editing === this.#placementEditing) return;
+    this.#placementEditing = editing;
+    this.socketRings.visible = editing;
+    this.socketTargets.visible = editing;
+  }
+
   setSceneryProfile(profile: PlazaSceneryProfile) {
     if (this.#disposed || profile === this.#sceneryProfile) return;
     this.#sceneryProfile = profile;
@@ -503,7 +535,16 @@ export class PlaceableScene {
     }
     for (const object of this.socketRings.children) {
       const ring = object as Mesh<RingGeometry, MeshStandardMaterial>;
-      ring.material.color.set(selection?.socketId === ring.name ? projection.preview ? "#c5a339" : "#238b88" : "#819f86");
+      const selected = selection?.socketId === ring.name;
+      ring.material.color.set(
+        selected
+          ? projection.preview
+            ? "#c5a339"
+            : "#238b88"
+          : "#819f86",
+      );
+      // Shape as well as color distinguishes the selected authored socket.
+      ring.scale.setScalar(this.#placementEditing && selected ? 1.18 : 1);
     }
     if (projection.pulse > this.#pulse && !projection.preview && selection) this.#feedbackLeft = 0.9;
     this.#pulse = projection.pulse;
@@ -608,8 +649,18 @@ export class PlaceableScene {
           }]
         : []),
     ];
-    return [...destinations,
-      ...SOCKETS.map((s) => ({ ...s, y: 0, z: s.z + 0.55 }))].map((label) => {
+    const sockets = SOCKETS.map((socket) => ({
+      ...socket,
+      // During placement editing the projected label is centered on the same
+      // world point used by the raycast target, so the visible place teaches
+      // the actual selectable location.
+      y: this.#placementEditing ? 0.055 : 0,
+      z: this.#placementEditing ? socket.z : socket.z + 0.55,
+    }));
+    const ordered = this.#placementEditing
+      ? [...sockets, ...destinations]
+      : [...destinations, ...sockets];
+    return ordered.map((label) => {
       const point = new Vector3(label.x, label.y, label.z).project(this.camera);
       const visible = point.z >= -1 && point.z <= 1 && Math.abs(point.x) < 0.9 && Math.abs(point.y) < 0.94;
       return { id: label.id, label: label.label, left: (point.x + 1) * 50, top: (1 - point.y) * 50, visible };
