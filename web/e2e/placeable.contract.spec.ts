@@ -131,6 +131,38 @@ test("#977 account adapter reports only current remote session rejection", async
   expect(rejected).toHaveLength(beforeUnknown);
 });
 
+test("#981 stale in-flight adapter cannot withdraw a newer verified token", async () => {
+  const first = { owner: "synthetic-A", token: "token-A", generation: 1 };
+  const newer = { owner: "synthetic-A", token: "token-B", generation: 2 };
+  let current = first;
+  let release!: () => void;
+  let started!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  const requestStarted = new Promise<void>((resolve) => { started = resolve; });
+  let rejected = 0;
+
+  const adapter = accountPersistence({
+    identity: first,
+    currentIdentity: () => current,
+    baseUrl: "https://synthetic.invalid",
+    onSessionRejected: () => { rejected++; },
+    fetcher: async () => {
+      started();
+      await pending;
+      return new Response(JSON.stringify(emptySnapshot()));
+    },
+  });
+
+  const read = adapter.read();
+  await requestStarted;
+  current = newer;
+  release();
+
+  await expect(read).rejects.toMatchObject({ kind: "session" });
+  expect(rejected).toBe(0);
+  expect(current).toEqual(newer);
+});
+
 test("strict snapshot and receipt matching includes revision, full selection and fingerprint", async () => {
   const op: Operation = { operationId: crypto.randomUUID(), expectedRevision: 0,
     schemaVersion: "placeable.v1", layoutId: "e1-plaza.v1", selection: coral };
