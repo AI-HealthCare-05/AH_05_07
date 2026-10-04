@@ -314,7 +314,7 @@ test("same-user token refresh retries an initial stale-token window once with th
   ]);
 });
 
-test("991 rejected token A cleanup cannot erase newer same-user token B", async ({ page }) => {
+test("#991 rejected token A cleanup cannot erase newer same-user token B", async ({ page }) => {
   let releaseLogout!: () => void;
   let markLogoutStarted!: () => void;
 
