@@ -415,10 +415,19 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   return <main className={`placeable-experience ${world ? "placeable-world-view" : ""}`} data-testid="placeable-experience"
     data-phase={state.phase} data-mode={adapter.mode} data-view={world ? "3d" : "classic"} data-editing={editing}
     onKeyDown={(event) => { if (world && editing && event.key === "Escape") { event.preventDefault(); cancelEditing(); } }}>
-    <header className="placeable-header">
-      <div className="placeable-home-title"><p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p><h1 ref={plazaHeading} tabIndex={-1}>내 공간 <span>My Space</span></h1>
-        {world ? <p className="plaza-scope">{adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간"}<span aria-hidden="true"> · </span>3D 광장</p>
-          : <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p>}</div>
+    <header
+      className={`placeable-header${world ? " plaza-identity-bar" : ""}`}
+      data-testid={world ? "plaza-identity-bar" : undefined}
+    >
+      <div className={`placeable-home-title${world ? " plaza-identity" : ""}`}>
+        <p className="placeable-eyebrow">{world ? "SK7 · PLAZA" : "SK7 · 두 개의 홈"}</p>
+        <h1 ref={plazaHeading} tabIndex={-1}>내 공간 <span>My Space</span></h1>
+        {world ? <p className="plaza-scope" data-testid="plaza-scope">
+          <strong>{adapter.mode === "browser" ? "이 브라우저의 공간" : "계정 공간"}</strong>
+          <span aria-hidden="true"> · </span>
+          <span className="plaza-scope-view">3D 광장</span>
+        </p> : <p>동반자와 쉬고 나만의 광장과 정원을 꾸미는 곳</p>}
+      </div>
       <nav className="placeable-home-nav" aria-label="SK7 홈 전환">
         <span className="placeable-current-home" aria-current="page"><small>현재 홈</small> 내 공간</span>
         <a className="placeable-view-switch" aria-label={world ? "간단한 광장으로 보기" : undefined}
@@ -435,23 +444,29 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     </header>
     <div className="placeable-layout">
       <section className="placeable-stage" aria-label="내 공간 미리보기" data-breeze={feedback && canInteract}>
-        <div className="placeable-destination"><div><p className="placeable-eyebrow">건강 기록 홈 · Today</p>
+        <div
+          className="placeable-destination"
+          data-testid={world ? "plaza-action-rail" : undefined}
+        ><div><p className="placeable-eyebrow">건강 기록 홈 · Today</p>
           <h2>오늘의 기록</h2>
           <p id="placeable-today-context">혈압 기록과 지난 기록 확인은 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
-          <a className="placeable-today" href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+          <a className="placeable-today" data-plaza-action={world ? "today" : undefined}
+            href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
             aria-label="오늘의 기록으로 가기"
             aria-describedby={todayDescribedBy}
             aria-disabled={preview || Boolean(state.pending)}
             onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
             {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
-          {world && <button className="plaza-garden-action" ref={gardenEntry} type="button"
+          {world && <button className="plaza-garden-action" data-plaza-action="garden"
+            ref={gardenEntry} type="button"
             aria-label="정원 쉼터로 가기"
             aria-disabled={sourceSettling}
             aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
             onClick={enterGardenNook}>
             정원 쉼터 <span aria-hidden="true">→</span>
           </button>}
-          {world && <button className="plaza-edit-action" ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
+          {world && <button className="plaza-edit-action" data-plaza-action="decorate"
+            ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
             onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
         </div>
         {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록이나 정원 쉼터로 이동하거나, 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
