@@ -6,6 +6,7 @@ import {
   PlaceableScene,
   GARDEN_ENTRANCE,
   RECORDS_DESTINATION,
+  AI_ANALYSIS_DESTINATION,
   SETTINGS_DESTINATION,
   PLAZA_WAYFINDING_PRIORITY,
   resolvePlazaWayfindingPriority,
@@ -118,6 +119,7 @@ test("multi-destination wayfinding hierarchy is explicit and placement-local", (
     "today-gate",
     GARDEN_ENTRANCE.id,
     RECORDS_DESTINATION.id,
+    AI_ANALYSIS_DESTINATION.id,
     SETTINGS_DESTINATION.id,
   ];
   expect(normal
@@ -127,6 +129,7 @@ test("multi-destination wayfinding hierarchy is explicit and placement-local", (
       ["today-gate", "primary"],
       [GARDEN_ENTRANCE.id, "destination"],
       [RECORDS_DESTINATION.id, "destination"],
+      [AI_ANALYSIS_DESTINATION.id, "destination"],
       [SETTINGS_DESTINATION.id, "utility"],
     ]);
   expect(normal.slice(-SOCKETS.length).every(
@@ -141,6 +144,79 @@ test("multi-destination wayfinding hierarchy is explicit and placement-local", (
   )).toBe(true);
   expect(editing.find((label) => label.id === "today-gate")?.priority)
     .toBe(PLAZA_WAYFINDING_PRIORITY.primary);
+
+  scene.dispose();
+});
+
+
+test("AI Analysis destination stays neutral, navigation-only and outside Model V2 state", () => {
+  expect(AI_ANALYSIS_DESTINATION).toMatchObject({
+    id: "analysis-desk",
+    label: "AI 분석",
+    role: "semantic",
+    rootName: "plaza-analysis-destination",
+    x: -2.25,
+    z: -2.35,
+    labelY: 1.16,
+    grounding: "plaza-floor",
+    compact: "retain",
+    cameraObstacle: true,
+    semanticFallback: "parent-semantic-control",
+  });
+  expect(Object.keys(AI_ANALYSIS_DESTINATION).some((key) =>
+    /score|probability|percent|risk|result|ready|model/i.test(key),
+  )).toBe(false);
+
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
+  expect(Math.abs(AI_ANALYSIS_DESTINATION.x)).toBeLessThan(reachableBound);
+  expect(Math.abs(AI_ANALYSIS_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.analysisDestination.name).toBe("plaza-analysis-destination");
+  expect(scene.analysisDesk.name).toBe(AI_ANALYSIS_DESTINATION.id);
+  expect(scene.analysisDesk.position.toArray()).toEqual([-2.25, 0, -2.35]);
+  expect(scene.analysisDesk.children.map((child) => child.name)).toEqual([
+    "analysis-desk-base",
+    "analysis-desk-support-0",
+    "analysis-desk-support-1",
+    "analysis-desk-surface",
+    "analysis-desk-board",
+    "analysis-desk-card-0",
+    "analysis-desk-card-1",
+  ]);
+  expect(scene.analysisDesk.children.every((child) =>
+    !/score|risk|gauge|meter|probability|percent|result|ready/i.test(child.name),
+  )).toBe(true);
+
+  const label = scene.labels().find(
+    (entry) => entry.id === AI_ANALYSIS_DESTINATION.id,
+  );
+  expect(label?.label).toBe("AI 분석");
+  expect(label?.wayfindingRole).toBe("destination");
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("analysis-desk-"),
+  )).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.analysisDestination.visible).toBe(true);
+  expect(scene.labels().some(
+    (entry) => entry.id === AI_ANALYSIS_DESTINATION.id,
+  )).toBe(true);
+
+  scene.setAnalysisAvailable(false);
+  expect(scene.analysisDestination.visible).toBe(false);
+  expect(scene.labels().some(
+    (entry) => entry.id === AI_ANALYSIS_DESTINATION.id,
+  )).toBe(false);
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("analysis-desk-"),
+  )).toBe(false);
+
+  expect(scene.labels().some((entry) => entry.id === "today-gate")).toBe(true);
+  expect(scene.labels().some((entry) => entry.id === RECORDS_DESTINATION.id)).toBe(true);
+  expect(scene.labels().some((entry) => entry.id === SETTINGS_DESTINATION.id)).toBe(true);
+  expect(scene.labels().some((entry) => entry.id === GARDEN_ENTRANCE.id)).toBe(true);
 
   scene.dispose();
 });

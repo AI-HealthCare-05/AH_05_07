@@ -11,6 +11,7 @@ import {
   resolveTodayGateProximity,
   TODAY_GATE_APPROACH_RADIUS,
   RECORDS_DESTINATION,
+  AI_ANALYSIS_DESTINATION,
   SETTINGS_DESTINATION,
 } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
@@ -122,6 +123,36 @@ async function recordsTarget(page: Page) {
       .getWorldPosition(new Vector3())
       .project(scene.camera);
 
+    return {
+      x: box.x + (point.x + 1) * box.width / 2,
+      y: box.y + (1 - point.y) * box.height / 2,
+    };
+  } finally {
+    scene.dispose();
+  }
+}
+
+
+async function openAnalysisDestination(page: Page) {
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await expect(page.locator(
+    `[data-world-label="${AI_ANALYSIS_DESTINATION.id}"]`,
+  )).toHaveText("AI 분석");
+}
+
+async function analysisTarget(page: Page) {
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("AI Analysis canvas is not visible");
+  const scene = new PlaceableScene();
+  try {
+    scene.resize(box.width / box.height);
+    scene.scene.updateMatrixWorld(true);
+    const board = scene.analysisDesk.getObjectByName("analysis-desk-board");
+    if (!board) throw new Error("AI Analysis desk board is missing");
+    const point = board.getWorldPosition(new Vector3()).project(scene.camera);
     return {
       x: box.x + (point.x + 1) * box.width / 2,
       y: box.y + (1 - point.y) * box.height / 2,
@@ -1161,6 +1192,130 @@ test("Records remains semantic at compact sizes and when the optional world fail
   await expect(records).toHaveAttribute("href", "?screen=S08");
 });
 
+
+test("AI Analysis is a neutral navigation-only spatial destination with direct S11 semantics", async ({ page }) => {
+  await page.addInitScript((key) => {
+    Object.assign(window, { analysisWrites: 0 });
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) {
+        (window as unknown as { analysisWrites: number }).analysisWrites++;
+      }
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openAnalysisDestination(page);
+
+  const label = page.locator(`[data-world-label="${AI_ANALYSIS_DESTINATION.id}"]`);
+  const analysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
+
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText("AI 분석");
+  await expect(label).toHaveAttribute("data-wayfinding-role", "destination");
+  await expect(analysis).toBeVisible();
+  await expect(analysis).toHaveAttribute("href", "?screen=S11");
+  await expect(analysis).toHaveAttribute("aria-describedby", "placeable-analysis-context");
+
+  await page.screenshot({
+    path: test.info().outputPath("ai-analysis-destination-desktop.png"),
+    scale: "css",
+  });
+
+  const beforeUrl = page.url();
+  let point = await analysisTarget(page);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 90, point.y + 18, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  await expect(page).toHaveURL(beforeUrl);
+
+  await openAnalysisDestination(page);
+  point = await analysisTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/\?screen=S11$/);
+  expect(await page.evaluate(() =>
+    (window as unknown as { analysisWrites: number }).analysisWrites,
+  )).toBe(0);
+});
+
+test("AI Analysis obeys source-settling and placement canvas ownership", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openAnalysisDestination(page);
+
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await page.getByRole("button", { name: "환영 바람개비 고르기", exact: true }).click();
+
+  const analysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
+  const handoff = page.locator("#placeable-destination-handoff");
+
+  await expect(analysis).toHaveAttribute("aria-disabled", "true");
+  await expect(analysis).toHaveAttribute(
+    "aria-describedby",
+    "placeable-analysis-context placeable-destination-handoff",
+  );
+
+  await analysis.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page).toHaveURL(/experience=e2/);
+
+  const point = await analysisTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/experience=e2/);
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click();
+  await expect(analysis).toHaveAttribute("aria-disabled", "false");
+  await expect(analysis).toHaveAttribute("aria-describedby", "placeable-analysis-context");
+});
+
+test("AI Analysis stays semantic on compact/WebGL paths and Guest Plaza stays unchanged", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(route);
+    await expect(page.getByTestId("placeable-world"))
+      .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+    const analysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
+    await analysis.scrollIntoViewIfNeeded();
+    await expect(analysis).toBeVisible();
+    await expect(analysis).toHaveAttribute("href", "?screen=S11");
+    expect((await analysis.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= innerWidth,
+    )).toBe(true);
+  }
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await page.getByTestId("placeable-world-canvas").evaluate(
+    (canvas: HTMLCanvasElement) => {
+      canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
+    },
+  );
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await expect(page.getByRole("link", { name: "AI 분석으로 가기", exact: true }))
+    .toHaveAttribute("href", "?screen=S11");
+
+  await page.goto("/?guest=1");
+  await page.getByRole("button", { name: "3D 공간 둘러보기", exact: true }).click();
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await expect(page.locator(
+    `[data-world-label="${AI_ANALYSIS_DESTINATION.id}"]`,
+  )).toHaveCount(0);
+  await expect(page.getByRole("link", {
+    name: "AI 분석으로 가기",
+    exact: true,
+  })).toHaveCount(0);
+});
+
 test("Settings is a secondary spatial utility outside the Plaza action rail", async ({ page }) => {
   await page.addInitScript((key) => {
     Object.assign(window, { settingsWrites: 0 });
@@ -1326,6 +1481,8 @@ test("Living City wayfinding hierarchy coordinates destinations without changing
       .toHaveAttribute("data-wayfinding-role", "destination");
     await expect(page.locator(`[data-world-label="${RECORDS_DESTINATION.id}"]`))
       .toHaveAttribute("data-wayfinding-role", "destination");
+    await expect(page.locator(`[data-world-label="${AI_ANALYSIS_DESTINATION.id}"]`))
+      .toHaveAttribute("data-wayfinding-role", "destination");
     await expect(page.locator(`[data-world-label="${SETTINGS_DESTINATION.id}"]`))
       .toHaveAttribute("data-wayfinding-role", "utility");
 
@@ -1333,6 +1490,10 @@ test("Living City wayfinding hierarchy coordinates destinations without changing
       name: "기록 찾아보기로 가기",
       exact: true,
     })).toHaveAttribute("href", "?screen=S08");
+    await expect(page.getByRole("link", {
+      name: "AI 분석으로 가기",
+      exact: true,
+    })).toHaveAttribute("href", "?screen=S11");
     await expect(page.getByRole("link", {
       name: "설정으로 가기",
       exact: true,

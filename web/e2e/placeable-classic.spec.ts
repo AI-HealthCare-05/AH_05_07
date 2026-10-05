@@ -255,6 +255,7 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   const viewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
   const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
   const records = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
+  const analysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
   const settings = page.getByRole("link", { name: "설정으로 가기", exact: true });
   const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const storage = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
@@ -272,6 +273,8 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   await expect(today).toHaveAttribute("aria-describedby", "placeable-today-context placeable-destination-handoff");
   await expect(records).toHaveAttribute("aria-disabled", "true");
   await expect(records).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
+  await expect(analysis).toHaveAttribute("aria-disabled", "true");
+  await expect(analysis).toHaveAttribute("aria-describedby", "placeable-analysis-context placeable-destination-handoff");
   await expect(settings).toHaveAttribute("aria-disabled", "true");
   await expect(settings).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
   await expect(garden).toHaveAttribute("aria-disabled", "true");
@@ -300,12 +303,15 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기" })).toHaveAttribute("aria-disabled", "true");
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   const blockedRecords = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
+  const blockedAnalysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
   const blockedSettings = page.getByRole("link", { name: "설정으로 가기", exact: true });
   const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const blockedViewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
   const blockedStorageSwitch = page.getByRole("link", { name: "이 브라우저의 공간 사용하기", exact: true });
   await expect(blockedRecords).toHaveAttribute("aria-disabled", "true");
   await expect(blockedRecords).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
+  await expect(blockedAnalysis).toHaveAttribute("aria-disabled", "true");
+  await expect(blockedAnalysis).toHaveAttribute("aria-describedby", "placeable-analysis-context placeable-destination-handoff");
   await expect(blockedSettings).toHaveAttribute("aria-disabled", "true");
   await expect(blockedSettings).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
   await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
@@ -318,7 +324,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await blockedGarden.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, 기록 찾아보기, 설정, 정원 쉼터");
+  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터");
   await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
@@ -737,6 +743,108 @@ test("Records destination uses direct S08 semantics and browser Back restores My
 
   await expect(classicRecords).toBeVisible();
   await expect(classicRecords).toHaveAttribute("href", "?screen=S08");
+  expect(await readLocal(page)).toEqual(before);
+});
+
+
+test("AI Analysis destination uses direct S11 semantics without importing Model V2 state into My Space", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  let modelRequests = 0;
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path === "/models/model-v2.json"
+      || path === "/api/v1/model-v2/product-score") {
+      modelRequests++;
+    }
+  });
+
+  await page.goto(companionRoute);
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 20000 },
+  );
+
+  const analysis = page.getByRole("link", {
+    name: "AI 분석으로 가기",
+    exact: true,
+  });
+  await expect(analysis).toHaveAttribute("href", "?screen=S11");
+
+  const sourceUrl = page.url();
+  const before = await readLocal(page);
+  const puts = account.puts;
+
+  await page.addInitScript((eventName) => {
+    const nativeAdd = window.addEventListener.bind(window);
+    Object.assign(window, { analysisSessionListenerReady: false });
+    window.addEventListener = (...args: Parameters<typeof window.addEventListener>) => {
+      nativeAdd(...args);
+      if (args[0] === eventName) {
+        (window as unknown as {
+          analysisSessionListenerReady: boolean;
+        }).analysisSessionListenerReady = true;
+      }
+    };
+  }, e2eSessionEventName);
+
+  await analysis.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\?screen=S11$/);
+  expect(new URL(page.url()).searchParams.has("return_space")).toBe(false);
+
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as {
+      analysisSessionListenerReady: boolean;
+    }).analysisSessionListenerReady,
+  )).toBe(true);
+
+  await page.evaluate((eventName) => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    if (raw) {
+      window.dispatchEvent(new CustomEvent(
+        eventName,
+        { detail: JSON.parse(raw) },
+      ));
+    }
+  }, e2eSessionEventName);
+
+  await expect(page.locator('[data-scene="S11"]')).toBeVisible();
+  await expect(page.locator('[data-model-v2-step="intake"]')).toBeVisible();
+  await expect(page.locator('[data-model-v2-user-result="processed"]')).toHaveCount(0);
+  await expect(page.locator("[data-model-v2-execution-receipt]")).toHaveCount(0);
+  expect(modelRequests).toBe(0);
+  await expect(page.getByRole("link", {
+    name: "내 공간으로 돌아가기",
+  })).toHaveCount(0);
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.goBack();
+  await expect(page).toHaveURL(sourceUrl);
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-view", "3d");
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-mode", "browser");
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.getByRole("link", {
+    name: "간단한 광장으로 보기",
+    exact: true,
+  }).click();
+
+  const classicAnalysis = page.getByRole("link", {
+    name: "AI 분석으로 가기",
+    exact: true,
+  });
+  await expect(classicAnalysis).toBeVisible();
+  await expect(classicAnalysis).toHaveAttribute("href", "?screen=S11");
   expect(await readLocal(page)).toEqual(before);
 });
 
@@ -2514,7 +2622,7 @@ test("#958 blocked Garden destination stays focusable and explains why before ac
       blockedBox!.y + blockedBox!.height / 2,
     );
     await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, 기록 찾아보기, 설정, 정원 쉼터");
+    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터");
     await expect(page.getByTestId("garden-experience")).toHaveCount(0);
 
     await page.keyboard.press("Escape");
