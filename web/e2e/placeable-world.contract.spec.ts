@@ -7,6 +7,8 @@ import {
   GARDEN_ENTRANCE,
   RECORDS_DESTINATION,
   SETTINGS_DESTINATION,
+  PLAZA_WAYFINDING_PRIORITY,
+  resolvePlazaWayfindingPriority,
   PINWHEEL_RADIUS,
   PINWHEEL_PREVIEW_CUE,
   resolvePlazaSceneryProfile,
@@ -85,6 +87,62 @@ test("bounded destination authoring validates role, grounding, envelope and pare
     .toThrow(/landmark builder/);
   expect(() => authorPlazaDestination(RECORDS_DESTINATION, () => undefined))
     .toThrow(/visible landmark geometry/);
+});
+
+test("multi-destination wayfinding hierarchy is explicit and placement-local", () => {
+  expect(resolvePlazaWayfindingPriority("primary", false))
+    .toBe(PLAZA_WAYFINDING_PRIORITY.primary);
+  expect(resolvePlazaWayfindingPriority("destination", false))
+    .toBe(PLAZA_WAYFINDING_PRIORITY.destination);
+  expect(resolvePlazaWayfindingPriority("utility", false))
+    .toBe(PLAZA_WAYFINDING_PRIORITY.utility);
+  expect(resolvePlazaWayfindingPriority("placement", false))
+    .toBe(PLAZA_WAYFINDING_PRIORITY.placement);
+  expect(resolvePlazaWayfindingPriority("placement", true))
+    .toBe(PLAZA_WAYFINDING_PRIORITY.placementEditing);
+
+  expect(PLAZA_WAYFINDING_PRIORITY.primary)
+    .toBeGreaterThan(PLAZA_WAYFINDING_PRIORITY.destination);
+  expect(PLAZA_WAYFINDING_PRIORITY.destination)
+    .toBeGreaterThan(PLAZA_WAYFINDING_PRIORITY.utility);
+  expect(PLAZA_WAYFINDING_PRIORITY.utility)
+    .toBeGreaterThan(PLAZA_WAYFINDING_PRIORITY.placement);
+  expect(PLAZA_WAYFINDING_PRIORITY.placementEditing)
+    .toBeGreaterThan(PLAZA_WAYFINDING_PRIORITY.primary);
+
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const normal = scene.labels();
+  const destinationIds = [
+    "today-gate",
+    GARDEN_ENTRANCE.id,
+    RECORDS_DESTINATION.id,
+    SETTINGS_DESTINATION.id,
+  ];
+  expect(normal
+    .filter((label) => destinationIds.includes(label.id))
+    .map(({ id, wayfindingRole }) => [id, wayfindingRole]))
+    .toEqual([
+      ["today-gate", "primary"],
+      [GARDEN_ENTRANCE.id, "destination"],
+      [RECORDS_DESTINATION.id, "destination"],
+      [SETTINGS_DESTINATION.id, "utility"],
+    ]);
+  expect(normal.slice(-SOCKETS.length).every(
+    (label) => label.wayfindingRole === "placement",
+  )).toBe(true);
+
+  scene.setPlacementEditing(true);
+  const editing = scene.labels();
+  expect(editing.slice(0, SOCKETS.length).every(
+    (label) => label.wayfindingRole === "placement"
+      && label.priority === PLAZA_WAYFINDING_PRIORITY.placementEditing,
+  )).toBe(true);
+  expect(editing.find((label) => label.id === "today-gate")?.priority)
+    .toBe(PLAZA_WAYFINDING_PRIORITY.primary);
+
+  scene.dispose();
 });
 
 test("#995 Garden entrance stays inside unchanged Plaza movement authority and remains an optional renderer destination", () => {

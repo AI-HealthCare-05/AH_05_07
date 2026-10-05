@@ -1288,6 +1288,118 @@ test("Settings remains a compact semantic utility and stays out of Guest Plaza",
   await expect(page.getByRole("link", { name: "설정으로 가기", exact: true })).toHaveCount(0);
 });
 
+test("Living City wayfinding hierarchy coordinates destinations without changing semantic exits", async ({ page }) => {
+  const assertNoVisibleLabelOverlap = async () => {
+    const overlaps = await page.locator(".placeable-world-label:visible").evaluateAll((nodes) => {
+      const items = nodes.map((node) => ({
+        id: (node as HTMLElement).dataset.worldLabel ?? "",
+        rect: node.getBoundingClientRect(),
+      }));
+      const pairs: string[] = [];
+      for (let left = 0; left < items.length; left++) {
+        for (let right = left + 1; right < items.length; right++) {
+          const a = items[left].rect;
+          const b = items[right].rect;
+          const overlaps = a.left < b.right && a.right > b.left
+            && a.top < b.bottom && a.bottom > b.top;
+          if (overlaps) pairs.push(`${items[left].id}:${items[right].id}`);
+        }
+      }
+      return pairs;
+    });
+    expect(overlaps).toEqual([]);
+  };
+
+  for (const viewport of [
+    { width: 1366, height: 900 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(route);
+    await expect(page.getByTestId("placeable-world"))
+      .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+
+    await expect(page.locator('[data-world-label="today-gate"]'))
+      .toHaveAttribute("data-wayfinding-role", "primary");
+    await expect(page.locator('[data-world-label="garden-entrance"]'))
+      .toHaveAttribute("data-wayfinding-role", "destination");
+    await expect(page.locator(`[data-world-label="${RECORDS_DESTINATION.id}"]`))
+      .toHaveAttribute("data-wayfinding-role", "destination");
+    await expect(page.locator(`[data-world-label="${SETTINGS_DESTINATION.id}"]`))
+      .toHaveAttribute("data-wayfinding-role", "utility");
+
+    await expect(page.getByRole("link", {
+      name: "기록 찾아보기로 가기",
+      exact: true,
+    })).toHaveAttribute("href", "?screen=S08");
+    await expect(page.getByRole("link", {
+      name: "설정으로 가기",
+      exact: true,
+    })).toHaveAttribute("href", "?screen=S14");
+    await expect(page.getByRole("button", {
+      name: "정원 쉼터로 가기",
+      exact: true,
+    })).toBeVisible();
+    await expect(page.getByRole("link", {
+      name: "오늘의 기록으로 가기",
+      exact: true,
+    })).toBeVisible();
+
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= innerWidth,
+    )).toBe(true);
+    await assertNoVisibleLabelOverlap();
+
+    await page.getByTestId("placeable-experience").evaluate((element) => {
+      element.scrollTop = 0;
+      element.scrollLeft = 0;
+    });
+    await page.screenshot({
+      path: test.info().outputPath(
+        `wayfinding-${viewport.width}x${viewport.height}.png`,
+      ),
+      scale: "css",
+    });
+  }
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+  await page.setViewportSize({ width: 321, height: 568 });
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth <= innerWidth,
+  )).toBe(true);
+  await assertNoVisibleLabelOverlap();
+  await page.screenshot({
+    path: test.info().outputPath("wayfinding-text-200.png"),
+    scale: "css",
+  });
+
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-placement-editing", "true");
+  await expect(page.locator('[data-wayfinding-role="placement"]'))
+    .toHaveCount(SOCKETS.length);
+  await assertNoVisibleLabelOverlap();
+  await page.screenshot({
+    path: test.info().outputPath("wayfinding-editing-320x568.png"),
+    scale: "css",
+  });
+
+  await page.emulateMedia({ forcedColors: "active" });
+  await expect(page.locator(`[data-world-label="${RECORDS_DESTINATION.id}"]`))
+    .toHaveCSS("border-top-style", "solid");
+  await expect(page.locator(`[data-world-label="${SETTINGS_DESTINATION.id}"]`))
+    .toHaveCSS("border-top-style", "solid");
+});
+
 test("#995 Garden is a visible tappable Plaza destination without proximity navigation or cosmetic writes", async ({ page }) => {
   await page.addInitScript((key) => {
     Object.assign(window, { e995Writes: 0 });

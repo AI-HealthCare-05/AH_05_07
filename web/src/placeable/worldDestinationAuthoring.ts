@@ -4,6 +4,7 @@ export type PlazaDestinationAuthoringRole = "semantic" | "utility";
 export type PlazaDestinationGrounding = "plaza-floor";
 export type PlazaDestinationCompactPolicy = "retain";
 export type PlazaDestinationSemanticFallback = "parent-semantic-control";
+export type PlazaDestinationWayfindingRole = "destination" | "utility";
 
 export type PlazaDestinationAuthoring = Readonly<{
   id: string;
@@ -25,6 +26,7 @@ export type PlazaDestinationLabelDescriptor = Readonly<{
   x: number;
   y: number;
   z: number;
+  wayfindingRole: PlazaDestinationWayfindingRole;
 }>;
 
 export type PlazaDestinationUnit = Readonly<{
@@ -98,6 +100,7 @@ export function authorPlazaDestination(
         x: authoring.x,
         y: authoring.labelY,
         z: authoring.z,
+        wayfindingRole: authoring.role === "semantic" ? "destination" : "utility",
       };
     },
     obstacleRoot() {
