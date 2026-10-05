@@ -71,7 +71,7 @@ export const journeyCopy = {
   S09: { eyebrow: "선택한 기록", title: "기록 상세" },
   S10: {
     eyebrow: "7일 기록",
-    title: "최근 7일 기록",
+    title: "7일 돌아보기",
   },
   S11: { eyebrow: "입력 기반 위험군 선별 신호", title: "이번 이용에만 생활정보를 살펴봐요" },
   S12: {

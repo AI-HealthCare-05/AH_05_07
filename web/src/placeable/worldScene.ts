@@ -132,6 +132,20 @@ export const AI_ANALYSIS_DESTINATION = definePlazaDestination({
   semanticFallback: "parent-semantic-control",
 });
 
+export const WEEK_REVIEW_DESTINATION = definePlazaDestination({
+  id: "week-overlook",
+  label: "7일 돌아보기",
+  role: "semantic",
+  rootName: "plaza-week-review-destination",
+  x: 0,
+  z: 3.25,
+  labelY: 1.22,
+  grounding: "plaza-floor",
+  compact: "retain",
+  cameraObstacle: true,
+  semanticFallback: "parent-semantic-control",
+});
+
 export const SETTINGS_DESTINATION = definePlazaDestination({
   id: "settings-service",
   label: "설정",
@@ -176,10 +190,13 @@ export class PlaceableScene {
   readonly recordsArchive: Group;
   readonly analysisDestination: Group;
   readonly analysisDesk: Group;
+  readonly weekReviewDestination: Group;
+  readonly weekReviewOverlook: Group;
   readonly settingsDestination: Group;
   readonly settingsPost: Group;
   #recordsUnit: PlazaDestinationUnit;
   #analysisUnit: PlazaDestinationUnit;
+  #weekReviewUnit: PlazaDestinationUnit;
   #settingsUnit: PlazaDestinationUnit;
   #authoredDestinations: readonly PlazaDestinationUnit[];
   readonly anchorScenery = new Group();
@@ -456,6 +473,47 @@ export class PlaceableScene {
     this.analysisDesk = this.#analysisUnit.landmark;
     this.scene.add(this.analysisDestination);
 
+    // The overlook names the existing static Living Week path as a semantic
+    // destination. Its seven equal marks never vary with records, outcomes or period state.
+    this.#weekReviewUnit = authorPlazaDestination(WEEK_REVIEW_DESTINATION, (weekReviewOverlook) => {
+      const weekStone = material("#b8b09d", "stone");
+      const weekWood = material("#796d58", "wood");
+      const weekPaper = material("#ded6bd", "trim");
+      const weekAccent = material("#6f776c", "accent");
+
+      const base = new Mesh(new BoxGeometry(1.18, 0.16, 0.54), weekStone);
+      base.name = "week-overlook-base";
+      base.position.y = 0.08;
+      weekReviewOverlook.add(base);
+
+      for (const [index, x] of [-0.42, 0.42].entries()) {
+        const post = new Mesh(new BoxGeometry(0.12, 0.72, 0.12), weekWood);
+        post.name = `week-overlook-post-${index}`;
+        post.position.set(x, 0.44, 0);
+        weekReviewOverlook.add(post);
+      }
+
+      const rail = new Mesh(new BoxGeometry(1.1, 0.12, 0.16), weekWood);
+      rail.name = "week-overlook-rail";
+      rail.position.set(0, 0.78, 0);
+      weekReviewOverlook.add(rail);
+
+      const sign = new Mesh(new BoxGeometry(0.98, 0.34, 0.07), weekPaper);
+      sign.name = "week-overlook-sign";
+      sign.position.set(0, 0.98, 0.12);
+      weekReviewOverlook.add(sign);
+
+      for (let index = 0; index < 7; index++) {
+        const marker = new Mesh(new BoxGeometry(0.06, 0.06, 0.035), weekAccent);
+        marker.name = `week-overlook-marker-${index}`;
+        marker.position.set(-0.3 + index * 0.1, 0.98, 0.165);
+        weekReviewOverlook.add(marker);
+      }
+    });
+    this.weekReviewDestination = this.#weekReviewUnit.root;
+    this.weekReviewOverlook = this.#weekReviewUnit.landmark;
+    this.scene.add(this.weekReviewDestination);
+
     this.#settingsUnit = authorPlazaDestination(SETTINGS_DESTINATION, (settingsPost) => {
       const settingsStone = material("#aaa999", "stone");
       const settingsWood = material("#6d756a", "wood");
@@ -502,6 +560,7 @@ export class PlaceableScene {
     this.#authoredDestinations = [
       this.#recordsUnit,
       this.#analysisUnit,
+      this.#weekReviewUnit,
       this.#settingsUnit,
     ];
 
@@ -689,6 +748,11 @@ export class PlaceableScene {
 
   setAnalysisAvailable(available: boolean) {
     if (this.#disposed || !this.#analysisUnit.setAvailable(available)) return;
+    this.#rebuildCameraObstacles();
+  }
+
+  setWeekReviewAvailable(available: boolean) {
+    if (this.#disposed || !this.#weekReviewUnit.setAvailable(available)) return;
     this.#rebuildCameraObstacles();
   }
 

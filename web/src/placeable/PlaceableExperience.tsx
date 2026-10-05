@@ -180,6 +180,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const [feedback, setFeedback] = useState(false);
   const [editing, setEditing] = useState(false);
   const editRef = useRef<HTMLButtonElement>(null);
+  const wasEditingOpen = useRef(false);
+  const editCloseReason = useRef<"cancel" | "saved" | null>(null);
   const editHeading = useRef<HTMLHeadingElement>(null);
   const editorRef = useRef<HTMLElement>(null);
   const wasDraft = useRef(false);
@@ -190,6 +192,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const handoffRef = useRef<HTMLDivElement>(null);
   const recordsEntry = useRef<HTMLAnchorElement>(null);
   const analysisEntry = useRef<HTMLAnchorElement>(null);
+  const weekReviewEntry = useRef<HTMLAnchorElement>(null);
   const settingsEntry = useRef<HTMLAnchorElement>(null);
   const plazaHeading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
@@ -289,12 +292,39 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   useEffect(() => {
     const draft = state.draft !== undefined || state.keepsakeDraft !== undefined || Boolean(state.pending);
     if (world && wasDraft.current && !draft && state.phase === "ready" && state.saved) {
-      setEditing(false); editRef.current?.focus();
+      editCloseReason.current = "saved";
+      setEditing(false);
     }
     wasDraft.current = draft;
     if (world && !["ready", "loading"].includes(state.phase)) setEditing(true);
   }, [world, state.draft, state.keepsakeDraft, state.pending, state.phase, state.saved]);
   useEffect(() => { if (editing) editHeading.current?.focus(); }, [editing]);
+
+  useLayoutEffect(() => {
+    const justClosed = world && wasEditingOpen.current && !editing;
+    wasEditingOpen.current = editing;
+    if (!justClosed) return;
+
+    const edit = editRef.current;
+    const main = edit?.closest("main");
+    const reason = editCloseReason.current;
+
+    if (reason === "saved" && main instanceof HTMLElement) {
+      main.scrollTop = 0;
+    }
+
+    if (reason === "cancel") {
+      edit?.scrollIntoView({
+        block: "nearest",
+        inline: "nearest",
+        behavior: "instant",
+      });
+    }
+
+    edit?.focus({ preventScroll: true });
+    editCloseReason.current = null;
+  }, [world, editing]);
+
   useLayoutEffect(() => {
     // Inserting the local preview must not push the activating keyboard control
     // out of view. Keep the existing focus owner; no delayed scroll or motion.
@@ -388,8 +418,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }
   function cancelEditing() {
     if (state.phase !== "ready" && state.phase !== "conflict") return;
-    controller.cancel(); setEditing(false);
-    if (world) editRef.current?.focus(); else chooseRef.current?.focus();
+    controller.cancel();
+    if (world) editCloseReason.current = "cancel";
+    setEditing(false);
+    if (!world) chooseRef.current?.focus();
   }
   const exactNotice = state.phase === "ready" && receiptNoticeId !== null && receiptNoticeId === state.receipt?.operationId;
   const acknowledging = exactNotice && receiptAccentId === receiptNoticeId;
@@ -423,6 +455,9 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const analysisDescribedBy = sourceSettling
     ? "placeable-analysis-context placeable-destination-handoff"
     : "placeable-analysis-context";
+  const weekReviewDescribedBy = sourceSettling
+    ? "placeable-week-review-context placeable-destination-handoff"
+    : "placeable-week-review-context";
   function blockContextSwitch(event: MouseEvent<HTMLAnchorElement>) {
     if (!sourceSettling) return;
     event.preventDefault();
@@ -441,6 +476,13 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       return;
     }
     analysisEntry.current?.click();
+  }
+  function activateWeekReview() {
+    if (sourceSettling) {
+      handoffRef.current?.focus();
+      return;
+    }
+    weekReviewEntry.current?.click();
   }
   function activateSettings() {
     if (sourceSettling) {
@@ -529,42 +571,55 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           <p id="placeable-today-context">오늘의 혈압 기록과 오늘 상태는 오늘의 기록에서 이어가요. 내 공간의 꾸미기 상태는 그대로 유지돼요.</p></div>
           <p id="placeable-records-context" className="sr-only">날짜별 지난 기록은 기록 찾아보기에서 확인해요. 내 공간은 기록 내용을 읽지 않아요.</p>
           <p id="placeable-analysis-context" className="sr-only">AI 분석은 입력한 생활정보를 이번 이용에서만 처리해요. 내 공간은 분석 입력이나 결과를 읽지 않아요.</p>
-          <a className="placeable-today" data-plaza-action={world ? "today" : undefined}
-            href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
-            aria-label="오늘의 기록으로 가기"
-            aria-describedby={todayDescribedBy}
-            aria-disabled={preview || Boolean(state.pending)}
-            onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
-            {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
-          <a ref={analysisEntry} className="placeable-analysis" data-plaza-action={world ? "analysis" : undefined}
-            href="?screen=S11"
-            aria-label="AI 분석으로 가기"
-            aria-describedby={analysisDescribedBy}
-            aria-disabled={sourceSettling}
-            onClick={blockContextSwitch}>
-            AI 분석 <span aria-hidden="true">→</span>
-          </a>
-          <a ref={recordsEntry} className="placeable-records" data-plaza-action={world ? "records" : undefined}
-            href="?screen=S08"
-            aria-label="기록 찾아보기로 가기"
-            aria-describedby={recordsDescribedBy}
-            aria-disabled={sourceSettling}
-            onClick={blockContextSwitch}>
-            기록 찾아보기 <span aria-hidden="true">→</span>
-          </a>
-          {world && <button className="plaza-garden-action" data-plaza-action="garden"
-            ref={gardenEntry} type="button"
-            aria-label="정원 쉼터로 가기"
-            aria-disabled={sourceSettling}
-            aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
-            onClick={enterGardenNook}>
-            정원 쉼터 <span aria-hidden="true">→</span>
-          </button>}
-          {world && <button className="plaza-edit-action" data-plaza-action="decorate"
-            ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
-            onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>}
+          <p id="placeable-week-review-context" className="sr-only">최근 7일 기록은 7일 돌아보기에서 확인해요. 광장의 7일 길은 기록 유무나 결과를 읽지 않아요.</p>
+          <nav className="placeable-semantic-destinations" aria-label="광장 주요 목적지">
+            <a className="placeable-today" data-plaza-action={world ? "today" : undefined}
+              href={classicTodayHref(world ? "3d" : "classic", adapter.mode)}
+              aria-label="오늘의 기록으로 가기"
+              aria-describedby={todayDescribedBy}
+              aria-disabled={preview || Boolean(state.pending)}
+              onClick={(event) => { if (preview || state.pending) { event.preventDefault(); handoffRef.current?.focus(); } }}>
+              {world ? "오늘의 기록" : "오늘의 기록으로 가기"} <span aria-hidden="true">→</span></a>
+            <a ref={analysisEntry} className="placeable-analysis" data-plaza-action={world ? "analysis" : undefined}
+              href="?screen=S11"
+              aria-label="AI 분석으로 가기"
+              aria-describedby={analysisDescribedBy}
+              aria-disabled={sourceSettling}
+              onClick={blockContextSwitch}>
+              AI 분석 <span aria-hidden="true">→</span>
+            </a>
+            <a ref={recordsEntry} className="placeable-records" data-plaza-action={world ? "records" : undefined}
+              href="?screen=S08"
+              aria-label="기록 찾아보기로 가기"
+              aria-describedby={recordsDescribedBy}
+              aria-disabled={sourceSettling}
+              onClick={blockContextSwitch}>
+              기록 찾아보기 <span aria-hidden="true">→</span>
+            </a>
+            <a ref={weekReviewEntry} className="placeable-week-review" data-plaza-action={world ? "week-review" : undefined}
+              href="?screen=S10"
+              aria-label="7일 돌아보기로 가기"
+              aria-describedby={weekReviewDescribedBy}
+              aria-disabled={sourceSettling}
+              onClick={blockContextSwitch}>
+              7일 돌아보기 <span aria-hidden="true">→</span>
+            </a>
+          </nav>
+          {world && <div className="plaza-local-actions" role="group" aria-label="광장 안에서 하기">
+            <button className="plaza-garden-action" data-plaza-action="garden"
+              ref={gardenEntry} type="button"
+              aria-label="정원 쉼터로 가기"
+              aria-disabled={sourceSettling}
+              aria-describedby={sourceSettling ? "placeable-destination-handoff" : undefined}
+              onClick={enterGardenNook}>
+              정원 쉼터 <span aria-hidden="true">→</span>
+            </button>
+            <button className="plaza-edit-action" data-plaza-action="decorate"
+              ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
+              onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>
+          </div>}
         </div>
-        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
+        {sourceSettling && <div id="placeable-destination-handoff" ref={handoffRef} tabIndex={-1} className="placeable-handoff-note" role="status"><strong>{state.phase === "unknown" ? "저장 결과를 먼저 확인해 주세요" : "미리보기를 먼저 마무리해 주세요"}</strong><p>{state.phase === "unknown" ? "중복 저장 없이 저장된 상태를 확인한 뒤 오늘의 기록, AI 분석, 기록 찾아보기, 7일 돌아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요." : "꾸미기 변경이 사라지지 않도록 확정하거나 취소한 뒤 오늘의 기록, AI 분석, 기록 찾아보기, 7일 돌아보기, 설정, 정원 쉼터로 이동하거나 광장 보기·저장 공간을 전환할 수 있어요."}</p></div>}
         {world ? <WorldBoundary classicHref={route("classic")} sourceSettling={sourceSettling} onContextSwitch={blockContextSwitch}><Suspense fallback={<p role="status">3D 광장을 열고 있어요… 위에서 간단한 광장으로 바꿀 수 있어요.</p>}>
           <PlaceableWorld reentry={reentry} companion={companion} choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pinwheelPreview={state.draft != null} pulse={state.pulse}
             sourceSettling={sourceSettling}
@@ -573,6 +628,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             onGardenActivate={enterGardenNook}
             onRecordsActivate={activateRecords}
             onAnalysisActivate={activateAnalysis}
+            onWeekReviewActivate={activateWeekReview}
             onSettingsActivate={activateSettings}
             onSocketSelect={(socketId) => change({ socketId })}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}

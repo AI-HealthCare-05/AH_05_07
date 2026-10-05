@@ -12,6 +12,7 @@ import {
   TODAY_GATE_APPROACH_RADIUS,
   RECORDS_DESTINATION,
   AI_ANALYSIS_DESTINATION,
+  WEEK_REVIEW_DESTINATION,
   SETTINGS_DESTINATION,
 } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
@@ -153,6 +154,36 @@ async function analysisTarget(page: Page) {
     const board = scene.analysisDesk.getObjectByName("analysis-desk-board");
     if (!board) throw new Error("AI Analysis desk board is missing");
     const point = board.getWorldPosition(new Vector3()).project(scene.camera);
+    return {
+      x: box.x + (point.x + 1) * box.width / 2,
+      y: box.y + (1 - point.y) * box.height / 2,
+    };
+  } finally {
+    scene.dispose();
+  }
+}
+
+
+async function openWeekReviewDestination(page: Page) {
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await expect(page.locator(
+    `[data-world-label="${WEEK_REVIEW_DESTINATION.id}"]`,
+  )).toHaveText("7일 돌아보기");
+}
+
+async function weekReviewTarget(page: Page) {
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Seven-day Review canvas is not visible");
+  const scene = new PlaceableScene();
+  try {
+    scene.resize(box.width / box.height);
+    scene.scene.updateMatrixWorld(true);
+    const sign = scene.weekReviewOverlook.getObjectByName("week-overlook-sign");
+    if (!sign) throw new Error("Seven-day Review overlook sign is missing");
+    const point = sign.getWorldPosition(new Vector3()).project(scene.camera);
     return {
       x: box.x + (point.x + 1) * box.width / 2,
       y: box.y + (1 - point.y) * box.height / 2,
@@ -1316,6 +1347,158 @@ test("AI Analysis stays semantic on compact/WebGL paths and Guest Plaza stays un
   })).toHaveCount(0);
 });
 
+
+test("Seven-day Review connects the existing 7-day path to direct S10 semantics", async ({ page }) => {
+  await page.addInitScript((key) => {
+    Object.assign(window, { weekReviewWrites: 0 });
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) {
+        (window as unknown as { weekReviewWrites: number }).weekReviewWrites++;
+      }
+      return original.call(this, name, value);
+    };
+  }, STORAGE_KEY);
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openWeekReviewDestination(page);
+
+  const label = page.locator(
+    `[data-world-label="${WEEK_REVIEW_DESTINATION.id}"]`,
+  );
+  const review = page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  });
+
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText("7일 돌아보기");
+  await expect(label).toHaveAttribute("data-wayfinding-role", "destination");
+  await expect(review).toBeVisible();
+  await expect(review).toHaveAttribute("href", "?screen=S10");
+  await expect(review).toHaveAttribute(
+    "aria-describedby",
+    "placeable-week-review-context",
+  );
+
+  const semantic = page.getByRole("navigation", { name: "광장 주요 목적지" });
+  await expect(semantic.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toBeVisible();
+  await expect(semantic.getByRole("link", { name: "AI 분석으로 가기", exact: true })).toBeVisible();
+  await expect(semantic.getByRole("link", { name: "기록 찾아보기로 가기", exact: true })).toBeVisible();
+  await expect(semantic.getByRole("link", { name: "7일 돌아보기로 가기", exact: true })).toBeVisible();
+  const local = page.getByRole("group", { name: "광장 안에서 하기" });
+  await expect(local.getByRole("button", { name: "정원 쉼터로 가기", exact: true })).toBeVisible();
+  await expect(local.getByRole("button", { name: "꾸미기", exact: true })).toBeVisible();
+
+  await page.screenshot({
+    path: test.info().outputPath("week-review-journey-desktop.png"),
+    scale: "css",
+  });
+
+  const beforeUrl = page.url();
+  let point = await weekReviewTarget(page);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 90, point.y + 18, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  await expect(page).toHaveURL(beforeUrl);
+
+  await openWeekReviewDestination(page);
+  point = await weekReviewTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/\?screen=S10$/);
+  expect(await page.evaluate(() =>
+    (window as unknown as { weekReviewWrites: number }).weekReviewWrites,
+  )).toBe(0);
+});
+
+test("Seven-day Review obeys source-settling and placement canvas ownership", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await openWeekReviewDestination(page);
+
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+  await page.getByRole("button", { name: "환영 바람개비 고르기", exact: true }).click();
+
+  const review = page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  });
+  const handoff = page.locator("#placeable-destination-handoff");
+
+  await expect(review).toHaveAttribute("aria-disabled", "true");
+  await expect(review).toHaveAttribute(
+    "aria-describedby",
+    "placeable-week-review-context placeable-destination-handoff",
+  );
+
+  await review.focus();
+  await page.keyboard.press("Enter");
+  await expect(handoff).toBeFocused();
+  await expect(page).toHaveURL(/experience=e2/);
+
+  const point = await weekReviewTarget(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page).toHaveURL(/experience=e2/);
+  await expect(page.getByTestId("draft-placement")).toBeVisible();
+
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click();
+  await expect(review).toHaveAttribute("aria-disabled", "false");
+  await expect(review).toHaveAttribute(
+    "aria-describedby",
+    "placeable-week-review-context",
+  );
+});
+
+test("Seven-day Review stays semantic on compact/WebGL paths and Guest Plaza stays unchanged", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(route);
+    await expect(page.getByTestId("placeable-world"))
+      .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+    const review = page.getByRole("link", {
+      name: "7일 돌아보기로 가기",
+      exact: true,
+    });
+    await review.scrollIntoViewIfNeeded();
+    await expect(review).toBeVisible();
+    await expect(review).toHaveAttribute("href", "?screen=S10");
+    expect((await review.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= innerWidth,
+    )).toBe(true);
+  }
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(route);
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, { timeout: 20000 });
+  await page.getByTestId("placeable-world-canvas").evaluate(
+    (canvas: HTMLCanvasElement) => {
+      canvas.getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
+    },
+  );
+  await expect(page.getByRole("alert")).toContainText("3D 광장을 열지 못했어요");
+  await expect(page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  })).toHaveAttribute("href", "?screen=S10");
+
+  await page.goto("/?guest=1");
+  await page.getByRole("button", { name: "3D 공간 둘러보기", exact: true }).click();
+  await expect(page.getByTestId("placeable-world-canvas")).toBeVisible();
+  await expect(page.locator(
+    `[data-world-label="${WEEK_REVIEW_DESTINATION.id}"]`,
+  )).toHaveCount(0);
+  await expect(page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  })).toHaveCount(0);
+});
+
 test("Settings is a secondary spatial utility outside the Plaza action rail", async ({ page }) => {
   await page.addInitScript((key) => {
     Object.assign(window, { settingsWrites: 0 });
@@ -1483,6 +1666,8 @@ test("Living City wayfinding hierarchy coordinates destinations without changing
       .toHaveAttribute("data-wayfinding-role", "destination");
     await expect(page.locator(`[data-world-label="${AI_ANALYSIS_DESTINATION.id}"]`))
       .toHaveAttribute("data-wayfinding-role", "destination");
+    await expect(page.locator(`[data-world-label="${WEEK_REVIEW_DESTINATION.id}"]`))
+      .toHaveAttribute("data-wayfinding-role", "destination");
     await expect(page.locator(`[data-world-label="${SETTINGS_DESTINATION.id}"]`))
       .toHaveAttribute("data-wayfinding-role", "utility");
 
@@ -1495,9 +1680,17 @@ test("Living City wayfinding hierarchy coordinates destinations without changing
       exact: true,
     })).toHaveAttribute("href", "?screen=S11");
     await expect(page.getByRole("link", {
+      name: "7일 돌아보기로 가기",
+      exact: true,
+    })).toHaveAttribute("href", "?screen=S10");
+    await expect(page.getByRole("link", {
       name: "설정으로 가기",
       exact: true,
     })).toHaveAttribute("href", "?screen=S14");
+    const semantic = page.getByRole("navigation", { name: "광장 주요 목적지" });
+    await expect(semantic.getByRole("link")).toHaveCount(4);
+    const local = page.getByRole("group", { name: "광장 안에서 하기" });
+    await expect(local.getByRole("button")).toHaveCount(2);
     await expect(page.getByRole("button", {
       name: "정원 쉼터로 가기",
       exact: true,

@@ -27,6 +27,7 @@ type Props = PlaceableProjection & {
   onGardenActivate?: () => void;
   onRecordsActivate?: () => void;
   onAnalysisActivate?: () => void;
+  onWeekReviewActivate?: () => void;
   onSettingsActivate?: () => void;
   onSocketSelect?: (socketId: Selection["socketId"]) => void;
   onGateProximityChange?: (proximity: TodayGateProximity) => void;
@@ -179,6 +180,7 @@ export default function PlaceableWorld(props: Props) {
       scene.setGardenAvailable(!guestVisit);
       scene.setRecordsAvailable(!guestVisit);
       scene.setAnalysisAvailable(!guestVisit);
+      scene.setWeekReviewAvailable(!guestVisit);
       scene.setSettingsAvailable(!guestVisit);
       scene.setPlacementEditing(!guestVisit && latest.current.placementEditing === true);
       companion = new MySpaceCompanionActor((next) => { if (!disposed) setPose(next); });
@@ -254,6 +256,12 @@ export default function PlaceableWorld(props: Props) {
           && latest.current.onAnalysisActivate
           && ray.intersectObject(scene!.analysisDesk, true).length) {
           latest.current.onAnalysisActivate();
+          return;
+        }
+        if (!guestVisit
+          && latest.current.onWeekReviewActivate
+          && ray.intersectObject(scene!.weekReviewOverlook, true).length) {
+          latest.current.onWeekReviewActivate();
           return;
         }
         if (!guestVisit

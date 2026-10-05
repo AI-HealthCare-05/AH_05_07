@@ -7,6 +7,7 @@ import {
   GARDEN_ENTRANCE,
   RECORDS_DESTINATION,
   AI_ANALYSIS_DESTINATION,
+  WEEK_REVIEW_DESTINATION,
   SETTINGS_DESTINATION,
   PLAZA_WAYFINDING_PRIORITY,
   resolvePlazaWayfindingPriority,
@@ -120,6 +121,7 @@ test("multi-destination wayfinding hierarchy is explicit and placement-local", (
     GARDEN_ENTRANCE.id,
     RECORDS_DESTINATION.id,
     AI_ANALYSIS_DESTINATION.id,
+    WEEK_REVIEW_DESTINATION.id,
     SETTINGS_DESTINATION.id,
   ];
   expect(normal
@@ -130,6 +132,7 @@ test("multi-destination wayfinding hierarchy is explicit and placement-local", (
       [GARDEN_ENTRANCE.id, "destination"],
       [RECORDS_DESTINATION.id, "destination"],
       [AI_ANALYSIS_DESTINATION.id, "destination"],
+      [WEEK_REVIEW_DESTINATION.id, "destination"],
       [SETTINGS_DESTINATION.id, "utility"],
     ]);
   expect(normal.slice(-SOCKETS.length).every(
@@ -217,6 +220,82 @@ test("AI Analysis destination stays neutral, navigation-only and outside Model V
   expect(scene.labels().some((entry) => entry.id === RECORDS_DESTINATION.id)).toBe(true);
   expect(scene.labels().some((entry) => entry.id === SETTINGS_DESTINATION.id)).toBe(true);
   expect(scene.labels().some((entry) => entry.id === GARDEN_ENTRANCE.id)).toBe(true);
+
+  scene.dispose();
+});
+
+
+test("Seven-day Review overlook preserves the static Living Week path and adds no record state", () => {
+  expect(WEEK_REVIEW_DESTINATION).toMatchObject({
+    id: "week-overlook",
+    label: "7일 돌아보기",
+    role: "semantic",
+    rootName: "plaza-week-review-destination",
+    x: 0,
+    z: 3.25,
+    labelY: 1.22,
+    grounding: "plaza-floor",
+    compact: "retain",
+    cameraObstacle: true,
+    semanticFallback: "parent-semantic-control",
+  });
+  expect(Object.keys(WEEK_REVIEW_DESTINATION).some((key) =>
+    /record|count|blood|challenge|period|fresh|selected|result|score/i.test(key),
+  )).toBe(false);
+  expect(LIVING_WEEK_SCENE_PLAN.markers).toHaveLength(7);
+  expect(LIVING_WEEK_SCENE_PLAN.segments).toHaveLength(6);
+
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+
+  const reachableBound = LIVING_WEEK_SCENE_PLAN.boundMetres - 0.35;
+  expect(Math.abs(WEEK_REVIEW_DESTINATION.x)).toBeLessThan(reachableBound);
+  expect(Math.abs(WEEK_REVIEW_DESTINATION.z)).toBeLessThan(reachableBound);
+  expect(scene.weekReviewDestination.name).toBe("plaza-week-review-destination");
+  expect(scene.weekReviewOverlook.name).toBe(WEEK_REVIEW_DESTINATION.id);
+  expect(scene.weekReviewOverlook.position.toArray()).toEqual([0, 0, 3.25]);
+  expect(scene.weekReviewOverlook.children.map((child) => child.name)).toEqual([
+    "week-overlook-base",
+    "week-overlook-post-0",
+    "week-overlook-post-1",
+    "week-overlook-rail",
+    "week-overlook-sign",
+    ...Array.from({ length: 7 }, (_, index) => `week-overlook-marker-${index}`),
+  ]);
+
+  for (const marker of LIVING_WEEK_SCENE_PLAN.markers) {
+    const rendered = scene.scene.getObjectByName(marker.id);
+    expect(rendered, marker.id).toBeTruthy();
+    expect(rendered!.position.x).toBe(marker.position.x);
+    expect(rendered!.position.z).toBe(marker.position.z);
+  }
+  for (const segment of LIVING_WEEK_SCENE_PLAN.segments) {
+    expect(scene.scene.getObjectByName(segment.id), segment.id).toBeTruthy();
+  }
+
+  const label = scene.labels().find(
+    (entry) => entry.id === WEEK_REVIEW_DESTINATION.id,
+  );
+  expect(label?.label).toBe("7일 돌아보기");
+  expect(label?.wayfindingRole).toBe("destination");
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("week-overlook-"),
+  )).toBe(true);
+
+  scene.setSceneryProfile("compact");
+  expect(scene.weekReviewDestination.visible).toBe(true);
+  expect(scene.labels().some(
+    (entry) => entry.id === WEEK_REVIEW_DESTINATION.id,
+  )).toBe(true);
+
+  scene.setWeekReviewAvailable(false);
+  expect(scene.weekReviewDestination.visible).toBe(false);
+  expect(scene.labels().some(
+    (entry) => entry.id === WEEK_REVIEW_DESTINATION.id,
+  )).toBe(false);
+  expect(scene.cameraObstacles.some((obstacle) =>
+    obstacle.id.startsWith("week-overlook-"),
+  )).toBe(false);
 
   scene.dispose();
 });
