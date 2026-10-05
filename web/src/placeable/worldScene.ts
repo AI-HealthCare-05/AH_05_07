@@ -118,6 +118,20 @@ export const RECORDS_DESTINATION = definePlazaDestination({
   semanticFallback: "parent-semantic-control",
 });
 
+export const AI_ANALYSIS_DESTINATION = definePlazaDestination({
+  id: "analysis-desk",
+  label: "AI 분석",
+  role: "semantic",
+  rootName: "plaza-analysis-destination",
+  x: -2.25,
+  z: -2.35,
+  labelY: 1.16,
+  grounding: "plaza-floor",
+  compact: "retain",
+  cameraObstacle: true,
+  semanticFallback: "parent-semantic-control",
+});
+
 export const SETTINGS_DESTINATION = definePlazaDestination({
   id: "settings-service",
   label: "설정",
@@ -160,9 +174,12 @@ export class PlaceableScene {
   readonly gardenEntrance = new Group();
   readonly recordsDestination: Group;
   readonly recordsArchive: Group;
+  readonly analysisDestination: Group;
+  readonly analysisDesk: Group;
   readonly settingsDestination: Group;
   readonly settingsPost: Group;
   #recordsUnit: PlazaDestinationUnit;
+  #analysisUnit: PlazaDestinationUnit;
   #settingsUnit: PlazaDestinationUnit;
   #authoredDestinations: readonly PlazaDestinationUnit[];
   readonly anchorScenery = new Group();
@@ -398,6 +415,47 @@ export class PlaceableScene {
     this.recordsArchive = this.#recordsUnit.landmark;
     this.scene.add(this.recordsDestination);
 
+    // AI Analysis is destination identity only. This neutral desk receives no
+    // Model V2 input, result, readiness, score, band or interpretation state.
+    this.#analysisUnit = authorPlazaDestination(AI_ANALYSIS_DESTINATION, (analysisDesk) => {
+      const analysisStone = material("#b4aea1", "stone");
+      const analysisWood = material("#786c5c", "wood");
+      const analysisPaper = material("#e1dbc9", "trim");
+      const analysisAccent = material("#77728a", "accent");
+
+      const base = new Mesh(new BoxGeometry(1.02, 0.16, 0.72), analysisStone);
+      base.name = "analysis-desk-base";
+      base.position.y = 0.08;
+      analysisDesk.add(base);
+
+      for (const [index, x] of [-0.32, 0.32].entries()) {
+        const support = new Mesh(new BoxGeometry(0.12, 0.52, 0.12), analysisWood);
+        support.name = `analysis-desk-support-${index}`;
+        support.position.set(x, 0.34, 0);
+        analysisDesk.add(support);
+      }
+
+      const surface = new Mesh(new BoxGeometry(1.06, 0.12, 0.64), analysisWood);
+      surface.name = "analysis-desk-surface";
+      surface.position.y = 0.65;
+      analysisDesk.add(surface);
+
+      const board = new Mesh(new BoxGeometry(0.9, 0.38, 0.07), analysisPaper);
+      board.name = "analysis-desk-board";
+      board.position.set(0, 0.94, 0.23);
+      analysisDesk.add(board);
+
+      for (const [index, x] of [-0.22, 0.22].entries()) {
+        const card = new Mesh(new BoxGeometry(0.18, 0.12, 0.035), analysisAccent);
+        card.name = `analysis-desk-card-${index}`;
+        card.position.set(x, 0.94, 0.275);
+        analysisDesk.add(card);
+      }
+    });
+    this.analysisDestination = this.#analysisUnit.root;
+    this.analysisDesk = this.#analysisUnit.landmark;
+    this.scene.add(this.analysisDestination);
+
     this.#settingsUnit = authorPlazaDestination(SETTINGS_DESTINATION, (settingsPost) => {
       const settingsStone = material("#aaa999", "stone");
       const settingsWood = material("#6d756a", "wood");
@@ -441,7 +499,11 @@ export class PlaceableScene {
     this.settingsDestination = this.#settingsUnit.root;
     this.settingsPost = this.#settingsUnit.landmark;
     this.scene.add(this.settingsDestination);
-    this.#authoredDestinations = [this.#recordsUnit, this.#settingsUnit];
+    this.#authoredDestinations = [
+      this.#recordsUnit,
+      this.#analysisUnit,
+      this.#settingsUnit,
+    ];
 
     this.anchorScenery.name = "plaza-scenery-anchor";
     this.optionalScenery.name = "plaza-scenery-optional";
@@ -622,6 +684,11 @@ export class PlaceableScene {
 
   setRecordsAvailable(available: boolean) {
     if (this.#disposed || !this.#recordsUnit.setAvailable(available)) return;
+    this.#rebuildCameraObstacles();
+  }
+
+  setAnalysisAvailable(available: boolean) {
+    if (this.#disposed || !this.#analysisUnit.setAvailable(available)) return;
     this.#rebuildCameraObstacles();
   }
 

@@ -1256,8 +1256,8 @@
 }
 
 
-/* Records destination: navigation-only semantic peer, never a second hero. */
-.placeable-experience .placeable-records {
+/* AI Analysis and Records are navigation-only semantic peers, never result cards. */
+.placeable-experience :is(.placeable-analysis, .placeable-records) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1272,21 +1272,20 @@
   text-decoration: none;
   white-space: normal;
 }
-.placeable-experience .placeable-records[aria-disabled=true] {
+.placeable-experience :is(.placeable-analysis, .placeable-records)[aria-disabled=true] {
   opacity: .55;
   cursor: not-allowed;
 }
 .placeable-world-view .placeable-destination {
   display: grid;
-  grid-template-columns: auto auto minmax(12px, 1fr) auto auto;
+  grid-template-columns: auto auto auto minmax(12px, 1fr) auto auto;
   align-items: center;
 }
 .placeable-world-view .placeable-destination .placeable-today {
   grid-column: 1;
   margin-right: 0;
 }
-.placeable-world-view .placeable-records {
-  grid-column: 2;
+.placeable-world-view :is(.placeable-analysis, .placeable-records) {
   justify-self: start;
   padding: 8px 2px;
   color: #53635a;
@@ -1298,30 +1297,34 @@
   font-weight: 640;
   text-decoration: none;
 }
-.placeable-world-view .plaza-garden-action { grid-column: 4; }
-.placeable-world-view .plaza-edit-action { grid-column: 5; }
+.placeable-world-view .placeable-analysis { grid-column: 2; }
+.placeable-world-view .placeable-records { grid-column: 3; }
+.placeable-world-view .plaza-garden-action { grid-column: 5; }
+.placeable-world-view .plaza-edit-action { grid-column: 6; }
 
 @media (max-width: 600px) {
   .placeable-world-view .placeable-destination {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   .placeable-world-view .placeable-destination .placeable-today {
-    grid-column: 1;
-    width: 100%;
+    grid-column: 1 / -1;
+    width: fit-content;
+    max-width: 100%;
   }
-  .placeable-world-view .placeable-records {
-    grid-column: 2;
+  .placeable-world-view :is(.placeable-analysis, .placeable-records) {
     width: 100%;
     justify-self: stretch;
     padding: 8px 2px;
     font-size: .82rem;
   }
+  .placeable-world-view .placeable-analysis { grid-column: 1; }
+  .placeable-world-view .placeable-records { grid-column: 2; }
   .placeable-world-view .plaza-garden-action { grid-column: 1; }
   .placeable-world-view .plaza-edit-action { grid-column: 2; }
 }
 
 @media (forced-colors: active) {
-  .placeable-world-view .placeable-records {
+  .placeable-world-view :is(.placeable-analysis, .placeable-records) {
     color: LinkText;
     border-color: LinkText;
     background: Canvas;
