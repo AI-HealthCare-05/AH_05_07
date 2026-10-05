@@ -256,6 +256,7 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   const today = page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true });
   const records = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
   const analysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
+  const weekReview = page.getByRole("link", { name: "7일 돌아보기로 가기", exact: true });
   const settings = page.getByRole("link", { name: "설정으로 가기", exact: true });
   const garden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const storage = page.getByRole("link", { name: "계정 공간 사용하기", exact: true });
@@ -275,6 +276,8 @@ test("#971 WebGL failure during preview preserves source-settling recovery truth
   await expect(records).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
   await expect(analysis).toHaveAttribute("aria-disabled", "true");
   await expect(analysis).toHaveAttribute("aria-describedby", "placeable-analysis-context placeable-destination-handoff");
+  await expect(weekReview).toHaveAttribute("aria-disabled", "true");
+  await expect(weekReview).toHaveAttribute("aria-describedby", "placeable-week-review-context placeable-destination-handoff");
   await expect(settings).toHaveAttribute("aria-disabled", "true");
   await expect(settings).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
   await expect(garden).toHaveAttribute("aria-disabled", "true");
@@ -304,6 +307,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true })).toHaveAttribute("aria-disabled", "true");
   const blockedRecords = page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true });
   const blockedAnalysis = page.getByRole("link", { name: "AI 분석으로 가기", exact: true });
+  const blockedWeekReview = page.getByRole("link", { name: "7일 돌아보기로 가기", exact: true });
   const blockedSettings = page.getByRole("link", { name: "설정으로 가기", exact: true });
   const blockedGarden = page.getByRole("button", { name: "정원 쉼터로 가기", exact: true });
   const blockedViewSwitch = page.getByRole("link", { name: "간단한 광장으로 보기", exact: true });
@@ -312,6 +316,8 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await expect(blockedRecords).toHaveAttribute("aria-describedby", "placeable-records-context placeable-destination-handoff");
   await expect(blockedAnalysis).toHaveAttribute("aria-disabled", "true");
   await expect(blockedAnalysis).toHaveAttribute("aria-describedby", "placeable-analysis-context placeable-destination-handoff");
+  await expect(blockedWeekReview).toHaveAttribute("aria-disabled", "true");
+  await expect(blockedWeekReview).toHaveAttribute("aria-describedby", "placeable-week-review-context placeable-destination-handoff");
   await expect(blockedSettings).toHaveAttribute("aria-disabled", "true");
   await expect(blockedSettings).toHaveAttribute("aria-describedby", "placeable-destination-handoff");
   await expect(blockedGarden).toHaveAttribute("aria-disabled", "true");
@@ -324,7 +330,7 @@ for (const behavior of ["unknown", "conflict"] as const) test(`Plaza immersive $
   await blockedGarden.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터");
+  await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 7일 돌아보기, 설정, 정원 쉼터");
   await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   if (behavior === "unknown") {
     await page.keyboard.press("Escape");
@@ -845,6 +851,97 @@ test("AI Analysis destination uses direct S11 semantics without importing Model 
   });
   await expect(classicAnalysis).toBeVisible();
   await expect(classicAnalysis).toHaveAttribute("href", "?screen=S11");
+  expect(await readLocal(page)).toEqual(before);
+});
+
+
+test("Seven-day Review destination uses direct S10 semantics and browser Back restores My Space without cosmetic writes", async ({ page }) => {
+  const account = await classicTodaySession(page);
+  await page.goto(companionRoute);
+
+  const world = page.getByTestId("placeable-world");
+  await expect(world).toHaveAttribute(
+    "data-companion-pose",
+    /idle|neutral/,
+    { timeout: 20000 },
+  );
+
+  const review = page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  });
+  await expect(review).toHaveAttribute("href", "?screen=S10");
+
+  const sourceUrl = page.url();
+  const before = await readLocal(page);
+  const puts = account.puts;
+
+  await page.addInitScript((eventName) => {
+    const nativeAdd = window.addEventListener.bind(window);
+    Object.assign(window, { weekReviewSessionListenerReady: false });
+    window.addEventListener = (...args: Parameters<typeof window.addEventListener>) => {
+      nativeAdd(...args);
+      if (args[0] === eventName) {
+        (window as unknown as {
+          weekReviewSessionListenerReady: boolean;
+        }).weekReviewSessionListenerReady = true;
+      }
+    };
+  }, e2eSessionEventName);
+
+  await review.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\?screen=S10$/);
+  expect(new URL(page.url()).searchParams.has("return_space")).toBe(false);
+
+  await expect.poll(() => page.evaluate(() =>
+    (window as unknown as {
+      weekReviewSessionListenerReady: boolean;
+    }).weekReviewSessionListenerReady,
+  )).toBe(true);
+
+  await page.evaluate((eventName) => {
+    const raw = localStorage.getItem("sb-e2e-auth-token");
+    if (raw) {
+      window.dispatchEvent(new CustomEvent(
+        eventName,
+        { detail: JSON.parse(raw) },
+      ));
+    }
+  }, e2eSessionEventName);
+
+  await expect(page.locator('[data-scene="S10"]')).toBeVisible();
+  await expect(page.locator("#S10-title")).toContainText("7일 돌아보기");
+  await expect(page.getByRole("link", {
+    name: "내 공간으로 돌아가기",
+  })).toHaveCount(0);
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.goBack();
+  await expect(page).toHaveURL(sourceUrl);
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-view", "3d");
+  await expect(page.getByTestId("placeable-experience"))
+    .toHaveAttribute("data-mode", "browser");
+  await expect(page.getByTestId("placeable-world"))
+    .toHaveAttribute("data-companion-pose", /idle|neutral/, {
+      timeout: 20000,
+    });
+  expect(await readLocal(page)).toEqual(before);
+  expect(account.puts).toBe(puts);
+
+  await page.getByRole("link", {
+    name: "간단한 광장으로 보기",
+    exact: true,
+  }).click();
+
+  const classicReview = page.getByRole("link", {
+    name: "7일 돌아보기로 가기",
+    exact: true,
+  });
+  await expect(classicReview).toBeVisible();
+  await expect(classicReview).toHaveAttribute("href", "?screen=S10");
   expect(await readLocal(page)).toEqual(before);
 });
 
@@ -2470,6 +2567,8 @@ for (const [width, height] of [[1440, 900], [1366, 768], [768, 1024], [390, 844]
     await page.keyboard.press("Escape"); await expect(edit).toBeFocused(); await expect(edit).toBeInViewport();
     expect(await readLocal(page)).toBeNull();
     await (await editorButton(page, "환영 바람개비 고르기")).click(); await confirm(page);
+
+
     await expect(edit).toBeInViewport();
     expect(await page.locator("main").evaluate(el => el.scrollTop)).toBe(0);
     await measure();
@@ -2549,7 +2648,7 @@ test("#956 Garden Nook is a primary Plaza destination without opening tools", as
   await page.keyboard.press("Enter");
   const handoff = page.locator(".placeable-handoff-note");
   await expect(handoff).toBeFocused();
-  await expect(handoff).toContainText("오늘의 기록이나 정원 쉼터");
+  await expect(handoff).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 7일 돌아보기, 설정, 정원 쉼터");
   await expect(page.getByTestId("garden-experience")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(garden).toHaveAttribute("aria-disabled", "false");
@@ -2622,7 +2721,7 @@ test("#958 blocked Garden destination stays focusable and explains why before ac
       blockedBox!.y + blockedBox!.height / 2,
     );
     await expect(page.locator(".placeable-handoff-note")).toBeFocused();
-    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 설정, 정원 쉼터");
+    await expect(page.locator(".placeable-handoff-note")).toContainText("오늘의 기록, AI 분석, 기록 찾아보기, 7일 돌아보기, 설정, 정원 쉼터");
     await expect(page.getByTestId("garden-experience")).toHaveCount(0);
 
     await page.keyboard.press("Escape");

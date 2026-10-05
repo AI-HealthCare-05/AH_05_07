@@ -943,9 +943,15 @@
     font-size: .7rem;
   }
   .placeable-world-view [data-testid=placeable-world] {
+    /*
+     * The mobile Plaza now has three semantic action rows:
+     * Today, read destinations, and Garden/Decorate.
+     * Reserve their real height so the primary action rail remains visible
+     * at the canonical scroll position after the editor closes.
+     */
     min-height: max(
-      340px,
-      calc(100dvh - 206px - var(--plaza-status-space, 0px))
+      280px,
+      calc(100dvh - 286px - var(--plaza-status-space, 0px))
     );
   }
   .placeable-world-view .placeable-destination {
@@ -1256,8 +1262,15 @@
 }
 
 
-/* AI Analysis and Records are navigation-only semantic peers, never result cards. */
-.placeable-experience :is(.placeable-analysis, .placeable-records) {
+/* 02-G: semantic destinations form one journey cluster; local place actions stay separate. */
+.placeable-semantic-destinations {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+.placeable-experience :is(.placeable-analysis, .placeable-records, .placeable-week-review) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1272,20 +1285,24 @@
   text-decoration: none;
   white-space: normal;
 }
-.placeable-experience :is(.placeable-analysis, .placeable-records)[aria-disabled=true] {
+.placeable-experience :is(.placeable-analysis, .placeable-records, .placeable-week-review)[aria-disabled=true] {
   opacity: .55;
   cursor: not-allowed;
 }
 .placeable-world-view .placeable-destination {
   display: grid;
-  grid-template-columns: auto auto auto minmax(12px, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  gap: 10px 18px;
+}
+.placeable-world-view .placeable-semantic-destinations {
+  grid-column: 1;
+  justify-self: start;
 }
 .placeable-world-view .placeable-destination .placeable-today {
-  grid-column: 1;
   margin-right: 0;
 }
-.placeable-world-view :is(.placeable-analysis, .placeable-records) {
+.placeable-world-view :is(.placeable-analysis, .placeable-records, .placeable-week-review) {
   justify-self: start;
   padding: 8px 2px;
   color: #53635a;
@@ -1293,38 +1310,59 @@
   border: 0;
   border-bottom: 1px solid #73857a70;
   border-radius: 0;
-  font-size: .88rem;
+  font-size: .86rem;
   font-weight: 640;
   text-decoration: none;
 }
-.placeable-world-view .placeable-analysis { grid-column: 2; }
-.placeable-world-view .placeable-records { grid-column: 3; }
-.placeable-world-view .plaza-garden-action { grid-column: 5; }
-.placeable-world-view .plaza-edit-action { grid-column: 6; }
+.placeable-world-view .placeable-destination > .plaza-local-actions {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 @media (max-width: 600px) {
   .placeable-world-view .placeable-destination {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .placeable-world-view .placeable-semantic-destinations {
+    grid-column: 1;
+    width: 100%;
+    display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 10px;
   }
   .placeable-world-view .placeable-destination .placeable-today {
     grid-column: 1 / -1;
     width: fit-content;
     max-width: 100%;
   }
-  .placeable-world-view :is(.placeable-analysis, .placeable-records) {
+  .placeable-world-view :is(.placeable-analysis, .placeable-records, .placeable-week-review) {
     width: 100%;
     justify-self: stretch;
     padding: 8px 2px;
-    font-size: .82rem;
+    font-size: .8rem;
   }
   .placeable-world-view .placeable-analysis { grid-column: 1; }
   .placeable-world-view .placeable-records { grid-column: 2; }
-  .placeable-world-view .plaza-garden-action { grid-column: 1; }
-  .placeable-world-view .plaza-edit-action { grid-column: 2; }
+  .placeable-world-view .placeable-week-review { grid-column: 1 / -1; }
+  .placeable-world-view .placeable-destination > .plaza-local-actions {
+    grid-column: 1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 10px;
+  }
+  .placeable-world-view .plaza-garden-action,
+  .placeable-world-view .plaza-edit-action {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (forced-colors: active) {
-  .placeable-world-view :is(.placeable-analysis, .placeable-records) {
+  .placeable-world-view :is(.placeable-analysis, .placeable-records, .placeable-week-review) {
     color: LinkText;
     border-color: LinkText;
     background: Canvas;
@@ -1371,5 +1409,40 @@
     background: Canvas;
     border-color: LinkText;
     forced-color-adjust: auto;
+  }
+}
+
+/* #903 short-mobile canonical Plaza arrival.
+   Four semantic destinations use a compact 2x2 grid so Garden/Decorate stay
+   reachable at scrollTop 0 after the editor closes. */
+@media (max-width: 600px) and (max-height: 640px) {
+  .placeable-world-view [data-testid=placeable-world] {
+    min-height: max(
+      220px,
+      calc(100dvh - 346px - var(--plaza-status-space, 0px))
+    );
+  }
+
+  .placeable-world-view .placeable-destination {
+    row-gap: 6px;
+    padding-top: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .placeable-world-view .placeable-semantic-destinations {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(44px, auto));
+    gap: 6px 10px;
+  }
+
+  .placeable-world-view
+    .placeable-destination
+    .placeable-semantic-destinations
+    > :is(a, button) {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    min-height: 44px;
+    justify-self: stretch;
   }
 }
