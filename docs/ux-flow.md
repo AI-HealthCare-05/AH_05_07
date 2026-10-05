@@ -98,10 +98,11 @@ context; it never uses bare `/`. Entry itself performs no cosmetic
 write or WebGL availability check. Guest routing and production activation remain
 unchanged.
 
-Signed-in S14 also offers a browser-local starting screen: `오늘의 기록`
-(default) or `내 공간 · My Space`, stored as `classic-today` / `my-space` under
-`sk7-starting-home`. Missing, invalid or unreadable storage means `오늘의 기록`;
-a failed write keeps the stored choice and reports failure. This presentation
+Signed-in S14 also offers a browser-local starting screen: `내 공간 · My Space`
+(default when readable storage has no saved choice) or `오늘의 기록`, stored as
+`my-space` / `classic-today` under `sk7-starting-home`. An explicit saved choice
+wins. Malformed or unreadable storage safely falls back to `오늘의 기록`; a failed
+write keeps the stored choice and reports failure. This presentation
 preference never enters account settings, health records or cosmetic snapshots.
 It takes effect on the next signed-in bare-root entry (`/` with no query/hash),
 including restored sessions and sign-in on a waiting root. My Space uses only

@@ -255,7 +255,19 @@ async function startingHomeSession(page: Page, preference: string | null = 'my-s
     get windows() { return windows; }, get verifies() { return verifies; } };
 }
 
-for (const preference of [null, 'classic-today', 'malformed', 'blocked']) test(`E9 ${preference ?? 'absent'} keeps Classic root`, async ({ page }) => {
+test('E9 absent preference defaults signed-in bare root to Living City without semantic window load', async ({ page }) => {
+  const account = await startingHomeSession(page, null);
+  await page.goto('/');
+  await expect(page).toHaveURL(/experience=e2&view=3d&storage=account/);
+  await expect(page.getByTestId('placeable-world')).toBeVisible();
+  expect(account.reads).toBe(1);
+  expect(account.windows).toBe(0);
+  expect(account.writes).toBe(0);
+  expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBeNull();
+  expect(await page.evaluate(() => sessionStorage.getItem('e9-saw-today'))).toBeNull();
+});
+
+for (const preference of ['classic-today', 'malformed', 'blocked']) test(`E9 ${preference} keeps Classic root`, async ({ page }) => {
   const account = await startingHomeSession(page, preference);
   if (preference === 'blocked') await page.addInitScript(() => {
     const original = Storage.prototype.getItem;
@@ -283,7 +295,11 @@ for (const mobile of [false, true]) test(`E9 ${mobile ? 'mobile touch' : 'deskto
     const account = await startingHomeSession(page, null);
     await page.goto('/?screen=S14');
     const classic = page.getByRole('radio', { name: /오늘의 기록/ }), space = page.getByRole('radio', { name: /My Space/ });
+    await expect(space).toBeChecked();
+    expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBeNull();
+    if (mobile) await classic.tap(); else { await space.focus(); await page.keyboard.press('ArrowLeft'); }
     await expect(classic).toBeChecked();
+    expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBe('classic-today');
     if (mobile) await space.tap(); else { await classic.focus(); await page.keyboard.press('ArrowRight'); }
     await expect(space).toBeChecked();
     await expect(page.locator('[data-scene="S14"]')).toBeVisible();
@@ -306,7 +322,7 @@ for (const mobile of [false, true]) test(`E9 ${mobile ? 'mobile touch' : 'deskto
     expect(account.windows).toBe(windows);
     expect(await page.evaluate(() => sessionStorage.getItem('e9-saw-today'))).toBeNull();
     await page.screenshot({ path: test.info().outputPath(`e9-home-${mobile ? 'mobile' : 'desktop'}.png`) });
-    await page.getByRole('link', { name: '오늘의 기록', exact: true }).click();
+    await page.getByRole('link', { name: '오늘의 기록으로 가기', exact: true }).click();
     await expect(page.locator('[data-scene="S02"]')).toBeVisible();
     await page.goBack(); await expect(world).toBeVisible();
     await page.goForward(); await expect(page.locator('[data-scene="S02"]')).toBeVisible();
@@ -385,16 +401,24 @@ test('E9 failed account verification stays truthful; explicit recovery cannot lo
   expect(account.reads).toBe(0); expect(account.writes).toBe(0);
 });
 
-test('E9 blocked preference writes remain Classic and report failure', async ({ page }) => {
+test('E9 blocked preference writes retain the effective default and report failure', async ({ page }) => {
   await startingHomeSession(page, null);
   await page.addInitScript(() => {
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) { if (key === 'sk7-starting-home') throw new Error('blocked'); original.call(this, key, value); };
   });
-  await page.goto('/?screen=S14'); await page.getByRole('radio', { name: /My Space/ }).click();
-  await expect(page.getByRole('radio', { name: /오늘의 기록/ })).toBeChecked();
+  await page.goto('/?screen=S14');
+  const classic = page.getByRole('radio', { name: /오늘의 기록/ });
+  const space = page.getByRole('radio', { name: /My Space/ });
+  await expect(space).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBeNull();
+  await classic.click();
+  await expect(space).toBeChecked();
   await expect(page.getByRole('status')).toContainText('저장하지 못했어요');
-  await page.goto('/'); await expect(page.locator('[data-scene="S02"]')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('sk7-starting-home'))).toBeNull();
+  await page.goto('/');
+  await expect(page).toHaveURL(/experience=e2&view=3d&storage=account/);
+  await expect(page.getByTestId('placeable-world')).toBeVisible();
 });
 
 test('E9 unavailable account read requires retry without copying browser state', async ({ page }) => {
