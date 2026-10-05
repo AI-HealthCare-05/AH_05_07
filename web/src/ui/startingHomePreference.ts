@@ -1,6 +1,7 @@
 export type StartingHomePreference = "classic-today" | "my-space";
 export const startingHomeStorageKey = "sk7-starting-home";
 export const mySpaceStartingDestination = "?experience=e2&view=3d&storage=account";
+const defaultStartingHomePreference: StartingHomePreference = "my-space";
 
 export function normalizeStartingHomePreference(value: unknown): StartingHomePreference {
   return value === "my-space" ? "my-space" : "classic-today";
@@ -12,7 +13,11 @@ function browserStorage(): Storage | null {
 }
 
 export function readStartingHomePreference(storage: Pick<Storage, "getItem"> | null = browserStorage()): StartingHomePreference {
-  try { return normalizeStartingHomePreference(storage?.getItem(startingHomeStorageKey)); }
+  if (!storage) return "classic-today";
+  try {
+    const stored = storage.getItem(startingHomeStorageKey);
+    return stored === null ? defaultStartingHomePreference : normalizeStartingHomePreference(stored);
+  }
   catch { return "classic-today"; }
 }
 

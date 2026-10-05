@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { isDefaultHomeEntry, normalizeStartingHomePreference, readStartingHomePreference,
   writeStartingHomePreference, resolveStartingHomeDestination, startingHomeStorageKey } from "../src/ui/startingHomePreference";
 
-test("starting home accepts only a bounded preference and fails closed without storage repair", () => {
+test("starting home defaults readable empty storage to Living City and fails closed without storage repair", () => {
   for (const value of [null, undefined, "", "My Space", "https://evil.invalid", "{}", "classic-today"]) {
     expect(normalizeStartingHomePreference(value)).toBe("classic-today");
   }
@@ -12,6 +12,8 @@ test("starting home accepts only a bounded preference and fails closed without s
   expect(writeStartingHomePreference("my-space", null)).toBe("classic-today");
   const values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+  expect(readStartingHomePreference(storage)).toBe("my-space");
+  expect([...values]).toEqual([]);
   expect(writeStartingHomePreference("my-space", storage)).toBe("my-space");
   expect([...values]).toEqual([[startingHomeStorageKey, "my-space"]]);
   expect(writeStartingHomePreference("classic-today", { ...storage, setItem() { throw new Error("blocked"); } })).toBe("my-space");
