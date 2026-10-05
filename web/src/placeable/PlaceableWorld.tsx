@@ -204,8 +204,17 @@ export default function PlaceableWorld(props: Props) {
         companion!.setReducedMotion(media.matches);
       };
       applyMotion(); media.addEventListener("change", applyMotion);
+      const settleHiddenTwilight = () => {
+        if (!document.hidden || disposed) return;
+        scene!.settleTwilightInterruption();
+        setWelcomePhase(scene!.welcomePhase);
+      };
+      document.addEventListener("visibilitychange", settleHiddenTwilight);
       companion.start(latest.current.companion);
-      cleanup.push(() => media.removeEventListener("change", applyMotion));
+      cleanup.push(
+        () => media.removeEventListener("change", applyMotion),
+        () => document.removeEventListener("visibilitychange", settleHiddenTwilight),
+      );
       const resize = () => {
         if (disposed) return;
         const width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);

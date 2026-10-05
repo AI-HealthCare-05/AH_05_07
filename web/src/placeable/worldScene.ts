@@ -796,10 +796,15 @@ export class PlaceableScene {
     for (const detail of this.choiceMarker.children) {
       if (detail.name.startsWith("choice-detail:")) detail.visible = detail.name === `choice-detail:${choice}`;
     }
+    const reducedMotionStarted = reducedMotion && !this.#reducedMotion;
     this.#reducedMotion = reducedMotion; this.#preview = projection.preview; this.#suspended = projection.suspended;
-    if (this.#suspended) this.stopSpatial();
+    if (this.#suspended) {
+      this.stopSpatial();
+      this.settleTwilightInterruption();
+    }
     if (reducedMotion && this.#welcomeTime !== (this.#twilight ? 2.1 : 0)) {
       this.#welcomeTime = this.#twilight ? 2.1 : 0;
+      if (reducedMotionStarted && this.#twilight) this.#greetingPending = false;
       this.#lighting();
     }
 
@@ -897,6 +902,13 @@ export class PlaceableScene {
     return !this.#twilight ? "daylight" : this.#welcomeTime >= 2.1 ? "twilight"
       : this.#welcomeTime >= 1.65 ? "companion" : this.#welcomeTime >= 1.05 ? "details"
       : this.#welcomeTime >= 0.55 ? "route" : "gate";
+  }
+
+  settleTwilightInterruption() {
+    if (this.#disposed || !this.#twilight) return;
+    this.#welcomeTime = 2.1;
+    this.#greetingPending = false;
+    this.#lighting();
   }
 
   setTwilight(enabled: boolean) {

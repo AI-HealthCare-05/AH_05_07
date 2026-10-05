@@ -1682,6 +1682,59 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   expect(await readLocal(page)).toEqual(before);
 });
 
+test("#1019 hidden and source-suspended Twilight settle without stale greeting or writes", async ({ page }) => {
+  await page.goto(companionRoute);
+
+  const world = page.getByTestId("placeable-world");
+  const response = page.getByTestId("companion-response");
+
+  await expect(world).toHaveAttribute("data-companion-pose", "idle", { timeout: 15000 });
+
+  const before = await readLocal(page);
+  const writes: string[] = [];
+  page.on("request", (request) => {
+    if (!["GET", "HEAD"].includes(request.method())) writes.push(request.url());
+  });
+
+  const light = await worldTool(page, "광장의 불빛 켜기");
+  await light.click();
+  await expect(world).toHaveAttribute("data-welcome-phase", "route");
+
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  await expect(world).toHaveAttribute("data-lighting", "twilight");
+  await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+  await expect(response).not.toContainText("인사를 나눴어요");
+
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  await page.waitForTimeout(1800);
+  await expect(response).not.toContainText("인사를 나눴어요");
+
+  await (await worldTool(page, "낮의 광장으로 돌아가기")).click();
+  await light.click();
+  await expect(world).toHaveAttribute("data-welcome-phase", "gate");
+  await expect(response).not.toContainText("인사를 나눴어요");
+
+  await page.getByRole("button", { name: "꾸미기", exact: true }).click();
+
+  await expect(world).toHaveAttribute("data-suspended", "true");
+  await expect(world).toHaveAttribute("data-lighting", "twilight");
+  await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+
+  await page.waitForTimeout(1200);
+  await expect(response).not.toContainText("인사를 나눴어요");
+
+  expect(await readLocal(page)).toEqual(before);
+  expect(writes).toEqual([]);
+});
+
 test("E6 mobile touch and live reduced motion retain the final hierarchy without choreography", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: "reduce" });
   const page = await context.newPage();

@@ -904,6 +904,71 @@ test("E6 Gate leads route/details, greets once, preserves placement and reverses
   scene.dispose();
 });
 
+test("#1019 interrupted Twilight settles pending choreography without a stale greet", () => {
+  for (const [steps, expectedPhase] of [[0, "gate"], [12, "route"], [23, "details"]] as const) {
+    const scene = new PlaceableScene();
+    scene.update(projection(), false);
+    scene.setTwilight(true);
+
+    for (let index = 0; index < steps; index++) {
+      expect(scene.step(0.05, still)).toBe(false);
+    }
+
+    expect(scene.welcomePhase).toBe(expectedPhase);
+    scene.settleTwilightInterruption();
+    expect(scene.welcomePhase).toBe("twilight");
+
+    for (let index = 0; index < 50; index++) {
+      expect(scene.step(0.05, still)).toBe(false);
+    }
+
+    scene.dispose();
+  }
+
+  const scene = new PlaceableScene();
+  scene.update(projection(), false);
+  scene.setTwilight(true);
+
+  let greetings = 0;
+  for (let index = 0; index < 34; index++) {
+    if (scene.step(0.05, still)) greetings++;
+  }
+
+  expect(greetings).toBe(1);
+  scene.settleTwilightInterruption();
+
+  for (let index = 0; index < 20; index++) {
+    expect(scene.step(0.05, still)).toBe(false);
+  }
+
+  scene.dispose();
+});
+
+test("#1019 source suspension and live reduced motion settle Twilight without a late greet", () => {
+  const suspended = new PlaceableScene();
+  suspended.update(projection(), false);
+  suspended.setTwilight(true);
+
+  for (let index = 0; index < 12; index++) {
+    expect(suspended.step(0.05, still)).toBe(false);
+  }
+
+  expect(suspended.welcomePhase).toBe("route");
+  suspended.update(projection({ suspended: true }), false);
+  expect(suspended.welcomePhase).toBe("twilight");
+  expect(suspended.step(0, still)).toBe(false);
+  suspended.dispose();
+
+  const reduced = new PlaceableScene();
+  reduced.update(projection(), false);
+  reduced.setTwilight(true);
+  expect(reduced.step(0.05, still)).toBe(false);
+  reduced.update(projection(), true);
+  expect(reduced.welcomePhase).toBe("twilight");
+  expect(reduced.step(0, still)).toBe(false);
+  reduced.dispose();
+});
+
 test("E6 reduced motion settles immediately, cancels pending reversal and never replays after disposal", () => {
   const scene = new PlaceableScene(); scene.update(projection(), true); scene.setTwilight(true);
   expect(scene.welcomePhase).toBe("twilight"); expect(scene.archLightMaterial.emissiveIntensity).toBe(0.85);
@@ -913,6 +978,7 @@ test("E6 reduced motion settles immediately, cancels pending reversal and never 
   scene.setTwilight(false);
   for (let i = 0; i < 50; i++) expect(scene.step(0.05, still)).toBe(false);
   scene.setTwilight(true); scene.update(projection(), true); expect(scene.welcomePhase).toBe("twilight");
+  expect(scene.step(0, still)).toBe(false);
   const before = scene.archLightMaterial.emissiveIntensity;
   scene.dispose(); expect(scene.step(0.05, still)).toBeUndefined(); scene.setTwilight(false);
   expect(scene.archLightMaterial.emissiveIntensity).toBe(before);

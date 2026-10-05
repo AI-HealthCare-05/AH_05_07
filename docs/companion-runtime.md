@@ -92,10 +92,15 @@ chooses the mood. Clock, health, challenge, save status and account/browser
 revisions cannot select it, and activation never writes placement or preferences.
 
 The existing scene RAF owns the bounded sequence and is cancelled on teardown.
-Reduced motion settles immediately into the same final hierarchy with a neutral
-companion and textual response. A loading/failed companion skips the optional
-greet without replay; plaza lighting stays available. The existing user-enabled
-audio context may play one short motif on activation, stays muted by default,
+Reduced motion on entry settles immediately into the same final hierarchy with
+a neutral companion and textual response. If an in-progress Twilight sequence is
+interrupted by a hidden document or source suspension, the scene settles directly
+to stable twilight and cancels any not-yet-emitted optional greet; resume does not
+replay Gate, route, detail or companion phases. Enabling reduced motion during an
+in-progress sequence follows the same no-late-greet settlement rule. A
+loading/failed companion skips the optional greet without replay; plaza lighting
+stays available. The existing user-enabled audio context may play one short motif
+on activation, stays muted by default,
 and retains its mute/visibility/unmount cleanup. Audio failure cannot prevent the
 visual state; WebGL failure preserves Classic plaza and Today navigation.
 These cases extend the existing placeable contract/browser tests and retain the
