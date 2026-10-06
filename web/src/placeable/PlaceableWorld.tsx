@@ -41,6 +41,7 @@ export default function PlaceableWorld(props: Props) {
   const reentryVisit = !guestVisit && props.reentry === true;
   const host = useRef<HTMLDivElement>(null);
   const pad = useRef<HTMLButtonElement>(null);
+  const toolsSummary = useRef<HTMLElement>(null);
   const labelNodes = useRef(new Map<string, HTMLSpanElement>());
   const labelGeometry = useRef<{ width: number; height: number; reserved: { left: number; right: number; top: number; bottom: number }[];
     sizes: Map<string, { width: number; height: number }> } | null>(null);
@@ -72,6 +73,14 @@ export default function PlaceableWorld(props: Props) {
     setWelcomePhase(sceneRef.current.welcomePhase);
     // Audio is optional and stays in the existing parent lifecycle, on this gesture only.
     if (enabled) latest.current.onTwilight();
+
+    // #1021 Compact signed-in Plaza reveals the atmosphere the user just chose
+    // instead of leaving the secondary tools panel over most of the scene.
+    // Focus returns to the disclosure because the activated button becomes hidden.
+    if (!guestVisit && window.matchMedia("(max-width: 600px)").matches) {
+      setToolsOpen(false);
+      toolsSummary.current?.focus();
+    }
   };
   const greet = () => {
     if (companionRef.current?.greet()) setGreetings((count) => count + 1);
@@ -445,7 +454,7 @@ export default function PlaceableWorld(props: Props) {
           : "동반자 모습만 지금 불러오지 못했어요. 이 문제로 내 공간의 꾸미기 상태가 바뀌지는 않아요. 광장과 오늘의 기록은 계속 이용할 수 있어요.")
       : pose === "loading" ? "동반자가 광장으로 오고 있어요…"
       : greetings ? "반가워요! 동반자와 인사를 나눴어요." : "동반자가 이 공간에 함께 있어요."}</p>
-    <details className="plaza-help" open={toolsOpen} onToggle={(event) => setToolsOpen(event.currentTarget.open)}><summary>광장 도구 <span aria-hidden="true">＋</span></summary>
+    <details className="plaza-help" open={toolsOpen} onToggle={(event) => setToolsOpen(event.currentTarget.open)}><summary ref={toolsSummary}>광장 도구 <span aria-hidden="true">＋</span></summary>
       <div className="plaza-tools-content">
         <div className="placeable-companion" aria-label="내 동반자" data-unavailable={error || pose === "unavailable"}>
           <button type="button" disabled={error || pose === "loading" || pose === "unavailable" || pose === "greet" || pose === "move"}

@@ -1663,6 +1663,7 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   await light.focus(); await page.keyboard.press("Enter");
   await expect(world).toHaveAttribute("data-companion-pose", "greet");
   await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+  await expect(page.locator(".plaza-help")).toHaveAttribute("open", "");
   await expect(page.getByTestId("audio-status")).toHaveText("소리: 꺼짐");
   await expect(world).toHaveAttribute("data-keepsake", "quiet-moon-v1");
   await expect(world).toHaveAttribute("data-color", "coral");
@@ -1682,6 +1683,70 @@ test("E6 explicit keyboard/pointer welcome is reversible, visit-local and makes 
   expect(await readLocal(page)).toEqual(before);
 });
 
+for (const width of [390, 320]) test(`#1021 ${width}px Twilight activation reveals the scene and returns focus to the tools disclosure`, async ({ browser }, testInfo) => {
+  const context = await browser.newContext({
+    viewport: { width, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto(companionRoute);
+
+    const world = page.getByTestId("placeable-world");
+    const tools = page.locator(".plaza-help");
+    const summary = tools.locator("summary");
+
+    await expect(world).toHaveAttribute(
+      "data-companion-pose",
+      /idle|neutral/,
+      { timeout: 15000 },
+    );
+
+    const before = await readLocal(page);
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (!["GET", "HEAD"].includes(request.method())) writes.push(request.url());
+    });
+
+    await summary.tap();
+    await expect(tools).toHaveAttribute("open", "");
+
+    await page.getByRole("button", {
+      name: "광장의 불빛 켜기",
+      exact: true,
+    }).tap();
+
+    await expect(world).toHaveAttribute("data-lighting", "twilight");
+    await expect(world).toHaveAttribute("data-welcome-phase", "twilight");
+    await expect.poll(() => tools.getAttribute("open")).toBeNull();
+    await expect(summary).toBeFocused();
+
+    await page.screenshot({
+      path: testInfo.outputPath(`1021-twilight-reveal-${width}.png`),
+      scale: "css",
+    });
+
+    await summary.tap();
+    await expect(tools).toHaveAttribute("open", "");
+
+    await page.getByRole("button", {
+      name: "낮의 광장으로 돌아가기",
+      exact: true,
+    }).tap();
+
+    await expect(world).toHaveAttribute("data-lighting", "daylight");
+    await expect(world).toHaveAttribute("data-welcome-phase", "daylight");
+    await expect.poll(() => tools.getAttribute("open")).toBeNull();
+    await expect(summary).toBeFocused();
+
+    expect(await readLocal(page)).toEqual(before);
+    expect(writes).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
 test("#1019 hidden and source-suspended Twilight settle without stale greeting or writes", async ({ page }) => {
   await page.goto(companionRoute);
 
@@ -1698,7 +1763,12 @@ test("#1019 hidden and source-suspended Twilight settle without stale greeting o
 
   const light = await worldTool(page, "광장의 불빛 켜기");
   await light.click();
-  await expect(world).toHaveAttribute("data-welcome-phase", "route");
+  // Browser frame delays may skip the brief route phase while the authored
+  // sequence remains active. Interrupt any non-final choreography phase.
+  await expect(world).toHaveAttribute(
+    "data-welcome-phase",
+    /route|details|companion/,
+  );
 
   await page.evaluate(() => {
     Object.defineProperty(document, "hidden", { configurable: true, value: true });
