@@ -12,5 +12,8 @@ Repository workflow is defined only in [AGENTS.md](../AGENTS.md).
 - Operations: [deployment](deployment.md), [recovery](architecture/RECOVERY_CONTRACT.md).
 
 Read evidence, research, ADRs and history only for a named need. They are scoped
-records, not live task or runtime state. Git history is the archive for deleted
-historical material.
+records, not live task or runtime state. A file's placement directly under `docs/`
+does not make it current authority: unindexed execution, closeout and historical
+review documents remain supporting records unless the current task or an indexed
+current domain contract explicitly names them. Git history is the archive for
+deleted historical material.
