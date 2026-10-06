@@ -143,7 +143,8 @@ Worker version이 연결되고 public200/live/ready/CORS 통과. 실제 record �
 
 **복귀·정리:** 실패 즉시 새 traffic 확대 중단. API는
 `gcloud run services update-traffic bp7-api --region asia-northeast3 --to-revisions="$PREVIOUS_REVISION=100"`.
-Web은 [기존 rollback 절차](cloudflare-rollback-plan.md)로 직전 **전체 version** 복귀.
-public smoke 후 승인된 목표로 restore하고 다시 smoke. DB downgrade를 즉흥 실행하지
-않는다. 신규 test revision/image와 임시 권한 정리는 보존/감사 정책에 따라 승인된
-대상만 수행하고, 원래 환경·traffic·합성 데이터 cleanup 상태를 기록한다.
+Web은 현재 [배포 절차](deployment.md)와
+[복구 계약](architecture/RECOVERY_CONTRACT.md)에 따라 검증된 호환 rollback identity로
+복귀한다. public smoke 후 승인된 목표로 restore하고 다시 smoke한다. DB downgrade를
+즉흥 실행하지 않는다. 신규 test revision/image와 임시 권한 정리는 보존/감사 정책에
+따라 승인된 대상만 수행하고, 원래 환경·traffic·합성 데이터 cleanup 상태를 기록한다.
