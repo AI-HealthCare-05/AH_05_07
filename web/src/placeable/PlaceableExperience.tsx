@@ -289,7 +289,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   }, [audio]);
 
   // Only a controller-confirmed transition dismisses the editor after a save.
-  // Recovery phases remain visible and cannot be dismissed as success.
+  // Write-recovery phases stay explicit; a transient read failure remains a
+  // compact Plaza status and never acquires editor ownership.
   useEffect(() => {
     const draft = state.draft !== undefined || state.keepsakeDraft !== undefined || Boolean(state.pending);
     if (world && wasDraft.current && !draft && state.phase === "ready" && state.saved) {
@@ -297,7 +298,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       setEditing(false);
     }
     wasDraft.current = draft;
-    if (world && !["ready", "loading"].includes(state.phase)) setEditing(true);
+    // A transient read failure does not own the Plaza presentation. Keep the
+    // recovery compact and leave the world visible; write-recovery states still
+    // surface the editor because they require an explicit user decision.
+    if (world && !["ready", "loading", "unavailable"].includes(state.phase)) setEditing(true);
   }, [world, state.draft, state.keepsakeDraft, state.pending, state.phase, state.saved]);
   useEffect(() => { if (editing) editHeading.current?.focus(); }, [editing]);
 
@@ -623,6 +627,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             </button>
             <button className="plaza-edit-action" data-plaza-action="decorate"
               ref={editRef} type="button" aria-expanded={editing} aria-controls="plaza-editor"
+              disabled={!canEdit}
               onClick={() => setEditing(true)}><span aria-hidden="true">＋</span> 꾸미기</button>
           </div>}
         </div>
@@ -653,6 +658,8 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       </section>
       {world && !editing && <div className="plaza-save-summary" data-quiet={state.phase === "ready" && (preview || !state.saved)}>
         {saveStatus}
+        {state.phase === "unavailable" && <button className="secondary" type="button"
+          onClick={() => void controller.load()}>저장된 상태 확인</button>}
         {preview && <p>저장 전 미리보기</p>}
       </div>}
       <section ref={editorRef} id="plaza-editor" className="placeable-controls" aria-label="내 공간 꾸미기" hidden={world && !editing}>

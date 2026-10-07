@@ -646,10 +646,19 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
   await expect(page.getByTestId("storage-label")).toContainText("계정 공간");
   await expect(page.getByTestId("save-status"))
     .toContainText("꾸미기 저장소에 연결할 수 없어요");
-  await expect(page.getByRole("button", {
+  const editor = page.locator("#plaza-editor");
+  const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+  const retry = page.getByRole("button", {
     name: "저장된 상태 확인",
     exact: true,
-  })).toBeVisible();
+  });
+
+  // Read recovery stays subordinate to the still-usable Plaza.
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(editor).toBeHidden();
+  await expect(page.locator(".plaza-save-summary")).toBeVisible();
+  await expect(retry).toBeVisible();
+  await expect(decorate).toBeDisabled();
 
   // A failed account read is not an empty account snapshot and never falls back
   // to the browser-only cosmetic snapshot.
@@ -674,11 +683,8 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
     exact: true,
   })).toHaveAttribute("aria-disabled", "false");
 
-  // Persisted cosmetic state is still unknown, so editing stays unavailable.
-  await expect(page.getByRole("button", {
-    name: "환영 바람개비 고르기",
-    exact: true,
-  })).toBeDisabled();
+  // Persisted cosmetic state is still unknown, so the edit entry remains unavailable.
+  await expect(decorate).toBeDisabled();
 
   // Desired Phase-2 contract: read readiness does not own exploration.
   // These soft assertions intentionally fail on the current implementation so
@@ -705,8 +711,37 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
   // browser-only snapshot.
   expect(account.puts).toBe(0);
   expect(await readLocal(page)).toEqual(browserSentinel);
+
+  // Explicit read reconciliation is safe and does not open the editor or write.
+  await retry.click();
+  await expect(experience).toHaveAttribute("data-phase", "ready");
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(editor).toBeHidden();
+  await expect(decorate).toBeEnabled();
+  expect(account.reads).toBe(2);
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
 });
 
+for (const width of [390, 320]) test(`#1026 unavailable account read keeps recovery compact at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 568 });
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const retry = page.getByRole("button", { name: "저장된 상태 확인", exact: true });
+
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(page.locator("#plaza-editor")).toBeHidden();
+  await expect(page.locator(".plaza-save-summary")).toBeVisible();
+  await expect(retry).toBeVisible();
+  await expect(retry).toBeInViewport();
+  await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기" })).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(account.puts).toBe(0);
+});
 for (const behavior of ["conflict", "unknown", "read-error"] as const) {
   test(`verified account ${behavior} keeps browser storage separate and requires confirmation`, async ({ page }) => {
     const account = await accountRoute(page, behavior);
