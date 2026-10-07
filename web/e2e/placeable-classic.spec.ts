@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { emptySnapshot, fingerprint, type Operation, type Snapshot } from "../src/placeable/contract";
 import { STORAGE_KEY } from "../src/placeable/persistence";
+import { PLACEABLE_COLD_READ_RETRY_DELAY_MS } from "../src/placeable/placeableCapabilities";
 import { PlaceableScene } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
@@ -565,7 +566,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-error-always" | "read-gated-error" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -576,11 +577,18 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
   await page.route("https://e2e.invalid/auth/v1/**", (route) => route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
     headers: cors, contentType: "application/json", body: route.request().method() === "OPTIONS" ? "" : JSON.stringify(user) }));
   let snapshot = initialSnapshot, puts = 0, reads = 0;
+  let releaseFirstRead = () => {};
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve; });
   await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async (route) => {
     const request = route.request();
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     if (request.method() === "GET") {
       reads++;
+      if (behavior === "read-gated-error" && reads === 1) {
+        await firstReadGate;
+        return route.fulfill({ status: 503, headers: cors, contentType: "application/json",
+          body: JSON.stringify({ detail: { code: "read_unavailable" } }) });
+      }
       if (behavior === "read-session") {
         return route.fulfill({ status: 401, headers: cors, contentType: "application/json",
           body: JSON.stringify({ detail: { code: "session_invalid" } }) });
@@ -589,8 +597,9 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
         return route.fulfill({ status: 410, headers: cors, contentType: "application/json",
           body: JSON.stringify({ detail: { code: "owner_deleted" } }) });
       }
-      return route.fulfill({ status: behavior === "read-error" && reads === 1 ? 503 : 200, headers: cors, contentType: "application/json",
-        body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } }
+      const readUnavailable = behavior === "read-error-always" || (behavior === "read-error" && reads === 1);
+      return route.fulfill({ status: readUnavailable ? 503 : 200, headers: cors, contentType: "application/json",
+        body: JSON.stringify(readUnavailable ? { detail: { code: "read_unavailable" } }
           : behavior === "unknown" && !confirmUnknownOnRead ? emptySnapshot() : snapshot) });
     }
     puts++; const op = request.postDataJSON() as Operation;
@@ -606,9 +615,255 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (behavior === "unknown") return route.abort("failed");
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(snapshot) });
   });
-  return { session, get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
+  return {
+    session,
+    get puts() { return puts; },
+    get reads() { return reads; },
+    get revision() { return snapshot.revision; },
+    releaseFirstRead,
+  };
 }
 
+test("#1026 cold account cosmetic read failure keeps 3D exploration available without writes", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+
+  const browserSentinel = {
+    ...emptySnapshot(),
+    revision: 41,
+    schemaVersion: "placeable.v2",
+    layoutId: "e1-plaza.v2",
+    selection: {
+      pinwheel: {
+        assetId: "welcome-pinwheel-v1",
+        color: "teal",
+        socketId: "gate-right",
+      },
+      keepsake: null,
+    },
+  } as const;
+
+  await page.addInitScript(({ key, value }) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, { key: STORAGE_KEY, value: browserSentinel });
+
+  const account = await accountRoute(page, "read-error-always");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const world = page.getByTestId("placeable-world");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const walkPad = page.getByRole("button", {
+    name: "드래그하거나 방향키로 광장 걷기",
+  });
+
+  await expect(experience).toHaveAttribute("data-mode", "account");
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(page.getByTestId("storage-label")).toContainText("계정 공간");
+  await expect(page.getByTestId("save-status"))
+    .toContainText("꾸미기 저장소에 연결할 수 없어요");
+  const editor = page.locator("#plaza-editor");
+  const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+  const retry = page.getByRole("button", {
+    name: "저장된 상태 확인",
+    exact: true,
+  });
+
+  // Read recovery stays subordinate to the still-usable Plaza.
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(editor).toBeHidden();
+  await expect(page.locator(".plaza-save-summary")).toBeVisible();
+  await expect(retry).toBeVisible();
+  await expect(decorate).toBeDisabled();
+
+  // A failed account read is not an empty account snapshot and never falls back
+  // to the browser-only cosmetic snapshot.
+  await expect(canvas).toBeVisible();
+  await expect(world).toHaveAttribute("data-color", "unplaced");
+  expect(account.reads).toBeGreaterThanOrEqual(1);
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
+
+  // Safe semantic exits remain independent of cosmetic-read readiness.
+  for (const link of [
+    page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }),
+    page.getByRole("link", { name: "AI 분석으로 가기", exact: true }),
+    page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true }),
+    page.getByRole("link", { name: "7일 돌아보기로 가기", exact: true }),
+    page.getByRole("link", { name: "설정으로 가기", exact: true }),
+  ]) {
+    await expect(link).toHaveAttribute("aria-disabled", "false");
+  }
+  await expect(page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  })).toHaveAttribute("aria-disabled", "false");
+
+  // Persisted cosmetic state is still unknown, so the edit entry remains unavailable.
+  await expect(decorate).toBeDisabled();
+
+  // Desired Phase-2 contract: read readiness does not own exploration.
+  // These soft assertions intentionally fail on the current implementation so
+  // the characterization run can show every coupled capability in one result.
+  await expect.soft(walkPad).toBeEnabled();
+
+  const cameraRight = await worldTool(page, "오른쪽 보기", true);
+  await expect.soft(cameraRight).toBeEnabled();
+
+  await canvas.focus();
+  await expect(world).toHaveAttribute("data-first-step", "prompt");
+  await page.keyboard.down("ArrowUp");
+  try {
+    await expect.soft(world).toHaveAttribute(
+      "data-first-step",
+      "acknowledged",
+      { timeout: 2500 },
+    );
+  } finally {
+    await page.keyboard.up("ArrowUp");
+  }
+
+  // Exploration must never manufacture a cosmetic write or mutate the separate
+  // browser-only snapshot.
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
+
+  // The automatic reconciliation is bounded to one extra GET. A persistent
+  // outage remains explicit and keeps the manual recovery action available.
+  await expect.poll(
+    () => account.reads,
+    { timeout: PLACEABLE_COLD_READ_RETRY_DELAY_MS + 5000 },
+  ).toBe(2);
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await page.waitForTimeout(PLACEABLE_COLD_READ_RETRY_DELAY_MS + 400);
+  expect(account.reads).toBe(2);
+  await expect(retry).toBeVisible();
+  await expect(decorate).toBeDisabled();
+
+  // Manual reconciliation remains available after the one automatic attempt.
+  await retry.click();
+  await expect.poll(() => account.reads).toBe(3);
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
+});
+
+test("#1026 delayed cold account read keeps Plaza usable and reconciles without reload", async ({ page }) => {
+  test.setTimeout(30_000);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const account = await accountRoute(page, "read-gated-error");
+  const sourceUrl = "/?experience=e2&view=3d&storage=account";
+
+  try {
+    await page.goto(sourceUrl);
+
+    const experience = page.getByTestId("placeable-experience");
+    const world = page.getByTestId("placeable-world");
+    const canvas = page.getByTestId("placeable-world-canvas");
+    const walkPad = page.getByRole("button", {
+      name: "드래그하거나 방향키로 광장 걷기",
+    });
+    const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+
+    await expect(experience).toHaveAttribute("data-mode", "account");
+    await expect(experience).toHaveAttribute("data-phase", "loading");
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(canvas).toBeVisible();
+    await expect(walkPad).toBeEnabled();
+    await expect(decorate).toBeDisabled();
+    expect(account.reads).toBe(1);
+    expect(account.puts).toBe(0);
+
+    await canvas.focus();
+    await expect(world).toHaveAttribute("data-first-step", "prompt");
+    await page.keyboard.down("ArrowUp");
+    try {
+      await expect(world).toHaveAttribute(
+        "data-first-step",
+        "acknowledged",
+        { timeout: 2500 },
+      );
+    } finally {
+      await page.keyboard.up("ArrowUp");
+    }
+
+    account.releaseFirstRead();
+    await expect(experience).toHaveAttribute("data-phase", "unavailable");
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(page.locator("#plaza-editor")).toBeHidden();
+    await expect(page.locator(".plaza-save-summary")).toBeVisible();
+    await expect(page.getByRole("button", {
+      name: "저장된 상태 확인",
+      exact: true,
+    })).toBeVisible();
+    await expect(walkPad).toBeEnabled();
+    expect(account.puts).toBe(0);
+
+    await expect(experience).toHaveAttribute(
+      "data-phase",
+      "ready",
+      { timeout: 8000 },
+    );
+
+    expect(new URL(page.url()).search).toBe(sourceUrl.slice(1));
+    expect(account.reads).toBe(2);
+    expect(account.puts).toBe(0);
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(page.locator("#plaza-editor")).toBeHidden();
+    await expect(decorate).toBeEnabled();
+  } finally {
+    account.releaseFirstRead();
+  }
+});
+test("#1026 one bounded cold-read retry reconciles account snapshot without reload", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+  const url = page.url();
+
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(decorate).toBeDisabled();
+  expect(account.puts).toBe(0);
+
+  await expect(experience).toHaveAttribute(
+    "data-phase",
+    "ready",
+    { timeout: PLACEABLE_COLD_READ_RETRY_DELAY_MS + 5000 },
+  );
+
+  expect(page.url()).toBe(url);
+  expect(account.reads).toBe(2);
+  expect(account.puts).toBe(0);
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(page.locator("#plaza-editor")).toBeHidden();
+  await expect(decorate).toBeEnabled();
+  await expect(page.getByRole("button", {
+    name: "저장된 상태 확인",
+    exact: true,
+  })).toHaveCount(0);
+});
+for (const width of [390, 320]) test(`#1026 unavailable account read keeps recovery compact at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 568 });
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const retry = page.getByRole("button", { name: "저장된 상태 확인", exact: true });
+
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(page.locator("#plaza-editor")).toBeHidden();
+  await expect(page.locator(".plaza-save-summary")).toBeVisible();
+  await expect(retry).toBeVisible();
+  await expect(retry).toBeInViewport();
+  await expect(page.getByRole("button", { name: "꾸미기", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "드래그하거나 방향키로 광장 걷기" })).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(account.puts).toBe(0);
+});
 for (const behavior of ["conflict", "unknown", "read-error"] as const) {
   test(`verified account ${behavior} keeps browser storage separate and requires confirmation`, async ({ page }) => {
     const account = await accountRoute(page, behavior);
