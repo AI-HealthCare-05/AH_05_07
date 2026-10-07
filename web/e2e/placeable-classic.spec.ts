@@ -609,6 +609,104 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
   return { session, get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
 }
 
+test("#1026 cold account cosmetic read failure keeps 3D exploration available without writes", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+
+  const browserSentinel = {
+    ...emptySnapshot(),
+    revision: 41,
+    schemaVersion: "placeable.v2",
+    layoutId: "e1-plaza.v2",
+    selection: {
+      pinwheel: {
+        assetId: "welcome-pinwheel-v1",
+        color: "teal",
+        socketId: "gate-right",
+      },
+      keepsake: null,
+    },
+  } as const;
+
+  await page.addInitScript(({ key, value }) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, { key: STORAGE_KEY, value: browserSentinel });
+
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const world = page.getByTestId("placeable-world");
+  const canvas = page.getByTestId("placeable-world-canvas");
+  const walkPad = page.getByRole("button", {
+    name: "드래그하거나 방향키로 광장 걷기",
+  });
+
+  await expect(experience).toHaveAttribute("data-mode", "account");
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(page.getByTestId("storage-label")).toContainText("계정 공간");
+  await expect(page.getByTestId("save-status"))
+    .toContainText("꾸미기 저장소에 연결할 수 없어요");
+  await expect(page.getByRole("button", {
+    name: "저장된 상태 확인",
+    exact: true,
+  })).toBeVisible();
+
+  // A failed account read is not an empty account snapshot and never falls back
+  // to the browser-only cosmetic snapshot.
+  await expect(canvas).toBeVisible();
+  await expect(world).toHaveAttribute("data-color", "unplaced");
+  expect(account.reads).toBe(1);
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
+
+  // Safe semantic exits remain independent of cosmetic-read readiness.
+  for (const link of [
+    page.getByRole("link", { name: "오늘의 기록으로 가기", exact: true }),
+    page.getByRole("link", { name: "AI 분석으로 가기", exact: true }),
+    page.getByRole("link", { name: "기록 찾아보기로 가기", exact: true }),
+    page.getByRole("link", { name: "7일 돌아보기로 가기", exact: true }),
+    page.getByRole("link", { name: "설정으로 가기", exact: true }),
+  ]) {
+    await expect(link).toHaveAttribute("aria-disabled", "false");
+  }
+  await expect(page.getByRole("button", {
+    name: "정원 쉼터로 가기",
+    exact: true,
+  })).toHaveAttribute("aria-disabled", "false");
+
+  // Persisted cosmetic state is still unknown, so editing stays unavailable.
+  await expect(page.getByRole("button", {
+    name: "환영 바람개비 고르기",
+    exact: true,
+  })).toBeDisabled();
+
+  // Desired Phase-2 contract: read readiness does not own exploration.
+  // These soft assertions intentionally fail on the current implementation so
+  // the characterization run can show every coupled capability in one result.
+  await expect.soft(walkPad).toBeEnabled();
+
+  const cameraRight = await worldTool(page, "오른쪽 보기", true);
+  await expect.soft(cameraRight).toBeEnabled();
+
+  await canvas.focus();
+  await expect(world).toHaveAttribute("data-first-step", "prompt");
+  await page.keyboard.down("ArrowUp");
+  try {
+    await expect.soft(world).toHaveAttribute(
+      "data-first-step",
+      "acknowledged",
+      { timeout: 2500 },
+    );
+  } finally {
+    await page.keyboard.up("ArrowUp");
+  }
+
+  // Exploration must never manufacture a cosmetic write or mutate the separate
+  // browser-only snapshot.
+  expect(account.puts).toBe(0);
+  expect(await readLocal(page)).toEqual(browserSentinel);
+});
+
 for (const behavior of ["conflict", "unknown", "read-error"] as const) {
   test(`verified account ${behavior} keeps browser storage separate and requires confirmation`, async ({ page }) => {
     const account = await accountRoute(page, behavior);

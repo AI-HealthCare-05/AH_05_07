@@ -7,6 +7,7 @@ import { classicTodayHref, mySpaceReturnPlaceQuery, type MySpaceReturnPlace } fr
 import { ASSET, COLORS, cosmeticLayout, SOCKETS, type Keepsake, type Selection } from "./contract";
 import { keepsakeCandidate, keepsakeMedia } from "./keepsakeMedia";
 import { PlaceableController } from "./controller";
+import { canExplorePlaceableWorld } from "./placeableCapabilities";
 import { PlaceableAudio, type AudioStatus } from "./feedback";
 import type { PlaceablePersistence } from "./persistence";
 
@@ -444,6 +445,12 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     if (alive.current && (!world || controller.getState().phase !== "ready")) statusRef.current?.focus({ preventScroll: !world });
   }
   const sourceSettling = preview || Boolean(state.pending);
+  const worldExplorationAvailable = canExplorePlaceableWorld({
+    phase: state.phase,
+    preview,
+    pending: Boolean(state.pending),
+    editing,
+  });
   const todayDescribedBy = sourceSettling
     ? "placeable-today-context placeable-destination-handoff"
     : world && todayGateProximity !== "far"
@@ -632,7 +639,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
             onSettingsActivate={activateSettings}
             onSocketSelect={(socketId) => change({ socketId })}
             onTwilight={() => { if (audioStatus === "ready" && !audio.play("twilight")) setAudioStatus("unavailable"); }}
-            suspended={preview || editing || state.phase !== "ready"} canInteract={canInteract} onInteract={interact} />
+            suspended={!worldExplorationAvailable} canInteract={canInteract} onInteract={interact} />
         </Suspense></WorldBoundary> : <ClassicPlaza choice={visibleChoice} keepsake={keepsake} selection={selection} preview={preview} pulse={state.pulse}
           interact={interact} canInteract={canInteract} statePresentation={classicStatePresentation} />}
         {keepsakeContext && <p
