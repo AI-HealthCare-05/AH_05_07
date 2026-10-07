@@ -7,7 +7,11 @@ import { classicTodayHref, mySpaceReturnPlaceQuery, type MySpaceReturnPlace } fr
 import { ASSET, COLORS, cosmeticLayout, SOCKETS, type Keepsake, type Selection } from "./contract";
 import { keepsakeCandidate, keepsakeMedia } from "./keepsakeMedia";
 import { PlaceableController } from "./controller";
-import { canExplorePlaceableWorld } from "./placeableCapabilities";
+import {
+  canExplorePlaceableWorld,
+  PLACEABLE_COLD_READ_RETRY_DELAY_MS,
+  shouldAutoRetryInitialPlaceableRead,
+} from "./placeableCapabilities";
 import { PlaceableAudio, type AudioStatus } from "./feedback";
 import type { PlaceablePersistence } from "./persistence";
 
@@ -207,6 +211,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
   const [todayGateProximity, setTodayGateProximity] = useState<"far" | "approach" | "arrived">("far");
   const seenReceipt = useRef(state.receipt);
   const pageActive = useRef(true);
+  const coldReadRetryAttempted = useRef(false);
   const [receiptNoticeId, setReceiptNoticeId] = useState<string | null>(null);
   const [receiptAccentId, setReceiptAccentId] = useState<string | null>(null);
   useLayoutEffect(() => {
@@ -264,6 +269,61 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       audio.dispose();
     };
   }, [controller, audio]);
+  useEffect(() => {
+    if (!world || adapter.mode !== "account" || coldReadRetryAttempted.current) return;
+
+    let timer: number | null = null;
+    const clearTimer = () => {
+      if (timer === null) return;
+      window.clearTimeout(timer);
+      timer = null;
+    };
+    const eligible = () => {
+      const current = controller.getState();
+      return shouldAutoRetryInitialPlaceableRead({
+        mode: adapter.mode,
+        world,
+        phase: current.phase,
+        hasConfirmed: current.confirmed !== null,
+        hasDraft: current.draft !== undefined || current.keepsakeDraft !== undefined,
+        hasPending: Boolean(current.pending),
+        alreadyAttempted: coldReadRetryAttempted.current,
+        hidden: document.hidden,
+      });
+    };
+    const schedule = () => {
+      if (timer !== null || !eligible()) return;
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (!eligible()) return;
+        coldReadRetryAttempted.current = true;
+        void controller.load();
+      }, PLACEABLE_COLD_READ_RETRY_DELAY_MS);
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimer();
+        return;
+      }
+      schedule();
+    };
+
+    schedule();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearTimer();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [
+    adapter.mode,
+    controller,
+    world,
+    state.phase,
+    state.confirmed,
+    state.draft,
+    state.keepsakeDraft,
+    state.pending,
+  ]);
   useEffect(() => {
     const leave = (event: BeforeUnloadEvent) => {
       if (state.draft !== undefined || state.keepsakeDraft !== undefined || state.pending) { event.preventDefault(); event.returnValue = ""; }
@@ -403,6 +463,10 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
     : null;
   const selected = selection ?? { assetId: ASSET, color: "coral", socketId: "gate-left" };
   function change(change: Partial<Selection>) { controller.preview({ ...selected, ...change }); }
+  function retryStorageRead() {
+    coldReadRetryAttempted.current = true;
+    void controller.load();
+  }
   function interact() {
     if (!canInteract) return;
     controller.interact();
@@ -659,7 +723,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
       {world && !editing && <div className="plaza-save-summary" data-quiet={state.phase === "ready" && (preview || !state.saved)}>
         {saveStatus}
         {state.phase === "unavailable" && <button className="secondary" type="button"
-          onClick={() => void controller.load()}>저장된 상태 확인</button>}
+          onClick={retryStorageRead}>저장된 상태 확인</button>}
         {preview && <p>저장 전 미리보기</p>}
       </div>}
       <section ref={editorRef} id="plaza-editor" className="placeable-controls" aria-label="내 공간 꾸미기" hidden={world && !editing}>
@@ -679,7 +743,7 @@ export default function PlaceableExperience({ adapter, accountAvailable = false,
           {adapter.mode === "browser" ? "계정 공간 사용하기" : "이 브라우저의 공간 사용하기"}</a>}
         {!world && saveStatus}
         {state.phase === "conflict" && <button onClick={() => controller.reviewLatest()}>미리보기를 유지하고 최근 저장 상태 사용</button>}
-        {["unknown", "unavailable", "unsupported"].includes(state.phase) && <button onClick={() => void controller.load()}>저장된 상태 확인</button>}
+        {["unknown", "unavailable", "unsupported"].includes(state.phase) && <button onClick={retryStorageRead}>저장된 상태 확인</button>}
         {state.phase === "unknown" && state.pending && <button onClick={() => void controller.retryPending()}>같은 저장 다시 시도</button>}
         {state.phase === "session" && <a href="/?screen=S02">오늘의 기록으로 돌아가기</a>}
         <h2>환영 바람개비</h2>

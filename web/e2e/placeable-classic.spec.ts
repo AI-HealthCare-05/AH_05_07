@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { emptySnapshot, fingerprint, type Operation, type Snapshot } from "../src/placeable/contract";
 import { STORAGE_KEY } from "../src/placeable/persistence";
+import { PLACEABLE_COLD_READ_RETRY_DELAY_MS } from "../src/placeable/placeableCapabilities";
 import { PlaceableScene } from "../src/placeable/worldScene";
 import { Vector3 } from "three";
 import { getMySpaceCompanion } from "../src/ui/mySpaceCompanion";
@@ -565,7 +566,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-error-always" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -589,8 +590,9 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
         return route.fulfill({ status: 410, headers: cors, contentType: "application/json",
           body: JSON.stringify({ detail: { code: "owner_deleted" } }) });
       }
-      return route.fulfill({ status: behavior === "read-error" && reads === 1 ? 503 : 200, headers: cors, contentType: "application/json",
-        body: JSON.stringify(behavior === "read-error" && reads === 1 ? { detail: { code: "read_unavailable" } }
+      const readUnavailable = behavior === "read-error-always" || (behavior === "read-error" && reads === 1);
+      return route.fulfill({ status: readUnavailable ? 503 : 200, headers: cors, contentType: "application/json",
+        body: JSON.stringify(readUnavailable ? { detail: { code: "read_unavailable" } }
           : behavior === "unknown" && !confirmUnknownOnRead ? emptySnapshot() : snapshot) });
     }
     puts++; const op = request.postDataJSON() as Operation;
@@ -631,7 +633,7 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
     localStorage.setItem(key, JSON.stringify(value));
   }, { key: STORAGE_KEY, value: browserSentinel });
 
-  const account = await accountRoute(page, "read-error");
+  const account = await accountRoute(page, "read-error-always");
   await page.goto("/?experience=e2&view=3d&storage=account");
 
   const experience = page.getByTestId("placeable-experience");
@@ -664,7 +666,7 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
   // to the browser-only cosmetic snapshot.
   await expect(canvas).toBeVisible();
   await expect(world).toHaveAttribute("data-color", "unplaced");
-  expect(account.reads).toBe(1);
+  expect(account.reads).toBeGreaterThanOrEqual(1);
   expect(account.puts).toBe(0);
   expect(await readLocal(page)).toEqual(browserSentinel);
 
@@ -712,17 +714,57 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
   expect(account.puts).toBe(0);
   expect(await readLocal(page)).toEqual(browserSentinel);
 
-  // Explicit read reconciliation is safe and does not open the editor or write.
-  await retry.click();
-  await expect(experience).toHaveAttribute("data-phase", "ready");
-  await expect(experience).toHaveAttribute("data-editing", "false");
-  await expect(editor).toBeHidden();
-  await expect(decorate).toBeEnabled();
+  // The automatic reconciliation is bounded to one extra GET. A persistent
+  // outage remains explicit and keeps the manual recovery action available.
+  await expect.poll(
+    () => account.reads,
+    { timeout: PLACEABLE_COLD_READ_RETRY_DELAY_MS + 5000 },
+  ).toBe(2);
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await page.waitForTimeout(PLACEABLE_COLD_READ_RETRY_DELAY_MS + 400);
   expect(account.reads).toBe(2);
+  await expect(retry).toBeVisible();
+  await expect(decorate).toBeDisabled();
+
+  // Manual reconciliation remains available after the one automatic attempt.
+  await retry.click();
+  await expect.poll(() => account.reads).toBe(3);
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
   expect(account.puts).toBe(0);
   expect(await readLocal(page)).toEqual(browserSentinel);
 });
 
+test("#1026 one bounded cold-read retry reconciles account snapshot without reload", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const account = await accountRoute(page, "read-error");
+  await page.goto("/?experience=e2&view=3d&storage=account");
+
+  const experience = page.getByTestId("placeable-experience");
+  const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+  const url = page.url();
+
+  await expect(experience).toHaveAttribute("data-phase", "unavailable");
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(decorate).toBeDisabled();
+  expect(account.puts).toBe(0);
+
+  await expect(experience).toHaveAttribute(
+    "data-phase",
+    "ready",
+    { timeout: PLACEABLE_COLD_READ_RETRY_DELAY_MS + 5000 },
+  );
+
+  expect(page.url()).toBe(url);
+  expect(account.reads).toBe(2);
+  expect(account.puts).toBe(0);
+  await expect(experience).toHaveAttribute("data-editing", "false");
+  await expect(page.locator("#plaza-editor")).toBeHidden();
+  await expect(decorate).toBeEnabled();
+  await expect(page.getByRole("button", {
+    name: "저장된 상태 확인",
+    exact: true,
+  })).toHaveCount(0);
+});
 for (const width of [390, 320]) test(`#1026 unavailable account read keeps recovery compact at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 390 ? 844 : 568 });
   const account = await accountRoute(page, "read-error");

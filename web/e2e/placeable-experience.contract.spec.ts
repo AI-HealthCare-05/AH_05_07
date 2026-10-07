@@ -8,7 +8,10 @@ import { accountPersistence, type AccountIdentity, type PlaceablePersistence } f
 import { ASSET, emptySnapshot } from "../src/placeable/contract";
 import { PlaceableAudio } from "../src/placeable/feedback";
 import PlaceableWorld from "../src/placeable/PlaceableWorld";
-import { canExplorePlaceableWorld } from "../src/placeable/placeableCapabilities";
+import {
+  canExplorePlaceableWorld,
+  shouldAutoRetryInitialPlaceableRead,
+} from "../src/placeable/placeableCapabilities";
 
 test("#1026 world exploration capability separates cold reads from mutation ownership", () => {
   const available = (
@@ -37,6 +40,34 @@ test("#1026 world exploration capability separates cold reads from mutation owne
   for (const phase of ["saving", "unknown", "conflict", "unsupported", "session"] as const) {
     expect(available(phase)).toBe(false);
   }
+});
+test("#1026 initial read auto-retry policy is account-3D-only and write-safe", () => {
+  const eligible = (
+    overrides: Partial<Parameters<typeof shouldAutoRetryInitialPlaceableRead>[0]> = {},
+  ) => shouldAutoRetryInitialPlaceableRead({
+    mode: "account",
+    world: true,
+    phase: "unavailable",
+    hasConfirmed: false,
+    hasDraft: false,
+    hasPending: false,
+    alreadyAttempted: false,
+    hidden: false,
+    ...overrides,
+  });
+
+  expect(eligible()).toBe(true);
+  expect(eligible({ mode: "browser" })).toBe(false);
+  expect(eligible({ world: false })).toBe(false);
+  expect(eligible({ phase: "loading" })).toBe(false);
+  expect(eligible({ phase: "ready" })).toBe(false);
+  expect(eligible({ phase: "unknown" })).toBe(false);
+  expect(eligible({ phase: "session" })).toBe(false);
+  expect(eligible({ hasConfirmed: true })).toBe(false);
+  expect(eligible({ hasDraft: true })).toBe(false);
+  expect(eligible({ hasPending: true })).toBe(false);
+  expect(eligible({ alreadyAttempted: true })).toBe(false);
+  expect(eligible({ hidden: true })).toBe(false);
 });
 test("Guest world presentation exposes qualified spatial controls without durable cosmetic wording", () => {
   const projection = { companion: null, selection: null, preview: false, pulse: 0,
