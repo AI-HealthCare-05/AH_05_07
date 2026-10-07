@@ -566,7 +566,7 @@ test("lost WebGL context releases the scene and retries without changing the con
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-supabase-api-version",
   "Access-Control-Allow-Methods": "GET,PUT,POST,OPTIONS" };
-async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-error-always" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
+async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read-error" | "read-error-always" | "read-gated-error" | "read-session" | "read-owner-deleted" | "session" | "normal", confirmUnknownOnRead = true, initialSnapshot = emptySnapshot()) {
   const owner = "00000000-0000-4000-8000-000000000810";
   const user = { id: owner, aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" };
   const token = [Buffer.from('{"alg":"none"}').toString("base64url"), Buffer.from(JSON.stringify({ sub: owner, exp: 4102444800 })).toString("base64url"), "synthetic"].join(".");
@@ -577,11 +577,18 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
   await page.route("https://e2e.invalid/auth/v1/**", (route) => route.fulfill({ status: route.request().method() === "OPTIONS" ? 204 : 200,
     headers: cors, contentType: "application/json", body: route.request().method() === "OPTIONS" ? "" : JSON.stringify(user) }));
   let snapshot = initialSnapshot, puts = 0, reads = 0;
+  let releaseFirstRead = () => {};
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve; });
   await page.route("http://e2e.invalid/api/v1/cosmetics/placeable", async (route) => {
     const request = route.request();
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     if (request.method() === "GET") {
       reads++;
+      if (behavior === "read-gated-error" && reads === 1) {
+        await firstReadGate;
+        return route.fulfill({ status: 503, headers: cors, contentType: "application/json",
+          body: JSON.stringify({ detail: { code: "read_unavailable" } }) });
+      }
       if (behavior === "read-session") {
         return route.fulfill({ status: 401, headers: cors, contentType: "application/json",
           body: JSON.stringify({ detail: { code: "session_invalid" } }) });
@@ -608,7 +615,13 @@ async function accountRoute(page: Page, behavior: "conflict" | "unknown" | "read
     if (behavior === "unknown") return route.abort("failed");
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(snapshot) });
   });
-  return { session, get puts() { return puts; }, get reads() { return reads; }, get revision() { return snapshot.revision; } };
+  return {
+    session,
+    get puts() { return puts; },
+    get reads() { return reads; },
+    get revision() { return snapshot.revision; },
+    releaseFirstRead,
+  };
 }
 
 test("#1026 cold account cosmetic read failure keeps 3D exploration available without writes", async ({ page }) => {
@@ -734,6 +747,73 @@ test("#1026 cold account cosmetic read failure keeps 3D exploration available wi
   expect(await readLocal(page)).toEqual(browserSentinel);
 });
 
+test("#1026 delayed cold account read keeps Plaza usable and reconciles without reload", async ({ page }) => {
+  test.setTimeout(30_000);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const account = await accountRoute(page, "read-gated-error");
+  const sourceUrl = "/?experience=e2&view=3d&storage=account";
+
+  try {
+    await page.goto(sourceUrl);
+
+    const experience = page.getByTestId("placeable-experience");
+    const world = page.getByTestId("placeable-world");
+    const canvas = page.getByTestId("placeable-world-canvas");
+    const walkPad = page.getByRole("button", {
+      name: "드래그하거나 방향키로 광장 걷기",
+    });
+    const decorate = page.getByRole("button", { name: "꾸미기", exact: true });
+
+    await expect(experience).toHaveAttribute("data-mode", "account");
+    await expect(experience).toHaveAttribute("data-phase", "loading");
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(canvas).toBeVisible();
+    await expect(walkPad).toBeEnabled();
+    await expect(decorate).toBeDisabled();
+    expect(account.reads).toBe(1);
+    expect(account.puts).toBe(0);
+
+    await canvas.focus();
+    await expect(world).toHaveAttribute("data-first-step", "prompt");
+    await page.keyboard.down("ArrowUp");
+    try {
+      await expect(world).toHaveAttribute(
+        "data-first-step",
+        "acknowledged",
+        { timeout: 2500 },
+      );
+    } finally {
+      await page.keyboard.up("ArrowUp");
+    }
+
+    account.releaseFirstRead();
+    await expect(experience).toHaveAttribute("data-phase", "unavailable");
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(page.locator("#plaza-editor")).toBeHidden();
+    await expect(page.locator(".plaza-save-summary")).toBeVisible();
+    await expect(page.getByRole("button", {
+      name: "저장된 상태 확인",
+      exact: true,
+    })).toBeVisible();
+    await expect(walkPad).toBeEnabled();
+    expect(account.puts).toBe(0);
+
+    await expect(experience).toHaveAttribute(
+      "data-phase",
+      "ready",
+      { timeout: 8000 },
+    );
+
+    expect(new URL(page.url()).search).toBe(sourceUrl.slice(1));
+    expect(account.reads).toBe(2);
+    expect(account.puts).toBe(0);
+    await expect(experience).toHaveAttribute("data-editing", "false");
+    await expect(page.locator("#plaza-editor")).toBeHidden();
+    await expect(decorate).toBeEnabled();
+  } finally {
+    account.releaseFirstRead();
+  }
+});
 test("#1026 one bounded cold-read retry reconciles account snapshot without reload", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   const account = await accountRoute(page, "read-error");
