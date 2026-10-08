@@ -38,7 +38,7 @@ import { useRecordExplorerMemory } from "./components/useRecordExplorerMemory";
 import type { RecordBrowseItem } from "./ui/recordExplorer";
 import { AccountDeletionConfirmation, type AccountDeletionRecovery } from "./components/AccountDeletionConfirmation";
 import { BrowserPersonalizationResetConfirmation } from "./components/BrowserPersonalizationResetConfirmation";
-import { ModelV2InputFlow } from "./components/ModelV2InputFlow";
+import { SignedInModelV2Presentation } from "./components/SignedInModelV2Presentation";
 import { createModelV2SessionGuard } from "./components/modelV2ExecutionGuard";
 import {
   ApiRequestError,
@@ -2086,25 +2086,28 @@ function App() {
 
     if (activeScreen === "S11") {
       if (evidenceMode || !session) {
-        return <Scene id="S11" {...journeyCopy.S11} tone="secondary" className="signal-scene"><div className="signal-orbit" aria-hidden="true"><span /><span /><i /></div><div className="signal-card" data-model-v2-synthetic-result data-model-v2-result-state={syntheticModelV2ResultState} role="status" aria-live="polite"><span className="status-pill">{syntheticModelV2ResultView.status}</span><h2>{syntheticModelV2ResultView.heading}</h2><p>{syntheticModelV2ResultView.body}</p></div><p className="signal-disclaimer">{syntheticModelV2ResultView.disclaimer}</p></Scene>;
+        return <SignedInModelV2Presentation
+          mode="synthetic"
+          state={syntheticModelV2ResultState}
+          view={syntheticModelV2ResultView}
+        />;
       }
       const modelV2Guard = createModelV2SessionGuard(() => ({
         userId: sessionIdentityRef.current.userId,
         generation: sessionIdentityRef.current.generation,
       }));
-      return (
-        <ModelV2InputFlow
-          key={sessionIdentityRef.current.generation}
-          guard={modelV2Guard}
-          bloodPressureStatus={modelV2Continuation.key === "confirm-today" ? "오늘 혈압 상태 · 최신 여부 미확인" : todayBloodPressureStatus}
-          bloodPressureSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 기록을 확인해요." : todayBloodPressureSupport}
-          continuation={modelV2Continuation}
-          challengeStatus={modelV2Continuation.key === "confirm-today" ? "오늘 챌린지 상태 · 최신 여부 미확인" : modelV2ChallengeStatus}
-          challengeSupport={modelV2Continuation.key === "confirm-today" ? "오늘 화면에서 최신 챌린지 상태를 확인해요." : modelV2ChallengeSupport}
-          onContinue={() => navigate(modelV2Continuation.destination)}
-          onReturnToToday={() => navigate("S02")}
-        />
-      );
+      return <SignedInModelV2Presentation
+        mode="account"
+        sessionGeneration={sessionIdentityRef.current.generation}
+        guard={modelV2Guard}
+        continuation={modelV2Continuation}
+        bloodPressureStatus={todayBloodPressureStatus}
+        bloodPressureSupport={todayBloodPressureSupport}
+        challengeStatus={modelV2ChallengeStatus}
+        challengeSupport={modelV2ChallengeSupport}
+        onContinue={() => navigate(modelV2Continuation.destination)}
+        onReturnToToday={() => navigate("S02")}
+      />;
     }
 
       if (presentation.journey) return (
