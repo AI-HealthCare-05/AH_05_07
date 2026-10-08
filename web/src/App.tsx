@@ -1,8 +1,7 @@
 import { StartingHomeControl } from "./ui/StartingHomeControl";
 import { dataScopeLabel } from "./ui/dataScope";
 import { isDefaultHomeEntry, readStartingHomePreference, resolveStartingHomeDestination } from "./ui/startingHomePreference";
-import { LivingChoiceLink } from "./ui/LivingChoiceLink";
-import { MySpaceEntry, MySpaceReturn } from "./ui/SpaceReturnNavigation";
+import { MySpaceReturn } from "./ui/SpaceReturnNavigation";
 import { readMySpaceReturn } from "./ui/mySpaceReturn";
 import { resolvePresentationPolicy } from "./ui/presentationPolicy";
 import type { FormEvent } from "react";
@@ -19,8 +18,10 @@ import { JourneySkeleton } from "./components/JourneySkeleton";
 import { resolveModelV2Continuation } from "./components/modelV2Continuation";
 import { LoginPresentation } from "./components/LoginPresentation";
 import { SignedInStatePresentation } from "./components/SignedInStatePresentation";
+import { SignedInTodayPresentation } from "./components/SignedInTodayPresentation";
 
 import { VisualStage } from "./components/VisualStage";
+
 
 import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
@@ -1718,6 +1719,7 @@ function App() {
     </section>;
   }
 
+
   function openRecord(item: RecordBrowseItem, returnScreen: "S08" | "S10" = "S08") {
     navigate("S09", item.key);
     window.history.replaceState(
@@ -1882,15 +1884,58 @@ function App() {
     }
 
     if (activeScreen === "S02") {
-      const choiceLink = windowState === "ready" && !controlsDisabled && !accountDeletionOpen
-        && !pendingBloodPressureDeletion && !pendingChallengeCheckinDeletion && !notice?.reload
-        ? <LivingChoiceLink actionId={activeChallenge?.action_id} search={window.location.search} /> : null;
-      if (presentation.journey) return <JourneyToday mySpaceEntry={mySpaceEntry} key={`${today}:${endOn}`} staticLandscape={s02SceneOwnsDecoration ? false : presentation.staticLandscape} today={today} days={trailDays} lead={homeLead} secondary={homeSecondaryActions} freshness={windowState} onNavigate={navigate} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset}>
-        {renderCycleActions()}
-        {choiceLink}
-        {previousCycleEnd && !activeChallengeEnded && <button type="button" className="secondary" onClick={() => openCycleReview(previousCycleEnd)}>종료된 7일 돌아보기</button>}
-      </JourneyToday>;
-      return <Scene id="S02" {...journeyCopy.S02} tone="base" className="home-scene">{renderCycleActions()}{choiceLink}<div className="today-ribbon"><span>{dateLabel(today)}</span><strong>{todayBloodPressureStatus}</strong><strong>{activeChallengeEnded ? "챌린지 종료" : activeChallenge ? challengeLabel(activeChallenge.action_id) : "챌린지 미선택"}</strong></div><section className="home-lead" data-home-concept={homeLead.key} aria-labelledby="home-lead-title"><div><p className="eyebrow">오늘 먼저 할 일</p><h2 id="home-lead-title">{homeLead.title}</h2><p>{homeLead.support}</p></div><button type="button" onClick={() => navigate(homeLead.screen)}>{homeLead.action}</button></section><nav className="home-links" aria-label="오늘 기록 바로가기">{homeSecondaryActions.map((item) => <button key={item.key} type="button" data-home-concept={item.key} data-home-destination={item.screen} aria-label={`${item.title} · ${item.support}`} onClick={() => navigate(item.screen)}><span><strong>{item.title}</strong><small>{item.support}</small></span><span aria-hidden="true">→</span></button>)}</nav>{mySpaceEntry && <MySpaceEntry destination={mySpaceEntry} />}<VisualStage screen="S02" calendarDate={today} companionSpecies={s02CompanionSpecies} companionAsset={activeCompanionAsset} /><section className="recent-window-summary" data-window-kind="recent-history" aria-labelledby="recent-window-title"><div><p className="eyebrow">기록 탐색</p><h2 id="recent-window-title">최근 7일 기록</h2><p>챌린지 7일 진행과는 별도로 확인해요.</p></div><ol className="week-path" aria-label="오늘을 포함한 최근 7일 기록">{Array.from({ length: 7 }, (_, index) => { const day = shiftDate(today, index - 6); return <li key={day} className={day === today ? "is-today" : ""} aria-label={dateLabel(day)}>{day === today ? "오늘" : `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`}</li>; })}</ol></section></Scene>;
+      const livingChoiceAvailable = windowState === "ready"
+        && !controlsDisabled
+        && !accountDeletionOpen
+        && !pendingBloodPressureDeletion
+        && !pendingChallengeCheckinDeletion
+        && !notice?.reload;
+
+      return <SignedInTodayPresentation
+        journey={presentation.journey}
+        staticLandscape={s02SceneOwnsDecoration ? false : presentation.staticLandscape}
+        today={today}
+        startOn={startOn}
+        endOn={endOn}
+        days={trailDays}
+        lead={homeLead}
+        secondary={homeSecondaryActions}
+        freshness={windowState}
+        mySpaceEntry={mySpaceEntry}
+        companionSpecies={s02CompanionSpecies}
+        companionAsset={activeCompanionAsset}
+        livingChoiceAvailable={livingChoiceAvailable}
+        livingChoiceActionId={activeChallenge?.action_id}
+        livingChoiceSearch={window.location.search}
+        endedChallenge={activeChallengeEnded ? activeChallenge : null}
+        challengeCheckins={windowData?.challenge_checkins ?? []}
+        endedChallengeLabel={activeChallengeEnded && activeChallenge
+          ? challengeLabel(activeChallenge.action_id)
+          : null}
+        endedCycleNextDisabled={readNavigationDisabled || windowState !== "ready" || challengeNeedsReload}
+        endedCycleReviewDisabled={readNavigationDisabled || evidenceMode}
+        showEndedCycleReviewAction={!isCycleReview}
+        previousCycleReviewVisible={Boolean(previousCycleEnd && !activeChallengeEnded)}
+        todayBloodPressureStatus={todayBloodPressureStatus}
+        challengeStatusLabel={activeChallengeEnded
+          ? "챌린지 종료"
+          : activeChallenge
+            ? challengeLabel(activeChallenge.action_id)
+            : "챌린지 미선택"}
+        dateLabel={dateLabel}
+        onNavigate={navigate}
+        onChooseNextChallenge={() => {
+          if (!activeChallenge) return;
+          setPreviousCycleEnd(activeChallenge.ends_on);
+          navigate("S03");
+        }}
+        onOpenEndedCycleReview={() => {
+          if (activeChallenge) openCycleReview(activeChallenge.ends_on);
+        }}
+        onOpenPreviousCycleReview={() => {
+          if (previousCycleEnd) openCycleReview(previousCycleEnd);
+        }}
+      />;
     }
 
     if (activeScreen === "S03") {
