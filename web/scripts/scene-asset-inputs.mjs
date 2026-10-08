@@ -40,6 +40,7 @@ export const sceneRuntimeVisualSources = [
   "web/src/components/sceneFirstPaintChannel.d.ts",
   "web/src/App.tsx",
   "web/src/components/SignedInTodayPresentation.tsx",
+  "web/src/components/SignedInRecapPresentation.tsx",
   "web/src/GuestJourneySandbox.tsx",
   "web/src/components/JourneyToday.tsx",
   "web/src/components/JourneyRecap.tsx",
