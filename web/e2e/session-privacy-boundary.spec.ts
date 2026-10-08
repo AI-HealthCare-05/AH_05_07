@@ -1002,7 +1002,7 @@ test("S01 and S14 explain retention, account, and local export boundaries", asyn
   await expect(settings).toContainText("JSON");
   await expect(settings).toContainText("PDF");
   await expect(settings).toContainText("인쇄물");
-  await expect(settings).toContainText("이 브라우저에만 저장");
+  await expect(settings.getByRole("heading", { name: "이 브라우저의 개인화", exact: true })).toBeVisible();
   await expect(settings.locator('[data-boundary="account"]')).toContainText("계정 My Space");
   await expect(settings.locator('[data-boundary="browser"]')).toContainText("브라우저 My Space");
   await expect(settings.locator('[data-boundary="device"]')).toContainText("내 기기");
@@ -1076,7 +1076,7 @@ test("browser personalization reset clears only the four allowlisted local keys"
     renderedTheme: document.documentElement.dataset.sk7Theme,
   }))).toEqual({ theme: null, home: null, companion: null, space: null, unrelated: "keep", renderedTheme: "cloud" });
   await expect(page.locator('[data-scene="S14"]')).toBeVisible();
-  await expect(page.getByRole("radio", { name: /오늘의 기록/ })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /내 공간 · My Space/ })).toBeChecked();
   const companion = page.getByLabel("캐릭터 선택");
   if (await companion.count()) await expect(companion).toHaveValue("bear");
   await expect(page.getByText("계정과 서버 기록은 변경되지 않았어요.")).toBeVisible();
