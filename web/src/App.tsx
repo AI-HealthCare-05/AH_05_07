@@ -20,15 +20,16 @@ import { LoginPresentation } from "./components/LoginPresentation";
 import { SignedInStatePresentation } from "./components/SignedInStatePresentation";
 import { SignedInTodayPresentation } from "./components/SignedInTodayPresentation";
 import { SignedInChallengeChoicePresentation, SignedInChallengeSummaryPresentation } from "./components/SignedInChallengePresentation";
+import { SignedInBloodPressurePresentation } from "./components/SignedInBloodPressurePresentation";
+import { SignedInSavedPresentation } from "./components/SignedInSavedPresentation";
 
 import { VisualStage } from "./components/VisualStage";
 
 
-import { Scene, SceneShell, SceneCompanion } from "./components/SceneShell";
+import { Scene, SceneShell } from "./components/SceneShell";
 import { DeleteConfirmation } from "./components/DeleteConfirmation";
 import { RecoveryPanel, type RecoveryContent } from "./components/RecoveryPanel";
 import { RecordExplorer } from "./components/RecordExplorer";
-import { BloodPressureDraftNote } from "./components/BloodPressureDraftNote";
 import { DailyActionLoop } from "./components/DailyActionLoop";
 import { ChallengeTimeline } from "./components/ChallengeTimeline";
 import { emptyBloodPressureDraft, useNewBloodPressureDraft, type BloodPressureDraft } from "./components/useNewBloodPressureDraft";
@@ -89,7 +90,6 @@ const challengeActions = [
 
 // Keep Safari's input focus from zooming the viewport and carrying that zoom
 // into the saved screen. User zoom and larger root text remain available.
-const measurementControlStyle = { fontSize: "max(1rem, 16px)" };
 
 type NoticeOrigin = "session" | "request-error" | "mutation-success" | "edit" | "export-success";
 type Notice = {
@@ -1960,179 +1960,59 @@ function App() {
     }
 
     if (activeScreen === "S04") {
-      return (
-        <Scene
-          id="S04"
-          eyebrow={editingBloodPressureId ? "저장된 기록 정정" : journeyCopy.S04.eyebrow}
-          title={editingBloodPressureId ? "혈압 기록을 바로잡아요" : journeyCopy.S04.title}
-          body={editingBloodPressureId
-            ? "기존 관찰 한 건의 저장값을 고칩니다. 새 측정 기록을 하나 더 만드는 과정이 아니에요."
-            : journeyCopy.S04.body}
-          tone="emphasis"
-          className={presentation.journey ? `journey-candidate journey-entry journey-sheet surface${editingBloodPressureId ? " journey-correction" : ""}` : ""}
-        >
-          {presentation.journey && !editingBloodPressureId && <DailyActionLoop current="S04" firstSession={confirmedWindowEmpty} />}
-          {editingBloodPressureId && editingBloodPressureRecord && <section className="correction-identity" aria-labelledby="correction-identity-title">
-            <div>
-              <p className="eyebrow">현재 수정 중인 기록</p>
-              <h2 id="correction-identity-title">{dateLabel(editingBloodPressureRecord.observed_on)} · {periodLabel(editingBloodPressureRecord.period)}</h2>
-            </div>
-            <strong>{displayMeasurement(editingBloodPressureRecord)}</strong>
-            <p>저장하면 새 측정 기록을 만들지 않고 이 기록 한 건의 값만 바꿔요.</p>
-          </section>}
-          <form className="measurement-panel" onSubmit={submitBloodPressure} noValidate>
-            <div className="bp-sheet-fields">
-              <div className="bp-sheet-context">
-                <label htmlFor="observed-on">
-                  <span className="bp-sheet-field-label">날짜</span>
-                  <input
-                    ref={observedOnRef}
-                    id="observed-on"
-                    style={measurementControlStyle}
-                    type="date"
-                    aria-invalid={bloodPressureError?.field === "observed-on"}
-                    aria-describedby={
-                      bloodPressureError?.field === "observed-on"
-                        ? "blood-pressure-error"
-                        : !editingBloodPressureId && bloodPressureDraft.observedOn && bloodPressureDraft.observedOn !== today
-                          ? "bp-draft-date-help"
-                          : undefined
-                    }
-                    value={bloodPressureDraft.observedOn}
-                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, observedOn: event.target.value }))}
-                    required
-                    disabled={controlsDisabled}
-                  />
-                </label>
-                <label htmlFor="period">
-                  <span className="bp-sheet-field-label">시간대</span>
-                  <select
-                    id="period"
-                    style={measurementControlStyle}
-                    value={bloodPressureDraft.period}
-                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, period: event.target.value as BloodPressureDraft["period"] }))}
-                    disabled={controlsDisabled}
-                  >
-                    <option value="morning">아침 · 기상 후 1시간 이내</option>
-                    <option value="evening">저녁 · 취침 전</option>
-                  </select>
-                </label>
-              </div>
-              <div className="bp-measurement-pair">
-                <label htmlFor="systolic" className="bp-measurement bp-measurement-systolic">
-                  <span className="bp-measurement-label">수축기</span>
-                  <input
-                    ref={systolicRef}
-                    id="systolic"
-                    style={measurementControlStyle}
-                    type="number"
-                    min="60"
-                    max="260"
-                    inputMode="numeric"
-                    value={bloodPressureDraft.systolic}
-                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, systolic: event.target.value }))}
-                    aria-invalid={bloodPressureError?.field === "systolic"}
-                    aria-describedby={bloodPressureError?.field === "systolic" ? "blood-pressure-error" : undefined}
-                    required
-                    disabled={controlsDisabled}
-                  />
-                  <span className="unit">mmHg</span>
-                </label>
-                <span className="bp-measurement-separator" aria-hidden="true">/</span>
-                <label htmlFor="diastolic" className="bp-measurement bp-measurement-diastolic">
-                  <span className="bp-measurement-label">이완기</span>
-                  <input
-                    ref={diastolicRef}
-                    id="diastolic"
-                    style={measurementControlStyle}
-                    type="number"
-                    min="30"
-                    max="160"
-                    inputMode="numeric"
-                    value={bloodPressureDraft.diastolic}
-                    onChange={(event) => setBloodPressureDraft((draft) => ({ ...draft, diastolic: event.target.value }))}
-                    aria-invalid={bloodPressureError?.field === "diastolic"}
-                    aria-describedby={bloodPressureError?.field === "diastolic" ? "blood-pressure-error" : undefined}
-                    required
-                    disabled={controlsDisabled}
-                  />
-                  <span className="unit">mmHg</span>
-                </label>
-              </div>
-            </div>
-            {bloodPressureError && <p id="blood-pressure-error" className="field-error status-notice" role="alert">{bloodPressureError.message}</p>}
-            <div className="form-actions action-group">
-              <button type="submit" disabled={controlsDisabled}>{pendingAction === "blood-pressure" ? "저장 중" : editingBloodPressureId ? "변경 저장" : "혈압 기록 저장"}</button>
-              {editingBloodPressureId && <button className="secondary" type="button" onClick={cancelBloodPressureEdit} disabled={controlsDisabled}>수정 취소</button>}
-            </div>
-            <div className="bp-sheet-secondary">
-              {!editingBloodPressureId && <BloodPressureDraftNote restored={newBloodPressure.restored} observedOn={bloodPressureDraft.observedOn} today={today} />}
-              <details className="measurement-guide section-header">
-                <summary>측정 전 확인하기</summary>
-                <ul>
-                  <li>조용히 앉아 몸과 호흡을 편하게 해요.</li>
-                  <li>등과 팔을 지지하고 측정 중에는 말하지 않아요.</li>
-                  <li>이 안내는 기록 조건을 돕기 위한 참고이며 저장되지 않아요.</li>
-                </ul>
-              </details>
-              {!editingBloodPressureId && newBloodPressure.meaningful && (
-                <details className="bp-draft-reset">
-                  <summary>새로 입력하기</summary>
-                  <p>입력한 날짜·시간대·혈압 값을 지우고 오늘 날짜로 시작해요. 저장된 기록에는 영향을 주지 않아요.</p>
-                  <button
-                    className="secondary"
-                    type="button"
-                    disabled={controlsDisabled}
-                    onClick={(event) => {
-                      const dateField = event.currentTarget.form?.elements.namedItem("observed-on");
-                      newBloodPressure.reset(today);
-                      setBloodPressureError(null);
-                      if (dateField instanceof HTMLInputElement) dateField.focus();
-                    }}
-                  >
-                    초안 지우기
-                  </button>
-                </details>
-              )}
-            </div>
-          </form>
-          {presentation.journey && <button type="button" className="text-button journey-back" onClick={editingBloodPressureId ? cancelBloodPressureEdit : () => navigate("S02")} disabled={controlsDisabled}>← {editingBloodPressureId ? "기록 상세로 돌아가기" : "오늘 화면으로 돌아가기"}</button>}
-        </Scene>
-      );
+      return <SignedInBloodPressurePresentation
+        journey={presentation.journey}
+        today={today}
+        firstSession={confirmedWindowEmpty}
+        editingBloodPressureId={editingBloodPressureId}
+        editingBloodPressureRecord={editingBloodPressureRecord}
+        draft={bloodPressureDraft}
+        error={bloodPressureError}
+        controlsDisabled={controlsDisabled}
+        saving={pendingAction === "blood-pressure"}
+        restoredDraft={newBloodPressure.restored}
+        meaningfulDraft={newBloodPressure.meaningful}
+        observedOnRef={observedOnRef}
+        systolicRef={systolicRef}
+        diastolicRef={diastolicRef}
+        dateLabel={dateLabel}
+        periodLabel={periodLabel}
+        displayMeasurement={displayMeasurement}
+        onDraftChange={(patch) => setBloodPressureDraft((draft) => ({ ...draft, ...patch }))}
+        onClearDraft={() => {
+          newBloodPressure.reset(today);
+          setBloodPressureError(null);
+        }}
+        onCancelEdit={cancelBloodPressureEdit}
+        onReturnToday={() => navigate("S02")}
+        onSubmit={submitBloodPressure}
+      />;
     }
 
     if (activeScreen === "S05") {
       const savedBloodPressureIsToday = savedFactKind === "blood-pressure" && savedFactDate === today;
-      return <Scene id="S05" {...journeyCopy.S05} tone="subtle" className={presentation.journey ? "saved-scene journey-candidate journey-saved" : "saved-scene"}>
-        {presentation.journey && <DailyActionLoop current="S05" firstSession={firstBloodPressureWindow && savedFactKind === "blood-pressure"} />}
-        <div className="save-ripple" aria-hidden="true">{presentation.journey ? <><div className="save-ripple-landscape"><i /><i /></div><SceneCompanion /></> : <><SceneCompanion /><i /><i /></>}<span>✓</span></div>
-        {presentation.journey && <section className="save-next-step section-header" aria-labelledby="save-next-step-title">
-          <p className="eyebrow">다음 확인</p>
-          <h2 id="save-next-step-title">{savedFactKind === "challenge-checkin"
-            ? "오늘의 기록에서 방금 저장한 챌린지 상태를 확인해요"
-            : savedBloodPressureIsToday
-              ? "오늘의 기록에서 방금 저장한 혈압을 확인해요"
-              : "최근 기록에서 방금 저장한 혈압을 확인해요"}</h2>
-          <p>{savedFactKind === "challenge-checkin"
-            ? "챌린지 상태는 혈압 기록과 별도로 남아요."
-            : savedBloodPressureIsToday
-              ? "오늘 기록 상세에서 바로 확인할 수 있어요."
-              : "기록 찾아보기에서 날짜·시간대별로 확인할 수 있어요."}</p>
-        </section>}
-        <div className="split-actions action-group journey-continuation-actions journey-continuation-actions--saved">
-          <button type="button" onClick={() => {
-            setConfirmedSave(false);
-            savedScene.clear();
-            navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "S08" : savedBloodPressureIsToday && presentation.journey ? "S07" : "S02");
-          }}>{savedFactKind === "blood-pressure" && !savedBloodPressureIsToday ? "기록 찾아보기" : savedBloodPressureIsToday && presentation.journey ? "방금 기록한 혈압 확인" : "오늘의 기록 보기"}</button>
-          <button className="secondary" type="button" onClick={() => {
-            setConfirmedSave(false);
-            savedScene.clear();
-            navigate(savedFactKind === "challenge-checkin" ? "S06" : "S04");
-          }}>{savedFactKind === "challenge-checkin" ? "챌린지 상태 보기" : "계속 기록하기"}</button>
-        </div>
-        {presentation.journey && savedBloodPressureIsToday && <button className="text-button journey-saved-home" type="button" onClick={() => { setConfirmedSave(false); savedScene.clear(); navigate("S02"); }}>오늘의 기록 보기</button>}
-      </Scene>;
+      return <SignedInSavedPresentation
+        journey={presentation.journey}
+        savedFactKind={savedFactKind}
+        savedBloodPressureIsToday={savedBloodPressureIsToday}
+        firstBloodPressureWindow={firstBloodPressureWindow}
+        onPrimary={() => {
+          setConfirmedSave(false);
+          savedScene.clear();
+          navigate(savedFactKind === "blood-pressure" && !savedBloodPressureIsToday
+            ? "S08" : savedBloodPressureIsToday && presentation.journey ? "S07" : "S02");
+        }}
+        onSecondary={() => {
+          setConfirmedSave(false);
+          savedScene.clear();
+          navigate(savedFactKind === "challenge-checkin" ? "S06" : "S04");
+        }}
+        onReturnHome={() => {
+          setConfirmedSave(false);
+          savedScene.clear();
+          navigate("S02");
+        }}
+      />;
     }
 
     if (activeScreen === "S06") {
