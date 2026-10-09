@@ -63,9 +63,10 @@ export function SignedInBloodPressurePresentation({
         <strong>{displayMeasurement(editingBloodPressureRecord)}</strong>
         <p>저장하면 새 측정 기록을 만들지 않고 이 기록 한 건의 값만 바꿔요.</p>
       </section>}
-      <form className="measurement-panel" onSubmit={onSubmit} noValidate>
+      <form className="measurement-panel" data-bp-entry-mode={editingBloodPressureId ? "correction" : "new"} data-bp-validation={error ? "invalid" : "none"} onSubmit={onSubmit} noValidate>
         <div className="bp-sheet-fields">
-          <div className="bp-sheet-context">
+          <div className="bp-sheet-context" role="group" aria-labelledby="bp-context-title">
+            <p className="bp-section-label" id="bp-context-title">기록 정보</p>
             <label htmlFor="observed-on">
               <span className="bp-sheet-field-label">날짜</span>
               <input
@@ -99,7 +100,12 @@ export function SignedInBloodPressurePresentation({
               </select>
             </label>
           </div>
-          <div className="bp-measurement-pair">
+          <div className="bp-reading-group" role="group" aria-labelledby="bp-reading-title">
+            <div className="bp-reading-heading">
+              <h2 id="bp-reading-title">혈압 측정값</h2>
+              <span>단위 mmHg</span>
+            </div>
+            <div className="bp-measurement-pair">
             <label htmlFor="systolic" className="bp-measurement bp-measurement-systolic">
               <span className="bp-measurement-label">수축기</span>
               <input
@@ -139,6 +145,7 @@ export function SignedInBloodPressurePresentation({
               />
               <span className="unit">mmHg</span>
             </label>
+            </div>
           </div>
         </div>
         {error && <p id="blood-pressure-error" className="field-error status-notice" role="alert">{error.message}</p>}

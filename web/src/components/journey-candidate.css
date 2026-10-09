@@ -114,26 +114,28 @@
 @media (prefers-reduced-motion: reduce) {
   .journey-candidate *, .journey-candidate *::before, .journey-candidate *::after { animation: none !important; transition: none !important; }
 }
-/* S04: shared foundation with one intentional large-value composition. */
+/* S04 Experience Slice #1029: a measured observation is one coherent entry. */
 .journey-sheet.scene {
-  max-width: 56rem;
+  max-width: 58rem;
+  min-height: 0;
   margin-inline: auto;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  gap: var(--sk7-space-xl);
+  gap: var(--sk7-space-lg);
   border: 1px solid var(--sk7-border);
-  border-radius: var(--sk7-radius-screen);
+  border-radius: var(--sk7-radius-panel);
   background: var(--sk7-surface);
+  padding: clamp(var(--sk7-space-lg), 2.8vw, var(--sk7-space-2xl));
   box-shadow: var(--sk7-shadow-surface);
-  padding: clamp(var(--sk7-space-xl), 3vw, var(--sk7-space-3xl));
 }
 
 .journey-sheet > .scene-copy {
-  gap: var(--sk7-space-sm);
+  gap: var(--sk7-space-xs);
   max-width: var(--sk7-copy-max);
 }
 
 .journey-sheet > .screen-header h1 {
+  color: var(--sk7-text);
   font-size: var(--sk7-type-display);
   font-weight: var(--sk7-weight-bold);
   line-height: var(--sk7-leading-tight);
@@ -145,59 +147,107 @@
 }
 
 .journey-sheet .measurement-panel {
-  gap: var(--sk7-space-xl);
+  display: grid;
   width: 100%;
-  padding-top: var(--sk7-space-2xl);
+  gap: var(--sk7-space-lg);
   border: 0;
   border-top: 1px solid var(--sk7-border);
   border-radius: 0;
   background: transparent;
+  padding-top: var(--sk7-space-lg);
   box-shadow: none;
 }
 
 .journey-sheet .bp-sheet-fields {
   display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
   gap: var(--sk7-space-xl);
+  min-width: 0;
 }
 
 .journey-sheet .bp-sheet-context {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sk7-space-md) var(--sk7-space-xl);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--sk7-space-sm);
+  min-width: 0;
+}
+
+.journey-sheet .bp-section-label {
+  margin: 0;
+  color: var(--sk7-accent);
+  font-size: var(--sk7-type-caption);
+  font-weight: var(--sk7-weight-bold);
+  letter-spacing: .045em;
 }
 
 .journey-sheet .bp-sheet-context label {
-  gap: var(--sk7-space-xs);
+  display: grid;
+  gap: var(--sk7-space-2xs);
+  min-width: 0;
   color: var(--sk7-text-muted);
   font-size: var(--sk7-type-label);
   font-weight: var(--sk7-weight-medium);
 }
 
-.journey-sheet .bp-sheet-field-label {
-  color: var(--sk7-text-muted);
-}
+.journey-sheet .bp-sheet-field-label { color: var(--sk7-text-muted); }
 
 .journey-sheet .bp-sheet-context input,
 .journey-sheet .bp-sheet-context select {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--sk7-target-min);
   border-color: var(--sk7-border-strong);
   border-radius: var(--sk7-radius-control);
   background: var(--sk7-surface-control);
   color: var(--sk7-text);
 }
 
+.journey-sheet .bp-reading-group {
+  display: grid;
+  align-content: start;
+  gap: var(--sk7-space-sm);
+  min-width: 0;
+  border-inline-start: 1px solid var(--sk7-border);
+  padding-inline-start: var(--sk7-space-xl);
+}
+
+.journey-sheet .bp-reading-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sk7-space-xs);
+}
+
+.journey-sheet .bp-reading-heading h2 {
+  margin: 0;
+  color: var(--sk7-text);
+  font-size: var(--sk7-type-body);
+  font-weight: var(--sk7-weight-bold);
+}
+
+.journey-sheet .bp-reading-heading span {
+  color: var(--sk7-text-muted);
+  font-size: var(--sk7-type-caption);
+}
+
 .journey-sheet .bp-measurement-pair {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sk7-space-sm);
-  padding: var(--sk7-space-xl) 0;
-  border-top: 1px solid var(--sk7-border);
+  gap: var(--sk7-space-xs);
+  min-width: 0;
+  border: 0;
+  padding: 0;
 }
 
 .journey-sheet .bp-measurement {
+  position: relative;
+  display: grid;
   flex: 1 1 0;
-  min-width: 0;
   gap: var(--sk7-space-xs);
+  min-width: 0;
   text-align: center;
 }
 
@@ -208,24 +258,37 @@
 }
 
 .journey-sheet .bp-measurement input[type="number"] {
-  min-height: 5rem;
-  border-color: var(--sk7-border-strong);
+  width: 100%;
+  min-width: 0;
+  min-height: 4.5rem;
+  border: 1px solid var(--sk7-border-strong);
   border-radius: var(--sk7-radius-control);
   background: var(--sk7-surface-control);
   color: var(--sk7-text);
-  font-size: var(--sk7-type-heading) !important;
+  font-size: clamp(1.75rem, 3vw, 2.25rem) !important;
   font-weight: var(--sk7-weight-bold);
-  letter-spacing: .03em;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
   text-align: center;
 }
 
+/* The group shows one visible unit; retain the per-field unit for assistive tech. */
 .journey-sheet .bp-measurement .unit {
-  color: var(--sk7-text-muted);
-  font-size: var(--sk7-type-caption);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .journey-sheet .bp-measurement-separator {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-top: var(--sk7-space-lg);
   color: var(--sk7-text-muted);
   font-size: var(--sk7-type-title);
   font-weight: var(--sk7-weight-medium);
@@ -233,7 +296,13 @@
 }
 
 .journey-sheet .form-actions {
+  display: flex;
   align-items: stretch;
+  justify-content: flex-end;
+  gap: var(--sk7-space-sm);
+  width: 100%;
+  border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-md);
 }
 
 .journey-sheet .form-actions button {
@@ -241,20 +310,22 @@
 }
 
 .journey-sheet .form-actions button[type="submit"] {
-  flex: 1 1 var(--sk7-form-max);
+  flex: 0 1 19rem;
+  min-width: 0;
+  border-radius: var(--sk7-radius-control);
 }
 
 .journey-sheet .bp-sheet-secondary {
   display: grid;
-  gap: var(--sk7-space-md);
-  padding-top: var(--sk7-space-xl);
+  gap: var(--sk7-space-sm);
   border-top: 1px solid var(--sk7-border);
+  padding-top: var(--sk7-space-md);
   color: var(--sk7-text-muted);
 }
 
 .journey-sheet .bp-sheet-secondary > * + * {
   border-top: 1px solid var(--sk7-border);
-  padding-top: var(--sk7-space-md);
+  padding-top: var(--sk7-space-sm);
 }
 
 .journey-sheet .field-error {
@@ -263,8 +334,12 @@
   color: var(--sk7-danger-text);
 }
 
-.journey-sheet .bp-draft-note {
-  border-inline-start-color: var(--sk7-accent);
+.journey-sheet .bp-draft-note { border-inline-start-color: var(--sk7-accent); }
+
+.journey-sheet .correction-identity {
+  border-inline-start: 3px solid var(--sk7-accent);
+  background: var(--sk7-surface-subtle);
+  padding: var(--sk7-space-md);
 }
 
 .journey-sheet .bp-sheet-secondary .measurement-guide {
@@ -287,110 +362,77 @@
   padding-left: 0;
 }
 
+/* The fallback (non-Journey) S04 retains a usable semantic pair. */
+[data-scene="S04"]:not(.journey-sheet) .bp-sheet-fields,
+[data-scene="S04"]:not(.journey-sheet) .bp-sheet-context,
+[data-scene="S04"]:not(.journey-sheet) .bp-reading-group {
+  display: grid;
+  gap: var(--sk7-space-sm);
+  min-width: 0;
+}
+[data-scene="S04"]:not(.journey-sheet) .bp-reading-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sk7-space-sm);
+}
+[data-scene="S04"]:not(.journey-sheet) .bp-reading-heading h2 { font-size: var(--sk7-type-body); }
+[data-scene="S04"]:not(.journey-sheet) .bp-measurement-pair {
+  display: flex;
+  align-items: center;
+  gap: var(--sk7-space-sm);
+  min-width: 0;
+}
+[data-scene="S04"]:not(.journey-sheet) .bp-measurement {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 0;
+}
+[data-scene="S04"]:not(.journey-sheet) .bp-measurement input { min-width: 0; width: 100%; }
+
+@media (max-width: 820px) {
+  .journey-sheet .bp-sheet-fields { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-md); }
+  .journey-sheet .bp-sheet-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journey-sheet .bp-reading-group {
+    border-inline-start: 0;
+    border-top: 1px solid var(--sk7-border);
+    padding: var(--sk7-space-md) 0 0;
+  }
+}
+
 @media (max-width: 580px) {
   .journey-sheet.scene {
     gap: var(--sk7-space-md);
-    border-radius: var(--sk7-radius-panel);
-    padding: var(--sk7-space-md) 0 var(--sk7-space-xl);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: var(--sk7-space-md) 0 var(--sk7-space-2xl);
+    box-shadow: none;
   }
-
-  .journey-sheet .measurement-panel {
-    gap: var(--sk7-space-md);
-    padding-top: var(--sk7-space-md);
-  }
-
-  .journey-sheet .bp-sheet-fields {
-    gap: var(--sk7-space-md);
-  }
-
-  .journey-sheet .bp-sheet-context {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sk7-space-sm) var(--sk7-space-md);
-  }
-
-  .journey-sheet .bp-measurement-pair {
-    gap: var(--sk7-space-xs);
-    padding: var(--sk7-space-md) 0;
-  }
-
-  .journey-sheet .bp-measurement input[type="number"] {
-    min-height: calc(var(--sk7-target-min) + var(--sk7-space-xl));
-  }
-
-  .journey-sheet .bp-measurement-separator {
-    font-size: var(--sk7-type-subtitle);
-  }
-
-  .journey-sheet .form-actions button[type="submit"] {
-    flex: 0 0 auto;
-  }
-
-  .journey-sheet .bp-sheet-secondary {
-    gap: var(--sk7-space-sm);
-    padding-top: var(--sk7-space-md);
-  }
+  .journey-sheet .measurement-panel { gap: var(--sk7-space-md); padding-top: var(--sk7-space-sm); }
+  .journey-sheet .bp-sheet-context { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-sm); }
+  .journey-sheet .bp-reading-group { gap: var(--sk7-space-sm); padding-top: var(--sk7-space-md); }
+  .journey-sheet .bp-measurement input[type="number"] { min-height: 3.75rem; }
+  .journey-sheet .form-actions { justify-content: stretch; }
+  .journey-sheet .form-actions button[type="submit"] { flex: 1 1 auto; width: 100%; }
+  .journey-sheet .bp-sheet-secondary { gap: var(--sk7-space-sm); }
 }
 
-@media (max-width: 580px) and (max-height: 650px) {
-  .journey-sheet.scene {
-    gap: var(--sk7-space-sm);
-    padding-bottom: var(--sk7-space-md);
-  }
-
-  .journey-sheet .bp-measurement-pair {
-    padding: var(--sk7-space-xs) 0;
-  }
-
-  .journey-sheet .bp-measurement input[type="number"] {
-    min-height: calc(var(--sk7-target-min) + var(--sk7-space-sm));
-  }
-}
-
-@media (max-width: 350px) {
-  .journey-sheet .bp-sheet-context {
-    gap: var(--sk7-space-xs) var(--sk7-space-sm);
-  }
-
-  .journey-sheet .bp-measurement input[type="number"] {
-    padding-inline: var(--sk7-space-2xs);
-  }
-}
-
-/* S04 short narrow screens: keep the complete BP input pair above the fixed nav. */
 @media (max-width: 350px) and (max-height: 650px) {
-  .journey-sheet.scene {
-    gap: var(--sk7-space-2xs);
-  }
-
-  .journey-sheet .scene-copy {
-    gap: var(--sk7-space-2xs);
-  }
-
-  .journey-sheet .measurement-panel {
-    gap: var(--sk7-space-2xs);
-    padding-top: 0;
-  }
-
-  .journey-sheet .bp-sheet-fields {
-    gap: var(--sk7-space-2xs);
-  }
-
-  .journey-sheet .bp-sheet-context {
-    gap: var(--sk7-space-xs) var(--sk7-space-md);
-  }
-
+  .journey-sheet.scene { gap: var(--sk7-space-xs); padding-top: var(--sk7-space-xs); }
+  .journey-sheet.journey-candidate > .daily-action-loop { display: none; }
+  .journey-sheet > .scene-copy { gap: var(--sk7-space-2xs); }
+  .journey-sheet .measurement-panel { gap: var(--sk7-space-xs); padding-top: 0; }
+  .journey-sheet .bp-sheet-fields,
+  .journey-sheet .bp-sheet-context,
+  .journey-sheet .bp-reading-group { gap: var(--sk7-space-xs); }
   .journey-sheet .bp-sheet-context input,
-  .journey-sheet .bp-sheet-context select {
-    min-height: var(--sk7-target-min);
-  }
-
-  .journey-sheet .bp-measurement-pair {
-    padding: 0;
-  }
-
-  .journey-sheet .form-actions button {
-    min-height: var(--sk7-target-min);
-  }
+  .journey-sheet .bp-sheet-context select { min-height: var(--sk7-target-min); }
+  .journey-sheet .bp-reading-group { padding-top: var(--sk7-space-xs); }
+  .journey-sheet .bp-measurement input[type="number"] { min-height: var(--sk7-target-min); }
+  .journey-sheet .form-actions { padding-top: var(--sk7-space-xs); }
+  .journey-sheet .form-actions button { min-height: var(--sk7-target-min); }
+  /* Keep the submit in normal flow: it must never overlay either numeric field. */
 }
 
 /* S13/S14: Journey-only load recovery and settings composition. */
@@ -1689,8 +1731,7 @@
 .journey-challenge-choice.scene,
 .journey-challenge-summary.scene,
 .journey-today-review.scene,
-.journey-saved.scene,
-.journey-sheet.scene {
+.journey-saved.scene {
   max-width: 68rem;
   min-height: 0;
   margin-inline: auto;
@@ -1731,12 +1772,6 @@
 .journey-challenge-choice .journey-challenge-actions { justify-content: flex-start; border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-md); }
 .journey-challenge-choice .journey-challenge-actions .text-button { margin-left: auto; }
 
-.journey-sheet .measurement-panel { padding-top: var(--sk7-space-lg); }
-.journey-sheet .bp-sheet-fields { grid-template-columns: minmax(13rem, .8fr) minmax(0, 1.2fr); gap: var(--sk7-space-xl); }
-.journey-sheet .bp-sheet-context { grid-template-columns: minmax(0, 1fr); }
-.journey-sheet .bp-measurement-pair { border-top: 0; border-left: 1px solid var(--sk7-border); padding: 0 0 0 var(--sk7-space-xl); }
-.journey-sheet .form-actions { border-top: 1px solid var(--sk7-border); padding-top: var(--sk7-space-lg); }
-.journey-sheet .bp-sheet-secondary { padding-top: var(--sk7-space-md); }
 
 .journey-saved .save-next-step { margin-top: var(--sk7-space-sm); }
 .journey-saved .save-ripple { margin-inline: auto; }
@@ -1765,17 +1800,13 @@
 @media (max-width: 820px) {
   .journey-challenge-summary.scene { grid-template-columns: minmax(0, 1fr); }
   .journey-challenge-summary .journey-challenge-summary-grid { grid-template-columns: minmax(0, 1fr); gap: var(--sk7-space-sm); }
-  .journey-sheet .bp-sheet-fields { grid-template-columns: minmax(0, 1fr); }
-  .journey-sheet .bp-sheet-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .journey-sheet .bp-measurement-pair { border-top: 1px solid var(--sk7-border); border-left: 0; padding: var(--sk7-space-lg) 0 0; }
 }
 
 @media (max-width: 580px) {
   .journey-challenge-choice.scene,
   .journey-challenge-summary.scene,
   .journey-today-review.scene,
-  .journey-saved.scene,
-  .journey-sheet.scene { padding: var(--sk7-space-lg) 0 var(--sk7-space-3xl); }
+  .journey-saved.scene { padding: var(--sk7-space-lg) 0 var(--sk7-space-3xl); }
   .daily-action-loop li { grid-template-columns: minmax(0, 1fr); font-size: var(--sk7-type-caption); }
   .daily-action-loop-index { font-size: .7rem; }
   .daily-action-loop li small { grid-column: 1; }
@@ -1783,23 +1814,10 @@
   .journey-challenge-choice .choice-tile { min-height: var(--sk7-target-min); padding: var(--sk7-space-md) var(--sk7-space-xs); }
   .journey-challenge-choice .choice-tile + .choice-tile { border-top: 1px solid var(--sk7-border); border-left: 0; }
   .journey-challenge-choice .journey-challenge-actions .text-button { margin-left: 0; }
-  .journey-sheet .bp-sheet-context { grid-template-columns: minmax(0, 1fr); }
-  .journey-sheet .bp-measurement-pair { padding-top: var(--sk7-space-md); }
-  .journey-sheet .form-actions { padding-top: var(--sk7-space-md); }
   .journey-today-review .journey-today-bp-records dd { font-size: var(--sk7-type-subtitle); }
 }
 
 @media (forced-colors: active) {
   .daily-action-loop li[aria-current="step"] { border-bottom-color: Highlight; }
   .journey-challenge-choice .choice-tile.is-selected { outline: 2px solid Highlight; outline-offset: -2px; }
-}
-
-@media (max-width: 350px) and (max-height: 650px) {
-  /* On the shortest supported viewport, keep the measurement itself ahead of
-     the presentation-only journey map. The title still names the current task. */
-  .journey-sheet.scene { gap: var(--sk7-space-xs); padding-top: var(--sk7-space-sm); }
-  .journey-sheet > .daily-action-loop { display: none; }
-  .journey-sheet .measurement-panel,
-  .journey-sheet .bp-sheet-fields { gap: var(--sk7-space-xs); padding-top: 0; }
-  .journey-sheet .bp-measurement-pair { padding-top: var(--sk7-space-xs); }
 }
