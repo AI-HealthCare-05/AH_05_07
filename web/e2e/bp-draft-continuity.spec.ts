@@ -142,8 +142,9 @@ test("confirmed POST alone clears new draft; pending navigation does not", async
   await fillDraft(page);
   await page.getByRole("button", { name: "혈압 기록 저장" }).click();
   await expect.poll(() => api.writes.length).toBe(1);
-  await page.getByRole("button", { name: "기록 찾아보기", exact: true }).click();
-  await page.goBack();
+  // A pending write locks primary navigation. A Playwright click here would
+  // auto-wait until the eight-second request deadline and test the wrong state.
+  await expect(page.getByRole("button", { name: "기록 찾아보기", exact: true })).toBeDisabled();
   await expectDraft(page);
   await page.getByText("새로 입력하기", { exact: true }).click();
   await expect(page.getByRole("button", { name: "초안 지우기" })).toBeDisabled();
