@@ -1,74 +1,108 @@
-# SK7
+<!-- SK7 public repository · README visual redesign candidate · 2026-10-09 -->
 
-- Product: SK7
-- Team: 상균7데이즈
+<div align="center">
 
-> **개발·문서 원본:** `AI-HealthCare-05/AH_05_07`
->
-> `emotigom/ah-05-07-pages`의 파일은 배포용 동기화 사본입니다. 수정은 원본에서만 합니다.
-> 작업은 [AGENTS.md](AGENTS.md), 작업 GitHub Issue, 변경 경계에 필요한 도메인 계약·코드·테스트에서 시작합니다.
-> [문서 색인](docs/README.md)은 필요한 주제의 링크만 제공합니다.
-> `main` 병합, 미러 동기화, 운영 배포, scene 활성화는 서로 다른 단계입니다.
+# SK7 · 상균7데이즈
 
-**SK7**은 혈압 관찰값을 날짜와 시간대별로 이어서 남기고, 최근 7일을 다시 보는
-비진단형 웹 서비스입니다. 원하는 사용자는 7일 생활습관 챌린지와 선택형 생활정보 선별 참고
-도구를 별도로 이용할 수 있으며, 세 사실은 서로 결합하지 않습니다.
+**오늘의 혈압 관찰을 기록하고, 최근 7일을 돌아보는 공간.**
 
-- **운영 서비스:** [https://hyeol.app/](https://hyeol.app/)
-- **같은 Worker의 운영 점검·롤백용 fallback:**
-  [https://ah-05-07-pages.ahnsangkyoon.workers.dev/](https://ah-05-07-pages.ahnsangkyoon.workers.dev/)
+혈압 관찰 · 7일 생활습관 챌린지 · 선택형 생활정보 참고 도구를 각각 구분해 제공하는 **비진단형 웹 서비스**입니다.
 
-![상균7데이즈 오늘 화면의 합성 데모](docs/evidence/sk7-ui-release/synthetic-S02-1366.png)
+[서비스 열기](https://hyeol.app/) · [3D Living City 설계](docs/architecture/SK7_LIVING_CITY_3D_FIRST_PRODUCT_CONTRACT.md) · [시작하기](#로컬-실행) · [이용 조건](LICENSE.md)
 
-_합성 fixture로 캡처한 SK7 Living Journey 화면입니다._
+</div>
 
-## 현재 제공 범위
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="web/public/assets/moa-journey-map-v1-mobile.webp">
+    <img src="web/public/assets/moa-journey-map-v1-desktop.webp" width="1100" alt="모아와 함께하는 일곱 장소의 7일 여정 시각 자산. 한국식 정원 입구에서 출발해 허브 정원, 그늘 나무, 나무 다리, 독서 쉼터, 정자, 노을 전망대로 이어지는 길을 표현합니다.">
+  </picture>
+</p>
 
-| 영역 | 제공하는 경험 |
+<p align="center"><sub>SK7 저장소의 7일 여정 정적 시각 자산입니다. 실제 3D Living City 런타임을 녹화한 영상은 아닙니다.</sub></p>
+
+---
+
+## 경험 소개
+
+SK7은 측정값을 평가하거나 건강 결과를 약속하지 않습니다. **기록할 일은 명확하게, 공간을 경험할 시간은 편안하게** 분리합니다.
+
+### 01 · 오늘의 기록
+
+날짜와 아침·저녁 시간대에 따라 혈압 관찰값을 직접 남기고, 작성·조회·수정·삭제할 수 있습니다. 중요한 입력과 사실은 이미지 또는 3D 연출과 별개로 접근 가능한 화면에서 제공합니다.
+
+![합성 데이터로 검증한 SK7 오늘 화면 — 1366px](docs/evidence/sk7-ui-release/synthetic-S02-1366.png)
+
+<sub>이 화면은 합성 fixture를 사용한 이전 UI 검증 캡처입니다. 최신 운영 화면과 동일하다는 뜻은 아닙니다.</sub>
+
+### 02 · 나만의 공간, Living City
+
+모아와 공간을 탐색하는 **Three.js 기반 Living City**는 기록 화면과 역할이 다릅니다. 3D 공간은 이동·탐색과 화면 전환 의도를 담당하며, 실제 관찰값·계정·모델 결과를 임의로 읽거나 판단하지 않습니다.
+
+현재 [3D-first 제품 계약](docs/architecture/SK7_LIVING_CITY_3D_FIRST_PRODUCT_CONTRACT.md)은 3D 세계와 **직접 접근 가능한 기존 화면**을 동등한 경로로 정의합니다. WebGL 실패, 모션 감소 설정, 키보드·접근성 요구가 있어도 중요한 작업을 계속할 수 있도록 설계합니다. 3D 노출 범위는 환경과 배포 단계에 따라 달라질 수 있습니다.
+
+<p align="center">
+  <img src="web/public/scene-review/s10/v1/garden-gate-desktop-838960a55a32089a.webp" width="1000" alt="SK7 검토용 3D 디오라마 장면의 정적 포스터, 한국식 정원 입구">
+</p>
+
+<sub>위 이미지는 저장소의 장면 검토용 **정적 포스터**이며, 실제 사용자 기록이나 현재 운영 활성화 상태를 나타내지 않습니다.</sub>
+
+### 03 · 7일의 흐름과 회고
+
+최근 7일의 관찰 기록을 날짜별로 다시 확인하고, 인쇄 또는 PDF, JSON 형태로 내보낼 수 있습니다. 생활습관 챌린지의 참여 사실은 측정값 또는 생활정보 모델 결과와 결합하지 않습니다.
+
+![합성 데이터로 검증한 SK7 7일 회고 화면 — 1366px](docs/evidence/sk7-ui-release/synthetic-S10-1366.png)
+
+<sub>합성 fixture를 사용한 이전 UI 검증 캡처이며, 최신 화면의 실시간 스크린샷은 아닙니다.</sub>
+
+---
+
+## 핵심 기능
+
+| 영역 | 사용자가 할 수 있는 일 |
 | --- | --- |
-| 로그인 | 비밀번호 없이 Supabase 이메일 링크로 로그인하고, 유효한 브라우저 세션을 새로고침 뒤 복구합니다. |
-| 혈압 관찰 | 측정 전 체크리스트를 확인하고 아침·저녁 관찰값을 작성·조회·수정·삭제합니다. |
-| 7일 챌린지 | 걷기·수면 루틴·저염 식사 중 하나를 선택하고 매일 `완료` 또는 `건너뜀`을 기록합니다. 첫 체크인 뒤에는 행동 선택이 고정됩니다. |
-| 기록과 회고 | 오늘, 기록 찾아보기, 현재·이전 7일 회고를 오가며 본인 기록을 확인합니다. 최근 7일은 읽기 좋은 리포트로 정리해 인쇄하거나 PDF로 저장할 수 있고, JSON으로도 내보낼 수 있습니다. |
-| 선택형 생활정보 도구 | 원할 때 생활정보를 동결된 11개 의미 특성 계약에 맞춰 browser-local Model V2 경로에서 처리하고, 입력한 활동·수면·생활습관을 이번 이용에만 보이는 `오늘의 시작점` 요약으로 정리합니다. [현재 제품 계약](docs/model-v2-product-contract.md#current-authority)의 한시적 연구/개발 미리보기 동안 로그인한 S11에서 계산이 성공하면 연속 출력을 소수점 셋째 자리의 평문 소수로 바로 표시합니다. 별도 펼치기는 필요하지 않으며 확률·백분율·등급 의미를 부여하거나 입력·결과를 저장하지 않습니다. |
-| 데이터 관리 | PostgreSQL RLS로 소유권을 제한하고, 제품 기록은 30일 뒤 접근을 차단한 다음 매일 물리 삭제합니다. 설정에서 2단계 확인 후 계정을 삭제할 수 있습니다. |
+| 로그인 | Supabase 이메일 링크로 로그인하고 브라우저 세션을 복구합니다. |
+| 혈압 관찰 | 아침·저녁 관찰값을 작성·조회·수정·삭제합니다. |
+| 생활습관 챌린지 | 걷기·수면 루틴·저염 식사 중 하나를 선택해 `완료` 또는 `건너뜀`으로 참여를 기록합니다. |
+| 기록 및 회고 | 오늘과 이전 기록을 확인하고, 7일 회고를 인쇄·PDF 또는 JSON으로 내보냅니다. |
+| 선택형 생활정보 도구 | 11개 의미 특성 계약에 따라 브라우저 안에서 입력 기반 위험군 선별 신호를 참고합니다. 진단·확률·등급으로 해석하지 않습니다. |
+| 데이터 관리 | 행 단위 접근 통제, 30일 기록 수명주기, 2단계 확인을 통한 계정 삭제를 지원합니다. |
 
-화면은 semantic HTML을 기본으로 동작합니다. 정적 clay poster와 선택적으로 로드되는
-Three.js companion은 표현 계층일 뿐, 기록·인증·모델 의미를 바꾸지 않습니다.
+## 어떻게 구성되어 있나요?
 
-## 안전 및 제품 계약
+```mermaid
+flowchart TD
+    A["웹 브라우저 · React / TypeScript"]
+    B["3D Living City · Three.js"]
+    C["접근 가능한 기록·회고 화면"]
+    D["FastAPI · Cloud Run"]
+    E["Supabase Auth / PostgreSQL RLS"]
+    F["선택형 Model V2 · 브라우저 로컬"]
+
+    A --> B
+    A --> C
+    B -->|"명시적 화면 이동"| C
+    C --> D
+    D --> E
+    C --> F
+```
+
+**경계:** 3D 공간은 의료정보 판단이나 데이터 접근 권한을 갖지 않습니다. Model V2의 한시적 연구·개발 미리보기와 출력 의미는 [현재 제품 계약](docs/model-v2-product-contract.md#current-authority)을 따릅니다. 전체 구조는 [Architecture](docs/architecture.md)에서 확인할 수 있습니다.
+
+## 안전과 한계
 
 > [!IMPORTANT]
-> 이 서비스는 교육·연구 목적의 데모이며 제품 기능에는 **합성 데이터만** 입력합니다.
-> 로그인 이메일은 Supabase Auth에서만 관리하고 제품 기록에 복제하지 않습니다. 실제 임상 기록,
-> 이름, 추가 연락처, 자유 서술 병력, 원본 문서 또는 인증정보를 입력하지 마세요.
+> **SK7은 교육·연구 목적의 비진단형 데모입니다. 제품 기능에는 합성 데이터만 입력하세요.**
+> 실제 임상 기록, 이름, 추가 연락처, 자유 서술 병력, 원본 문서 또는 인증정보는 입력하지 마세요.
 
-- 제품 용어는 **입력 기반 위험군 선별 신호**로 고정합니다.
-- 모델 처리, 측정한 혈압, 챌린지 참여는 서로 다른 사실이며 인과관계나 개선 효과로 합치지 않습니다.
-- 개인별 확률·백분율·등급과 영구 점수 의미를 공개하지 않습니다. [현재 제품 계약](docs/model-v2-product-contract.md#current-authority)이 정한 기간에만 기존 browser-local 연속 출력을 연구/개발 미리보기로 표시하며, 확률·백분율·등급·진단 의미로 해석하지 않습니다. 기간 종료 시 숫자 표시를 중단합니다.
-- 진단·처방·치료·예방 또는 응급 판단을 제공하지 않습니다.
-- Model V2 입력과 내부 결과는 일시적으로만 처리하며 저장하거나 혈압·챌린지 기록과 결합하지 않습니다.
+- 관찰한 혈압, 챌린지 참여, 선택형 모델 참고 결과는 **서로 다른 사실**입니다. 인과관계나 건강 개선 효과를 주장하지 않습니다.
+- 진단, 처방, 치료, 예방 또는 응급 판단을 제공하지 않습니다.
+- 개인별 확률·백분율·등급으로 해석하지 않습니다. 한시적 연구·개발 미리보기의 연속 출력도 이러한 의미를 갖지 않습니다.
+- 인증·세션·RLS, 데이터 보존 및 삭제의 구체적인 안전 규칙은 [Auth 계약](docs/auth-contract.md), [관찰 데이터 수명주기](docs/observation-data-lifecycle.md), [Model V2 제품 계약](docs/model-v2-product-contract.md)을 따릅니다.
 
-세부 계약은 [Model V2 제품 경계](docs/model-v2-product-contract.md),
-[관찰 데이터 수명주기](docs/observation-data-lifecycle.md),
-[인증 계약](docs/auth-contract.md)에서 확인할 수 있습니다.
+## 로컬 실행
 
-## 아키텍처
-
-| 계층 | 현재 구성 |
-| --- | --- |
-| Web | React, TypeScript, Vite, semantic HTML, 선택적 Three.js를 Cloudflare Worker `ah-05-07-pages`에서 제공합니다. |
-| API | FastAPI를 서울 리전의 Google Cloud Run 서비스 `bp7-api`에서 실행합니다. |
-| Auth · Data | Supabase Auth 이메일 링크와 Supabase PostgreSQL RLS가 세션·행 소유권 경계를 담당합니다. |
-| Model V2 | 동결된 11개 의미 특성 계산을 검증된 browser-local 자산으로 실행합니다. 정상 S11 제출은 feature-bearing inference POST를 보내지 않으며, 인증된 서버 endpoint는 두 필드 비수치 계약으로 구조적으로 유지됩니다. 한시적 연구/개발 미리보기의 연속 출력은 브라우저에서만 표시되고 저장·API 숫자 응답으로 확장되지 않습니다. |
-| Visual assets | 승인된 공개 companion·poster 자산만 Cloudflare R2에서 불변 manifest와 함께 제공합니다. 앱 배포 경계와는 분리됩니다. |
-
-자세한 구성과 ERD는 [Architecture](docs/architecture.md), 운영 토폴로지와 배포 시점 확인 절차는
-[Deployment runbook](docs/deployment.md)를 기준으로 합니다.
-
-## 로컬 web 실행
-
-CI 기준 Node.js 버전은 24입니다.
+CI 기준 Node.js 버전은 **24**입니다.
 
 ```bash
 cd web
@@ -77,37 +111,19 @@ npm ci
 npm run dev
 ```
 
-`.env.local`의 `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`,
-`VITE_SUPABASE_PUBLISHABLE_KEY`를 로컬 환경에 맞게 설정합니다. `VITE_*` 값은 브라우저에
-포함되는 공개 설정이므로 서버 전용 secret이나 Supabase secret/service-role key를 넣지 않습니다.
-추가 preview와 합성 browser harness는 [web/README.md](web/README.md)를 참고합니다.
+`.env.local`에 `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`를 환경에 맞게 설정합니다. `VITE_*` 변수는 브라우저에 포함되므로 서비스 전용 secret 또는 Supabase service-role 키를 절대로 넣지 않습니다. [웹 실행 및 테스트 안내](web/README.md)를 참고하세요.
 
-## 검증
+## 개발과 검증
 
-개발 중에는 변경한 경계에 가장 가까운 검사만 반복합니다. 최종 PR에서는 필수 `lint`와
-`test`를 통과해야 하며, web·scene·model 전용 검사는 변경 경로에 따라 추가됩니다.
-아래 명령은 전체/수동 검증 예시이며, routine 변경에는 [AGENTS.md](AGENTS.md)의
-affected-check 정책이 우선합니다.
+- **Web:** React, TypeScript, Vite, Three.js, Cloudflare Worker
+- **API:** FastAPI, Google Cloud Run
+- **인증·저장:** Supabase Auth, PostgreSQL RLS
+- **선택형 AI:** 동결된 11개 특성 계약을 따르는 브라우저 로컬 Model V2
+- **CI:** 변경 범위 기반의 `lint`, `test`와 관련 단계별 검사
 
-```bash
-# Python 전체 검증
-uv sync --group app --group ai --frozen
-uv run ruff check .
-uv run ruff format . --check
-uv run coverage run -m pytest app tests
-uv run coverage report -m
+작업은 [AGENTS.md](AGENTS.md)와 GitHub Issue/PR을 기준으로 수행합니다. 영향 범위에 맞는 검사를 선택하며, 실제 `main` 병합, 배포 미러 동기화, Cloudflare 배포, 3D 장면 활성화는 각각 **별도의 단계**입니다. 자세한 자료는 [문서 색인](docs/README.md)과 [배포 가이드](docs/deployment.md)를 참고하세요.
 
-# Web 설치와 production build
-cd web
-npm ci
-npm run build
-```
-
-## 문서 안내
-
-주제별 도메인 문서는 [문서 색인](docs/README.md)에서 찾을 수 있습니다.
-현재 작업의 authority만 읽고, 역사 기록은 필요할 때 Git history와 evidence/research/ADR에서
-찾습니다. 검색 결과에 나타난 오래된 상태를 현재 제품이나 운영 상태로 해석하지 않습니다.
+> 개발·문서 원본은 **`AI-HealthCare-05/AH_05_07`**입니다. `emotigom/ah-05-07-pages`는 배포용 비공개 동기화 사본이며 원본 수정 위치가 아닙니다.
 
 ## 저작권 및 이용 조건
 
