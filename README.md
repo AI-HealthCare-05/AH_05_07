@@ -42,10 +42,17 @@ SK7은 측정값을 평가하거나 건강 결과를 약속하지 않습니다. 
 현재 [3D-first 제품 계약](docs/architecture/SK7_LIVING_CITY_3D_FIRST_PRODUCT_CONTRACT.md)은 3D 세계와 **직접 접근 가능한 기존 화면**을 동등한 경로로 정의합니다. WebGL 실패, 모션 감소 설정, 키보드·접근성 요구가 있어도 중요한 작업을 계속할 수 있도록 설계합니다. 3D 노출 범위는 환경과 배포 단계에 따라 달라질 수 있습니다.
 
 <p align="center">
-  <img src="web/public/scene-review/s10/v1/garden-gate-desktop-838960a55a32089a.webp" width="1000" alt="SK7 검토용 3D 디오라마 장면의 정적 포스터, 한국식 정원 입구">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce) and (max-width: 600px)" srcset="docs/media/readme/living-city-mobile-still.png">
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/readme/living-city-desktop-still.png">
+    <source media="(max-width: 600px)" srcset="docs/media/readme/living-city-mobile.gif">
+    <img src="docs/media/readme/living-city-desktop.gif" width="900" alt="실제 SK7 Living City 비로그인 3D 체험에서 모아가 정원 입구에 서 있고, 카메라가 부드럽게 회전했다가 돌아오는 짧은 반복 영상">
+  </picture>
 </p>
 
-<sub>위 이미지는 저장소의 장면 검토용 **정적 포스터**이며, 실제 사용자 기록이나 현재 운영 활성화 상태를 나타내지 않습니다.</sub>
+<sub>실제 SK7 Three.js 비로그인 체험을 합성 데이터 환경에서 촬영해 짧은 구간을 왕복 반복 편집한 GIF입니다. 실제 건강정보·계정정보는 포함하지 않으며, 운영 환경의 3D 활성화 상태를 입증하지 않습니다. 동작 감소 설정에서는 정적 이미지를 제공합니다.</sub>
+
+[일시정지가 가능한 데스크톱 영상](docs/media/readme/living-city-desktop.mp4) · [모바일 영상](docs/media/readme/living-city-mobile.mp4) · [기존 장면 포스터](web/public/scene-review/s10/v1/garden-gate-desktop-838960a55a32089a.webp)
 
 ### 03 · 7일의 흐름과 회고
 
